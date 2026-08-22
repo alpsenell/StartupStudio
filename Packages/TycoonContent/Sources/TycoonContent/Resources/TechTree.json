@@ -1,0 +1,202 @@
+[
+  {
+    "id": "code_reviews",
+    "name": "Code Reviews",
+    "tier": 1,
+    "researchCost": 20,
+    "cashCost": 0,
+    "prerequisites": [],
+    "effect": { "type": "qualityMultiplier", "bonus": 0.05 },
+    "blurb": "Every pull request gets a second pair of eyes."
+  },
+  {
+    "id": "version_control",
+    "name": "Version Control",
+    "tier": 1,
+    "researchCost": 25,
+    "cashCost": 0,
+    "prerequisites": [],
+    "effect": { "type": "devSpeedMultiplier", "bonus": 0.10 },
+    "blurb": "Stop emailing zip files named final_v2_REAL."
+  },
+  {
+    "id": "press_kit",
+    "name": "Press Kit",
+    "tier": 1,
+    "researchCost": 30,
+    "cashCost": 0,
+    "prerequisites": [],
+    "effect": { "type": "unlockCampaignKind", "id": "press_release" },
+    "blurb": "Logos, screenshots, and a quotable founder."
+  },
+  {
+    "id": "desktop_dev_kit",
+    "name": "Desktop Dev Kit",
+    "tier": 1,
+    "researchCost": 40,
+    "cashCost": 0,
+    "prerequisites": [],
+    "effect": { "type": "unlockProductType", "id": "desktop_tool" },
+    "blurb": "Native toolchains for serious desktop software."
+  },
+  {
+    "id": "automated_testing",
+    "name": "Automated Testing",
+    "tier": 2,
+    "researchCost": 60,
+    "cashCost": 0,
+    "prerequisites": ["code_reviews"],
+    "effect": { "type": "qualityMultiplier", "bonus": 0.05 },
+    "blurb": "A robot that complains before your customers do."
+  },
+  {
+    "id": "ui_toolkit",
+    "name": "UI Toolkit",
+    "tier": 2,
+    "researchCost": 70,
+    "cashCost": 0,
+    "prerequisites": ["version_control"],
+    "effect": { "type": "qualityMultiplier", "bonus": 0.05 },
+    "blurb": "Reusable buttons that never wobble."
+  },
+  {
+    "id": "agile_sprints",
+    "name": "Agile Sprints",
+    "tier": 2,
+    "researchCost": 75,
+    "cashCost": 0,
+    "prerequisites": ["version_control"],
+    "effect": { "type": "devSpeedMultiplier", "bonus": 0.10 },
+    "blurb": "Two-week bursts, daily standups, fewer surprises."
+  },
+  {
+    "id": "game_engine",
+    "name": "Game Engine",
+    "tier": 2,
+    "researchCost": 100,
+    "cashCost": 3000,
+    "prerequisites": ["desktop_dev_kit"],
+    "effect": { "type": "unlockProductType", "id": "game" },
+    "blurb": "Physics, particles, and a level editor."
+  },
+  {
+    "id": "design_system",
+    "name": "Design System",
+    "tier": 3,
+    "researchCost": 120,
+    "cashCost": 0,
+    "prerequisites": ["ui_toolkit"],
+    "effect": { "type": "qualityMultiplier", "bonus": 0.05 },
+    "blurb": "One source of truth for every pixel."
+  },
+  {
+    "id": "telemetry",
+    "name": "Telemetry",
+    "tier": 3,
+    "researchCost": 130,
+    "cashCost": 0,
+    "prerequisites": ["automated_testing"],
+    "effect": { "type": "devSpeedMultiplier", "bonus": 0.10 },
+    "blurb": "Usage data tells the team what to build next."
+  },
+  {
+    "id": "continuous_delivery",
+    "name": "Continuous Delivery",
+    "tier": 3,
+    "researchCost": 140,
+    "cashCost": 0,
+    "prerequisites": ["automated_testing", "agile_sprints"],
+    "effect": { "type": "devSpeedMultiplier", "bonus": 0.10 },
+    "blurb": "Ship every day without holding your breath."
+  },
+  {
+    "id": "cloud_infrastructure",
+    "name": "Cloud Infrastructure",
+    "tier": 3,
+    "researchCost": 180,
+    "cashCost": 8000,
+    "prerequisites": ["automated_testing", "agile_sprints"],
+    "effect": { "type": "unlockProductType", "id": "saas_platform" },
+    "blurb": "Servers that scale while you sleep."
+  },
+  {
+    "id": "user_research_lab",
+    "name": "User Research Lab",
+    "tier": 4,
+    "researchCost": 200,
+    "cashCost": 5000,
+    "prerequisites": ["design_system"],
+    "effect": { "type": "qualityMultiplier", "bonus": 0.05 },
+    "blurb": "Watch real people use your product. Wince. Improve."
+  },
+  {
+    "id": "internal_tooling",
+    "name": "Internal Tooling",
+    "tier": 4,
+    "researchCost": 210,
+    "cashCost": 0,
+    "prerequisites": ["continuous_delivery"],
+    "effect": { "type": "devSpeedMultiplier", "bonus": 0.10 },
+    "blurb": "Tools that build the tools that build the product."
+  },
+  {
+    "id": "security_compliance",
+    "name": "Security & Compliance",
+    "tier": 4,
+    "researchCost": 240,
+    "cashCost": 12000,
+    "prerequisites": ["cloud_infrastructure"],
+    "effect": { "type": "qualityMultiplier", "bonus": 0.05 },
+    "blurb": "Audits, encryption, and a very thick binder."
+  },
+  {
+    "id": "ai_pair_programmer",
+    "name": "AI Pair Programmer",
+    "tier": 4,
+    "researchCost": 260,
+    "cashCost": 6000,
+    "prerequisites": ["continuous_delivery", "telemetry"],
+    "effect": { "type": "devSpeedMultiplier", "bonus": 0.15 },
+    "blurb": "It never sleeps and only occasionally argues."
+  },
+  {
+    "id": "craftsmanship_culture",
+    "name": "Craftsmanship Culture",
+    "tier": 5,
+    "researchCost": 300,
+    "cashCost": 10000,
+    "prerequisites": ["user_research_lab", "security_compliance"],
+    "effect": { "type": "qualityMultiplier", "bonus": 0.05 },
+    "blurb": "Quality is everyone's job title now."
+  },
+  {
+    "id": "hyperscale_pipeline",
+    "name": "Hyperscale Pipeline",
+    "tier": 5,
+    "researchCost": 320,
+    "cashCost": 15000,
+    "prerequisites": ["ai_pair_programmer", "internal_tooling"],
+    "effect": { "type": "devSpeedMultiplier", "bonus": 0.15 },
+    "blurb": "From commit to customers in minutes, worldwide."
+  },
+  {
+    "id": "launch_event",
+    "name": "Launch Event",
+    "tier": 5,
+    "researchCost": 340,
+    "cashCost": 20000,
+    "prerequisites": ["press_kit", "user_research_lab"],
+    "effect": { "type": "unlockCampaignKind", "id": "launch_event" },
+    "blurb": "Rent a stage, dim the lights, say 'one more thing'."
+  },
+  {
+    "id": "enterprise_suite",
+    "name": "Enterprise Suite",
+    "tier": 5,
+    "researchCost": 400,
+    "cashCost": 25000,
+    "prerequisites": ["security_compliance"],
+    "effect": { "type": "unlockProductType", "id": "enterprise_tool" },
+    "blurb": "SLAs, SSO, and seats sold by the thousand."
+  }
+]

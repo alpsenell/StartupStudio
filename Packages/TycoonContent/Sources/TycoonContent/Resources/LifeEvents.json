@@ -1,0 +1,116 @@
+[
+  {
+    "id": "partner_promotion",
+    "headline": "Your partner got a promotion — dinner's on them!",
+    "weight": 3,
+    "minStage": "dating",
+    "impact": { "wallet": 300, "relationships": 6, "mood": 4 }
+  },
+  {
+    "id": "old_friend_visits",
+    "headline": "An old friend drops by unannounced. You talk until 3am.",
+    "weight": 4,
+    "impact": { "mood": 10, "energy": -3 }
+  },
+  {
+    "id": "client_bonus",
+    "headline": "A delighted client slips you a surprise thank-you bonus.",
+    "weight": 2,
+    "impact": { "wallet": 800, "mood": 5 }
+  },
+  {
+    "id": "kids_first_word",
+    "headline": "Your kid's first word was \"deploy\". You're not sure how to feel.",
+    "weight": 3,
+    "requiresChildren": true,
+    "impact": { "mood": 12, "relationships": 8 }
+  },
+  {
+    "id": "gym_streak",
+    "headline": "Your gym buddy drags you through a four-week streak.",
+    "weight": 3,
+    "impact": { "health": 10, "energy": 4 }
+  },
+  {
+    "id": "caught_cold",
+    "headline": "You caught a cold. Tissues everywhere.",
+    "weight": 5,
+    "impact": { "energy": -10, "coldDays": 5 }
+  },
+  {
+    "id": "rent_hike",
+    "headline": "Your landlord \"regretfully\" raises the rent. Again.",
+    "weight": 3,
+    "impact": { "wallet": -400, "mood": -4 }
+  },
+  {
+    "id": "partner_complains",
+    "headline": "Your partner points out you've said \"one sec\" for six hours straight.",
+    "weight": 4,
+    "minStage": "dating",
+    "maxRelationships": 40,
+    "impact": { "mood": -8, "relationships": -4 }
+  },
+  {
+    "id": "newborn_sleepless",
+    "headline": "A sleepless week with the newborn. Coffee is a food group now.",
+    "weight": 4,
+    "requiresChildren": true,
+    "impact": { "energy": -15, "mood": -3, "relationships": 3 }
+  },
+  {
+    "id": "friends_wedding",
+    "headline": "Your friend's wedding weekend: open bar, bad dancing, great memories.",
+    "weight": 3,
+    "impact": { "wallet": -350, "energy": -8, "mood": 12 }
+  },
+  {
+    "id": "family_emergency",
+    "headline": "Family emergency — you drop everything and catch the next flight.",
+    "weight": 2,
+    "impact": { "wallet": -300, "mood": -6, "awayDays": 3, "awayReason": "Family emergency" }
+  },
+  {
+    "id": "parking_ticket",
+    "headline": "Parked for \"just five minutes\". The city disagreed.",
+    "weight": 4,
+    "impact": { "wallet": -90, "mood": -2 }
+  },
+  {
+    "id": "food_poisoning",
+    "headline": "The sushi place was not, in fact, \"probably fine\".",
+    "weight": 3,
+    "impact": { "energy": -8, "health": -4, "coldDays": 3 }
+  },
+  {
+    "id": "viral_tweet",
+    "headline": "A joke about your company goes viral. Your DMs are a warzone (a fun one).",
+    "weight": 3,
+    "impact": { "mood": 8 }
+  },
+  {
+    "id": "surprise_party",
+    "headline": "Your friends throw you a surprise party. You genuinely didn't see it coming.",
+    "weight": 2,
+    "impact": { "mood": 10, "relationships": 5, "energy": -4 }
+  },
+  {
+    "id": "tax_refund",
+    "headline": "A tax refund lands. Past-you filed something right for once.",
+    "weight": 2,
+    "impact": { "wallet": 600, "mood": 3 }
+  },
+  {
+    "id": "neighbor_drums",
+    "headline": "Your upstairs neighbor takes up the drums. At night.",
+    "weight": 3,
+    "impact": { "energy": -5, "mood": -4 }
+  },
+  {
+    "id": "anniversary_dinner",
+    "headline": "Anniversary dinner. You remembered. Barely.",
+    "weight": 3,
+    "minStage": "partner",
+    "impact": { "wallet": -150, "relationships": 10, "mood": 5 }
+  }
+]

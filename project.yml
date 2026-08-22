@@ -1,0 +1,62 @@
+name: StartupStudio
+
+options:
+  bundleIdPrefix: com.alpsenel
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "17.0"
+
+packages:
+  TycoonEngine:
+    path: Packages/TycoonEngine
+  TycoonContent:
+    path: Packages/TycoonContent
+  TycoonSave:
+    path: Packages/TycoonSave
+  PixelKit:
+    path: Packages/PixelKit
+
+targets:
+  StartupStudio:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - App/Sources
+      - App/Resources
+    dependencies:
+      - package: TycoonEngine
+        product: TycoonEngine
+      - package: TycoonContent
+        product: TycoonContent
+      - package: TycoonSave
+        product: TycoonSave
+      - package: PixelKit
+        product: PixelKit
+    info:
+      path: App/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Startup Studio
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.alpsenel.startupstudio
+        DEVELOPMENT_TEAM: 6S7Q8F967Q
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SUPPORTS_MACCATALYST: NO
+    scheme:
+      configVariants: []

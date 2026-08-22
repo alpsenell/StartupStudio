@@ -1,0 +1,66 @@
+{
+  "firstNames": [
+    "Aisha", "Alejandro", "Amara", "Anders", "Aylin", "Bao", "Carmen", "Chidi",
+    "Daniela", "Dmitri", "Elif", "Emeka", "Fatima", "Felix", "Freya", "Hana",
+    "Hiroshi", "Ingrid", "Ivan", "Jasmine", "Jonas", "Kai", "Kavya", "Kenji",
+    "Lars", "Leila", "Liam", "Lucia", "Mateo", "Mei", "Milan", "Nadia",
+    "Noor", "Oliver", "Priya", "Rafael", "Ravi", "Rosa", "Sanna", "Santiago",
+    "Sofia", "Tariq", "Wei", "Yara", "Yusuf", "Zanele"
+  ],
+  "lastNames": [
+    "Abebe", "Almeida", "Andersson", "Bakker", "Bianchi", "Chen", "Costa", "Dubois",
+    "Eriksen", "Fernandez", "Fischer", "Garcia", "Haddad", "Hansen", "Ibrahim", "Ivanov",
+    "Jansen", "Johansson", "Kaur", "Kim", "Kobayashi", "Kowalski", "Larsen", "Lindqvist",
+    "Mbeki", "Mendoza", "Moreau", "Nakamura", "Nguyen", "Novak", "Okafor", "Oyelaran",
+    "Park", "Petrov", "Popescu", "Rossi", "Santos", "Sato", "Schneider", "Silva",
+    "Singh", "Suzuki", "Tanaka", "Vasquez", "Yamamoto", "Yilmaz"
+  ],
+  "clientCompanies": [
+    "Pigeon Logistics",
+    "CrumbleSoft",
+    "Wobble & Sons",
+    "Turnip Analytics",
+    "Moonbeam Dairy",
+    "Cactus Couriers",
+    "Pretzel Dynamics",
+    "Velvet Walrus Media",
+    "Grumpy Kettle Co.",
+    "Bumblebee Banking",
+    "Noodle Ninjas",
+    "Marble Llama Studios",
+    "Foggy Harbor Freight",
+    "Sprocket & Thimble",
+    "Cloudy Cauldron Games",
+    "Penguin Parasol Travel",
+    "Rusty Rocket Rentals",
+    "Waffle Works",
+    "Tangerine Telegraph",
+    "Quiet Yeti Outfitters",
+    "Snail Mail Express",
+    "Biscuit Barrel Retail",
+    "Lighthouse Lemonade",
+    "Copper Comet Tools",
+    "Dizzy Daisy Florists",
+    "Herring & Hound Legal",
+    "Mango Meadow Farms",
+    "Paperplane Postal",
+    "Sleepy Owl Hotels",
+    "Thundercloud Yoga",
+    "Wizard's Whisk Bakery",
+    "Zeppelin Zippers"
+  ],
+  "partnerNames": [
+    "Alex", "Amira", "Andrés", "Anika", "Arjun", "Beatriz", "Camille", "Chiara",
+    "Daniel", "Dara", "Elena", "Emre", "Esther", "Farid", "Gabriel", "Hannah",
+    "Idris", "Ines", "Jun", "Kwame", "Laila", "Lena", "Luca", "Malik",
+    "Mariam", "Mira", "Nikolai", "Omar", "Paloma", "Rhea", "Samir", "Sven",
+    "Tomás", "Valentina", "Yuki", "Zara"
+  ],
+  "childNames": [
+    "Ada", "Amos", "Asha", "Benji", "Bodhi", "Cleo", "Dev", "Eli",
+    "Emi", "Ezra", "Finn", "Gus", "Hazel", "Ivy", "Jace", "Juno",
+    "Kenzo", "Kira", "Leo", "Lila", "Luna", "Mila", "Milo", "Nia",
+    "Nico", "Odin", "Otis", "Pia", "Remy", "Rocco", "Sana", "Theo",
+    "Uma", "Wren", "Zain", "Zoe"
+  ]
+}

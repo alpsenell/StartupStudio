@@ -1,0 +1,74 @@
+[
+  {
+    "id": "fitness",
+    "name": "Fitness",
+    "iconSystemName": "figure.run",
+    "fitByType": { "mobile_app": 1.15, "enterprise_tool": 0.8 }
+  },
+  {
+    "id": "finance",
+    "name": "Finance",
+    "iconSystemName": "dollarsign.circle",
+    "fitByType": { "enterprise_tool": 1.15, "saas_platform": 1.15, "game": 0.8 }
+  },
+  {
+    "id": "social",
+    "name": "Social",
+    "iconSystemName": "person.2",
+    "fitByType": { "mobile_app": 1.15, "web_app": 1.15, "enterprise_tool": 0.8 }
+  },
+  {
+    "id": "travel",
+    "name": "Travel",
+    "iconSystemName": "airplane",
+    "fitByType": { "mobile_app": 1.15, "desktop_tool": 0.8 }
+  },
+  {
+    "id": "food_delivery",
+    "name": "Food Delivery",
+    "iconSystemName": "takeoutbag.and.cup.and.straw",
+    "fitByType": { "mobile_app": 1.15, "web_app": 1.15, "desktop_tool": 0.8, "enterprise_tool": 0.8 }
+  },
+  {
+    "id": "education",
+    "name": "Education",
+    "iconSystemName": "graduationcap",
+    "fitByType": { "web_app": 1.15, "saas_platform": 1.15 }
+  },
+  {
+    "id": "music",
+    "name": "Music",
+    "iconSystemName": "music.note",
+    "fitByType": { "mobile_app": 1.15, "enterprise_tool": 0.8 }
+  },
+  {
+    "id": "gaming",
+    "name": "Gaming",
+    "iconSystemName": "gamecontroller",
+    "fitByType": { "game": 1.15, "enterprise_tool": 0.8 }
+  },
+  {
+    "id": "productivity",
+    "name": "Productivity",
+    "iconSystemName": "checklist",
+    "fitByType": { "desktop_tool": 1.15, "saas_platform": 1.15, "game": 0.8 }
+  },
+  {
+    "id": "health",
+    "name": "Health",
+    "iconSystemName": "cross.case",
+    "fitByType": { "mobile_app": 1.15, "game": 0.8 }
+  },
+  {
+    "id": "dating",
+    "name": "Dating",
+    "iconSystemName": "heart",
+    "fitByType": { "mobile_app": 1.15, "desktop_tool": 0.8, "enterprise_tool": 0.8 }
+  },
+  {
+    "id": "logistics",
+    "name": "Logistics",
+    "iconSystemName": "shippingbox",
+    "fitByType": { "enterprise_tool": 1.15, "saas_platform": 1.15, "game": 0.8 }
+  }
+]

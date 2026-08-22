@@ -1,0 +1,62 @@
+[
+  {
+    "id": "blog_feature",
+    "headline": "A tech blog features your studio!",
+    "impact": { "type": "hypeDeltaOnActiveProduct", "amount": 10 },
+    "weight": 4
+  },
+  {
+    "id": "influencer_shoutout",
+    "headline": "A famous streamer can't stop talking about your latest build.",
+    "impact": { "type": "hypeDeltaOnActiveProduct", "amount": 15 },
+    "weight": 2
+  },
+  {
+    "id": "viral_thread",
+    "headline": "Your founder's late-night debugging story goes viral.",
+    "impact": { "type": "reputationDelta", "amount": 3 },
+    "weight": 3
+  },
+  {
+    "id": "conference_invite",
+    "headline": "Your team is invited to speak at DevWorld Conf.",
+    "impact": { "type": "reputationDelta", "amount": 2 },
+    "weight": 3
+  },
+  {
+    "id": "negative_review",
+    "headline": "A grumpy reviewer pans your studio in a weekend roundup.",
+    "impact": { "type": "reputationDelta", "amount": -3 },
+    "weight": 3
+  },
+  {
+    "id": "data_scare",
+    "headline": "A minor data hiccup makes the local news.",
+    "impact": { "type": "reputationDelta", "amount": -4 },
+    "weight": 2
+  },
+  {
+    "id": "angel_gift",
+    "headline": "A retired angel investor wires you a thank-you gift.",
+    "impact": { "type": "cashDelta", "amount": 2000 },
+    "weight": 1
+  },
+  {
+    "id": "server_outage",
+    "headline": "Your hosting provider has a very bad Tuesday.",
+    "impact": { "type": "cashDelta", "amount": -800 },
+    "weight": 3
+  },
+  {
+    "id": "office_flu",
+    "headline": "Half the office catches the flu; contractors fill in.",
+    "impact": { "type": "cashDelta", "amount": -400 },
+    "weight": 5
+  },
+  {
+    "id": "patent_troll",
+    "headline": "A patent troll sends a scary letter. Legal shrugs it off — for a fee.",
+    "impact": { "type": "cashDelta", "amount": -1200 },
+    "weight": 2
+  }
+]
