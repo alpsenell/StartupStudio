@@ -371,7 +371,7 @@ extension SpriteLibrary {
         case .suitcase: suitcaseSprite()
         case .plantHome: plantHomeSprite()
         case .fireplace: fireplaceSprite()
-        case .skylineWindow: skylineWindowSprite()
+        case .skylineWindow: skyline(time: .night)
         case .stove: stoveSprite()
         case .laundryPile: laundryPileSprite()
         case .deadPlant: deadPlantSprite()
@@ -1054,64 +1054,83 @@ extension SpriteLibrary {
         return PixelSprite(frames: [a, b], palette: palette)
     }
 
-    /// Panoramic skyline window, 172×18: four panes behind slim mullions,
-    /// a navy sky with one moon and scattered stars over a row of towers
-    /// with lit windows. Built procedurally from fixed tower/star tables so
-    /// it stays deterministic.
-    private static func skylineWindowSprite() -> PixelSprite {
+    /// Panoramic skyline window, 172×18: four panes behind slim mullions
+    /// over a row of towers. The sky, the towers and how many windows are
+    /// lit all follow the hour — a penthouse at 8am should not be looking
+    /// out at midnight. Built from fixed tables, so it stays deterministic.
+    public static func skyline(time: TimeOfDay = .night, weather: Weather = .clear) -> PixelSprite {
         let width = 172, height = 18
-        let ground = 15 // street line row; towers rise from the row above
-        // Tower widths/heights cycle through fixed tables across the pane.
+        let ground = 15
         let widths = [3, 4, 2, 5, 3, 4, 6, 2, 3, 5, 4, 3]
         let tops = [9, 6, 8, 4, 10, 7, 5, 8, 11, 6, 9, 5]
         var towers: [(x: Int, w: Int, top: Int)] = []
         var cursor = 2
-        var i = 0
+        var index = 0
         while cursor < width - 2 {
-            let w = min(widths[i % widths.count], width - 2 - cursor)
-            towers.append((cursor, w, tops[i % tops.count]))
+            let w = min(widths[index % widths.count], width - 2 - cursor)
+            towers.append((cursor, w, tops[index % tops.count]))
             cursor += w + 1
-            i += 1
+            index += 1
         }
-        let stars: [(Int, Int)] = (0..<14).map { ((($0 * 37) % 168) + 2, 2 + ($0 * 5) % 6) }
-        let moon = (x: 150, y: 3)
         let mullions = [43, 86, 129]
 
-        var rows: [String] = []
-        for y in 0..<height {
-            var chars: [Character] = []
-            for x in 0..<width {
-                if x == 0 || y == 0 || x == width - 1 || y >= height - 2 || mullions.contains(x) {
-                    chars.append("O")
-                    continue
-                }
-                if y == ground {
-                    chars.append("n")
-                    continue
-                }
-                if let tower = towers.first(where: { x >= $0.x && x < $0.x + $0.w && y >= $0.top }) {
-                    let lit = (x - tower.x).isMultiple(of: 2) && (y - tower.top) % 2 == 1 && (x * 7 + y * 3) % 5 != 0
-                    chars.append(lit ? "Y" : "n")
-                    continue
-                }
-                let mx = x - moon.x, my = y - moon.y
-                if (0...3).contains(mx) && (0...3).contains(my) && !(mx == 3 && (1...2).contains(my)) && !(mx == 0 && (my == 0 || my == 3)) {
-                    chars.append("M")
-                    continue
-                }
-                chars.append(stars.contains { $0 == (x, y) } ? "S" : "N")
-            }
-            rows.append(String(chars))
+        let sky: (top: RGBA, bottom: RGBA)
+        let towerTone: RGBA
+        switch time {
+        case .morning: sky = (Palettes.sky[2], Palettes.gold[1]); towerTone = Palettes.ink[1]
+        case .day: sky = (Palettes.sky[2], Palettes.sky[1]); towerTone = Palettes.ink[0]
+        case .dusk: sky = (Palettes.plum[3], Palettes.ember[2]); towerTone = Palettes.ink[3]
+        case .night: sky = (Palettes.indigo[4], Palettes.indigo[3]); towerTone = Palettes.ink[4]
         }
-        let palette: [Character: RGBA] = [
-            "O": Palettes.outline,
-            "N": HomePalette.nightSky,
-            "n": HomePalette.nightCity,
-            "M": HomePalette.moon,
-            "S": HomePalette.star,
-            "Y": Palettes.gold[1],
-        ]
-        return PixelSprite(frames: [rows], palette: palette)
+        // Almost every window is on at night, a scattering by day.
+        let litModulus = time.needsArtificialLight ? 5 : 3
+
+        var canvas = PixelCanvas(width: width, height: height)
+        canvas.fill(x: 0, y: 0, width: width, height: height, sky.top)
+        canvas.fill(x: 0, y: ground - 4, width: width, height: 4, sky.bottom)
+
+        if time == .night {
+            for star in 0..<14 {
+                canvas.set(x: ((star * 37) % 168) + 2, y: 2 + (star * 5) % 6, Palettes.gold[0])
+            }
+            // Moon.
+            canvas.fill(x: 150, y: 3, width: 3, height: 3, Palettes.stone[0])
+            canvas.set(x: 152, y: 4, sky.top)
+        } else if time == .morning {
+            canvas.fill(x: 148, y: 8, width: 5, height: 5, Palettes.gold[0])
+        }
+
+        for tower in towers {
+            canvas.fill(x: tower.x, y: tower.top, width: tower.w, height: height - tower.top, towerTone)
+            for y in stride(from: tower.top + 1, to: ground, by: 2) {
+                for x in stride(from: tower.x, to: tower.x + tower.w, by: 2)
+                where (x * 7 + y * 3) % litModulus != 0 {
+                    canvas.set(x: x, y: y, time.needsArtificialLight ? Palettes.gold[1] : Palettes.sky[1])
+                }
+            }
+        }
+        canvas.hLine(x: 0, y: ground, length: width, Palettes.shaded(towerTone, by: 0.2))
+
+        if weather == .rain {
+            for y in 1..<(height - 2) {
+                for x in 1..<(width - 1) where (x * 3 + y * 5) % 17 == 0 {
+                    canvas.set(x: x, y: y, Palettes.translucent(Palettes.sky[0], 120))
+                }
+            }
+        }
+
+        // Frame and mullions last.
+        for x in 0..<width {
+            canvas.set(x: x, y: 0, Palettes.outline)
+            canvas.set(x: x, y: height - 2, Palettes.outline)
+            canvas.set(x: x, y: height - 1, Palettes.outline)
+        }
+        for y in 0..<height {
+            canvas.set(x: 0, y: y, Palettes.outline)
+            canvas.set(x: width - 1, y: y, Palettes.outline)
+            for mullion in mullions { canvas.set(x: mullion, y: y, Palettes.outline) }
+        }
+        return canvas.sprite()
     }
 
     // MARK: - Bubbles

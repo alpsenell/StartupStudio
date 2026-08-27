@@ -121,8 +121,8 @@ struct HomeSceneComposerTests {
         for (tier, activity) in allCombos {
             let scene = HomeSceneComposer.compose(tier: tier, occupants: occupants(), activity: activity, mood: .okay)
             let founders = placements(of: .person, in: scene)
-            if activity == .away {
-                #expect(founders.isEmpty, "\(tier) away: no founder")
+            if !activity.isFounderHome {
+                #expect(founders.isEmpty, "\(tier) \(activity): no founder")
             } else {
                 #expect(founders.count == 1, "\(tier) \(activity): one founder")
             }
@@ -274,7 +274,11 @@ struct HomeSceneComposerTests {
 
             let dinner = HomeSceneComposer.compose(tier: tier, occupants: occupants(partner: true), activity: .dinner, mood: .okay)
             let dinnerPartner = placements(of: .partner, in: dinner)[0]
-            if let table = prop(.diningTable, in: dinner) {
+            // Somebody has to cook: with a kitchen the partner is at the
+            // stove, otherwise they are opposite the founder at the table.
+            if let stove = prop(.stove, in: dinner) {
+                #expect(overlaps(dinnerPartner, stove), "\(tier): partner cooking at the stove")
+            } else if let table = prop(.diningTable, in: dinner) {
                 #expect(overlaps(dinnerPartner, table), "\(tier): partner at the table too")
                 let founderAtTable = founderPlacement(in: dinner)!
                 #expect(dinnerPartner.x != founderAtTable.x, "opposite seats")
@@ -334,7 +338,7 @@ struct HomeSceneComposerTests {
     // MARK: Mood bubble
 
     @Test func moodBubbleFloatsAboveTheFoundersHead() {
-        for (tier, activity) in allCombos where activity != .away && activity != .sleeping {
+        for (tier, activity) in allCombos where activity.isFounderHome && activity != .sleeping && activity != .crunching {
             for mood in MoodLevel.allCases {
                 let scene = HomeSceneComposer.compose(tier: tier, occupants: occupants(), activity: activity, mood: mood)
                 let founder = founderPlacement(in: scene)!
@@ -389,7 +393,7 @@ struct HomeSceneComposerTests {
     }
 
     @Test func peopleStandOnTheFloorNotTheWall() {
-        for (tier, activity) in allCombos where activity != .away {
+        for (tier, activity) in allCombos where activity.isFounderHome {
             let scene = HomeSceneComposer.compose(
                 tier: tier, occupants: occupants(partner: true, children: 3), activity: activity, mood: .okay
             )
@@ -401,7 +405,7 @@ struct HomeSceneComposerTests {
     }
 
     @Test func peopleAreDrawnAfterFurnitureTheySitOn() {
-        for (tier, activity) in allCombos where activity != .away {
+        for (tier, activity) in allCombos where activity.isFounderHome {
             let scene = HomeSceneComposer.compose(tier: tier, occupants: occupants(partner: true), activity: activity, mood: .okay)
             let founderIndex = scene.firstIndex { $0.kind == .person }!
             let seats: [SpriteLibrary.HomePropName] = [.bed, .couch, .armchair]
