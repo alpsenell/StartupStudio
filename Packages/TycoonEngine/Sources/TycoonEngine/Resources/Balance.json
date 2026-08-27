@@ -389,7 +389,6 @@
     "updateReviewWeight": 0.5,
     "updateSalesBump": 1.5,
     "updateBumpDays": 7,
-    "devSlots": { "garage": 1, "loft": 2, "studio": 3, "campus": 5 },
     "pace": {
       "relaxed": { "outputFactor": 0.85, "moraleTargetDelta": 6.0,   "skillGrowthFactor": 1.0, "bugFactor": 0.9 },
       "normal":  { "outputFactor": 1.0,  "moraleTargetDelta": 0.0,   "skillGrowthFactor": 1.0, "bugFactor": 1.0 },

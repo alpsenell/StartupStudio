@@ -457,9 +457,9 @@ public struct GameState: Codable, Equatable, Sendable {
         }
     }
 
-    /// Every product currently in development. One at a time today; WS-A
-    /// opens concurrent slots by office tier and `productInDevelopment`
-    /// stays as the first-of-these shorthand for the UI.
+    /// Every product currently in development. The office tier sets how
+    /// many there may be; `productInDevelopment` stays as the
+    /// first-of-these shorthand for the UI.
     public var productsInDevelopment: [Product] {
         products.filter { product in
             if case .development = product.stage { return true }
@@ -467,9 +467,12 @@ public struct GameState: Codable, Equatable, Sendable {
         }
     }
 
-    /// How many products may be in development at once. 1 today; WS-A
-    /// scales it by office tier (garage 1, loft 2, studio 3, campus 5).
-    public var devSlots: Int { 1 }
+    /// How many products may be in development at once: garage 1, loft 2,
+    /// studio 3, campus 5.
+    public var devSlots: Int { company.officeTier.concurrentDevSlots }
+
+    /// Whether there is room to start another product right now.
+    public var hasFreeDevSlot: Bool { productsInDevelopment.count < devSlots }
 
     /// Looks up a product by id.
     public func product(id: UUID) -> Product? {

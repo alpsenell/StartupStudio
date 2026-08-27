@@ -41,6 +41,11 @@ public enum Reducer {
 
         // MARK: WS-A
 
+        // Live ops runs last: support desks, the wild's bug discovery and
+        // landing patches all read the day the rest of the simulation just
+        // produced (notably the sales week `ProductSystem` posts).
+        LiveOpsSystem.run,
+
         // MARK: WS-B
 
         // MARK: WS-F

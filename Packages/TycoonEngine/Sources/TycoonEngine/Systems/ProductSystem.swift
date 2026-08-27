@@ -246,8 +246,8 @@ enum ProductSystem {
 
     // MARK: - Actions
 
-    /// Starts a new product. Ignored while another product is in development,
-    /// for unknown type/topic ids, and for types that are neither unlocked
+    /// Starts a new product. Ignored once every development slot the office
+    /// tier grants is taken, for unknown type/topic ids, and for types that are neither unlocked
     /// from the start nor unlocked by completed research. The product id is
     /// drawn from the state RNG so runs replay identically. Every currently
     /// idle employee (founder included) is auto-assigned to the new product,
@@ -261,7 +261,7 @@ enum ProductSystem {
         state: inout GameState,
         content: ContentCatalog
     ) -> [GameEvent] {
-        guard state.productInDevelopment == nil,
+        guard state.hasFreeDevSlot,
               content.productType(typeID) != nil,
               state.isProductTypeUnlocked(typeID, content: content),
               content.topic(topicID) != nil

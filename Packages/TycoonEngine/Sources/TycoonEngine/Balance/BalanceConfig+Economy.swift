@@ -74,8 +74,6 @@ extension BalanceConfig {
         public var updateSalesBump: Double
         /// Days a patch's sales bump lasts.
         public var updateBumpDays: Int
-        /// Concurrent development slots per office tier.
-        public var devSlots: [String: Int]
 
         // MARK: Work pace
 
@@ -209,7 +207,6 @@ extension BalanceConfig {
             updateReviewWeight: Double = 0.5,
             updateSalesBump: Double = 1.5,
             updateBumpDays: Int = 7,
-            devSlots: [String: Int] = EconomyBalance.standardDevSlots,
             pace: [String: PaceDef] = PaceDef.standardTable,
             stagnationDays: Int = 364,
             stagnationMoralePenalty: Double = 10,
@@ -261,7 +258,6 @@ extension BalanceConfig {
             self.updateReviewWeight = updateReviewWeight
             self.updateSalesBump = updateSalesBump
             self.updateBumpDays = updateBumpDays
-            self.devSlots = devSlots
             self.pace = pace
             self.stagnationDays = stagnationDays
             self.stagnationMoralePenalty = stagnationMoralePenalty
@@ -292,19 +288,6 @@ extension BalanceConfig {
         }
 
         public static let `default` = EconomyBalance()
-
-        /// Concurrent development slots by office tier.
-        public static let standardDevSlots: [String: Int] = [
-            OfficeTier.garage.rawValue: 1,
-            OfficeTier.loft.rawValue: 2,
-            OfficeTier.studio.rawValue: 3,
-            OfficeTier.campus.rawValue: 5,
-        ]
-
-        /// Development slots at `tier` (never below one).
-        public func devSlots(for tier: OfficeTier) -> Int {
-            max(1, devSlots[tier.rawValue] ?? 1)
-        }
 
         /// The trade-off for a price tier (`.standard` when unknown).
         public func priceTier(_ tier: PriceTier) -> PriceTierDef {

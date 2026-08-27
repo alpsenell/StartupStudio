@@ -167,7 +167,8 @@ enum EmployeeSystem {
 
     // MARK: - Daily output
 
-    /// Every employee assigned to the in-development product contributes
+    /// Every employee assigned to a product in development — or to a
+    /// released product with a patch cycle running — contributes
     /// points split by the product's focus and shaped by their role:
     /// `poolYield = focusShare * roleYield * (employeeBasePoints + relevantSkill / skillYieldDivisor)`
     /// where the code pool draws on coding, the design pool on design, and
@@ -183,35 +184,140 @@ enum EmployeeSystem {
         _ balance: BalanceConfig,
         _ content: ContentCatalog
     ) {
-        guard let productIndex = state.products.firstIndex(where: { product in
-            if case .development = product.stage { return true }
-            return false
-        }), case .development(let dev) = state.products[productIndex].stage else { return }
+        // Every product in development gets its own crew and its own day.
+        for productIndex in state.products.indices {
+            guard case .development(let dev) = state.products[productIndex].stage else { continue }
+            buildProduct(at: productIndex, focus: dev.focus, &state, balance, content)
+        }
+        // Patches on released products draw from the same pool of hands.
+        for updateIndex in state.economy.updates.indices {
+            patchProduct(at: updateIndex, &state, balance, content)
+        }
+    }
 
+    /// One day of work on one in-development product.
+    private static func buildProduct(
+        at productIndex: Int,
+        focus: PhaseFocus,
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) {
         let productID = state.products[productIndex].id
-        let focus = dev.focus
-        let company = balance.company
+        let crew = gatherCrewOutput(
+            productID: productID, focus: focus, state: state, balance: balance, content: content
+        )
+        let pace = balance.economy.pace(state.economy.workPace)
+        let output = state.devSpeedTechMultiplier(content: content)
+            * crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            * pace.outputFactor
 
-        let founderAway = state.life.isAway(day: state.day)
-        let founderFactor = state.founderOutputMultiplier(balance: balance)
-        // Working next to a friend lifts output (strongest co-assigned bond).
-        let crew = state.employees
-            .filter { if case .product(let id) = $0.assignment { return id == productID }; return false }
-            .map(\.id)
-        var design = 0.0, code = 0.0, polish = 0.0
+        ProductSystem.applyDailyProgress(
+            design: crew.design * output,
+            code: crew.code * output,
+            polish: crew.polish * output,
+            averageCoding: crew.producers.isEmpty
+                ? balance.founderCoding
+                : crew.codingSum / Double(crew.producers.count),
+            bugChanceMultiplier: (crew.founderWorked
+                ? state.founderBugChanceMultiplier(balance: balance)
+                : 1) * pace.bugFactor,
+            bugFixMultiplier: crew.bugFixMultiplier(balance: balance),
+            productIndex: productIndex, state: &state, balance: balance
+        )
+        // Record who built it today, for the ship-time quality ceiling.
+        if !crew.producers.isEmpty,
+           case .development(var progress) = state.products[productIndex].stage {
+            progress.hype += crew.hype
+            progress.crewSkillDaySum += ProductSystem.crewSkillSample(
+                designSkillSum: crew.designSum,
+                codingSkillSum: crew.codingSum,
+                crewCount: crew.producers.count,
+                balance: balance
+            )
+            progress.crewSkillDays += 1
+            state.products[productIndex].stage = .development(progress)
+        }
+        growProducers(crew.producers, focus: focus, pace: pace, &state, balance, content)
+    }
+
+    /// One day of work on one patch cycle. The crew is whoever is assigned
+    /// to the released product; the focus follows whatever the patch still
+    /// needs, so a patch always finishes rather than stalling on a pool the
+    /// player has no way to re-aim.
+    private static func patchProduct(
+        at updateIndex: Int,
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) {
+        let update = state.economy.updates[updateIndex]
+        let focus = PhaseFocus(
+            design: max(0, update.designPts - update.progressDesign),
+            code: max(0, update.codePts - update.progressCode),
+            polish: max(0, update.polishPts - update.progressPolish)
+        ).normalized
+        let crew = gatherCrewOutput(
+            productID: update.productID, focus: focus,
+            state: state, balance: balance, content: content
+        )
+        guard !crew.producers.isEmpty else { return }
+
+        let pace = balance.economy.pace(state.economy.workPace)
+        let output = state.devSpeedTechMultiplier(content: content)
+            * crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            * pace.outputFactor
+        state.economy.updates[updateIndex].progressDesign += crew.design * output
+        state.economy.updates[updateIndex].progressCode += crew.code * output
+        state.economy.updates[updateIndex].progressPolish += crew.polish * output
+        growProducers(crew.producers, focus: focus, pace: pace, &state, balance, content)
+    }
+
+    /// One day's raw pool output from everyone assigned to `productID`,
+    /// before the tech, crowding and pace multipliers.
+    private struct CrewOutput {
+        var design = 0.0
+        var code = 0.0
+        var polish = 0.0
         var qaPolish = 0.0
         var hype = 0.0
         var codingSum = 0.0
         var designSum = 0.0
         var producers: [Int] = []
         var founderWorked = false
+
+        /// Bugs fixed per completed polish point, blended over who produced
+        /// today's polish (exactly 1 without QA, exactly the multiplier with
+        /// only QA).
+        func bugFixMultiplier(balance: BalanceConfig) -> Double {
+            guard polish > 0 else { return 1 }
+            return (polish - qaPolish + qaPolish * balance.company.qaBugFixMultiplier) / polish
+        }
+    }
+
+    private static func gatherCrewOutput(
+        productID: UUID,
+        focus: PhaseFocus,
+        state: GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> CrewOutput {
+        let company = balance.company
+        let founderAway = state.life.isAway(day: state.day)
+        let founderFactor = state.founderOutputMultiplier(balance: balance)
+        // Working next to a friend lifts output (strongest co-assigned bond).
+        let crewIDs = state.employees
+            .filter { if case .product(let id) = $0.assignment { return id == productID }; return false }
+            .map(\.id)
+
+        var out = CrewOutput()
         for index in state.employees.indices {
             guard case .product(let assignedID) = state.employees[index].assignment,
                   assignedID == productID else { continue }
             let isFounder = state.employees[index].isFounder
             if isFounder, founderAway { continue }
             let bond = SocialSystem.strongestBond(
-                for: state.employees[index].id, among: crew, in: state
+                for: state.employees[index].id, among: crewIDs, in: state
             )
             let friendFactor = 1 + balance.social.friendshipOutputBonus * bond / 100
             let factor = (isFounder
@@ -222,64 +328,38 @@ enum EmployeeSystem {
             let skills = state.employees[index].skills
             let role = state.employees[index].role
             let yield = company.roleYield(role)
-            design += factor * focus.design * yield.design
+            out.design += factor * focus.design * yield.design
                 * (balance.employeeBasePoints + skills.design / balance.skillYieldDivisor)
-            code += factor * focus.code * yield.code
+            out.code += factor * focus.code * yield.code
                 * (balance.employeeBasePoints + skills.coding / balance.skillYieldDivisor)
             let polishShare = factor * focus.polish * yield.polish
                 * (balance.employeeBasePoints + (skills.coding + skills.design) / 2 / balance.skillYieldDivisor)
-            polish += polishShare
-            if role == .qa { qaPolish += polishShare }
+            out.polish += polishShare
+            if role == .qa { out.qaPolish += polishShare }
             if role == .marketer {
-                hype += company.marketerDailyHype * (1 + skills.marketing / 100)
+                out.hype += company.marketerDailyHype * (1 + skills.marketing / 100)
             }
-            codingSum += skills.coding
-            designSum += skills.design
-            producers.append(index)
-            if isFounder { founderWorked = true }
+            out.codingSum += skills.coding
+            out.designSum += skills.design
+            out.producers.append(index)
+            if isFounder { out.founderWorked = true }
         }
+        return out
+    }
 
-        let averageCoding = producers.isEmpty
-            ? balance.founderCoding
-            : codingSum / Double(producers.count)
-        let bugChanceMultiplier = founderWorked ? state.founderBugChanceMultiplier(balance: balance) : 1
-        // Bugs fixed per completed polish point, blended over who produced
-        // today's polish (exactly 1 without QA, exactly the multiplier with
-        // only QA).
-        let bugFixMultiplier = polish > 0
-            ? (polish - qaPolish + qaPolish * company.qaBugFixMultiplier) / polish
-            : 1
-        let devSpeed = state.devSpeedTechMultiplier(content: content)
-        // Brooks's law: adding people to a build costs everyone some of
-        // their day in coordination, so ten hands never do ten hands' work.
-        let crowding = crowdingFactor(producerCount: producers.count, balance: balance)
-        let pace = balance.economy.pace(state.economy.workPace)
-        let output = devSpeed * crowding * pace.outputFactor
-        ProductSystem.applyDailyProgress(
-            design: design * output, code: code * output, polish: polish * output,
-            averageCoding: averageCoding,
-            bugChanceMultiplier: bugChanceMultiplier * pace.bugFactor,
-            bugFixMultiplier: bugFixMultiplier,
-            productIndex: productIndex, state: &state, balance: balance
-        )
-        // Record who built it today, for the ship-time quality ceiling.
-        if !producers.isEmpty,
-           case .development(var progress) = state.products[productIndex].stage {
-            progress.hype += hype
-            progress.crewSkillDaySum += ProductSystem.crewSkillSample(
-                designSkillSum: designSum,
-                codingSkillSum: codingSum,
-                crewCount: producers.count,
-                balance: balance
-            )
-            progress.crewSkillDays += 1
-            state.products[productIndex].stage = .development(progress)
-        }
-
-        // Skill growth for the skills that fed a pool today: coding feeds the
-        // code and polish pools, design feeds the design and polish pools.
+    /// Skill growth for the skills that fed a pool today: coding feeds the
+    /// code and polish pools, design feeds the design and polish pools.
+    private static func growProducers(
+        _ producers: [Int],
+        focus: PhaseFocus,
+        pace: BalanceConfig.EconomyBalance.PaceDef,
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) {
         let growsCoding = focus.code > 0 || focus.polish > 0
         let growsDesign = focus.design > 0 || focus.polish > 0
+        guard growsCoding || growsDesign else { return }
         for index in producers {
             // Read the trait factor before the inout growth calls: taking
             // `&state.employees[index]...` and reading `state.employees`
