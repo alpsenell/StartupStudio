@@ -36,6 +36,14 @@ final class GameShell {
     /// The run's day the shell last saw, to detect week boundaries.
     @ObservationIgnored private var lastSeenDay = -1
 
+    init() {
+        // Every fresh batch of events flows through the toast center;
+        // this is where the shell picks the ones that deserve a sheet.
+        toasts.onFreshEvents = { [weak self] events in
+            self?.noteMoments(in: events)
+        }
+    }
+
     /// Weeks for which the report opens itself (when the setting is on).
     /// After this the chip is still offered, but the game stops
     /// interrupting a player who has learned the loop.
@@ -88,11 +96,15 @@ final class GameShell {
     /// Announces whatever a tick appended to the event log, and picks up
     /// the moments that get a sheet of their own.
     func eventsChanged(engine: GameEngine) {
-        let fresh = toasts.announceNewEvents(
+        toasts.announceNewEvents(
             in: engine.state,
             copy: EventCopy(state: engine.state, content: engine.content, balance: engine.balance)
         )
-        for event in fresh {
+    }
+
+    /// Picks the events that get a sheet rather than a toast.
+    private func noteMoments(in events: [GameEvent]) {
+        for event in events {
             // Both halves of launch day open the same sheet: the ship
             // itself, and the reviews a week later (which is why
             // `.reviewsIn` needs no pause banner of its own).

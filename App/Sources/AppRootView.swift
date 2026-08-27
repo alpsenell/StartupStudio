@@ -25,14 +25,18 @@ struct AppRootView: View {
             .environment(shell)
             // One observation point for the whole app: everything the
             // world does reaches the player from here.
-            .onChange(of: engine.state.eventLog.count, initial: true) { _, _ in
+            //
+            // The rebase runs first and on appear, so a resumed save never
+            // replays its backlog as toasts and a swapped-in engine starts
+            // from its own day.
+            .onChange(of: ObjectIdentifier(engine), initial: true) { _, _ in
+                shell.rebase(to: engine)
+            }
+            .onChange(of: engine.state.eventLog.count) { _, _ in
                 shell.eventsChanged(engine: engine)
             }
             .onChange(of: engine.state.day) { _, _ in
                 shell.dayAdvanced(engine: engine)
-            }
-            .onChange(of: ObjectIdentifier(engine)) { _, _ in
-                shell.rebase(to: engine)
             }
             .overlay(alignment: .top) {
                 ToastStack(center: shell.toasts)

@@ -43,31 +43,37 @@ enum ProductBoxArt {
         ]
     }
 
-    /// The 24×24 grid: an outlined box, a type-specific device silhouette,
-    /// and a small deterministic pattern in the corner.
+    /// The 24×24 grid: a boxed cover with a darker spine down the right
+    /// edge, the type's device silhouette in the middle, and a row of
+    /// "sticker" pixels along the bottom that varies with the seed.
     private static func grid(typeID: String, seed: UInt64) -> [String] {
         var rows = [String](repeating: String(repeating: "B", count: 24), count: 24)
 
-        // Outline and inner shade.
+        // Outline, and the three-column spine on the right that gives the
+        // box its thickness.
         rows[0] = String(repeating: "O", count: 24)
         rows[23] = String(repeating: "O", count: 24)
         for y in 1..<23 {
             var line = Array(rows[y])
             line[0] = "O"
             line[23] = "O"
-            // A slab of shade down the right third gives the box depth.
-            for x in 16..<23 { line[x] = "S" }
+            line[20] = "O"
+            line[21] = "S"
+            line[22] = "S"
             rows[y] = String(line)
         }
 
-        // The device silhouette, centered.
-        for (offsetY, row) in silhouette(typeID: typeID).enumerated() {
-            let y = 5 + offsetY
+        // The device silhouette, centred in the cover area (columns 1-19).
+        let art = silhouette(typeID: typeID)
+        let artWidth = art.first?.count ?? 0
+        let originX = max(1, (20 - artWidth) / 2)
+        for (offsetY, row) in art.enumerated() {
+            let y = 4 + offsetY
             guard rows.indices.contains(y) else { continue }
             var line = Array(rows[y])
             for (offsetX, pixel) in row.enumerated() where pixel != " " {
-                let x = 5 + offsetX
-                if line.indices.contains(x) { line[x] = pixel }
+                let x = originX + offsetX
+                if x < 20, line.indices.contains(x) { line[x] = pixel }
             }
             rows[y] = String(line)
         }
@@ -77,57 +83,59 @@ enum ProductBoxArt {
         var line = Array(rows[20])
         for index in 0..<4 {
             let on = (seed >> UInt64(index * 3)) & 1 == 1
-            let x = 3 + index * 3
+            let x = 4 + index * 3
             if line.indices.contains(x) { line[x] = on ? "L" : "D" }
         }
         rows[20] = String(line)
         return rows
     }
 
-    /// 14×12 device shapes, one per product type family.
+    /// 14×14 device shapes, one per product type family.
     private static func silhouette(typeID: String) -> [String] {
         switch typeID {
         case "mobile":
             [
-                "    OOOOOO    ",
-                "    OLLLLO    ",
-                "    OLGGLO    ",
-                "    OLGGLO    ",
-                "    OLGGLO    ",
-                "    OLGGLO    ",
-                "    OLGGLO    ",
-                "    OLLLLO    ",
-                "    OOOOOO    ",
-                "              ",
-                "              ",
+                "   OOOOOOOO   ",
+                "   OLLLLLLO   ",
+                "   OLGGGGLO   ",
+                "   OLGGGGLO   ",
+                "   OLGGGGLO   ",
+                "   OLGGGGLO   ",
+                "   OLGGGGLO   ",
+                "   OLGGGGLO   ",
+                "   OLLLLLLO   ",
+                "   OLLDDLLO   ",
+                "   OOOOOOOO   ",
                 "              ",
             ]
         case "web":
+            // A browser window: title bar with three dots, no stand —
+            // otherwise it reads as the desktop monitor.
             [
                 " OOOOOOOOOOOO ",
-                " OLLLLLLLLLLO ",
                 " ODDDDDDDDDDO ",
+                " ODLDLDLDDDDO ",
+                " ODDDDDDDDDDO ",
+                " OLLLLLLLLLLO ",
+                " OLGGGGGGGGLO ",
                 " OLGGGGGGGGLO ",
                 " OLGGGGGGGGLO ",
                 " OLGGGGGGGGLO ",
                 " OLLLLLLLLLLO ",
                 " OOOOOOOOOOOO ",
-                "      OO      ",
-                "    OOOOOO    ",
-                "              ",
                 "              ",
             ]
         case "game":
             [
-                "   OOOOOOOO   ",
-                "  OLLLLLLLLO  ",
-                "  OLGGGGGGLO  ",
-                "  OLGGGGGGLO  ",
-                "  OLLLLLLLLO  ",
-                "  ODLOOOOLDO  ",
-                "  OLLLLLLLLO  ",
-                "   OOOOOOOO   ",
-                "              ",
+                "  OOOOOOOOOO  ",
+                " OLLLLLLLLLLO ",
+                " OLGGGGGGGGLO ",
+                " OLGGGGGGGGLO ",
+                " OLGGGGGGGGLO ",
+                " OLLLLLLLLLLO ",
+                " ODLOOOOOOLDO ",
+                " OLLLLLLLLLLO ",
+                "  OOOOOOOOOO  ",
                 "              ",
                 "              ",
                 "              ",
@@ -155,11 +163,11 @@ enum ProductBoxArt {
                 " OLGGGGGGGGLO ",
                 " OLGGGGGGGGLO ",
                 " OLGGGGGGGGLO ",
+                " OLGGGGGGGGLO ",
                 " OLLLLLLLLLLO ",
                 " OOOOOOOOOOOO ",
                 "     OOOO     ",
                 "   OOOOOOOO   ",
-                "              ",
                 "              ",
                 "              ",
             ]

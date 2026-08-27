@@ -29,14 +29,15 @@ struct TopHUD: View {
     }
 
     private var bar: some View {
-        ZStack {
+        // One row rather than a centred overlay: at scale 2 the bitmap
+        // date is wide enough to collide with the speed buttons if it is
+        // free to sit dead centre.
+        HStack(spacing: Theme.Spacing.sm) {
+            cashCounter
+            Spacer(minLength: Theme.Spacing.xs)
             dateLabel
-
-            HStack {
-                cashCounter
-                Spacer()
-                SpeedControl(engine: engine)
-            }
+            Spacer(minLength: Theme.Spacing.xs)
+            SpeedControl(engine: engine)
         }
         .padding(.horizontal, Theme.Spacing.lg)
         .padding(.vertical, Theme.Spacing.sm)

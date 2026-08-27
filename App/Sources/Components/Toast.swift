@@ -30,6 +30,12 @@ final class ToastCenter {
     /// The most toasts shown at once; older ones are dropped.
     static let maxVisible = 3
 
+    /// Called with every batch of fresh events, whoever noticed them —
+    /// a tick or a player action. `GameShell` uses it to catch the moments
+    /// that open a sheet, so a manually shipped product still gets its
+    /// launch day even though `send(_:to:)` consumed the events first.
+    @ObservationIgnored var onFreshEvents: (([GameEvent]) -> Void)?
+
     @ObservationIgnored private var nextID = 0
     /// Events already turned into a toast, so a redraw never re-announces
     /// the same tick.
@@ -53,7 +59,8 @@ final class ToastCenter {
     ///   - events: the newest events, oldest first.
     ///   - copy: the shared event-to-English mapper.
     func announce(_ events: [GameEvent], copy: EventCopy) {
-        for event in events where shouldToast(event) {
+        let announced = events.filter { shouldToast($0) }
+        for event in announced {
             let line = copy.line(for: event)
             push(
                 Toast(
@@ -62,8 +69,25 @@ final class ToastCenter {
                     message: line.message,
                     tint: line.tint,
                     severity: event.severity
-                )
+                ),
+                silent: true
             )
+        }
+        // One buzz and one blip per batch, at the loudest severity in it:
+        // a busy tick should not fire five haptics in a row.
+        guard let loudest = announced.map(\.severity).max(by: { rank($0) < rank($1) }) else {
+            return
+        }
+        Haptics.play(severity: loudest)
+        Sounds.play(severity: loudest)
+    }
+
+    private func rank(_ severity: EventSeverity) -> Int {
+        switch severity {
+        case .quiet: 0
+        case .info: 1
+        case .notable: 2
+        case .critical: 3
         }
     }
 
@@ -84,6 +108,7 @@ final class ToastCenter {
         }
         let fresh = Array(log.suffix(log.count - lastAnnouncedEventCount))
         lastAnnouncedEventCount = log.count
+        onFreshEvents?(fresh)
         announce(fresh, copy: copy)
         return fresh
     }
@@ -106,7 +131,7 @@ final class ToastCenter {
         }
     }
 
-    private func push(_ toast: Toast) {
+    private func push(_ toast: Toast, silent: Bool = false) {
         nextID += 1
         withAnimation(.spring(duration: 0.32)) {
             toasts.append(toast)
@@ -114,8 +139,10 @@ final class ToastCenter {
                 toasts.removeFirst(toasts.count - Self.maxVisible)
             }
         }
-        Haptics.play(severity: toast.severity)
-        Sounds.play(severity: toast.severity)
+        if !silent {
+            Haptics.play(severity: toast.severity)
+            Sounds.play(severity: toast.severity)
+        }
         let id = toast.id
         Task { [weak self] in
             try? await Task.sleep(for: Self.lifetime)

@@ -176,8 +176,19 @@ private struct TechNodeRow: View {
     let onSelect: (TechNode) -> Void
 
     @Environment(GameShell.self) private var shell
+    /// Drives the one-shot flip when this node's research lands.
+    @State private var flip: Double = 0
 
     private var research: ResearchState { engine.state.research }
+
+    /// True on the tick this node's `.researchCompleted` arrives, so the
+    /// card can turn over once and settle as "owned".
+    private var justCompleted: Bool {
+        guard case .researchCompleted(let nodeID, let day) = engine.state.eventLog.last else {
+            return false
+        }
+        return nodeID == node.id && day == engine.state.day
+    }
 
     private var status: TechNodeStatus {
         techNodeStatus(node, research: research)
@@ -197,8 +208,21 @@ private struct TechNodeRow: View {
             }
         }
         .contentShape(Rectangle())
+        .rotation3DEffect(.degrees(flip), axis: (x: 1, y: 0, z: 0))
         .onTapGesture { onSelect(node) }
         .accessibilityAction(named: "Show details") { onSelect(node) }
+        // A finished tech turns over once: the one moment in the tree
+        // that is worth watching.
+        .onChange(of: justCompleted) { _, completed in
+            guard completed else { return }
+            Sounds.play(.goal)
+            Haptics.success()
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.6)) { flip = 360 }
+            Task {
+                try? await Task.sleep(for: .milliseconds(700))
+                flip = 0
+            }
+        }
     }
 
     /// Trailing "there's more" affordance on every row.

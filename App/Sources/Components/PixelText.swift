@@ -165,19 +165,23 @@ struct PixelText: View {
     var color: Color = Theme.pixelInk
     /// Draws a 1-pixel drop shadow under the glyphs, as the office sprites
     /// have, so the label sits on the panel instead of floating on it.
+    /// Ignored above scale 2, where a whole-pixel offset stops reading as
+    /// a shadow and starts reading as a second, ghosted copy of the text.
     var shadow: Bool = false
+
+    private var drawsShadow: Bool { shadow && scale <= 2 }
 
     private var displayText: String { text.uppercased() }
 
     var body: some View {
         let runs = PixelFont.pixelRuns(of: displayText)
         let pixelWidth = CGFloat(PixelFont.width(of: displayText))
-        let pixelHeight = CGFloat(PixelFont.glyphHeight) + (shadow ? 1 : 0)
+        let pixelHeight = CGFloat(PixelFont.glyphHeight) + (drawsShadow ? 1 : 0)
         Canvas(rendersAsynchronously: false) { context, _ in
-            if shadow {
+            if drawsShadow {
                 for run in runs {
                     context.fill(
-                        Path(rect(for: run, scale: scale, offsetX: 0, offsetY: 1)),
+                        Path(rect(for: run, scale: scale, offsetX: 1, offsetY: 1)),
                         with: .color(Theme.pixelShadow)
                     )
                 }
@@ -189,7 +193,7 @@ struct PixelText: View {
                 )
             }
         }
-        .frame(width: pixelWidth * scale, height: pixelHeight * scale)
+        .frame(width: (pixelWidth + (drawsShadow ? 1 : 0)) * scale, height: pixelHeight * scale)
         .accessibilityLabel(text)
     }
 

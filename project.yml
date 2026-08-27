@@ -60,3 +60,24 @@ targets:
         SUPPORTS_MACCATALYST: NO
     scheme:
       configVariants: []
+      testTargets:
+        - StartupStudioTests
+
+  # Unit tests for the App layer: the weekly report's reconciliation with
+  # the ledger, the router, the event copy's coverage of every GameEvent,
+  # the bitmap font, and the game calendar. Run with:
+  #   make apptest
+  StartupStudioTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - App/Tests
+    dependencies:
+      - target: StartupStudio
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.alpsenel.startupstudio.tests
