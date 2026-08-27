@@ -568,8 +568,13 @@
       {
         "id": "ignore",
         "label": "Archive it",
-        "detail": "Free",
-        "effects": []
+        "detail": "Free · you keep the evenings",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 3
+          }
+        ]
       }
     ]
   },
@@ -1159,8 +1164,13 @@
       {
         "id": "decline",
         "label": "Decline",
-        "detail": "Free",
-        "effects": []
+        "detail": "Free · reputation −1, they ask someone else",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
       }
     ]
   },
@@ -1654,8 +1664,13 @@
       {
         "id": "decline",
         "label": "Tell her to come back with a salary line",
-        "detail": "Free",
-        "effects": []
+        "detail": "Free · mood −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
       }
     ]
   },
@@ -2236,8 +2251,13 @@
       {
         "id": "later",
         "label": "Ask for it after the next launch",
-        "detail": "Free",
-        "effects": []
+        "detail": "Free · you keep the two days",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 4
+          }
+        ]
       }
     ]
   },
@@ -2849,8 +2869,13 @@
       {
         "id": "skip",
         "label": "Skip it",
-        "detail": "Free",
-        "effects": []
+        "detail": "Free · reputation −2, everyone else went",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
       }
     ]
   },
@@ -2906,8 +2931,13 @@
       {
         "id": "discount",
         "label": "Offer a discount instead",
-        "detail": "Free",
-        "effects": []
+        "detail": "Free · team morale −3",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -3
+          }
+        ]
       }
     ]
   },
