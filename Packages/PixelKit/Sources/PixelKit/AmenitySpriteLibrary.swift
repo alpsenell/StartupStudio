@@ -41,15 +41,15 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "K": RGBA(r: 62, g: 60, b: 72),
-            "R": RGBA(r: 222, g: 84, b: 70),
-            "W": RGBA(r: 245, g: 245, b: 247),
-            "A": RGBA(r: 214, g: 70, b: 60),
-            "a": RGBA(r: 120, g: 190, b: 90),
-            "B": RGBA(r: 126, g: 130, b: 156),
-            "S": RGBA(r: 226, g: 220, b: 206),
-            "P": RGBA(r: 150, g: 110, b: 78),
-            "p": RGBA(r: 128, g: 92, b: 64),
+            "K": Palettes.ink[2],
+            "R": Palettes.ember[2],
+            "W": Palettes.stone[0],
+            "A": Palettes.ember[3],
+            "a": Palettes.moss[2],
+            "B": Palettes.stone[3],
+            "S": Palettes.clay[0],
+            "P": Palettes.skinTones[3].base,
+            "p": Palettes.sand[3],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -72,10 +72,10 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "W": RGBA(r: 236, g: 232, b: 222),
-            "w": RGBA(r: 214, g: 208, b: 196),
-            "P": RGBA(r: 110, g: 112, b: 130),
-            "R": RGBA(r: 200, g: 80, b: 70),
+            "W": Palettes.stone[0],
+            "w": Palettes.clay[0],
+            "P": Palettes.ink[0],
+            "R": Palettes.ember[3],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -112,15 +112,15 @@ extension SpriteLibrary {
         }
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "B": RGBA(r: 70, g: 100, b: 190),
-            "L": RGBA(r: 250, g: 240, b: 180),
-            "l": RGBA(r: 214, g: 196, b: 120),
-            "K": RGBA(r: 36, g: 40, b: 60),
-            "k": RGBA(r: 54, g: 62, b: 96),
-            "R": RGBA(r: 214, g: 70, b: 60),
-            "Y": RGBA(r: 240, g: 200, b: 70),
-            "G": RGBA(r: 90, g: 190, b: 110),
-            "c": RGBA(r: 20, g: 22, b: 30),
+            "B": Palettes.sky[3],
+            "L": Palettes.gold[0],
+            "l": Palettes.sand[1],
+            "K": Palettes.ink[3],
+            "k": Palettes.ink[2],
+            "R": Palettes.ember[3],
+            "Y": Palettes.gold[2],
+            "G": Palettes.moss[2],
+            "c": Palettes.ink[4],
         ]
         return PixelSprite(frames: [lit, dim], palette: palette)
     }
@@ -149,13 +149,13 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "S": RGBA(r: 150, g: 196, b: 232),
-            "W": RGBA(r: 244, g: 246, b: 250),
-            "I": RGBA(r: 94, g: 96, b: 206),
-            "B": RGBA(r: 120, g: 170, b: 220),
-            "K": RGBA(r: 40, g: 40, b: 48),
-            "G": RGBA(r: 170, g: 166, b: 160),
-            "g": RGBA(r: 134, g: 130, b: 126),
+            "S": Palettes.sky[1],
+            "W": Palettes.stone[0],
+            "I": Palettes.indigo[2],
+            "B": Palettes.sky[2],
+            "K": Palettes.hairColors[0].shade,
+            "G": Palettes.stone[2],
+            "g": Palettes.clay[2],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -188,11 +188,11 @@ extension SpriteLibrary {
         shifted[2] = " OsSsO        "
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "S": RGBA(r: 110, g: 220, b: 200),
-            "s": RGBA(r: 70, g: 180, b: 160),
-            "B": RGBA(r: 64, g: 66, b: 82),
-            "b": RGBA(r: 104, g: 106, b: 124),
-            "K": RGBA(r: 128, g: 130, b: 144),
+            "S": Palettes.teal[1],
+            "s": Palettes.teal[2],
+            "B": Palettes.ink[2],
+            "b": Palettes.ink[0],
+            "K": Palettes.stone[3],
         ]
         return PixelSprite(frames: [running, shifted], palette: palette)
     }
@@ -215,10 +215,10 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "R": RGBA(r: 214, g: 70, b: 60),
-            "B": RGBA(r: 80, g: 104, b: 214),
-            "G": RGBA(r: 90, g: 190, b: 110),
-            "K": RGBA(r: 90, g: 92, b: 108),
+            "R": Palettes.ember[3],
+            "B": Palettes.indigo[2],
+            "G": Palettes.moss[2],
+            "K": Palettes.ink[1],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -256,15 +256,15 @@ extension SpriteLibrary {
         frameB[8] = " OKOGsssOKO "
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "M": RGBA(r: 214, g: 86, b: 160),
-            "m": RGBA(r: 180, g: 66, b: 134),
-            "K": RGBA(r: 58, g: 62, b: 96),
-            "k": RGBA(r: 46, g: 50, b: 80),
-            "S": RGBA(r: 28, g: 36, b: 64),
-            "s": RGBA(r: 44, g: 62, b: 110),
-            "G": RGBA(r: 120, g: 230, b: 130),
-            "R": RGBA(r: 222, g: 84, b: 70),
-            "B": RGBA(r: 90, g: 130, b: 230),
+            "M": Palettes.plum[2],
+            "m": Palettes.plum[2],
+            "K": Palettes.ink[2],
+            "k": Palettes.ink[2],
+            "S": Palettes.ink[3],
+            "s": Palettes.indigo[4],
+            "G": Palettes.moss[1],
+            "R": Palettes.ember[2],
+            "B": Palettes.indigo[2],
         ]
         return PixelSprite(frames: [frameA, frameB], palette: palette)
     }
@@ -289,14 +289,14 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "G": RGBA(r: 72, g: 150, b: 92),
-            "W": RGBA(r: 236, g: 240, b: 236),
-            "r": RGBA(r: 176, g: 182, b: 196),
-            "R": RGBA(r: 214, g: 70, b: 60),
-            "B": RGBA(r: 80, g: 104, b: 214),
-            "H": RGBA(r: 70, g: 70, b: 82),
-            "T": RGBA(r: 196, g: 158, b: 110),
-            "t": RGBA(r: 168, g: 132, b: 88),
+            "G": Palettes.moss[2],
+            "W": Palettes.stone[0],
+            "r": Palettes.stone[2],
+            "R": Palettes.ember[3],
+            "B": Palettes.indigo[2],
+            "H": Palettes.ink[2],
+            "T": Palettes.skinTones[2].base,
+            "t": Palettes.sand[2],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
