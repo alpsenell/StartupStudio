@@ -85,6 +85,10 @@ private struct ActiveContractCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
+            if job.requiredSkill > 0 {
+                qualityLine
+            }
+
             if !hasWorkers {
                 Text("Assign people from the Team tab.")
                     .font(.footnote)
@@ -96,6 +100,31 @@ private struct ActiveContractCard: View {
         .accessibilityLabel(
             "Contract with \(job.clientName), \(daysLeft) day\(daysLeft == 1 ? "" : "s") left, pays \(job.payout.money)"
         )
+    }
+
+    /// How the crew stacks up against the client's skill expectations —
+    /// mirrors the engine's delivery grade so a weak crew is flagged
+    /// before the client rejects the work.
+    @ViewBuilder private var qualityLine: some View {
+        let projected = job.projectedQuality
+        let quality = engine.balance.contractQuality
+        if job.skillDays == 0 {
+            Text("Client expects skill ~\(Int(job.requiredSkill.rounded())). Nobody has worked on it yet.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        } else if projected >= quality.greatThreshold {
+            Text("Crew skill \(Int(job.averageCrewSkill.rounded())) vs. expected \(Int(job.requiredSkill.rounded())) — on track for full pay.")
+                .font(.footnote)
+                .foregroundStyle(Theme.positiveCash)
+        } else if projected >= quality.okayThreshold {
+            Text("Crew skill \(Int(job.averageCrewSkill.rounded())) vs. expected \(Int(job.requiredSkill.rounded())) — the client will have notes.")
+                .font(.footnote)
+                .foregroundStyle(Theme.warning)
+        } else {
+            Text("Crew skill \(Int(job.averageCrewSkill.rounded())) is far below the expected \(Int(job.requiredSkill.rounded())) — the client will reject the quality.")
+                .font(.footnote)
+                .foregroundStyle(Theme.negativeCash)
+        }
     }
 }
 
@@ -110,7 +139,11 @@ private struct ContractOfferCard: View {
     }
 
     private var requirementSummary: String {
-        "Code \(Int(offer.requiredCodePts.rounded())) · Design \(Int(offer.requiredDesignPts.rounded())) pts"
+        var summary = "Code \(Int(offer.requiredCodePts.rounded())) · Design \(Int(offer.requiredDesignPts.rounded())) pts"
+        if offer.requiredSkill > 0 {
+            summary += " · Skill ~\(Int(offer.requiredSkill.rounded()))"
+        }
+        return summary
     }
 
     var body: some View {

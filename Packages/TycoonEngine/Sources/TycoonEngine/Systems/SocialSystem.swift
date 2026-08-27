@@ -1,0 +1,373 @@
+import Foundation
+import TycoonContent
+
+/// Daily social system, running right after `EmployeeSystem` so it sees
+/// the post-sweep, post-quit roster: loyalty drifts with morale,
+/// friendships form and fade with who works with whom, and every few
+/// weeks a staff moment (birthday, family emergency, rival rumor) fires —
+/// the answerable ones through the pending-decision pattern. Also hosts
+/// the social action handlers used by `Reducer.apply`.
+///
+/// All randomness draws from `state.worldRNG`. Draw order per tick:
+/// pending staff-event auto-resolve (no draws) → weekly bond formation
+/// (one uniform per bond-less co-assigned pair, pairs in sorted id order)
+/// → staff-event check on its interval (one uniform hit roll, then on a
+/// hit one `nextInt` kind pick — the target pick is deterministic).
+enum SocialSystem {
+    @Sendable
+    static func run(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        let config = balance.social
+        var events: [GameEvent] = []
+
+        autoResolveStaffEvent(&state, config, &events)
+        driftLoyalty(&state, config)
+        pruneFriendships(&state)
+
+        if state.day % GameState.daysPerWeek == 0 {
+            events.append(contentsOf: updateBonds(&state, config))
+        }
+
+        events.append(contentsOf: staffEventCheck(&state, config))
+        return events
+    }
+
+    // MARK: - Loyalty
+
+    /// Loyalty follows morale: toward `50 + (morale − 70) / 2`.
+    private static func driftLoyalty(_ state: inout GameState, _ config: BalanceConfig.SocialBalance) {
+        for index in state.employees.indices where !state.employees[index].isFounder {
+            let employee = state.employees[index]
+            let target = min(100, max(0, 50 + (employee.morale - 70) / 2))
+            state.employees[index].loyalty = min(100, max(0,
+                employee.loyalty + (target - employee.loyalty) * config.loyaltyAdaptRate
+            ))
+        }
+    }
+
+    // MARK: - Friendships
+
+    /// Drops bonds whose members left (quit, fired, poached) or faded out.
+    private static func pruneFriendships(_ state: inout GameState) {
+        let ids = Set(state.employees.map(\.id))
+        state.friendships.removeAll { !ids.contains($0.a) || !ids.contains($0.b) || $0.strength <= 0 }
+    }
+
+    /// Weekly: co-assigned pairs without a bond roll one uniform each
+    /// against `bondChance` (pairs visited in sorted id order); existing
+    /// bonds grow while the pair works together and decay apart — no
+    /// draws.
+    private static func updateBonds(
+        _ state: inout GameState,
+        _ config: BalanceConfig.SocialBalance
+    ) -> [GameEvent] {
+        var events: [GameEvent] = []
+        let together = coAssignedPairs(state)
+
+        // Grow / decay existing bonds first (index-stable, no draws).
+        for index in state.friendships.indices {
+            let key = pairKey(state.friendships[index].a, state.friendships[index].b)
+            if together.contains(key) {
+                state.friendships[index].strength = min(100,
+                    state.friendships[index].strength + config.bondGrowthPerWeek)
+            } else {
+                state.friendships[index].strength = max(0,
+                    state.friendships[index].strength - config.bondDecayPerWeek)
+            }
+        }
+
+        // New bonds, deterministic visit order.
+        let existing = Set(state.friendships.map { pairKey($0.a, $0.b) })
+        for key in together.sorted() where !existing.contains(key) {
+            let roll = state.worldRNG.nextUniform()
+            guard roll < config.bondChance else { continue }
+            let parts = key.split(separator: "|").map(String.init)
+            guard parts.count == 2, let a = UUID(uuidString: parts[0]), let b = UUID(uuidString: parts[1])
+            else { continue }
+            state.friendships.append(Friendship(a: a, b: b, strength: 20, sinceDay: state.day))
+            events.append(.friendshipFormed(a: a, b: b, day: state.day))
+        }
+
+        state.friendships.removeAll { $0.strength <= 0 }
+        return events
+    }
+
+    /// Keys of non-founder pairs sharing a non-idle assignment target.
+    private static func coAssignedPairs(_ state: GameState) -> Set<String> {
+        var groups: [String: [UUID]] = [:]
+        for employee in state.employees where !employee.isFounder {
+            let target: String?
+            switch employee.assignment {
+            case .idle: target = nil
+            case .research: target = "research"
+            case .product(let id): target = "product-\(id.uuidString)"
+            case .contract(let id): target = "contract-\(id.uuidString)"
+            }
+            if let target {
+                groups[target, default: []].append(employee.id)
+            }
+        }
+        var pairs: Set<String> = []
+        for members in groups.values where members.count > 1 {
+            let sorted = members.sorted { $0.uuidString < $1.uuidString }
+            for i in 0..<(sorted.count - 1) {
+                for j in (i + 1)..<sorted.count {
+                    pairs.insert(pairKey(sorted[i], sorted[j]))
+                }
+            }
+        }
+        return pairs
+    }
+
+    private static func pairKey(_ a: UUID, _ b: UUID) -> String {
+        a.uuidString <= b.uuidString
+            ? "\(a.uuidString)|\(b.uuidString)"
+            : "\(b.uuidString)|\(a.uuidString)"
+    }
+
+    /// The strongest bond `employeeID` shares with anyone in `coWorkers`
+    /// (0 with none) — the output-bonus input for `EmployeeSystem`.
+    static func strongestBond(for employeeID: UUID, among coWorkers: [UUID], in state: GameState) -> Double {
+        let coWorkerSet = Set(coWorkers)
+        return state.friendships
+            .filter { friendship in
+                guard let other = friendship.other(than: employeeID) else { return false }
+                return coWorkerSet.contains(other)
+            }
+            .map(\.strength)
+            .max() ?? 0
+    }
+
+    /// Dents every surviving friend's morale when an employee leaves
+    /// involuntarily (fired or poached), then drops the bonds. Shared by
+    /// `EmployeeSystem.fire` and the rival system's poach exit so both
+    /// departures behave identically.
+    static func friendDeparted(
+        _ departedID: UUID,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        var events: [GameEvent] = []
+        for friendship in state.friendships where friendship.involves(departedID) {
+            guard let friendID = friendship.other(than: departedID),
+                  let index = state.employees.firstIndex(where: { $0.id == friendID })
+            else { continue }
+            let penalty = balance.social.friendFiredMoralePenalty * friendship.strength / 100
+            state.employees[index].morale = min(100, max(0, state.employees[index].morale - penalty))
+            events.append(.friendLostMorale(employeeID: friendID, day: state.day))
+        }
+        state.friendships.removeAll { $0.involves(departedID) }
+        return events
+    }
+
+    // MARK: - Staff events
+
+    /// Every `staffEventIntervalDays` (nothing pending, at least one hired
+    /// employee): one uniform against `staffEventChance`; on a hit the
+    /// target rotates deterministically through the sorted non-founder
+    /// ids, and one `nextInt` picks the kind — a birthday applies right
+    /// away, the other kinds pause for an answer.
+    private static func staffEventCheck(
+        _ state: inout GameState,
+        _ config: BalanceConfig.SocialBalance
+    ) -> [GameEvent] {
+        guard state.day % config.staffEventIntervalDays == 0,
+              state.pendingStaffEvent == nil
+        else { return [] }
+        let hired = state.employees.filter { !$0.isFounder }.sorted { $0.id.uuidString < $1.id.uuidString }
+        guard !hired.isEmpty else { return [] }
+
+        let roll = state.worldRNG.nextUniform()
+        guard roll < config.staffEventChance else { return [] }
+
+        let target = hired[(state.day / config.staffEventIntervalDays) % hired.count]
+        let kindRoll = state.worldRNG.nextInt(in: 0...2)
+        if kindRoll == 0 {
+            // Birthday: cake on the company, everyone's happy, no pause.
+            if let index = state.employees.firstIndex(where: { $0.id == target.id }) {
+                state.employees[index].morale = min(100,
+                    state.employees[index].morale + config.birthdayMoraleBoost)
+            }
+            state.company.cash -= config.birthdayCakeCost
+            state.ledger.post(LedgerEntry(
+                day: state.day,
+                amount: -config.birthdayCakeCost,
+                category: .other,
+                label: "Birthday cake: \(target.name)"
+            ))
+            return [.staffBirthday(employeeID: target.id, day: state.day)]
+        }
+
+        let kind: StaffEventKind = kindRoll == 1 ? .familyEmergency : .rivalOfferRumor
+        let event = StaffEvent(
+            employeeID: target.id,
+            kind: kind,
+            respondByDay: state.day + config.staffEventResponseDays
+        )
+        state.pendingStaffEvent = event
+        return [.staffEventOccurred(
+            employeeID: target.id, kind: kind, respondByDay: event.respondByDay, day: state.day
+        )]
+    }
+
+    /// A pending staff event past its deadline resolves as `strict` (the
+    /// founder never got back to them). No draws.
+    private static func autoResolveStaffEvent(
+        _ state: inout GameState,
+        _ config: BalanceConfig.SocialBalance,
+        _ events: inout [GameEvent]
+    ) {
+        guard let pending = state.pendingStaffEvent, state.day > pending.respondByDay else { return }
+        state.pendingStaffEvent = nil
+        events.append(contentsOf: applyStaffChoice(.strict, to: pending, state: &state, config: config))
+    }
+
+    private static func applyStaffChoice(
+        _ choice: StaffEventChoice,
+        to event: StaffEvent,
+        state: inout GameState,
+        config: BalanceConfig.SocialBalance
+    ) -> [GameEvent] {
+        guard let index = state.employees.firstIndex(where: { $0.id == event.employeeID }) else {
+            return []
+        }
+        switch choice {
+        case .supportive:
+            state.company.cash -= config.supportCost
+            state.ledger.post(LedgerEntry(
+                day: state.day,
+                amount: -config.supportCost,
+                category: .other,
+                label: "Supporting \(state.employees[index].name)"
+            ))
+            state.employees[index].morale = min(100,
+                state.employees[index].morale + config.supportMorale)
+            state.employees[index].loyalty = min(100,
+                state.employees[index].loyalty + config.supportLoyalty)
+            if event.kind == .familyEmergency {
+                state.employees[index].assignment = .idle
+            }
+        case .strict:
+            state.employees[index].loyalty = max(0,
+                state.employees[index].loyalty - config.strictLoyaltyPenalty)
+        }
+        return [.staffEventResolved(employeeID: event.employeeID, choice: choice, day: state.day)]
+    }
+
+    // MARK: - Actions
+
+    /// Coffee with one employee: small morale and loyalty, company pays,
+    /// per-employee social cooldown.
+    static func grabCoffee(employeeID: UUID, state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        socialAction(
+            employeeID: employeeID, state: &state, balance: balance,
+            cost: balance.social.coffeeCost,
+            morale: balance.social.coffeeMorale,
+            loyalty: balance.social.coffeeLoyalty,
+            kind: .coffee,
+            label: "Coffee with"
+        )
+    }
+
+    /// A one-on-one: free, the biggest loyalty lift, and it clears the
+    /// employee's low-morale streak (they felt heard).
+    static func oneOnOne(employeeID: UUID, state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        let events = socialAction(
+            employeeID: employeeID, state: &state, balance: balance,
+            cost: 0,
+            morale: 0,
+            loyalty: balance.social.oneOnOneLoyalty,
+            kind: .oneOnOne,
+            label: nil
+        )
+        if !events.isEmpty, let index = state.employees.firstIndex(where: { $0.id == employeeID }) {
+            state.employees[index].lowMoraleStreakDays = 0
+        }
+        return events
+    }
+
+    /// A gift: pricier, big morale and loyalty.
+    static func giveGift(employeeID: UUID, state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        socialAction(
+            employeeID: employeeID, state: &state, balance: balance,
+            cost: balance.social.giftCost,
+            morale: balance.social.giftMorale,
+            loyalty: balance.social.giftLoyalty,
+            kind: .gift,
+            label: "Gift for"
+        )
+    }
+
+    /// Dinner for the whole team: per-head cost, morale and loyalty for
+    /// every hired employee, global cooldown.
+    static func teamDinner(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        let config = balance.social
+        let hired = state.employees.filter { !$0.isFounder }
+        let cost = config.dinnerCostPerHead * state.headcount
+        guard !hired.isEmpty, state.company.cash >= cost else { return [] }
+        if let last = state.lastTeamDinnerDay,
+           state.day - last < config.teamDinnerCooldownDays { return [] }
+
+        state.company.cash -= cost
+        state.ledger.post(LedgerEntry(
+            day: state.day, amount: -cost, category: .other, label: "Team dinner"
+        ))
+        for index in state.employees.indices where !state.employees[index].isFounder {
+            state.employees[index].morale = min(100,
+                state.employees[index].morale + config.dinnerMorale)
+            state.employees[index].loyalty = min(100,
+                state.employees[index].loyalty + config.dinnerLoyalty)
+        }
+        state.lastTeamDinnerDay = state.day
+        return [.socialActivity(kind: .teamDinner, employeeID: nil, day: state.day)]
+    }
+
+    /// Shared one-on-one social plumbing: gates (hired target, cash,
+    /// cooldown), effects, ledger, event.
+    private static func socialAction(
+        employeeID: UUID,
+        state: inout GameState,
+        balance: BalanceConfig,
+        cost: Int,
+        morale: Double,
+        loyalty: Double,
+        kind: SocialActivityKind,
+        label: String?
+    ) -> [GameEvent] {
+        let config = balance.social
+        guard let index = state.employees.firstIndex(where: { $0.id == employeeID }),
+              !state.employees[index].isFounder,
+              cost == 0 || state.company.cash >= cost
+        else { return [] }
+        if let last = state.employees[index].lastSocialDay,
+           state.day - last < config.socialCooldownDays { return [] }
+
+        if cost > 0 {
+            state.company.cash -= cost
+            state.ledger.post(LedgerEntry(
+                day: state.day,
+                amount: -cost,
+                category: .other,
+                label: "\(label ?? "Social:") \(state.employees[index].name)"
+            ))
+        }
+        state.employees[index].morale = min(100, max(0, state.employees[index].morale + morale))
+        state.employees[index].loyalty = min(100, max(0, state.employees[index].loyalty + loyalty))
+        state.employees[index].lastSocialDay = state.day
+        return [.socialActivity(kind: kind, employeeID: employeeID, day: state.day)]
+    }
+
+    /// Answers the pending staff event. Ignored with nothing pending.
+    static func resolveStaffEvent(
+        choice: StaffEventChoice,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard let pending = state.pendingStaffEvent else { return [] }
+        state.pendingStaffEvent = nil
+        return applyStaffChoice(choice, to: pending, state: &state, config: balance.social)
+    }
+}

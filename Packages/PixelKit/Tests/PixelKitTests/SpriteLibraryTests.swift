@@ -90,4 +90,54 @@ struct SpriteLibraryTests {
             #expect(sprite.width > 0 && sprite.height > 0, "\(prop) should have pixels")
         }
     }
+
+    @Test func roleBubblesAreDistinctAndShareTheBubbleCanvas() {
+        let reference = SpriteLibrary.statusBubble(.coding)
+        let roles: [WorkStatus] = [.testing, .legal, .peopleOps, .operations]
+        var seen: [PixelSprite] = [reference]
+        for status in roles {
+            let bubble = SpriteLibrary.statusBubble(status)
+            #expect(bubble.width == reference.width && bubble.height == reference.height, "\(status) bubble size")
+            #expect(bubble.frameCount == 1)
+            #expect(bubble == SpriteLibrary.statusBubble(status), "\(status) bubble is stable across calls")
+            #expect(!seen.contains(bubble), "\(status) bubble must be distinguishable from the others")
+            seen.append(bubble)
+        }
+    }
+
+    @Test func everyAmenityPropBuildsAndIsStable() {
+        for name in SpriteLibrary.AmenityPropName.allCases {
+            let sprite = SpriteLibrary.amenityProp(name)
+            #expect(sprite.width > 0 && sprite.height > 0, "\(name) should have pixels")
+            #expect(sprite == SpriteLibrary.amenityProp(name), "\(name) is stable across calls")
+            let bytes = rgbaBytes(of: sprite.cgImage(frame: 0))
+            #expect(bytes.contains { $0 != 0 }, "\(name) should draw something")
+            for frame in 0..<sprite.frameCount {
+                _ = sprite.cgImage(frame: frame)
+            }
+        }
+    }
+
+    @Test func animatedAmenityPropsHaveTwoDifferentFrames() {
+        let animated: [SpriteLibrary.AmenityPropName] = [.treadmill, .arcadeCabinet, .vendingMachine]
+        for name in SpriteLibrary.AmenityPropName.allCases {
+            let sprite = SpriteLibrary.amenityProp(name)
+            if animated.contains(name) {
+                #expect(sprite.frameCount == 2, "\(name) animates")
+                #expect(rgbaBytes(of: sprite.cgImage(frame: 0)) != rgbaBytes(of: sprite.cgImage(frame: 1)), "\(name) frames differ")
+            } else {
+                #expect(sprite.frameCount == 1, "\(name) is still")
+            }
+        }
+    }
+
+    @Test func amenityPropsSitAtDeskScale() {
+        // Props must read next to a 14x18 person and a 24x7 desk: nothing
+        // tiny, nothing that dwarfs the room.
+        for name in SpriteLibrary.AmenityPropName.allCases {
+            let sprite = SpriteLibrary.amenityProp(name)
+            #expect((8...30).contains(sprite.width), "\(name) width \(sprite.width)")
+            #expect((8...22).contains(sprite.height), "\(name) height \(sprite.height)")
+        }
+    }
 }

@@ -262,6 +262,1058 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         }
     }
 
+    /// Tuning for the per-topic market simulation (`MarketSystem`).
+    public struct MarketBalance: Codable, Equatable, Sendable {
+        /// Multipliers take a random-walk step every this many days.
+        public var shiftIntervalDays: Int
+        /// Sigma of the gaussian drift step.
+        public var driftSigma: Double
+        /// Clamp bounds on a topic's demand multiplier.
+        public var multiplierMin: Double
+        public var multiplierMax: Double
+        /// Chance per shift that a topic booms, and the jump it adds.
+        public var boomChance: Double
+        public var boomJump: Double
+        /// Chance per shift that a topic crashes, and the drop it applies.
+        public var crashChance: Double
+        public var crashJump: Double
+
+        public init(
+            shiftIntervalDays: Int, driftSigma: Double,
+            multiplierMin: Double, multiplierMax: Double,
+            boomChance: Double, boomJump: Double,
+            crashChance: Double, crashJump: Double
+        ) {
+            self.shiftIntervalDays = shiftIntervalDays
+            self.driftSigma = driftSigma
+            self.multiplierMin = multiplierMin
+            self.multiplierMax = multiplierMax
+            self.boomChance = boomChance
+            self.boomJump = boomJump
+            self.crashChance = crashChance
+            self.crashJump = crashJump
+        }
+
+        public static let standard = MarketBalance(
+            shiftIntervalDays: 7, driftSigma: 0.06,
+            multiplierMin: 0.4, multiplierMax: 1.8,
+            boomChance: 0.05, boomJump: 0.4,
+            crashChance: 0.05, crashJump: 0.4
+        )
+    }
+
+    /// Tuning for the post-launch adoption ramp: sales start slow and reach
+    /// the full peak only after `adoptionWeeks`, which shrinks with the
+    /// team's marketing skill at launch and with launch hype.
+    public struct AdoptionBalance: Codable, Equatable, Sendable {
+        /// Ramp length with zero marketing skill and zero hype.
+        public var rampWeeksMax: Double
+        /// The ramp can never get shorter than this.
+        public var rampWeeksMin: Double
+        /// Average marketing skill removes `skill / marketingDivisor` weeks.
+        public var marketingDivisor: Double
+        /// Launch hype removes `hype / hypeDivisor` weeks.
+        public var hypeDivisor: Double
+
+        public init(
+            rampWeeksMax: Double, rampWeeksMin: Double,
+            marketingDivisor: Double, hypeDivisor: Double
+        ) {
+            self.rampWeeksMax = rampWeeksMax
+            self.rampWeeksMin = rampWeeksMin
+            self.marketingDivisor = marketingDivisor
+            self.hypeDivisor = hypeDivisor
+        }
+
+        public static let standard = AdoptionBalance(
+            rampWeeksMax: 8, rampWeeksMin: 1, marketingDivisor: 16, hypeDivisor: 25
+        )
+    }
+
+    /// Tuning for employee morale, performance, seniority, and training.
+    public struct StaffBalance: Codable, Equatable, Sendable {
+        /// Morale a fresh hire starts with.
+        public var startingMorale: Double
+        /// Daily fraction morale moves toward its target.
+        public var moraleAdaptRate: Double
+        /// Morale target before pay and office adjustments.
+        public var baselineMorale: Double
+        /// Paid under `underpaidThreshold ×` fair pay drags the target down
+        /// by `underpaidTargetPenalty`; over `wellPaidThreshold ×` lifts it
+        /// by `wellPaidTargetBonus`. Fair pay is the hiring-market rate for
+        /// the employee's skills, raised `levelPayExpectation` per level.
+        public var underpaidThreshold: Double
+        public var underpaidTargetPenalty: Double
+        public var wellPaidThreshold: Double
+        public var wellPaidTargetBonus: Double
+        public var levelPayExpectation: Double
+        /// Morale target bonus keyed by `OfficeTier` raw value.
+        public var officeMoraleBonus: [String: Double]
+        /// Morale below the threshold for more than the streak quits.
+        public var quitMoraleThreshold: Double
+        public var quitStreakDays: Int
+        /// Praise: instant morale boost, at most once per cooldown.
+        public var praiseMoraleBoost: Double
+        public var praiseCooldownDays: Int
+        /// A salary change of fraction f moves morale by `f × raiseFactor`
+        /// (raises) or `f × cutFactor` (cuts, f negative so morale drops).
+        public var raiseMoraleFactor: Double
+        public var cutMoraleFactor: Double
+        /// Promotion / demotion: salary change fraction and morale delta.
+        public var promotionSalaryBump: Double
+        public var promotionMoraleBoost: Double
+        public var demotionSalaryCut: Double
+        public var demotionMoralePenalty: Double
+        /// Morale at which output is exactly 1×; each point above/below
+        /// moves output by `performancePerMoralePoint`, clamped to
+        /// `performanceMin...performanceMax`.
+        public var moraleNeutral: Double
+        public var performancePerMoralePoint: Double
+        public var performanceMin: Double
+        public var performanceMax: Double
+        /// Extra output per seniority level above junior.
+        public var levelOutputBonus: Double
+        /// Training: cash cost, instant boost to the chosen skill, morale
+        /// boost, and per-employee cooldown.
+        public var trainingCost: Int
+        public var trainingSkillBoost: Double
+        public var trainingMoraleBoost: Double
+        public var trainingCooldownDays: Int
+
+        public init(
+            startingMorale: Double, moraleAdaptRate: Double, baselineMorale: Double,
+            underpaidThreshold: Double, underpaidTargetPenalty: Double,
+            wellPaidThreshold: Double, wellPaidTargetBonus: Double,
+            levelPayExpectation: Double, officeMoraleBonus: [String: Double],
+            quitMoraleThreshold: Double, quitStreakDays: Int,
+            praiseMoraleBoost: Double, praiseCooldownDays: Int,
+            raiseMoraleFactor: Double, cutMoraleFactor: Double,
+            promotionSalaryBump: Double, promotionMoraleBoost: Double,
+            demotionSalaryCut: Double, demotionMoralePenalty: Double,
+            moraleNeutral: Double, performancePerMoralePoint: Double,
+            performanceMin: Double, performanceMax: Double, levelOutputBonus: Double,
+            trainingCost: Int, trainingSkillBoost: Double,
+            trainingMoraleBoost: Double, trainingCooldownDays: Int
+        ) {
+            self.startingMorale = startingMorale
+            self.moraleAdaptRate = moraleAdaptRate
+            self.baselineMorale = baselineMorale
+            self.underpaidThreshold = underpaidThreshold
+            self.underpaidTargetPenalty = underpaidTargetPenalty
+            self.wellPaidThreshold = wellPaidThreshold
+            self.wellPaidTargetBonus = wellPaidTargetBonus
+            self.levelPayExpectation = levelPayExpectation
+            self.officeMoraleBonus = officeMoraleBonus
+            self.quitMoraleThreshold = quitMoraleThreshold
+            self.quitStreakDays = quitStreakDays
+            self.praiseMoraleBoost = praiseMoraleBoost
+            self.praiseCooldownDays = praiseCooldownDays
+            self.raiseMoraleFactor = raiseMoraleFactor
+            self.cutMoraleFactor = cutMoraleFactor
+            self.promotionSalaryBump = promotionSalaryBump
+            self.promotionMoraleBoost = promotionMoraleBoost
+            self.demotionSalaryCut = demotionSalaryCut
+            self.demotionMoralePenalty = demotionMoralePenalty
+            self.moraleNeutral = moraleNeutral
+            self.performancePerMoralePoint = performancePerMoralePoint
+            self.performanceMin = performanceMin
+            self.performanceMax = performanceMax
+            self.levelOutputBonus = levelOutputBonus
+            self.trainingCost = trainingCost
+            self.trainingSkillBoost = trainingSkillBoost
+            self.trainingMoraleBoost = trainingMoraleBoost
+            self.trainingCooldownDays = trainingCooldownDays
+        }
+
+        public static let standard = StaffBalance(
+            startingMorale: 70, moraleAdaptRate: 0.04, baselineMorale: 60,
+            underpaidThreshold: 0.85, underpaidTargetPenalty: 25,
+            wellPaidThreshold: 1.15, wellPaidTargetBonus: 10,
+            levelPayExpectation: 0.12,
+            officeMoraleBonus: ["garage": 0, "loft": 3, "studio": 6, "campus": 10],
+            quitMoraleThreshold: 20, quitStreakDays: 14,
+            praiseMoraleBoost: 8, praiseCooldownDays: 7,
+            raiseMoraleFactor: 40, cutMoraleFactor: 80,
+            promotionSalaryBump: 0.15, promotionMoraleBoost: 15,
+            demotionSalaryCut: 0.10, demotionMoralePenalty: 20,
+            moraleNeutral: 70, performancePerMoralePoint: 0.005,
+            performanceMin: 0.5, performanceMax: 1.15, levelOutputBonus: 0.06,
+            trainingCost: 800, trainingSkillBoost: 6,
+            trainingMoraleBoost: 4, trainingCooldownDays: 14
+        )
+    }
+
+    /// Tuning for contract quality: what skill level the client expects and
+    /// what a shortfall costs on delivery.
+    public struct ContractQualityBalance: Codable, Equatable, Sendable {
+        /// Bounds on the uniform required-skill roll before year scaling.
+        public var skillMin: Double
+        public var skillMax: Double
+        /// Required skill rises this much per elapsed year, capped.
+        public var skillYearBump: Double
+        public var skillCap: Double
+        /// Delivery quality score bands (0...100): at or above `great` the
+        /// client is delighted, `okay..<great` grumbles (reduced payout),
+        /// below `okay` the client rejects the quality (reduced payout and
+        /// a reputation hit).
+        public var okayThreshold: Int
+        public var greatThreshold: Int
+        public var okayPayoutFraction: Double
+        public var poorPayoutFraction: Double
+        public var poorReputationPenalty: Double
+
+        public init(
+            skillMin: Double, skillMax: Double, skillYearBump: Double, skillCap: Double,
+            okayThreshold: Int, greatThreshold: Int,
+            okayPayoutFraction: Double, poorPayoutFraction: Double,
+            poorReputationPenalty: Double
+        ) {
+            self.skillMin = skillMin
+            self.skillMax = skillMax
+            self.skillYearBump = skillYearBump
+            self.skillCap = skillCap
+            self.okayThreshold = okayThreshold
+            self.greatThreshold = greatThreshold
+            self.okayPayoutFraction = okayPayoutFraction
+            self.poorPayoutFraction = poorPayoutFraction
+            self.poorReputationPenalty = poorReputationPenalty
+        }
+
+        public static let standard = ContractQualityBalance(
+            skillMin: 25, skillMax: 65, skillYearBump: 5, skillCap: 90,
+            okayThreshold: 60, greatThreshold: 80,
+            okayPayoutFraction: 0.85, poorPayoutFraction: 0.5,
+            poorReputationPenalty: 2.0
+        )
+    }
+
+    /// Tuning for company loans.
+    public struct LoanBalance: Codable, Equatable, Sendable {
+        /// Borrowing limit: `baseLimit + reputation × perReputation`, minus
+        /// what's already outstanding.
+        public var baseLimit: Int
+        public var perReputation: Double
+        /// Interest charged weekly on the outstanding balance.
+        public var weeklyInterestRate: Double
+
+        public init(baseLimit: Int, perReputation: Double, weeklyInterestRate: Double) {
+            self.baseLimit = baseLimit
+            self.perReputation = perReputation
+            self.weeklyInterestRate = weeklyInterestRate
+        }
+
+        public static let standard = LoanBalance(
+            baseLimit: 20_000, perReputation: 600, weeklyInterestRate: 0.01
+        )
+    }
+
+    /// Tuning for company depth: how employee roles route build output,
+    /// how candidates roll a role, what departments grant, and what office
+    /// amenities cost and do. Decoded from the `"company"` block.
+    public struct CompanyBalance: Codable, Equatable, Sendable {
+        /// Multipliers a role applies to its code / design / polish output
+        /// on products (and code / design on contracts).
+        public struct RoleYield: Codable, Equatable, Sendable {
+            public var code: Double
+            public var design: Double
+            public var polish: Double
+
+            public init(code: Double, design: Double, polish: Double) {
+                self.code = code
+                self.design = design
+                self.polish = polish
+            }
+
+            public static let neutral = RoleYield(code: 1, design: 1, polish: 1)
+        }
+
+        public struct AmenityDef: Codable, Equatable, Sendable {
+            public var upgradeCost: Int
+            public var weeklyCost: Int
+            /// The office tier needed to build it.
+            public var minTier: OfficeTier
+            /// Added to every hired employee's morale target while owned.
+            public var moraleBonus: Double
+            /// Daily founder health drift while owned.
+            public var founderHealthBonus: Double
+            /// Extra sub-threshold days before an employee quits.
+            public var quitStreakBonusDays: Int
+
+            public init(
+                upgradeCost: Int, weeklyCost: Int, minTier: OfficeTier,
+                moraleBonus: Double, founderHealthBonus: Double = 0, quitStreakBonusDays: Int = 0
+            ) {
+                self.upgradeCost = upgradeCost
+                self.weeklyCost = weeklyCost
+                self.minTier = minTier
+                self.moraleBonus = moraleBonus
+                self.founderHealthBonus = founderHealthBonus
+                self.quitStreakBonusDays = quitStreakBonusDays
+            }
+        }
+
+        // Roles
+        /// Keyed by `EmployeeRole` raw value; a missing role yields 1×.
+        public var roleYields: [String: RoleYield]
+        /// Bugs fixed per polish point a QA engineer contributes (others
+        /// fix one per point).
+        public var qaBugFixMultiplier: Double
+        /// Hype a marketer assigned to an in-development product adds per
+        /// day, scaled by `1 + marketing / 100`.
+        public var marketerDailyHype: Double
+
+        // Candidates
+        /// Weighted pick at refresh, keyed by `EmployeeRole` raw value
+        /// (missing or non-positive: never rolled).
+        public var candidateRoleWeights: [String: Int]
+        /// Minimum office tier a role appears at, keyed by raw value
+        /// (missing: garage).
+        public var candidateRoleMinTier: [String: OfficeTier]
+        /// Builder roles add this to the roll ceiling of their primary skill.
+        public var builderPrimarySkillBonus: Double
+        /// Marketers add this to their marketing roll ceiling.
+        public var marketerSkillBonus: Double
+        /// Salary multiplier for lawyers, HR, and ops.
+        public var supportSalaryFactor: Double
+
+        // Departments
+        public var legalPenaltyFactor: Double
+        public var legalPayoutBonus: Double
+        public var legalExtraOffers: Int
+        public var hrMoraleBonus: Double
+        public var hrRefreshDaysReduction: Int
+        public var hrQuitStreakBonus: Int
+        public var hrTrainingCostFactor: Double
+        public var opsUpkeepFactor: Double
+        public var opsRentFactor: Double
+
+        /// Keyed by `Amenity` raw value.
+        public var amenities: [String: AmenityDef]
+
+        public init(
+            roleYields: [String: RoleYield],
+            qaBugFixMultiplier: Double,
+            marketerDailyHype: Double,
+            candidateRoleWeights: [String: Int],
+            candidateRoleMinTier: [String: OfficeTier],
+            builderPrimarySkillBonus: Double,
+            marketerSkillBonus: Double,
+            supportSalaryFactor: Double,
+            legalPenaltyFactor: Double,
+            legalPayoutBonus: Double,
+            legalExtraOffers: Int,
+            hrMoraleBonus: Double,
+            hrRefreshDaysReduction: Int,
+            hrQuitStreakBonus: Int,
+            hrTrainingCostFactor: Double,
+            opsUpkeepFactor: Double,
+            opsRentFactor: Double,
+            amenities: [String: AmenityDef]
+        ) {
+            self.roleYields = roleYields
+            self.qaBugFixMultiplier = qaBugFixMultiplier
+            self.marketerDailyHype = marketerDailyHype
+            self.candidateRoleWeights = candidateRoleWeights
+            self.candidateRoleMinTier = candidateRoleMinTier
+            self.builderPrimarySkillBonus = builderPrimarySkillBonus
+            self.marketerSkillBonus = marketerSkillBonus
+            self.supportSalaryFactor = supportSalaryFactor
+            self.legalPenaltyFactor = legalPenaltyFactor
+            self.legalPayoutBonus = legalPayoutBonus
+            self.legalExtraOffers = legalExtraOffers
+            self.hrMoraleBonus = hrMoraleBonus
+            self.hrRefreshDaysReduction = hrRefreshDaysReduction
+            self.hrQuitStreakBonus = hrQuitStreakBonus
+            self.hrTrainingCostFactor = hrTrainingCostFactor
+            self.opsUpkeepFactor = opsUpkeepFactor
+            self.opsRentFactor = opsRentFactor
+            self.amenities = amenities
+        }
+
+        public func roleYield(_ role: EmployeeRole) -> RoleYield {
+            roleYields[role.rawValue] ?? .neutral
+        }
+
+        public func candidateMinTier(_ role: EmployeeRole) -> OfficeTier {
+            candidateRoleMinTier[role.rawValue] ?? .garage
+        }
+
+        public func amenity(_ amenity: Amenity) -> AmenityDef {
+            guard let def = amenities[amenity.rawValue] else {
+                preconditionFailure("BalanceConfig.company is missing an amenity definition for '\(amenity.rawValue)'")
+            }
+            return def
+        }
+
+        public static let standard = CompanyBalance(
+            roleYields: [
+                "founder": RoleYield(code: 1.0, design: 1.0, polish: 1.0),
+                "frontend": RoleYield(code: 1.1, design: 1.1, polish: 0.9),
+                "backend": RoleYield(code: 1.4, design: 0.5, polish: 1.0),
+                "designer": RoleYield(code: 0.5, design: 1.5, polish: 1.0),
+                "qa": RoleYield(code: 0.6, design: 0.6, polish: 1.6),
+                "marketer": RoleYield(code: 0.3, design: 0.3, polish: 0.3),
+                "lawyer": RoleYield(code: 0.3, design: 0.3, polish: 0.3),
+                "hr": RoleYield(code: 0.3, design: 0.3, polish: 0.3),
+                "ops": RoleYield(code: 0.3, design: 0.3, polish: 0.3),
+            ],
+            qaBugFixMultiplier: 2.0,
+            marketerDailyHype: 0.4,
+            candidateRoleWeights: [
+                "frontend": 22, "backend": 25, "designer": 18, "qa": 12,
+                "marketer": 10, "lawyer": 5, "hr": 5, "ops": 3,
+            ],
+            candidateRoleMinTier: ["lawyer": .loft, "hr": .loft, "ops": .studio],
+            builderPrimarySkillBonus: 15,
+            marketerSkillBonus: 20,
+            supportSalaryFactor: 0.9,
+            legalPenaltyFactor: 0.5,
+            legalPayoutBonus: 1.10,
+            legalExtraOffers: 1,
+            hrMoraleBonus: 5,
+            hrRefreshDaysReduction: 4,
+            hrQuitStreakBonus: 7,
+            hrTrainingCostFactor: 0.7,
+            opsUpkeepFactor: 0.7,
+            opsRentFactor: 0.9,
+            amenities: [
+                "gameRoom": AmenityDef(
+                    upgradeCost: 10_000, weeklyCost: 150, minTier: .loft, moraleBonus: 4
+                ),
+                "cafeteria": AmenityDef(
+                    upgradeCost: 25_000, weeklyCost: 400, minTier: .studio, moraleBonus: 6
+                ),
+                "shuttle": AmenityDef(
+                    upgradeCost: 15_000, weeklyCost: 300, minTier: .studio, moraleBonus: 4,
+                    quitStreakBonusDays: 7
+                ),
+                "gym": AmenityDef(
+                    upgradeCost: 30_000, weeklyCost: 350, minTier: .studio, moraleBonus: 5,
+                    founderHealthBonus: 0.2
+                ),
+            ]
+        )
+    }
+
+    /// How one `Difficulty` rescales the balance. Factors multiply, bonuses
+    /// and deltas add; `identity` (all 1× / +0) is what Normal ships with.
+    /// Decoded from the `"difficulty"` block, keyed by `Difficulty` raw value.
+    public struct RivalBalance: Codable, Equatable, Sendable {
+        /// How many rival studios exist at once (folded rivals are
+        /// replaced; acquired rivals are not).
+        public var rivalCount: Int
+        /// Days between evolution steps (strength drift + ship/stumble roll).
+        public var evolveIntervalDays: Int
+        /// Sigma of the weekly strength random-walk step.
+        public var strengthDriftSigma: Double
+        /// Chance an evolution step ships a product (dents that topic's
+        /// market multiplier by `competitionDent`).
+        public var shipChance: Double
+        public var competitionDent: Double
+        /// Reputation a rival gains when it ships.
+        public var shipReputationGain: Double
+        /// Chance an evolution step stumbles instead (strength and
+        /// reputation drop).
+        public var stumbleChance: Double
+        public var stumbleStrengthDrop: Double
+        public var stumbleReputationDrop: Double
+        /// A rival below this strength folds and is replaced.
+        public var foldThreshold: Double
+        /// Founding rolls: strength and reputation ranges.
+        public var foundingStrengthMin: Double
+        public var foundingStrengthMax: Double
+        public var foundingReputationMin: Double
+        public var foundingReputationMax: Double
+
+        /// Poach checks fire on days where `day % poachIntervalDays ==
+        /// poachOffsetDays`, at most once per `poachCooldownDays`.
+        public var poachIntervalDays: Int
+        public var poachOffsetDays: Int
+        public var poachCooldownDays: Int
+        /// Base chance a check produces an offer, scaled down by the
+        /// target's loyalty (`1 - loyalty / loyaltyResistDivisor`).
+        public var poachChance: Double
+        public var loyaltyResistDivisor: Double
+        /// Targeting weights over skill total, underpayment, and low morale.
+        public var poachSkillWeight: Double
+        public var poachUnderpaidWeight: Double
+        public var poachMoraleWeight: Double
+        /// Offered salary = fair pay × uniform(premiumMin...premiumMax).
+        public var poachPremiumMin: Double
+        public var poachPremiumMax: Double
+        /// Days the player has to respond before the offer auto-resolves.
+        public var poachResponseDays: Int
+        /// Loyalty gained when the player matches the offer.
+        public var matchLoyaltyBoost: Double
+
+        /// Buyout checks fire on days where `day % buyoutIntervalDays ==
+        /// buyoutOffsetDays`, at most once per `buyoutCooldownDays`, and
+        /// only while the company looks weak.
+        public var buyoutIntervalDays: Int
+        public var buyoutOffsetDays: Int
+        public var buyoutCooldownDays: Int
+        public var buyoutChance: Double
+        public var weakCashThreshold: Int
+        public var weakRepThreshold: Double
+        /// Offer = company valuation × uniform(offerFractionMin...Max).
+        public var offerFractionMin: Double
+        public var offerFractionMax: Double
+        public var buyoutResponseDays: Int
+
+        /// Valuation inputs (rival: per strength point; player: revenue
+        /// multiple over recent weekly sales plus per reputation point).
+        public var valuationPerStrength: Double
+        public var valuationRevenueMultiple: Double
+        public var valuationPerReputation: Double
+
+        /// Acquiring a rival costs `valuation × acquirePremium` and needs
+        /// player valuation ≥ rival valuation × `acquireDominanceFactor`.
+        public var acquirePremium: Double
+        public var acquireDominanceFactor: Double
+        public var acquireRepBonus: Double
+        /// Absorbed hires = `strength / absorbDivisor` (capped by headroom).
+        public var absorbDivisor: Double
+
+        public init(
+            rivalCount: Int,
+            evolveIntervalDays: Int,
+            strengthDriftSigma: Double,
+            shipChance: Double,
+            competitionDent: Double,
+            shipReputationGain: Double,
+            stumbleChance: Double,
+            stumbleStrengthDrop: Double,
+            stumbleReputationDrop: Double,
+            foldThreshold: Double,
+            foundingStrengthMin: Double,
+            foundingStrengthMax: Double,
+            foundingReputationMin: Double,
+            foundingReputationMax: Double,
+            poachIntervalDays: Int,
+            poachOffsetDays: Int,
+            poachCooldownDays: Int,
+            poachChance: Double,
+            loyaltyResistDivisor: Double,
+            poachSkillWeight: Double,
+            poachUnderpaidWeight: Double,
+            poachMoraleWeight: Double,
+            poachPremiumMin: Double,
+            poachPremiumMax: Double,
+            poachResponseDays: Int,
+            matchLoyaltyBoost: Double,
+            buyoutIntervalDays: Int,
+            buyoutOffsetDays: Int,
+            buyoutCooldownDays: Int,
+            buyoutChance: Double,
+            weakCashThreshold: Int,
+            weakRepThreshold: Double,
+            offerFractionMin: Double,
+            offerFractionMax: Double,
+            buyoutResponseDays: Int,
+            valuationPerStrength: Double,
+            valuationRevenueMultiple: Double,
+            valuationPerReputation: Double,
+            acquirePremium: Double,
+            acquireDominanceFactor: Double,
+            acquireRepBonus: Double,
+            absorbDivisor: Double
+        ) {
+            self.rivalCount = rivalCount
+            self.evolveIntervalDays = evolveIntervalDays
+            self.strengthDriftSigma = strengthDriftSigma
+            self.shipChance = shipChance
+            self.competitionDent = competitionDent
+            self.shipReputationGain = shipReputationGain
+            self.stumbleChance = stumbleChance
+            self.stumbleStrengthDrop = stumbleStrengthDrop
+            self.stumbleReputationDrop = stumbleReputationDrop
+            self.foldThreshold = foldThreshold
+            self.foundingStrengthMin = foundingStrengthMin
+            self.foundingStrengthMax = foundingStrengthMax
+            self.foundingReputationMin = foundingReputationMin
+            self.foundingReputationMax = foundingReputationMax
+            self.poachIntervalDays = poachIntervalDays
+            self.poachOffsetDays = poachOffsetDays
+            self.poachCooldownDays = poachCooldownDays
+            self.poachChance = poachChance
+            self.loyaltyResistDivisor = loyaltyResistDivisor
+            self.poachSkillWeight = poachSkillWeight
+            self.poachUnderpaidWeight = poachUnderpaidWeight
+            self.poachMoraleWeight = poachMoraleWeight
+            self.poachPremiumMin = poachPremiumMin
+            self.poachPremiumMax = poachPremiumMax
+            self.poachResponseDays = poachResponseDays
+            self.matchLoyaltyBoost = matchLoyaltyBoost
+            self.buyoutIntervalDays = buyoutIntervalDays
+            self.buyoutOffsetDays = buyoutOffsetDays
+            self.buyoutCooldownDays = buyoutCooldownDays
+            self.buyoutChance = buyoutChance
+            self.weakCashThreshold = weakCashThreshold
+            self.weakRepThreshold = weakRepThreshold
+            self.offerFractionMin = offerFractionMin
+            self.offerFractionMax = offerFractionMax
+            self.buyoutResponseDays = buyoutResponseDays
+            self.valuationPerStrength = valuationPerStrength
+            self.valuationRevenueMultiple = valuationRevenueMultiple
+            self.valuationPerReputation = valuationPerReputation
+            self.acquirePremium = acquirePremium
+            self.acquireDominanceFactor = acquireDominanceFactor
+            self.acquireRepBonus = acquireRepBonus
+            self.absorbDivisor = absorbDivisor
+        }
+
+        public static let standard = RivalBalance(
+            rivalCount: 4,
+            evolveIntervalDays: 7,
+            strengthDriftSigma: 2.0,
+            shipChance: 0.10,
+            competitionDent: 0.08,
+            shipReputationGain: 1.5,
+            stumbleChance: 0.06,
+            stumbleStrengthDrop: 6,
+            stumbleReputationDrop: 4,
+            foldThreshold: 8,
+            foundingStrengthMin: 15,
+            foundingStrengthMax: 55,
+            foundingReputationMin: 10,
+            foundingReputationMax: 50,
+            poachIntervalDays: 7,
+            poachOffsetDays: 3,
+            poachCooldownDays: 21,
+            poachChance: 0.35,
+            loyaltyResistDivisor: 130,
+            poachSkillWeight: 1.0,
+            poachUnderpaidWeight: 120,
+            poachMoraleWeight: 90,
+            poachPremiumMin: 1.15,
+            poachPremiumMax: 1.45,
+            poachResponseDays: 5,
+            matchLoyaltyBoost: 12,
+            buyoutIntervalDays: 7,
+            buyoutOffsetDays: 5,
+            buyoutCooldownDays: 28,
+            buyoutChance: 0.4,
+            weakCashThreshold: 5000,
+            weakRepThreshold: 20,
+            offerFractionMin: 0.7,
+            offerFractionMax: 1.1,
+            buyoutResponseDays: 5,
+            valuationPerStrength: 4000,
+            valuationRevenueMultiple: 6,
+            valuationPerReputation: 1500,
+            acquirePremium: 1.3,
+            acquireDominanceFactor: 1.5,
+            acquireRepBonus: 5,
+            absorbDivisor: 25
+        )
+    }
+
+    public struct CityBalance: Codable, Equatable, Sendable {
+        /// One district's costs and perks.
+        public struct DistrictDef: Codable, Equatable, Sendable {
+            /// Multiplies the office tier's weekly rent.
+            public var rentMultiplier: Double
+            /// Multiplies purchase and relocation costs.
+            public var priceMultiplier: Double
+            /// Added to the candidate-refresh skill ceiling.
+            public var candidateSkillBonus: Double
+            /// Extra weekly contract offers (like `legalExtraOffers`).
+            public var extraContractOffers: Int
+            /// Weekly reputation drift from the address's prestige.
+            public var weeklyReputationDrift: Double
+            /// Added to every hired employee's morale target.
+            public var moraleBonus: Double
+
+            public init(
+                rentMultiplier: Double,
+                priceMultiplier: Double,
+                candidateSkillBonus: Double,
+                extraContractOffers: Int,
+                weeklyReputationDrift: Double,
+                moraleBonus: Double
+            ) {
+                self.rentMultiplier = rentMultiplier
+                self.priceMultiplier = priceMultiplier
+                self.candidateSkillBonus = candidateSkillBonus
+                self.extraContractOffers = extraContractOffers
+                self.weeklyReputationDrift = weeklyReputationDrift
+                self.moraleBonus = moraleBonus
+            }
+
+            /// Old Town: the pre-city baseline (multipliers 1, no perks).
+            public static let neutral = DistrictDef(
+                rentMultiplier: 1, priceMultiplier: 1, candidateSkillBonus: 0,
+                extraContractOffers: 0, weeklyReputationDrift: 0, moraleBonus: 0
+            )
+        }
+
+        /// Keyed by `DistrictID` raw value; a missing key reads as neutral.
+        public var districts: [String: DistrictDef]
+        /// Buy price = this many weeks of the district-scaled weekly rent.
+        public var buyPriceFactor: Double
+        /// Weekly tax posted while owned: `propertyValue × rate`.
+        public var weeklyPropertyTaxRate: Double
+        /// Sigma of the monthly relative property-value step.
+        public var propertyDriftSigma: Double
+        /// Property value stays within `purchase × min...max` factors.
+        public var propertyValueMinFactor: Double
+        public var propertyValueMaxFactor: Double
+        /// Relocation cost = base × destination price multiplier.
+        public var relocationCostBase: Int
+        /// Morale hit every hired employee takes on a move.
+        public var relocationMoralePenalty: Double
+
+        public init(
+            districts: [String: DistrictDef],
+            buyPriceFactor: Double,
+            weeklyPropertyTaxRate: Double,
+            propertyDriftSigma: Double,
+            propertyValueMinFactor: Double,
+            propertyValueMaxFactor: Double,
+            relocationCostBase: Int,
+            relocationMoralePenalty: Double
+        ) {
+            self.districts = districts
+            self.buyPriceFactor = buyPriceFactor
+            self.weeklyPropertyTaxRate = weeklyPropertyTaxRate
+            self.propertyDriftSigma = propertyDriftSigma
+            self.propertyValueMinFactor = propertyValueMinFactor
+            self.propertyValueMaxFactor = propertyValueMaxFactor
+            self.relocationCostBase = relocationCostBase
+            self.relocationMoralePenalty = relocationMoralePenalty
+        }
+
+        public func district(_ id: DistrictID) -> DistrictDef {
+            districts[id.rawValue] ?? .neutral
+        }
+
+        public static let standard = CityBalance(
+            districts: [
+                DistrictID.oldTown.rawValue: DistrictDef(
+                    rentMultiplier: 1.0, priceMultiplier: 1.0, candidateSkillBonus: 0,
+                    extraContractOffers: 0, weeklyReputationDrift: 0, moraleBonus: 0
+                ),
+                DistrictID.suburbs.rawValue: DistrictDef(
+                    rentMultiplier: 0.7, priceMultiplier: 0.7, candidateSkillBonus: -5,
+                    extraContractOffers: 0, weeklyReputationDrift: -0.1, moraleBonus: -2
+                ),
+                DistrictID.midtown.rawValue: DistrictDef(
+                    rentMultiplier: 1.3, priceMultiplier: 1.4, candidateSkillBonus: 5,
+                    extraContractOffers: 1, weeklyReputationDrift: 0.1, moraleBonus: 2
+                ),
+                DistrictID.techPark.rawValue: DistrictDef(
+                    rentMultiplier: 1.6, priceMultiplier: 1.8, candidateSkillBonus: 12,
+                    extraContractOffers: 1, weeklyReputationDrift: 0.15, moraleBonus: 3
+                ),
+                DistrictID.downtown.rawValue: DistrictDef(
+                    rentMultiplier: 2.2, priceMultiplier: 2.6, candidateSkillBonus: 8,
+                    extraContractOffers: 2, weeklyReputationDrift: 0.3, moraleBonus: 5
+                ),
+            ],
+            buyPriceFactor: 150,
+            weeklyPropertyTaxRate: 0.002,
+            propertyDriftSigma: 0.03,
+            propertyValueMinFactor: 0.5,
+            propertyValueMaxFactor: 2.0,
+            relocationCostBase: 8000,
+            relocationMoralePenalty: 5
+        )
+    }
+
+    public struct InstantLifeBalance: Codable, Equatable, Sendable {
+        /// One instant activity's effects: `LifeBalance.ActivityDef` deltas
+        /// plus a per-activity cooldown.
+        public struct InstantActivityDef: Codable, Equatable, Sendable {
+            public var energy: Double
+            public var health: Double
+            public var mood: Double
+            public var relationships: Double
+            public var cost: Int
+            public var cooldownDays: Int
+
+            public init(
+                energy: Double, health: Double, mood: Double,
+                relationships: Double, cost: Int, cooldownDays: Int
+            ) {
+                self.energy = energy
+                self.health = health
+                self.mood = mood
+                self.relationships = relationships
+                self.cost = cost
+                self.cooldownDays = cooldownDays
+            }
+        }
+
+        /// A buyable possession: one-time mood pop, then a small daily
+        /// mood drift and a prestige term feeding the relationships drift.
+        public struct ItemDef: Codable, Equatable, Sendable {
+            public var name: String
+            public var cost: Int
+            public var moodPop: Double
+            public var dailyMoodDrift: Double
+            public var prestige: Double
+
+            public init(name: String, cost: Int, moodPop: Double, dailyMoodDrift: Double, prestige: Double) {
+                self.name = name
+                self.cost = cost
+                self.moodPop = moodPop
+                self.dailyMoodDrift = dailyMoodDrift
+                self.prestige = prestige
+            }
+        }
+
+        /// Instant activities allowed per day (shared cap).
+        public var maxPerDay: Int
+        /// Keyed by `InstantActivity` raw value.
+        public var activities: [String: InstantActivityDef]
+        /// The shop catalog, keyed by item id.
+        public var items: [String: ItemDef]
+        /// Prestige sum × this joins the daily relationships drift.
+        public var prestigeRelationshipFactor: Double
+
+        public init(
+            maxPerDay: Int,
+            activities: [String: InstantActivityDef],
+            items: [String: ItemDef],
+            prestigeRelationshipFactor: Double
+        ) {
+            self.maxPerDay = maxPerDay
+            self.activities = activities
+            self.items = items
+            self.prestigeRelationshipFactor = prestigeRelationshipFactor
+        }
+
+        public func activity(_ activity: InstantActivity) -> InstantActivityDef? {
+            activities[activity.rawValue]
+        }
+
+        public static let standard = InstantLifeBalance(
+            maxPerDay: 2,
+            activities: [
+                InstantActivity.gymSession.rawValue: InstantActivityDef(
+                    energy: -8, health: 6, mood: 3, relationships: 0, cost: 30, cooldownDays: 1
+                ),
+                InstantActivity.walk.rawValue: InstantActivityDef(
+                    energy: -2, health: 2, mood: 4, relationships: 0, cost: 0, cooldownDays: 1
+                ),
+                InstantActivity.cinema.rawValue: InstantActivityDef(
+                    energy: -3, health: 0, mood: 8, relationships: 2, cost: 40, cooldownDays: 2
+                ),
+                InstantActivity.restaurant.rawValue: InstantActivityDef(
+                    energy: 2, health: -1, mood: 6, relationships: 4, cost: 90, cooldownDays: 2
+                ),
+            ],
+            items: [
+                "espressoMachine": ItemDef(
+                    name: "Espresso machine", cost: 600, moodPop: 5, dailyMoodDrift: 0.1, prestige: 0
+                ),
+                "gamingConsole": ItemDef(
+                    name: "Gaming console", cost: 900, moodPop: 8, dailyMoodDrift: 0.15, prestige: 0
+                ),
+                "roadBike": ItemDef(
+                    name: "Road bike", cost: 1800, moodPop: 6, dailyMoodDrift: 0.1, prestige: 1
+                ),
+                "designerWatch": ItemDef(
+                    name: "Designer watch", cost: 4000, moodPop: 6, dailyMoodDrift: 0.05, prestige: 2
+                ),
+                "sportsCar": ItemDef(
+                    name: "Sports car", cost: 60000, moodPop: 15, dailyMoodDrift: 0.2, prestige: 6
+                ),
+            ],
+            prestigeRelationshipFactor: 0.02
+        )
+    }
+
+    public struct SocialBalance: Codable, Equatable, Sendable {
+        /// Loyalty drifts toward `50 + (morale − 70) / 2` at this rate.
+        public var loyaltyAdaptRate: Double
+        /// The quit streak extends by `loyalty / this` days.
+        public var loyaltyQuitDivisor: Double
+        /// Per-employee cooldown shared by coffee / 1-on-1 / gift.
+        public var socialCooldownDays: Int
+        public var coffeeCost: Int
+        public var coffeeMorale: Double
+        public var coffeeLoyalty: Double
+        public var oneOnOneLoyalty: Double
+        public var giftCost: Int
+        public var giftMorale: Double
+        public var giftLoyalty: Double
+        public var dinnerCostPerHead: Int
+        public var dinnerMorale: Double
+        public var dinnerLoyalty: Double
+        public var teamDinnerCooldownDays: Int
+        /// Weekly chance a co-assigned pair without a bond forms one.
+        public var bondChance: Double
+        public var bondGrowthPerWeek: Double
+        public var bondDecayPerWeek: Double
+        /// Output factor per point of the strongest co-assigned bond:
+        /// `1 + bonus × strength / 100`.
+        public var friendshipOutputBonus: Double
+        /// Morale a surviving friend loses when their friend is fired or
+        /// poached, scaled by bond strength / 100.
+        public var friendFiredMoralePenalty: Double
+        public var staffEventIntervalDays: Int
+        public var staffEventChance: Double
+        public var birthdayMoraleBoost: Double
+        public var birthdayCakeCost: Int
+        public var supportCost: Int
+        public var supportMorale: Double
+        public var supportLoyalty: Double
+        public var strictLoyaltyPenalty: Double
+        public var staffEventResponseDays: Int
+
+        public init(
+            loyaltyAdaptRate: Double,
+            loyaltyQuitDivisor: Double,
+            socialCooldownDays: Int,
+            coffeeCost: Int,
+            coffeeMorale: Double,
+            coffeeLoyalty: Double,
+            oneOnOneLoyalty: Double,
+            giftCost: Int,
+            giftMorale: Double,
+            giftLoyalty: Double,
+            dinnerCostPerHead: Int,
+            dinnerMorale: Double,
+            dinnerLoyalty: Double,
+            teamDinnerCooldownDays: Int,
+            bondChance: Double,
+            bondGrowthPerWeek: Double,
+            bondDecayPerWeek: Double,
+            friendshipOutputBonus: Double,
+            friendFiredMoralePenalty: Double,
+            staffEventIntervalDays: Int,
+            staffEventChance: Double,
+            birthdayMoraleBoost: Double,
+            birthdayCakeCost: Int,
+            supportCost: Int,
+            supportMorale: Double,
+            supportLoyalty: Double,
+            strictLoyaltyPenalty: Double,
+            staffEventResponseDays: Int
+        ) {
+            self.loyaltyAdaptRate = loyaltyAdaptRate
+            self.loyaltyQuitDivisor = loyaltyQuitDivisor
+            self.socialCooldownDays = socialCooldownDays
+            self.coffeeCost = coffeeCost
+            self.coffeeMorale = coffeeMorale
+            self.coffeeLoyalty = coffeeLoyalty
+            self.oneOnOneLoyalty = oneOnOneLoyalty
+            self.giftCost = giftCost
+            self.giftMorale = giftMorale
+            self.giftLoyalty = giftLoyalty
+            self.dinnerCostPerHead = dinnerCostPerHead
+            self.dinnerMorale = dinnerMorale
+            self.dinnerLoyalty = dinnerLoyalty
+            self.teamDinnerCooldownDays = teamDinnerCooldownDays
+            self.bondChance = bondChance
+            self.bondGrowthPerWeek = bondGrowthPerWeek
+            self.bondDecayPerWeek = bondDecayPerWeek
+            self.friendshipOutputBonus = friendshipOutputBonus
+            self.friendFiredMoralePenalty = friendFiredMoralePenalty
+            self.staffEventIntervalDays = staffEventIntervalDays
+            self.staffEventChance = staffEventChance
+            self.birthdayMoraleBoost = birthdayMoraleBoost
+            self.birthdayCakeCost = birthdayCakeCost
+            self.supportCost = supportCost
+            self.supportMorale = supportMorale
+            self.supportLoyalty = supportLoyalty
+            self.strictLoyaltyPenalty = strictLoyaltyPenalty
+            self.staffEventResponseDays = staffEventResponseDays
+        }
+
+        public static let standard = SocialBalance(
+            loyaltyAdaptRate: 0.03,
+            loyaltyQuitDivisor: 10,
+            socialCooldownDays: 7,
+            coffeeCost: 20,
+            coffeeMorale: 3,
+            coffeeLoyalty: 3,
+            oneOnOneLoyalty: 8,
+            giftCost: 250,
+            giftMorale: 8,
+            giftLoyalty: 10,
+            dinnerCostPerHead: 60,
+            dinnerMorale: 6,
+            dinnerLoyalty: 4,
+            teamDinnerCooldownDays: 14,
+            bondChance: 0.15,
+            bondGrowthPerWeek: 4,
+            bondDecayPerWeek: 2,
+            friendshipOutputBonus: 0.08,
+            friendFiredMoralePenalty: 18,
+            staffEventIntervalDays: 21,
+            staffEventChance: 0.5,
+            birthdayMoraleBoost: 6,
+            birthdayCakeCost: 100,
+            supportCost: 500,
+            supportMorale: 6,
+            supportLoyalty: 12,
+            strictLoyaltyPenalty: 10,
+            staffEventResponseDays: 5
+        )
+    }
+
+    public struct DifficultyBalance: Codable, Equatable, Sendable {
+        /// × `startingCash`.
+        public var startingCashFactor: Double
+        /// × `weeklyOperatingCost`.
+        public var operatingCostFactor: Double
+        /// × every office tier's `weeklyRent` and `upgradeCost`.
+        public var officeCostFactor: Double
+        /// × `salaryBase` and `salaryPerSkillPoint` (so fair-pay
+        /// expectations move with the hiring market).
+        public var salaryFactor: Double
+        /// × `marketSizeScale` (sales) and `contractPayoutPerPoint`.
+        public var revenueFactor: Double
+        /// + `reviewExpectationBase`.
+        public var reviewExpectationBonus: Double
+        /// + `bankruptcyGraceDays`.
+        public var bankruptcyGraceDaysDelta: Int
+        /// + `candidateSkillBase`.
+        public var candidateSkillBonus: Double
+        /// × `life.hospitalBill` and every home tier's `weeklyRent`.
+        public var lifeCostFactor: Double
+
+        public init(
+            startingCashFactor: Double, operatingCostFactor: Double, officeCostFactor: Double,
+            salaryFactor: Double, revenueFactor: Double, reviewExpectationBonus: Double,
+            bankruptcyGraceDaysDelta: Int, candidateSkillBonus: Double, lifeCostFactor: Double
+        ) {
+            self.startingCashFactor = startingCashFactor
+            self.operatingCostFactor = operatingCostFactor
+            self.officeCostFactor = officeCostFactor
+            self.salaryFactor = salaryFactor
+            self.revenueFactor = revenueFactor
+            self.reviewExpectationBonus = reviewExpectationBonus
+            self.bankruptcyGraceDaysDelta = bankruptcyGraceDaysDelta
+            self.candidateSkillBonus = candidateSkillBonus
+            self.lifeCostFactor = lifeCostFactor
+        }
+
+        /// Changes nothing — Normal.
+        public static let identity = DifficultyBalance(
+            startingCashFactor: 1, operatingCostFactor: 1, officeCostFactor: 1,
+            salaryFactor: 1, revenueFactor: 1, reviewExpectationBonus: 0,
+            bankruptcyGraceDaysDelta: 0, candidateSkillBonus: 0, lifeCostFactor: 1
+        )
+
+        /// The shipped easy / normal / hard table.
+        public static let standardTable: [String: DifficultyBalance] = [
+            Difficulty.easy.rawValue: DifficultyBalance(
+                startingCashFactor: 1.5, operatingCostFactor: 0.8, officeCostFactor: 0.8,
+                salaryFactor: 0.9, revenueFactor: 1.25, reviewExpectationBonus: -5,
+                bankruptcyGraceDaysDelta: 7, candidateSkillBonus: 10, lifeCostFactor: 0.8
+            ),
+            Difficulty.normal.rawValue: .identity,
+            Difficulty.hard.rawValue: DifficultyBalance(
+                startingCashFactor: 0.7, operatingCostFactor: 1.3, officeCostFactor: 1.25,
+                salaryFactor: 1.15, revenueFactor: 0.8, reviewExpectationBonus: 6,
+                bankruptcyGraceDaysDelta: -4, candidateSkillBonus: -5, lifeCostFactor: 1.2
+            ),
+        ]
+    }
+
     /// Weights of the three point pools in the ship-quality formula.
     public struct QualityWeights: Codable, Equatable, Sendable {
         public var design: Double
@@ -357,6 +1409,23 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     public var delistFraction: Double
     /// Fraction by which reputation moves toward the average review score per launch.
     public var reputationReviewNudge: Double
+    /// Engine-side multiplier on every product type's `marketSize` (the
+    /// content package is read-only, so the economy is scaled here).
+    public var marketSizeScale: Double
+
+    // MARK: - Launch saturation & genre fatigue
+
+    /// Each of the studio's own releases in the same topic within
+    /// `saturationWindowDays` multiplies the next launch's sales peak by
+    /// this factor, never below `saturationFloor`.
+    public var saturationPerRelease: Double
+    public var saturationFloor: Double
+    public var saturationWindowDays: Int
+    /// Each release of the same product type within
+    /// `genreFatigueWindowDays` multiplies the next launch's peak by this
+    /// factor (same floor).
+    public var genreFatigueFactor: Double
+    public var genreFatigueWindowDays: Int
 
     // MARK: - Contracts
 
@@ -436,6 +1505,47 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     public var life: LifeBalance
 
+    // MARK: - Dynamics (market, adoption, staff, contract quality, loans)
+
+    public var market: MarketBalance
+    public var adoption: AdoptionBalance
+    public var staff: StaffBalance
+    public var contractQuality: ContractQualityBalance
+    public var loans: LoanBalance
+
+    // MARK: - Company depth (roles, departments, amenities)
+
+    public var company: CompanyBalance
+
+    // MARK: - Rivals
+
+    public var rivals: RivalBalance
+
+    // MARK: - City
+
+    public var city: CityBalance
+
+    // MARK: - Instant life
+
+    public var instantLife: InstantLifeBalance
+
+    // MARK: - Social
+
+    public var social: SocialBalance
+
+    // MARK: - Market history
+
+    /// Weeks of per-topic multiplier history `MarketState.history` keeps.
+    public var marketHistoryWeeks: Int
+    /// Booms and crashes `MarketState.recentEvents` keeps.
+    public var marketEventLogCap: Int
+
+    // MARK: - Difficulty
+
+    /// Per-difficulty rescaling, keyed by `Difficulty` raw value. A missing
+    /// key reads as `DifficultyBalance.identity`.
+    public var difficulty: [String: DifficultyBalance]
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,
@@ -509,7 +1619,26 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         salesHypeDivisor: Double,
         eventCheckIntervalDays: Int,
         eventChance: Double,
-        life: LifeBalance
+        life: LifeBalance,
+        market: MarketBalance = .standard,
+        adoption: AdoptionBalance = .standard,
+        staff: StaffBalance = .standard,
+        contractQuality: ContractQualityBalance = .standard,
+        loans: LoanBalance = .standard,
+        company: CompanyBalance = .standard,
+        rivals: RivalBalance = .standard,
+        city: CityBalance = .standard,
+        instantLife: InstantLifeBalance = .standard,
+        social: SocialBalance = .standard,
+        marketSizeScale: Double = 1,
+        saturationPerRelease: Double = 1,
+        saturationFloor: Double = 0.3,
+        saturationWindowDays: Int = 182,
+        genreFatigueFactor: Double = 1,
+        genreFatigueWindowDays: Int = 84,
+        marketHistoryWeeks: Int = 26,
+        marketEventLogCap: Int = 30,
+        difficulty: [String: DifficultyBalance] = DifficultyBalance.standardTable
     ) {
         self.startingCash = startingCash
         self.weeklyOperatingCost = weeklyOperatingCost
@@ -584,6 +1713,25 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         self.eventCheckIntervalDays = eventCheckIntervalDays
         self.eventChance = eventChance
         self.life = life
+        self.market = market
+        self.adoption = adoption
+        self.staff = staff
+        self.contractQuality = contractQuality
+        self.loans = loans
+        self.company = company
+        self.rivals = rivals
+        self.city = city
+        self.instantLife = instantLife
+        self.social = social
+        self.marketSizeScale = marketSizeScale
+        self.saturationPerRelease = saturationPerRelease
+        self.saturationFloor = saturationFloor
+        self.saturationWindowDays = saturationWindowDays
+        self.genreFatigueFactor = genreFatigueFactor
+        self.genreFatigueWindowDays = genreFatigueWindowDays
+        self.marketHistoryWeeks = marketHistoryWeeks
+        self.marketEventLogCap = marketEventLogCap
+        self.difficulty = difficulty
     }
 
     public func office(_ tier: OfficeTier) -> OfficeDef {
@@ -596,6 +1744,68 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     /// Shorthand for `life.home(tier)`.
     public func home(_ tier: HomeTier) -> LifeBalance.HomeDef {
         life.home(tier)
+    }
+
+    /// A copy rescaled for `difficulty` per its `difficulty` block (an
+    /// absent block reads as identity, so Normal — and any balance without
+    /// the block — comes back equal to `self`). Pure: the receiver is never
+    /// mutated, and the RNG-facing cadences (refresh intervals, roll counts,
+    /// ranges that decide whether a word is drawn) are deliberately not on
+    /// the list, so a seed walks the same random path on every difficulty.
+    public func adjusted(for difficulty: Difficulty) -> BalanceConfig {
+        let scale = self.difficulty[difficulty.rawValue] ?? .identity
+        func scaled(_ value: Int, by factor: Double) -> Int {
+            Int((Double(value) * factor).rounded())
+        }
+
+        var copy = self
+        copy.startingCash = scaled(startingCash, by: scale.startingCashFactor)
+        copy.weeklyOperatingCost = scaled(weeklyOperatingCost, by: scale.operatingCostFactor)
+        copy.bankruptcyGraceDays = bankruptcyGraceDays + scale.bankruptcyGraceDaysDelta
+        for (tier, office) in offices {
+            copy.offices[tier] = OfficeDef(
+                upgradeCost: scaled(office.upgradeCost, by: scale.officeCostFactor),
+                weeklyRent: scaled(office.weeklyRent, by: scale.officeCostFactor),
+                headcountCap: office.headcountCap
+            )
+        }
+        copy.salaryBase = scaled(salaryBase, by: scale.salaryFactor)
+        copy.salaryPerSkillPoint = salaryPerSkillPoint * scale.salaryFactor
+        copy.marketSizeScale = marketSizeScale * scale.revenueFactor
+        copy.contractPayoutPerPoint = contractPayoutPerPoint * scale.revenueFactor
+        copy.reviewExpectationBase = reviewExpectationBase + scale.reviewExpectationBonus
+        copy.candidateSkillBase = candidateSkillBase + scale.candidateSkillBonus
+        // Rival money values track the revenue economy; cadences and
+        // chances deliberately stay so the world stream walks the same
+        // path on every difficulty.
+        copy.rivals.valuationPerStrength = rivals.valuationPerStrength * scale.revenueFactor
+        copy.rivals.valuationPerReputation = rivals.valuationPerReputation * scale.revenueFactor
+        copy.rivals.weakCashThreshold = scaled(rivals.weakCashThreshold, by: scale.startingCashFactor)
+        // City money values track office costs; multipliers are ratios and
+        // stay put.
+        copy.city.relocationCostBase = scaled(city.relocationCostBase, by: scale.officeCostFactor)
+        // Instant-life prices track the founder's cost of living.
+        for (id, activity) in instantLife.activities {
+            copy.instantLife.activities[id]?.cost = scaled(activity.cost, by: scale.lifeCostFactor)
+        }
+        for (id, item) in instantLife.items {
+            copy.instantLife.items[id]?.cost = scaled(item.cost, by: scale.lifeCostFactor)
+        }
+        // Social costs are company money; track operating costs.
+        copy.social.coffeeCost = scaled(social.coffeeCost, by: scale.operatingCostFactor)
+        copy.social.giftCost = scaled(social.giftCost, by: scale.operatingCostFactor)
+        copy.social.dinnerCostPerHead = scaled(social.dinnerCostPerHead, by: scale.operatingCostFactor)
+        copy.social.birthdayCakeCost = scaled(social.birthdayCakeCost, by: scale.operatingCostFactor)
+        copy.social.supportCost = scaled(social.supportCost, by: scale.operatingCostFactor)
+        copy.life.hospitalBill = scaled(life.hospitalBill, by: scale.lifeCostFactor)
+        for (tier, home) in life.homes {
+            copy.life.homes[tier] = LifeBalance.HomeDef(
+                upgradeCost: home.upgradeCost,
+                weeklyRent: scaled(home.weeklyRent, by: scale.lifeCostFactor),
+                moodBonus: home.moodBonus
+            )
+        }
+        return copy
     }
 
     /// Decodes the bundled `Balance.json` via `Bundle.module`.

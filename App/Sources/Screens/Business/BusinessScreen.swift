@@ -10,8 +10,10 @@ struct BusinessScreen: View {
 
     private enum BusinessSection: String, CaseIterable, Identifiable {
         case contracts = "Contracts"
+        case market = "Market"
         case marketing = "Marketing"
         case finances = "Finances"
+        case rivals = "Rivals"
 
         var id: String { rawValue }
     }
@@ -40,10 +42,14 @@ struct BusinessScreen: View {
                         switch section {
                         case .contracts:
                             ContractsView(engine: engine)
+                        case .market:
+                            MarketView(engine: engine)
                         case .marketing:
                             MarketingView(engine: engine)
                         case .finances:
                             FinancesView(engine: engine)
+                        case .rivals:
+                            RivalsView(engine: engine)
                         }
                     }
                     .padding(.horizontal, Theme.Spacing.lg)
@@ -51,6 +57,9 @@ struct BusinessScreen: View {
                     .padding(.bottom, Theme.Spacing.lg)
                 }
             }
+            // The HUD inset lives on the stack's root content (this VStack),
+            // not on the NavigationStack, so the picker lands below it.
+            .withTopHUD(engine: engine)
             .background(Theme.screenBackground)
             .navigationTitle("Business")
             .navigationBarTitleDisplayMode(.inline)

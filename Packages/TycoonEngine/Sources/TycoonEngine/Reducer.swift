@@ -9,15 +9,28 @@ public enum Reducer {
     typealias System = @Sendable (inout GameState, BalanceConfig, ContentCatalog) -> [GameEvent]
 
     /// Systems run in this order every day:
-    /// Life → Employee → Product → Contract → Research → Marketing → Finance → Event.
-    /// Life runs first so today's founder condition scales today's output.
+    /// Life → Market → Rival → Employee → Social → Product → Contract →
+    /// Research → Marketing → City → Finance → Event.
+    /// Life runs first so today's founder condition scales today's output;
+    /// Market shifts before sales post so a weekly shift prices the same
+    /// day's sales; Rival runs after Market (a rival shipping dents the
+    /// fresh multipliers) and before Employee (a poach resolving today
+    /// precedes the morale/quit sweep); Social runs right after Employee
+    /// so loyalty and bonds track the post-sweep roster; City settles
+    /// property tax and address prestige just before Finance's weekly
+    /// bill. Rival, Social, and City draw only from `worldRNG`, so their
+    /// positions never disturb the original `rng` stream.
     static let systems: [System] = [
         LifeSystem.run,
+        MarketSystem.run,
+        RivalSystem.run,
         EmployeeSystem.run,
+        SocialSystem.run,
         ProductSystem.run,
         ContractSystem.run,
         ResearchSystem.run,
         MarketingSystem.run,
+        CitySystem.run,
         FinanceSystem.run,
         EventSystem.run,
     ]
@@ -71,7 +84,7 @@ public enum Reducer {
         case let .hire(candidateID):
             events = EmployeeSystem.hire(candidateID: candidateID, state: &state, balance: balance)
         case let .fire(employeeID):
-            events = EmployeeSystem.fire(employeeID: employeeID, state: &state)
+            events = EmployeeSystem.fire(employeeID: employeeID, state: &state, balance: balance)
         case let .assign(employeeID, assignment):
             events = EmployeeSystem.assign(employeeID: employeeID, to: assignment, state: &state)
         case let .startResearch(nodeID):
@@ -99,6 +112,58 @@ public enum Reducer {
             events = LifeSystem.advanceRelationship(state: &state, balance: balance, content: content)
         case .haveChild:
             events = LifeSystem.haveChild(state: &state, balance: balance, content: content)
+        case let .praise(employeeID):
+            events = EmployeeSystem.praise(employeeID: employeeID, state: &state, balance: balance)
+        case let .adjustSalary(employeeID, weeklySalary):
+            events = EmployeeSystem.adjustSalary(
+                employeeID: employeeID, weeklySalary: weeklySalary, state: &state, balance: balance
+            )
+        case let .promote(employeeID):
+            events = EmployeeSystem.promote(employeeID: employeeID, state: &state, balance: balance)
+        case let .demote(employeeID):
+            events = EmployeeSystem.demote(employeeID: employeeID, state: &state, balance: balance)
+        case let .train(employeeID, skill):
+            events = EmployeeSystem.train(
+                employeeID: employeeID, skill: skill, state: &state, balance: balance
+            )
+        case let .takeLoan(amount):
+            events = FinanceSystem.takeLoan(amount: amount, state: &state, balance: balance)
+        case let .repayLoan(amount):
+            events = FinanceSystem.repayLoan(amount: amount, state: &state)
+        case let .buildAmenity(amenity):
+            events = FinanceSystem.buildAmenity(amenity, state: &state, balance: balance)
+        case .matchPoachOffer:
+            events = RivalSystem.matchPoachOffer(state: &state, balance: balance)
+        case .declinePoachOffer:
+            events = RivalSystem.declinePoachOffer(state: &state, balance: balance)
+        case .acceptBuyout:
+            events = RivalSystem.acceptBuyout(state: &state)
+        case .declineBuyout:
+            events = RivalSystem.declineBuyout(state: &state)
+        case let .acquireRival(rivalID):
+            events = RivalSystem.acquireRival(
+                rivalID: rivalID, state: &state, balance: balance, content: content
+            )
+        case let .relocateOffice(district):
+            events = CitySystem.relocateOffice(district: district, state: &state, balance: balance)
+        case .buyOffice:
+            events = CitySystem.buyOffice(state: &state, balance: balance)
+        case .sellOffice:
+            events = CitySystem.sellOffice(state: &state)
+        case let .doInstantActivity(activity):
+            events = LifeSystem.doInstantActivity(activity, state: &state, balance: balance)
+        case let .buyItem(itemID):
+            events = LifeSystem.buyItem(itemID: itemID, state: &state, balance: balance)
+        case let .grabCoffee(employeeID):
+            events = SocialSystem.grabCoffee(employeeID: employeeID, state: &state, balance: balance)
+        case let .oneOnOne(employeeID):
+            events = SocialSystem.oneOnOne(employeeID: employeeID, state: &state, balance: balance)
+        case let .giveGift(employeeID):
+            events = SocialSystem.giveGift(employeeID: employeeID, state: &state, balance: balance)
+        case .teamDinner:
+            events = SocialSystem.teamDinner(state: &state, balance: balance)
+        case let .resolveStaffEvent(choice):
+            events = SocialSystem.resolveStaffEvent(choice: choice, state: &state, balance: balance)
         }
 
         state.logEvents(events)

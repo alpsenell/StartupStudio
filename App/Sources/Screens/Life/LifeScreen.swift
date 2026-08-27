@@ -16,11 +16,16 @@ struct LifeScreen: View {
                     LifeMetersCard(engine: engine)
                     WorkScheduleCard(engine: engine)
                     MoneyCard(engine: engine)
+                    ActivitiesCard(engine: engine)
                     WeekendCard(engine: engine)
                     FamilyCard(engine: engine)
                 }
                 .padding(Theme.Spacing.lg)
             }
+            // The HUD inset lives on the stack's root content (not on the
+            // NavigationStack) so the root scrolls below it and any pushed
+            // destination shows the navigation bar instead.
+            .withTopHUD(engine: engine)
             .background(Theme.screenBackground)
             .navigationTitle("Life")
             .navigationBarTitleDisplayMode(.inline)

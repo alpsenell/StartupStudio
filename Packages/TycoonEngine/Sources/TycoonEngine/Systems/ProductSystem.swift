@@ -24,13 +24,15 @@ enum ProductSystem {
     /// accumulates), with the chance scaled by the producers' average coding
     /// skill and by `bugChanceMultiplier` (the founder's low-energy penalty
     /// when the founder worked today, else 1); each completed polish point
-    /// fixes one open bug.
+    /// fixes `bugFixMultiplier` open bugs (1 without QA on the crew; the
+    /// day's total rounds to the nearest bug).
     static func applyDailyProgress(
         design: Double,
         code: Double,
         polish: Double,
         averageCoding: Double,
         bugChanceMultiplier: Double,
+        bugFixMultiplier: Double = 1,
         productIndex: Int,
         state: inout GameState,
         balance: BalanceConfig
@@ -55,7 +57,8 @@ enum ProductSystem {
         dev.polishPts += polish
         let polishPointsCrossed = Int(dev.polishPts) - wholePolishBefore
         if polishPointsCrossed > 0 {
-            dev.openBugs = max(0, dev.openBugs - polishPointsCrossed)
+            let fixed = Int((Double(polishPointsCrossed) * bugFixMultiplier).rounded())
+            dev.openBugs = max(0, dev.openBugs - fixed)
         }
 
         state.products[productIndex].stage = .development(dev)
@@ -67,6 +70,16 @@ enum ProductSystem {
     /// curve uses w = the number of already-recorded sales weeks, which is 0
     /// on the first weekly post after launch and matches full weeks since
     /// launch thereafter (a row is appended every on-market weekly post).
+    ///
+    /// Two dynamics shape the curve beyond quality:
+    /// - the adoption ramp: sales reach the peak only after
+    ///   `info.adoptionWeeks` (set at ship from marketing skill and hype),
+    ///   and decay starts counting after the ramp completes;
+    /// - the topic's market multiplier, read live each week, so a booming
+    ///   market lifts every on-market product in that topic and a crash
+    ///   drags them down;
+    /// - `info.launchMarketScale`, the saturation / genre-fatigue discount
+    ///   fixed at ship (see `launchMarketScale(for:state:balance:)`).
     private static func postWeeklySales(
         _ state: inout GameState,
         _ balance: BalanceConfig,
@@ -82,14 +95,19 @@ enum ProductSystem {
 
             let qHat = Double(info.averageReviewScore) / 100.0
             let hypeBoost = 1 + info.hypeAtLaunch * balance.hypeLaunchCarryFraction / balance.salesHypeDivisor
-            let peak = type.marketSize
+            let marketMultiplier = state.market.multiplier(for: state.products[index].topicID)
+            let peak = type.marketSize * balance.marketSizeScale
                 * (balance.salesBaseFactor + balance.salesQualityFactor * qHat)
                 * hypeBoost
+                * info.launchMarketScale
             let week = info.weeklySales.count
+            let rampWeeks = max(1, info.adoptionWeeks)
+            let adoption = min(1, (Double(week) + 1) / rampWeeks)
             let decay = balance.salesDecayBase + balance.salesDecayQualityFactor * qHat
-            let units = Int(peak * pow(decay, Double(week)))
+            let decayWeeks = max(0, Double(week) - (rampWeeks - 1))
+            let units = Int(peak * adoption * pow(decay, decayWeeks) * marketMultiplier)
 
-            if units == 0 || Double(units) < balance.delistFraction * peak {
+            if units == 0 || (adoption >= 1 && Double(units) < balance.delistFraction * peak) {
                 info.offMarket = true
                 state.products[index].stage = .released(info)
                 events.append(.productOffMarket(productID: state.products[index].id, day: state.day))
@@ -109,6 +127,35 @@ enum ProductSystem {
         }
 
         return events
+    }
+
+    /// The launch-time market discount for a product about to ship: every
+    /// other release of the studio's in the same topic launched less than
+    /// `saturationWindowDays` ago multiplies the peak by
+    /// `saturationPerRelease`, and every release of the same product type
+    /// launched less than `genreFatigueWindowDays` ago multiplies it by
+    /// `genreFatigueFactor`; each term is floored at `saturationFloor`.
+    /// Off-market releases still count — the audience remembers them.
+    static func launchMarketScale(
+        for product: Product,
+        state: GameState,
+        balance: BalanceConfig
+    ) -> Double {
+        var sameTopic = 0
+        var sameType = 0
+        for other in state.products where other.id != product.id {
+            guard case .released(let info) = other.stage else { continue }
+            let age = state.day - info.launchDay
+            if other.topicID == product.topicID, age < balance.saturationWindowDays {
+                sameTopic += 1
+            }
+            if other.typeID == product.typeID, age < balance.genreFatigueWindowDays {
+                sameType += 1
+            }
+        }
+        let saturation = max(balance.saturationFloor, pow(balance.saturationPerRelease, Double(sameTopic)))
+        let fatigue = max(balance.saturationFloor, pow(balance.genreFatigueFactor, Double(sameType)))
+        return saturation * fatigue
     }
 
     // MARK: - Actions
@@ -170,7 +217,8 @@ enum ProductSystem {
     /// (graded against expectations that rise with studio age and
     /// reputation, lifted by launch hype) and reputation is nudged. The
     /// hype at ship is captured into `ReleaseInfo.hypeAtLaunch` to boost the
-    /// weekly sales peak.
+    /// weekly sales peak, and the launch saturation / genre fatigue into
+    /// `ReleaseInfo.launchMarketScale` to shrink it.
     static func ship(
         productID: UUID,
         state: inout GameState,
@@ -218,13 +266,29 @@ enum ProductSystem {
             ))
         }
 
+        // Adoption ramp: a marketing-savvy team (and launch hype) reaches
+        // the sales peak faster. The average is over the whole payroll —
+        // whoever is around sells the launch.
+        let marketingAvg = state.employees.isEmpty
+            ? 0
+            : state.employees.reduce(0.0) { $0 + $1.skills.marketing } / Double(state.employees.count)
+        let adoptionConfig = balance.adoption
+        let adoptionWeeks = max(adoptionConfig.rampWeeksMin,
+            adoptionConfig.rampWeeksMax
+                - marketingAvg / adoptionConfig.marketingDivisor
+                - hypeAtLaunch / adoptionConfig.hypeDivisor)
+
         let info = ReleaseInfo(
             launchDay: state.day,
             quality: quality,
             reviews: reviews,
             weeklySales: [],
             offMarket: false,
-            hypeAtLaunch: hypeAtLaunch
+            hypeAtLaunch: hypeAtLaunch,
+            adoptionWeeks: adoptionWeeks,
+            launchMarketScale: launchMarketScale(
+                for: state.products[index], state: state, balance: balance
+            )
         )
         let averageScore = info.averageReviewScore
 

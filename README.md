@@ -10,23 +10,37 @@ engine, with a pixel-art office scene as the game's face.
 Five tabs over the persistent cash/date/speed HUD:
 
 - **HQ** — the animated pixel office scene (upgradeable from garage to
-  campus), company overview, burn rate and runway, the product in
-  development, office upgrades, and the activity feed
+  campus), office amenities (game room, cafeteria, shuttle, gym — each with
+  a build cost and weekly upkeep, lifting team morale), departments (Legal,
+  People & HR, Operations — formed by hiring the matching role, each with
+  its own company-wide perks), company overview, burn rate and runway, the
+  product in development, office upgrades, and the activity feed
 - **Life** — the founder's personal life: the pixel home scene (studio
   flat to penthouse), energy/health/mood/relationship meters, work
   schedule (chill/normal/crunch), founder salary and wallet, weekend plans,
   and family — dating, moving in, marriage, and kids
-- **Team** — roster with skills, salaries, and assignments; hiring from a
-  rotating candidate pool; swipe-to-fire
+- **Team** — roster with roles (frontend, backend, designer, QA, marketer,
+  plus lawyers, HR, and ops who staff departments), skills, salaries,
+  seniority, and assignments; hiring from a rotating candidate pool;
+  swipe-to-fire; tap anyone to manage them one-on-one — praise, raises and
+  cuts, promotions and demotions, and paid training. Employees have morale
+  that drives their output; underpay them and they drift toward quitting
 - **Products** — two segments: *Products* builds products phase by phase
   (design/code/polish), tunes the phase focus, squashes bugs, ships, and
   watches reviews and sales roll in; *R&D* is the tech tree — bank research
-  points and unlock technologies
-- **Business** — client contracts with deadlines, marketing campaigns, and
-  the company finance ledger
+  points and unlock technologies. Sales don't spike instantly: launches
+  ramp up over an adoption curve set by the team's marketing skill and
+  launch hype
+- **Business** — client contracts with deadlines *and* quality
+  expectations (deliver with an under-skilled crew and the client docks
+  the payout), a live market board showing which topics are hot or
+  slumping (demand multiplies weekly sales, with booms and crashes),
+  marketing campaigns, bank loans with weekly interest, and the company
+  finance ledger
 
-Plus autosave with versioned migrations, game over on bankruptcy, and a
-deterministic engine (same seed, same game) under it all.
+Plus autosave with versioned migrations, game over on bankruptcy,
+auto-pause on notable events so nothing important slips past at 4× speed,
+and a deterministic engine (same seed, same game) under it all.
 
 ## Layout
 

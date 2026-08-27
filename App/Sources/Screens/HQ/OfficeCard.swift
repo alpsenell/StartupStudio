@@ -3,14 +3,18 @@ import SwiftUI
 import TycoonEngine
 
 /// The pixel-art office scene card at the top of HQ — the game's face.
-/// Shows the current office tier with every employee at a desk, a headcount
-/// pill against the tier's desk cap, and — until the studio reaches campus —
-/// the upgrade affordance for the next tier.
+/// Shows the current office tier with every employee at a desk (and any
+/// amenities built), a headcount pill against the tier's desk cap, the
+/// amenities entry point, and — until the studio reaches campus — the
+/// upgrade affordance for the next tier.
 ///
-/// Mirrors `CardView`'s header styling by hand because this card carries a
-/// trailing accessory in the header row.
+/// Mirrors `CardView`'s header styling by hand because this card carries
+/// trailing accessories in the header row.
 struct OfficeCard: View {
     let engine: GameEngine
+
+    @State private var showingAmenities = false
+    @State private var showingCityMap = false
 
     var body: some View {
         let state = engine.state
@@ -30,12 +34,28 @@ struct OfficeCard: View {
                 if founderIsAway {
                     FounderAwayChip(reason: state.life.awayReason)
                 }
+                ForEach(ownedAmenities, id: \.self) { amenity in
+                    AmenityChip(amenity: amenity)
+                }
                 HeadcountPill(headcount: state.headcount, cap: cap)
             }
 
-            OfficeSceneView(tier: tierStyle, occupants: occupants)
+            OfficeSceneView(tier: tierStyle, occupants: occupants, amenities: amenityStyles)
                 .frame(maxWidth: .infinity)
                 .accessibilityLabel(sceneAccessibilityLabel)
+
+            Divider()
+            AmenitiesRow(ownedCount: ownedAmenities.count) {
+                showingAmenities = true
+            }
+
+            Divider()
+            CityMapRow(
+                district: state.city.district,
+                owned: state.city.ownership.isOwned
+            ) {
+                showingCityMap = true
+            }
 
             if let next = state.company.officeTier.next {
                 Divider()
@@ -52,12 +72,29 @@ struct OfficeCard: View {
         // Moving day: the scene above re-renders with the new tier; add a
         // success haptic so the moment lands.
         .sensoryFeedback(.success, trigger: state.company.officeTier)
+        .sheet(isPresented: $showingAmenities) {
+            AmenitiesSheet(engine: engine)
+        }
+        .fullScreenCover(isPresented: $showingCityMap) {
+            CityMapScreen(engine: engine)
+        }
     }
 
     /// `OfficeTier` and `OfficeTierStyle` share raw values by design;
     /// the fallback is defensive and should never trigger.
     private var tierStyle: OfficeTierStyle {
         OfficeTierStyle(rawValue: engine.state.company.officeTier.rawValue) ?? .garage
+    }
+
+    /// Built amenities in catalog order (a `Set` has no stable order).
+    private var ownedAmenities: [Amenity] {
+        Amenity.allCases.filter { engine.state.amenities.contains($0) }
+    }
+
+    /// `Amenity` and `AmenityStyle` share raw values by design; anything
+    /// PixelKit can't draw is simply left out of the scene.
+    private var amenityStyles: Set<AmenityStyle> {
+        Set(engine.state.amenities.compactMap { AmenityStyle(rawValue: $0.rawValue) })
     }
 
     /// Travelling founder (vacation, conference, ...): their desk sits empty.
@@ -84,26 +121,134 @@ struct OfficeCard: View {
             }
     }
 
-    /// Maps a simulation assignment onto a cosmetic desk status.
-    /// Contracts borrow the marketing bubble until M5 gets its own.
+    /// Maps a simulation assignment onto a cosmetic desk status. Department
+    /// staff (legal, HR, ops) work their department whenever they're not
+    /// idle; builders show their role's bubble on a product or contract,
+    /// the flask while researching.
     private func workStatus(for employee: Employee) -> WorkStatus {
-        switch employee.assignment {
-        case .idle:
-            .idle
-        case .research:
-            .researching
-        case .contract:
-            .marketing
-        case .product:
+        if case .idle = employee.assignment { return .idle }
+
+        switch employee.role {
+        case .lawyer: return .legal
+        case .hr: return .peopleOps
+        case .ops: return .operations
+        case .founder, .frontend, .backend, .designer, .qa, .marketer: break
+        }
+
+        if case .research = employee.assignment { return .researching }
+
+        return switch employee.role {
+        case .qa: .testing
+        case .designer: .designing
+        case .marketer: .marketing
+        case .frontend, .backend: .coding
+        case .founder:
             employee.skills.coding >= employee.skills.design ? .coding : .designing
+        case .lawyer, .hr, .ops: .idle // handled above
         }
     }
 
     private var sceneAccessibilityLabel: String {
         let tier = engine.state.company.officeTier.displayName
         let count = occupants.count
-        let base = "\(tier) office scene, \(count) \(count == 1 ? "person" : "people") at work"
+        var base = "\(tier) office scene, \(count) \(count == 1 ? "person" : "people") at work"
+        if !ownedAmenities.isEmpty {
+            base += ", with " + ownedAmenities.map(\.displayName).joined(separator: ", ")
+        }
         return founderIsAway ? base + ", founder away" : base
+    }
+}
+
+/// Icon-only capsule in the card header for each amenity already built.
+private struct AmenityChip: View {
+    let amenity: Amenity
+
+    var body: some View {
+        Image(systemName: amenity.systemImage)
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(Theme.positiveCash)
+            .padding(.horizontal, Theme.Spacing.xs + 2)
+            .padding(.vertical, 3)
+            .background(Theme.positiveCash.opacity(0.15), in: Capsule())
+            .accessibilityLabel("\(amenity.displayName) built")
+    }
+}
+
+/// In-card entry point for the amenities sheet (nav-bar toolbars sit
+/// underneath the opaque top HUD in this design, so actions live in
+/// content).
+private struct AmenitiesRow: View {
+    let ownedCount: Int
+    let open: () -> Void
+
+    private var summary: String {
+        ownedCount == 0
+            ? "Nothing built yet"
+            : "\(ownedCount) of \(Amenity.allCases.count) built"
+    }
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "sofa.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Amenities")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(summary)
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: Theme.Spacing.sm)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Amenities, \(summary.lowercased())")
+        .accessibilityHint("Opens the amenities sheet")
+    }
+}
+
+/// In-card entry point for the city map, mirroring `AmenitiesRow`.
+private struct CityMapRow: View {
+    let district: DistrictID
+    let owned: Bool
+    let open: () -> Void
+
+    private var summary: String {
+        "\(district.displayName) · \(owned ? "owned" : "renting")"
+    }
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "map.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("City map")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(summary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: Theme.Spacing.sm)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("City map, office in \(summary.lowercased())")
+        .accessibilityHint("Opens the city map")
     }
 }
 

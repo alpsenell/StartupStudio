@@ -53,9 +53,16 @@ final class GameSession {
         applyDebugLaunchArguments()
     }
 
-    /// Deletes the save and replaces the engine with a fresh game.
-    /// Used by the game-over screen's "New game" button.
+    /// Deletes the save and replaces the engine with a fresh game at
+    /// normal difficulty. Kept for callers that don't offer a choice.
     func startNewGame() {
+        startNewGame(difficulty: .normal)
+    }
+
+    /// Deletes the save and replaces the engine with a fresh game at the
+    /// given difficulty. Used by the game-over screen and the Settings
+    /// sheet's "Start a new game…".
+    func startNewGame(difficulty: Difficulty) {
         // Stop the outgoing engine for good: without this, a still-referenced
         // old instance keeps ticking and its autosave overwrites the new
         // game's save file (the "zombie engine" bug).
@@ -65,7 +72,7 @@ final class GameSession {
         } catch {
             lastSaveError = error.localizedDescription
         }
-        engine = Self.makeFreshEngine()
+        engine = Self.makeFreshEngine(difficulty: difficulty)
         wireAutosave()
         applyDebugLaunchArguments()
     }
@@ -101,10 +108,11 @@ final class GameSession {
 
     /// Determinism lives inside the engine; a random seed at the app layer
     /// is fine.
-    private static func makeFreshEngine() -> GameEngine {
+    private static func makeFreshEngine(difficulty: Difficulty = .normal) -> GameEngine {
         GameEngine.newGame(
             companyName: "Startup Studio",
-            seed: UInt64.random(in: .min ... .max)
+            seed: UInt64.random(in: .min ... .max),
+            difficulty: difficulty
         )
     }
 

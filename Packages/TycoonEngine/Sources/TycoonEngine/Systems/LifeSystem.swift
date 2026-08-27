@@ -7,7 +7,8 @@ import TycoonContent
 ///    and an ending cold clears;
 /// 2. meter drift — the schedule's drift (chill while away), the
 ///    relationship stage's drain, per-child drift, the home's mood bonus,
-///    and the debt mood penalty, clamped to 0...100;
+///    the owned amenities' founder health bonus (the gym), and the debt
+///    mood penalty, clamped to 0...100;
 /// 3. thresholds — burnout, then hospital (each only while not away, so
 ///    burnout wins a same-day tie), then the breakup streak;
 /// 4. life events — every `lifeEventIntervalDays` days, one roll against
@@ -38,6 +39,9 @@ enum LifeSystem {
         var events: [GameEvent] = []
         let config = balance.life
 
+        // 0. A new day resets the instant-activity cap.
+        state.life.instantActionsToday = 0
+
         // 1. Expiry.
         if let until = state.life.awayUntilDay, state.day >= until {
             state.life.awayUntilDay = nil
@@ -49,7 +53,7 @@ enum LifeSystem {
         }
 
         // 2. Drift.
-        applyDailyDrift(&state, config)
+        applyDailyDrift(&state, balance)
 
         // 3. Thresholds.
         events.append(contentsOf: checkThresholds(&state, config))
@@ -67,17 +71,34 @@ enum LifeSystem {
 
     // MARK: - Daily drift
 
-    private static func applyDailyDrift(_ state: inout GameState, _ config: BalanceConfig.LifeBalance) {
+    private static func applyDailyDrift(_ state: inout GameState, _ balance: BalanceConfig) {
+        let config = balance.life
         let schedule = state.life.isAway(day: state.day) ? WorkSchedule.chill : state.life.schedule
         let drift = config.drift(for: schedule)
         let childCount = Double(state.life.family.children.count)
         let child = config.childDrift
+        let amenityHealth = state.ownedAmenities.reduce(0.0) {
+            $0 + balance.company.amenity($1).founderHealthBonus
+        }
 
         let energy = drift.energy + childCount * child.energy
-        let health = drift.health + childCount * child.health
+        let health = drift.health + childCount * child.health + amenityHealth
+        // Owned possessions in sorted-id order so the sum accumulates in a
+        // fixed order (the list is kept sorted, but stay defensive).
+        let instant = balance.instantLife
+        var possessionMood = 0.0
+        var possessionPrestige = 0.0
+        for id in state.life.possessions.sorted() {
+            guard let item = instant.items[id] else { continue }
+            possessionMood += item.dailyMoodDrift
+            possessionPrestige += item.prestige
+        }
+
         let relationships = drift.relationships + childCount * child.relationships
             - config.relationshipDrain(for: state.life.family.stage)
+            + possessionPrestige * instant.prestigeRelationshipFactor
         var mood = drift.mood + childCount * child.mood + config.home(state.life.home).moodBonus
+            + possessionMood
         if state.life.wallet < 0 {
             mood -= config.debtMoodPenalty
         }
@@ -249,7 +270,7 @@ enum LifeSystem {
             events.append(.founderAway(reason: vacationReason, untilDay: until, day: day))
         case .doctor:
             state.life.coldUntilDay = nil
-        case .rest, .gym, .dateNight, .friends, .hobby, .familyTime:
+        case .rest, .gym, .dateNight, .friends, .hobby, .familyTime, .spa, .networking:
             break
         }
         return events
@@ -374,6 +395,54 @@ enum LifeSystem {
         state.life.family.lastChildDay = state.day
         state.life.meters.apply(mood: config.childMoodBonus)
         return [.childBorn(name: name, day: state.day)]
+    }
+
+    /// Does an instant activity right now: applies the meter deltas and
+    /// debits the wallet. Gated on the shared per-day cap, the activity's
+    /// cooldown, the wallet, and the founder being around. Zero RNG.
+    static func doInstantActivity(
+        _ activity: InstantActivity,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        let instant = balance.instantLife
+        guard let def = instant.activity(activity),
+              state.life.instantActionsToday < instant.maxPerDay,
+              // Free activities are always affordable, even overdrawn.
+              def.cost == 0 || state.life.wallet >= def.cost,
+              !state.life.isAway(day: state.day)
+        else { return [] }
+        if let last = state.life.instantCooldowns[activity.rawValue],
+           state.day - last < def.cooldownDays { return [] }
+
+        state.life.meters.apply(
+            energy: def.energy, health: def.health, mood: def.mood, relationships: def.relationships
+        )
+        state.life.wallet -= def.cost
+        state.life.instantCooldowns[activity.rawValue] = state.day
+        state.life.instantActionsToday += 1
+        return [.instantActivityDone(activity: activity, day: state.day)]
+    }
+
+    /// Buys a possession from the shop catalog: instant mood pop now, its
+    /// daily drift joins `applyDailyDrift` from tomorrow. Gated on the
+    /// wallet, not already owning it, and the founder being around.
+    static func buyItem(
+        itemID: String,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard let item = balance.instantLife.items[itemID],
+              !state.life.possessions.contains(itemID),
+              state.life.wallet >= item.cost,
+              !state.life.isAway(day: state.day)
+        else { return [] }
+
+        state.life.wallet -= item.cost
+        state.life.possessions.append(itemID)
+        state.life.possessions.sort()
+        state.life.meters.apply(mood: item.moodPop)
+        return [.itemPurchased(itemID: itemID, day: state.day)]
     }
 
     private static func pick(_ pool: [String], _ rng: inout SeededRNG) -> String {

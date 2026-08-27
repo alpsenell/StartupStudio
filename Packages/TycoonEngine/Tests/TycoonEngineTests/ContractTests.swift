@@ -243,7 +243,7 @@ struct ContractLifecycleTests {
         // Day 1: founder adds code 2.6 / design 2.2 — both pools clear.
         let events = Reducer.tick(&state, balance: balance, content: content)
 
-        #expect(events.contains(.contractCompleted(contractID: job.id, payout: 1_800, day: 1)))
+        #expect(events.contains(.contractDelivered(contractID: job.id, quality: 100, payout: 1_800, day: 1)))
         #expect(state.company.cash == balance.startingCash + 1_800)
         #expect(state.company.reputation == 100)
         #expect(state.activeContracts.isEmpty)

@@ -17,7 +17,13 @@ struct HiringSheet: View {
                         emptyState
                     } else {
                         ForEach(candidates) { candidate in
-                            CandidateCard(candidate: candidate, atCap: atCap) {
+                            CandidateCard(
+                                candidate: candidate,
+                                atCap: atCap,
+                                departmentActive: candidate.role.department.map {
+                                    engine.state.hasDepartment($0)
+                                } ?? false
+                            ) {
                                 engine.send(.hire(candidateID: candidate.id))
                             }
                         }
@@ -77,6 +83,9 @@ struct HiringSheet: View {
 private struct CandidateCard: View {
     let candidate: Candidate
     let atCap: Bool
+    /// Whether the candidate's department (if their role has one) is
+    /// already staffed — flips the hint from "forms" to "joins".
+    let departmentActive: Bool
     let hire: () -> Void
 
     var body: some View {
@@ -85,9 +94,13 @@ private struct CandidateCard: View {
                 PixelPortrait(seed: candidate.appearanceSeed)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(candidate.name)
-                        .font(.system(.headline, design: .rounded))
-                        .lineLimit(1)
+                    // Role is the headline: who they are, then what they cost.
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Text(candidate.name)
+                            .font(.system(.headline, design: .rounded))
+                            .lineLimit(1)
+                        RoleBadge(role: candidate.role, prominent: true)
+                    }
                     Text("\(candidate.weeklySalary.money)/wk")
                         .font(.caption)
                         .monospacedDigit()
@@ -100,6 +113,12 @@ private struct CandidateCard: View {
 
             SkillBars(skills: candidate.skills)
 
+            if let hint = departmentHint {
+                Label(hint, systemImage: "building.columns")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Button(action: hire) {
                 Label("Hire", systemImage: "person.badge.plus")
                     .font(.system(.headline, design: .rounded))
@@ -109,8 +128,17 @@ private struct CandidateCard: View {
             .buttonStyle(.borderedProminent)
             .tint(Theme.accent)
             .disabled(atCap)
-            .accessibilityLabel("Hire \(candidate.name) for \(candidate.weeklySalary.money) per week")
+            .accessibilityLabel("Hire \(candidate.name), \(candidate.role.displayName), for \(candidate.weeklySalary.money) per week")
         }
         .cardStyle()
+    }
+
+    /// "Hiring a lawyer forms your Legal department" — only for roles that
+    /// belong to a department.
+    private var departmentHint: String? {
+        guard let department = candidate.role.department else { return nil }
+        return departmentActive
+            ? "Joins your \(department.cardTitle) department."
+            : "Hiring \(candidate.role.hiringNoun) forms your \(department.cardTitle) department."
     }
 }

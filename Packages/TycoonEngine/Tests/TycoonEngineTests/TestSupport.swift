@@ -85,7 +85,31 @@ enum TestBalance {
         salesHypeDivisor: Double = 150.0,
         eventCheckIntervalDays: Int = 30,
         eventChance: Double = 0.2,
-        life: BalanceConfig.LifeBalance = TestBalance.life()
+        life: BalanceConfig.LifeBalance = TestBalance.life(),
+        // Dynamics default to NEUTRAL in tests (no market shifts, instant
+        // adoption, frozen morale, no client skill expectations) so seeded
+        // RNG sequences and hand-computed outputs match the pre-dynamics
+        // engine. Tests exercising a dynamic pass its config explicitly.
+        market: BalanceConfig.MarketBalance = TestBalance.quietMarket,
+        adoption: BalanceConfig.AdoptionBalance = TestBalance.instantAdoption,
+        staff: BalanceConfig.StaffBalance = TestBalance.frozenStaff,
+        contractQuality: BalanceConfig.ContractQualityBalance = TestBalance.noSkillExpectations,
+        loans: BalanceConfig.LoanBalance = .standard,
+        company: BalanceConfig.CompanyBalance = TestBalance.neutralCompany,
+        rivals: BalanceConfig.RivalBalance = TestBalance.noRivals,
+        social: BalanceConfig.SocialBalance = TestBalance.quietSocial,
+        // The economy scale is 1× and launch saturation / genre fatigue
+        // are off in tests so hand-computed sales hold; the difficulty
+        // table is the shipped one (it only matters to `adjusted(for:)`).
+        marketSizeScale: Double = 1,
+        saturationPerRelease: Double = 1,
+        saturationFloor: Double = 0.3,
+        saturationWindowDays: Int = 182,
+        genreFatigueFactor: Double = 1,
+        genreFatigueWindowDays: Int = 84,
+        marketHistoryWeeks: Int = 26,
+        marketEventLogCap: Int = 30,
+        difficulty: [String: BalanceConfig.DifficultyBalance] = BalanceConfig.DifficultyBalance.standardTable
     ) -> BalanceConfig {
         BalanceConfig(
             startingCash: startingCash,
@@ -173,11 +197,119 @@ enum TestBalance {
             salesHypeDivisor: salesHypeDivisor,
             eventCheckIntervalDays: eventCheckIntervalDays,
             eventChance: eventChance,
-            life: life
+            life: life,
+            market: market,
+            adoption: adoption,
+            staff: staff,
+            contractQuality: contractQuality,
+            loans: loans,
+            company: company,
+            rivals: rivals,
+            social: social,
+            marketSizeScale: marketSizeScale,
+            saturationPerRelease: saturationPerRelease,
+            saturationFloor: saturationFloor,
+            saturationWindowDays: saturationWindowDays,
+            genreFatigueFactor: genreFatigueFactor,
+            genreFatigueWindowDays: genreFatigueWindowDays,
+            marketHistoryWeeks: marketHistoryWeeks,
+            marketEventLogCap: marketEventLogCap,
+            difficulty: difficulty
         )
     }
 
     static var standard: BalanceConfig { make() }
+
+    /// Roles, departments, and amenities change nothing: every role yields
+    /// 1× on every pool, QA fixes one bug per polish point, marketers add
+    /// no hype, every candidate rolls backend (a single eligible role draws
+    /// no RNG word) with no skill bias or salary discount, and departments
+    /// grant nothing. Amenity definitions are the shipped ones (nothing is
+    /// owned unless a test says so).
+    static var neutralCompany: BalanceConfig.CompanyBalance {
+        var company = BalanceConfig.CompanyBalance.standard
+        company.roleYields = Dictionary(
+            uniqueKeysWithValues: EmployeeRole.allCases.map {
+                ($0.rawValue, BalanceConfig.CompanyBalance.RoleYield(code: 1, design: 1, polish: 1))
+            }
+        )
+        company.qaBugFixMultiplier = 1
+        company.marketerDailyHype = 0
+        company.candidateRoleWeights = [EmployeeRole.backend.rawValue: 1]
+        company.candidateRoleMinTier = [:]
+        company.builderPrimarySkillBonus = 0
+        company.marketerSkillBonus = 0
+        company.supportSalaryFactor = 1
+        company.legalPenaltyFactor = 1
+        company.legalPayoutBonus = 1
+        company.legalExtraOffers = 0
+        company.hrMoraleBonus = 0
+        company.hrRefreshDaysReduction = 0
+        company.hrQuitStreakBonus = 0
+        company.hrTrainingCostFactor = 1
+        company.opsUpkeepFactor = 1
+        company.opsRentFactor = 1
+        return company
+    }
+
+    /// No rival studios exist (the founding loop fills to zero), so the
+    /// rival system draws nothing from the world RNG and emits no events —
+    /// pre-rivals choreography and hand-computed economics hold. Tests
+    /// exercising rivals pass a real config explicitly.
+    static var noRivals: BalanceConfig.RivalBalance {
+        var rivals = BalanceConfig.RivalBalance.standard
+        rivals.rivalCount = 0
+        return rivals
+    }
+
+    /// Social dynamics that change nothing: loyalty never drifts or
+    /// extends the quit streak, bonds never form, staff events never
+    /// roll, and friendship grants no output — pre-social choreography
+    /// and hand-computed outputs hold. Tests exercising the social layer
+    /// pass a real config explicitly.
+    static var quietSocial: BalanceConfig.SocialBalance {
+        var social = BalanceConfig.SocialBalance.standard
+        social.loyaltyAdaptRate = 0
+        social.loyaltyQuitDivisor = 1_000_000
+        social.bondChance = 0
+        social.friendshipOutputBonus = 0
+        social.staffEventIntervalDays = 1_000_000
+        social.staffEventChance = 0
+        return social
+    }
+
+    /// Market that never shifts (and so never draws from the RNG).
+    static var quietMarket: BalanceConfig.MarketBalance {
+        var market = BalanceConfig.MarketBalance.standard
+        market.shiftIntervalDays = 1_000_000
+        return market
+    }
+
+    /// Sales hit the peak on launch week, the pre-adoption behavior.
+    static var instantAdoption: BalanceConfig.AdoptionBalance {
+        BalanceConfig.AdoptionBalance(
+            rampWeeksMax: 1, rampWeeksMin: 1, marketingDivisor: 16, hypeDivisor: 25
+        )
+    }
+
+    /// Morale never drifts (performance stays exactly 1× at the starting
+    /// morale) and nobody ever quits.
+    static var frozenStaff: BalanceConfig.StaffBalance {
+        var staff = BalanceConfig.StaffBalance.standard
+        staff.moraleAdaptRate = 0
+        staff.quitStreakDays = 1_000_000
+        return staff
+    }
+
+    /// Clients expect nothing: the skill roll range is empty (drawing no
+    /// RNG word) and every delivery grades 100.
+    static var noSkillExpectations: BalanceConfig.ContractQualityBalance {
+        var quality = BalanceConfig.ContractQualityBalance.standard
+        quality.skillMin = 0
+        quality.skillMax = 0
+        quality.skillYearBump = 0
+        return quality
+    }
 
     /// Builds a life balance. Defaults mirror the shipped `Balance.json`
     /// "life" block.
@@ -281,6 +413,8 @@ enum TestBalance {
                 WeekendActivity.familyTime.rawValue: Activity(energy: 0, health: 0, mood: 6, relationships: 12, cost: 40),
                 WeekendActivity.vacation.rawValue: Activity(energy: 40, health: 10, mood: 20, relationships: 10, cost: 1_500),
                 WeekendActivity.doctor.rawValue: Activity(energy: 0, health: 15, mood: 0, relationships: 0, cost: 200),
+                WeekendActivity.spa.rawValue: Activity(energy: 20, health: 5, mood: 10, relationships: 0, cost: 300),
+                WeekendActivity.networking.rawValue: Activity(energy: -2, health: 0, mood: 4, relationships: 8, cost: 150),
             ],
             vacationDays: vacationDays,
             datingMinRelationships: datingMinRelationships,
@@ -347,6 +481,7 @@ enum TestPeople {
     static func employee(
         id: UUID = UUID(),
         name: String = "Worker",
+        role: EmployeeRole? = nil,
         coding: Double = 50,
         design: Double = 25,
         marketing: Double = 10,
@@ -361,13 +496,15 @@ enum TestPeople {
             assignment: assignment,
             isFounder: false,
             hiredDay: 0,
-            appearanceSeed: 1
+            appearanceSeed: 1,
+            role: role
         )
     }
 
     static func candidate(
         id: UUID = UUID(),
         name: String = "Ada Lovelace",
+        role: EmployeeRole? = nil,
         coding: Double = 30,
         design: Double = 20,
         marketing: Double = 10,
@@ -378,7 +515,8 @@ enum TestPeople {
             name: name,
             skills: SkillSet(coding: coding, design: design, marketing: marketing),
             weeklySalary: weeklySalary,
-            appearanceSeed: 2
+            appearanceSeed: 2,
+            role: role
         )
     }
 }

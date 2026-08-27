@@ -108,6 +108,8 @@ extension WeekendActivity {
         case .familyTime: "Family time"
         case .vacation: "Vacation"
         case .doctor: "Doctor"
+        case .spa: "Spa day"
+        case .networking: "Networking"
         }
     }
 
@@ -121,6 +123,8 @@ extension WeekendActivity {
         case .familyTime: "figure.2.and.child.holdinghands"
         case .vacation: "airplane"
         case .doctor: "cross.case.fill"
+        case .spa: "drop.circle.fill"
+        case .networking: "person.line.dotted.person.fill"
         }
     }
 
@@ -135,6 +139,8 @@ extension WeekendActivity {
         case .familyTime: "Relationships up with the family"
         case .vacation: "Big reset — away for a week"
         case .doctor: "Cures a cold, health up"
+        case .spa: "Energy and mood up, pricey"
+        case .networking: "Meet people, mood up"
         }
     }
 }

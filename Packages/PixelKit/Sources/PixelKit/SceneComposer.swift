@@ -11,6 +11,11 @@ public enum PlacementKind: Sendable, Equatable, Hashable {
     case child
     /// The in-crib baby bundle.
     case baby
+    /// A piece of office amenity furniture (game room, cafeteria, gym, shuttle).
+    case amenityProp(SpriteLibrary.AmenityPropName)
+    /// A city-map element (building, landmark, marker, selection border),
+    /// tagged by a short name so layouts can be inspected.
+    case cityProp(String)
 }
 
 /// How a placed sprite animates. Cosmetic only — the scene view drives it
@@ -64,9 +69,15 @@ public struct PlacedSprite: Sendable, Equatable {
     }
 }
 
-/// Pure scene layout: turns a tier + occupants into an ordered (back-to-front)
-/// list of placed sprites. `OfficeSceneView` and the PNG preview renderer both
-/// draw exactly this list, so what tests see is what ships.
+/// Pure scene layout: turns a tier + occupants (+ amenities) into an ordered
+/// (back-to-front) list of placed sprites. `OfficeSceneView` and the PNG
+/// preview renderer both draw exactly this list, so what tests see is what
+/// ships.
+///
+/// Amenities render as prop zones in the front row, to the right of the
+/// founder's desk, and the shuttle as a back-wall window; see
+/// `SceneComposer+Amenities.swift`. Scene size is fixed per tier — amenities
+/// fill space the layout already reserves.
 public enum SceneComposer {
     public struct SceneSize: Sendable, Equatable {
         public let width: Int
@@ -75,7 +86,7 @@ public enum SceneComposer {
 
     // MARK: Layout constants
 
-    private struct Layout {
+    struct Layout {
         let cols: Int
         let wallHeight: Int
 
@@ -88,7 +99,7 @@ public enum SceneComposer {
         var rowsStartY: Int { wallHeight - 8 } // back row overlaps the wall line slightly
     }
 
-    private static func layout(for tier: OfficeTierStyle) -> Layout {
+    static func layout(for tier: OfficeTierStyle) -> Layout {
         switch tier {
         case .garage: Layout(cols: 3, wallHeight: 30)
         case .loft: Layout(cols: 3, wallHeight: 32)
@@ -114,9 +125,19 @@ public enum SceneComposer {
     // MARK: Composition
 
     public static func compose(tier: OfficeTierStyle, occupants: [Occupant]) -> [PlacedSprite] {
+        compose(tier: tier, occupants: occupants, amenities: [])
+    }
+
+    /// Composes the office with amenity zones. Amenities the tier cannot host
+    /// are silently skipped (see `shownAmenities(for:amenities:)`); an empty
+    /// set yields exactly the two-argument composition.
+    public static func compose(
+        tier: OfficeTierStyle, occupants: [Occupant], amenities: Set<AmenityStyle>
+    ) -> [PlacedSprite] {
         let l = layout(for: tier)
         let size = sceneSize(for: tier)
         let rows = deskRows(for: tier, cols: l.cols)
+        let shown = shownAmenities(for: tier, amenities: amenities)
 
         var scene: [PlacedSprite] = []
         scene.append(PlacedSprite(
@@ -131,18 +152,27 @@ public enum SceneComposer {
         let founder = founders.first
         let regulars = Array((founders.dropFirst() + employees).prefix(tier.deskCapacity))
 
+        // With a cafeteria, the first idle regular takes a break at a table
+        // instead of sitting at their desk.
+        let breakIndex = shown.contains(.cafeteria) ? regulars.firstIndex { $0.status == .idle } : nil
+
         for index in 0..<tier.deskCapacity {
             let row = index / l.cols
             let col = index % l.cols
             let cellX = Layout.sideMargin + col * Layout.cellWidth
             let cellY = l.rowsStartY + row * Layout.cellHeight
-            scene += deskCell(x: cellX, y: cellY, occupant: index < regulars.count ? regulars[index] : nil, index: index)
+            let seated = index < regulars.count && index != breakIndex ? regulars[index] : nil
+            scene += deskCell(x: cellX, y: cellY, occupant: seated, index: index)
         }
 
         // Founder desk: front row, left, slightly separated.
         let founderY = l.rowsStartY + rows * Layout.cellHeight + Layout.founderGap
         scene += deskCell(x: Layout.sideMargin, y: founderY, occupant: founder, index: tier.deskCapacity)
 
+        scene += amenityZones(
+            for: tier, shown: shown, size: size, founderY: founderY,
+            onBreak: breakIndex.map { regulars[$0] }
+        )
         return scene
     }
 

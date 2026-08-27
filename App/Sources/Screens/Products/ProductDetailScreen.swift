@@ -6,6 +6,11 @@ import TycoonEngine
 /// Detail for one product. Released products get the sales chart and
 /// reviews; products still in development get progress bars, the focus
 /// editor, and the Ship button.
+///
+/// Pushed onto the Products tab's stack. The tab root hides the navigation
+/// bar (the HUD takes that slot), so this screen explicitly shows it
+/// again: that restores the Back button and the swipe-back gesture, which
+/// iOS disables while the bar is hidden. The HUD isn't shown here.
 struct ProductDetailScreen: View {
     let engine: GameEngine
     let productID: UUID
@@ -35,6 +40,7 @@ struct ProductDetailScreen: View {
         .background(Theme.screenBackground)
         .navigationTitle(engine.state.product(id: productID)?.name ?? "Product")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
     }
 
     private var type: ProductTypeDef? {

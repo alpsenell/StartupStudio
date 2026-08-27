@@ -8,7 +8,14 @@ public enum WorkSchedule: String, Codable, Equatable, Sendable, CaseIterable {
 
 /// What the founder does with the weekend. Resolves every 7th day.
 public enum WeekendActivity: String, Codable, Equatable, Sendable, CaseIterable {
-    case rest, gym, dateNight, friends, hobby, familyTime, vacation, doctor
+    case rest, gym, dateNight, friends, hobby, familyTime, vacation, doctor, spa, networking
+}
+
+/// A same-day life action, distinct from the planned weekend: instant
+/// meter effects, wallet cost, per-activity cooldown, and a shared
+/// per-day cap. Tuned in `balance.instantLife.activities`.
+public enum InstantActivity: String, Codable, Equatable, Sendable, CaseIterable {
+    case gymSession, walk, cinema, restaurant
 }
 
 /// The founder's relationship ladder.
@@ -151,6 +158,15 @@ public struct LifeState: Codable, Equatable, Sendable {
     /// Consecutive days with relationships below the breakup threshold
     /// while in a relationship.
     public var lowRelationshipStreakDays: Int
+    /// Last day each instant activity was done, keyed by raw value
+    /// (cooldowns).
+    public var instantCooldowns: [String: Int]
+    /// Instant activities done today; resets at the top of each daily tick
+    /// and caps at `balance.instantLife.maxPerDay`.
+    public var instantActionsToday: Int
+    /// Item ids the founder owns, kept sorted (bought via `.buyItem`;
+    /// their daily mood drift joins the meter drift).
+    public var possessions: [String]
 
     public init(
         meters: LifeMeters,
@@ -163,7 +179,10 @@ public struct LifeState: Codable, Equatable, Sendable {
         awayUntilDay: Int?,
         awayReason: String?,
         coldUntilDay: Int?,
-        lowRelationshipStreakDays: Int
+        lowRelationshipStreakDays: Int,
+        instantCooldowns: [String: Int] = [:],
+        instantActionsToday: Int = 0,
+        possessions: [String] = []
     ) {
         self.meters = meters
         self.schedule = schedule
@@ -176,6 +195,9 @@ public struct LifeState: Codable, Equatable, Sendable {
         self.awayReason = awayReason
         self.coldUntilDay = coldUntilDay
         self.lowRelationshipStreakDays = lowRelationshipStreakDays
+        self.instantCooldowns = instantCooldowns
+        self.instantActionsToday = instantActionsToday
+        self.possessions = possessions
     }
 
     /// Whether the founder is absent on `day` (half-open: back on
@@ -222,6 +244,72 @@ public struct LifeState: Codable, Equatable, Sendable {
             coldUntilDay: nil,
             lowRelationshipStreakDays: 0
         )
+    }
+}
+
+// MARK: - Codable
+
+// Hand-written (in an extension, preserving the memberwise initializer) so
+// saves written before instant activities existed keep loading, and so the
+// cooldown map encodes as an array of entries sorted by activity —
+// byte-identical for identical states whatever the encoder's key ordering
+// (the `MarketState.history` precedent).
+extension LifeState {
+    private enum CodingKeys: String, CodingKey {
+        case meters, schedule, plannedActivity, wallet, founderSalary, home, family
+        case awayUntilDay, awayReason, coldUntilDay, lowRelationshipStreakDays
+        case instantCooldowns, instantActionsToday, possessions
+    }
+
+    private struct CooldownEntry: Codable {
+        var activity: String
+        var day: Int
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let cooldowns = try container.decodeIfPresent([CooldownEntry].self, forKey: .instantCooldowns) ?? []
+        self.init(
+            meters: try container.decode(LifeMeters.self, forKey: .meters),
+            schedule: try container.decode(WorkSchedule.self, forKey: .schedule),
+            plannedActivity: try container.decode(WeekendActivity.self, forKey: .plannedActivity),
+            wallet: try container.decode(Int.self, forKey: .wallet),
+            founderSalary: try container.decode(Int.self, forKey: .founderSalary),
+            home: try container.decode(HomeTier.self, forKey: .home),
+            family: try container.decode(FamilyState.self, forKey: .family),
+            awayUntilDay: try container.decodeIfPresent(Int.self, forKey: .awayUntilDay),
+            awayReason: try container.decodeIfPresent(String.self, forKey: .awayReason),
+            coldUntilDay: try container.decodeIfPresent(Int.self, forKey: .coldUntilDay),
+            lowRelationshipStreakDays: try container.decode(Int.self, forKey: .lowRelationshipStreakDays),
+            instantCooldowns: Dictionary(
+                cooldowns.map { ($0.activity, $0.day) }, uniquingKeysWith: { _, last in last }
+            ),
+            instantActionsToday: try container.decodeIfPresent(Int.self, forKey: .instantActionsToday) ?? 0,
+            possessions: try container.decodeIfPresent([String].self, forKey: .possessions) ?? []
+        )
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(meters, forKey: .meters)
+        try container.encode(schedule, forKey: .schedule)
+        try container.encode(plannedActivity, forKey: .plannedActivity)
+        try container.encode(wallet, forKey: .wallet)
+        try container.encode(founderSalary, forKey: .founderSalary)
+        try container.encode(home, forKey: .home)
+        try container.encode(family, forKey: .family)
+        try container.encodeIfPresent(awayUntilDay, forKey: .awayUntilDay)
+        try container.encodeIfPresent(awayReason, forKey: .awayReason)
+        try container.encodeIfPresent(coldUntilDay, forKey: .coldUntilDay)
+        try container.encode(lowRelationshipStreakDays, forKey: .lowRelationshipStreakDays)
+        try container.encode(
+            instantCooldowns.keys.sorted().map {
+                CooldownEntry(activity: $0, day: instantCooldowns[$0] ?? 0)
+            },
+            forKey: .instantCooldowns
+        )
+        try container.encode(instantActionsToday, forKey: .instantActionsToday)
+        try container.encode(possessions.sorted(), forKey: .possessions)
     }
 }
 

@@ -79,6 +79,7 @@ struct LifeStateTests {
         #expect(WorkSchedule.allCases == [.chill, .normal, .crunch])
         #expect(WeekendActivity.allCases == [
             .rest, .gym, .dateNight, .friends, .hobby, .familyTime, .vacation, .doctor,
+            .spa, .networking,
         ])
         #expect(RelationshipStage.allCases == [.single, .dating, .partner, .married])
         #expect(RelationshipStage.single.next == .dating)

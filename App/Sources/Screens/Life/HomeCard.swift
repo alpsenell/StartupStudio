@@ -101,6 +101,8 @@ struct HomeCard: View {
         case .familyTime: life.family.children.isEmpty ? .dinner : .withBaby
         case .vacation: .away
         case .doctor: .reading
+        case .spa: .relaxing
+        case .networking: .dinner
         }
     }
 

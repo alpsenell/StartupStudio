@@ -19,12 +19,14 @@ public final class GameEngine {
     @ObservationIgnored public var autosave: (@MainActor (GameState) -> Void)?
 
     /// Total weekly fixed costs: operating cost + current office rent +
-    /// payroll across all employees + the founder's salary.
+    /// payroll across all employees + the founder's salary + amenity
+    /// upkeep (rent and upkeep after the Operations discount).
     public var weeklyBurn: Int {
         balance.weeklyOperatingCost
-            + balance.office(state.company.officeTier).weeklyRent
+            + state.officeWeeklyRent(balance: balance)
             + state.employees.reduce(0) { $0 + $1.weeklySalary }
             + state.life.founderSalary
+            + state.amenityWeeklyUpkeep(balance: balance)
     }
 
     @ObservationIgnored private var tickTask: Task<Void, Never>?
@@ -41,20 +43,31 @@ public final class GameEngine {
         tickTask?.cancel()
     }
 
-    /// Starts a new game using the bundled balance and content.
-    public static func newGame(companyName: String, seed: UInt64) -> GameEngine {
-        let (balance, content) = loadBundledConfiguration()
-        let state = GameState.newGame(companyName: companyName, seed: seed, balance: balance)
+    /// Starts a new game using the bundled balance (rescaled once for
+    /// `difficulty`, so `engine.balance` is already adjusted) and content.
+    public static func newGame(
+        companyName: String,
+        seed: UInt64,
+        difficulty: Difficulty = .normal
+    ) -> GameEngine {
+        let (bundled, content) = loadBundledConfiguration()
+        let balance = bundled.adjusted(for: difficulty)
+        let state = GameState.newGame(
+            companyName: companyName, seed: seed, balance: balance, difficulty: difficulty
+        )
         return GameEngine(state: state, balance: balance, content: content)
     }
 
-    /// Rebuilds an engine around a saved state using the bundled balance and
-    /// content. The state comes back paused and no tick loop is running.
+    /// Rebuilds an engine around a saved state using the bundled balance
+    /// (rescaled once for the save's difficulty) and content. The state
+    /// comes back paused and no tick loop is running.
     public static func resume(state: GameState) -> GameEngine {
-        let (balance, content) = loadBundledConfiguration()
+        let (bundled, content) = loadBundledConfiguration()
         var state = state
         state.speed = .paused
-        return GameEngine(state: state, balance: balance, content: content)
+        return GameEngine(
+            state: state, balance: bundled.adjusted(for: state.difficulty), content: content
+        )
     }
 
     private static func loadBundledConfiguration() -> (BalanceConfig, ContentCatalog) {
@@ -125,6 +138,11 @@ public final class GameEngine {
         let events = Reducer.tick(&state, balance: balance, content: content)
         tickCount += 1
         if state.gameOver != nil {
+            cancelTickLoop()
+        } else if events.contains(where: \.pausesTimeline), state.speed != .paused {
+            // Notable events stop the clock so the player can react; the
+            // speed control resumes it.
+            state.speed = .paused
             cancelTickLoop()
         }
         if !events.isEmpty || tickCount.isMultiple(of: 60) {

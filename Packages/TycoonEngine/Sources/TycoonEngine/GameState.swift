@@ -46,10 +46,40 @@ public struct FinancialLedger: Codable, Equatable, Sendable {
     }
 }
 
+/// How a run ended.
+public enum EndingKind: String, Codable, Equatable, Sendable {
+    case bankruptcy
+    /// The founder sold the company to a rival — a successful exit.
+    case acquired
+}
+
 /// Terminal state details once the run has ended.
 public struct GameOverInfo: Codable, Equatable, Sendable {
     public var day: Int
     public var reason: String
+    /// Saves written before endings existed decode as `.bankruptcy`.
+    public var kind: EndingKind
+
+    init(day: Int, reason: String, kind: EndingKind = .bankruptcy) {
+        self.day = day
+        self.reason = reason
+        self.kind = kind
+    }
+}
+
+extension GameOverInfo {
+    private enum CodingKeys: String, CodingKey {
+        case day, reason, kind
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            day: try container.decode(Int.self, forKey: .day),
+            reason: try container.decode(String.self, forKey: .reason),
+            kind: try container.decodeIfPresent(EndingKind.self, forKey: .kind) ?? .bankruptcy
+        )
+    }
 }
 
 /// Notable simulation events surfaced to the UI.
@@ -80,6 +110,75 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case childBorn(name: String, day: Int)
     case homeUpgraded(tier: HomeTier, day: Int)
     case weekendSpent(activity: WeekendActivity, day: Int)
+    case marketBoom(topicID: String, day: Int)
+    case marketCrash(topicID: String, day: Int)
+    case employeeQuit(employeeID: UUID, name: String, day: Int)
+    case employeePromoted(employeeID: UUID, level: SeniorityLevel, day: Int)
+    case employeeDemoted(employeeID: UUID, level: SeniorityLevel, day: Int)
+    case salaryChanged(employeeID: UUID, weeklySalary: Int, day: Int)
+    case employeeTrained(employeeID: UUID, day: Int)
+    /// Replaces `.contractCompleted` for deliveries graded on quality
+    /// (0...100). The payout is the amount actually paid after any
+    /// quality docking.
+    case contractDelivered(contractID: UUID, quality: Int, payout: Int, day: Int)
+    case loanTaken(amount: Int, day: Int)
+    case loanRepaid(amount: Int, day: Int)
+    case amenityBuilt(amenity: Amenity, day: Int)
+    /// A department's first staffer arrived / its last one left (detected
+    /// on the daily tick).
+    case departmentFormed(department: Department, day: Int)
+    case departmentDissolved(department: Department, day: Int)
+    case rivalFounded(rivalID: UUID, name: String, day: Int)
+    case rivalShipped(rivalID: UUID, topicID: String, day: Int)
+    case rivalFolded(rivalID: UUID, name: String, day: Int)
+    /// A rival made one of the player's employees an offer; the player can
+    /// match it or let them go until `respondByDay`.
+    case poachAttempt(rivalID: UUID, employeeID: UUID, offeredWeeklySalary: Int, respondByDay: Int, day: Int)
+    /// The player matched a poach offer and the employee stayed.
+    case poachDefeated(employeeID: UUID, day: Int)
+    /// An employee left for a rival (declined counter, or auto-resolved).
+    case employeePoached(employeeID: UUID, name: String, rivalID: UUID, day: Int)
+    /// A rival offered to buy the company; open until `respondByDay`.
+    case buyoutOffered(rivalID: UUID, amount: Int, respondByDay: Int, day: Int)
+    case buyoutWithdrawn(rivalID: UUID, day: Int)
+    /// The player accepted a buyout — the run ends as a successful exit.
+    case companySold(rivalID: UUID, amount: Int, day: Int)
+    /// The player acquired a rival studio.
+    case rivalAcquired(rivalID: UUID, name: String, hiresAbsorbed: Int, day: Int)
+    /// The office moved to a new district (pauses so the player sees the
+    /// new terms).
+    case officeRelocated(district: DistrictID, day: Int)
+    case officeBought(district: DistrictID, price: Int, day: Int)
+    case officeSold(district: DistrictID, price: Int, day: Int)
+    case instantActivityDone(activity: InstantActivity, day: Int)
+    case itemPurchased(itemID: String, day: Int)
+    /// A one-on-one social action (or the team dinner, employeeID nil).
+    case socialActivity(kind: SocialActivityKind, employeeID: UUID?, day: Int)
+    /// Two employees became friends.
+    case friendshipFormed(a: UUID, b: UUID, day: Int)
+    /// A surviving friend took the departure hard.
+    case friendLostMorale(employeeID: UUID, day: Int)
+    case staffBirthday(employeeID: UUID, day: Int)
+    /// A staff moment needs an answer by `respondByDay` (pauses).
+    case staffEventOccurred(employeeID: UUID, kind: StaffEventKind, respondByDay: Int, day: Int)
+    case staffEventResolved(employeeID: UUID, choice: StaffEventChoice, day: Int)
+}
+
+extension GameEvent {
+    /// Whether this event is notable enough to auto-pause the timeline so
+    /// the player can react. Checked by the engine after every tick.
+    public var pausesTimeline: Bool {
+        switch self {
+        case .bankruptcyWarning, .gameOver, .reviewsIn, .contractFailed,
+             .contractDelivered, .randomEvent, .lifeEvent, .founderAway,
+             .breakup, .childBorn, .marketBoom, .marketCrash, .employeeQuit,
+             .poachAttempt, .buyoutOffered, .companySold, .rivalAcquired,
+             .employeePoached, .officeRelocated, .staffEventOccurred:
+            true
+        default:
+            false
+        }
+    }
 }
 
 /// The complete, serializable simulation state. A pure value: the reducer is
@@ -94,7 +193,15 @@ public struct GameState: Codable, Equatable, Sendable {
     static let maxEventLogEntries = 500
 
     public var schemaVersion: Int
+    /// Chosen once at `newGame`; the engine rescales the balance with it.
+    /// Saves written before difficulty existed decode as `.normal`.
+    public var difficulty: Difficulty
     public var rng: SeededRNG
+    /// A second RNG stream feeding the "world" systems added after launch
+    /// (rivals, city, social). Kept separate so those systems' draws never
+    /// shift the long-established `rng` stream that the original systems
+    /// (and their determinism tests) document word by word.
+    public var worldRNG: SeededRNG
     /// Ticks since founding; starts at 0.
     public var day: Int
     public var speed: SimSpeed
@@ -113,9 +220,39 @@ public struct GameState: Codable, Equatable, Sendable {
     public var milestonesReached: Set<String>
     /// The founder's personal life, advanced by `LifeSystem`.
     public var life: LifeState
+    /// Per-topic market conditions, advanced by `MarketSystem`.
+    public var market: MarketState
+    /// Competitor studios and their standing offers, advanced by
+    /// `RivalSystem`.
+    public var rivals: RivalsState
+    /// Office district and rent-vs-own terms, advanced by `CitySystem`.
+    public var city: CityState
+    /// Bonds between employees, advanced by `SocialSystem` (canonical pair
+    /// order, kept sorted by (a, b) for deterministic encoding).
+    public var friendships: [Friendship]
+    /// A staff moment awaiting the founder's answer.
+    public var pendingStaffEvent: StaffEvent?
+    /// The last day the whole team went to dinner (global cooldown).
+    public var lastTeamDinnerDay: Int?
+    /// Outstanding company loan principal. Interest posts weekly.
+    public var loanBalance: Int
+    /// Office amenities bought so far; kept across office upgrades.
+    public var amenities: Set<Amenity>
+    /// The departments seen active on the last daily tick, so the tick can
+    /// emit formed/dissolved events on transitions. `activeDepartments` is
+    /// the live truth.
+    public var knownDepartments: Set<Department>
     public var gameOver: GameOverInfo?
 
-    public static func newGame(companyName: String, seed: UInt64, balance: BalanceConfig) -> GameState {
+    /// Starts a fresh company. `balance` is used as given — pass the
+    /// difficulty-adjusted balance (`GameEngine.newGame` does); `difficulty`
+    /// is only recorded so a resume can re-derive that adjustment.
+    public static func newGame(
+        companyName: String,
+        seed: UInt64,
+        balance: BalanceConfig,
+        difficulty: Difficulty = .normal
+    ) -> GameState {
         var rng = SeededRNG(seed: seed)
         let founder = Employee(
             id: UUID(from: &rng),
@@ -129,11 +266,16 @@ public struct GameState: Codable, Equatable, Sendable {
             assignment: .idle,
             isFounder: true,
             hiredDay: 0,
-            appearanceSeed: rng.next()
+            appearanceSeed: rng.next(),
+            role: .founder
         )
         return GameState(
             schemaVersion: 1,
+            difficulty: difficulty,
             rng: rng,
+            // Derived from the seed (not drawn from `rng`) so the original
+            // stream's draw count at newGame is unchanged.
+            worldRNG: SeededRNG(seed: seed &* 0x9E37_79B9_7F4A_7C15 &+ 1),
             day: 0,
             speed: .paused,
             company: Company(
@@ -154,8 +296,63 @@ public struct GameState: Codable, Equatable, Sendable {
             eventLog: [],
             milestonesReached: [],
             life: LifeState.newGame(balance: balance),
+            market: .neutral,
+            rivals: .empty,
+            city: .legacy,
+            friendships: [],
+            pendingStaffEvent: nil,
+            lastTeamDinnerDay: nil,
+            loanBalance: 0,
+            amenities: [],
+            knownDepartments: [],
             gameOver: nil
         )
+    }
+
+    /// Departments staffed right now: any employee whose role staffs one.
+    public var activeDepartments: Set<Department> {
+        Set(employees.compactMap(\.role.department))
+    }
+
+    public func hasDepartment(_ department: Department) -> Bool {
+        employees.contains { $0.role.department == department }
+    }
+
+    public func hasAmenity(_ amenity: Amenity) -> Bool {
+        amenities.contains(amenity)
+    }
+
+    /// Owned amenities in `Amenity.allCases` order, so sums over their
+    /// bonuses accumulate in a fixed order (set iteration order is not).
+    var ownedAmenities: [Amenity] {
+        Amenity.allCases.filter { amenities.contains($0) }
+    }
+
+    /// This week's office rent: the tier's rent scaled by the district,
+    /// after the Operations discount. An owned office pays no rent
+    /// (`CitySystem` posts property tax instead).
+    func officeWeeklyRent(balance: BalanceConfig) -> Int {
+        guard !city.ownership.isOwned else { return 0 }
+        let rent = Double(balance.office(company.officeTier).weeklyRent)
+            * balance.city.district(city.district).rentMultiplier
+        guard hasDepartment(.ops) else { return Int(rent.rounded()) }
+        return Int((rent * balance.company.opsRentFactor).rounded())
+    }
+
+    /// What buying the current tier's space in a district costs:
+    /// `buyPriceFactor` weeks of that district's rent (a garage's free rent
+    /// reads as a small baseline so even it has a price).
+    public func officePurchasePrice(in district: DistrictID, balance: BalanceConfig) -> Int {
+        let weekly = Double(max(balance.office(company.officeTier).weeklyRent, 50))
+            * balance.city.district(district).rentMultiplier
+        return Int((weekly * balance.city.buyPriceFactor).rounded())
+    }
+
+    /// This week's amenity upkeep after the Operations discount.
+    func amenityWeeklyUpkeep(balance: BalanceConfig) -> Int {
+        let upkeep = ownedAmenities.reduce(0) { $0 + balance.company.amenity($1).weeklyCost }
+        guard hasDepartment(.ops) else { return upkeep }
+        return Int((Double(upkeep) * balance.company.opsUpkeepFactor).rounded())
     }
 
     /// The single product currently in development, if any.
@@ -204,29 +401,54 @@ public struct GameState: Codable, Equatable, Sendable {
 
     /// Compact date label, e.g. "W3 · Y1".
     public var dateLabel: String { "W\(weekOfYear) · Y\(year)" }
+
+    /// What the company is worth to an acquirer: cash on hand, a revenue
+    /// multiple over each on-market product's recent sales, and a premium
+    /// per reputation point. Deterministic — no RNG.
+    public func companyValuation(balance: BalanceConfig) -> Int {
+        let rivalBalance = balance.rivals
+        var value = Double(company.cash - loanBalance)
+        for product in products {
+            guard case .released(let info) = product.stage, !info.offMarket else { continue }
+            let recent = info.weeklySales.suffix(4).reduce(0) { $0 + $1.revenue }
+            value += Double(recent) * rivalBalance.valuationRevenueMultiple
+        }
+        value += company.reputation * rivalBalance.valuationPerReputation
+        return max(0, Int(value.rounded()))
+    }
 }
 
 // MARK: - Codable
 
 // Hand-written (in an extension, preserving the memberwise initializer) so
-// `milestonesReached` encodes in sorted order: `Set` iteration order is not
-// stable across processes, and saves (like the determinism tests) rely on
-// byte-identical JSON for identical states. The `milestonesReached` and
-// `life` keys also decode as optional so saves written before the fields
-// existed keep loading (a missing life starts fresh with an empty wallet).
+// the sets (`milestonesReached`, `amenities`, `knownDepartments`) encode in
+// sorted order: `Set` iteration order is not stable across processes, and
+// saves (like the determinism tests) rely on byte-identical JSON for
+// identical states. The set, `life`, `market`, `loanBalance`, and
+// `difficulty` keys also decode as optional so saves written before the
+// fields existed keep loading (a missing life starts fresh with an empty
+// wallet; a missing difficulty is Normal).
 
 extension GameState {
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, rng, day, speed, company, ledger, products, employees
         case candidatePool, research, contractOffers, activeContracts, campaigns
-        case eventLog, milestonesReached, life, gameOver
+        case eventLog, milestonesReached, life, market, loanBalance, gameOver
+        case amenities, knownDepartments, difficulty
+        case worldRNG, rivals, city, friendships, pendingStaffEvent, lastTeamDinnerDay
     }
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             schemaVersion: try container.decode(Int.self, forKey: .schemaVersion),
+            difficulty: try container.decodeIfPresent(Difficulty.self, forKey: .difficulty) ?? .normal,
             rng: try container.decode(SeededRNG.self, forKey: .rng),
+            // Pre-rivals saves get a fixed-seed world stream; determinism
+            // only needs encode/decode round-trips to be stable, which a
+            // constant is.
+            worldRNG: try container.decodeIfPresent(SeededRNG.self, forKey: .worldRNG)
+                ?? SeededRNG(seed: 0xC0FF_EE00_C0FF_EE00),
             day: try container.decode(Int.self, forKey: .day),
             speed: try container.decode(SimSpeed.self, forKey: .speed),
             company: try container.decode(Company.self, forKey: .company),
@@ -244,6 +466,17 @@ extension GameState {
             ),
             life: try container.decodeIfPresent(LifeState.self, forKey: .life)
                 ?? LifeState.newGame(wallet: 0, founderSalary: 0),
+            market: try container.decodeIfPresent(MarketState.self, forKey: .market) ?? .neutral,
+            rivals: try container.decodeIfPresent(RivalsState.self, forKey: .rivals) ?? .empty,
+            city: try container.decodeIfPresent(CityState.self, forKey: .city) ?? .legacy,
+            friendships: try container.decodeIfPresent([Friendship].self, forKey: .friendships) ?? [],
+            pendingStaffEvent: try container.decodeIfPresent(StaffEvent.self, forKey: .pendingStaffEvent),
+            lastTeamDinnerDay: try container.decodeIfPresent(Int.self, forKey: .lastTeamDinnerDay),
+            loanBalance: try container.decodeIfPresent(Int.self, forKey: .loanBalance) ?? 0,
+            amenities: Set(try container.decodeIfPresent([Amenity].self, forKey: .amenities) ?? []),
+            knownDepartments: Set(
+                try container.decodeIfPresent([Department].self, forKey: .knownDepartments) ?? []
+            ),
             gameOver: try container.decodeIfPresent(GameOverInfo.self, forKey: .gameOver)
         )
     }
@@ -251,7 +484,9 @@ extension GameState {
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(schemaVersion, forKey: .schemaVersion)
+        try container.encode(difficulty, forKey: .difficulty)
         try container.encode(rng, forKey: .rng)
+        try container.encode(worldRNG, forKey: .worldRNG)
         try container.encode(day, forKey: .day)
         try container.encode(speed, forKey: .speed)
         try container.encode(company, forKey: .company)
@@ -266,6 +501,22 @@ extension GameState {
         try container.encode(eventLog, forKey: .eventLog)
         try container.encode(milestonesReached.sorted(), forKey: .milestonesReached)
         try container.encode(life, forKey: .life)
+        try container.encode(market, forKey: .market)
+        try container.encode(rivals, forKey: .rivals)
+        try container.encode(city, forKey: .city)
+        try container.encode(
+            friendships.sorted {
+                ($0.a.uuidString, $0.b.uuidString) < ($1.a.uuidString, $1.b.uuidString)
+            },
+            forKey: .friendships
+        )
+        try container.encodeIfPresent(pendingStaffEvent, forKey: .pendingStaffEvent)
+        try container.encodeIfPresent(lastTeamDinnerDay, forKey: .lastTeamDinnerDay)
+        try container.encode(loanBalance, forKey: .loanBalance)
+        try container.encode(amenities.sorted { $0.rawValue < $1.rawValue }, forKey: .amenities)
+        try container.encode(
+            knownDepartments.sorted { $0.rawValue < $1.rawValue }, forKey: .knownDepartments
+        )
         try container.encodeIfPresent(gameOver, forKey: .gameOver)
     }
 }

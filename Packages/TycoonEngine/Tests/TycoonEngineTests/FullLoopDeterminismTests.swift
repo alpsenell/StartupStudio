@@ -22,22 +22,31 @@ struct FullLoopDeterminismTests {
     /// revenue covers the cost long before then), drop back to a normal
     /// schedule and start paying the founder on day 131, book a vacation on
     /// day 142 (it fires on day 147 and the founder is back on day 154),
-    /// start "version_control" on day 200 (by then banked RP covers its
-    /// cost, so it completes immediately on start), accept another offer
-    /// on day 210 that nobody works — it dies at its deadline — and move
-    /// into an apartment on day 390 (the salary covers it by then). From
-    /// day 62 on, every Monday plans the weekend on a three-week rotation
-    /// (date night, rest, rest — with gym replacing the rests during weeks
-    /// 23...34) so the founder never burns out or drifts into a breakup.
-    /// Random events roll every 30 days and life events every 14 days
-    /// throughout.
+    /// build a game room on day 132 (the loft unlocks it), start
+    /// "version_control" on day 200 (by then banked RP covers its cost, so
+    /// it completes immediately on start), accept another offer on day 210
+    /// that nobody works — it dies at its deadline — and move into an
+    /// apartment on day 390 (the salary covers it by then). From day 131
+    /// on, the first lawyer and the first QA engineer to show up in a
+    /// candidate pool are hired (the loft lets lawyers roll; the hires
+    /// join whatever is in development), forming the Legal department.
+    /// From day 62 on, every Monday plans the weekend on a three-week
+    /// rotation (date night, rest, rest — with gym replacing the rests
+    /// during weeks 23...34) so the founder never burns out or drifts into
+    /// a breakup. Random events roll every 30 days and life events every
+    /// 14 days throughout.
     private func runScript(seed: UInt64) throws -> Data {
-        let balance = try BalanceConfig.loadBundled()
+        // The script's day-numbered choreography predates rivals; disable
+        // them so poaches don't rewrite the cast mid-script.
+        var balance = try BalanceConfig.loadBundled()
+        balance.rivals.rivalCount = 0
         let content = TestContent.bundled
         var state = GameState.newGame(companyName: "Determined", seed: seed, balance: balance)
         var productID: UUID?
         var secondProductID: UUID?
         var hiredID: UUID?
+        var lawyerID: UUID?
+        var qaID: UUID?
         var workedContractID: UUID?
         var abandonedContractID: UUID?
 
@@ -52,6 +61,19 @@ struct FullLoopDeterminismTests {
                 default: (23...34).contains(week) ? .gym : .rest
                 }
                 Reducer.apply(.planWeekend(plan), to: &state, balance: balance, content: content)
+            }
+
+            // Scripted candidate picks once the loft is in: the first
+            // lawyer and the first QA engineer on any sheet.
+            if state.day >= 131 {
+                if lawyerID == nil, let lawyer = state.candidatePool.first(where: { $0.role == .lawyer }) {
+                    Reducer.apply(.hire(candidateID: lawyer.id), to: &state, balance: balance, content: content)
+                    lawyerID = lawyer.id
+                }
+                if qaID == nil, let qa = state.candidatePool.first(where: { $0.role == .qa }) {
+                    Reducer.apply(.hire(candidateID: qa.id), to: &state, balance: balance, content: content)
+                    qaID = qa.id
+                }
             }
 
             switch state.day {
@@ -135,6 +157,8 @@ struct FullLoopDeterminismTests {
             case 131:
                 Reducer.apply(.setWorkSchedule(.normal), to: &state, balance: balance, content: content)
                 Reducer.apply(.setFounderSalary(500), to: &state, balance: balance, content: content)
+            case 132:
+                Reducer.apply(.buildAmenity(.gameRoom), to: &state, balance: balance, content: content)
             case 142:
                 Reducer.apply(.planWeekend(.vacation), to: &state, balance: balance, content: content)
             case 390:
@@ -180,9 +204,26 @@ struct FullLoopDeterminismTests {
         #expect(info.launchDay == 60)
         #expect(!info.weeklySales.isEmpty)
         #expect(state.eventLog.contains(.shipped(productID: try #require(productID), day: 60)))
-        #expect(state.employees.count == 2)
+        #expect(state.employees.count == 4)
         #expect(state.eventLog.contains(.hired(employeeID: try #require(hiredID), day: 15)))
         #expect(state.eventLog.contains(.candidatesRefreshed(day: 14)))
+
+        // Sanity: the scripted lawyer and QA picks landed, Legal formed on
+        // the tick after the lawyer arrived, and the game room went up.
+        let lawyerHireID = try #require(lawyerID)
+        let qaHireID = try #require(qaID)
+        let lawyer = try #require(state.employee(id: lawyerHireID))
+        let qa = try #require(state.employee(id: qaHireID))
+        #expect(lawyer.role == .lawyer)
+        #expect(qa.role == .qa)
+        #expect(lawyer.hiredDay >= 131)
+        #expect(qa.hiredDay >= 131)
+        #expect(state.eventLog.contains(.departmentFormed(department: .legal, day: lawyer.hiredDay + 1)))
+        #expect(state.activeDepartments == [.legal])
+        #expect(state.knownDepartments == [.legal])
+        #expect(state.eventLog.contains(.amenityBuilt(amenity: .gameRoom, day: 132)))
+        #expect(state.amenities == [.gameRoom])
+        #expect(state.ledger.entries.contains { $0.label == "Amenities" && $0.amount == -150 })
 
         // Sanity: all scripted research nodes started and completed.
         #expect(state.eventLog.contains(.researchStarted(nodeID: "code_reviews", day: 71)))
@@ -195,10 +236,11 @@ struct FullLoopDeterminismTests {
         #expect(state.research.activeNodeID == nil)
         #expect(state.research.banked > 0)
 
-        // Sanity: offers refreshed weekly, both campaigns ran, the worked
-        // contract completed, and the abandoned one failed at its deadline.
+        // Sanity: offers refreshed weekly (the final sheet carries Legal's
+        // extra offer), both campaigns ran, the worked contract completed,
+        // and the abandoned one failed at its deadline.
         #expect(state.eventLog.contains(.contractOffersRefreshed(day: 7)))
-        #expect(state.contractOffers.count == 3)
+        #expect(state.contractOffers.count == 4)
         let campaignStarts = state.eventLog.filter {
             if case .campaignStarted = $0 { return true }
             return false
@@ -215,7 +257,7 @@ struct FullLoopDeterminismTests {
         #expect(state.eventLog.contains(.contractAccepted(contractID: workedID, day: 105)))
         #expect(state.eventLog.contains(.contractAccepted(contractID: abandonedID, day: 210)))
         #expect(state.eventLog.contains { event in
-            if case .contractCompleted(let id, _, _) = event { return id == workedID }
+            if case .contractDelivered(let id, _, _, _) = event { return id == workedID }
             return false
         })
         #expect(state.eventLog.contains { event in
@@ -257,9 +299,12 @@ struct FullLoopDeterminismTests {
             return false
         }.count
         #expect(lifeEventCount >= 1)
+        // Random life events may send the founder away (that's fine), but
+        // the schedule rotation must keep the run clear of burnout,
+        // hospital stays, breakups, and bankruptcy.
         #expect(!state.eventLog.contains { event in
             switch event {
-            case .founderAway(let reason, _, _): reason != "Vacation"
+            case .founderAway(let reason, _, _): reason == "Burnout" || reason == "Hospital"
             case .breakup, .gameOver: true
             default: false
             }

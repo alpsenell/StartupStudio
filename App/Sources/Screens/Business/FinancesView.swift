@@ -9,8 +9,101 @@ struct FinancesView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
+            LoanCard(engine: engine)
             CashflowCard(state: engine.state)
             RecentLedgerCard(state: engine.state)
+        }
+    }
+}
+
+// MARK: - Bank loan
+
+/// Borrow against the company's reputation and repay in chunks; interest
+/// posts weekly on whatever stays outstanding.
+private struct LoanCard: View {
+    let engine: GameEngine
+
+    /// The chunk each borrow/repay tap moves.
+    private static let step = 1_000
+
+    @State private var amount = 5_000
+
+    private var loans: BalanceConfig.LoanBalance { engine.balance.loans }
+
+    private var creditLimit: Int {
+        loans.baseLimit + Int((engine.state.company.reputation * loans.perReputation).rounded())
+    }
+
+    private var outstanding: Int { engine.state.loanBalance }
+
+    private var weeklyInterest: Int {
+        Int((Double(outstanding) * loans.weeklyInterestRate).rounded())
+    }
+
+    var body: some View {
+        CardView("Bank loan", systemImage: "banknote.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Outstanding")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(outstanding.money)
+                            .font(.system(.headline, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(outstanding > 0 ? Theme.negativeCash : .primary)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("Credit limit")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(creditLimit.money)
+                            .font(.system(.headline, design: .rounded))
+                            .monospacedDigit()
+                    }
+                }
+
+                if outstanding > 0 {
+                    Text("Interest \(weeklyInterest.money)/wk until repaid.")
+                        .font(.caption)
+                        .foregroundStyle(Theme.warning)
+                } else {
+                    Text("Reputation raises the limit. Interest posts weekly.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: Theme.Spacing.md) {
+                    Stepper(value: $amount, in: Self.step...100_000, step: Self.step) {
+                        Text(amount.money)
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            .monospacedDigit()
+                    }
+                    .accessibilityLabel("Loan amount")
+                    .accessibilityValue(amount.money)
+                }
+
+                HStack(spacing: Theme.Spacing.md) {
+                    Button("Borrow") {
+                        engine.send(.takeLoan(amount: amount))
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+                    .disabled(outstanding >= creditLimit)
+                    .accessibilityLabel("Borrow \(amount.money)")
+
+                    Button("Repay") {
+                        engine.send(.repayLoan(amount: amount))
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(outstanding == 0 || engine.state.company.cash <= 0)
+                    .accessibilityLabel("Repay \(amount.money)")
+
+                    Spacer(minLength: 0)
+                }
+                .font(.system(.footnote, design: .rounded).weight(.semibold))
+            }
         }
     }
 }

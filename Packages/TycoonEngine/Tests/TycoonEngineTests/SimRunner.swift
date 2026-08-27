@@ -110,7 +110,7 @@ enum SimRunner {
     private static func tally(_ events: [GameEvent], into result: inout Result) {
         for event in events {
             switch event {
-            case .contractCompleted: result.contractsCompleted += 1
+            case .contractDelivered: result.contractsCompleted += 1
             case .contractFailed: result.contractsFailed += 1
             case .shipped: result.productsShipped += 1
             case .officeUpgraded: result.officeUpgrades += 1

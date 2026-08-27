@@ -98,8 +98,10 @@ public enum SpriteLibrary {
     // MARK: - Status bubbles
 
     /// A small speech bubble with a status icon: `</>` for coding, a brush for
-    /// designing, a megaphone for marketing, a flask for researching — and a
-    /// fully transparent sprite for idle (idle people get no bubble).
+    /// designing, a megaphone for marketing, a flask for researching, a bug
+    /// for testing, scales for legal, two people for people ops, a wrench for
+    /// operations — and a fully transparent sprite for idle (idle people get
+    /// no bubble).
     public static func statusBubble(_ status: WorkStatus) -> PixelSprite {
         let bubbleWidth = 10
         let bubbleHeight = 9
@@ -138,6 +140,30 @@ public enum SpriteLibrary {
                 " FLLF ",
                 "FLLLLF",
             ]
+        case .testing: // beetle: red shell, dark wing seam, legs out
+            icon = [
+                "O UU O",
+                " UKKU ",
+                "O UU O",
+            ]
+        case .legal: // scales: silver beam and pans on a dark post
+            icon = [
+                "QQQQQQ",
+                "Q OO Q",
+                "QQOOQQ",
+            ]
+        case .peopleOps: // two people, shoulder to shoulder
+            icon = [
+                " S  S ",
+                " I  R ",
+                "IIIRRR",
+            ]
+        case .operations: // wrench, jaw up-right
+            icon = [
+                "   G G",
+                "  GGGG",
+                "GGG   ",
+            ]
         }
 
         let grid = [
@@ -160,6 +186,11 @@ public enum SpriteLibrary {
             "M": RGBA(r: 217, g: 164, b: 65),
             "F": RGBA(r: 176, g: 205, b: 226),
             "L": RGBA(r: 110, g: 190, b: 120),
+            "U": RGBA(r: 200, g: 60, b: 50),
+            "K": RGBA(r: 52, g: 44, b: 48),
+            "Q": RGBA(r: 112, g: 122, b: 150),
+            "S": RGBA(r: 240, g: 196, b: 151),
+            "G": RGBA(r: 78, g: 86, b: 112),
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }

@@ -1,9 +1,13 @@
 import SwiftUI
 import TycoonEngine
 
-/// Root of the app: tab bar plus the persistent top HUD.
-/// The HUD is attached here (not inside a screen) so it stays visible
-/// across every future tab.
+/// Root of the app: the tab bar, the game-over cover, and the one-time
+/// load-failure notice.
+///
+/// The persistent top HUD is NOT attached here. Each tab's root screen
+/// attaches it inside its own `NavigationStack` (see `TopHUD`), so that
+/// pinned content in the stack root sits below the HUD and pushed
+/// destinations get a regular navigation bar with Back instead.
 struct AppRootView: View {
     let session: GameSession
 
@@ -21,40 +25,48 @@ struct AppRootView: View {
     var body: some View {
         let engine = session.engine
         TabView(selection: $selectedTab) {
-            HQScreen(engine: engine)
-                .withTopHUD(engine: engine)
-                .tabItem { Label("HQ", systemImage: "building.2") }
-                .tag(GameTab.hq)
+            HQScreen(engine: engine) { difficulty in
+                session.startNewGame(difficulty: difficulty)
+            }
+            .tabItem { Label("HQ", systemImage: "building.2") }
+            .tag(GameTab.hq)
 
             LifeScreen(engine: engine)
-                .withTopHUD(engine: engine)
                 .tabItem { Label("Life", systemImage: "heart.fill") }
                 .tag(GameTab.life)
 
             TeamScreen(engine: engine)
-                .withTopHUD(engine: engine)
                 .tabItem { Label("Team", systemImage: "person.2.fill") }
                 .tag(GameTab.team)
 
             // Products and R&D share one tab (segmented inside) to keep the
             // bar at five tabs.
             ProductsScreen(engine: engine)
-                .withTopHUD(engine: engine)
                 .tabItem { Label("Products", systemImage: "shippingbox.fill") }
                 .tag(GameTab.products)
 
             BusinessScreen(engine: engine)
-                .withTopHUD(engine: engine)
                 .tabItem { Label("Business", systemImage: "briefcase.fill") }
                 .tag(GameTab.business)
         }
         .tint(Theme.accent)
         .fullScreenCover(isPresented: gameOverPresented) {
             if let info = engine.state.gameOver {
-                GameOverView(info: info, dateLabel: engine.state.dateLabel) {
-                    session.startNewGame()
+                if info.kind == .acquired {
+                    GameWonView(info: info, dateLabel: engine.state.dateLabel) { difficulty in
+                        session.startNewGame(difficulty: difficulty)
+                    }
+                } else {
+                    GameOverView(info: info, dateLabel: engine.state.dateLabel) { difficulty in
+                        session.startNewGame(difficulty: difficulty)
+                    }
                 }
             }
+        }
+        // Pending rival offers surface here (not per tab) so the paused
+        // timeline always has its question on screen.
+        .sheet(item: pendingDecision) { prompt in
+            DecisionSheet(prompt: prompt, engine: engine)
         }
         .alert("Couldn't load your save", isPresented: loadFailurePresented) {
             Button("OK") { session.clearLoadFailure() }
@@ -73,6 +85,21 @@ struct AppRootView: View {
         )
     }
 
+    /// The pending offer needing an answer, if any. The setter is a no-op:
+    /// dismissal happens when an option's action clears the pending offer
+    /// (interactive dismissal is disabled on the sheet).
+    private var pendingDecision: Binding<DecisionPrompt?> {
+        Binding(
+            get: {
+                guard session.engine.state.gameOver == nil else { return nil }
+                return DecisionPrompt.pending(
+                    in: session.engine.state, balance: session.engine.balance
+                )
+            },
+            set: { _ in }
+        )
+    }
+
     /// One-time dismissible notice when the save failed to load.
     private var loadFailurePresented: Binding<Bool> {
         Binding(
@@ -81,53 +108,5 @@ struct AppRootView: View {
                 if !presented { session.clearLoadFailure() }
             }
         )
-    }
-}
-
-private extension View {
-    /// Attach the persistent HUD to a tab's root screen. Applied per-screen
-    /// (not on the TabView) because a safe-area inset applied outside the
-    /// UIKit-backed TabView doesn't reliably propagate into tab content.
-    func withTopHUD(engine: GameEngine) -> some View {
-        safeAreaInset(edge: .top, spacing: 0) { TopHUD(engine: engine) }
-    }
-}
-
-// MARK: - Top HUD
-
-/// Persistent heads-up display: cash (left), in-game date (center),
-/// speed control (right).
-private struct TopHUD: View {
-    let engine: GameEngine
-
-    var body: some View {
-        ZStack {
-            Text(engine.state.dateLabel)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-                .contentTransition(.numericText())
-                .animation(.spring(duration: 0.3), value: engine.state.day)
-
-            HStack {
-                cashCounter
-                Spacer()
-                SpeedControl(engine: engine)
-            }
-        }
-        .padding(.horizontal, Theme.Spacing.lg)
-        .padding(.vertical, Theme.Spacing.sm)
-        .background(.bar)
-        .overlay(alignment: .bottom) { Divider() }
-    }
-
-    private var cashCounter: some View {
-        let cash = engine.state.company.cash
-        return StatPill(
-            systemImage: "dollarsign.circle.fill",
-            value: cash.money,
-            tint: cash < 0 ? Theme.negativeCash : .primary
-        )
-        .accessibilityLabel("Cash \(cash.money)")
     }
 }

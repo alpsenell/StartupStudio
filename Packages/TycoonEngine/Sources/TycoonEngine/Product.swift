@@ -93,6 +93,15 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// The development hype captured at ship; feeds the review hype bonus
     /// and the weekly sales peak multiplier.
     public var hypeAtLaunch: Double
+    /// How many weeks sales take to ramp up to the full peak, computed at
+    /// ship from the team's marketing skill and launch hype. 1 = the old
+    /// instant-peak behavior (also the fallback for pre-adoption saves).
+    public var adoptionWeeks: Double
+    /// Launch saturation × genre fatigue captured at ship (the studio's
+    /// own recent releases in the same topic / of the same type shrink the
+    /// peak); multiplies the weekly sales peak for the product's life.
+    /// 1 = untouched (also the fallback for pre-saturation saves).
+    public var launchMarketScale: Double
 
     public init(
         launchDay: Int,
@@ -100,7 +109,9 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         reviews: [Review],
         weeklySales: [WeeklySale],
         offMarket: Bool,
-        hypeAtLaunch: Double = 0
+        hypeAtLaunch: Double = 0,
+        adoptionWeeks: Double = 1,
+        launchMarketScale: Double = 1
     ) {
         self.launchDay = launchDay
         self.quality = quality
@@ -108,6 +119,8 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         self.weeklySales = weeklySales
         self.offMarket = offMarket
         self.hypeAtLaunch = hypeAtLaunch
+        self.adoptionWeeks = adoptionWeeks
+        self.launchMarketScale = launchMarketScale
     }
 
     /// Rounded mean review score, 0 if there are no reviews.
@@ -120,6 +133,30 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// Lifetime revenue across all recorded sales weeks.
     public var totalRevenue: Int {
         weeklySales.reduce(0) { $0 + $1.revenue }
+    }
+}
+
+// Hand-written decode so saves written before the adoption ramp or launch
+// saturation existed keep loading (a missing `adoptionWeeks` reads as the
+// old instant peak; a missing `launchMarketScale` as an untouched peak).
+extension ReleaseInfo {
+    private enum CodingKeys: String, CodingKey {
+        case launchDay, quality, reviews, weeklySales, offMarket, hypeAtLaunch, adoptionWeeks
+        case launchMarketScale
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            launchDay: try container.decode(Int.self, forKey: .launchDay),
+            quality: try container.decode(Double.self, forKey: .quality),
+            reviews: try container.decode([Review].self, forKey: .reviews),
+            weeklySales: try container.decode([WeeklySale].self, forKey: .weeklySales),
+            offMarket: try container.decode(Bool.self, forKey: .offMarket),
+            hypeAtLaunch: try container.decodeIfPresent(Double.self, forKey: .hypeAtLaunch) ?? 0,
+            adoptionWeeks: try container.decodeIfPresent(Double.self, forKey: .adoptionWeeks) ?? 1,
+            launchMarketScale: try container.decodeIfPresent(Double.self, forKey: .launchMarketScale) ?? 1
+        )
     }
 }
 

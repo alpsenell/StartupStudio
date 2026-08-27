@@ -13,11 +13,15 @@ struct BalanceSimulationTests {
     private static let days = 730
 
     private static func run(_ bot: any BotPolicy, seed: UInt64) throws -> SimRunner.Result {
-        SimRunner.run(
+        // Rivals are disabled: the bots predate them and never answer
+        // offers, so auto-resolved poaches would decimate every roster.
+        var balance = try BalanceConfig.loadBundled()
+        balance.rivals.rivalCount = 0
+        return SimRunner.run(
             days: days,
             seed: seed,
             bot: bot,
-            balance: try BalanceConfig.loadBundled(),
+            balance: balance,
             content: TestContent.bundled
         )
     }

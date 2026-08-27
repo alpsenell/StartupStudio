@@ -26,20 +26,29 @@ enum ContractSystem {
 
     // MARK: - Weekly offer sheet
 
-    /// Replaces the sheet with `contractOfferCount` fresh rolls. Per offer,
-    /// the RNG draws in a fixed order: id, client name, total points, code
-    /// split, urgency premium, deadline slack. The point-roll range scales
-    /// with the studio's age: `1 + contractYearScale * (year - 1)`.
+    /// Replaces the sheet with `contractOfferCount` fresh rolls (plus
+    /// `legalExtraOffers` with a Legal department). Per offer, the RNG
+    /// draws in a fixed order: id, client name, total points, code split,
+    /// urgency premium, deadline slack, required skill. The point-roll
+    /// range scales with the studio's age:
+    /// `1 + contractYearScale * (year - 1)`; the required-skill roll rises
+    /// `skillYearBump` per year, capped at `skillCap`.
     private static func refreshOffers(
         _ state: inout GameState,
         _ balance: BalanceConfig,
         _ content: ContentCatalog
     ) {
         let scale = 1 + balance.contractYearScale * Double(state.year - 1)
+        // Like `legalExtraOffers`, the district bonus changes how many
+        // per-offer draw groups run — a player-caused divergence of the
+        // main stream (relocating), same class as hiring a lawyer.
+        let offerCount = balance.contractOfferCount
+            + (state.hasDepartment(.legal) ? balance.company.legalExtraOffers : 0)
+            + balance.city.district(state.city.district).extraContractOffers
 
         var offers: [ContractOffer] = []
-        offers.reserveCapacity(balance.contractOfferCount)
-        for _ in 0..<balance.contractOfferCount {
+        offers.reserveCapacity(offerCount)
+        for _ in 0..<offerCount {
             let id = UUID(from: &state.rng)
             let clientName = pick(content.names.clientCompanies, &state.rng)
             let totalPts = scale * (balance.contractPtsMin
@@ -50,6 +59,15 @@ enum ContractSystem {
                 + state.rng.nextUniform() * (balance.contractUrgencyPremiumMax - balance.contractUrgencyPremiumMin)
             let slack = balance.contractDeadlineSlackMin
                 + state.rng.nextUniform() * (balance.contractDeadlineSlackMax - balance.contractDeadlineSlackMin)
+            // An empty roll range draws nothing, so a quality-neutral
+            // balance (skillMin == skillMax == 0) leaves the RNG sequence
+            // exactly as it was before contract quality existed.
+            let quality = balance.contractQuality
+            let skillRoll = quality.skillMax > quality.skillMin
+                ? quality.skillMin + state.rng.nextUniform() * (quality.skillMax - quality.skillMin)
+                : quality.skillMin
+            let requiredSkill = min(quality.skillCap,
+                skillRoll + quality.skillYearBump * Double(state.year - 1))
 
             let payout = Int((totalPts * balance.contractPayoutPerPoint * premium).rounded())
             offers.append(ContractOffer(
@@ -60,7 +78,8 @@ enum ContractSystem {
                 payout: payout,
                 penalty: Int((balance.contractPenaltyFraction * Double(payout)).rounded()),
                 deadlineDays: Int((totalPts / balance.contractDeadlinePtsPerDay * slack).rounded(.up)),
-                expiresDay: state.day + balance.contractOfferRefreshDays
+                expiresDay: state.day + balance.contractOfferRefreshDays,
+                requiredSkill: requiredSkill
             ))
         }
         state.contractOffers = offers
@@ -74,8 +93,10 @@ enum ContractSystem {
     // MARK: - Daily settlement
 
     /// Completion is checked before the deadline, so a job can still be
-    /// delivered on its deadline day. Settled jobs leave `activeContracts`;
-    /// the daily employee sweep then returns their workers to idle.
+    /// delivered on its deadline day. A Legal department lifts every payout
+    /// by `legalPayoutBonus` and scales every missed-deadline penalty by
+    /// `legalPenaltyFactor`. Settled jobs leave `activeContracts`; the
+    /// daily employee sweep then returns their workers to idle.
     private static func settleContracts(
         _ state: inout GameState,
         _ balance: BalanceConfig
@@ -83,26 +104,50 @@ enum ContractSystem {
         var events: [GameEvent] = []
         var remaining: [ContractJob] = []
         remaining.reserveCapacity(state.activeContracts.count)
+        let hasLegal = state.hasDepartment(.legal)
+        let payoutBonus = hasLegal ? balance.company.legalPayoutBonus : 1
+        let penaltyFactor = hasLegal ? balance.company.legalPenaltyFactor : 1
 
         for job in state.activeContracts {
             if job.progressCode >= job.requiredCodePts, job.progressDesign >= job.requiredDesignPts {
-                state.company.cash += job.payout
+                // Grade the delivery: the crew's average skill vs. what the
+                // client expected. A weak crew gets docked pay; a very weak
+                // one also costs reputation ("this is not good").
+                let quality = job.projectedQuality
+                let config = balance.contractQuality
+                let paidFraction: Double
+                var reputationDelta = balance.contractReputationReward
+                if quality >= config.greatThreshold {
+                    paidFraction = 1
+                } else if quality >= config.okayThreshold {
+                    paidFraction = config.okayPayoutFraction
+                    reputationDelta = 0
+                } else {
+                    paidFraction = config.poorPayoutFraction
+                    reputationDelta = -config.poorReputationPenalty
+                }
+                let paid = Int((Double(job.payout) * paidFraction * payoutBonus).rounded())
+
+                state.company.cash += paid
                 state.ledger.post(LedgerEntry(
-                    day: state.day, amount: job.payout, category: .contracts, label: job.clientName
+                    day: state.day, amount: paid, category: .contracts, label: job.clientName
                 ))
                 state.company.reputation = min(100, max(0,
-                    state.company.reputation + balance.contractReputationReward
+                    state.company.reputation + reputationDelta
                 ))
-                events.append(.contractCompleted(contractID: job.id, payout: job.payout, day: state.day))
+                events.append(.contractDelivered(
+                    contractID: job.id, quality: quality, payout: paid, day: state.day
+                ))
             } else if state.day > job.deadlineDay {
-                state.company.cash -= job.penalty
+                let penalty = Int((Double(job.penalty) * penaltyFactor).rounded())
+                state.company.cash -= penalty
                 state.ledger.post(LedgerEntry(
-                    day: state.day, amount: -job.penalty, category: .contracts, label: job.clientName
+                    day: state.day, amount: -penalty, category: .contracts, label: job.clientName
                 ))
                 state.company.reputation = min(100, max(0,
                     state.company.reputation - balance.contractReputationPenalty
                 ))
-                events.append(.contractFailed(contractID: job.id, penalty: job.penalty, day: state.day))
+                events.append(.contractFailed(contractID: job.id, penalty: penalty, day: state.day))
             } else {
                 remaining.append(job)
             }
@@ -133,7 +178,8 @@ enum ContractSystem {
             deadlineDay: state.day + offer.deadlineDays,
             payout: offer.payout,
             penalty: offer.penalty,
-            acceptedDay: state.day
+            acceptedDay: state.day,
+            requiredSkill: offer.requiredSkill
         ))
         return [.contractAccepted(contractID: offer.id, day: state.day)]
     }

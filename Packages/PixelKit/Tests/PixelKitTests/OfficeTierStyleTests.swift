@@ -15,6 +15,14 @@ struct OfficeTierStyleTests {
     }
 
     @Test func workStatusCases() {
-        #expect(WorkStatus.allCases == [.idle, .coding, .designing, .marketing, .researching])
+        #expect(WorkStatus.allCases == [
+            .idle, .coding, .designing, .marketing, .researching,
+            .testing, .legal, .peopleOps, .operations,
+        ])
+    }
+
+    @Test func amenityStylesMirrorTheEngineRawValues() {
+        #expect(AmenityStyle.allCases == [.gameRoom, .cafeteria, .shuttle, .gym])
+        #expect(AmenityStyle.allCases.map(\.rawValue) == ["gameRoom", "cafeteria", "shuttle", "gym"])
     }
 }

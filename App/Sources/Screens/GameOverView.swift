@@ -2,15 +2,16 @@ import SwiftUI
 import TycoonEngine
 
 /// Full-screen bankruptcy screen. "New game" wipes the save and starts a
-/// fresh run via the session.
+/// fresh run via the session at the chosen difficulty.
 struct GameOverView: View {
     let info: GameOverInfo
     let dateLabel: String
-    let onNewGame: () -> Void
+    let onNewGame: (Difficulty) -> Void
 
-    /// Starting over deletes the save — confirm first, so a stray tap the
-    /// moment bankruptcy hits can't silently wipe the run.
-    @State private var confirmingNewGame = false
+    /// Starting over deletes the save, so a stray tap the moment bankruptcy
+    /// hits can't silently wipe the run: "New game" first opens the
+    /// difficulty choice (with Cancel); picking one starts the game.
+    @State private var choosingDifficulty = false
 
     var body: some View {
         ZStack {
@@ -41,7 +42,7 @@ struct GameOverView: View {
                 Spacer()
 
                 Button {
-                    confirmingNewGame = true
+                    choosingDifficulty = true
                 } label: {
                     Text("New game")
                         .font(.system(.headline, design: .rounded))
@@ -55,15 +56,11 @@ struct GameOverView: View {
                 .padding(.bottom, Theme.Spacing.xl)
             }
         }
-        .confirmationDialog(
-            "Start over?",
-            isPresented: $confirmingNewGame,
-            titleVisibility: .visible
-        ) {
-            Button("Start a new game", role: .destructive, action: onNewGame)
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Your bankrupt company will be deleted for good.")
+        .sheet(isPresented: $choosingDifficulty) {
+            DifficultyPickerSheet { difficulty in
+                choosingDifficulty = false
+                onNewGame(difficulty)
+            }
         }
     }
 }

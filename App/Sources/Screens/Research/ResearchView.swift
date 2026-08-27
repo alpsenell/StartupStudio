@@ -5,15 +5,27 @@ import TycoonEngine
 /// The R&D segment of the Products tab: banked research points, the active
 /// project, and the tech tree grouped by tier. Research points come only
 /// from employees assigned to Research on the Team tab.
+///
+/// Every tech node row is tappable and opens `TechNodeInfoSheet` (name,
+/// tier, blurb, effect, cost, prerequisites, status); the Research/Switch/
+/// Cancel buttons stay on the rows.
 struct ResearchView: View {
     let engine: GameEngine
+
+    /// The node whose info sheet is open, if any.
+    @State private var selectedNode: TechNode?
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
             LabSummaryCard(engine: engine)
             ForEach(tiers, id: \.tier) { group in
-                TierCard(engine: engine, tier: group.tier, nodes: group.nodes)
+                TierCard(engine: engine, tier: group.tier, nodes: group.nodes) { node in
+                    selectedNode = node
+                }
             }
+        }
+        .sheet(item: $selectedNode) { node in
+            TechNodeInfoSheet(engine: engine, node: node)
         }
     }
 
@@ -108,12 +120,13 @@ private struct TierCard: View {
     let engine: GameEngine
     let tier: Int
     let nodes: [TechNode]
+    let onSelect: (TechNode) -> Void
 
     var body: some View {
         CardView("Tier \(tier)", systemImage: "square.stack.3d.up.fill") {
             VStack(spacing: 0) {
                 ForEach(Array(nodes.enumerated()), id: \.element.id) { index, node in
-                    TechNodeRow(engine: engine, node: node)
+                    TechNodeRow(engine: engine, node: node, onSelect: onSelect)
                         .padding(.vertical, Theme.Spacing.sm)
                     if index < nodes.count - 1 {
                         Divider()
@@ -124,23 +137,34 @@ private struct TierCard: View {
     }
 }
 
+// MARK: - Node status
+
+/// Where a tech node stands for the current save.
+private enum TechNodeStatus {
+    case owned, active, available, locked
+}
+
+private func techNodeStatus(_ node: TechNode, research: ResearchState) -> TechNodeStatus {
+    if research.unlocked.contains(node.id) { return .owned }
+    if research.activeNodeID == node.id { return .active }
+    let prerequisitesMet = node.prerequisites.allSatisfy { research.unlocked.contains($0) }
+    return prerequisitesMet ? .available : .locked
+}
+
 // MARK: - Tech node row
 
+/// One node in a tier card. The whole row is tappable (opens the info
+/// sheet via `onSelect`); the Research/Switch/Cancel buttons inside take
+/// precedence over the row tap.
 private struct TechNodeRow: View {
     let engine: GameEngine
     let node: TechNode
-
-    private enum Status {
-        case owned, active, available, locked
-    }
+    let onSelect: (TechNode) -> Void
 
     private var research: ResearchState { engine.state.research }
 
-    private var status: Status {
-        if research.unlocked.contains(node.id) { return .owned }
-        if research.activeNodeID == node.id { return .active }
-        let prerequisitesMet = node.prerequisites.allSatisfy { research.unlocked.contains($0) }
-        return prerequisitesMet ? .available : .locked
+    private var status: TechNodeStatus {
+        techNodeStatus(node, research: research)
     }
 
     private var effectSummary: String {
@@ -148,12 +172,25 @@ private struct TechNodeRow: View {
     }
 
     var body: some View {
-        switch status {
-        case .owned: ownedRow
-        case .active: activeRow
-        case .available: availableRow
-        case .locked: lockedRow
+        Group {
+            switch status {
+            case .owned: ownedRow
+            case .active: activeRow
+            case .available: availableRow
+            case .locked: lockedRow
+            }
         }
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect(node) }
+        .accessibilityAction(named: "Show details") { onSelect(node) }
+    }
+
+    /// Trailing "there's more" affordance on every row.
+    private var infoIcon: some View {
+        Image(systemName: "info.circle")
+            .font(.subheadline)
+            .foregroundStyle(.tertiary)
+            .accessibilityHidden(true)
     }
 
     // MARK: Owned
@@ -171,6 +208,7 @@ private struct TechNodeRow: View {
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .lineLimit(1)
+            infoIcon
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(node.name), researched. \(effectSummary)")
@@ -193,6 +231,7 @@ private struct TechNodeRow: View {
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
                 Spacer(minLength: Theme.Spacing.sm)
                 EffectChip(text: effectSummary)
+                infoIcon
             }
 
             Gauge(value: fraction) {
@@ -232,8 +271,12 @@ private struct TechNodeRow: View {
         let isSwitch = research.activeNodeID != nil
         let canAffordCash = engine.state.company.cash >= node.cashCost
         return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text(node.name)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+            HStack(spacing: Theme.Spacing.sm) {
+                Text(node.name)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                Spacer(minLength: Theme.Spacing.sm)
+                infoIcon
+            }
             Text(node.blurb)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -270,6 +313,8 @@ private struct TechNodeRow: View {
                 )
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(node.name), available. \(effectSummary)")
     }
 
     // MARK: Locked
@@ -288,6 +333,7 @@ private struct TechNodeRow: View {
                     .foregroundStyle(.tertiary)
             }
             Spacer(minLength: 0)
+            infoIcon
         }
         .opacity(0.6)
         .accessibilityElement(children: .ignore)
@@ -300,6 +346,170 @@ private struct TechNodeRow: View {
         node.prerequisites
             .map { engine.content.tech($0)?.name ?? $0 }
             .joined(separator: ", ")
+    }
+}
+
+// MARK: - Node info sheet
+
+/// Read-only detail for one tech node: name, tier, blurb, effect, cost,
+/// prerequisites (with owned checkmarks), and status. Actions stay on the
+/// tree rows.
+private struct TechNodeInfoSheet: View {
+    let engine: GameEngine
+    let node: TechNode
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var research: ResearchState { engine.state.research }
+
+    private var status: TechNodeStatus {
+        techNodeStatus(node, research: research)
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                        HStack(spacing: Theme.Spacing.sm) {
+                            StatPill(systemImage: "square.stack.3d.up.fill", value: "Tier \(node.tier)")
+                            statusPill
+                        }
+                        Text(node.blurb)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, Theme.Spacing.xs)
+                }
+
+                Section("Effect") {
+                    Label(
+                        techEffectSummary(node.effect, content: engine.content),
+                        systemImage: effectIcon
+                    )
+                }
+
+                Section("Cost") {
+                    LabeledContent("Research") {
+                        Text("\(Int(node.researchCost.rounded())) RP")
+                            .monospacedDigit()
+                    }
+                    if node.cashCost > 0 {
+                        LabeledContent("Cash") {
+                            Text(node.cashCost.money)
+                                .monospacedDigit()
+                                .foregroundStyle(
+                                    engine.state.company.cash >= node.cashCost
+                                        ? Color.secondary
+                                        : Theme.negativeCash
+                                )
+                        }
+                    }
+                }
+
+                Section("Prerequisites") {
+                    if node.prerequisites.isEmpty {
+                        Text("None")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(node.prerequisites, id: \.self) { id in
+                            prerequisiteRow(id)
+                        }
+                    }
+                }
+
+                Section("Status") {
+                    statusDetail
+                }
+            }
+            .navigationTitle(node.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private var statusPill: StatPill {
+        switch status {
+        case .owned:
+            StatPill(systemImage: "checkmark.circle.fill", value: "Researched", tint: Theme.positiveCash)
+        case .active:
+            StatPill(systemImage: "flask.fill", value: "In progress", tint: Theme.accent)
+        case .available:
+            StatPill(systemImage: "circle.dashed", value: "Available")
+        case .locked:
+            StatPill(systemImage: "lock.fill", value: "Locked", tint: .secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var statusDetail: some View {
+        switch status {
+        case .owned:
+            Text("Researched — its effect is active.")
+                .foregroundStyle(.secondary)
+        case .active:
+            let progress = Int(research.activeProgress.rounded())
+            let cost = Int(node.researchCost.rounded())
+            let fraction = node.researchCost > 0
+                ? min(max(research.activeProgress / node.researchCost, 0), 1)
+                : 0
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text("\(progress) / \(cost) RP")
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                Gauge(value: fraction) {
+                    EmptyView()
+                }
+                .gaugeStyle(.accessoryLinearCapacity)
+                .tint(Theme.accent)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("In progress, \(progress) of \(cost) research points")
+        case .available:
+            if research.activeNodeID != nil {
+                Text("Ready to research. Switching from the current project refunds its progress to the banked pool.")
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Ready to research.")
+                    .foregroundStyle(.secondary)
+            }
+            if node.cashCost > 0, engine.state.company.cash < node.cashCost {
+                Text("Needs \(node.cashCost.money) cash to start.")
+                    .foregroundStyle(Theme.negativeCash)
+            }
+        case .locked:
+            Text("Research the prerequisites above first.")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func prerequisiteRow(_ id: String) -> some View {
+        // Defensive: prerequisite ids should always resolve against the
+        // same catalog, but fall back to the raw id if content ever drifts.
+        let owned = research.unlocked.contains(id)
+        let name = engine.content.tech(id)?.name ?? id
+        return HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: owned ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(owned ? Theme.positiveCash : Color.secondary)
+            Text(name)
+                .foregroundStyle(owned ? Color.primary : Color.secondary)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(name), \(owned ? "researched" : "not yet researched")")
+    }
+
+    private var effectIcon: String {
+        switch node.effect {
+        case .unlockProductType: "shippingbox.fill"
+        case .qualityMultiplier: "sparkles"
+        case .devSpeedMultiplier: "hare.fill"
+        case .unlockCampaignKind: "megaphone.fill"
+        }
     }
 }
 
