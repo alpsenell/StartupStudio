@@ -12,6 +12,8 @@ struct ActivitiesCard: View {
     @State private var playing: PlayingActivity?
     @State private var showingShop = false
 
+    @Environment(GameShell.self) private var shell
+
     private let columns = [
         GridItem(.flexible(), spacing: Theme.Spacing.md),
         GridItem(.flexible(), spacing: Theme.Spacing.md),
@@ -34,7 +36,23 @@ struct ActivitiesCard: View {
                                 summary: effectSummary(def),
                                 blocker: blocker(for: activity, def: def)
                             ) {
-                                engine.send(.doInstantActivity(activity))
+                                // Only celebrate what actually happened:
+                                // the vignette waits for the engine's
+                                // `.instantActivityDone`, so a rejected
+                                // action no longer plays a scene and a
+                                // summary the player never got.
+                                let events = shell.toasts.send(
+                                    .doInstantActivity(activity),
+                                    to: engine,
+                                    rejected: "Not today — \(activity.displayName.lowercased()) is out of reach."
+                                )
+                                let happened = events.contains { event in
+                                    if case .instantActivityDone(let done, _) = event {
+                                        return done == activity
+                                    }
+                                    return false
+                                }
+                                guard happened else { return }
                                 playing = PlayingActivity(
                                     style: ActivitySceneStyle(rawValue: activity.rawValue) ?? .walk,
                                     title: activity.displayName,

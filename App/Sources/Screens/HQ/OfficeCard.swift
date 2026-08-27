@@ -15,6 +15,11 @@ struct OfficeCard: View {
 
     @State private var showingAmenities = false
     @State private var showingCityMap = false
+    @State private var confirmingUpgrade = false
+    /// Drives the "moving day" wipe when the tier changes.
+    @State private var movingDay = false
+
+    @Environment(GameShell.self) private var shell
 
     var body: some View {
         let state = engine.state
@@ -40,9 +45,20 @@ struct OfficeCard: View {
                 HeadcountPill(headcount: state.headcount, cap: cap)
             }
 
-            OfficeSceneView(tier: tierStyle, occupants: occupants, amenities: amenityStyles)
-                .frame(maxWidth: .infinity)
-                .accessibilityLabel(sceneAccessibilityLabel)
+            PixelPanel(contentPadding: Theme.Spacing.xs) {
+                // Equatable input + EquatableView: HQ observes `state`,
+                // which mutates 4x a second at 4x speed. Without this the
+                // whole scene recomposes on every tick even when nothing
+                // about the office changed.
+                EquatableView(
+                    content: OfficeScenePanel(
+                        input: sceneInput,
+                        sceneLabel: sceneAccessibilityLabel
+                    )
+                )
+            }
+            .overlay { movingDayWipe }
+            .frame(maxWidth: .infinity)
 
             Divider()
             AmenitiesRow(ownedCount: ownedAmenities.count) {
@@ -64,7 +80,7 @@ struct OfficeCard: View {
                     def: engine.balance.office(next),
                     cash: state.company.cash
                 ) {
-                    engine.send(.upgradeOffice)
+                    confirmingUpgrade = true
                 }
             }
         }
@@ -72,11 +88,73 @@ struct OfficeCard: View {
         // Moving day: the scene above re-renders with the new tier; add a
         // success haptic so the moment lands.
         .sensoryFeedback(.success, trigger: state.company.officeTier)
+        .confirmationDialog(
+            "Move into the \(engine.state.company.officeTier.next?.displayName ?? "next office")?",
+            isPresented: $confirmingUpgrade,
+            titleVisibility: .visible
+        ) {
+            if let next = engine.state.company.officeTier.next {
+                Button("Pay \(engine.balance.office(next).upgradeCost.money) and move") {
+                    shell.toasts.send(
+                        .upgradeOffice,
+                        to: engine,
+                        rejected: "The move fell through - check the cash."
+                    )
+                }
+            }
+            Button("Stay put", role: .cancel) {}
+        } message: {
+            if let next = engine.state.company.officeTier.next {
+                Text(
+                    "Rent goes from \(engine.balance.office(engine.state.company.officeTier).weeklyRent.money) to \(engine.balance.office(next).weeklyRent.money) a week, every week, and the old space is gone."
+                )
+            }
+        }
+        .onChange(of: engine.state.company.officeTier) { _, _ in
+            movingDay = true
+            Sounds.play(.goal)
+            Task {
+                try? await Task.sleep(for: .milliseconds(1100))
+                withAnimation(.easeOut(duration: 0.35)) { movingDay = false }
+            }
+        }
         .sheet(isPresented: $showingAmenities) {
             AmenitiesSheet(engine: engine)
         }
         .fullScreenCover(isPresented: $showingCityMap) {
             CityMapScreen(engine: engine)
+        }
+    }
+
+    /// Everything the scene needs, as one `Hashable` value. WS-C's
+    /// director reads `ambience` and `celebration`; until then they carry
+    /// their defaults and the scene draws exactly as it did before.
+    private var sceneInput: OfficeSceneInput {
+        OfficeSceneInput(
+            tier: tierStyle,
+            occupants: occupants,
+            amenities: amenityStyles
+        )
+    }
+
+    /// The moving-day wipe: a panel drops over the card while the scene
+    /// underneath swaps to the new tier.
+    @ViewBuilder private var movingDayWipe: some View {
+        if movingDay {
+            ZStack {
+                Theme.pixelInk.opacity(0.92)
+                VStack(spacing: Theme.Spacing.sm) {
+                    PixelText(text: "Moving day", scale: 3, color: Theme.pixelPaper)
+                    Text("Welcome to the \(engine.state.company.officeTier.displayName)")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.pixelPaper.opacity(0.8))
+                }
+            }
+            .transition(.move(edge: .bottom))
+            .allowsHitTesting(false)
+            .accessibilityLabel(
+                "Moving day. Welcome to the \(engine.state.company.officeTier.displayName)."
+            )
         }
     }
 
@@ -334,5 +412,22 @@ private struct HeadcountPill: View {
             .contentTransition(.numericText())
             .animation(.spring(duration: 0.35), value: headcount)
             .accessibilityLabel("\(headcount) of \(cap) desks filled")
+    }
+}
+
+/// The office scene inside an `EquatableView`, so it only recomposes when
+/// the scene's own input actually changes.
+private struct OfficeScenePanel: View, Equatable {
+    let input: OfficeSceneInput
+    let sceneLabel: String
+
+    var body: some View {
+        OfficeSceneView(input: input)
+            .frame(maxWidth: .infinity)
+            .accessibilityLabel(sceneLabel)
+    }
+
+    nonisolated static func == (lhs: OfficeScenePanel, rhs: OfficeScenePanel) -> Bool {
+        lhs.input == rhs.input && lhs.sceneLabel == rhs.sceneLabel
     }
 }

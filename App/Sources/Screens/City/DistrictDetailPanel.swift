@@ -9,6 +9,9 @@ struct DistrictDetailPanel: View {
     let engine: GameEngine
     let district: DistrictID
 
+    @Environment(GameShell.self) private var shell
+    @State private var pendingMove: PropertyMove?
+
     var body: some View {
         let state = engine.state
         let def = engine.balance.city.district(district)
@@ -59,6 +62,68 @@ struct DistrictDetailPanel: View {
         .padding(Theme.Spacing.md)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
         .animation(.spring(duration: 0.3), value: district)
+        .confirmationDialog(
+            confirmationTitle,
+            isPresented: Binding(
+                get: { pendingMove != nil },
+                set: { if !$0 { pendingMove = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: pendingMove
+        ) { move in
+            Button(confirmButtonTitle(move)) { commit(move) }
+            Button("Cancel", role: .cancel) { pendingMove = nil }
+        } message: { move in
+            Text(confirmationMessage(move))
+        }
+    }
+
+    // MARK: - Confirmations
+
+    private var confirmationTitle: String {
+        switch pendingMove {
+        case .sell: "Sell the office?"
+        case .buy: "Buy this office?"
+        case .relocate: "Move to \(district.displayName)?"
+        case nil: ""
+        }
+    }
+
+    private func confirmButtonTitle(_ move: PropertyMove) -> String {
+        switch move {
+        case .sell: "Sell for \(engine.state.city.propertyValue.money)"
+        case .buy: "Buy for \(buyPrice.money)"
+        case .relocate: "Move for \(relocationCost.money)"
+        }
+    }
+
+    private func confirmationMessage(_ move: PropertyMove) -> String {
+        switch move {
+        case .sell:
+            "You go back to paying \(weeklyRent.money) a week in rent. Buying back later is at the market price."
+        case .buy:
+            "The weekly rent stops, and the building becomes an asset you can sell later."
+        case .relocate:
+            engine.state.city.ownership.isOwned
+                ? "Your current office is sold for \(engine.state.city.propertyValue.money) first, and the team packs up."
+                : "The team packs up and rent becomes \(weeklyRent.money) a week."
+        }
+    }
+
+    private func commit(_ move: PropertyMove) {
+        pendingMove = nil
+        switch move {
+        case .sell:
+            shell.toasts.send(.sellOffice, to: engine, rejected: "The sale fell through.")
+        case .buy:
+            shell.toasts.send(.buyOffice, to: engine, rejected: "The purchase fell through.")
+        case .relocate:
+            shell.toasts.send(
+                .relocateOffice(district: district),
+                to: engine,
+                rejected: "The move fell through."
+            )
+        }
     }
 
     // MARK: - Numbers
@@ -110,6 +175,20 @@ struct DistrictDetailPanel: View {
 
     // MARK: - Actions
 
+    /// The property move awaiting confirmation. All three spend real money
+    /// and none of them can be undone, so none of them fires on one tap.
+    private enum PropertyMove: Identifiable {
+        case sell, buy, relocate
+
+        var id: String {
+            switch self {
+            case .sell: "sell"
+            case .buy: "buy"
+            case .relocate: "relocate"
+            }
+        }
+    }
+
     @ViewBuilder
     private func actionRow(isCurrent: Bool) -> some View {
         let state = engine.state
@@ -120,7 +199,7 @@ struct DistrictDetailPanel: View {
                     systemImage: "signature",
                     blocker: nil
                 ) {
-                    engine.send(.sellOffice)
+                    pendingMove = .sell
                 }
             } else {
                 gatedButton(
@@ -130,7 +209,7 @@ struct DistrictDetailPanel: View {
                         ? nil
                         : "Need \((buyPrice - state.company.cash).money) more"
                 ) {
-                    engine.send(.buyOffice)
+                    pendingMove = .buy
                 }
             }
         } else {
@@ -142,7 +221,7 @@ struct DistrictDetailPanel: View {
                     ? nil
                     : "Need \((relocationCost - state.company.cash - saleProceeds).money) more"
             ) {
-                engine.send(.relocateOffice(district: district))
+                pendingMove = .relocate
             }
             if state.city.ownership.isOwned {
                 Text("Moving sells your current office for \(state.city.propertyValue.money) first.")

@@ -146,8 +146,13 @@ extension ToastCenter {
     ///   - action: what to send.
     ///   - engine: the live engine.
     ///   - ack: the sentence to show when the action produced no event.
-    ///   - icon: SF Symbol for that fallback line.
-    ///   - tint: tint for that fallback line.
+    ///     Pass this for actions the reducer applies silently (a focus
+    ///     change, an assignment).
+    ///   - rejected: the sentence to show when the action produced no
+    ///     event. Pass this instead for actions that always emit one when
+    ///     accepted, so a gate the player didn't see still gets a reason.
+    ///   - icon: SF Symbol for the `ack` line.
+    ///   - tint: tint for the `ack` line.
     /// - Returns: the events the action produced, for callers that need to
     ///   know whether the engine actually accepted it.
     @discardableResult
@@ -155,6 +160,7 @@ extension ToastCenter {
         _ action: GameAction,
         to engine: GameEngine,
         ack: String? = nil,
+        rejected: String? = nil,
         icon: String = "checkmark.circle.fill",
         tint: Color = Theme.accent
     ) -> [GameEvent] {
@@ -163,7 +169,10 @@ extension ToastCenter {
             in: engine.state,
             copy: EventCopy(state: engine.state, content: engine.content, balance: engine.balance)
         )
-        if produced.isEmpty, let ack {
+        guard produced.isEmpty else { return produced }
+        if let rejected {
+            show(rejected, icon: "exclamationmark.triangle.fill", tint: Theme.warning, severity: .notable)
+        } else if let ack {
             Haptics.commit()
             show(ack, icon: icon, tint: tint)
         }

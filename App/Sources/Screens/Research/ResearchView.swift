@@ -45,6 +45,8 @@ struct ResearchView: View {
 private struct LabSummaryCard: View {
     let engine: GameEngine
 
+    @Environment(AppRouter.self) private var router
+
     private var research: ResearchState { engine.state.research }
 
     private var bankedRP: Int { Int(research.banked.rounded()) }
@@ -71,9 +73,21 @@ private struct LabSummaryCard: View {
                 }
 
                 if researcherCount == 0 {
-                    Text("Assign someone to Research from the Team tab.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.warning)
+                    HStack(spacing: Theme.Spacing.md) {
+                        Text("Nobody is researching — the lab banks no points.")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.warning)
+                        Spacer(minLength: Theme.Spacing.sm)
+                        Button {
+                            Haptics.tap()
+                            router.tab = .team
+                        } label: {
+                            Label("Assign", systemImage: "person.2.fill")
+                                .font(.system(.footnote, design: .rounded).weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Assign someone to research")
+                    }
                 }
 
                 if let activeNode {
@@ -160,6 +174,8 @@ private struct TechNodeRow: View {
     let engine: GameEngine
     let node: TechNode
     let onSelect: (TechNode) -> Void
+
+    @Environment(GameShell.self) private var shell
 
     private var research: ResearchState { engine.state.research }
 
@@ -251,7 +267,12 @@ private struct TechNodeRow: View {
                 // No confirmation needed: cancelling refunds progress to
                 // the banked pool.
                 Button("Cancel") {
-                    engine.send(.cancelResearch)
+                    shell.toasts.send(
+                        .cancelResearch,
+                        to: engine,
+                        ack: "Shelved \(node.name) — the points go back in the bank",
+                        icon: "flask"
+                    )
                 }
                 .font(.system(.footnote, design: .rounded).weight(.semibold))
                 .buttonStyle(.bordered)
@@ -299,7 +320,11 @@ private struct TechNodeRow: View {
                 }
                 Spacer(minLength: Theme.Spacing.sm)
                 Button(isSwitch ? "Switch" : "Research") {
-                    engine.send(.startResearch(nodeID: node.id))
+                    shell.toasts.send(
+                        .startResearch(nodeID: node.id),
+                        to: engine,
+                        rejected: "\(node.name) can't be started yet."
+                    )
                 }
                 .font(.system(.footnote, design: .rounded).weight(.semibold))
                 .buttonStyle(.borderedProminent)

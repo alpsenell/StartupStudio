@@ -21,6 +21,8 @@ struct BusinessScreen: View {
 
     @State private var section: BusinessSection = .contracts
 
+    @Environment(AppRouter.self) private var router
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -67,6 +69,36 @@ struct BusinessScreen: View {
             .navigationTitle("Business")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
+            // Deep links into this tab pick their own segment.
+            .onChange(of: router.pendingPush, initial: true) { _, _ in
+                consumeRoute()
+            }
+        }
+    }
+
+    /// Switches to the segment a deep link asked for.
+    ///
+    /// Routes this screen can satisfy on its own are consumed here;
+    /// `.marketReport` only picks the segment and is left in place for
+    /// `MarketView` to open the report on the right topic.
+    private func consumeRoute() {
+        switch router.pendingPush {
+        case .contracts:
+            section = .contracts
+            router.take(.contracts)
+        case .market:
+            section = .market
+            router.take(.market)
+        case .marketing:
+            section = .marketing
+            router.take(.marketing)
+        case .finances:
+            section = .finances
+            router.take(.finances)
+        case .marketReport:
+            section = .market
+        default:
+            break
         }
     }
 }

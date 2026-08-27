@@ -15,6 +15,9 @@ struct ProductDetailScreen: View {
     let engine: GameEngine
     let productID: UUID
 
+    @Environment(GameShell.self) private var shell
+    @State private var confirmingShip = false
+
     var body: some View {
         Group {
             if let product = engine.state.product(id: productID) {
@@ -56,7 +59,12 @@ struct ProductDetailScreen: View {
     @ViewBuilder
     private func releasedContent(product: Product, info: ReleaseInfo) -> some View {
         ReleasedHeaderCard(product: product, info: info, type: type, topic: topic)
+        if info.isSubscription {
+            SubscriptionCard(info: info, type: type)
+        }
         SalesCard(info: info)
+        LiveOpsCard(engine: engine, product: product, info: info, shell: shell)
+        RivalProductsCard(engine: engine, topicID: product.topicID)
         ReviewsCard(reviews: info.reviews)
     }
 
@@ -110,10 +118,13 @@ struct ProductDetailScreen: View {
 
     @ViewBuilder
     private func shipButton(product: Product, progress: DevProgress) -> some View {
-        let canShip = progress.codePts >= 0.6 * (type?.codePts ?? 0)
+        // The gate is the engine's, read from balance rather than mirrored
+        // (it used to be a hardcoded 0.6 here).
+        let threshold = engine.balance.shipCodeThreshold
+        let canShip = progress.codePts >= threshold * (type?.codePts ?? 0)
         VStack(spacing: Theme.Spacing.sm) {
             Button {
-                engine.send(.ship(productID: product.id))
+                confirmingShip = true
             } label: {
                 Label("Ship it", systemImage: "shippingbox.fill")
                     .font(.system(.headline, design: .rounded))
@@ -126,11 +137,283 @@ struct ProductDetailScreen: View {
             .accessibilityLabel("Ship \(product.name)")
 
             if !canShip {
-                Text("Shipping unlocks once code reaches 60% of its target.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                Text(
+                    "Shipping unlocks once code reaches \(Int((threshold * 100).rounded()))% of its target."
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
             }
         }
+        .confirmationDialog(
+            "Ship \(product.name)?",
+            isPresented: $confirmingShip,
+            titleVisibility: .visible
+        ) {
+            Button("Ship it") {
+                shell.toasts.send(
+                    .ship(productID: product.id),
+                    to: engine,
+                    rejected: "It is not ready to ship yet."
+                )
+            }
+            Button("Keep working", role: .cancel) {}
+        } message: {
+            Text(shipPreview(progress: progress))
+        }
+    }
+
+    /// What the player is about to trade away, in the engine's own terms:
+    /// how complete each pool is and what is still open. Deliberately not
+    /// a predicted score — the reviews are the moment.
+    private func shipPreview(progress: DevProgress) -> String {
+        guard let type else {
+            return "Once it ships, development stops for good and the press reviews it."
+        }
+        let design = percent(progress.designPts, of: type.designPts)
+        let code = percent(progress.codePts, of: type.codePts)
+        let polish = percent(progress.polishPts, of: type.polishPts)
+        var lines = "Design \(design)%, code \(code)%, polish \(polish)%."
+        if progress.openBugs > 0 {
+            lines += " \(progress.openBugs) bug\(progress.openBugs == 1 ? "" : "s") still open — the press will find them."
+        }
+        if polish < 100 {
+            lines += " Unfinished polish costs review score."
+        }
+        return lines + " Development stops for good."
+    }
+
+    private func percent(_ points: Double, of pool: Double) -> Int {
+        guard pool > 0 else { return 100 }
+        return Int((min(points / pool, 1) * 100).rounded())
+    }
+}
+
+// MARK: - Subscriptions
+
+/// Recurring revenue for a subscription product: subscribers and the
+/// weekly run rate they add up to.
+private struct SubscriptionCard: View {
+    let info: ReleaseInfo
+    let type: ProductTypeDef?
+
+    private var weeklyRevenue: Int {
+        Int((Double(info.subscribers) * (type?.unitPrice ?? 0)).rounded())
+    }
+
+    var body: some View {
+        CardView("Subscription", systemImage: "arrow.triangle.2.circlepath") {
+            HStack(alignment: .top, spacing: Theme.Spacing.xl) {
+                DetailStat(label: "Subscribers", value: info.subscribers.formatted())
+                DetailStat(label: "Weekly run rate", value: weeklyRevenue.money, tint: Theme.positiveCash)
+            }
+        }
+    }
+}
+
+// MARK: - Live ops
+
+/// Post-launch: bugs in the wild, who is fixing them, what the thing
+/// costs, and whether to put out an update.
+private struct LiveOpsCard: View {
+    let engine: GameEngine
+    let product: Product
+    let info: ReleaseInfo
+    let shell: GameShell
+
+    /// Employees currently on this product's support queue.
+    private var supporters: [Employee] {
+        guard let assignment = LiveOps.supportAssignment(productID: product.id) else { return [] }
+        return engine.state.employees.filter { $0.assignment == assignment }
+    }
+
+    /// Everyone who could be moved onto support.
+    private var assignable: [Employee] {
+        engine.state.employees.filter { !$0.isFounder }
+    }
+
+    var body: some View {
+        CardView("Live ops", systemImage: "wrench.and.screwdriver.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
+                HStack(alignment: .top, spacing: Theme.Spacing.xl) {
+                    DetailStat(
+                        label: "Live bugs",
+                        value: "\(info.liveBugs)",
+                        tint: info.liveBugs > 0 ? Theme.warning : Theme.positiveCash
+                    )
+                    DetailStat(label: "Price", value: info.priceTier.displayName)
+                    if info.offMarket {
+                        DetailStat(label: "Status", value: "Delisted", tint: .secondary)
+                    }
+                }
+
+                if info.liveBugs > 0 {
+                    Text(
+                        "Every open bug shaves a little off this product's weekly \(info.isSubscription ? "subscribers" : "sales")."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+
+                if LiveOps.isAvailable, !info.offMarket {
+                    priceTierPicker
+                    supportRow
+                    updateButton
+                }
+            }
+        }
+    }
+
+    private var priceTierPicker: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Picker("Price tier", selection: priceBinding) {
+                ForEach(PriceTier.allCases, id: \.self) { tier in
+                    Text(tier.displayName).tag(tier)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel("Price tier for \(product.name)")
+
+            Text(LiveOps.priceCaption(for: info.priceTier))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var priceBinding: Binding<PriceTier> {
+        Binding(
+            get: { info.priceTier },
+            set: { tier in
+                guard let action = LiveOps.setPriceTier(productID: product.id, tier: tier) else { return }
+                shell.toasts.send(
+                    action,
+                    to: engine,
+                    ack: "\(product.name) is now priced \(tier.displayName.lowercased())",
+                    icon: "tag.fill"
+                )
+            }
+        )
+    }
+
+    private var supportRow: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Text("Support")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                Spacer(minLength: 0)
+                Menu {
+                    ForEach(assignable) { employee in
+                        Button(employee.name) { assign(employee) }
+                    }
+                } label: {
+                    Label(
+                        supporters.isEmpty ? "Assign someone" : supporters.map(\.name).joined(separator: ", "),
+                        systemImage: "person.badge.shield.checkmark"
+                    )
+                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                }
+                .disabled(assignable.isEmpty)
+            }
+            Text("Someone on support closes live bugs faster than they arrive.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func assign(_ employee: Employee) {
+        guard let assignment = LiveOps.supportAssignment(productID: product.id) else { return }
+        shell.toasts.send(
+            .assign(employeeID: employee.id, to: assignment),
+            to: engine,
+            ack: "\(employee.name) is on \(product.name) support",
+            icon: "person.badge.shield.checkmark"
+        )
+    }
+
+    private var updateButton: some View {
+        Button {
+            guard let action = LiveOps.startUpdate(productID: product.id) else { return }
+            shell.toasts.send(
+                action,
+                to: engine,
+                rejected: "There is no room for an update right now."
+            )
+        } label: {
+            Label("Ship an update", systemImage: "arrow.up.circle.fill")
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Theme.Spacing.xs)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityHint("Puts the product back into a short development cycle for a quality bump")
+    }
+}
+
+/// What the competition has in this topic. Reads WS-F's rival products
+/// when they exist and falls back to the rivals' focus topics, so the card
+/// says something useful on either branch.
+private struct RivalProductsCard: View {
+    let engine: GameEngine
+    let topicID: String
+
+    @Environment(AppRouter.self) private var router
+
+    private var contenders: [Rival] {
+        engine.state.rivals.rivals.filter { $0.focusTopicIDs.contains(topicID) }
+    }
+
+    var body: some View {
+        if !contenders.isEmpty {
+            CardView("Competition", systemImage: "flag.2.crossed.fill") {
+                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    ForEach(contenders) { rival in
+                        HStack(spacing: Theme.Spacing.md) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(rival.name)
+                                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                Text("Works this market too")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            StatPill(
+                                systemImage: "chart.bar.fill",
+                                value: "Strength \(Int(rival.strength.rounded()))",
+                                tint: .secondary
+                            )
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                    Button {
+                        Haptics.tap()
+                        router.tab = .business
+                    } label: {
+                        Label("See the rivals", systemImage: "arrow.forward")
+                            .font(.footnote.weight(.semibold))
+                    }
+                    .buttonStyle(.borderless)
+                }
+            }
+        }
+    }
+}
+
+/// Labelled figure used by the released-product cards.
+private struct DetailStat: View {
+    let label: String
+    let value: String
+    var tint: Color = .primary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(.title3, design: .rounded).weight(.semibold))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -345,10 +628,8 @@ private struct ReviewsCard: View {
 
 // MARK: - Game dates
 
-/// Compact date label for an arbitrary day, e.g. "W3 · Y1".
-/// Mirrors the engine's calendar: 364-day years of 52 seven-day weeks.
+/// Compact date label for an arbitrary day, e.g. "Mar W3 · Y1", from the
+/// one calendar the whole app shares.
 private func gameDateLabel(forDay day: Int) -> String {
-    let year = day / 364 + 1
-    let week = (day % 364) / 7 + 1
-    return "W\(week) · Y\(year)"
+    GameCalendar(day: day).hudLabel
 }
