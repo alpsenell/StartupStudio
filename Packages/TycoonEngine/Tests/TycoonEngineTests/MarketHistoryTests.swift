@@ -126,6 +126,10 @@ struct MarketHistoryTests {
         balance.rivals.rivalCount = 0
         let content = TestContent.bundled
         var state = GameState.newGame(companyName: "Acme", seed: 5, balance: balance)
+        // A studio that ships nothing for thirty weeks now runs out of
+        // money long before then, and a game-over state stops ticking —
+        // this test is about the market log, so bankroll it.
+        state.company.cash = 10_000_000
         for _ in 0..<(7 * 30) {
             Reducer.tick(&state, balance: balance, content: content)
         }

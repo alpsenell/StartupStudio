@@ -158,7 +158,10 @@ struct DifficultyTests {
         #expect(hard.state.difficulty == .hard)
         #expect(hard.balance == bundled.adjusted(for: .hard))
         #expect(hard.state.company.cash == bundled.adjusted(for: .hard).startingCash)
-        #expect(hard.weeklyBurn == bundled.adjusted(for: .hard).weeklyOperatingCost)
+        // Burn is operating costs plus the founder's own salary; a fresh
+        // garage has no rent, payroll or amenities.
+        #expect(hard.weeklyBurn == bundled.adjusted(for: .hard).weeklyOperatingCost
+            + bundled.adjusted(for: .hard).life.defaultFounderSalary)
 
         let resumed = GameEngine.resume(state: hard.state)
         #expect(resumed.balance == bundled.adjusted(for: .hard))

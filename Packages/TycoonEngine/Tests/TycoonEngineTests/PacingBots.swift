@@ -208,12 +208,12 @@ struct SaaSBuilderBot: BotPolicy {
     ]
     /// Weeks of payroll kept in the bank before hiring.
     let hireRunwayWeeks = 10
+    /// The founder only stays in the lab while the rent is safe.
+    let researchCashFloor = 15_000
     /// The crew stays small until the platform is earning.
     let crewCapBeforeLaunch = 5
     /// People kept on the support desk once the platform is live.
     let supportDeskSize = 2
-    /// The founder only stays in the lab while the rent is safe.
-    let researchCashFloor = 15_000
 
     func actions(
         for state: GameState,
@@ -283,8 +283,10 @@ struct SaaSBuilderBot: BotPolicy {
         // Before the platform earns anything the studio can only afford
         // one build at a time; once it is live the spare slots go to
         // cash-flow apps.
+        var startedSomething = false
         if state.hasFreeDevSlot,
            livePlatform != nil || state.productsInDevelopment.isEmpty {
+            startedSomething = true
             if unlocked, livePlatform == nil, !buildingPlatform {
                 actions.append(.startProduct(
                     typeID: "saas_platform",
@@ -301,10 +303,17 @@ struct SaaSBuilderBot: BotPolicy {
                     name: "Filler \(state.products.count + 1)",
                     focus: .balanced
                 ))
+            } else {
+                startedSomething = false
             }
         }
+        // `startProduct` puts everyone idle onto the new build; re-deciding
+        // assignments from this (pre-action) state would immediately undo
+        // that, so the crew settles on the next poll.
+        if startedSomething { return actions }
 
-        // Who does what: the founder researches until the gate is open, a
+        // Who does what: the founder takes the lab whenever the rent is
+        // safe (a garage studio cannot afford a full-time researcher), a
         // couple of hands hold the support desk once the platform is live,
         // and everyone else is dealt round-robin across the open builds so
         // both slots actually move.

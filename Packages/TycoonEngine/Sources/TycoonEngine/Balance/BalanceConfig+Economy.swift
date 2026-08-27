@@ -186,7 +186,7 @@ extension BalanceConfig {
         public init(
             qualityCeilingBase: Double = 0.35,
             expectationPerComplexity: Double = 8,
-            subscriberAcquisitionWeeks: Double = 52,
+            subscriberAcquisitionWeeks: Double = 42,
             churnBase: Double = 0.06,
             churnQualityFactor: Double = 0.03,
             subscriptionFloorSubscribers: Int = 8,

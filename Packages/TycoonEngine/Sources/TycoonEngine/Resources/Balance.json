@@ -28,9 +28,9 @@
   "salaryBase": 180,
   "salaryPerSkillPoint": 9.0,
   "salaryJitter": 0.1,
-  "researchBasePoints": 0.5,
-  "researchCodingDivisor": 40.0,
-  "researchDesignDivisor": 80.0,
+  "researchBasePoints": 1.0,
+  "researchCodingDivisor": 25.0,
+  "researchDesignDivisor": 50.0,
   "techQualityMultiplierCap": 1.35,
   "reviewNoiseSigma": 6.0,
   "reviewFloor": 5,
@@ -298,7 +298,7 @@
   },
   "life": {
     "startingWallet": 2000,
-    "defaultFounderSalary": 0,
+    "defaultFounderSalary": 200,
     "founderSalaryMax": 5000,
     "drift": {
       "chill":  { "energy": 1.5,  "health": 0.3,  "mood": 0.5,  "relationships": 0.3 },
@@ -364,7 +364,7 @@
   "economy": {
     "qualityCeilingBase": 0.35,
     "expectationPerComplexity": 8.0,
-    "subscriberAcquisitionWeeks": 52.0,
+    "subscriberAcquisitionWeeks": 42.0,
     "churnBase": 0.06,
     "churnQualityFactor": 0.03,
     "subscriptionFloorSubscribers": 8,

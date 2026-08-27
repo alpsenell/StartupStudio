@@ -21,7 +21,10 @@ struct BalanceConfigTests {
         let balance = try BalanceConfig.loadBundled()
         let life = balance.life
         #expect(life.startingWallet == 2_000)
-        #expect(life.defaultFounderSalary == 0)
+        // The founder pays themselves from day one: enough to cover the
+        // studio flat's rent so the wallet does not drift negative by
+        // default (WS-A's founder-consequences pass).
+        #expect(life.defaultFounderSalary == 200)
         #expect(life.founderSalaryMax > 0)
         for schedule in WorkSchedule.allCases {
             #expect(life.drift[schedule.rawValue] != nil, Comment(rawValue: schedule.rawValue))

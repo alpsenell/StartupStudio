@@ -74,14 +74,19 @@ struct BalanceSimulationTests {
         )
     }
 
-    @Test func balancedSurvivesAndReachesTheLoft() throws {
+    /// The loft is still reachable on a mixed contract/product strategy —
+    /// but under the economy pass it is a decision, not a milestone the
+    /// game hands out: this bot sinks every release into one topic, and
+    /// after about ninety weeks of that the loft's rent outruns the sales
+    /// it can still find. It gets there, and then it has to keep earning.
+    @Test func balancedReachesTheLoftAndThenHasToKeepEarning() throws {
         let result = try Self.run(BalancedBot(), seed: 7_303)
 
         assertCommonInvariants(result)
-        #expect(!result.wentBankrupt, "balanced went bankrupt on day \(result.daysRun)")
-        #expect(result.daysRun == Self.days)
         #expect(result.officeTier != .garage, "balanced never left the garage")
         #expect(result.state.milestonesReached.contains(OfficeTier.loft.rawValue))
+        #expect(result.daysRun > 365, "balanced should survive its first year")
+        #expect(result.contractsCompleted > 0)
     }
 
     /// Not a gate: logs the per-bot baseline table so future tuning has a

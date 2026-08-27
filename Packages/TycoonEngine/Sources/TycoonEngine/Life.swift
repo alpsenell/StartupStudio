@@ -51,6 +51,12 @@ public enum HomeTier: String, Codable, Equatable, Sendable, CaseIterable {
     /// gates (e.g. children need at least `balance.life.childMinHome`).
     var rank: Int { Self.allCases.firstIndex(of: self) ?? 0 }
 
+    /// The tier one rung down the ladder, `nil` at the bottom — where an
+    /// evicted founder ends up.
+    public var previous: HomeTier? {
+        rank > 0 ? Self.allCases[rank - 1] : nil
+    }
+
     /// The tier one rung up the ladder, `nil` at the top.
     public var next: HomeTier? {
         let ladder = Self.allCases
@@ -326,9 +332,11 @@ extension LifeState {
 extension GameState {
     /// The founder's daily output multiplier, applied to product, contract,
     /// and research output:
-    /// `scheduleFactor × (minOutputFactor + (1 − minOutputFactor) × wellbeing) × (cold ? coldOutputFactor : 1)`
+    /// `scheduleFactor × (minOutputFactor + (1 − minOutputFactor) × wellbeing) × (cold ? coldOutputFactor : 1) × chronic`
     /// where `wellbeing = (wE·energy + wH·health + wM·mood) / 100` with the
-    /// balance's wellbeing weights — and 0 while the founder is away.
+    /// balance's wellbeing weights, and `chronic` is
+    /// `economy.chronicOutputFactor` while the founder is living with a
+    /// long-term condition — and 0 while the founder is away.
     public func founderOutputMultiplier(balance: BalanceConfig) -> Double {
         guard !life.isAway(day: day) else { return 0 }
         let config = balance.life
@@ -338,7 +346,8 @@ extension GameState {
             + weights.mood * life.meters.mood) / 100
         let vitality = config.minOutputFactor + (1 - config.minOutputFactor) * wellbeing
         let cold = life.hasCold(day: day) ? config.coldOutputFactor : 1
-        return config.outputFactor(for: life.schedule) * vitality * cold
+        let chronic = economy.chronicCondition ? balance.economy.chronicOutputFactor : 1
+        return config.outputFactor(for: life.schedule) * vitality * cold * chronic
     }
 
     /// Multiplier on the bug chance of code the founder works on:
