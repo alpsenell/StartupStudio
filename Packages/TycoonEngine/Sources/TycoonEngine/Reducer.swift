@@ -45,9 +45,15 @@ public enum Reducer {
 
         // MARK: WS-F
 
-        // Runs last, on the post-sweep roster: the trait effects that need
-        // the whole team (mentoring, the mood of the room, press).
+        // Runs on the post-sweep roster: the trait effects that need the
+        // whole team (mentoring, the mood of the room, press).
         TraitSystem.run,
+        // Then the investor cadence (offers, quarterly board reviews),
+        // which can end the run.
+        InvestorSystem.run,
+        // Progression measures last, so a goal that a system finished
+        // today completes today.
+        ProgressionSystem.run,
     ]
 
     /// Advances the state by one game day. No-op once the game is over.
@@ -189,6 +195,18 @@ public enum Reducer {
         // MARK: WS-B
 
         // MARK: WS-F
+        case .acceptInvestment:
+            events = InvestorSystem.acceptOffer(state: &state, balance: balance)
+        case .declineInvestment:
+            events = InvestorSystem.declineOffer(state: &state)
+        case .fileIPO:
+            events = InvestorSystem.fileIPO(state: &state, balance: balance)
+        case let .interviewCandidate(candidateID):
+            events = HiringSystem.interview(
+                candidateID: candidateID, state: &state, balance: balance
+            )
+        case let .passOnCandidate(candidateID):
+            events = HiringSystem.pass(candidateID: candidateID, state: &state)
         }
 
         state.logEvents(events)

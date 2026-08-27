@@ -236,9 +236,9 @@ public struct ProgressionStats: Codable, Equatable, Sendable {
     public var bestProductRevenue: Int
     /// Topics where the player's share beat every rival for a full week.
     public var topicsDominated: Int
-    /// The day the last contract count was taken, so the daily sweep only
-    /// counts each contract once.
-    public var lastContractScanDay: Int
+    /// How many contracts were open at the last daily sweep, so the next
+    /// one can tell an acceptance from a settlement.
+    public var openContracts: Int
 
     public init(
         peakHeadcount: Int = 1,
@@ -254,7 +254,7 @@ public struct ProgressionStats: Codable, Equatable, Sendable {
         bestReviewScore: Int = 0,
         bestProductRevenue: Int = 0,
         topicsDominated: Int = 0,
-        lastContractScanDay: Int = 0
+        openContracts: Int = 0
     ) {
         self.peakHeadcount = peakHeadcount
         self.departmentsEverFormed = departmentsEverFormed
@@ -269,7 +269,7 @@ public struct ProgressionStats: Codable, Equatable, Sendable {
         self.bestReviewScore = bestReviewScore
         self.bestProductRevenue = bestProductRevenue
         self.topicsDominated = topicsDominated
-        self.lastContractScanDay = lastContractScanDay
+        self.openContracts = openContracts
     }
 
     public static let initial = ProgressionStats()
@@ -286,7 +286,7 @@ extension ProgressionStats {
         case peakHeadcount, departmentsEverFormed, contractsAccepted, contractsSettled
         case cashPositiveWeeks, weekendsOff, crashesWeathered, campaignsRun
         case rivalsAcquired, roundsRaised, bestReviewScore, bestProductRevenue
-        case topicsDominated, lastContractScanDay
+        case topicsDominated, openContracts
     }
 
     public init(from decoder: any Decoder) throws {
@@ -305,7 +305,7 @@ extension ProgressionStats {
             bestReviewScore: try container.decodeIfPresent(Int.self, forKey: .bestReviewScore) ?? 0,
             bestProductRevenue: try container.decodeIfPresent(Int.self, forKey: .bestProductRevenue) ?? 0,
             topicsDominated: try container.decodeIfPresent(Int.self, forKey: .topicsDominated) ?? 0,
-            lastContractScanDay: try container.decodeIfPresent(Int.self, forKey: .lastContractScanDay) ?? 0
+            openContracts: try container.decodeIfPresent(Int.self, forKey: .openContracts) ?? 0
         )
     }
 }
@@ -353,6 +353,12 @@ public struct ProgressionState: Codable, Equatable, Sendable {
     public var chapterLog: [ChapterEntry]
     /// Run counters no other state records.
     public var stats: ProgressionStats
+    /// Candidates the founder has interviewed, so the hiring sheet knows
+    /// whose second trait to reveal. Cleared when a candidate leaves the
+    /// pool. Encoded sorted.
+    public var interviewedCandidateIDs: Set<UUID>
+    /// The last day an interview happened — one per day.
+    public var lastInterviewDay: Int?
 
     /// How many chapters `Goals.json` ships.
     public static let chapterCount = 5
@@ -368,7 +374,9 @@ public struct ProgressionState: Codable, Equatable, Sendable {
         goalProgress: [String: Double] = [:],
         perks: Set<String> = [],
         chapterLog: [ChapterEntry] = [ChapterEntry(chapter: 1, day: 0)],
-        stats: ProgressionStats = .initial
+        stats: ProgressionStats = .initial,
+        interviewedCandidateIDs: Set<UUID> = [],
+        lastInterviewDay: Int? = nil
     ) {
         self.founder = founder
         self.chapter = chapter
@@ -379,6 +387,8 @@ public struct ProgressionState: Codable, Equatable, Sendable {
         self.perks = perks
         self.chapterLog = chapterLog
         self.stats = stats
+        self.interviewedCandidateIDs = interviewedCandidateIDs
+        self.lastInterviewDay = lastInterviewDay
     }
 
     /// A fresh company's progression state: the default founder, chapter 1,
@@ -418,6 +428,7 @@ extension ProgressionState {
     private enum CodingKeys: String, CodingKey {
         case founder, chapter, chapterTitle, completedGoalIDs, activeGoals
         case goalProgress, perks, chapterLog, stats
+        case interviewedCandidateIDs, lastInterviewDay
     }
 
     private struct ProgressEntry: Codable {
@@ -442,7 +453,11 @@ extension ProgressionState {
             perks: Set(try container.decodeIfPresent([String].self, forKey: .perks) ?? []),
             chapterLog: try container.decodeIfPresent([ChapterEntry].self, forKey: .chapterLog)
                 ?? [ChapterEntry(chapter: 1, day: 0)],
-            stats: try container.decodeIfPresent(ProgressionStats.self, forKey: .stats) ?? .initial
+            stats: try container.decodeIfPresent(ProgressionStats.self, forKey: .stats) ?? .initial,
+            interviewedCandidateIDs: Set(
+                try container.decodeIfPresent([UUID].self, forKey: .interviewedCandidateIDs) ?? []
+            ),
+            lastInterviewDay: try container.decodeIfPresent(Int.self, forKey: .lastInterviewDay)
         )
     }
 
@@ -460,6 +475,11 @@ extension ProgressionState {
         try container.encode(perks.sorted(), forKey: .perks)
         try container.encode(chapterLog, forKey: .chapterLog)
         try container.encode(stats, forKey: .stats)
+        try container.encode(
+            interviewedCandidateIDs.sorted { $0.uuidString < $1.uuidString },
+            forKey: .interviewedCandidateIDs
+        )
+        try container.encodeIfPresent(lastInterviewDay, forKey: .lastInterviewDay)
     }
 }
 

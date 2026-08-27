@@ -85,21 +85,38 @@ struct CandidatePoolTests {
     @Test func skillCeilingRespondsToReputationAndOfficeTier() {
         let balance = TestBalance.standard
 
-        func maxSkillAtFirstRefresh(reputation: Double, tier: OfficeTier, seed: UInt64) -> Double {
+        // The ceiling is read off the state at refresh time, not off the
+        // reputation the run started with: chapter goals pay out a little
+        // reputation over the first fortnight (WS-F), so a run that starts
+        // at 10 is a point or two above it by the first refresh.
+        func firstRefresh(
+            reputation: Double, tier: OfficeTier, seed: UInt64
+        ) -> (maxSkill: Double, ceiling: Double) {
             var state = GameState.newGame(companyName: "Acme", seed: seed, balance: balance)
             state.company.reputation = reputation
             state.company.officeTier = tier
             for _ in 0..<balance.candidateRefreshDays {
                 Reducer.tick(&state, balance: balance, content: content)
             }
-            return state.candidatePool
+            let ceiling = min(100, balance.candidateSkillBase
+                + balance.candidateSkillPerReputation * state.company.reputation
+                + (balance.candidateSkillTierBonus[tier.rawValue] ?? 0))
+            let maxSkill = state.candidatePool
                 .flatMap { [$0.skills.coding, $0.skills.design, $0.skills.marketing] }
                 .max() ?? 0
+            return (maxSkill, ceiling)
         }
 
-        // Low reputation in the garage keeps every roll at or below 40.
+        func maxSkillAtFirstRefresh(reputation: Double, tier: OfficeTier, seed: UInt64) -> Double {
+            firstRefresh(reputation: reputation, tier: tier, seed: seed).maxSkill
+        }
+
+        // Low reputation in the garage keeps every roll at the ceiling the
+        // garage and that reputation allow — about 40.
         for seed: UInt64 in 1...5 {
-            #expect(maxSkillAtFirstRefresh(reputation: 10, tier: .garage, seed: seed) <= 40)
+            let result = firstRefresh(reputation: 10, tier: .garage, seed: seed)
+            #expect(result.maxSkill <= result.ceiling)
+            #expect(result.ceiling <= 42)
         }
 
         // High reputation on a campus raises the ceiling (35 + 40 + 30, clamped

@@ -51,6 +51,33 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
     case bankruptcy
     /// The founder sold the company to a rival — a successful exit.
     case acquired
+
+    // MARK: WS-F
+
+    /// The company went public and the founder rang the bell — the best
+    /// ending in the game.
+    case ipo
+    /// The board lost patience and replaced the founder with a hire.
+    case oustedByBoard
+
+    /// Whether the run ended somewhere the founder would call a win. The
+    /// endings screen picks its tone from this.
+    public var isSuccess: Bool {
+        switch self {
+        case .acquired, .ipo: true
+        case .bankruptcy, .oustedByBoard: false
+        }
+    }
+
+    /// The headline the founder biography leads with.
+    public var headline: String {
+        switch self {
+        case .bankruptcy: "Bankrupt"
+        case .acquired: "Acquired"
+        case .ipo: "Public"
+        case .oustedByBoard: "Replaced"
+        }
+    }
 }
 
 /// Terminal state details once the run has ended.
@@ -173,6 +200,37 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: WS-B
 
     // MARK: WS-F
+
+    /// A chapter goal was finished (and its reward paid).
+    case goalCompleted(goalID: String, day: Int)
+    /// A new chapter opened.
+    case chapterReached(chapter: Int, day: Int)
+    /// An investor put a term sheet on the table; open until
+    /// `respondByDay`.
+    case investmentOffered(investorID: String, amount: Int, equity: Double, respondByDay: Int, day: Int)
+    /// The founder took the money.
+    case investmentAccepted(investorID: String, amount: Int, equity: Double, day: Int)
+    /// The founder turned it down.
+    case investmentDeclined(investorID: String, day: Int)
+    /// The offer expired unanswered.
+    case investmentWithdrawn(investorID: String, day: Int)
+    /// A quarterly board review landed.
+    case boardReviewed(met: Bool, pressure: Double, day: Int)
+    /// Board pressure crossed the warning line: they want a plan.
+    case boardDemandedPlan(pressure: Double, day: Int)
+    /// The board replaced the founder — the run ends.
+    case founderOusted(day: Int)
+    /// The company filed to go public — the run ends.
+    case wentPublic(proceeds: Int, day: Int)
+    /// A rival shipped a *named* product into a topic.
+    case rivalProductLaunched(rivalID: UUID, productName: String, topicID: String, quality: Int, day: Int)
+    /// A rival started a price war in a topic the player leads.
+    case priceWarStarted(rivalID: UUID, topicID: String, untilDay: Int, day: Int)
+    /// A rival cloned the player's best topic.
+    case rivalCopycat(rivalID: UUID, topicID: String, day: Int)
+    /// The player was interviewed a candidate and learned their second
+    /// trait.
+    case candidateInterviewed(candidateID: UUID, day: Int)
 }
 
 extension GameEvent {
@@ -196,6 +254,10 @@ extension GameEvent {
 
         // MARK: WS-F
 
+        case .investmentOffered, .boardDemandedPlan, .founderOusted, .wentPublic,
+             .chapterReached, .priceWarStarted:
+            true
+
         default:
             false
         }
@@ -213,6 +275,15 @@ extension GameEvent {
         // MARK: WS-B
 
         // MARK: WS-F
+
+        case .founderOusted, .wentPublic, .investmentOffered:
+            .critical
+        case .boardDemandedPlan, .chapterReached, .priceWarStarted:
+            .notable
+        case .goalCompleted, .investmentAccepted, .rivalProductLaunched, .rivalCopycat:
+            .info
+        case .investmentDeclined, .investmentWithdrawn, .boardReviewed, .candidateInterviewed:
+            .quiet
 
         default:
             .info

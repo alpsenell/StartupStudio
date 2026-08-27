@@ -30,7 +30,22 @@ struct ScaffoldContractTests {
         }
         let legacy = try JSONSerialization.data(withJSONObject: object)
         let legacyState = try JSONDecoder().decode(GameState.self, from: legacy)
-        #expect(legacyState == state)
+
+        // Each stripped sub-state comes back as `.initial` and everything
+        // else survives. (The scaffold compared whole states, which only
+        // held while every sub-state was still empty; WS-F's progression
+        // is the first one that carries real data after 40 ticks.)
+        #expect(legacyState.economy == .initial)
+        #expect(legacyState.narrative == .initial)
+        #expect(legacyState.progression == .initial)
+        #expect(legacyState.investors == .initial)
+
+        var expected = state
+        expected.economy = .initial
+        expected.narrative = .initial
+        expected.progression = .initial
+        expected.investors = .initial
+        #expect(legacyState == expected)
 
         let employeeData = try encoder.encode(state.employees[0])
         var employeeObject = try #require(
