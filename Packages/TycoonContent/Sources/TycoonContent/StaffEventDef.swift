@@ -41,8 +41,6 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
         public var salaryPercent: Double
         /// Clears the employee's assignment (they're out for a while).
         public var clearsAssignment: Bool
-        /// The employee walks out on the spot.
-        public var quits: Bool
         /// Skill growth for that employee, applied to every skill.
         public var skill: Double
         /// A narrative flag raised by this answer.
@@ -58,7 +56,6 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             reputation: Double = 0,
             salaryPercent: Double = 0,
             clearsAssignment: Bool = false,
-            quits: Bool = false,
             skill: Double = 0,
             setFlag: String? = nil
         ) {
@@ -71,14 +68,13 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             self.reputation = reputation
             self.salaryPercent = salaryPercent
             self.clearsAssignment = clearsAssignment
-            self.quits = quits
             self.skill = skill
             self.setFlag = setFlag
         }
 
         private enum CodingKeys: String, CodingKey {
             case label, detail, cash, morale, loyalty, moraleAll, reputation
-            case salaryPercent, clearsAssignment, quits, skill, setFlag
+            case salaryPercent, clearsAssignment, skill, setFlag
         }
 
         public init(from decoder: any Decoder) throws {
@@ -93,7 +89,6 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
                 reputation: try container.decodeIfPresent(Double.self, forKey: .reputation) ?? 0,
                 salaryPercent: try container.decodeIfPresent(Double.self, forKey: .salaryPercent) ?? 0,
                 clearsAssignment: try container.decodeIfPresent(Bool.self, forKey: .clearsAssignment) ?? false,
-                quits: try container.decodeIfPresent(Bool.self, forKey: .quits) ?? false,
                 skill: try container.decodeIfPresent(Double.self, forKey: .skill) ?? 0,
                 setFlag: try container.decodeIfPresent(String.self, forKey: .setFlag)
             )
@@ -110,7 +105,6 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             try container.encode(reputation, forKey: .reputation)
             try container.encode(salaryPercent, forKey: .salaryPercent)
             try container.encode(clearsAssignment, forKey: .clearsAssignment)
-            try container.encode(quits, forKey: .quits)
             try container.encode(skill, forKey: .skill)
             try container.encodeIfPresent(setFlag, forKey: .setFlag)
         }

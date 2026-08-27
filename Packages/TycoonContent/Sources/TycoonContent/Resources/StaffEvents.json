@@ -1,1 +1,247 @@
-[]
+[
+  {
+    "id": "familyEmergency",
+    "title": "{name} has a family emergency",
+    "body": "They are already in the car. They asked whether it was all right, which tells you what kind of place they think this is.",
+    "headline": "{name} needed time off at no notice.",
+    "weight": 5,
+    "supportive": {
+      "label": "Cover for them",
+      "detail": "−$500 · time off · loyalty way up",
+      "cash": -500,
+      "morale": 6,
+      "loyalty": 12,
+      "clearsAssignment": true
+    },
+    "strict": {
+      "label": "Business first",
+      "detail": "Free · loyalty −10",
+      "loyalty": -10
+    }
+  },
+  {
+    "id": "rivalOfferRumor",
+    "title": "{name} is being courted",
+    "body": "Word is a rival has been buying them lunch. Twice. They have not mentioned it, which is either loyalty or a decision already made.",
+    "headline": "A rival has been buying {name} lunch.",
+    "weight": 4,
+    "supportive": {
+      "label": "Show them they matter",
+      "detail": "−$500 · loyalty way up",
+      "cash": -500,
+      "morale": 6,
+      "loyalty": 12
+    },
+    "strict": {
+      "label": "Trust them to stay",
+      "detail": "Free · loyalty −10",
+      "loyalty": -10
+    }
+  },
+  {
+    "id": "raiseRequest",
+    "title": "{name} wants a raise",
+    "body": "They brought numbers: three job listings, the industry survey, and the date of their last increase. None of it is wrong.",
+    "headline": "{name} asked for a raise, with evidence.",
+    "weight": 6,
+    "requires": { "minTenureDays": 120 },
+    "supportive": {
+      "label": "Give them the raise",
+      "detail": "+12% salary · morale +10 · loyalty +16",
+      "salaryPercent": 12,
+      "morale": 10,
+      "loyalty": 16
+    },
+    "strict": {
+      "label": "Tell them to wait for the review cycle",
+      "detail": "Free · morale −10 · loyalty −14",
+      "morale": -10,
+      "loyalty": -14
+    }
+  },
+  {
+    "id": "roleSwitch",
+    "title": "{name} wants to do a different job",
+    "body": "They have been doing the other job in the evenings for two months and are better at it than the one you pay them for.",
+    "headline": "{name} asked to change roles.",
+    "weight": 4,
+    "requires": { "minTenureDays": 180, "minHeadcount": 4 },
+    "supportive": {
+      "label": "Let them move",
+      "detail": "Morale +14 · loyalty +12 · they start slower",
+      "morale": 14,
+      "loyalty": 12,
+      "skill": -4,
+      "clearsAssignment": true
+    },
+    "strict": {
+      "label": "Keep them where they're needed",
+      "detail": "Free · morale −12",
+      "morale": -12,
+      "loyalty": -8
+    }
+  },
+  {
+    "id": "teamConflict",
+    "title": "{name} and a teammate have stopped speaking",
+    "body": "Nothing was said out loud. Standups run four minutes shorter and the code review queue has an obvious gap in it.",
+    "headline": "{name} is routing around a teammate.",
+    "weight": 5,
+    "requires": { "minHeadcount": 4, "requiresFriend": true },
+    "supportive": {
+      "label": "Sit them both down",
+      "detail": "Morale +8 for everyone · an afternoon gone",
+      "morale": 8,
+      "moraleAll": 6,
+      "loyalty": 6
+    },
+    "strict": {
+      "label": "Let them work it out",
+      "detail": "Free · team morale −8",
+      "morale": -6,
+      "moraleAll": -8
+    }
+  },
+  {
+    "id": "burnoutWarning",
+    "title": "{name} is running on fumes",
+    "body": "Three commits after midnight this week. Their last message to the team channel was an apology for a typo at 2:40am.",
+    "weight": 6,
+    "headline": "{name} has been shipping at 2am all week.",
+    "requires": { "maxMorale": 55 },
+    "supportive": {
+      "label": "Take work off them for a week",
+      "detail": "Morale +18 · loyalty +12 · slower week",
+      "morale": 18,
+      "loyalty": 12,
+      "clearsAssignment": true
+    },
+    "strict": {
+      "label": "Thank them for the effort",
+      "detail": "Free · morale −14 · team morale −4",
+      "morale": -14,
+      "moraleAll": -4,
+      "loyalty": -8
+    }
+  },
+  {
+    "id": "sideProject",
+    "title": "{name} has a side project",
+    "body": "It is good. It is also adjacent enough that a lawyer would have an opinion, and they built it on their own weekends.",
+    "headline": "{name} has been building something on the side.",
+    "weight": 4,
+    "requires": { "minTenureDays": 150 },
+    "supportive": {
+      "label": "It's theirs — say so in writing",
+      "detail": "Morale +16 · loyalty +18 · reputation +2",
+      "morale": 16,
+      "loyalty": 18,
+      "reputation": 2,
+      "setFlag": "ip_generous"
+    },
+    "strict": {
+      "label": "Remind them of the IP clause",
+      "detail": "Free · morale −16 · team morale −6",
+      "morale": -16,
+      "moraleAll": -6,
+      "loyalty": -18
+    }
+  },
+  {
+    "id": "promotionDemand",
+    "title": "{name} wants the title",
+    "body": "They have been doing the senior work for a year and watched someone else get called senior for less. They are not shouting. That is worse.",
+    "headline": "{name} asked for the title they have been doing the work of.",
+    "weight": 4,
+    "requires": { "minTenureDays": 240, "minLoyalty": 30 },
+    "supportive": {
+      "label": "Promote them",
+      "detail": "+18% salary · morale +16 · loyalty +18",
+      "salaryPercent": 18,
+      "morale": 16,
+      "loyalty": 18
+    },
+    "strict": {
+      "label": "Not this cycle",
+      "detail": "Free · morale −14 · loyalty −18",
+      "morale": -14,
+      "loyalty": -18
+    }
+  },
+  {
+    "id": "parentalLeave",
+    "title": "{name} is having a baby",
+    "body": "They want to know what the policy is. There is no policy. Whatever you say next becomes the policy.",
+    "headline": "{name} asked what the parental leave policy is.",
+    "weight": 3,
+    "requires": { "minTenureDays": 180, "minHeadcount": 4 },
+    "supportive": {
+      "label": "Full pay, three months, written down",
+      "detail": "−$4,000 · morale +12 for everyone · reputation +4",
+      "cash": -4000,
+      "morale": 16,
+      "loyalty": 20,
+      "moraleAll": 12,
+      "reputation": 4,
+      "clearsAssignment": true,
+      "setFlag": "good_leave_policy"
+    },
+    "strict": {
+      "label": "The statutory minimum",
+      "detail": "Free · morale −12 for everyone · reputation −3",
+      "morale": -12,
+      "moraleAll": -12,
+      "loyalty": -14,
+      "reputation": -3,
+      "clearsAssignment": true
+    }
+  },
+  {
+    "id": "remoteRequest",
+    "title": "{name} wants to move away",
+    "body": "Their partner got a job four hours from here. They would like to keep this one. They have thought about the time zones already.",
+    "headline": "{name} asked to work remotely for good.",
+    "weight": 4,
+    "requires": { "minTenureDays": 120 },
+    "supportive": {
+      "label": "Make it work",
+      "detail": "Morale +14 · loyalty +16 · team morale −3",
+      "morale": 14,
+      "loyalty": 16,
+      "moraleAll": -3,
+      "setFlag": "remote_friendly"
+    },
+    "strict": {
+      "label": "This is an in-person company",
+      "detail": "Free · morale −16 · loyalty −20",
+      "morale": -16,
+      "loyalty": -20
+    }
+  },
+  {
+    "id": "harassmentComplaint",
+    "title": "{name} has made a complaint",
+    "body": "It is specific, it is dated, and they have written it down. There is a right way to handle this and it is not a quiet word in the kitchen.",
+    "headline": "{name} filed a formal complaint.",
+    "weight": 3,
+    "requires": { "requiresDepartment": "hr", "minHeadcount": 8 },
+    "supportive": {
+      "label": "Run a proper process",
+      "detail": "−$3,000 · morale +10 for everyone · reputation +3",
+      "cash": -3000,
+      "morale": 10,
+      "loyalty": 14,
+      "moraleAll": 10,
+      "reputation": 3,
+      "setFlag": "process_trusted"
+    },
+    "strict": {
+      "label": "Have a quiet word with everyone involved",
+      "detail": "Free · morale −18 for everyone · reputation −6",
+      "morale": -18,
+      "moraleAll": -18,
+      "loyalty": -22,
+      "reputation": -6
+    }
+  }
+]

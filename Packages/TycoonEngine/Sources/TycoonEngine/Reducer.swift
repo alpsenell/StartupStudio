@@ -180,7 +180,9 @@ public enum Reducer {
         case .teamDinner:
             events = SocialSystem.teamDinner(state: &state, balance: balance)
         case let .resolveStaffEvent(choice):
-            events = SocialSystem.resolveStaffEvent(choice: choice, state: &state, balance: balance)
+            events = SocialSystem.resolveStaffEvent(
+                choice: choice, state: &state, balance: balance, content: content
+            )
 
         // Reserved regions — each workstream adds the handlers for the
         // cases it appended to `GameAction` inside its own region and
