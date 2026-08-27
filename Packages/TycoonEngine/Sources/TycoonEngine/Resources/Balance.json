@@ -378,5 +378,12 @@
     "investorRolodexWeeksEarlier": 4
   },
   "investors": {},
-  "traits": {}
+  "traits": {
+    "teamGrowthStrength": 1.0,
+    "teamGrowthLimit": 1.2,
+    "teamMoraleLimit": 1.2,
+    "reputationBonusCap": 0.06,
+    "reputationBonusCeiling": 70.0,
+    "interviewEnergyCost": 6.0
+  }
 }

@@ -102,14 +102,25 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
     public var role: EmployeeRole
     /// Personality tags (`TraitDef.id`s in the content catalog) that shape
     /// output, morale, skill growth and poach resistance through
-    /// `TraitEffects`. Empty until WS-F derives them from
-    /// `appearanceSeed`; saves written before traits existed decode as
-    /// empty too.
+    /// `TraitEffects`.
+    ///
+    /// Derived from `appearanceSeed` at creation — see the initializer —
+    /// so the same face always has the same personality and no RNG stream
+    /// is consumed. A save written before traits existed decodes with none
+    /// and gets the same derivation on the way in, which is why an old run
+    /// picks up traits without any migration.
     public var traits: [String]
 
     /// `role` defaults to the pre-roles inference (founder, else the
     /// stronger of coding and design) so callers that predate roles keep
     /// building the same employees.
+    ///
+    /// `traits` left empty is *derived* from `appearanceSeed` rather than
+    /// stored empty: every caller (hiring, an absorbed acquisition, a
+    /// decoded save) gets a person with a personality without having to
+    /// know about traits. The founder is the exception — their character
+    /// is their archetype, and giving them traits on top would quietly
+    /// move every founder-output number in the balance.
     public init(
         id: UUID,
         name: String,
@@ -145,7 +156,11 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         self.loyalty = loyalty
         self.lastSocialDay = lastSocialDay
         self.role = role ?? .inferred(isFounder: isFounder, skills: skills)
-        self.traits = traits
+        self.traits = if !traits.isEmpty || isFounder {
+            traits
+        } else {
+            TraitEffects.derivedTraitIDs(appearanceSeed: appearanceSeed)
+        }
     }
 
     /// Output multiplier from morale and seniority (the founder's output is
@@ -165,7 +180,8 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
 // Hand-written decode so saves written before morale/seniority/roles/traits
 // existed keep loading: the new keys decode as optional with fresh-hire
 // defaults, a missing role is inferred from the founder flag and skills, and
-// missing traits read as none.
+// missing traits are backfilled from the appearance seed by the initializer
+// (a pure derivation — the same save always decodes to the same people).
 extension Employee {
     private enum CodingKeys: String, CodingKey {
         case id, name, skills, weeklySalary, assignment, isFounder, hiredDay
@@ -224,6 +240,13 @@ public struct Candidate: Codable, Equatable, Sendable, Identifiable {
         self.weeklySalary = weeklySalary
         self.appearanceSeed = appearanceSeed
         self.role = role ?? .inferred(isFounder: false, skills: skills)
+    }
+
+    /// The traits this candidate would bring, derived from the same seed
+    /// the hire will carry — so what the hiring sheet promises is exactly
+    /// what walks in the door.
+    public var traits: [String] {
+        TraitEffects.derivedTraitIDs(appearanceSeed: appearanceSeed)
     }
 }
 

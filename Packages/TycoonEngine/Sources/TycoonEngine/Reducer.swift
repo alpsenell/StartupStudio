@@ -44,6 +44,10 @@ public enum Reducer {
         // MARK: WS-B
 
         // MARK: WS-F
+
+        // Runs last, on the post-sweep roster: the trait effects that need
+        // the whole team (mentoring, the mood of the room, press).
+        TraitSystem.run,
     ]
 
     /// Advances the state by one game day. No-op once the game is over.

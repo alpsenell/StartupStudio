@@ -1,15 +1,81 @@
-/// The `"traits"` block of `Balance.json` — how strongly employee traits
-/// move output, morale, growth and loyalty.
+/// The `"traits"` block of `Balance.json` — the dials behind the trait
+/// effects that reach the whole team.
 ///
-/// Scaffold placeholder: empty today, so `"traits": {}` decodes and
-/// `.default` is what an older balance file without the block gets.
-/// WS-F adds the tunables here and the matching numbers to the
-/// `"traits"` object; no other workstream edits this file or that object.
+/// The per-trait numbers live in `Traits.json` (content); the per-employee
+/// clamps live as constants on `TraitEffects`, whose hook signatures are
+/// fixed by the scaffold and take no balance. What is left here is
+/// everything `TraitSystem` applies across the roster — the mentor's
+/// teaching, the jokester's and grumbler's mood, the showman's press — plus
+/// the founder's cost for interviewing a candidate.
+///
+/// Every field decodes with a default, so a balance file that predates the
+/// block still loads. WS-F owns this file and the `"traits"` object.
 extension BalanceConfig {
     public struct TraitBalance: Codable, Equatable, Sendable {
-        public init() {}
+        /// Multiplies every trait's `teamGrowthBonus` before it is applied.
+        public var teamGrowthStrength: Double
+        /// Cap on the combined team skill-growth bonus, however many
+        /// mentors are on payroll.
+        public var teamGrowthLimit: Double
+        /// Cap on the combined daily team morale nudge, either way.
+        public var teamMoraleLimit: Double
+        /// Cap on the combined daily reputation trickle from the roster.
+        public var reputationBonusCap: Double
+        /// Reputation above which the trickle stops — showmen get you
+        /// noticed, they don't make you a household name.
+        public var reputationBonusCeiling: Double
+        /// Founder energy spent interviewing one candidate.
+        public var interviewEnergyCost: Double
+
+        public init(
+            teamGrowthStrength: Double = 1,
+            teamGrowthLimit: Double = 1.2,
+            teamMoraleLimit: Double = 1.2,
+            reputationBonusCap: Double = 0.06,
+            reputationBonusCeiling: Double = 70,
+            interviewEnergyCost: Double = 6
+        ) {
+            self.teamGrowthStrength = teamGrowthStrength
+            self.teamGrowthLimit = teamGrowthLimit
+            self.teamMoraleLimit = teamMoraleLimit
+            self.reputationBonusCap = reputationBonusCap
+            self.reputationBonusCeiling = reputationBonusCeiling
+            self.interviewEnergyCost = interviewEnergyCost
+        }
 
         public static let `default` = TraitBalance()
+    }
+}
+
+// MARK: - Codable
+
+// Hand-written so a `"traits"` object that lists only some of the dials
+// still decodes: every key reads with `decodeIfPresent`.
+
+extension BalanceConfig.TraitBalance {
+    private enum CodingKeys: String, CodingKey {
+        case teamGrowthStrength, teamGrowthLimit, teamMoraleLimit
+        case reputationBonusCap, reputationBonusCeiling, interviewEnergyCost
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = BalanceConfig.TraitBalance.default
+        self.init(
+            teamGrowthStrength: try container.decodeIfPresent(Double.self, forKey: .teamGrowthStrength)
+                ?? fallback.teamGrowthStrength,
+            teamGrowthLimit: try container.decodeIfPresent(Double.self, forKey: .teamGrowthLimit)
+                ?? fallback.teamGrowthLimit,
+            teamMoraleLimit: try container.decodeIfPresent(Double.self, forKey: .teamMoraleLimit)
+                ?? fallback.teamMoraleLimit,
+            reputationBonusCap: try container.decodeIfPresent(Double.self, forKey: .reputationBonusCap)
+                ?? fallback.reputationBonusCap,
+            reputationBonusCeiling: try container.decodeIfPresent(
+                Double.self, forKey: .reputationBonusCeiling
+            ) ?? fallback.reputationBonusCeiling,
+            interviewEnergyCost: try container.decodeIfPresent(Double.self, forKey: .interviewEnergyCost)
+                ?? fallback.interviewEnergyCost
+        )
     }
 }
 
