@@ -77,6 +77,24 @@ struct ScaffoldContractTests {
         }
         let stripped = try JSONSerialization.data(withJSONObject: object)
         let reloaded = try JSONDecoder().decode(BalanceConfig.self, from: stripped)
-        #expect(reloaded == balance)
+
+        // Every workstream block falls back to `.default`; everything else
+        // survives the round trip untouched. (The scaffold could compare
+        // the whole config because every block was still empty; once a
+        // workstream tunes its object — WS-F's `progression` is the first —
+        // only the non-workstream fields can match.)
+        #expect(reloaded.progression == .default)
+        #expect(reloaded.economy == .default)
+        #expect(reloaded.narrative == .default)
+        #expect(reloaded.investors == .default)
+        #expect(reloaded.traits == .default)
+
+        var expected = balance
+        expected.economy = .default
+        expected.narrative = .default
+        expected.progression = .default
+        expected.investors = .default
+        expected.traits = .default
+        #expect(reloaded == expected)
     }
 }

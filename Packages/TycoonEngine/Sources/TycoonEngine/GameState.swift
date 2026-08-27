@@ -319,13 +319,18 @@ public struct GameState: Codable, Equatable, Sendable {
         let drawnAppearanceSeed = rng.next()
         let founderEmployee = Employee(
             id: founderID,
-            name: founder.name,
-            // WS-F gives each archetype its own spread here; every
-            // archetype starts from the balance's founder skills today.
-            skills: SkillSet(
-                coding: balance.founderCoding,
-                design: balance.founderDesign,
-                marketing: balance.founderMarketing
+            name: founder.displayName,
+            // The chosen archetype's spread from the progression balance.
+            // The default founder — and any archetype the balance does not
+            // list — falls back to the flat founder skills, which is
+            // exactly the pre-archetype founder.
+            skills: founder.startingSkills(
+                balance: balance,
+                fallback: SkillSet(
+                    coding: balance.founderCoding,
+                    design: balance.founderDesign,
+                    marketing: balance.founderMarketing
+                )
             ),
             weeklySalary: 0,
             assignment: .idle,
@@ -372,7 +377,7 @@ public struct GameState: Codable, Equatable, Sendable {
             knownDepartments: [],
             economy: .initial,
             narrative: .initial,
-            progression: .initial,
+            progression: .initial(founder: founder),
             investors: .initial,
             gameOver: nil
         )

@@ -363,7 +363,20 @@
   "_workstreamBlocks": "One tunables object per workstream: WS-A owns economy, WS-B narrative, WS-F progression/investors/traits. Nobody edits another workstream's object.",
   "economy": {},
   "narrative": {},
-  "progression": {},
+  "progression": {
+    "archetypes": {
+      "hacker": { "coding": 55.0, "design": 25.0, "marketing": 20.0 },
+      "designer": { "coding": 25.0, "design": 55.0, "marketing": 20.0 },
+      "hustler": { "coding": 25.0, "design": 20.0, "marketing": 55.0 }
+    },
+    "goalsToAdvanceChapter": 4,
+    "rewardReputationScale": 1.0,
+    "rewardCashScale": 1.0,
+    "pressContactsHypeBonus": 5.0,
+    "veteranCrewMoraleBonus": 4.0,
+    "talentMagnetSkillBonus": 6.0,
+    "investorRolodexWeeksEarlier": 4
+  },
   "investors": {},
   "traits": {}
 }
