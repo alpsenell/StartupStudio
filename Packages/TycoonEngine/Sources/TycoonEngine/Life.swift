@@ -150,6 +150,9 @@ public struct LifeState: Codable, Equatable, Sendable {
     public var family: FamilyState
     /// The founder is absent (produces nothing) while `day < awayUntilDay`.
     public var awayUntilDay: Int?
+    /// The day the current absence began, so the team can notice a long
+    /// one. `nil` whenever the founder is around.
+    public var awaySinceDay: Int?
     /// Why the founder is away, e.g. "Burnout", "Hospital", "Vacation".
     public var awayReason: String?
     /// The founder has a cold (output × `coldOutputFactor`) while
@@ -177,6 +180,7 @@ public struct LifeState: Codable, Equatable, Sendable {
         home: HomeTier,
         family: FamilyState,
         awayUntilDay: Int?,
+        awaySinceDay: Int? = nil,
         awayReason: String?,
         coldUntilDay: Int?,
         lowRelationshipStreakDays: Int,
@@ -192,6 +196,7 @@ public struct LifeState: Codable, Equatable, Sendable {
         self.home = home
         self.family = family
         self.awayUntilDay = awayUntilDay
+        self.awaySinceDay = awaySinceDay
         self.awayReason = awayReason
         self.coldUntilDay = coldUntilDay
         self.lowRelationshipStreakDays = lowRelationshipStreakDays
@@ -240,6 +245,7 @@ public struct LifeState: Codable, Equatable, Sendable {
                 lastChildDay: nil
             ),
             awayUntilDay: nil,
+            awaySinceDay: nil,
             awayReason: nil,
             coldUntilDay: nil,
             lowRelationshipStreakDays: 0
@@ -257,7 +263,7 @@ public struct LifeState: Codable, Equatable, Sendable {
 extension LifeState {
     private enum CodingKeys: String, CodingKey {
         case meters, schedule, plannedActivity, wallet, founderSalary, home, family
-        case awayUntilDay, awayReason, coldUntilDay, lowRelationshipStreakDays
+        case awayUntilDay, awaySinceDay, awayReason, coldUntilDay, lowRelationshipStreakDays
         case instantCooldowns, instantActionsToday, possessions
     }
 
@@ -278,6 +284,7 @@ extension LifeState {
             home: try container.decode(HomeTier.self, forKey: .home),
             family: try container.decode(FamilyState.self, forKey: .family),
             awayUntilDay: try container.decodeIfPresent(Int.self, forKey: .awayUntilDay),
+            awaySinceDay: try container.decodeIfPresent(Int.self, forKey: .awaySinceDay),
             awayReason: try container.decodeIfPresent(String.self, forKey: .awayReason),
             coldUntilDay: try container.decodeIfPresent(Int.self, forKey: .coldUntilDay),
             lowRelationshipStreakDays: try container.decode(Int.self, forKey: .lowRelationshipStreakDays),
@@ -299,6 +306,7 @@ extension LifeState {
         try container.encode(home, forKey: .home)
         try container.encode(family, forKey: .family)
         try container.encodeIfPresent(awayUntilDay, forKey: .awayUntilDay)
+        try container.encodeIfPresent(awaySinceDay, forKey: .awaySinceDay)
         try container.encodeIfPresent(awayReason, forKey: .awayReason)
         try container.encodeIfPresent(coldUntilDay, forKey: .coldUntilDay)
         try container.encode(lowRelationshipStreakDays, forKey: .lowRelationshipStreakDays)

@@ -70,10 +70,18 @@ enum EmployeeSystem {
 
     /// Every hired employee's morale drifts toward a target set by pay
     /// fairness (their salary vs. the hiring-market rate for their skills,
-    /// raised by seniority), the office tier, People & HR, and the owned
-    /// amenities. Morale below the quit threshold builds a streak; a streak
-    /// past `quitStreakDays` (extended by HR and the shuttle) makes the
-    /// employee resign. The founder has life meters instead of morale.
+    /// raised by seniority), the office tier, People & HR, the owned
+    /// amenities, and — new in the economy pass — how the place is actually
+    /// being run: the company's work pace, being stuck on the same rung for
+    /// a year, a room at its headcount cap, contracts running past their
+    /// deadline, and a founder who has been gone for over a week.
+    ///
+    /// Morale below the quit threshold builds a streak. Past the streak an
+    /// employee does not vanish: they hand in their notice
+    /// (`.resignationNotice`), keep working, and leave on `respondByDay`
+    /// unless the founder counters with a raise or a promotion. Only one
+    /// notice is open at a time — the next unhappy person waits their turn.
+    /// The founder has life meters instead of morale.
     private static func updateMoraleAndQuits(
         _ state: inout GameState,
         _ balance: BalanceConfig,
@@ -81,6 +89,7 @@ enum EmployeeSystem {
     ) -> [GameEvent] {
         let staff = balance.staff
         let company = balance.company
+        let economy = balance.economy
         let hasHR = state.hasDepartment(.hr)
         let officeBonus = (staff.officeMoraleBonus[state.company.officeTier.rawValue] ?? 0)
             + balance.city.district(state.city.district).moraleBonus
@@ -89,19 +98,27 @@ enum EmployeeSystem {
         let quitStreakDays = staff.quitStreakDays
             + (hasHR ? company.hrQuitStreakBonus : 0)
             + state.ownedAmenities.reduce(0) { $0 + company.amenity($1).quitStreakBonusDays }
+        let conditions = workplaceMoraleDelta(state, balance)
         var events: [GameEvent] = []
         var quitting: [Int] = []
+        var noticeCandidate: Int?
 
         for index in state.employees.indices where !state.employees[index].isFounder {
             let employee = state.employees[index]
             let fairPay = fairWeeklyPay(for: employee, balance: balance)
             let ratio = fairPay > 0 ? Double(employee.weeklySalary) / fairPay : 1
-            var target = staff.baselineMorale + officeBonus + perkBonus
+            var target = staff.baselineMorale + officeBonus + perkBonus + conditions
                 + TraitEffects.moraleTargetDelta(employee, content: content)
             if ratio < staff.underpaidThreshold {
                 target -= staff.underpaidTargetPenalty
             } else if ratio > staff.wellPaidThreshold {
                 target += staff.wellPaidTargetBonus
+            }
+            // Nobody has been promoted, raised or trained in a year: they
+            // start reading job ads.
+            let lastRecognised = state.economy.lastRecognitionDay[employee.id] ?? employee.hiredDay
+            if state.day - lastRecognised >= economy.stagnationDays {
+                target -= economy.stagnationMoralePenalty
             }
             target = min(100, max(0, target))
 
@@ -115,16 +132,51 @@ enum EmployeeSystem {
                 let personalStreak = quitStreakDays
                     + Int(state.employees[index].loyalty / balance.social.loyaltyQuitDivisor)
                     + TraitEffects.quitStreakBonus(employee, content: content)
-                if state.employees[index].lowMoraleStreakDays > personalStreak {
-                    quitting.append(index)
+                if state.employees[index].lowMoraleStreakDays > personalStreak,
+                   noticeCandidate == nil {
+                    noticeCandidate = index
                 }
             } else {
                 state.employees[index].lowMoraleStreakDays = 0
             }
         }
 
+        // A notice that ran out of road: they leave today.
+        if let pending = state.economy.pendingResignation, state.day >= pending.respondByDay {
+            state.economy.pendingResignation = nil
+            if let index = state.employees.firstIndex(where: { $0.id == pending.employeeID }) {
+                quitting.append(index)
+            }
+        }
+        // With no notice period configured (the neutral test economy) an
+        // unhappy employee simply walks, which is the pre-notice behavior.
+        if economy.resignationNoticeDays <= 0 {
+            if let index = noticeCandidate, !quitting.contains(index) {
+                quitting.append(index)
+            }
+        } else if state.economy.pendingResignation == nil,
+                  let index = noticeCandidate,
+                  !quitting.contains(index) {
+            let employee = state.employees[index]
+            let respondByDay = state.day + economy.resignationNoticeDays
+            state.economy.pendingResignation = PendingResignation(
+                employeeID: employee.id,
+                name: employee.name,
+                sinceDay: state.day,
+                respondByDay: respondByDay,
+                salaryAtNotice: employee.weeklySalary
+            )
+            events.append(.resignationNotice(
+                employeeID: employee.id,
+                name: employee.name,
+                respondByDay: respondByDay,
+                day: state.day
+            ))
+        }
+
         for index in quitting.reversed() {
             let employee = state.employees.remove(at: index)
+            state.economy.lastRecognitionDay[employee.id] = nil
             events.append(.employeeQuit(employeeID: employee.id, name: employee.name, day: state.day))
             events.append(contentsOf: SocialSystem.friendDeparted(
                 employee.id, state: &state, balance: balance
@@ -133,11 +185,62 @@ enum EmployeeSystem {
         return events
     }
 
-    /// The weekly pay an employee considers fair: the candidate-market rate
-    /// for their skills, raised by `levelPayExpectation` per seniority level.
+    /// What the company's own conduct does to everybody's morale target
+    /// today: the work pace, a room at its cap, contracts running late, and
+    /// a founder who has not been seen in over a week.
+    static func workplaceMoraleDelta(_ state: GameState, _ balance: BalanceConfig) -> Double {
+        let economy = balance.economy
+        var delta = economy.pace(state.economy.workPace).moraleTargetDelta
+
+        if state.headcount >= balance.office(state.company.officeTier).headcountCap {
+            delta -= economy.overcrowdingMoralePenalty
+        }
+        let overdue = state.activeContracts.count { $0.deadlineDay < state.day }
+        delta -= Double(overdue) * economy.overdueContractMoralePenalty
+        if let since = state.life.awaySinceDay,
+           state.life.isAway(day: state.day),
+           state.day - since > economy.founderAwayDays {
+            delta -= economy.founderAwayMoralePenalty
+        }
+        return delta
+    }
+
+    /// Records that an employee was recognised today — hired, raised,
+    /// promoted or trained — resetting the stagnation clock.
+    static func recordRecognition(_ employeeID: UUID, _ state: inout GameState) {
+        state.economy.lastRecognitionDay[employeeID] = state.day
+    }
+
+    /// Answers an open resignation notice. A raise that clears
+    /// `counterOfferRaiseFactor` of the salary they resigned on — or any
+    /// promotion — keeps them: morale jumps, the streak resets, and the
+    /// notice is withdrawn. Anything less is not a counter-offer.
+    private static func answerResignation(
+        _ employeeID: UUID,
+        newSalary: Int?,
+        promoted: Bool,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) {
+        guard let pending = state.economy.pendingResignation,
+              pending.employeeID == employeeID
+        else { return }
+        let enough = promoted || newSalary.map {
+            Double($0) >= Double(pending.salaryAtNotice) * balance.economy.counterOfferRaiseFactor
+        } ?? false
+        guard enough else { return }
+
+        state.economy.pendingResignation = nil
+        guard let index = state.employees.firstIndex(where: { $0.id == employeeID }) else { return }
+        bumpMorale(&state.employees[index], by: balance.economy.counterOfferMoraleBoost)
+        state.employees[index].lowMoraleStreakDays = 0
+    }
+
+    /// The weekly pay an employee considers fair. Lives on `BalanceConfig`
+    /// so screens can show the number the morale system actually uses
+    /// rather than re-deriving it.
     static func fairWeeklyPay(for employee: Employee, balance: BalanceConfig) -> Double {
-        (Double(balance.salaryBase) + balance.salaryPerSkillPoint * employee.skills.total)
-            * (1 + balance.staff.levelPayExpectation * Double(employee.level.rank))
+        balance.fairWeeklyPay(for: employee)
     }
 
     // MARK: - Daily sweep
@@ -623,6 +726,7 @@ enum EmployeeSystem {
             level: .forSkillTotal(candidate.skills.total),
             role: candidate.role
         ))
+        recordRecognition(candidate.id, &state)
         return [.hired(employeeID: candidate.id, day: state.day)]
     }
 
@@ -665,6 +769,12 @@ enum EmployeeSystem {
             : fraction * staff.cutMoraleFactor
         state.employees[index].weeklySalary = weeklySalary
         bumpMorale(&state.employees[index], by: moraleDelta)
+        if moraleDelta > 0 {
+            recordRecognition(employeeID, &state)
+        }
+        answerResignation(
+            employeeID, newSalary: weeklySalary, promoted: false, state: &state, balance: balance
+        )
         return [.salaryChanged(employeeID: employeeID, weeklySalary: weeklySalary, day: state.day)]
     }
 
@@ -686,6 +796,10 @@ enum EmployeeSystem {
             (Double(state.employees[index].weeklySalary) * (1 + staff.promotionSalaryBump)).rounded()
         )
         bumpMorale(&state.employees[index], by: staff.promotionMoraleBoost)
+        recordRecognition(employeeID, &state)
+        answerResignation(
+            employeeID, newSalary: nil, promoted: true, state: &state, balance: balance
+        )
         return [.employeePromoted(employeeID: employeeID, level: next, day: state.day)]
     }
 
@@ -751,6 +865,7 @@ enum EmployeeSystem {
             bumpMorale(&state.employees[index], by: staff.trainingMoraleBoost)
         }
         state.employees[index].lastTrainedDay = state.day
+        recordRecognition(employeeID, &state)
         return [.employeeTrained(employeeID: employeeID, day: state.day)]
     }
 
@@ -781,6 +896,10 @@ enum EmployeeSystem {
         else { return [] }
 
         state.employees.remove(at: index)
+        state.economy.lastRecognitionDay[employeeID] = nil
+        if state.economy.pendingResignation?.employeeID == employeeID {
+            state.economy.pendingResignation = nil
+        }
         var events: [GameEvent] = [.fired(employeeID: employeeID, day: state.day)]
         events.append(contentsOf: SocialSystem.friendDeparted(
             employeeID, state: &state, balance: balance

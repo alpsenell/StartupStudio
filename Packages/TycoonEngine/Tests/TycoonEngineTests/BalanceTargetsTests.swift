@@ -133,16 +133,23 @@ struct BalanceTargetsTests {
 
     // MARK: - Recurring revenue is a real strategy
 
+    /// Betting the studio on a platform is a real bet: about half the
+    /// seeds run out of money during the long unfunded stretch between the
+    /// research and the launch, and the ones that get there are earning
+    /// several times what a shelf of mobile apps ever did.
     @Test func saaSBuilderBuildsRecurringRevenue() throws {
         let results = try Self.runAll(SaaSBuilderBot())
         let earners = Self.count(results) { $0.finalWeeklySubscriptionRevenue >= 20_000 }
         #expect(
-            earners >= 6,
+            earners >= 5,
             """
             only \(earners)/10 SaaS seeds reached $20k/week of subscriptions \
             (\(results.map(\.finalWeeklySubscriptionRevenue)))
             """
         )
+        // And the ones that make it are properly rewarded.
+        let best = results.map(\.finalWeeklySubscriptionRevenue).max() ?? 0
+        #expect(best >= 40_000, "the best SaaS seed only reached $\(best)/week")
     }
 
     // MARK: - Contracts pay the bills, not the pension

@@ -41,6 +41,7 @@ enum LifeSystem {
         // 1. Expiry.
         if let until = state.life.awayUntilDay, state.day >= until {
             state.life.awayUntilDay = nil
+            state.life.awaySinceDay = nil
             state.life.awayReason = nil
             events.append(.founderBack(day: state.day))
         }
@@ -114,6 +115,7 @@ enum LifeSystem {
         if !state.life.isAway(day: day), state.life.meters.energy < config.burnoutEnergyThreshold {
             let until = day + config.burnoutDays
             state.life.awayUntilDay = until
+            state.life.awaySinceDay = day
             state.life.awayReason = burnoutReason
             state.life.meters.energy = LifeMeters.clamped(config.burnoutRecoveryEnergy)
             events.append(.founderAway(reason: burnoutReason, untilDay: until, day: day))
@@ -122,6 +124,7 @@ enum LifeSystem {
         if !state.life.isAway(day: day), state.life.meters.health < config.hospitalHealthThreshold {
             let until = day + config.hospitalDays
             state.life.awayUntilDay = until
+            state.life.awaySinceDay = day
             state.life.awayReason = hospitalReason
             state.life.wallet -= config.hospitalBill
             state.life.meters.health = LifeMeters.clamped(config.hospitalRecoveryHealth)
@@ -186,6 +189,7 @@ enum LifeSystem {
         case .vacation:
             let until = day + config.vacationDays
             state.life.awayUntilDay = until
+            state.life.awaySinceDay = day
             state.life.awayReason = vacationReason
             state.life.plannedActivity = .rest
             events.append(.founderAway(reason: vacationReason, untilDay: until, day: day))

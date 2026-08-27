@@ -208,6 +208,8 @@ struct SaaSBuilderBot: BotPolicy {
     ]
     /// Weeks of payroll kept in the bank before hiring.
     let hireRunwayWeeks = 10
+    /// The crew stays small until the platform is earning.
+    let crewCapBeforeLaunch = 5
     /// People kept on the support desk once the platform is live.
     let supportDeskSize = 2
     /// The founder only stays in the lab while the rent is safe.
@@ -221,15 +223,38 @@ struct SaaSBuilderBot: BotPolicy {
         var actions: [GameAction] = []
         let payroll = state.employees.reduce(0) { $0 + $1.weeklySalary }
 
-        if state.headcount < balance.office(state.company.officeTier).headcountCap,
+        let livePlatform = state.products.first { product in
+            guard case .released(let info) = product.stage else { return false }
+            return product.typeID == "saas_platform" && !info.offMarket
+        }
+        let crewCap = livePlatform == nil
+            ? crewCapBeforeLaunch
+            : balance.office(state.company.officeTier).headcountCap
+        if state.headcount < min(crewCap, balance.office(state.company.officeTier).headcountCap),
            state.company.officeTier != .campus,
            let candidate = BotHelp.bestValueCandidate(state),
            state.company.cash > (payroll + candidate.weeklySalary) * hireRunwayWeeks {
             actions.append(.hire(candidateID: candidate.id))
         }
         if let next = state.company.officeTier.next, next != .campus,
+           livePlatform != nil || next == .loft,
            state.company.cash >= balance.office(next).upgradeCost + payroll * 8 {
             actions.append(.upgradeOffice)
+        }
+
+        // Pay the market rate: a value hire who stays underpaid resigns,
+        // and this bot's whole strategy is a crew that sticks around.
+        for employee in state.employees where !employee.isFounder {
+            let fair = Int(balance.fairWeeklyPay(for: employee).rounded())
+            if employee.weeklySalary < fair {
+                actions.append(.adjustSalary(employeeID: employee.id, weeklySalary: fair))
+            }
+        }
+        if let pending = state.economy.pendingResignation {
+            actions.append(.adjustSalary(
+                employeeID: pending.employeeID,
+                weeklySalary: Int(Double(pending.salaryAtNotice) * 1.25)
+            ))
         }
 
         let unlocked = state.isProductTypeUnlocked("saas_platform", content: content)
@@ -238,14 +263,11 @@ struct SaaSBuilderBot: BotPolicy {
             actions.append(.startResearch(nodeID: next))
         }
 
-        let livePlatform = state.products.first { product in
-            guard case .released(let info) = product.stage else { return false }
-            return product.typeID == "saas_platform" && !info.offMarket
-        }
-
-        // What to build: the platform once it is unlocked and not yet
-        // shipped, otherwise mobile apps for cash flow.
-        if let product = state.productsInDevelopment.first {
+        // What to build. Every free development slot gets filled: the
+        // platform first once it is unlocked, and mobile apps alongside it
+        // to keep the lights on while it is being built — which is exactly
+        // what the loft's second slot is for.
+        for product in state.productsInDevelopment {
             let polish = product.typeID == "saas_platform" ? 1.0 : 0.8
             if BotHelp.looksShippable(product, balance, content, polish: polish) {
                 actions.append(.ship(productID: product.id))
@@ -255,27 +277,43 @@ struct SaaSBuilderBot: BotPolicy {
                     focus: BotHelp.focusForRemainingWork(product, content)
                 ))
             }
-        } else if unlocked, livePlatform == nil {
-            actions.append(.startProduct(
-                typeID: "saas_platform",
-                topicID: "productivity",
-                name: "Platform",
-                focus: .balanced
-            ))
-        } else if livePlatform == nil || state.headcount > supportDeskSize + 1 {
-            actions.append(.startProduct(
-                typeID: "mobile_app",
-                topicID: BotHelp.topic(forProductNumber: state.products.count),
-                name: "Filler \(state.products.count + 1)",
-                focus: .balanced
-            ))
+        }
+        let buildingPlatform = state.productsInDevelopment
+            .contains { $0.typeID == "saas_platform" }
+        // Before the platform earns anything the studio can only afford
+        // one build at a time; once it is live the spare slots go to
+        // cash-flow apps.
+        if state.hasFreeDevSlot,
+           livePlatform != nil || state.productsInDevelopment.isEmpty {
+            if unlocked, livePlatform == nil, !buildingPlatform {
+                actions.append(.startProduct(
+                    typeID: "saas_platform",
+                    topicID: "productivity",
+                    name: "Platform",
+                    focus: .balanced
+                ))
+            } else if !buildingPlatform {
+                // While the platform is being built it gets the whole
+                // studio; the spare slots are for cash-flow apps.
+                actions.append(.startProduct(
+                    typeID: "mobile_app",
+                    topicID: BotHelp.topic(forProductNumber: state.products.count),
+                    name: "Filler \(state.products.count + 1)",
+                    focus: .balanced
+                ))
+            }
         }
 
         // Who does what: the founder researches until the gate is open, a
         // couple of hands hold the support desk once the platform is live,
-        // and everyone else builds whatever is in development.
-        let buildTarget = state.productsInDevelopment.first?.id
+        // and everyone else is dealt round-robin across the open builds so
+        // both slots actually move.
+        // While the platform is on the bench everybody is on it.
+        let builds = buildingPlatform
+            ? state.productsInDevelopment.filter { $0.typeID == "saas_platform" }.map(\.id)
+            : state.productsInDevelopment.map(\.id)
         var supportPlaced = 0
+        var dealt = 0
         for employee in state.employees {
             let wanted: Assignment
             if employee.isFounder, !unlocked, state.company.cash > researchCashFloor {
@@ -284,8 +322,9 @@ struct SaaSBuilderBot: BotPolicy {
                       state.headcount > supportDeskSize {
                 wanted = .support(livePlatform.id)
                 supportPlaced += 1
-            } else if let buildTarget {
-                wanted = .product(buildTarget)
+            } else if !builds.isEmpty {
+                wanted = .product(builds[dealt % builds.count])
+                dealt += 1
             } else if let livePlatform {
                 wanted = .support(livePlatform.id)
             } else {
