@@ -15,6 +15,9 @@ public struct Company: Codable, Equatable, Sendable {
 public struct LedgerEntry: Codable, Equatable, Sendable {
     public enum Category: String, Codable, Equatable, Sendable, CaseIterable {
         case operating, rent, payroll, sales, contracts, marketing, research, other
+        /// Servers, bandwidth and support desks for everything on the
+        /// market — the cost of success (appended by WS-A).
+        case hosting
     }
 
     public var day: Int
@@ -169,6 +172,28 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // (the case order is not persisted, but a stable diff is the point).
 
     // MARK: WS-A
+
+    /// Live bugs on a released product crossed the alarm threshold: the
+    /// wild is eating its sales until someone is put on support.
+    case liveBugsSpiking(productID: UUID, liveBugs: Int, day: Int)
+    /// A patch landed: the product's quality and reviews were revised.
+    case updateShipped(productID: UUID, newScore: Int, day: Int)
+    /// The player moved a released product to a new price tier.
+    case priceChanged(productID: UUID, tier: PriceTier, day: Int)
+    /// An employee handed in their notice; a raise or promotion before
+    /// `respondByDay` still keeps them.
+    case resignationNotice(employeeID: UUID, name: String, respondByDay: Int, day: Int)
+    /// The founder's landlord has had enough of the overdrawn rent.
+    case evictionWarning(untilDay: Int, day: Int)
+    /// The founder was forced out of their home into a cheaper one.
+    case homeDowngraded(tier: HomeTier, day: Int)
+    /// Two hospital stays in a year: the founder now lives with a chronic
+    /// condition.
+    case chronicConditionDiagnosed(day: Int)
+    /// Three restorative weekends in a row cleared it.
+    case chronicConditionCleared(day: Int)
+    /// Burning out twice in a year made the trade press.
+    case founderMeltdown(day: Int)
 
     // MARK: WS-B
 

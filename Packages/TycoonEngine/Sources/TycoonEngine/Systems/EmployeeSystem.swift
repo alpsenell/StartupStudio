@@ -155,6 +155,10 @@ enum EmployeeSystem {
             case .contract(let contractID):
                 if state.activeContract(id: contractID) != nil { continue }
                 state.employees[index].assignment = .idle
+            case .support(let productID):
+                if case .released(let info)? = state.product(id: productID)?.stage,
+                   !info.offMarket { continue }
+                state.employees[index].assignment = .idle
             case .idle, .research:
                 continue
             }
@@ -665,6 +669,13 @@ enum EmployeeSystem {
             employeeID, state: &state, balance: balance
         ))
         return events
+    }
+
+    /// Sets the pace the whole company works at. No event — the effects
+    /// show up in tomorrow's output, morale and bug rolls.
+    static func setWorkPace(_ pace: WorkPace, state: inout GameState) -> [GameEvent] {
+        state.economy.workPace = pace
+        return []
     }
 
     /// Reassigns an employee. Any assignment is accepted (a stale product

@@ -73,6 +73,17 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: WS-A
 
+    /// Repositions a released product on the price ladder. Budget trades
+    /// margin for reach, premium the reverse — and a premium price on a
+    /// product the press did not love drives subscribers away.
+    case setPriceTier(productID: UUID, tier: PriceTier)
+    /// Puts a released product back into a short patch cycle. On
+    /// completion it gains quality, is re-reviewed, and gets one bumper
+    /// sales week.
+    case startUpdate(productID: UUID)
+    /// Sets the pace the whole company works at.
+    case setWorkPace(WorkPace)
+
     // MARK: WS-B
 
     // MARK: WS-F

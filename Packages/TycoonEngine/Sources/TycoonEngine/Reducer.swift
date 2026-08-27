@@ -182,6 +182,17 @@ public enum Reducer {
 
         // MARK: WS-A
 
+        case let .setPriceTier(productID, tier):
+            events = ProductSystem.setPriceTier(
+                productID: productID, tier: tier, state: &state, balance: balance
+            )
+        case let .startUpdate(productID):
+            events = ProductSystem.startUpdate(
+                productID: productID, state: &state, balance: balance, content: content
+            )
+        case let .setWorkPace(pace):
+            events = EmployeeSystem.setWorkPace(pace, state: &state)
+
         // MARK: WS-B
 
         // MARK: WS-F

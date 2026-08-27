@@ -307,4 +307,58 @@ enum ProductSystem {
         ]
     }
 
+    // MARK: - Live-ops actions
+
+    /// Repositions a released, on-market product on the price ladder.
+    /// Ignored for unknown ids, products still in development, delisted
+    /// products, and a no-op tier.
+    static func setPriceTier(
+        productID: UUID,
+        tier: PriceTier,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard let index = state.products.firstIndex(where: { $0.id == productID }),
+              case .released(var info) = state.products[index].stage,
+              !info.offMarket,
+              info.priceTier != tier
+        else { return [] }
+
+        info.priceTier = tier
+        state.products[index].stage = .released(info)
+        return [.priceChanged(productID: productID, tier: tier, day: state.day)]
+    }
+
+    /// Puts a released, on-market product back into a short patch cycle
+    /// sized at `economy.updatePoolFraction` of its original point pools.
+    /// Everyone idle joins the patch, mirroring `startProduct`. Ignored for
+    /// unknown ids, unreleased or delisted products, and while a patch is
+    /// already running on the same product.
+    static func startUpdate(
+        productID: UUID,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let index = state.products.firstIndex(where: { $0.id == productID }),
+              case .released(let info) = state.products[index].stage,
+              !info.offMarket,
+              state.economy.update(for: productID) == nil,
+              let type = content.productType(state.products[index].typeID)
+        else { return [] }
+
+        let fraction = balance.economy.updatePoolFraction
+        state.economy.updates.append(ProductUpdate(
+            productID: productID,
+            startedDay: state.day,
+            designPts: type.designPts * fraction,
+            codePts: type.codePts * fraction,
+            polishPts: type.polishPts * fraction
+        ))
+        for employeeIndex in state.employees.indices
+        where state.employees[employeeIndex].assignment == .idle {
+            state.employees[employeeIndex].assignment = .product(productID)
+        }
+        return []
+    }
 }
