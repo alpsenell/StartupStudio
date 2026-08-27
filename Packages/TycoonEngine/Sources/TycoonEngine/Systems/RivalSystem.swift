@@ -281,33 +281,56 @@ enum RivalSystem {
     // MARK: - Buyouts
 
     /// On buyout-check days (interval + offset, cooldown elapsed, nothing
-    /// pending) a rival moves on a weak company — in debt, cash under the
-    /// threshold, or reputation under the threshold (all deterministic).
+    /// pending) a rival makes an approach — for one of two very different
+    /// reasons.
+    ///
+    /// *Distress*: the company is in debt, out of cash, or unknown, and the
+    /// offer is a fraction of what it is worth. That was the only path
+    /// before, and it made selling out the reward for failing.
+    ///
+    /// *Strategic*: the company is worth at least
+    /// `strategicDominanceFactor ×` the buyer and its reputation clears
+    /// `strategicMinReputation` — somebody wants what you built, and pays a
+    /// premium of 1.5–2.5× for it. Building something excellent now has an
+    /// exit of its own.
+    ///
     /// One uniform decides the approach; a hit draws one more for the
-    /// offer fraction and pauses the timeline via `.buyoutOffered`.
+    /// fraction or premium and pauses the timeline via `.buyoutOffered`.
     private static func buyoutCheck(
         _ state: inout GameState,
         _ balance: BalanceConfig
     ) -> [GameEvent] {
         let config = balance.rivals
+        let exits = balance.investors
         guard state.day % config.buyoutIntervalDays == config.buyoutOffsetDays,
               state.rivals.pendingBuyout == nil,
               state.rivals.lastBuyoutDay.map({ state.day - $0 >= config.buyoutCooldownDays }) ?? true,
               let buyer = strongestRival(state)
         else { return [] }
 
+        let valuation = state.companyValuation(balance: balance)
         let weak = state.company.daysInDebt > 0
             || state.company.cash < config.weakCashThreshold
             || state.company.reputation < config.weakRepThreshold
-        guard weak else { return [] }
+        let strong = !weak
+            && state.company.reputation >= exits.strategicMinReputation
+            && Double(valuation)
+                >= Double(buyer.valuation(balance: balance)) * exits.strategicDominanceFactor
+        guard weak || strong else { return [] }
 
         let roll = state.worldRNG.nextUniform()
         guard roll < config.buyoutChance else { return [] }
 
-        let fraction = config.offerFractionMin
-            + state.worldRNG.nextUniform() * (config.offerFractionMax - config.offerFractionMin)
-        let valuation = state.companyValuation(balance: balance)
-        let amount = max(1000, Int((Double(valuation) * fraction).rounded()))
+        // Both paths draw exactly one more uniform, so the world stream
+        // advances identically whichever approach this is.
+        let multiplier: Double = if strong {
+            exits.strategicPremiumMin
+                + state.worldRNG.nextUniform() * (exits.strategicPremiumMax - exits.strategicPremiumMin)
+        } else {
+            config.offerFractionMin
+                + state.worldRNG.nextUniform() * (config.offerFractionMax - config.offerFractionMin)
+        }
+        let amount = max(1000, Int((Double(valuation) * multiplier).rounded()))
         let offer = BuyoutOffer(
             rivalID: buyer.id,
             amount: amount,
@@ -315,6 +338,7 @@ enum RivalSystem {
         )
         state.rivals.pendingBuyout = offer
         state.rivals.lastBuyoutDay = state.day
+        state.rivals.lastBuyoutWasStrategic = strong
         return [.buyoutOffered(
             rivalID: buyer.id, amount: amount, respondByDay: offer.respondByDay, day: state.day
         )]

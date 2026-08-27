@@ -305,7 +305,7 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Days per game year (52 weeks of 7 days).
     static let daysPerYear = 364
     /// Days per game week.
-    static let daysPerWeek = 7
+    public static let daysPerWeek = 7
     /// The maximum number of `eventLog` entries retained (mirrors
     /// `FinancialLedger.maxEntries`).
     static let maxEventLogEntries = 500

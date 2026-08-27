@@ -47,13 +47,16 @@ struct AppRootView: View {
         .environment(router)
         .fullScreenCover(isPresented: gameOverPresented) {
             if let info = engine.state.gameOver {
-                if info.kind == .acquired {
-                    GameWonView(info: info, dateLabel: engine.state.dateLabel) { difficulty in
-                        session.startNewGame(difficulty: difficulty)
+                // WS-F: four endings now, graded by `EndingKind.isSuccess`
+                // rather than one named case, and both screens carry the
+                // founder profile the setup sheet produced.
+                if info.kind.isSuccess {
+                    GameWonView(engine: engine, info: info) { difficulty, founder in
+                        session.startNewGame(difficulty: difficulty, founder: founder)
                     }
                 } else {
-                    GameOverView(info: info, dateLabel: engine.state.dateLabel) { difficulty in
-                        session.startNewGame(difficulty: difficulty)
+                    GameOverView(engine: engine, info: info) { difficulty, founder in
+                        session.startNewGame(difficulty: difficulty, founder: founder)
                     }
                 }
             }

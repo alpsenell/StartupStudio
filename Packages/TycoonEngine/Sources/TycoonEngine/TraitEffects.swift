@@ -182,7 +182,7 @@ public enum TraitEffects {
 
     /// A plain-numbers summary of an effects block, used when a trait
     /// ships without a blurb.
-    static func describe(_ effects: TraitDef.Effects) -> String {
+    public static func describe(_ effects: TraitDef.Effects) -> String {
         var parts: [String] = []
         if effects.outputMult != 1 {
             parts.append("output \(percent(effects.outputMult))")
