@@ -51,7 +51,9 @@ struct ExitTests {
     @Test func aWeakCompanyStillGetsALowball() throws {
         let balance = try Self.balance()
         var state = GameState.newGame(companyName: "Acme", seed: 32, balance: balance)
-        state.company.cash = 100
+        // Solvent enough to survive the wait, but nobody has heard of it —
+        // weak on reputation, which is the distress path.
+        state.company.cash = 60_000
         state.company.reputation = 8
 
         let offer = try #require(
