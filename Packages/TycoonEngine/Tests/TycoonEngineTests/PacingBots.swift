@@ -2,14 +2,26 @@ import Foundation
 import TycoonContent
 import TycoonEngine
 
-// The WS-A pacing bots: four deliberately one-note strategies that
+// The WS-A pacing bots: four one-note but *plausible* strategies that
 // `BalanceTargetsTests` measures the economy against. They live beside
 // `SimRunner`'s original three (which predate the pacing pass and are kept
 // as-is so their long-standing assertions still mean something).
+//
+// Each bot plays like someone who has understood one idea and nothing else
+// — so a gate that fails says something about the balance, not about a bot
+// doing something no human would do.
 
-/// Shared helpers for the pacing bots: everyone on one job, and the
-/// "am I done?" gates the bots ship on.
+/// Shared helpers: crew assignment, the "would I put my name on this?"
+/// gates, focus that follows the work, and value hiring.
 enum BotHelp {
+    /// Topics rotated through so a bot's tenth product isn't its ninth
+    /// again — launch saturation punishes that, and a player would notice.
+    static let topics = ["fitness", "finance", "productivity", "travel", "music", "health"]
+
+    static func topic(forProductNumber number: Int) -> String {
+        topics[number % topics.count]
+    }
+
     /// Puts every employee on `assignment` (skipping those already there).
     static func assignAll(_ state: GameState, to assignment: Assignment) -> [GameAction] {
         state.employees
@@ -19,24 +31,51 @@ enum BotHelp {
 
     /// Whether every point pool of an in-development product is full.
     static func isComplete(_ product: Product, _ content: ContentCatalog) -> Bool {
-        guard case .development(let dev) = product.stage,
-              let type = content.productType(product.typeID)
-        else { return false }
-        return dev.designPts >= type.designPts
-            && dev.codePts >= type.codePts
-            && dev.polishPts >= type.polishPts
+        looksShippable(product, nil, content, polish: 1.0)
     }
 
-    /// Whether an in-development product clears the ship gate.
-    static func clearsShipGate(
+    /// Whether an in-development product clears the ship gate *and* looks
+    /// finished enough that a founder would put their name on it: the code
+    /// gate, plus `polish` of every pool.
+    static func looksShippable(
         _ product: Product,
-        _ balance: BalanceConfig,
-        _ content: ContentCatalog
+        _ balance: BalanceConfig?,
+        _ content: ContentCatalog,
+        polish: Double
     ) -> Bool {
         guard case .development(let dev) = product.stage,
               let type = content.productType(product.typeID)
         else { return false }
-        return dev.codePts >= balance.shipCodeThreshold * type.codePts
+        let codeGate = max(balance?.shipCodeThreshold ?? 0, polish)
+        return dev.codePts >= codeGate * type.codePts
+            && dev.designPts >= polish * type.designPts
+            && dev.polishPts >= polish * type.polishPts
+    }
+
+    /// A focus split matching what a product still needs, so a bot never
+    /// pours a third of its days into a pool that is already full — the
+    /// thing any player learns in their first hour.
+    static func focusForRemainingWork(
+        _ product: Product,
+        _ content: ContentCatalog
+    ) -> PhaseFocus {
+        guard case .development(let dev) = product.stage,
+              let type = content.productType(product.typeID)
+        else { return .balanced }
+        return PhaseFocus(
+            design: max(0, type.designPts - dev.designPts),
+            code: max(0, type.codePts - dev.codePts),
+            polish: max(0, type.polishPts - dev.polishPts)
+        )
+    }
+
+    /// The candidate offering the most skill per dollar — what a founder
+    /// counting the runway actually hires.
+    static func bestValueCandidate(_ state: GameState) -> Candidate? {
+        state.candidatePool.max {
+            $0.skills.total / Double(max(1, $0.weeklySalary))
+                < $1.skills.total / Double(max(1, $1.weeklySalary))
+        }
     }
 
     /// The best affordable contract offer: the highest payout whose penalty
@@ -49,9 +88,9 @@ enum BotHelp {
 }
 
 /// The archetype solo founder: never hires, never crunches, builds one
-/// mobile app at a time on a balanced focus and ships only when all three
-/// pools are full. Measures "how long is the first product, and is it any
-/// good?".
+/// mobile app at a time and ships once the code gate clears and the rest is
+/// 70% there — a founder who cares, but who cannot afford to gold-plate.
+/// Measures "how long is the first product, and is it any good?".
 struct SoloSlowBot: BotPolicy {
     let name = "solo-slow"
 
@@ -60,30 +99,36 @@ struct SoloSlowBot: BotPolicy {
         balance: BalanceConfig,
         content: ContentCatalog
     ) -> [GameAction] {
-        if let product = state.productsInDevelopment.first {
-            if BotHelp.isComplete(product, content) {
-                return [.ship(productID: product.id)]
-            }
-            return BotHelp.assignAll(state, to: .product(product.id))
+        guard let product = state.productsInDevelopment.first else {
+            return [.startProduct(
+                typeID: "mobile_app",
+                topicID: BotHelp.topic(forProductNumber: state.products.count),
+                name: "Solo \(state.products.count + 1)",
+                focus: .balanced
+            )]
         }
-        return [.startProduct(
-            typeID: "mobile_app",
-            topicID: "fitness",
-            name: "Solo \(state.products.count + 1)",
-            focus: .balanced
-        )]
+        if BotHelp.looksShippable(product, balance, content, polish: 0.7) {
+            return [.ship(productID: product.id)]
+        }
+        return BotHelp.assignAll(state, to: .product(product.id)) + [
+            .setPhaseFocus(
+                productID: product.id,
+                focus: BotHelp.focusForRemainingWork(product, content)
+            )
+        ]
     }
 }
 
-/// Growth at any cost: crunches, hires the strongest affordable candidate up
-/// to the office cap, upgrades the office the moment it is affordable with a
-/// month of payroll to spare, and ships at the code gate — but hands out a
-/// raise to anyone whose morale slips, so it measures "can you grow fast if
-/// you do look after people?".
+/// Growth at any cost: crunches the whole company, hires the best-value
+/// candidate up to the office cap whenever there is a quarter's runway,
+/// upgrades the office as soon as it is affordable with a month of payroll
+/// to spare, and ships at 85% — but hands out raises and answers
+/// resignation notices, so it measures "can you grow fast if you *do* look
+/// after people?".
 struct CrunchHireBot: BotPolicy {
     let name = "crunch-hire"
     /// Weeks of payroll kept in the bank before hiring.
-    let hireRunwayWeeks = 6
+    let hireRunwayWeeks = 12
     let raiseMoraleFloor = 45.0
 
     func actions(
@@ -101,12 +146,13 @@ struct CrunchHireBot: BotPolicy {
 
         let payroll = state.employees.reduce(0) { $0 + $1.weeklySalary }
         if state.headcount < balance.office(state.company.officeTier).headcountCap,
-           let candidate = state.candidatePool.max(by: { $0.skills.total < $1.skills.total }),
+           let candidate = BotHelp.bestValueCandidate(state),
            state.company.cash > (payroll + candidate.weeklySalary) * hireRunwayWeeks {
             actions.append(.hire(candidateID: candidate.id))
         }
 
-        // Keep people: anyone drifting down gets a raise.
+        // Keep people: anyone drifting down gets a raise, and a resignation
+        // notice is answered on the spot.
         for employee in state.employees
         where !employee.isFounder && employee.morale < raiseMoraleFloor {
             actions.append(.adjustSalary(
@@ -114,12 +160,10 @@ struct CrunchHireBot: BotPolicy {
                 weeklySalary: Int(Double(employee.weeklySalary) * 1.2)
             ))
         }
-        // A resignation notice is answered with a raise and a promotion.
-        if let pending = state.economy.pendingResignation,
-           let employee = state.employee(id: pending.employeeID) {
+        if let pending = state.economy.pendingResignation {
             actions.append(.adjustSalary(
-                employeeID: employee.id,
-                weeklySalary: Int(Double(employee.weeklySalary) * 1.3)
+                employeeID: pending.employeeID,
+                weeklySalary: Int(Double(pending.salaryAtNotice) * 1.3)
             ))
         }
 
@@ -129,99 +173,20 @@ struct CrunchHireBot: BotPolicy {
         }
 
         if let product = state.productsInDevelopment.first {
-            if BotHelp.clearsShipGate(product, balance, content) {
+            if BotHelp.looksShippable(product, balance, content, polish: 0.85) {
                 actions.append(.ship(productID: product.id))
             } else {
                 actions.append(contentsOf: BotHelp.assignAll(state, to: .product(product.id)))
+                actions.append(.setPhaseFocus(
+                    productID: product.id,
+                    focus: BotHelp.focusForRemainingWork(product, content)
+                ))
             }
         } else {
             actions.append(.startProduct(
-                typeID: "mobile_app",
-                topicID: "fitness",
+                typeID: state.headcount >= 4 ? "web_app" : "mobile_app",
+                topicID: BotHelp.topic(forProductNumber: state.products.count),
                 name: "Sprint \(state.products.count + 1)",
-                focus: PhaseFocus(design: 2, code: 6, polish: 2)
-            ))
-        }
-        return actions
-    }
-}
-
-/// Plays the recurring-revenue game: contracts pay the bills while half the
-/// crew researches its way to `cloud_infrastructure`, then it builds one SaaS
-/// platform to full completion and lives off the subscriptions, keeping
-/// bodies on support so live bugs never eat into churn.
-struct SaaSBuilderBot: BotPolicy {
-    let name = "saas-builder"
-    /// Below this the studio drops research and works for money.
-    let cashFloor = 18_000
-    /// The research path to the tech that unlocks `saas_platform`.
-    static let path = [
-        "code_reviews", "version_control", "automated_testing",
-        "agile_sprints", "cloud_infrastructure",
-    ]
-
-    func actions(
-        for state: GameState,
-        balance: BalanceConfig,
-        content: ContentCatalog
-    ) -> [GameAction] {
-        var actions: [GameAction] = []
-
-        if state.headcount < balance.office(state.company.officeTier).headcountCap,
-           state.company.cash > 30_000,
-           let candidate = state.candidatePool.max(by: { $0.skills.total < $1.skills.total }) {
-            actions.append(.hire(candidateID: candidate.id))
-        }
-        if let next = state.company.officeTier.next, next != .campus,
-           state.company.cash >= balance.office(next).upgradeCost + 40_000 {
-            actions.append(.upgradeOffice)
-        }
-
-        guard state.isProductTypeUnlocked("saas_platform", content: content) else {
-            if state.research.activeNodeID == nil,
-               let next = Self.path.first(where: { !state.research.unlocked.contains($0) }) {
-                actions.append(.startResearch(nodeID: next))
-            }
-            var target = state.activeContracts.first?.id
-            if target == nil, let offer = BotHelp.bestOffer(state) {
-                actions.append(.acceptContract(offerID: offer.id))
-                target = offer.id
-            }
-            // Half the crew researches and half earns — but a one-person
-            // studio has to pay the rent before it can think.
-            let needsCash = state.company.cash < cashFloor
-            for (index, employee) in state.employees.enumerated() {
-                let wanted: Assignment = if let target, needsCash || !index.isMultiple(of: 2) {
-                    .contract(target)
-                } else {
-                    .research
-                }
-                if employee.assignment != wanted {
-                    actions.append(.assign(employeeID: employee.id, to: wanted))
-                }
-            }
-            return actions
-        }
-
-        let livePlatform = state.products.first { product in
-            guard case .released(let info) = product.stage else { return false }
-            return product.typeID == "saas_platform" && !info.offMarket
-        }
-
-        if let product = state.productsInDevelopment.first {
-            if BotHelp.isComplete(product, content) {
-                actions.append(.ship(productID: product.id))
-            } else {
-                actions.append(contentsOf: BotHelp.assignAll(state, to: .product(product.id)))
-            }
-        } else if let livePlatform {
-            // The platform is live: everyone tends it.
-            actions.append(contentsOf: BotHelp.assignAll(state, to: .support(livePlatform.id)))
-        } else {
-            actions.append(.startProduct(
-                typeID: "saas_platform",
-                topicID: "productivity",
-                name: "Platform",
                 focus: .balanced
             ))
         }
@@ -229,9 +194,114 @@ struct SaaSBuilderBot: BotPolicy {
     }
 }
 
-/// The bad boss: crunches forever, hires whoever is cheapest, and never
-/// praises, raises, promotes, or takes anyone for coffee. The control group
-/// for "do people actually leave?".
+/// Plays the recurring-revenue game the way a player would: ship mobile
+/// apps to pay the bills while the founder sits in the lab all the way to
+/// `cloud_infrastructure`, then put the whole studio on one SaaS platform,
+/// finish it properly, and live off the subscriptions with a couple of
+/// people on the support desk holding churn down.
+struct SaaSBuilderBot: BotPolicy {
+    let name = "saas-builder"
+    /// The research path to the tech that unlocks `saas_platform`.
+    static let path = [
+        "code_reviews", "version_control", "automated_testing",
+        "agile_sprints", "cloud_infrastructure",
+    ]
+    /// Weeks of payroll kept in the bank before hiring.
+    let hireRunwayWeeks = 10
+    /// People kept on the support desk once the platform is live.
+    let supportDeskSize = 2
+    /// The founder only stays in the lab while the rent is safe.
+    let researchCashFloor = 15_000
+
+    func actions(
+        for state: GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameAction] {
+        var actions: [GameAction] = []
+        let payroll = state.employees.reduce(0) { $0 + $1.weeklySalary }
+
+        if state.headcount < balance.office(state.company.officeTier).headcountCap,
+           state.company.officeTier != .campus,
+           let candidate = BotHelp.bestValueCandidate(state),
+           state.company.cash > (payroll + candidate.weeklySalary) * hireRunwayWeeks {
+            actions.append(.hire(candidateID: candidate.id))
+        }
+        if let next = state.company.officeTier.next, next != .campus,
+           state.company.cash >= balance.office(next).upgradeCost + payroll * 8 {
+            actions.append(.upgradeOffice)
+        }
+
+        let unlocked = state.isProductTypeUnlocked("saas_platform", content: content)
+        if !unlocked, state.research.activeNodeID == nil,
+           let next = Self.path.first(where: { !state.research.unlocked.contains($0) }) {
+            actions.append(.startResearch(nodeID: next))
+        }
+
+        let livePlatform = state.products.first { product in
+            guard case .released(let info) = product.stage else { return false }
+            return product.typeID == "saas_platform" && !info.offMarket
+        }
+
+        // What to build: the platform once it is unlocked and not yet
+        // shipped, otherwise mobile apps for cash flow.
+        if let product = state.productsInDevelopment.first {
+            let polish = product.typeID == "saas_platform" ? 1.0 : 0.8
+            if BotHelp.looksShippable(product, balance, content, polish: polish) {
+                actions.append(.ship(productID: product.id))
+            } else {
+                actions.append(.setPhaseFocus(
+                    productID: product.id,
+                    focus: BotHelp.focusForRemainingWork(product, content)
+                ))
+            }
+        } else if unlocked, livePlatform == nil {
+            actions.append(.startProduct(
+                typeID: "saas_platform",
+                topicID: "productivity",
+                name: "Platform",
+                focus: .balanced
+            ))
+        } else if livePlatform == nil || state.headcount > supportDeskSize + 1 {
+            actions.append(.startProduct(
+                typeID: "mobile_app",
+                topicID: BotHelp.topic(forProductNumber: state.products.count),
+                name: "Filler \(state.products.count + 1)",
+                focus: .balanced
+            ))
+        }
+
+        // Who does what: the founder researches until the gate is open, a
+        // couple of hands hold the support desk once the platform is live,
+        // and everyone else builds whatever is in development.
+        let buildTarget = state.productsInDevelopment.first?.id
+        var supportPlaced = 0
+        for employee in state.employees {
+            let wanted: Assignment
+            if employee.isFounder, !unlocked, state.company.cash > researchCashFloor {
+                wanted = .research
+            } else if let livePlatform, supportPlaced < supportDeskSize,
+                      state.headcount > supportDeskSize {
+                wanted = .support(livePlatform.id)
+                supportPlaced += 1
+            } else if let buildTarget {
+                wanted = .product(buildTarget)
+            } else if let livePlatform {
+                wanted = .support(livePlatform.id)
+            } else {
+                wanted = .research
+            }
+            if employee.assignment != wanted {
+                actions.append(.assign(employeeID: employee.id, to: wanted))
+            }
+        }
+        return actions
+    }
+}
+
+/// The bad boss: crunches forever, hires whoever is cheapest, ships at half
+/// done, and never praises, raises, promotes, or takes anyone for coffee.
+/// The control group for "do people actually leave?".
 struct NeglectfulBot: BotPolicy {
     let name = "neglectful"
 
@@ -254,17 +324,21 @@ struct NeglectfulBot: BotPolicy {
         }
 
         if let product = state.productsInDevelopment.first {
-            if BotHelp.clearsShipGate(product, balance, content) {
+            if BotHelp.looksShippable(product, balance, content, polish: 0.5) {
                 actions.append(.ship(productID: product.id))
             } else {
                 actions.append(contentsOf: BotHelp.assignAll(state, to: .product(product.id)))
+                actions.append(.setPhaseFocus(
+                    productID: product.id,
+                    focus: BotHelp.focusForRemainingWork(product, content)
+                ))
             }
         } else {
             actions.append(.startProduct(
                 typeID: "mobile_app",
-                topicID: "social",
+                topicID: BotHelp.topic(forProductNumber: state.products.count),
                 name: "Grind \(state.products.count + 1)",
-                focus: PhaseFocus(design: 2, code: 6, polish: 2)
+                focus: .balanced
             ))
         }
         return actions

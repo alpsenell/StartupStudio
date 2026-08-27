@@ -192,7 +192,7 @@ extension BalanceConfig {
             churnBase: Double = 0.06,
             churnQualityFactor: Double = 0.03,
             subscriptionFloorSubscribers: Int = 8,
-            hostingCostPerSubscriber: Double = 0.02,
+            hostingCostPerSubscriber: Double = 0.05,
             brooksPenalty: Double = 0.10,
             liveBugSeedFraction: Double = 0.5,
             liveBugUnitsPerDiscovery: Double = 2_000,

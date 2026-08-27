@@ -250,10 +250,15 @@ enum EmployeeSystem {
             ? (polish - qaPolish + qaPolish * company.qaBugFixMultiplier) / polish
             : 1
         let devSpeed = state.devSpeedTechMultiplier(content: content)
+        // Brooks's law: adding people to a build costs everyone some of
+        // their day in coordination, so ten hands never do ten hands' work.
+        let crowding = crowdingFactor(producerCount: producers.count, balance: balance)
+        let pace = balance.economy.pace(state.economy.workPace)
+        let output = devSpeed * crowding * pace.outputFactor
         ProductSystem.applyDailyProgress(
-            design: design * devSpeed, code: code * devSpeed, polish: polish * devSpeed,
+            design: design * output, code: code * output, polish: polish * output,
             averageCoding: averageCoding,
-            bugChanceMultiplier: bugChanceMultiplier,
+            bugChanceMultiplier: bugChanceMultiplier * pace.bugFactor,
             bugFixMultiplier: bugFixMultiplier,
             productIndex: productIndex, state: &state, balance: balance
         )
@@ -280,6 +285,7 @@ enum EmployeeSystem {
             // `&state.employees[index]...` and reading `state.employees`
             // in the same call would overlap exclusive access.
             let growthRate = balance.skillGrowthRate
+                * pace.skillGrowthFactor
                 * TraitEffects.growthFactor(state.employees[index], content: content)
             if growsCoding {
                 grow(&state.employees[index].skills.coding, rate: growthRate)
@@ -288,6 +294,14 @@ enum EmployeeSystem {
                 grow(&state.employees[index].skills.design, rate: growthRate)
             }
         }
+    }
+
+    /// Brooks's law as one number: `n` people working the same job each
+    /// produce `1 / (1 + brooksPenalty × (n − 1))` of a solo day. A penalty
+    /// of 0 (the neutral test economy) restores the old straight sum.
+    static func crowdingFactor(producerCount: Int, balance: BalanceConfig) -> Double {
+        guard producerCount > 1 else { return 1 }
+        return 1 / (1 + balance.economy.brooksPenalty * Double(producerCount - 1))
     }
 
     // MARK: - Daily contract output
@@ -307,6 +321,14 @@ enum EmployeeSystem {
         let devSpeed = state.devSpeedTechMultiplier(content: content)
         let founderAway = state.life.isAway(day: state.day)
         let founderFactor = state.founderOutputMultiplier(balance: balance)
+        let pace = balance.economy.pace(state.economy.workPace)
+        // A contract crew crowds the same way a product crew does.
+        var crewSizes: [UUID: Int] = [:]
+        for employee in state.employees {
+            if case .contract(let id) = employee.assignment {
+                crewSizes[id, default: 0] += 1
+            }
+        }
 
         for index in state.employees.indices {
             guard case .contract(let contractID) = state.employees[index].assignment,
@@ -327,15 +349,19 @@ enum EmployeeSystem {
 
             let skills = state.employees[index].skills
             let yield = balance.company.roleYield(state.employees[index].role)
+            let output = devSpeed * pace.outputFactor * crowdingFactor(
+                producerCount: crewSizes[contractID] ?? 1, balance: balance
+            )
             state.activeContracts[jobIndex].progressCode += factor * yield.code
-                * (balance.employeeBasePoints + skills.coding / balance.skillYieldDivisor) * devSpeed
+                * (balance.employeeBasePoints + skills.coding / balance.skillYieldDivisor) * output
             state.activeContracts[jobIndex].progressDesign += factor * yield.design
-                * (balance.employeeBasePoints + skills.design / balance.skillYieldDivisor) * devSpeed
+                * (balance.employeeBasePoints + skills.design / balance.skillYieldDivisor) * output
             // Record the crew's skill for the delivery-quality grade.
             state.activeContracts[jobIndex].skillDaySum += (skills.coding + skills.design) / 2
             state.activeContracts[jobIndex].skillDays += 1
-            grow(&state.employees[index].skills.coding, rate: balance.skillGrowthRate)
-            grow(&state.employees[index].skills.design, rate: balance.skillGrowthRate)
+            let growthRate = balance.skillGrowthRate * pace.skillGrowthFactor
+            grow(&state.employees[index].skills.coding, rate: growthRate)
+            grow(&state.employees[index].skills.design, rate: growthRate)
         }
     }
 

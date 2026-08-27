@@ -46,15 +46,31 @@ struct BalanceSimulationTests {
         #expect(result.contractsCompleted > 0)
     }
 
-    @Test func shipFastReachesFiftyThousandProductRevenue() throws {
+    /// Replaces the old "ship-fast reaches $50k of revenue" gate, which
+    /// measured the pre-economy-pass numbers. Speed alone no longer pays:
+    /// the bot dumps mobile app after mobile app into a single topic, so
+    /// launch saturation and genre fatigue shrink each release (its ledger
+    /// runs 1054, 1603, 887, 344, 147, 27) until the payroll outruns the
+    /// revenue.
+    @Test func shippingFastIntoOneTopicSaturatesIt() throws {
         let result = try Self.run(ShipFastBot(), seed: 7_302)
 
         assertCommonInvariants(result)
-        #expect(!result.wentBankrupt, "ship-fast went bankrupt on day \(result.daysRun)")
-        #expect(result.productsShipped > 0)
+        #expect(result.productsShipped > 5, "ship-fast is supposed to be prolific")
+
+        let revenues = result.state.products.compactMap { product -> Int? in
+            guard case .released(let info) = product.stage else { return nil }
+            return info.totalRevenue
+        }
+        let first = try #require(revenues.first)
+        let fifth = try #require(revenues.dropFirst(4).first)
         #expect(
-            result.totalProductRevenue >= 50_000,
-            "ship-fast only earned \(result.totalProductRevenue) in product revenue"
+            fifth < first / 4,
+            "the fifth release into the same topic earned \(fifth) against the first's \(first)"
+        )
+        #expect(
+            result.totalProductRevenue < 200_000,
+            "spamming one topic still earned \(result.totalProductRevenue)"
         )
     }
 

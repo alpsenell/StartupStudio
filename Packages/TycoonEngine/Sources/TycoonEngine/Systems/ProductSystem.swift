@@ -86,6 +86,7 @@ enum ProductSystem {
         _ content: ContentCatalog
     ) -> [GameEvent] {
         var events: [GameEvent] = []
+        var hostingBill = 0
 
         for index in state.products.indices {
             guard case .released(var info) = state.products[index].stage,
@@ -93,32 +94,75 @@ enum ProductSystem {
                   let type = content.productType(state.products[index].typeID)
             else { continue }
 
+            let productID = state.products[index].id
+            let economy = balance.economy
             let qHat = Double(info.averageReviewScore) / 100.0
             let hypeBoost = 1 + info.hypeAtLaunch * balance.hypeLaunchCarryFraction / balance.salesHypeDivisor
             let marketMultiplier = state.market.multiplier(for: state.products[index].topicID)
             // WS-F's rival products dent the player's slice of a topic
             // through this accessor; 1.0 until their data exists.
             let shareMultiplier = state.market.shareMultiplier(for: state.products[index].topicID)
-            let peak = type.marketSize * balance.marketSizeScale
-                * (balance.salesBaseFactor + balance.salesQualityFactor * qHat)
-                * hypeBoost
-                * info.launchMarketScale
+            let pricing = economy.priceTier(info.priceTier)
+            // A premium price the reviews don't back up drives people away.
+            let overpriced = info.priceTier == .premium
+                && Double(info.averageReviewScore) < economy.premiumQualityThreshold
+            // Bugs players hit in the wild cost sales and subscribers alike.
+            let liveBugDrag = 1 - min(
+                economy.liveBugPenaltyCap,
+                Double(info.liveBugs) * economy.liveBugSalesPenalty
+            )
             let week = info.weeklySales.count
             let rampWeeks = max(1, info.adoptionWeeks)
             let adoption = min(1, (Double(week) + 1) / rampWeeks)
-            let decay = balance.salesDecayBase + balance.salesDecayQualityFactor * qHat
-            let decayWeeks = max(0, Double(week) - (rampWeeks - 1))
-            let units = Int(peak * adoption * pow(decay, decayWeeks) * marketMultiplier * shareMultiplier)
+            // A patch buys one bumper week.
+            let updateBump = info.lastUpdateDay.map {
+                state.day - $0 <= economy.updateBumpDays ? economy.updateSalesBump : 1
+            } ?? 1
+            let demand = type.marketSize * balance.marketSizeScale
+                * (balance.salesBaseFactor + balance.salesQualityFactor * qHat)
+                * hypeBoost
+                * info.launchMarketScale
+                * pricing.demandFactor
+            let price = type.unitPrice * pricing.priceFactor
+            let world = marketMultiplier * shareMultiplier * liveBugDrag * updateBump
 
-            if units == 0 || (adoption >= 1 && Double(units) < balance.delistFraction * peak) {
+            let units: Int
+            let delisted: Bool
+            if info.isSubscription {
+                // Recurring revenue: every week signs some of the
+                // addressable market up and loses a slice of the book.
+                let acquired = demand / max(1, economy.subscriberAcquisitionWeeks)
+                    * adoption * world
+                var churnRate = max(0, economy.churnBase - economy.churnQualityFactor * qHat)
+                if overpriced { churnRate *= economy.premiumChurnPenalty }
+                churnRate *= 1 - supportChurnRelief(
+                    productID: productID, state: state, balance: balance
+                )
+                let book = Double(info.subscribers)
+                let next = max(0, book + acquired - book * churnRate)
+                info.subscribers = Int(next.rounded())
+                units = info.subscribers
+                delisted = adoption >= 1 && units < economy.subscriptionFloorSubscribers
+            } else {
+                // One-off sales: a launch spike that decays week by week.
+                let decay = balance.salesDecayBase + balance.salesDecayQualityFactor * qHat
+                let decayWeeks = max(0, Double(week) - (rampWeeks - 1))
+                units = Int(demand * adoption * pow(decay, decayWeeks) * world)
+                delisted = units == 0
+                    || (adoption >= 1 && Double(units) < balance.delistFraction * demand)
+            }
+
+            if delisted {
                 info.offMarket = true
+                info.subscribers = 0
                 state.products[index].stage = .released(info)
-                events.append(.productOffMarket(productID: state.products[index].id, day: state.day))
+                events.append(.productOffMarket(productID: productID, day: state.day))
                 continue
             }
 
-            let revenue = Int(Double(units) * type.unitPrice)
+            let revenue = Int(Double(units) * price)
             info.weeklySales.append(WeeklySale(weekIndex: week, units: units, revenue: revenue))
+            hostingBill += weeklyHostingCost(for: info, type: type, balance: balance)
             state.products[index].stage = .released(info)
             state.company.cash += revenue
             state.ledger.post(LedgerEntry(
@@ -129,7 +173,46 @@ enum ProductSystem {
             ))
         }
 
+        // The cost of success: everything on the market needs servers,
+        // bandwidth and a support desk, billed as one line.
+        if hostingBill > 0 {
+            state.company.cash -= hostingBill
+            state.ledger.post(LedgerEntry(
+                day: state.day,
+                amount: -hostingBill,
+                category: .hosting,
+                label: "Hosting & support"
+            ))
+        }
+
         return events
+    }
+
+    /// What one on-market release costs to keep running for a week: its
+    /// type's flat bill plus a per-subscriber slice for subscription
+    /// products.
+    static func weeklyHostingCost(
+        for info: ReleaseInfo,
+        type: ProductTypeDef,
+        balance: BalanceConfig
+    ) -> Int {
+        let perSubscriber = info.isSubscription
+            ? Double(info.subscribers) * balance.economy.hostingCostPerSubscriber
+            : 0
+        return Int((type.hostingCostPerWeek + perSubscriber).rounded())
+    }
+
+    /// How much the people on a product's support desk hold churn down,
+    /// 0...1: `supportChurnRelief` per supporter, capped just short of
+    /// eliminating churn entirely.
+    static func supportChurnRelief(
+        productID: UUID,
+        state: GameState,
+        balance: BalanceConfig
+    ) -> Double {
+        let supporters = state.employees.count { $0.assignment == .support(productID) }
+        guard supporters > 0 else { return 0 }
+        return min(0.75, Double(supporters) * balance.economy.supportChurnRelief)
     }
 
     /// The launch-time market discount for a product about to ship: every
@@ -301,7 +384,9 @@ enum ProductSystem {
             adoptionWeeks: adoptionWeeks,
             launchMarketScale: launchMarketScale(
                 for: state.products[index], state: state, balance: balance
-            )
+            ),
+            liveBugs: Int((Double(dev.openBugs) * balance.economy.liveBugSeedFraction).rounded()),
+            isSubscription: type.revenueModel == .subscription
         )
         let averageScore = info.averageReviewScore
 

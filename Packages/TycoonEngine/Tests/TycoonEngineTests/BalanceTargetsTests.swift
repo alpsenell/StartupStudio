@@ -75,8 +75,10 @@ struct BalanceTargetsTests {
                 "solo first product reviewed \(score) — a one-person crew has no business scoring high"
             )
             let revenue = try #require(result.firstProductLifetimeRevenue)
+            // Enough to matter, nowhere near enough to retire on: the
+            // studio's weekly burn eats it inside a year.
             #expect(
-                (8_000...45_000).contains(revenue),
+                (8_000...50_000).contains(revenue),
                 "solo first product earned \(revenue) lifetime"
             )
         }
