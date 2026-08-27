@@ -1,3 +1,5 @@
+import Foundation
+
 /// What a placement is, for draw-order reasoning and testing.
 public enum PlacementKind: Sendable, Equatable, Hashable {
     case room, prop, desk, monitor, person, bubble
@@ -19,7 +21,12 @@ public enum PlacementKind: Sendable, Equatable, Hashable {
 }
 
 /// How a placed sprite animates. Cosmetic only — the scene view drives it
-/// from a periodic timeline, never from the game simulation.
+/// from a timeline, never from the game simulation.
+///
+/// The first four modes run on the original 4-ticks-per-second modulo
+/// clock and are unchanged. `.sequence` and `.once` are the animation
+/// runtime's own modes: they run at an arbitrary frame rate off scene
+/// *time*, anchored to `PlacedSprite.start`.
 public enum SpriteAnimation: Sendable, Equatable, Hashable {
     case still
     /// 7-tick cycle A,B,A,B,A,B,blink. `slow` halves the tick rate (idle).
@@ -29,9 +36,22 @@ public enum SpriteAnimation: Sendable, Equatable, Hashable {
     /// Two frames alternating every `period` ticks — breathing, bouncing,
     /// rocking, controller wiggle.
     case toggle(period: Int)
+    /// An explicit frame list played at `fps` from `PlacedSprite.start`,
+    /// looping forever or holding on the last frame.
+    case sequence(frames: [Int], fps: Double, loop: Bool)
+    /// An explicit frame list played through exactly once from
+    /// `PlacedSprite.start`, then held. Shorthand for a non-looping
+    /// `.sequence` — celebrations and pops.
+    case once(frames: [Int], fps: Double)
 }
 
 /// One sprite positioned in scene pixel coordinates (origin top-left).
+///
+/// A placement is a *value evaluated at a time*: `position(at:)` and
+/// `frameIndex(at:)` take the scene clock, so the office director can hand
+/// the view one list per second and still get smooth 12 fps movement out of
+/// it. Placements with no `motion` sit at `(x, y)` forever, which is what
+/// every first-iteration composer produces.
 public struct PlacedSprite: Sendable, Equatable {
     public var sprite: PixelSprite
     public var x: Int
@@ -40,17 +60,67 @@ public struct PlacedSprite: Sendable, Equatable {
     public var animation: SpriteAnimation
     /// Per-placement offset into the animation cycle so neighbours desync.
     public var phase: Int
+    /// Scene time this placement's `.sequence` / `.once` animation and its
+    /// `motion` are anchored to.
+    public var start: TimeInterval
+    /// Optional travel. When present it overrides `(x, y)` at draw time.
+    public var motion: Motion?
+    /// Painter's-algorithm depth. Higher draws later (in front). The default
+    /// is the sprite's baseline (`y + height`) so a walker crossing the
+    /// floor slides in front of the desks behind them and behind the ones in
+    /// front — rooms sink to the back, bubbles float to the top.
+    public var zIndex: Int
+    /// 0...1 alpha, for fades (a leaver walking out, a wipe).
+    public var opacity: Double
+    /// Mirrors the sprite horizontally — one walk cycle serves both ways.
+    public var flipX: Bool
 
-    public init(sprite: PixelSprite, x: Int, y: Int, kind: PlacementKind, animation: SpriteAnimation, phase: Int) {
+    public init(
+        sprite: PixelSprite,
+        x: Int,
+        y: Int,
+        kind: PlacementKind,
+        animation: SpriteAnimation,
+        phase: Int,
+        start: TimeInterval = 0,
+        motion: Motion? = nil,
+        zIndex: Int? = nil,
+        opacity: Double = 1,
+        flipX: Bool = false
+    ) {
         self.sprite = sprite
         self.x = x
         self.y = y
         self.kind = kind
         self.animation = animation
         self.phase = phase
+        self.start = start
+        self.motion = motion
+        self.zIndex = zIndex ?? Self.defaultZIndex(kind: kind, y: y, height: sprite.height)
+        self.opacity = opacity
+        self.flipX = flipX
+    }
+
+    /// Baseline depth for a placement that does not name its own.
+    static func defaultZIndex(kind: PlacementKind, y: Int, height: Int) -> Int {
+        switch kind {
+        case .room: -100_000
+        case .bubble: y + height + 1_000
+        default: y + height
+        }
+    }
+
+    /// Top-left corner at scene time `t`, snapped to whole pixels.
+    public func position(at t: TimeInterval) -> (x: Int, y: Int) {
+        guard let motion else { return (x, y) }
+        return motion.position(at: t).rounded
     }
 
     /// Which frame to draw at a global animation tick (~4 ticks/second).
+    ///
+    /// The tick clock only drives the four original modes; `.sequence` and
+    /// `.once` are time-based, so this converts the tick back into seconds
+    /// for them.
     public func frameIndex(atTick tick: Int) -> Int {
         let t = max(0, tick)
         let index: Int
@@ -64,8 +134,39 @@ public struct PlacedSprite: Sendable, Equatable {
             index = (t / 2 + phase) % 2
         case .toggle(let period):
             index = (t / max(1, period) + phase) % 2
+        case .sequence, .once:
+            return frameIndex(at: TimeInterval(t) / AnimationClock.legacyTicksPerSecond)
         }
         return min(index, sprite.frameCount - 1)
+    }
+
+    /// Which frame to draw at scene time `t` (seconds since the scene
+    /// appeared). The single entry point the 12 fps renderer uses.
+    public func frameIndex(at t: TimeInterval) -> Int {
+        switch animation {
+        case .still, .typing, .glow, .toggle:
+            return frameIndex(atTick: AnimationClock.tick(at: t))
+        case .sequence(let frames, let fps, let loop):
+            return sequenceFrame(frames: frames, fps: fps, loop: loop, at: t)
+        case .once(let frames, let fps):
+            return sequenceFrame(frames: frames, fps: fps, loop: false, at: t)
+        }
+    }
+
+    private func sequenceFrame(frames: [Int], fps: Double, loop: Bool, at t: TimeInterval) -> Int {
+        guard !frames.isEmpty else { return 0 }
+        let elapsed = max(0, t - start)
+        let step = Int((elapsed * max(0.0001, fps)).rounded(.down)) + phase
+        let index = loop
+            ? frames[((step % frames.count) + frames.count) % frames.count]
+            : frames[min(max(0, step), frames.count - 1)]
+        return min(max(0, index), sprite.frameCount - 1)
+    }
+
+    /// Whether the placement has finished playing a `.once` animation at `t`.
+    public func hasFinished(at t: TimeInterval) -> Bool {
+        guard case .once(let frames, let fps) = animation, !frames.isEmpty else { return false }
+        return t - start >= TimeInterval(frames.count) / max(0.0001, fps)
     }
 }
 
@@ -180,7 +281,7 @@ public enum SceneComposer {
         var cell: [PlacedSprite] = []
         if let occupant {
             cell.append(PlacedSprite(
-                sprite: SpriteLibrary.person(appearance: occupant.appearance, isFounder: occupant.isFounder),
+                sprite: SpriteCache.person(appearance: occupant.appearance, pose: .seated, isFounder: occupant.isFounder, role: occupant.role),
                 x: x + 8, y: y,
                 kind: .person,
                 animation: .typing(slow: occupant.status == .idle),

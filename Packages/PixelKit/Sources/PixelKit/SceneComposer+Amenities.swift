@@ -176,7 +176,7 @@ extension SceneComposer {
             for (index, item) in zone.items.enumerated() {
                 if amenity == .cafeteria, let onBreak, let seat = zone.seat, seat.coveredBy == index {
                     placements.append(PlacedSprite(
-                        sprite: SpriteLibrary.person(appearance: onBreak.appearance, isFounder: onBreak.isFounder),
+                        sprite: SpriteCache.person(appearance: onBreak.appearance, pose: .seated, isFounder: onBreak.isFounder, role: onBreak.role),
                         x: x + seat.x, y: y + seat.y,
                         kind: .person,
                         animation: .typing(slow: true),
