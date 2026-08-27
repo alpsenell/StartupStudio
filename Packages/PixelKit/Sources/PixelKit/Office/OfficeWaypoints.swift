@@ -116,11 +116,13 @@ public enum OfficeWaypoints {
         let size = SceneComposer.sceneSize(for: tier)
         switch tier {
         case .garage:
-            let origin = (x: size.width - 46, y: l.wallHeight + 2)
-            return (ScenePoint(x: origin.x + 6, y: origin.y + 20), origin)
+            // The one clear patch of back wall, left of the whiteboard.
+            let origin = (x: 16, y: 4)
+            return (ScenePoint(x: origin.x + 6, y: l.rowsStartY), origin)
         case .loft:
-            let origin = (x: size.width - 16, y: l.wallHeight + 2)
-            return (ScenePoint(x: origin.x - 6, y: origin.y + 20), origin)
+            // Between the whiteboard and the right-hand window.
+            let origin = (x: 68, y: 3)
+            return (ScenePoint(x: origin.x + 6, y: l.rowsStartY), origin)
         case .studio:
             // Machine at (width - 12, wallHeight + 3), 9×11.
             return (ScenePoint(x: size.width - 20, y: l.wallHeight + 20), nil)
