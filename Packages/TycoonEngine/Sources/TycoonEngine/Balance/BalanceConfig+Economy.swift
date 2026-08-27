@@ -14,10 +14,6 @@ extension BalanceConfig {
         /// The share of full quality a crew of complete beginners can reach.
         /// The rest is earned: `ceiling = base + (1 − base) × skillIndex/100`.
         public var qualityCeilingBase: Double
-        /// Cap on the research quality multiplier, applied before the
-        /// ceiling so tech sharpens a good team rather than rescuing a bad
-        /// one.
-        public var techQualityCap: Double
         /// Extra review expectation per point of product-type complexity
         /// above 1.0.
         public var expectationPerComplexity: Double
@@ -191,7 +187,6 @@ extension BalanceConfig {
 
         public init(
             qualityCeilingBase: Double = 0.35,
-            techQualityCap: Double = 1.35,
             expectationPerComplexity: Double = 8,
             subscriberAcquisitionWeeks: Double = 52,
             churnBase: Double = 0.06,
@@ -244,7 +239,6 @@ extension BalanceConfig {
             creditRevenueWeeks: Int = 12
         ) {
             self.qualityCeilingBase = qualityCeilingBase
-            self.techQualityCap = techQualityCap
             self.expectationPerComplexity = expectationPerComplexity
             self.subscriberAcquisitionWeeks = subscriberAcquisitionWeeks
             self.churnBase = churnBase

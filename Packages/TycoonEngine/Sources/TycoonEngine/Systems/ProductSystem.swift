@@ -245,15 +245,25 @@ enum ProductSystem {
         let techMultiplier = state.qualityTechMultiplier(
             content: content, cap: balance.techQualityMultiplierCap
         )
-        let quality = min(100, max(0, 100 * completion * topicFit * bugFactor * techMultiplier))
+        // The skill ceiling: a product can only be as good as the people who
+        // built it. A crew of complete beginners tops out at
+        // `qualityCeilingBase`; the rest is earned point by point, and tech
+        // (already capped) sharpens a good team rather than rescuing a bad
+        // one — it multiplies *under* the ceiling.
+        let ceiling = qualityCeiling(skillIndex: dev.crewSkillIndex, balance: balance)
+        let quality = min(100, max(0,
+            100 * completion * topicFit * bugFactor * techMultiplier * ceiling
+        ))
 
         // Full review model: the press expects more from an older, more
-        // reputable studio, docks a fraction of any shortfall, and grants a
-        // hype bonus. Reputation here is the pre-nudge value.
+        // reputable studio and from a more ambitious kind of product, docks
+        // a fraction of any shortfall, and grants a hype bonus. Reputation
+        // here is the pre-nudge value.
         let hypeAtLaunch = dev.hype
         let expected = balance.reviewExpectationBase
             + balance.reviewExpectationPerYear * Double(state.year - 1)
             + balance.reviewExpectationRepFactor * state.company.reputation
+            + balance.economy.expectationPerComplexity * (type.complexity - 1)
         let baseScore = quality
             - balance.reviewShortfallPenalty * max(0, expected - quality)
             + hypeAtLaunch / balance.reviewHypeDivisor
@@ -305,6 +315,34 @@ enum ProductSystem {
             .shipped(productID: productID, day: state.day),
             .reviewsIn(productID: productID, averageScore: averageScore, day: state.day),
         ]
+    }
+
+    /// The fraction of full quality a crew with this average pool-weighted
+    /// skill can reach: `base + (1 − base) × skillIndex / 100`, clamped to
+    /// `base...1`. A base of 1 (the neutral test economy) restores the
+    /// pre-ceiling behavior exactly.
+    static func qualityCeiling(skillIndex: Double, balance: BalanceConfig) -> Double {
+        let base = min(1, max(0, balance.economy.qualityCeilingBase))
+        return base + (1 - base) * min(100, max(0, skillIndex)) / 100
+    }
+
+    /// The pool-weighted skill of one day's crew: the design pool draws on
+    /// design, the code pool on coding, and the polish pool on the mean of
+    /// both, weighted by the same `qualityWeights` the quality itself is
+    /// computed from. An empty crew reads 0.
+    static func crewSkillSample(
+        designSkillSum: Double,
+        codingSkillSum: Double,
+        crewCount: Int,
+        balance: BalanceConfig
+    ) -> Double {
+        guard crewCount > 0 else { return 0 }
+        let design = designSkillSum / Double(crewCount)
+        let coding = codingSkillSum / Double(crewCount)
+        let weights = balance.qualityWeights
+        return weights.design * design
+            + weights.code * coding
+            + weights.polish * (design + coding) / 2
     }
 
     // MARK: - Live-ops actions

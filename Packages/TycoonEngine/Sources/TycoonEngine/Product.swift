@@ -36,6 +36,13 @@ public struct DevProgress: Codable, Equatable, Sendable {
     /// Marketing hype: fed by campaigns, decayed daily by `MarketingSystem`,
     /// and captured into `ReleaseInfo.hypeAtLaunch` at ship.
     public var hype: Double
+    /// Running sum of the crew's pool-weighted skill, one sample per day
+    /// anyone worked on this product. Divided by `crewSkillDays` at ship it
+    /// becomes the skill index behind the quality ceiling — a product can
+    /// only be as good as the people who built it (the `ContractJob`
+    /// `skillDaySum` / `skillDays` precedent).
+    public var crewSkillDaySum: Double
+    public var crewSkillDays: Int
 
     public init(
         designPts: Double,
@@ -43,7 +50,9 @@ public struct DevProgress: Codable, Equatable, Sendable {
         polishPts: Double,
         openBugs: Int,
         focus: PhaseFocus,
-        hype: Double
+        hype: Double,
+        crewSkillDaySum: Double = 0,
+        crewSkillDays: Int = 0
     ) {
         self.designPts = designPts
         self.codePts = codePts
@@ -51,6 +60,39 @@ public struct DevProgress: Codable, Equatable, Sendable {
         self.openBugs = openBugs
         self.focus = focus
         self.hype = hype
+        self.crewSkillDaySum = crewSkillDaySum
+        self.crewSkillDays = crewSkillDays
+    }
+
+    /// The crew's average pool-weighted skill over the build, 0...100.
+    /// A product nobody ever worked reads 0.
+    public var crewSkillIndex: Double {
+        guard crewSkillDays > 0 else { return 0 }
+        return crewSkillDaySum / Double(crewSkillDays)
+    }
+}
+
+// Hand-written decode so a product that was mid-build when the skill
+// ceiling landed keeps loading: no recorded crew skill reads as a build
+// nobody has worked yet, and the first day of work starts the average.
+extension DevProgress {
+    private enum CodingKeys: String, CodingKey {
+        case designPts, codePts, polishPts, openBugs, focus, hype
+        case crewSkillDaySum, crewSkillDays
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            designPts: try container.decode(Double.self, forKey: .designPts),
+            codePts: try container.decode(Double.self, forKey: .codePts),
+            polishPts: try container.decode(Double.self, forKey: .polishPts),
+            openBugs: try container.decode(Int.self, forKey: .openBugs),
+            focus: try container.decode(PhaseFocus.self, forKey: .focus),
+            hype: try container.decode(Double.self, forKey: .hype),
+            crewSkillDaySum: try container.decodeIfPresent(Double.self, forKey: .crewSkillDaySum) ?? 0,
+            crewSkillDays: try container.decodeIfPresent(Int.self, forKey: .crewSkillDays) ?? 0
+        )
     }
 }
 

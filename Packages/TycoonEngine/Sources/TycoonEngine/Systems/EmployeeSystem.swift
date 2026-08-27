@@ -202,6 +202,7 @@ enum EmployeeSystem {
         var qaPolish = 0.0
         var hype = 0.0
         var codingSum = 0.0
+        var designSum = 0.0
         var producers: [Int] = []
         var founderWorked = false
         for index in state.employees.indices {
@@ -233,6 +234,7 @@ enum EmployeeSystem {
                 hype += company.marketerDailyHype * (1 + skills.marketing / 100)
             }
             codingSum += skills.coding
+            designSum += skills.design
             producers.append(index)
             if isFounder { founderWorked = true }
         }
@@ -255,8 +257,17 @@ enum EmployeeSystem {
             bugFixMultiplier: bugFixMultiplier,
             productIndex: productIndex, state: &state, balance: balance
         )
-        if hype > 0, case .development(var progress) = state.products[productIndex].stage {
+        // Record who built it today, for the ship-time quality ceiling.
+        if !producers.isEmpty,
+           case .development(var progress) = state.products[productIndex].stage {
             progress.hype += hype
+            progress.crewSkillDaySum += ProductSystem.crewSkillSample(
+                designSkillSum: designSum,
+                codingSkillSum: codingSum,
+                crewCount: producers.count,
+                balance: balance
+            )
+            progress.crewSkillDays += 1
             state.products[productIndex].stage = .development(progress)
         }
 
