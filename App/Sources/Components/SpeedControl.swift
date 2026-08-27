@@ -1,9 +1,12 @@
 import SwiftUI
 import TycoonEngine
 
-/// Compact segmented-style control for the simulation speed
-/// (Paused / 1x / 2x / 4x). Reads the current speed from the engine state
-/// and calls `engine.setSpeed(_:)` on taps.
+/// The clock: four chunky pixel buttons (Paused / 1× / 2× / 4×) that read
+/// the current speed from the engine and call `engine.setSpeed(_:)`.
+///
+/// Drawn as pixel chrome rather than a system segmented control — it sits
+/// beside the bitmap cash and date, and it is the control the player
+/// touches most.
 struct SpeedControl: View {
     let engine: GameEngine
 
@@ -13,8 +16,12 @@ struct SpeedControl: View {
                 segment(for: speed)
             }
         }
-        .padding(3)
-        .background(Theme.chipBackground, in: Capsule())
+        .padding(2)
+        .background(Theme.pixelInk.opacity(0.12))
+        .overlay {
+            PixelPanelBorder(thickness: 2, corner: 2)
+                .fill(Theme.pixelInk.opacity(0.35))
+        }
         .animation(.spring(duration: 0.25), value: engine.state.speed)
         .accessibilityLabel("Simulation speed")
     }
@@ -23,15 +30,14 @@ struct SpeedControl: View {
     private func segment(for speed: SimSpeed) -> some View {
         let isSelected = engine.state.speed == speed
         Button {
+            Haptics.tap()
+            Sounds.play(.tap)
             engine.setSpeed(speed)
         } label: {
-            segmentLabel(for: speed)
-                .font(.system(.caption, design: .rounded).weight(.bold))
-                .monospacedDigit()
+            segmentLabel(for: speed, isSelected: isSelected)
                 .frame(minWidth: 26, minHeight: 22)
-                .foregroundStyle(isSelected ? Color.white : Color.secondary)
-                .background(isSelected ? Theme.accent : Color.clear, in: Capsule())
-                .contentShape(Capsule())
+                .background(isSelected ? Theme.pixelAccent : Color.clear)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(speed.label)
@@ -39,14 +45,20 @@ struct SpeedControl: View {
     }
 
     @ViewBuilder
-    private func segmentLabel(for speed: SimSpeed) -> some View {
+    private func segmentLabel(for speed: SimSpeed, isSelected: Bool) -> some View {
+        let ink: Color = isSelected ? .white : .secondary
         switch speed {
         case .paused:
-            Image(systemName: "pause.fill")
+            // Two bars: the pixel pause glyph.
+            HStack(spacing: 2) {
+                Rectangle().frame(width: 3, height: 10)
+                Rectangle().frame(width: 3, height: 10)
+            }
+            .foregroundStyle(ink)
         case .x1:
-            Image(systemName: "play.fill")
+            PixelText(text: "▶", scale: 2, color: ink)
         default:
-            Text(speed.label)
+            PixelText(text: speed.label, scale: 2, color: ink)
         }
     }
 }
