@@ -69,25 +69,48 @@ public struct Track: Sendable, Equatable, Hashable {
         t > start && t < end
     }
 
-    /// An L-shaped route between two points by way of a corridor line.
+    /// An L-shaped route between two points by way of a corridor line and,
+    /// optionally, a set of vertical lanes.
     ///
-    /// People in this office never cut diagonally across the floor: they
-    /// step out of their row into the corridor, walk it, then step in. When
-    /// both ends already sit on the corridor the dog-leg collapses to a
-    /// single straight walk.
+    /// People in this office never cut diagonally across the floor. They
+    /// step sideways out of their row into the nearest clear lane between
+    /// two desk columns, walk that lane down to the front corridor, cross
+    /// the room along it, then reverse the manoeuvre at the other end. With
+    /// no lanes given the route degenerates to the plain three-leg dog-leg
+    /// (out, across, in), and when both ends already sit on the corridor it
+    /// collapses to one straight walk.
+    ///
+    /// - Parameter lanes: x positions of the clear vertical lanes. The
+    ///   nearest one to each end is used.
     public static func route(
         from origin: ScenePoint,
         to destination: ScenePoint,
         corridorY: Double,
+        lanes: [Double] = [],
         departingAt start: TimeInterval,
         speed: Double
     ) -> Track {
         var track = Track(parkedAt: origin, from: start)
-        if origin.y != corridorY {
-            track.append(to: ScenePoint(x: origin.x, y: corridorY), speed: speed)
+        guard origin != destination else { return track }
+
+        /// Anything within a couple of pixels of the corridor counts as
+        /// already being on it — no detour worth walking.
+        func onCorridor(_ point: ScenePoint) -> Bool { abs(point.y - corridorY) <= 2 }
+        func lane(near x: Double) -> Double {
+            lanes.min { abs($0 - x) < abs($1 - x) } ?? x
         }
-        if destination.x != origin.x {
+
+        if !onCorridor(origin) {
+            let out = lane(near: origin.x)
+            track.append(to: ScenePoint(x: out, y: origin.y), speed: speed)
+            track.append(to: ScenePoint(x: out, y: corridorY), speed: speed)
+        }
+        if onCorridor(destination) {
             track.append(to: ScenePoint(x: destination.x, y: corridorY), speed: speed)
+        } else {
+            let into = lane(near: destination.x)
+            track.append(to: ScenePoint(x: into, y: corridorY), speed: speed)
+            track.append(to: ScenePoint(x: into, y: destination.y), speed: speed)
         }
         track.append(to: destination, speed: speed)
         return track

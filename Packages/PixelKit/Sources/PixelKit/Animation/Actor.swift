@@ -112,13 +112,17 @@ public struct ActorState: Sendable, Equatable {
 /// the same things at the same times every time the scene is evaluated.
 public struct ActorPlan: Sendable, Equatable, Hashable {
     public var id: UUID
-    /// The desk this actor returns to. Feet-anchor, scene pixels.
+    /// Which desk cell this actor belongs to, in `SceneComposer`'s indexing
+    /// (`deskCapacity` is the founder's own desk).
+    public var seatIndex: Int
+    /// Where this actor stands when they get up. Feet-anchor, scene pixels.
     public var deskAnchor: ScenePoint
     /// Contiguous, ordered, whole-second segments.
     public var segments: [ActorSegment]
 
-    public init(id: UUID, deskAnchor: ScenePoint, segments: [ActorSegment]) {
+    public init(id: UUID, seatIndex: Int, deskAnchor: ScenePoint, segments: [ActorSegment]) {
         self.id = id
+        self.seatIndex = seatIndex
         self.deskAnchor = deskAnchor
         self.segments = segments
     }

@@ -130,7 +130,9 @@ private final class FrameCache: @unchecked Sendable {
 /// renders is therefore the cheapest honest proxy for "did the cache work",
 /// and `OfficePerfTests` asserts it goes to zero after warm-up.
 enum SpriteRenderStats {
-    private static let box = Counter()
+    /// The counter for the task currently measuring. Task-local so two
+    /// tests measuring in parallel cannot see each other's rasterizations.
+    @TaskLocal private static var active: Counter?
 
     private final class Counter: @unchecked Sendable {
         private let lock = NSLock()
@@ -147,18 +149,18 @@ enum SpriteRenderStats {
             defer { lock.unlock() }
             return value
         }
-
-        func reset() {
-            lock.lock()
-            value = 0
-            lock.unlock()
-        }
     }
 
-    static func recordRender() { box.increment() }
-    /// Frames rasterized since the last `reset()`.
-    static var renderedFrames: Int { box.read() }
-    static func reset() { box.reset() }
+    static func recordRender() { active?.increment() }
+
+    /// Runs `body` and reports how many sprite frames it rasterized.
+    static func rasterizations(during body: () -> Void) -> Int {
+        let counter = Counter()
+        return $active.withValue(counter) {
+            body()
+            return counter.read()
+        }
+    }
 }
 
 /// Shared, keyed store of composed person sprites.
@@ -214,10 +216,26 @@ public enum SpriteCache {
         }
     }
 
+    /// The sprite for an arbitrary string key.
+    ///
+    /// People are not the only thing rebuilt per frame: the room itself is
+    /// a 260×144 grid of strings on a campus, and desks, monitors, bubbles
+    /// and props are all rebuilt on every call too. Anything whose art is a
+    /// pure function of a few parameters belongs here, keyed by those
+    /// parameters — `"room.campus.260x144.36.night"`, `"desk"`, and so on.
+    public static func shared(_ key: String, make: () -> PixelSprite) -> PixelSprite {
+        let boxed = key as NSString
+        if let hit = named.object(forKey: boxed) { return hit.sprite }
+        let sprite = make()
+        named.setObject(SpriteBox(sprite), forKey: boxed)
+        return sprite
+    }
+
     /// Empties the cache. Tests use it to measure a cold pipeline; the app
     /// never needs to.
     public static func removeAll() {
         store.removeAllObjects()
+        named.removeAllObjects()
     }
 
     // MARK: Storage
@@ -227,6 +245,14 @@ public enum SpriteCache {
     nonisolated(unsafe) private static let store: NSCache<KeyBox, SpriteBox> = {
         let cache = NSCache<KeyBox, SpriteBox>()
         cache.countLimit = 512
+        return cache
+    }()
+
+    /// Rooms, furniture, props, bubbles and effect art, keyed by the
+    /// parameters they are built from.
+    nonisolated(unsafe) private static let named: NSCache<NSString, SpriteBox> = {
+        let cache = NSCache<NSString, SpriteBox>()
+        cache.countLimit = 256
         return cache
     }()
 

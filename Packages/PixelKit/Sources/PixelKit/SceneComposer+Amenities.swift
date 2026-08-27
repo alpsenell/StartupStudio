@@ -135,6 +135,35 @@ extension SceneComposer {
 
     // MARK: Placement
 
+    /// Where each floor zone lands, in scene pixels.
+    ///
+    /// `amenityZones` lays the props out from these rectangles and
+    /// `OfficeWaypoints` hangs its "go and use the game room" anchors off
+    /// them, so both agree by construction.
+    static func zoneFrames(
+        for tier: OfficeTierStyle,
+        shown: [AmenityStyle],
+        size: SceneSize,
+        founderY: Int
+    ) -> [(amenity: AmenityStyle, x: Int, y: Int, width: Int, height: Int)] {
+        let zones = shown.compactMap { amenity in floorZone(for: amenity).map { (amenity, $0) } }
+        guard !zones.isEmpty else { return [] }
+
+        let startX = Layout.sideMargin + Layout.cellWidth + zoneLead
+        let endX = size.width - rightReserve(for: tier)
+        let totalWidth = zones.reduce(0) { $0 + $1.1.width }
+        let gap = min(maxZoneGap, (endX - startX - totalWidth) / (zones.count + 1))
+        let baseline = founderY + Layout.cellHeight - 2
+
+        var frames: [(AmenityStyle, Int, Int, Int, Int)] = []
+        var x = startX + gap
+        for (amenity, zone) in zones {
+            frames.append((amenity, x, baseline - zone.height, zone.width, zone.height))
+            x += zone.width + gap
+        }
+        return frames
+    }
+
     static func amenityZones(
         for tier: OfficeTierStyle,
         shown: [AmenityStyle],
@@ -147,7 +176,7 @@ extension SceneComposer {
 
         func place(_ item: ZoneItem, atX x: Int, y: Int) -> PlacedSprite {
             PlacedSprite(
-                sprite: SpriteLibrary.amenityProp(item.name),
+                sprite: SpriteCache.shared("amenity.\(item.name.rawValue)") { SpriteLibrary.amenityProp(item.name) },
                 x: x + item.x, y: y + item.y,
                 kind: .amenityProp(item.name),
                 animation: item.animation, phase: item.phase

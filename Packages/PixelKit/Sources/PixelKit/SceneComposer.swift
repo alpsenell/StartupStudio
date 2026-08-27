@@ -209,8 +209,33 @@ public enum SceneComposer {
         }
     }
 
-    private static func deskRows(for tier: OfficeTierStyle, cols: Int) -> Int {
+    static func deskRows(for tier: OfficeTierStyle, cols: Int) -> Int {
         (tier.deskCapacity + cols - 1) / cols
+    }
+
+    /// Top-left corner of a desk cell. `index` runs `0..<deskCapacity` for
+    /// the regular grid; `deskCapacity` itself is the founder's own desk in
+    /// the front row, left, separated from the rest.
+    ///
+    /// The director needs this to seat people and to work out where they
+    /// stand when they get up, so it lives next to the layout constants it
+    /// is derived from rather than being recomputed elsewhere.
+    static func cellOrigin(tier: OfficeTierStyle, index: Int) -> (x: Int, y: Int) {
+        let l = layout(for: tier)
+        let rows = deskRows(for: tier, cols: l.cols)
+        guard index < tier.deskCapacity else {
+            return (Layout.sideMargin, l.rowsStartY + rows * Layout.cellHeight + Layout.founderGap)
+        }
+        return (
+            Layout.sideMargin + (index % l.cols) * Layout.cellWidth,
+            l.rowsStartY + (index / l.cols) * Layout.cellHeight
+        )
+    }
+
+    /// Where a seated person's sprite is drawn for a desk index.
+    static func seatOrigin(tier: OfficeTierStyle, index: Int) -> (x: Int, y: Int) {
+        let cell = cellOrigin(tier: tier, index: index)
+        return (cell.x + 8, cell.y)
     }
 
     public static func sceneSize(for tier: OfficeTierStyle) -> SceneSize {
@@ -289,49 +314,76 @@ public enum SceneComposer {
             ))
         }
         cell.append(PlacedSprite(
-            sprite: SpriteLibrary.desk(), x: x + 3, y: y + 13,
+            sprite: SpriteCache.shared("desk", make: SpriteLibrary.desk), x: x + 3, y: y + 13,
             kind: .desk, animation: .still, phase: 0
         ))
         cell.append(PlacedSprite(
-            sprite: SpriteLibrary.monitor(), x: x + 10, y: y + 7,
+            sprite: SpriteCache.shared("monitor", make: SpriteLibrary.monitor), x: x + 10, y: y + 7,
             kind: .monitor, animation: .glow, phase: index % 2
         ))
         if let occupant, occupant.status != .idle {
             cell.append(PlacedSprite(
-                sprite: SpriteLibrary.statusBubble(occupant.status), x: x + 16, y: y - 8,
+                sprite: SpriteCache.shared("bubble.\(occupant.status.rawValue)") { SpriteLibrary.statusBubble(occupant.status) },
+                x: x + 16, y: y - 8,
                 kind: .bubble, animation: .still, phase: 0
             ))
         }
         return cell
     }
 
-    private static func props(for tier: OfficeTierStyle, size: SceneSize, layout l: Layout) -> [PlacedSprite] {
+    static func props(
+        for tier: OfficeTierStyle,
+        size: SceneSize,
+        layout l: Layout,
+        ambience: OfficeAmbience = .plain
+    ) -> [PlacedSprite] {
         func place(_ name: SpriteLibrary.PropName, _ x: Int, _ y: Int) -> PlacedSprite {
-            PlacedSprite(sprite: SpriteLibrary.prop(name), x: x, y: y, kind: .prop, animation: .still, phase: 0)
+            PlacedSprite(
+                sprite: SpriteCache.shared("prop.\(name.rawValue)") { SpriteLibrary.prop(name) },
+                x: x, y: y, kind: .prop, animation: .still, phase: 0
+            )
         }
+        // Windows carry the hour and the weather (WS-D's art; a daylight
+        // pane until it lands), so they go through the ambience seam.
+        func window(_ x: Int, _ y: Int) -> PlacedSprite {
+            PlacedSprite(
+                sprite: SpriteCache.shared(
+                    "window.office.\(ambience.timeOfDay.rawValue).\(ambience.weather.rawValue)"
+                ) {
+                    SpriteLibrary.window(
+                        style: .office, time: ambience.timeOfDay, weather: ambience.weather
+                    )
+                },
+                x: x, y: y, kind: .prop, animation: .still, phase: 0
+            )
+        }
+        let boardX = (size.width - 22) / 2
 
         switch tier {
         case .garage:
             return [
                 place(.garageDoor, size.width - 34, l.wallHeight - 16),
+                place(.whiteboard, boardX, 4),
                 place(.toolbox, 2, l.wallHeight + 1),
             ]
         case .loft:
             return [
-                place(.windowDay, 14, 3),
-                place(.windowDay, size.width - 26, 3),
+                window(14, 3),
+                window(size.width - 26, 3),
+                place(.whiteboard, boardX, 3),
                 place(.plant, 2, l.wallHeight + 2),
                 place(.plant, size.width - 11, size.height - 14),
             ]
         case .studio:
             return [
-                place(.whiteboard, (size.width - 22) / 2, 4),
+                place(.whiteboard, boardX, 4),
                 place(.coffeeMachine, size.width - 12, l.wallHeight + 3),
                 place(.plant, 2, l.wallHeight + 2),
             ]
         case .campus:
             let step = (size.width - 44) / 3
-            var props = (0..<4).map { place(.windowDay, 16 + $0 * step, 4) }
+            var props = (0..<4).map { window(16 + $0 * step, 4) }
+            props.append(place(.whiteboard, boardX, 4))
             props.append(place(.plant, 2, l.wallHeight + 2))
             props.append(place(.plant, size.width - 10, l.wallHeight + 2))
             props.append(place(.coffeeMachine, size.width - 12, size.height - 20))
