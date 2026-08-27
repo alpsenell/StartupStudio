@@ -4,13 +4,30 @@
 extension SpriteLibrary {
     // MARK: - Poses
 
+    /// Every pose a person sprite can be drawn in.
+    ///
+    /// The first five are the authored home/office poses. The rest are the
+    /// office-life poses WS-C's director needs: in the scaffold they are
+    /// *placeholders* mapped onto existing art (walking → the activity
+    /// walk cycle, cheer → the arms-up exercise frames, slump/coffee/chat/
+    /// carryBox → standing, portrait → a bust cropped out of the seated
+    /// frames). WS-D authors the real art behind the same case names, so
+    /// nothing downstream has to change.
     public enum PersonPose: String, Sendable, Equatable, CaseIterable {
-        case seated, standing, lying, seatedCouch, holdingBaby
+        case seated, standing, lying, seatedCouch, holdingBaby, exercising
+        case walkLeft, walkRight, walkDown, cheer, slump, coffee, chat, carryBox, portrait
     }
 
-    /// A person in a home pose. `seated` is the existing office sprite
-    /// (3 frames); the other poses are 2-frame (bob / breathe / rock).
-    public static func person(appearance: CharacterAppearance, pose: PersonPose, isFounder: Bool = false) -> PixelSprite {
+    /// A person in a pose. `seated` is the existing office sprite
+    /// (3 frames); the other poses are 2-frame (bob / breathe / rock /
+    /// step). `role` is the accessory WS-D draws on top — ignored while
+    /// the art doesn't exist, so every pose renders exactly as before.
+    public static func person(
+        appearance: CharacterAppearance,
+        pose: PersonPose,
+        isFounder: Bool = false,
+        role: RoleLook = .none
+    ) -> PixelSprite {
         switch pose {
         case .seated:
             return person(appearance: appearance, isFounder: isFounder)
@@ -35,8 +52,53 @@ extension SpriteLibrary {
                 frames: [HomePersonArt.holdingBabyA, HomePersonArt.holdingBabyB],
                 hairOffsets: [0, 1], appearance: appearance, isFounder: isFounder
             )
+        case .exercising:
+            return exercisingPerson(appearance: appearance, isFounder: isFounder)
+
+        // MARK: Placeholders (WS-D authors the art)
+
+        case .walkLeft, .walkRight, .walkDown:
+            // One walk cycle for all three directions until WS-D draws the
+            // side and front views.
+            return ActivitySpriteLibrary.walkingPerson(
+                appearance: appearance, isFounder: isFounder
+            )
+        case .cheer:
+            // Arms down / arms up reads as a cheer well enough to block out
+            // the celebration timing.
+            return exercisingPerson(appearance: appearance, isFounder: isFounder)
+        case .slump, .coffee, .chat, .carryBox:
+            return composePerson(
+                frames: [HomePersonArt.standingA, HomePersonArt.headBob(HomePersonArt.standingA)],
+                hairOffsets: [0, 1], appearance: appearance, isFounder: isFounder
+            )
+        case .portrait:
+            return portraitBust(appearance: appearance, isFounder: isFounder)
         }
     }
+
+    /// A 10×10 head-and-shoulders bust cropped out of the seated frames
+    /// (open eyes / blink), for UI portraits. The crop keeps the founder's
+    /// hoodie collar, so the founder still reads as the founder.
+    private static func portraitBust(
+        appearance: CharacterAppearance, isFounder: Bool
+    ) -> PixelSprite {
+        let hair = PersonArt.hairOverlays[appearance.hairStyle % PersonArt.hairOverlays.count]
+        let frames = [PersonArt.frameA, PersonArt.frameABlink].map { frame -> [String] in
+            var grid = PixelGrid.overlay(base: frame, top: hair)
+            if isFounder {
+                grid = PixelGrid.overlay(base: grid, top: PersonArt.hoodieOverlay)
+            }
+            return grid.prefix(Self.portraitHeight).map { row in
+                String(row.dropFirst(Self.portraitInsetX).prefix(Self.portraitWidth))
+            }
+        }
+        return PixelSprite(frames: frames, palette: personPalette(appearance))
+    }
+
+    private static let portraitWidth = 10
+    private static let portraitHeight = 10
+    private static let portraitInsetX = 2
 
     /// Dumbbell workout: arms down / arms up. Internal — the composer uses it
     /// for `.exercising`.

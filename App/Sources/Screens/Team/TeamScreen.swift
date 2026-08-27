@@ -305,6 +305,10 @@ private struct AssignmentMenu: View {
         case .product(let productID):
             // Defensive: the product should always resolve while assigned.
             engine.state.product(id: productID)?.name ?? "Product"
+        // WS-A appends `.support`; the fallback keeps the App building
+        // until this file's owner gives it a proper label.
+        @unknown default:
+            "Assigned"
         }
     }
 }

@@ -100,6 +100,12 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
     /// What they were hired to do; shapes build output and staffs
     /// departments. The founder is always `.founder`.
     public var role: EmployeeRole
+    /// Personality tags (`TraitDef.id`s in the content catalog) that shape
+    /// output, morale, skill growth and poach resistance through
+    /// `TraitEffects`. Empty until WS-F derives them from
+    /// `appearanceSeed`; saves written before traits existed decode as
+    /// empty too.
+    public var traits: [String]
 
     /// `role` defaults to the pre-roles inference (founder, else the
     /// stronger of coding and design) so callers that predate roles keep
@@ -120,7 +126,8 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         lastTrainedDay: Int? = nil,
         loyalty: Double = 50,
         lastSocialDay: Int? = nil,
-        role: EmployeeRole? = nil
+        role: EmployeeRole? = nil,
+        traits: [String] = []
     ) {
         self.id = id
         self.name = name
@@ -138,6 +145,7 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         self.loyalty = loyalty
         self.lastSocialDay = lastSocialDay
         self.role = role ?? .inferred(isFounder: isFounder, skills: skills)
+        self.traits = traits
     }
 
     /// Output multiplier from morale and seniority (the founder's output is
@@ -154,14 +162,15 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
 
 // MARK: - Codable
 
-// Hand-written decode so saves written before morale/seniority/roles
+// Hand-written decode so saves written before morale/seniority/roles/traits
 // existed keep loading: the new keys decode as optional with fresh-hire
-// defaults, and a missing role is inferred from the founder flag and skills.
+// defaults, a missing role is inferred from the founder flag and skills, and
+// missing traits read as none.
 extension Employee {
     private enum CodingKeys: String, CodingKey {
         case id, name, skills, weeklySalary, assignment, isFounder, hiredDay
         case appearanceSeed, morale, level, lowMoraleStreakDays, lastPraisedDay, lastTrainedDay
-        case loyalty, lastSocialDay, role
+        case loyalty, lastSocialDay, role, traits
     }
 
     public init(from decoder: any Decoder) throws {
@@ -182,7 +191,8 @@ extension Employee {
             lastTrainedDay: try container.decodeIfPresent(Int.self, forKey: .lastTrainedDay),
             loyalty: try container.decodeIfPresent(Double.self, forKey: .loyalty) ?? 50,
             lastSocialDay: try container.decodeIfPresent(Int.self, forKey: .lastSocialDay),
-            role: try container.decodeIfPresent(EmployeeRole.self, forKey: .role)
+            role: try container.decodeIfPresent(EmployeeRole.self, forKey: .role),
+            traits: try container.decodeIfPresent([String].self, forKey: .traits) ?? []
         )
     }
 }

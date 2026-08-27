@@ -1546,6 +1546,24 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     /// key reads as `DifficultyBalance.identity`.
     public var difficulty: [String: DifficultyBalance]
 
+    // MARK: - Workstream blocks
+
+    // One block per workstream, each defined in its own
+    // `BalanceConfig+X.swift` and tuned in its own `Balance.json` object,
+    // so six branches never edit the same balance line. An absent block
+    // decodes as `.default`.
+
+    /// Economy, live ops and pacing (WS-A).
+    public var economy: EconomyBalance
+    /// Narrative cadences and choice deadlines (WS-B).
+    public var narrative: NarrativeBalance
+    /// Chapters, goals and archetypes (WS-F).
+    public var progression: ProgressionBalance
+    /// Rounds, board pressure and the IPO gate (WS-F).
+    public var investors: InvestorBalance
+    /// Employee trait strengths (WS-F).
+    public var traits: TraitBalance
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,
@@ -1638,7 +1656,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         genreFatigueWindowDays: Int = 84,
         marketHistoryWeeks: Int = 26,
         marketEventLogCap: Int = 30,
-        difficulty: [String: DifficultyBalance] = DifficultyBalance.standardTable
+        difficulty: [String: DifficultyBalance] = DifficultyBalance.standardTable,
+        economy: EconomyBalance = .default,
+        narrative: NarrativeBalance = .default,
+        progression: ProgressionBalance = .default,
+        investors: InvestorBalance = .default,
+        traits: TraitBalance = .default
     ) {
         self.startingCash = startingCash
         self.weeklyOperatingCost = weeklyOperatingCost
@@ -1732,6 +1755,11 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         self.marketHistoryWeeks = marketHistoryWeeks
         self.marketEventLogCap = marketEventLogCap
         self.difficulty = difficulty
+        self.economy = economy
+        self.narrative = narrative
+        self.progression = progression
+        self.investors = investors
+        self.traits = traits
     }
 
     public func office(_ tier: OfficeTier) -> OfficeDef {

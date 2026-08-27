@@ -1,4 +1,5 @@
 import SwiftUI
+import TycoonContent
 import TycoonEngine
 
 /// A pause-and-choose moment surfaced from pending state (a rival's poach
@@ -105,7 +106,13 @@ struct DecisionSheet: View {
 extension DecisionPrompt {
     /// The prompt for whatever offer is pending, poach first. Reads pending
     /// state (not transient events) so an offer survives app relaunches.
-    static func pending(in state: GameState, balance: BalanceConfig) -> DecisionPrompt? {
+    /// WS-B's narrative choices come last, through
+    /// `NarrativeChoicePresenter` — which returns `nil` today.
+    static func pending(
+        in state: GameState,
+        content: ContentCatalog,
+        balance: BalanceConfig
+    ) -> DecisionPrompt? {
         if let poach = state.rivals.pendingPoach {
             return poachPrompt(poach, state: state)
         }
@@ -115,7 +122,7 @@ extension DecisionPrompt {
         if let staffEvent = state.pendingStaffEvent {
             return staffEventPrompt(staffEvent, state: state, balance: balance)
         }
-        return nil
+        return NarrativeChoicePresenter.prompt(for: state, content: content, balance: balance)
     }
 
     private static func staffEventPrompt(

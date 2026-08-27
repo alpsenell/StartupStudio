@@ -66,6 +66,16 @@ public enum GameAction: Codable, Equatable, Sendable {
     case teamDinner
     /// Answers the pending staff event.
     case resolveStaffEvent(choice: StaffEventChoice)
+
+    // Reserved regions — each workstream appends its new cases inside its
+    // own region and nowhere else, so six branches never touch the same
+    // line. Keep the regions in this order.
+
+    // MARK: WS-A
+
+    // MARK: WS-B
+
+    // MARK: WS-F
 }
 
 /// The skill a training course targets.

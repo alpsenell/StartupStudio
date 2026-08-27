@@ -82,6 +82,22 @@ public struct WeeklySale: Codable, Equatable, Sendable {
     }
 }
 
+/// How a released product is priced. WS-A attaches the demand/price
+/// trade-off (budget ×0.6 price ×1.5 demand, premium ×1.6 price ×0.6
+/// demand); every product ships `.standard`, which is exactly today's
+/// behavior.
+public enum PriceTier: String, Codable, Equatable, Sendable, CaseIterable {
+    case budget, standard, premium
+
+    public var displayName: String {
+        switch self {
+        case .budget: "Budget"
+        case .standard: "Standard"
+        case .premium: "Premium"
+        }
+    }
+}
+
 /// Everything known about a product after it shipped.
 public struct ReleaseInfo: Codable, Equatable, Sendable {
     public var launchDay: Int
@@ -102,6 +118,18 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// peak); multiplies the weekly sales peak for the product's life.
     /// 1 = untouched (also the fallback for pre-saturation saves).
     public var launchMarketScale: Double
+    /// Bugs found in the wild after launch. 0 (and inert) until WS-A's
+    /// live-ops pass seeds and discovers them.
+    public var liveBugs: Int
+    /// The price the product sells at. `.standard` is today's flat price.
+    public var priceTier: PriceTier
+    /// Paying subscribers, for subscription products. 0 until WS-A's
+    /// revenue-model pass.
+    public var subscribers: Int
+    /// Whether revenue comes from a recurring subscription rather than
+    /// one-time sales. `false` — today's one-time model — until WS-A reads
+    /// it from `ProductTypeDef.revenueModel` at ship.
+    public var isSubscription: Bool
 
     public init(
         launchDay: Int,
@@ -111,7 +139,11 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         offMarket: Bool,
         hypeAtLaunch: Double = 0,
         adoptionWeeks: Double = 1,
-        launchMarketScale: Double = 1
+        launchMarketScale: Double = 1,
+        liveBugs: Int = 0,
+        priceTier: PriceTier = .standard,
+        subscribers: Int = 0,
+        isSubscription: Bool = false
     ) {
         self.launchDay = launchDay
         self.quality = quality
@@ -121,6 +153,10 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         self.hypeAtLaunch = hypeAtLaunch
         self.adoptionWeeks = adoptionWeeks
         self.launchMarketScale = launchMarketScale
+        self.liveBugs = liveBugs
+        self.priceTier = priceTier
+        self.subscribers = subscribers
+        self.isSubscription = isSubscription
     }
 
     /// Rounded mean review score, 0 if there are no reviews.
@@ -136,13 +172,15 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     }
 }
 
-// Hand-written decode so saves written before the adoption ramp or launch
-// saturation existed keep loading (a missing `adoptionWeeks` reads as the
-// old instant peak; a missing `launchMarketScale` as an untouched peak).
+// Hand-written decode so saves written before the adoption ramp, launch
+// saturation, or live ops existed keep loading (a missing `adoptionWeeks`
+// reads as the old instant peak; a missing `launchMarketScale` as an
+// untouched peak; missing live-ops keys as a bug-free, standard-priced,
+// one-time-sale release).
 extension ReleaseInfo {
     private enum CodingKeys: String, CodingKey {
         case launchDay, quality, reviews, weeklySales, offMarket, hypeAtLaunch, adoptionWeeks
-        case launchMarketScale
+        case launchMarketScale, liveBugs, priceTier, subscribers, isSubscription
     }
 
     public init(from decoder: any Decoder) throws {
@@ -155,7 +193,11 @@ extension ReleaseInfo {
             offMarket: try container.decode(Bool.self, forKey: .offMarket),
             hypeAtLaunch: try container.decodeIfPresent(Double.self, forKey: .hypeAtLaunch) ?? 0,
             adoptionWeeks: try container.decodeIfPresent(Double.self, forKey: .adoptionWeeks) ?? 1,
-            launchMarketScale: try container.decodeIfPresent(Double.self, forKey: .launchMarketScale) ?? 1
+            launchMarketScale: try container.decodeIfPresent(Double.self, forKey: .launchMarketScale) ?? 1,
+            liveBugs: try container.decodeIfPresent(Int.self, forKey: .liveBugs) ?? 0,
+            priceTier: try container.decodeIfPresent(PriceTier.self, forKey: .priceTier) ?? .standard,
+            subscribers: try container.decodeIfPresent(Int.self, forKey: .subscribers) ?? 0,
+            isSubscription: try container.decodeIfPresent(Bool.self, forKey: .isSubscription) ?? false
         )
     }
 }

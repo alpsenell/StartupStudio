@@ -2,6 +2,22 @@
 /// frame) for a tier. Patterns are fixed modular functions — deterministic,
 /// no randomness.
 enum RoomBuilder {
+    /// The office room at a time of day.
+    ///
+    /// Scaffold placeholder: delegates straight to `room(...)` and ignores
+    /// `time`, so every hour draws today's daylight room. WS-D tints the
+    /// wall and floor per `time` behind this signature; WS-C calls it from
+    /// day one.
+    static func officeRoom(
+        tier: OfficeTierStyle,
+        width: Int,
+        height: Int,
+        wallHeight: Int,
+        time: TimeOfDay = .day
+    ) -> PixelSprite {
+        room(tier: tier, width: width, height: height, wallHeight: wallHeight)
+    }
+
     static func room(tier: OfficeTierStyle, width: Int, height: Int, wallHeight: Int) -> PixelSprite {
         var rows: [String] = []
         rows.reserveCapacity(height)

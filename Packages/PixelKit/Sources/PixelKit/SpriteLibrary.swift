@@ -1,6 +1,14 @@
 /// Sprite factory: composed people (body + hair + shirt palette applied,
 /// seated pose, 2-frame typing + occasional blink), desks, monitors with a
 /// screen-glow animation, ambient props, and status bubbles.
+/// The accessory that tells a role apart at a glance (QA headset, designer
+/// beret, lawyer tie…). `.none` is today's plain sprite; WS-D draws the
+/// rest, and every entry point defaults to `.none` so nothing changes
+/// until then.
+public enum RoleLook: String, Sendable, Equatable, Codable, CaseIterable {
+    case none, founder, qa, designer, marketer, lawyer, hr, ops
+}
+
 public enum SpriteLibrary {
     // MARK: - People
 
@@ -348,5 +356,38 @@ public enum SpriteLibrary {
             "Y": RGBA(r: 250, g: 214, b: 110),
         ]
         return PixelSprite(frames: [grid], palette: palette)
+    }
+
+    // MARK: - Ambience seams (WS-D fills these in)
+
+    /// The window for a scene at a time of day and weather.
+    ///
+    /// Placeholder: every combination returns the existing sprite — the
+    /// daylight office window, or the home's night window — so WS-C can
+    /// call this from day one and WS-D can swap the art in behind it
+    /// without touching a call site.
+    public static func window(
+        style: WindowStyle,
+        time: TimeOfDay = .day,
+        weather: Weather = .clear
+    ) -> PixelSprite {
+        switch style {
+        case .office: prop(.windowDay)
+        case .home: homeProp(.windowNight)
+        }
+    }
+
+    /// A translucent tint laid over a whole room to sell the hour.
+    ///
+    /// Placeholder: a fully transparent sprite of the requested size, so
+    /// drawing it changes nothing. WS-D replaces the fill per `time`.
+    public static func lightingOverlay(width: Int, height: Int, time: TimeOfDay) -> PixelSprite {
+        let clampedWidth = max(1, width)
+        let clampedHeight = max(1, height)
+        let row = String(repeating: " ", count: clampedWidth)
+        return PixelSprite(
+            frames: [Array(repeating: row, count: clampedHeight)],
+            palette: [:]
+        )
     }
 }

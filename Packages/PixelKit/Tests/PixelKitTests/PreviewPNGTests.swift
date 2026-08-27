@@ -10,8 +10,12 @@ import Testing
 /// SwiftUI view draws, so these previews exercise the real layout.
 @Suite("Preview PNGs", .serialized)
 struct PreviewPNGTests {
+    /// Where the PNG suites write. Set `PIXELKIT_PREVIEW_DIR` to review
+    /// them somewhere specific; otherwise they land in a temp folder that
+    /// exists on every machine.
     static let outputDirectory = URL(
-        fileURLWithPath: "/private/tmp/claude-502/-Users-alpsenel-Desktop-personal-projects-MobileGame/04e78738-c779-4903-a77a-70055d5ae19c/scratchpad/pixelkit",
+        fileURLWithPath: ProcessInfo.processInfo.environment["PIXELKIT_PREVIEW_DIR"]
+            ?? NSTemporaryDirectory() + "pixelkit-previews",
         isDirectory: true
     )
     static let scale = 4

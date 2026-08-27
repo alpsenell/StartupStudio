@@ -308,6 +308,9 @@ private struct LedgerRow: View {
         case .marketing: "megaphone.fill"
         case .research: "flask.fill"
         case .other: "ellipsis.circle.fill"
+        // WS-A appends `.hosting`; the fallback keeps the App building
+        // until this file's owner gives it a proper icon.
+        @unknown default: "ellipsis.circle.fill"
         }
     }
 }

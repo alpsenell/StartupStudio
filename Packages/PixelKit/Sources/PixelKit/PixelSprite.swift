@@ -121,3 +121,40 @@ private final class FrameCache: @unchecked Sendable {
         return image
     }
 }
+
+/// Shared, keyed store of composed person sprites.
+///
+/// `SpriteLibrary.person` builds a brand-new `PixelSprite` — and so a brand
+/// new frame cache — on every call, which means the office re-rasterizes
+/// every sprite on every rebuild. WS-C turns this into an `NSCache`-backed
+/// store so identical people share one instance (and one frame cache).
+///
+/// Scaffold stub: `sprite(for:make:)` just calls `make()`, so behavior is
+/// unchanged while call sites can already route through the cache.
+public enum SpriteCache {
+    /// What makes one composed person sprite different from another.
+    public struct Key: Hashable, Sendable {
+        public var appearance: CharacterAppearance
+        public var pose: SpriteLibrary.PersonPose
+        public var isFounder: Bool
+        public var role: RoleLook
+
+        public init(
+            appearance: CharacterAppearance,
+            pose: SpriteLibrary.PersonPose,
+            isFounder: Bool,
+            role: RoleLook = .none
+        ) {
+            self.appearance = appearance
+            self.pose = pose
+            self.isFounder = isFounder
+            self.role = role
+        }
+    }
+
+    /// The sprite for `key`, building it with `make` on a miss. Every call
+    /// is a miss until WS-C lands the real cache.
+    public static func sprite(for key: Key, make: () -> PixelSprite) -> PixelSprite {
+        make()
+    }
+}

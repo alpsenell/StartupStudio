@@ -25,7 +25,7 @@ enum EmployeeSystem {
         produceContractOutput(&state, balance, content)
         produceResearchPoints(&state, balance)
 
-        var events = updateMoraleAndQuits(&state, balance)
+        var events = updateMoraleAndQuits(&state, balance, content)
         events.append(contentsOf: trackDepartments(&state))
 
         if state.day % candidateRefreshInterval(state, balance) == 0 {
@@ -76,7 +76,8 @@ enum EmployeeSystem {
     /// employee resign. The founder has life meters instead of morale.
     private static func updateMoraleAndQuits(
         _ state: inout GameState,
-        _ balance: BalanceConfig
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
     ) -> [GameEvent] {
         let staff = balance.staff
         let company = balance.company
@@ -96,6 +97,7 @@ enum EmployeeSystem {
             let fairPay = fairWeeklyPay(for: employee, balance: balance)
             let ratio = fairPay > 0 ? Double(employee.weeklySalary) / fairPay : 1
             var target = staff.baselineMorale + officeBonus + perkBonus
+                + TraitEffects.moraleTargetDelta(employee, content: content)
             if ratio < staff.underpaidThreshold {
                 target -= staff.underpaidTargetPenalty
             } else if ratio > staff.wellPaidThreshold {
@@ -112,6 +114,7 @@ enum EmployeeSystem {
                 // Loyal people hold on longer before resigning.
                 let personalStreak = quitStreakDays
                     + Int(state.employees[index].loyalty / balance.social.loyaltyQuitDivisor)
+                    + TraitEffects.quitStreakBonus(employee, content: content)
                 if state.employees[index].lowMoraleStreakDays > personalStreak {
                     quitting.append(index)
                 }
@@ -208,7 +211,9 @@ enum EmployeeSystem {
             let friendFactor = 1 + balance.social.friendshipOutputBonus * bond / 100
             let factor = (isFounder
                 ? founderFactor
-                : state.employees[index].performanceMultiplier(balance: balance)) * friendFactor
+                : state.employees[index].performanceMultiplier(balance: balance))
+                * friendFactor
+                * TraitEffects.outputFactor(state.employees[index], content: content)
             let skills = state.employees[index].skills
             let role = state.employees[index].role
             let yield = company.roleYield(role)
@@ -256,11 +261,16 @@ enum EmployeeSystem {
         let growsCoding = focus.code > 0 || focus.polish > 0
         let growsDesign = focus.design > 0 || focus.polish > 0
         for index in producers {
+            // Read the trait factor before the inout growth calls: taking
+            // `&state.employees[index]...` and reading `state.employees`
+            // in the same call would overlap exclusive access.
+            let growthRate = balance.skillGrowthRate
+                * TraitEffects.growthFactor(state.employees[index], content: content)
             if growsCoding {
-                grow(&state.employees[index].skills.coding, rate: balance.skillGrowthRate)
+                grow(&state.employees[index].skills.coding, rate: growthRate)
             }
             if growsDesign {
-                grow(&state.employees[index].skills.design, rate: balance.skillGrowthRate)
+                grow(&state.employees[index].skills.design, rate: growthRate)
             }
         }
     }

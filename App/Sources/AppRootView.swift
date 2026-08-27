@@ -11,16 +11,10 @@ import TycoonEngine
 struct AppRootView: View {
     let session: GameSession
 
-    /// Tabs of the game.
-    private enum GameTab: Hashable {
-        case hq
-        case life
-        case team
-        case products
-        case business
-    }
-
     @State private var selectedTab: GameTab = .hq
+    /// Cross-tab navigation, injected for the screens to read. WS-E takes
+    /// over `selectedTab` with `router.tab` and fills in the deep links.
+    @State private var router = AppRouter()
 
     var body: some View {
         let engine = session.engine
@@ -50,6 +44,7 @@ struct AppRootView: View {
                 .tag(GameTab.business)
         }
         .tint(Theme.accent)
+        .environment(router)
         .fullScreenCover(isPresented: gameOverPresented) {
             if let info = engine.state.gameOver {
                 if info.kind == .acquired {
@@ -93,7 +88,9 @@ struct AppRootView: View {
             get: {
                 guard session.engine.state.gameOver == nil else { return nil }
                 return DecisionPrompt.pending(
-                    in: session.engine.state, balance: session.engine.balance
+                    in: session.engine.state,
+                    content: session.engine.content,
+                    balance: session.engine.balance
                 )
             },
             set: { _ in }

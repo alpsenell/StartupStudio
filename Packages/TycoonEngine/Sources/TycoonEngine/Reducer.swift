@@ -33,6 +33,17 @@ public enum Reducer {
         CitySystem.run,
         FinanceSystem.run,
         EventSystem.run,
+
+        // Reserved regions — each workstream appends its new systems inside
+        // its own region and nowhere else. A system's position in this
+        // array fixes when it runs (and, for anything drawing from `rng`,
+        // the draw order), so never insert outside your region.
+
+        // MARK: WS-A
+
+        // MARK: WS-B
+
+        // MARK: WS-F
     ]
 
     /// Advances the state by one game day. No-op once the game is over.
@@ -164,6 +175,16 @@ public enum Reducer {
             events = SocialSystem.teamDinner(state: &state, balance: balance)
         case let .resolveStaffEvent(choice):
             events = SocialSystem.resolveStaffEvent(choice: choice, state: &state, balance: balance)
+
+        // Reserved regions — each workstream adds the handlers for the
+        // cases it appended to `GameAction` inside its own region and
+        // nowhere else. The switch stays exhaustive: no `default`.
+
+        // MARK: WS-A
+
+        // MARK: WS-B
+
+        // MARK: WS-F
         }
 
         state.logEvents(events)

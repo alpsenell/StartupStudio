@@ -1,4 +1,82 @@
+import Foundation
 import SwiftUI
+
+/// Everything cosmetic about the room's hour and weather. Cosmetic only:
+/// WS-C advances `timeOfDay` on its own real-time loop, never from a tick.
+public struct OfficeAmbience: Sendable, Equatable, Hashable {
+    public var timeOfDay: TimeOfDay
+    public var weather: Weather
+    public var isWeekend: Bool
+    public var teamMood: MoodLevel
+
+    public init(
+        timeOfDay: TimeOfDay = .day,
+        weather: Weather = .clear,
+        isWeekend: Bool = false,
+        teamMood: MoodLevel = .okay
+    ) {
+        self.timeOfDay = timeOfDay
+        self.weather = weather
+        self.isWeekend = isWeekend
+        self.teamMood = teamMood
+    }
+
+    /// A bright, ordinary weekday — exactly what the scene draws today.
+    public static let plain = OfficeAmbience()
+}
+
+/// A one-off moment the room reacts to. Paired with a token by
+/// `OfficeSceneInput` so a view rebuild never replays the same celebration.
+public enum SceneCelebration: Sendable, Equatable, Hashable {
+    case shipped(score: Int)
+    case hired(UUID)
+    case quit(UUID)
+    case officeUpgraded
+    case researchComplete
+    case contractDelivered
+}
+
+/// Everything the office scene is a function of.
+///
+/// `Hashable` so WS-C can memoize the director's output per input and the
+/// app can wrap the card in an `EquatableView`. The scaffold's
+/// `OfficeSceneView(input:)` reads only `tier`, `occupants` and
+/// `amenities` — the same three things the old initializers pass — so the
+/// composed scene is byte-for-byte what it was.
+public struct OfficeSceneInput: Sendable, Equatable, Hashable {
+    public var tier: OfficeTierStyle
+    public var occupants: [Occupant]
+    public var amenities: Set<AmenityStyle>
+    public var ambience: OfficeAmbience
+    /// The celebration to play, with a token that changes when a *new*
+    /// celebration starts.
+    public var celebration: Celebration?
+
+    /// A celebration plus the token that makes it fire once.
+    public struct Celebration: Sendable, Equatable, Hashable {
+        public var kind: SceneCelebration
+        public var token: Int
+
+        public init(kind: SceneCelebration, token: Int) {
+            self.kind = kind
+            self.token = token
+        }
+    }
+
+    public init(
+        tier: OfficeTierStyle,
+        occupants: [Occupant],
+        amenities: Set<AmenityStyle> = [],
+        ambience: OfficeAmbience = .plain,
+        celebration: Celebration? = nil
+    ) {
+        self.tier = tier
+        self.occupants = occupants
+        self.amenities = amenities
+        self.ambience = ambience
+        self.celebration = celebration
+    }
+}
 
 /// The office scene: floor and walls per tier, a desk grid, occupants at
 /// desks (founder front-left), status bubbles, ambient props, and optional
@@ -22,6 +100,16 @@ public struct OfficeSceneView: View {
         // each sprite, so the timeline only picks frame indices.
         self.placements = SceneComposer.compose(tier: tier, occupants: occupants, amenities: amenities)
         self.sceneSize = SceneComposer.sceneSize(for: tier)
+    }
+
+    /// The full-input initializer WS-E codes against and WS-C fills in.
+    ///
+    /// Scaffold behavior: delegates to the existing composer with the
+    /// input's tier, occupants and amenities, and ignores `ambience`,
+    /// `celebration` and `onTapOccupant` — so it draws exactly what the
+    /// older initializers draw. The two of those are kept as wrappers.
+    public init(input: OfficeSceneInput, onTapOccupant: ((UUID) -> Void)? = nil) {
+        self.init(tier: input.tier, occupants: input.occupants, amenities: input.amenities)
     }
 
     public var body: some View {

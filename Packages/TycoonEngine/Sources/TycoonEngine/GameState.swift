@@ -162,6 +162,17 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// A staff moment needs an answer by `respondByDay` (pauses).
     case staffEventOccurred(employeeID: UUID, kind: StaffEventKind, respondByDay: Int, day: Int)
     case staffEventResolved(employeeID: UUID, choice: StaffEventChoice, day: Int)
+
+    // Reserved regions — each workstream appends its new cases inside its
+    // own region and nowhere else, so six branches never touch the same
+    // line. Keep the regions in this order; never reorder existing cases
+    // (the case order is not persisted, but a stable diff is the point).
+
+    // MARK: WS-A
+
+    // MARK: WS-B
+
+    // MARK: WS-F
 }
 
 extension GameEvent {
@@ -175,10 +186,46 @@ extension GameEvent {
              .poachAttempt, .buyoutOffered, .companySold, .rivalAcquired,
              .employeePoached, .officeRelocated, .staffEventOccurred:
             true
+
+        // Reserved regions — each workstream adds its pausing cases inside
+        // its own region, above the `default`, which stays `false`.
+
+        // MARK: WS-A
+
+        // MARK: WS-B
+
+        // MARK: WS-F
+
         default:
             false
         }
     }
+
+    /// How loudly an event should interrupt the player. WS-A grades every
+    /// case (and derives `pausesTimeline` from it); until then everything
+    /// reads `.info`, which changes nothing — `pausesTimeline` is still the
+    /// switch above.
+    public var severity: EventSeverity {
+        switch self {
+
+        // MARK: WS-A
+
+        // MARK: WS-B
+
+        // MARK: WS-F
+
+        default:
+            .info
+        }
+    }
+}
+
+/// How loudly an event interrupts the player, from background noise to a
+/// full stop. WS-A's pause policy grades every `GameEvent` with one of
+/// these and budgets non-critical pauses; WS-E picks banner and haptic
+/// strength from it.
+public enum EventSeverity: String, Codable, Equatable, Sendable, CaseIterable {
+    case quiet, info, notable, critical
 }
 
 /// The complete, serializable simulation state. A pure value: the reducer is
@@ -242,6 +289,16 @@ public struct GameState: Codable, Equatable, Sendable {
     /// emit formed/dissolved events on transitions. `activeDepartments` is
     /// the live truth.
     public var knownDepartments: Set<Department>
+    /// Economy, live-ops and pacing state (WS-A). Empty in the scaffold.
+    public var economy: EconomyState
+    /// Narrative engine state — pending choice, flags, cooldowns (WS-B).
+    /// Empty in the scaffold.
+    public var narrative: NarrativeState
+    /// Chapters, goals and perks (WS-F). Empty in the scaffold.
+    public var progression: ProgressionState
+    /// Rounds raised, equity and board pressure (WS-F). Empty in the
+    /// scaffold.
+    public var investors: InvestorState
     public var gameOver: GameOverInfo?
 
     /// Starts a fresh company. `balance` is used as given — pass the
@@ -251,12 +308,20 @@ public struct GameState: Codable, Equatable, Sendable {
         companyName: String,
         seed: UInt64,
         balance: BalanceConfig,
-        difficulty: Difficulty = .normal
+        difficulty: Difficulty = .normal,
+        founder: FounderProfile = .default
     ) -> GameState {
         var rng = SeededRNG(seed: seed)
-        let founder = Employee(
-            id: UUID(from: &rng),
-            name: "Founder",
+        // The id and the appearance word are drawn in this order, always —
+        // a profile that pins the appearance still burns the draw, so the
+        // stream walks the same path whatever the new-game flow chose.
+        let founderID = UUID(from: &rng)
+        let drawnAppearanceSeed = rng.next()
+        let founderEmployee = Employee(
+            id: founderID,
+            name: founder.name,
+            // WS-F gives each archetype its own spread here; every
+            // archetype starts from the balance's founder skills today.
             skills: SkillSet(
                 coding: balance.founderCoding,
                 design: balance.founderDesign,
@@ -266,7 +331,7 @@ public struct GameState: Codable, Equatable, Sendable {
             assignment: .idle,
             isFounder: true,
             hiredDay: 0,
-            appearanceSeed: rng.next(),
+            appearanceSeed: founder.appearanceSeed ?? drawnAppearanceSeed,
             role: .founder
         )
         return GameState(
@@ -287,7 +352,7 @@ public struct GameState: Codable, Equatable, Sendable {
             ),
             ledger: FinancialLedger(entries: []),
             products: [],
-            employees: [founder],
+            employees: [founderEmployee],
             candidatePool: [],
             research: .initial,
             contractOffers: [],
@@ -305,6 +370,10 @@ public struct GameState: Codable, Equatable, Sendable {
             loanBalance: 0,
             amenities: [],
             knownDepartments: [],
+            economy: .initial,
+            narrative: .initial,
+            progression: .initial,
+            investors: .initial,
             gameOver: nil
         )
     }
@@ -362,6 +431,20 @@ public struct GameState: Codable, Equatable, Sendable {
             return false
         }
     }
+
+    /// Every product currently in development. One at a time today; WS-A
+    /// opens concurrent slots by office tier and `productInDevelopment`
+    /// stays as the first-of-these shorthand for the UI.
+    public var productsInDevelopment: [Product] {
+        products.filter { product in
+            if case .development = product.stage { return true }
+            return false
+        }
+    }
+
+    /// How many products may be in development at once. 1 today; WS-A
+    /// scales it by office tier (garage 1, loft 2, studio 3, campus 5).
+    public var devSlots: Int { 1 }
 
     /// Looks up a product by id.
     public func product(id: UUID) -> Product? {
@@ -427,7 +510,9 @@ public struct GameState: Codable, Equatable, Sendable {
 // identical states. The set, `life`, `market`, `loanBalance`, and
 // `difficulty` keys also decode as optional so saves written before the
 // fields existed keep loading (a missing life starts fresh with an empty
-// wallet; a missing difficulty is Normal).
+// wallet; a missing difficulty is Normal). The four workstream sub-states
+// (`economy`, `narrative`, `progression`, `investors`) follow the same
+// rule: absent keys decode as `.initial`, so `saveFormatVersion` stays 1.
 
 extension GameState {
     private enum CodingKeys: String, CodingKey {
@@ -436,6 +521,7 @@ extension GameState {
         case eventLog, milestonesReached, life, market, loanBalance, gameOver
         case amenities, knownDepartments, difficulty
         case worldRNG, rivals, city, friendships, pendingStaffEvent, lastTeamDinnerDay
+        case economy, narrative, progression, investors
     }
 
     public init(from decoder: any Decoder) throws {
@@ -477,6 +563,11 @@ extension GameState {
             knownDepartments: Set(
                 try container.decodeIfPresent([Department].self, forKey: .knownDepartments) ?? []
             ),
+            economy: try container.decodeIfPresent(EconomyState.self, forKey: .economy) ?? .initial,
+            narrative: try container.decodeIfPresent(NarrativeState.self, forKey: .narrative) ?? .initial,
+            progression: try container.decodeIfPresent(ProgressionState.self, forKey: .progression)
+                ?? .initial,
+            investors: try container.decodeIfPresent(InvestorState.self, forKey: .investors) ?? .initial,
             gameOver: try container.decodeIfPresent(GameOverInfo.self, forKey: .gameOver)
         )
     }
@@ -517,6 +608,10 @@ extension GameState {
         try container.encode(
             knownDepartments.sorted { $0.rawValue < $1.rawValue }, forKey: .knownDepartments
         )
+        try container.encode(economy, forKey: .economy)
+        try container.encode(narrative, forKey: .narrative)
+        try container.encode(progression, forKey: .progression)
+        try container.encode(investors, forKey: .investors)
         try container.encodeIfPresent(gameOver, forKey: .gameOver)
     }
 }

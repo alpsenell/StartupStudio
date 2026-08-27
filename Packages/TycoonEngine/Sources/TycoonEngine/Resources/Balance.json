@@ -358,5 +358,12 @@
       "house":      { "upgradeCost": 40000,  "weeklyRent": 700,  "moodBonus": 0.2 },
       "penthouse":  { "upgradeCost": 250000, "weeklyRent": 2500, "moodBonus": 0.5 }
     }
-  }
+  },
+
+  "_workstreamBlocks": "One tunables object per workstream: WS-A owns economy, WS-B narrative, WS-F progression/investors/traits. Nobody edits another workstream's object.",
+  "economy": {},
+  "narrative": {},
+  "progression": {},
+  "investors": {},
+  "traits": {}
 }

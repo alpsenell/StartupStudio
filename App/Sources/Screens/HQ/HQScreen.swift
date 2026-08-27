@@ -23,6 +23,8 @@ struct HQScreen: View {
                     }
                     // The office is the game's face — it leads the dashboard.
                     OfficeCard(engine: engine)
+                    // Reserved slot: renders nothing until WS-F fills it in.
+                    GoalsCard(engine: engine)
                     DepartmentsCard(engine: engine)
                     CompanyCard(company: engine.state.company, difficulty: engine.state.difficulty)
                     BurnRateCard(weeklyBurn: engine.weeklyBurn, cash: engine.state.company.cash)
@@ -522,7 +524,24 @@ private struct ActivityRow: View {
                 day,
                 choice == .supportive ? Theme.positiveCash : Color.secondary
             )
+
+        // Events added after the scaffold land here instead of breaking
+        // the build: `@unknown default` keeps this switch compiling (with
+        // a warning naming the new case) when a workstream appends one.
+        // `EventPresenter` (WS-B) describes it; anything it doesn't know
+        // still gets a line rather than vanishing.
+        @unknown default:
+            fallbackEntry
         }
+    }
+
+    private var fallbackEntry: (icon: String, message: String, day: Int, tint: Color) {
+        if let line = EventPresenter.describe(
+            event, state: state, content: content, balance: balance
+        ) {
+            return (line.icon, line.message, line.day, line.tint)
+        }
+        return ("sparkles", "Something happened", state.day, Color.secondary)
     }
 
     private func socialMessage(_ kind: SocialActivityKind, employeeID: UUID?) -> String {

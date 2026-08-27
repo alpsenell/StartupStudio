@@ -44,7 +44,7 @@ enum RivalSystem {
             events.append(contentsOf: evolve(&state, balance, content))
         }
 
-        events.append(contentsOf: poachCheck(&state, balance))
+        events.append(contentsOf: poachCheck(&state, balance, content))
         events.append(contentsOf: buyoutCheck(&state, balance))
         return events
     }
@@ -168,7 +168,8 @@ enum RivalSystem {
     /// premium and pauses the timeline via `.poachAttempt`.
     private static func poachCheck(
         _ state: inout GameState,
-        _ balance: BalanceConfig
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
     ) -> [GameEvent] {
         let config = balance.rivals
         guard state.day % config.poachIntervalDays == config.poachOffsetDays,
@@ -179,6 +180,7 @@ enum RivalSystem {
         else { return [] }
 
         let resistance = clamp(1 - target.loyalty / config.loyaltyResistDivisor, min: 0, max: 1)
+            / TraitEffects.poachResistance(target, content: content)
         let roll = state.worldRNG.nextUniform()
         guard roll < config.poachChance * resistance else { return [] }
 

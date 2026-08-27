@@ -14,6 +14,7 @@ struct BusinessScreen: View {
         case marketing = "Marketing"
         case finances = "Finances"
         case rivals = "Rivals"
+        case investors = "Investors"
 
         var id: String { rawValue }
     }
@@ -50,6 +51,8 @@ struct BusinessScreen: View {
                             FinancesView(engine: engine)
                         case .rivals:
                             RivalsView(engine: engine)
+                        case .investors:
+                            InvestorsView(engine: engine)
                         }
                     }
                     .padding(.horizontal, Theme.Spacing.lg)

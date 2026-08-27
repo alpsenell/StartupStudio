@@ -66,6 +66,14 @@ public struct MarketState: Codable, Equatable, Sendable {
         topics[topicID]?.multiplier ?? 1.0
     }
 
+    /// The player's slice of a topic's demand, multiplied into weekly
+    /// sales by `ProductSystem`. 1.0 — the whole market — until WS-F's
+    /// rival products start computing a real share per topic, so today's
+    /// sales are unchanged.
+    public func shareMultiplier(for topicID: String) -> Double {
+        1.0
+    }
+
     /// The last shift delta for a topic (0 when the topic is unknown).
     public func lastChange(for topicID: String) -> Double {
         topics[topicID]?.lastChange ?? 0

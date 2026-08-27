@@ -2,7 +2,7 @@
 ///
 /// The derivation is a pure SplitMix64 stream — no system randomness — so the
 /// same seed always produces the same appearance on every platform and run.
-public struct CharacterAppearance: Sendable, Equatable, Codable {
+public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
     public var skinTone: Int
     public var hairStyle: Int
     public var hairColor: Int
