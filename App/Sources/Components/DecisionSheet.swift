@@ -122,6 +122,11 @@ extension DecisionPrompt {
         if let staffEvent = state.pendingStaffEvent {
             return staffEventPrompt(staffEvent, state: state, balance: balance)
         }
+        // WS-F: a term sheet pauses the clock, so the question has to be on
+        // screen whatever tab the player was on.
+        if let offer = state.investors.pendingOffer {
+            return investmentPrompt(offer, state: state, content: content)
+        }
         return NarrativeChoicePresenter.prompt(for: state, content: content, balance: balance)
     }
 
@@ -164,6 +169,46 @@ extension DecisionPrompt {
                     detail: "Free, but loyalty takes a hit",
                     role: .destructive,
                     action: .resolveStaffEvent(choice: .strict)
+                ),
+            ]
+        )
+    }
+
+    /// An investor's term sheet: what they pay, what they take, and
+    /// whether they'll be in the room afterwards.
+    private static func investmentPrompt(
+        _ offer: InvestmentOffer,
+        state: GameState,
+        content: ContentCatalog
+    ) -> DecisionPrompt? {
+        let persona = content.investors.first { $0.id == offer.investorID }
+        let boardLine = offer.takesBoardSeat
+            ? "They take a board seat and will grade you on \(offer.expects.displayName.lowercased()) every quarter."
+            : "No board seat — they wire the money and leave you alone."
+        return DecisionPrompt(
+            id: "investment-\(offer.investorID)-\(offer.respondByDay)",
+            systemImage: "doc.text.fill",
+            tint: Theme.accent,
+            title: "\(offer.investorName) wants in",
+            message: (persona?.pitch.map { "\u{201C}\($0)\u{201D} " } ?? "")
+                + "\(offer.amount.money) for \(offer.equity.oneDecimal)% of \(state.company.name). "
+                + boardLine,
+            stats: [
+                ("Cheque", offer.amount.money),
+                ("Equity", "\(offer.equity.oneDecimal)%"),
+            ],
+            options: [
+                Option(
+                    label: "Take the money",
+                    detail: offer.takesBoardSeat
+                        ? "Cash in, \(offer.equity.oneDecimal)% out, a board to answer to"
+                        : "Cash in, \(offer.equity.oneDecimal)% out",
+                    action: .acceptInvestment
+                ),
+                Option(
+                    label: "Stay independent",
+                    detail: "Keep all \(state.investors.equityRemaining.oneDecimal)% of it",
+                    action: .declineInvestment
                 ),
             ]
         )

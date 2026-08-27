@@ -28,6 +28,13 @@ enum EventPresenter {
         content: ContentCatalog,
         balance: BalanceConfig
     ) -> EventLine? {
-        nil
+        // WS-F describes its own events (goals, chapters, investors, the
+        // board, rival products) next door, so this file stays WS-B's.
+        if let line = ProgressionEventPresenter.describe(
+            event, state: state, content: content, balance: balance
+        ) {
+            return line
+        }
+        return nil
     }
 }
