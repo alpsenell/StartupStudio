@@ -30,7 +30,16 @@ struct ScaffoldContractTests {
         }
         let legacy = try JSONSerialization.data(withJSONObject: object)
         let legacyState = try JSONDecoder().decode(GameState.self, from: legacy)
-        #expect(legacyState == state)
+        // The sub-states now carry real data (WS-B's narrative engine
+        // records the beats a 40-day run fires), so the comparison is
+        // against the same state with them reset — which is exactly what
+        // "an omitted sub-state decodes as `.initial`" means.
+        var expected = state
+        expected.economy = .initial
+        expected.narrative = .initial
+        expected.progression = .initial
+        expected.investors = .initial
+        #expect(legacyState == expected)
 
         let employeeData = try encoder.encode(state.employees[0])
         var employeeObject = try #require(
@@ -77,6 +86,15 @@ struct ScaffoldContractTests {
         }
         let stripped = try JSONSerialization.data(withJSONObject: object)
         let reloaded = try JSONDecoder().decode(BalanceConfig.self, from: stripped)
-        #expect(reloaded == balance)
+        // Blocks a workstream has since filled in (WS-B's `narrative`)
+        // read back as `.default`, which is the point: the file loads with
+        // the block missing entirely.
+        var expected = balance
+        expected.economy = .default
+        expected.narrative = .default
+        expected.progression = .default
+        expected.investors = .default
+        expected.traits = .default
+        #expect(reloaded == expected)
     }
 }

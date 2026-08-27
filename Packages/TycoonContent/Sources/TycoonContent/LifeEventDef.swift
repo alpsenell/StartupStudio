@@ -63,6 +63,16 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
             )
         }
 
+        /// The founder-meter effect this impact is shorthand for. The cold
+        /// and away windows are separate effects, so the narrative system
+        /// reads those off the impact directly.
+        public var asEffect: EventEffect {
+            .founderMeters(
+                energy: energy, health: health, mood: mood,
+                relationships: relationships, wallet: wallet
+            )
+        }
+
         public func encode(to encoder: any Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(energy, forKey: .energy)
@@ -91,6 +101,31 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
     public var maxRelationships: Double?
     /// What happens when the event fires.
     public var impact: Impact
+    /// The paragraph shown in the decision sheet. Choice-less events don't
+    /// need one.
+    public var body: String?
+    /// Effects beyond `impact`, applied after it — the same vocabulary
+    /// company events use, so a life beat can also move team morale or
+    /// raise a story flag.
+    public var effects: [EventEffect]
+    /// The full v2 gate, evaluated on top of `minStage` /
+    /// `requiresChildren` / `maxRelationships` (which stay for the
+    /// catalogs written before it existed).
+    public var requires: EventRequirements?
+    /// The answers offered. Empty means the event just happens.
+    public var choices: [EventChoice]
+    /// Days before this event can be drawn again. 0 = no cooldown.
+    public var cooldownDays: Int
+    /// Fires at most once per run.
+    public var once: Bool
+    /// Icon/tint/journal bucket.
+    public var category: EventCategory
+    /// How long the player has to answer a choice. Default 5 days.
+    public var respondByDays: Int
+    /// Which option the deadline picks. Defaults to the last one.
+    public var autoChoiceIndex: Int?
+    /// Follow-up halves of a storyline are never drawn directly.
+    public var followUpOnly: Bool
 
     public init(
         id: String,
@@ -99,7 +134,17 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
         minStage: String? = nil,
         requiresChildren: Bool = false,
         maxRelationships: Double? = nil,
-        impact: Impact
+        impact: Impact,
+        body: String? = nil,
+        effects: [EventEffect] = [],
+        requires: EventRequirements? = nil,
+        choices: [EventChoice] = [],
+        cooldownDays: Int = 0,
+        once: Bool = false,
+        category: EventCategory = .personal,
+        respondByDays: Int = 5,
+        autoChoiceIndex: Int? = nil,
+        followUpOnly: Bool = false
     ) {
         self.id = id
         self.headline = headline
@@ -108,10 +153,28 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
         self.requiresChildren = requiresChildren
         self.maxRelationships = maxRelationships
         self.impact = impact
+        self.body = body
+        self.effects = effects
+        self.requires = requires
+        self.choices = choices
+        self.cooldownDays = cooldownDays
+        self.once = once
+        self.category = category
+        self.respondByDays = respondByDays
+        self.autoChoiceIndex = autoChoiceIndex
+        self.followUpOnly = followUpOnly
+    }
+
+    /// Every effect the event applies on its own: the founder-meter impact
+    /// first, then `effects`.
+    public var unconditionalEffects: [EventEffect] {
+        [impact.asEffect] + effects
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, headline, weight, minStage, requiresChildren, maxRelationships, impact
+        case body, effects, requires, choices, cooldownDays, once, category
+        case respondByDays, autoChoiceIndex, followUpOnly
     }
 
     public init(from decoder: any Decoder) throws {
@@ -123,7 +186,17 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
             minStage: try container.decodeIfPresent(String.self, forKey: .minStage),
             requiresChildren: try container.decodeIfPresent(Bool.self, forKey: .requiresChildren) ?? false,
             maxRelationships: try container.decodeIfPresent(Double.self, forKey: .maxRelationships),
-            impact: try container.decode(Impact.self, forKey: .impact)
+            impact: try container.decode(Impact.self, forKey: .impact),
+            body: try container.decodeIfPresent(String.self, forKey: .body),
+            effects: try container.decodeIfPresent([EventEffect].self, forKey: .effects) ?? [],
+            requires: try container.decodeIfPresent(EventRequirements.self, forKey: .requires),
+            choices: try container.decodeIfPresent([EventChoice].self, forKey: .choices) ?? [],
+            cooldownDays: try container.decodeIfPresent(Int.self, forKey: .cooldownDays) ?? 0,
+            once: try container.decodeIfPresent(Bool.self, forKey: .once) ?? false,
+            category: try container.decodeIfPresent(EventCategory.self, forKey: .category) ?? .personal,
+            respondByDays: try container.decodeIfPresent(Int.self, forKey: .respondByDays) ?? 5,
+            autoChoiceIndex: try container.decodeIfPresent(Int.self, forKey: .autoChoiceIndex),
+            followUpOnly: try container.decodeIfPresent(Bool.self, forKey: .followUpOnly) ?? false
         )
     }
 
@@ -136,5 +209,15 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
         try container.encode(requiresChildren, forKey: .requiresChildren)
         try container.encodeIfPresent(maxRelationships, forKey: .maxRelationships)
         try container.encode(impact, forKey: .impact)
+        try container.encodeIfPresent(body, forKey: .body)
+        if !effects.isEmpty { try container.encode(effects, forKey: .effects) }
+        try container.encodeIfPresent(requires, forKey: .requires)
+        if !choices.isEmpty { try container.encode(choices, forKey: .choices) }
+        if cooldownDays != 0 { try container.encode(cooldownDays, forKey: .cooldownDays) }
+        if once { try container.encode(once, forKey: .once) }
+        try container.encode(category, forKey: .category)
+        try container.encode(respondByDays, forKey: .respondByDays)
+        try container.encodeIfPresent(autoChoiceIndex, forKey: .autoChoiceIndex)
+        if followUpOnly { try container.encode(followUpOnly, forKey: .followUpOnly) }
     }
 }

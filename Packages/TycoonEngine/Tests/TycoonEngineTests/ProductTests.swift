@@ -328,6 +328,12 @@ struct ProductActionTests {
         let balance = try BalanceConfig.loadBundled()
         let content = TestContent.bundled
 
+        // The narrative engine can move reputation during the 28 warm-up
+        // days (a weekly company beat is part of the shipped balance now),
+        // so the nudge is measured against the reputation the ship
+        // actually started from rather than the starting 10.
+        var preShipReputation = 0.0
+
         func shippedState(seed: UInt64) -> GameState {
             var state = GameState.newGame(companyName: "Acme", seed: seed, balance: balance)
             Reducer.apply(
@@ -345,6 +351,7 @@ struct ProductActionTests {
             for _ in 0..<28 {
                 Reducer.tick(&state, balance: balance, content: content)
             }
+            preShipReputation = state.company.reputation
             Reducer.apply(.ship(productID: id), to: &state, balance: balance, content: content)
             return state
         }
@@ -375,8 +382,9 @@ struct ProductActionTests {
         }
         #expect(rerunInfo.reviews == info.reviews)
 
-        // Reputation nudged from 10 toward the average score.
-        let expectedReputation = 10.0 + (Double(info.averageReviewScore) - 10.0) * balance.reputationReviewNudge
+        // Reputation nudged from where it stood toward the average score.
+        let expectedReputation = preShipReputation
+            + (Double(info.averageReviewScore) - preShipReputation) * balance.reputationReviewNudge
         #expect(abs(state.company.reputation - expectedReputation) < 1e-9)
     }
 

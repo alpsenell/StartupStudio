@@ -43,6 +43,12 @@ public enum Reducer {
 
         // MARK: WS-B
 
+        // Runs after everything else so it sees the finished day: a choice
+        // whose deadline passed is answered, a scheduled follow-up fires,
+        // and the industry-news drum beats. Draws only from `worldRNG`, and
+        // only when `News.json` has templates.
+        NarrativeSystem.run,
+
         // MARK: WS-F
     ]
 
@@ -183,6 +189,12 @@ public enum Reducer {
         // MARK: WS-A
 
         // MARK: WS-B
+
+        case let .resolveChoice(eventID, optionIndex):
+            events = NarrativeSystem.resolveChoice(
+                eventID: eventID, optionIndex: optionIndex,
+                state: &state, balance: balance, content: content
+            )
 
         // MARK: WS-F
         }

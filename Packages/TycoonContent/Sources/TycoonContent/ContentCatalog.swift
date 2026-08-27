@@ -41,11 +41,16 @@ public struct ContentCatalog: Sendable {
     /// Investor personas (`Investors.json`, WS-F). Empty until WS-F writes
     /// them.
     public let investors: [InvestorDef]
+    /// Staff moments (`StaffEvents.json`), one def per `StaffEventKind`.
+    /// Empty falls back to the engine's balance numbers.
+    public let staffEvents: [StaffEventDef]
 
     private let productTypesByID: [String: ProductTypeDef]
     private let topicsByID: [String: TopicDef]
     private let techByID: [String: TechNode]
     private let lifeEventsByID: [String: LifeEventDef]
+    private let eventsByID: [String: EventDef]
+    private let staffEventsByID: [String: StaffEventDef]
 
     public init(
         productTypes: [ProductTypeDef],
@@ -59,7 +64,8 @@ public struct ContentCatalog: Sendable {
         news: [NewsTemplate] = [],
         reviews: ReviewCatalog? = nil,
         goals: [GoalDef] = [],
-        investors: [InvestorDef] = []
+        investors: [InvestorDef] = [],
+        staffEvents: [StaffEventDef] = []
     ) {
         self.productTypes = productTypes
         self.topics = topics
@@ -73,6 +79,7 @@ public struct ContentCatalog: Sendable {
         self.reviews = reviews
         self.goals = goals
         self.investors = investors
+        self.staffEvents = staffEvents
         self.productTypesByID = Dictionary(
             productTypes.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
@@ -87,6 +94,14 @@ public struct ContentCatalog: Sendable {
         )
         self.lifeEventsByID = Dictionary(
             lifeEvents.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        self.eventsByID = Dictionary(
+            events.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        self.staffEventsByID = Dictionary(
+            staffEvents.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
     }
@@ -110,7 +125,8 @@ public struct ContentCatalog: Sendable {
             news: try decodeResourceIfPresent("News", using: decoder) ?? [],
             reviews: try decodeResourceIfPresent("Reviews", using: decoder),
             goals: try decodeResourceIfPresent("Goals", using: decoder) ?? [],
-            investors: try decodeResourceIfPresent("Investors", using: decoder) ?? []
+            investors: try decodeResourceIfPresent("Investors", using: decoder) ?? [],
+            staffEvents: try decodeResourceIfPresent("StaffEvents", using: decoder) ?? []
         )
     }
 
@@ -132,6 +148,16 @@ public struct ContentCatalog: Sendable {
     /// O(1) lookup of a life event by id.
     public func lifeEvent(_ id: String) -> LifeEventDef? {
         lifeEventsByID[id]
+    }
+
+    /// O(1) lookup of a company event by id.
+    public func event(_ id: String) -> EventDef? {
+        eventsByID[id]
+    }
+
+    /// O(1) lookup of a staff-event definition by its kind raw value.
+    public func staffEvent(_ id: String) -> StaffEventDef? {
+        staffEventsByID[id]
     }
 
     private static func decodeResource<T: Decodable>(

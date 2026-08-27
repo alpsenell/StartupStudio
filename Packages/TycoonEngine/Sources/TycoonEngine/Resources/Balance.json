@@ -362,7 +362,17 @@
 
   "_workstreamBlocks": "One tunables object per workstream: WS-A owns economy, WS-B narrative, WS-F progression/investors/traits. Nobody edits another workstream's object.",
   "economy": {},
-  "narrative": {},
+  "narrative": {
+    "companyEventIntervalDays": 7,
+    "companyEventChance": 0.3,
+    "lifeEventIntervalDays": 14,
+    "lifeEventChance": 0.35,
+    "respondByDays": 5,
+    "minDaysBetweenBeats": 4,
+    "defaultCooldownDays": 240,
+    "newsIntervalDays": 7,
+    "newsChance": 0.55
+  },
   "progression": {},
   "investors": {},
   "traits": {}

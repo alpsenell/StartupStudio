@@ -172,6 +172,16 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: WS-B
 
+    /// A story beat is waiting on the founder's answer until
+    /// `respondByDay`. Pauses the timeline.
+    case narrativeChoice(eventID: String, respondByDay: Int, day: Int)
+    /// A story beat was answered — by the player, or by the deadline
+    /// (`automatic`).
+    case narrativeResolved(eventID: String, optionID: String, automatic: Bool, day: Int)
+    /// A headline from the wider industry. Flavor only: never pauses,
+    /// changes nothing.
+    case industryNews(headline: String, day: Int)
+
     // MARK: WS-F
 }
 
@@ -194,6 +204,11 @@ extension GameEvent {
 
         // MARK: WS-B
 
+        // A story beat with options on the table always stops the clock:
+        // it is the one thing in the game that waits on the player.
+        case .narrativeChoice:
+            true
+
         // MARK: WS-F
 
         default:
@@ -211,6 +226,13 @@ extension GameEvent {
         // MARK: WS-A
 
         // MARK: WS-B
+
+        case .narrativeChoice:
+            .critical
+        case .narrativeResolved:
+            .info
+        case .industryNews:
+            .quiet
 
         // MARK: WS-F
 
