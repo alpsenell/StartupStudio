@@ -1,6 +1,11 @@
 /// City districts as PixelKit sees them. Raw values deliberately mirror the
 /// engine's `DistrictID` — the app maps between them with `init(rawValue:)`
 /// and a defensive fallback; PixelKit never imports TycoonEngine.
+///
+/// Each district gets one ground tone, one wall pair and one roof pair, all
+/// from the master palette. Five districts, five silhouettes, five colour
+/// stories: sandstone Old Town, green Suburbs, grey Midtown, glass Tech
+/// Park, slate Downtown.
 public enum DistrictStyle: String, Sendable, CaseIterable {
     case oldTown, suburbs, midtown, techPark, downtown
 
@@ -19,33 +24,33 @@ public enum DistrictStyle: String, Sendable, CaseIterable {
     /// Ground tint the map builder fills the district block with.
     var ground: RGBA {
         switch self {
-        case .oldTown: RGBA(r: 189, g: 172, b: 152)   // worn sandstone
-        case .suburbs: RGBA(r: 148, g: 178, b: 128)   // lawn green
-        case .midtown: RGBA(r: 172, g: 168, b: 176)   // pale concrete
-        case .techPark: RGBA(r: 158, g: 178, b: 186)  // cool slate
-        case .downtown: RGBA(r: 150, g: 148, b: 162)  // city asphalt-gray
+        case .oldTown: Palettes.sand[1]    // worn sandstone
+        case .suburbs: Palettes.moss[1]    // lawn green
+        case .midtown: Palettes.stone[2]   // pale concrete
+        case .techPark: Palettes.stone[1]  // cool slate
+        case .downtown: Palettes.stone[3]  // city asphalt-grey
         }
     }
 
     /// (base, shade) building wall tones.
     var wall: (base: RGBA, shade: RGBA) {
         switch self {
-        case .oldTown: (RGBA(r: 214, g: 178, b: 138), RGBA(r: 186, g: 150, b: 112))
-        case .suburbs: (RGBA(r: 234, g: 222, b: 198), RGBA(r: 206, g: 192, b: 166))
-        case .midtown: (RGBA(r: 202, g: 198, b: 208), RGBA(r: 172, g: 168, b: 180))
-        case .techPark: (RGBA(r: 186, g: 206, b: 214), RGBA(r: 152, g: 176, b: 186))
-        case .downtown: (RGBA(r: 158, g: 160, b: 178), RGBA(r: 128, g: 130, b: 148))
+        case .oldTown: Palettes.sand.pair(1)
+        case .suburbs: Palettes.sand.pair(0)
+        case .midtown: Palettes.stone.pair(1)
+        case .techPark: Palettes.sky.pair(1)
+        case .downtown: Palettes.stone.pair(2)
         }
     }
 
     /// (base, shade) roof tones.
     var roof: (base: RGBA, shade: RGBA) {
         switch self {
-        case .oldTown: (RGBA(r: 168, g: 88, b: 70), RGBA(r: 138, g: 70, b: 56))
-        case .suburbs: (RGBA(r: 130, g: 96, b: 74), RGBA(r: 106, g: 76, b: 58))
-        case .midtown: (RGBA(r: 110, g: 112, b: 132), RGBA(r: 88, g: 90, b: 108))
-        case .techPark: (RGBA(r: 86, g: 130, b: 146), RGBA(r: 66, g: 104, b: 118))
-        case .downtown: (RGBA(r: 84, g: 86, b: 108), RGBA(r: 64, g: 66, b: 86))
+        case .oldTown: Palettes.ember.pair(3)
+        case .suburbs: Palettes.sand.pair(3)
+        case .midtown: Palettes.ink.pair(0)
+        case .techPark: Palettes.teal.pair(3)
+        case .downtown: Palettes.ink.pair(1)
         }
     }
 }
