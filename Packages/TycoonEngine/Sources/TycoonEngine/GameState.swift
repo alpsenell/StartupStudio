@@ -298,6 +298,11 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// The partner has had enough of being an afterthought — a warning
     /// before the breakup, and the only one there is.
     case partnerDrifting(affection: Double, day: Int)
+    /// The bank called the founder's personal guarantee in: `amount` of
+    /// the company's debt was paid off with the founder's own savings, or
+    /// — with `tookHome` — by taking their home. Never silent: this is the
+    /// player's money, and it leaves without them pressing anything.
+    case guaranteeCalled(amount: Int, tookHome: Bool, day: Int)
     /// The founder spent their own evening with somebody on the team.
     case hungOutWith(employeeID: UUID, day: Int)
     /// The founder taught somebody something.
@@ -389,6 +394,9 @@ extension GameEvent {
         // for, and a partner who is drifting is the last warning before a
         // breakup that ends the same way a bankruptcy does: suddenly, and
         // with the player saying they never saw it.
+        // The founder's own money leaving without them pressing anything.
+        case .guaranteeCalled:
+            .critical
         case .stakeExited, .stakeLost, .partnerDrifting:
             .notable
         case .networkingEventStarted, .contactRecruited, .contactJoinedForEquity,

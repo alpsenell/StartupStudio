@@ -125,6 +125,33 @@ struct PersonalGuaranteeTests {
         #expect(state.life.home == .apartment)
         #expect(events.contains { if case .homeDowngraded = $0 { true } else { false } })
         #expect(state.guaranteedDebt < 11_000)
+        // And the player is told, both times.
+        #expect(events.count { if case .guaranteeCalled = $0 { true } else { false } } == 2)
+    }
+
+    @Test("A seizure pays the bank, not the company")
+    func seizureIsNotAFundingRound() {
+        let config = balance()
+        var state = housed(config)
+        let content = TestContent.tiny()
+        Reducer.apply(.takeSecuredLoan(amount: 20_000), to: &state, balance: config, content: content)
+        state.company.cash = -1_000
+        state.life.wallet = 5_000
+        let debtBefore = state.loanBalance
+
+        // One tick past the call window.
+        for _ in 0..<(config.economy.guaranteeCallDays + 2) {
+            Reducer.tick(&state, balance: config, content: content)
+        }
+
+        // The founder's savings went to the bank: the debt fell by what
+        // was taken, and the company's cash is no better for it. Crediting
+        // cash *as well* would have made signing a guarantee a way to
+        // raise money out of your own house.
+        let seized = 5_000 - state.life.wallet
+        #expect(seized > 0)
+        #expect(state.loanBalance <= debtBefore - seized)
+        #expect(state.company.cash < 0)
     }
 
     @Test("Nothing is called from a founder who never signed")

@@ -52,8 +52,8 @@ enum FinanceSystem {
             }
             state.company.daysInDebt += 1
             // The bank comes for the founder before it comes for the
-            // company: money the guarantee releases lands in company cash,
-            // so it can also be what saves the run.
+            // company. It pays down debt and moves no cash, so it never
+            // rescues a run on its own.
             events.append(contentsOf: callGuarantee(&state, balance))
             if state.company.daysInDebt > balance.bankruptcyGraceDays {
                 state.gameOver = GameOverInfo(
@@ -192,10 +192,14 @@ enum FinanceSystem {
     /// Runs once the company has been in debt for `guaranteeCallDays` with
     /// guaranteed borrowing outstanding. The wallet pays what it can; if
     /// it cannot, the house goes — one tier down, through the same
-    /// `.homeDowngraded` path an eviction uses, with its value credited
-    /// against what is owed. The company's own bankruptcy clock keeps
-    /// running underneath: this is the founder losing their house *and*
-    /// possibly the company, which is what a personal guarantee is.
+    /// `.homeDowngraded` path an eviction uses, with its value written off
+    /// what is owed.
+    ///
+    /// None of it reaches company cash. The company's bankruptcy clock
+    /// keeps running underneath, so this is the founder losing their
+    /// savings and their house *and* very possibly the company anyway,
+    /// which is what a personal guarantee is. Making the seizure a cash
+    /// injection would have made signing one a way to *raise money*.
     static func callGuarantee(
         _ state: inout GameState,
         _ balance: BalanceConfig
@@ -205,17 +209,22 @@ enum FinanceSystem {
               state.company.daysInDebt > economy.guaranteeCallDays
         else { return [] }
 
-        // Cash first, house second.
+        // Seized money goes to the *bank*, not into the company's account:
+        // it pays the debt down and moves no cash. Crediting company cash
+        // as well — which this did — paid the company twice for the same
+        // seizure, and turned the founder's house into a fundraising round
+        // with a mood penalty attached.
+        var events: [GameEvent] = []
         if state.life.wallet > 0 {
             let paid = min(state.life.wallet, state.economy.guaranteedLoanAmount)
             state.life.wallet -= paid
             state.economy.guaranteedLoanAmount -= paid
             state.loanBalance = max(0, state.loanBalance - paid)
-            post(amount: paid, category: .other, label: "Personal guarantee called", to: &state)
+            events.append(.guaranteeCalled(amount: paid, tookHome: false, day: state.day))
         }
         guard state.economy.guaranteedLoanAmount > 0,
               let cheaper = state.life.home.previous
-        else { return [] }
+        else { return events }
 
         let released = min(
             state.economy.guaranteedLoanAmount,
@@ -225,9 +234,10 @@ enum FinanceSystem {
         state.life.home = cheaper
         state.economy.guaranteedLoanAmount -= released
         state.loanBalance = max(0, state.loanBalance - released)
-        post(amount: released, category: .other, label: "Guarantee: home sold", to: &state)
         state.life.meters.apply(mood: -balance.life.breakupMoodPenalty)
-        return [.homeDowngraded(tier: cheaper, day: state.day)]
+        events.append(.guaranteeCalled(amount: released, tookHome: true, day: state.day))
+        events.append(.homeDowngraded(tier: cheaper, day: state.day))
+        return events
     }
 
     /// Buys an office amenity: the cost posts to the ledger and the amenity

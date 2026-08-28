@@ -79,6 +79,10 @@ struct EventCopy {
         // Somebody joining, from wherever, is team news.
         case .contactRecruited, .contactJoinedForEquity, .hungOutWith, .employeeMentored:
             .team
+        // The bank taking the founder's savings is company news and life
+        // news at once; it belongs with the money.
+        case .guaranteeCalled:
+            .company
         // Somebody handing in notice, and somebody being interviewed, are
         // team news wherever they were raised.
         case .resignationNotice, .candidateInterviewed:
@@ -393,6 +397,15 @@ struct EventCopy {
                 "Your partner has stopped expecting you home. Do something about it.",
                 day,
                 Theme.warning
+            )
+        case .guaranteeCalled(let amount, let tookHome, let day):
+            (
+                "house.fill",
+                tookHome
+                    ? "The bank took your home against the company's debt (\(amount.money))"
+                    : "Your guarantee was called — \(amount.money) of your savings went to the bank",
+                day,
+                Theme.negativeCash
             )
         case .hungOutWith(let employeeID, let day):
             (
