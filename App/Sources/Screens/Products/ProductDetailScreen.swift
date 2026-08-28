@@ -92,6 +92,12 @@ struct ProductDetailScreen: View {
             FocusEditor(focus: focusBinding(fallback: progress.focus))
         }
 
+        if let forecast = engine.state.shipForecast(
+            productID: productID, balance: engine.balance, content: engine.content
+        ) {
+            ShipForecastCard(forecast: forecast)
+        }
+
         shipButton(product: product, progress: progress)
     }
 
@@ -661,4 +667,66 @@ private struct ReviewsCard: View {
 /// one calendar the whole app shares.
 private func gameDateLabel(forDay day: Int) -> String {
     GameCalendar(day: day).hudLabel
+}
+
+
+// MARK: - The ship decision
+
+/// What shipping today would get you, and what is holding the number down.
+///
+/// The screen used to show three completion bars and nothing else, so "100%
+/// on all three" could mean a quality of 58 with no way to tell — the two
+/// terms that put it there (the crew's ceiling and topic fit) were computed
+/// at launch and never shown. Ship-or-keep-working is the real decision on
+/// this screen; this is the information it needs.
+private struct ShipForecastCard: View {
+    let forecast: ShipForecast
+
+    var body: some View {
+        CardView("If you shipped today", systemImage: "shippingbox") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+                    Text("\(Int(forecast.quality.rounded()))")
+                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.scoreTint(Int(forecast.quality.rounded())))
+                        .contentTransition(.numericText())
+                        .animation(.spring(duration: 0.35), value: forecast.quality)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("projected quality")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("your crew tops out at \(Int((forecast.crewCeiling * 100).rounded()))")
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundStyle(.tertiary)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                if let limiting = forecast.limitingFactor {
+                    Text(limiting)
+                        .font(.footnote)
+                        .foregroundStyle(
+                            forecast.quality >= forecast.crewCeiling * 100 - 1
+                                ? Theme.warning : .secondary
+                        )
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if forecast.marketScale < 0.99 {
+                    // Own-saturation: two launches of the same type inside
+                    // a quarter cut the peak to about 0.61, and this number
+                    // appeared nowhere in the game.
+                    Label(
+                        "Your own recent launches have taken \(Int(((1 - forecast.marketScale) * 100).rounded()))% of this launch's audience.",
+                        systemImage: "chart.line.downtrend.xyaxis"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(Theme.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
 }
