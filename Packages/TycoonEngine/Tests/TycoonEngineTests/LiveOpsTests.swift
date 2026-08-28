@@ -189,6 +189,56 @@ struct LiveOpsTests {
         #expect(state.employees[0].assignment == .idle)
     }
 
+    @Test func aPatchTakesABuildSlot() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        let content = Self.content()
+        var (state, id) = try Self.withRelease(balance: balance, content: content)
+        // The garage builds one thing at a time.
+        #expect(state.devSlots == 1)
+
+        Reducer.apply(.startUpdate(productID: id), to: &state, balance: balance, content: content)
+        #expect(state.economy.updates.count == 1)
+        #expect(!state.hasFreeDevSlot)
+
+        // With the slot spent on the patch, the next product waits.
+        Reducer.apply(
+            .startProduct(typeID: "tool", topicID: "testing", name: "Next", focus: .balanced),
+            to: &state, balance: balance, content: content
+        )
+        #expect(state.productsInDevelopment.isEmpty)
+    }
+
+    @Test func patchesPayLessEachTime() throws {
+        var economy = Self.economy()
+        economy.updateQualityDecay = 0.6
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: economy)
+        let content = Self.content()
+
+        /// Quality added by the `n`-th patch of a product.
+        func gain(after previousPatches: Int) throws -> Double {
+            var (state, id) = try Self.withRelease(balance: balance, content: content)
+            guard case .released(var info) = state.products[0].stage else { return 0 }
+            info.updateCount = previousPatches
+            state.products[0].stage = .released(info)
+            let before = try Self.release(state, id).quality
+
+            Reducer.apply(.startUpdate(productID: id), to: &state, balance: balance, content: content)
+            for index in state.economy.updates.indices {
+                state.economy.updates[index].progressDesign = 1_000
+                state.economy.updates[index].progressCode = 1_000
+                state.economy.updates[index].progressPolish = 1_000
+            }
+            Reducer.tick(&state, balance: balance, content: content)
+            return try Self.release(state, id).quality - before
+        }
+
+        let first = try gain(after: 0)
+        let third = try gain(after: 2)
+        #expect(first > third)
+        // 8 × 0.6² ≈ 2.9: a third patch is a marketing beat, not a fix.
+        #expect(abs(third - 8 * 0.36) < 0.01)
+    }
+
     // MARK: - Price tiers
 
     @Test func settingAPriceTierIsGatedAndAnnounced() throws {
@@ -332,8 +382,11 @@ struct LiveOpsTests {
         #expect(info.averageReviewScore == 53)
         #expect(landed.1 == 53)
         #expect(state.economy.updates.isEmpty)
-        // The crew comes off the patch.
-        #expect(state.employees[0].assignment == .idle)
+        // The crew that patched it stays on it, as its support desk.
+        // Benching them undid the player's staffing decision, and merely
+        // leaving them on a `.product` assignment let the daily sweep
+        // bench them a tick later instead.
+        #expect(state.employees[0].assignment == .support(id))
     }
 
     @Test func aPatchBuysOneBumperSalesWeek() throws {

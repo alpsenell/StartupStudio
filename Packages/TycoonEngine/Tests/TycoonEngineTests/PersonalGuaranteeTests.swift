@@ -5,7 +5,7 @@ import TycoonEngine
 
 private func guaranteeEconomy(
     unsecuredCreditFraction: Double = 0.45,
-    guaranteeHomeFactor: Double = 1,
+    guaranteeHomeFactor: Double = 0.7,
     guaranteeCallDays: Int = 7,
     creditLimitBase: Int = 20_000
 ) -> BalanceConfig.EconomyBalance {
@@ -23,7 +23,10 @@ private func balance(
     economy: BalanceConfig.EconomyBalance = guaranteeEconomy()
 ) -> BalanceConfig {
     TestBalance.make(
-        bankruptcyGraceDays: 1_000,
+        // A real grace period, because the call is keyed off it: the
+        // founder's assets go at `grace − guaranteeCallDays`, a week
+        // before the company itself does.
+        bankruptcyGraceDays: 21,
         candidateRefreshDays: 10_000,
         contractOfferRefreshDays: 10_000,
         eventCheckIntervalDays: 10_000,
@@ -32,7 +35,8 @@ private func balance(
     )
 }
 
-/// A founder in a house — worth $40,000 of collateral at a factor of 1.
+/// A founder in a house: $40,000 of home, $28,000 of collateral at the
+/// shipped 0.7 haircut.
 private func housed(_ balance: BalanceConfig, home: HomeTier = .house) -> GameState {
     var state = GameState.newGame(companyName: "Acme", seed: 6, balance: balance)
     TestLife.pinPeak(&state)
@@ -115,7 +119,7 @@ struct PersonalGuaranteeTests {
         state.life.wallet = 2_000
 
         var events: [GameEvent] = []
-        for _ in 0..<10 {
+        for _ in 0..<16 {
             events += Reducer.tick(&state, balance: config, content: content)
         }
 
@@ -139,8 +143,8 @@ struct PersonalGuaranteeTests {
         state.life.wallet = 5_000
         let debtBefore = state.loanBalance
 
-        // One tick past the call window.
-        for _ in 0..<(config.economy.guaranteeCallDays + 2) {
+        // Past the call day, still inside the company's grace period.
+        for _ in 0..<16 {
             Reducer.tick(&state, balance: config, content: content)
         }
 
@@ -164,14 +168,51 @@ struct PersonalGuaranteeTests {
         state.life.wallet = 5_000
 
         var events: [GameEvent] = []
-        for _ in 0..<10 {
+        for _ in 0..<16 {
             events += Reducer.tick(&state, balance: config, content: content)
         }
         // The wallet still pays the week's rent — but nothing was seized,
         // and the house is not the bank's to take.
-        #expect(state.life.wallet > 4_000)
+        // Two weeks of rent came out; nothing was seized.
+        #expect(state.life.wallet > 3_000)
         #expect(state.life.home == .house)
         #expect(!events.contains { if case .homeDowngraded = $0 { true } else { false } })
+    }
+
+    @Test("The founder is warned on the first day of debt, and told when")
+    func theWarningComesFirst() {
+        let config = balance()
+        var state = housed(config)
+        let content = TestContent.tiny()
+        Reducer.apply(.takeSecuredLoan(amount: 20_000), to: &state, balance: config, content: content)
+        state.company.cash = -1_000
+        state.life.wallet = 50_000
+
+        let firstDay = Reducer.tick(&state, balance: config, content: content)
+        let warning = firstDay.compactMap { event -> Int? in
+            if case .guaranteeAtRisk(_, let callOnDay, _) = event { return callOnDay }
+            return nil
+        }.first
+        // Warned on day one of debt, with the date — and the date is a
+        // week before the company's own deadline, not the day after
+        // tomorrow.
+        #expect(warning != nil)
+        #expect(warning == state.day + (21 - config.economy.guaranteeCallDays) - 1)
+        // And comfortably before the company's own deadline.
+        #expect((warning ?? 0) < state.day + 21)
+        // Nothing has been taken yet.
+        #expect(state.life.wallet > 40_000)
+    }
+
+    @Test("A house forgives less debt than the founder loses")
+    func collateralIsWorthLessThanTheHouse() {
+        let config = balance()
+        let state = housed(config)
+        // The bank lends against 70% of the home's value, so foreclosing
+        // writes off less than the founder gave up — which is what makes
+        // signing a loss rather than a way to sell your house.
+        #expect(state.guaranteeCapacity(balance: config) == 28_000)
+        #expect(config.life.home(.house).upgradeCost == 40_000)
     }
 
     @Test("An economy without guarantees lends exactly as it did before")

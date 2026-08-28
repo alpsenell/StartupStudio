@@ -334,21 +334,46 @@ private struct LiveOpsCard: View {
     }
 
     private var updateButton: some View {
-        Button {
-            guard let action = LiveOps.startUpdate(productID: product.id) else { return }
-            shell.toasts.send(
-                action,
-                to: engine,
-                rejected: "There is no room for an update right now."
-            )
-        } label: {
-            Label("Ship an update", systemImage: "arrow.up.circle.fill")
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Theme.Spacing.xs)
+        let state = engine.state
+        let economy = engine.balance.economy
+        let patchesSoFar: Int = {
+            if case .released(let info) = product.stage { return info.updateCount }
+            return 0
+        }()
+        // The same arithmetic `LiveOpsSystem` will apply, so the button
+        // quotes what *this* patch is worth rather than what the first one
+        // was — the point of the decay is that the player can see it.
+        let worth = economy.updateQualityBonus
+            * pow(economy.updateQualityDecay, Double(patchesSoFar))
+        let noSlot = !state.hasFreeDevSlot
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Button {
+                guard let action = LiveOps.startUpdate(productID: product.id) else { return }
+                shell.toasts.send(
+                    action,
+                    to: engine,
+                    rejected: "No build slot free — something else is in development."
+                )
+            } label: {
+                Label("Ship an update", systemImage: "arrow.up.circle.fill")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.xs)
+            }
+            .buttonStyle(.bordered)
+            .disabled(noSlot)
+            .accessibilityHint("Puts the product back into a short development cycle")
+
+            Text(noSlot
+                ? "No build slot free — a patch takes one, like a new product."
+                : "+\(worth.formatted(.number.precision(.fractionLength(1)))) quality · "
+                    + "half the live bugs · a bumper sales week · uses a build slot")
+                .font(.caption2)
+                .monospacedDigit()
+                .foregroundStyle(noSlot ? Theme.warning : .secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .buttonStyle(.bordered)
-        .accessibilityHint("Puts the product back into a short development cycle for a quality bump")
     }
 }
 

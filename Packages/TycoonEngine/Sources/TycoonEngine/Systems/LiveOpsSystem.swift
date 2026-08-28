@@ -136,7 +136,16 @@ enum LiveOpsSystem {
             else { continue }
 
             let economy = balance.economy
-            info.quality = min(100, info.quality + economy.updateQualityBonus)
+            // Diminishing returns on the count that was already being
+            // incremented here and read by nothing. A flat bonus meant a
+            // twelfth patch was worth as much as the first, so any product
+            // could be walked to `reviewCeiling` regardless of how it
+            // shipped; now the third is worth about three points and a
+            // late patch is a marketing beat (the sales bump below) rather
+            // than a quality fix.
+            let bonus = economy.updateQualityBonus
+                * pow(economy.updateQualityDecay, Double(info.updateCount))
+            info.quality = min(100, info.quality + bonus)
             // A patch is mostly bug fixes: half the wild's backlog goes.
             info.liveBugs /= 2
             info.updateCount += 1
@@ -159,7 +168,14 @@ enum LiveOpsSystem {
                 )
             }
             let newScore = info.averageReviewScore
+            let stillSelling = !info.offMarket
             state.products[index].stage = .released(info)
+            if stillSelling {
+                for employeeIndex in state.employees.indices
+                where state.employees[employeeIndex].assignment == .product(update.productID) {
+                    state.employees[employeeIndex].assignment = .support(update.productID)
+                }
+            }
             // A well-received patch nudges the studio's reputation the way a
             // launch does, at the same reduced weight.
             state.company.reputation = min(100, max(0,
@@ -170,11 +186,17 @@ enum LiveOpsSystem {
             events.append(.updateShipped(
                 productID: update.productID, newScore: newScore, day: state.day
             ))
-            // Everyone who was patching goes back to the bench.
-            for employeeIndex in state.employees.indices
-            where state.employees[employeeIndex].assignment == .product(update.productID) {
-                state.employees[employeeIndex].assignment = .idle
-            }
+            // The patch crew rolls onto the product's support desk rather
+            // than the bench.
+            //
+            // Benching them undid the player's staffing decision: they put
+            // these people on *this product*, and a finished patch moved
+            // them off it. Simply not moving them was no better — the
+            // daily sweep idles a `.product` assignment on something that
+            // is no longer in development, so the crew ended up on the
+            // bench a tick later anyway. A support desk is the assignment
+            // that stays valid, and it is where the people who just spent
+            // a fortnight in this product's bug list are worth the most.
         }
         return events
     }

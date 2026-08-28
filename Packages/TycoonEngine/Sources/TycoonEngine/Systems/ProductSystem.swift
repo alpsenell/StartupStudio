@@ -491,6 +491,10 @@ enum ProductSystem {
               case .released(let info) = state.products[index].stage,
               !info.offMarket,
               state.economy.update(for: productID) == nil,
+              // A patch is a build and takes a build slot, exactly as
+              // `startProduct` does. In a two-slot loft, patching the last
+              // product means not starting the next one.
+              state.hasFreeDevSlot,
               let type = content.productType(state.products[index].typeID)
         else { return [] }
 

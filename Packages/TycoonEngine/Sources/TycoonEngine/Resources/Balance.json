@@ -799,8 +799,9 @@
     "founderPayMoraleCap": 10.0,
     "founderPayBoardPressure": 4.0,
     "unsecuredCreditFraction": 0.45,
-    "guaranteeHomeFactor": 1.0,
-    "guaranteeCallDays": 7
+    "guaranteeHomeFactor": 0.7,
+    "guaranteeCallDays": 7,
+    "updateQualityDecay": 0.6
   },
   "narrative": {
     "companyEventIntervalDays": 7,

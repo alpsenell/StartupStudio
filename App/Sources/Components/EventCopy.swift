@@ -81,7 +81,7 @@ struct EventCopy {
             .team
         // The bank taking the founder's savings is company news and life
         // news at once; it belongs with the money.
-        case .guaranteeCalled:
+        case .guaranteeCalled, .guaranteeAtRisk:
             .company
         // Somebody handing in notice, and somebody being interviewed, are
         // team news wherever they were raised.
@@ -397,6 +397,14 @@ struct EventCopy {
                 "Your partner has stopped expecting you home. Do something about it.",
                 day,
                 Theme.warning
+            )
+        case .guaranteeAtRisk(let amount, let callOnDay, let day):
+            (
+                "exclamationmark.triangle.fill",
+                "The company is in the red and you guaranteed \(amount.money) of its debt. "
+                    + "Clear it by day \(callOnDay) or the bank takes your savings and your home.",
+                day,
+                Theme.negativeCash
             )
         case .guaranteeCalled(let amount, let tookHome, let day):
             (

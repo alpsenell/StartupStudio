@@ -298,6 +298,10 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// The partner has had enough of being an afterthought — a warning
     /// before the breakup, and the only one there is.
     case partnerDrifting(affection: Double, day: Int)
+    /// The company is in debt with a personal guarantee outstanding: the
+    /// founder's savings and home go on `callOnDay` unless it is cleared.
+    /// The warning the flat trigger never gave.
+    case guaranteeAtRisk(amount: Int, callOnDay: Int, day: Int)
     /// The bank called the founder's personal guarantee in: `amount` of
     /// the company's debt was paid off with the founder's own savings, or
     /// — with `tookHome` — by taking their home. Never silent: this is the
@@ -394,8 +398,9 @@ extension GameEvent {
         // for, and a partner who is drifting is the last warning before a
         // breakup that ends the same way a bankruptcy does: suddenly, and
         // with the player saying they never saw it.
-        // The founder's own money leaving without them pressing anything.
-        case .guaranteeCalled:
+        // The founder's own money leaving without them pressing anything,
+        // and the notice that it is about to.
+        case .guaranteeCalled, .guaranteeAtRisk:
             .critical
         case .stakeExited, .stakeLost, .partnerDrifting:
             .notable
@@ -732,7 +737,19 @@ public struct GameState: Codable, Equatable, Sendable {
     public var devSlots: Int { company.officeTier.concurrentDevSlots }
 
     /// Whether there is room to start another product right now.
-    public var hasFreeDevSlot: Bool { productsInDevelopment.count < devSlots }
+    /// Builds under way right now: products in development *and* patches
+    /// in flight.
+    ///
+    /// A patch is a build — it draws on the same pools, occupies the same
+    /// people, and ships the same way — so it takes a slot like one. It
+    /// did not, which made patching free: no slot, no cash, no cooldown,
+    /// and twelve of them took any product to the review ceiling however
+    /// it had shipped.
+    public var buildsInFlight: Int {
+        productsInDevelopment.count + economy.updates.count
+    }
+
+    public var hasFreeDevSlot: Bool { buildsInFlight < devSlots }
 
     /// Looks up a product by id.
     public func product(id: UUID) -> Product? {

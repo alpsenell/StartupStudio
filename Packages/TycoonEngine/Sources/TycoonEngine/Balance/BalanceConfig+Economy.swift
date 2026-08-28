@@ -68,6 +68,11 @@ extension BalanceConfig {
         public var updatePoolFraction: Double
         /// Quality a finished patch adds (capped at 100).
         public var updateQualityBonus: Double
+        /// Geometric decay applied to that bonus per patch already
+        /// shipped, read off `ReleaseInfo.updateCount`. `1` is the old
+        /// flat bonus and the default, so a balance without the key
+        /// patches exactly as it did.
+        public var updateQualityDecay: Double
         /// Weight of the re-review against the launch reviews.
         public var updateReviewWeight: Double
         /// Sales multiplier for the week a patch lands.
@@ -249,6 +254,7 @@ extension BalanceConfig {
             premiumChurnPenalty: Double = 2.0,
             updatePoolFraction: Double = 0.30,
             updateQualityBonus: Double = 8,
+            updateQualityDecay: Double = 1,
             updateReviewWeight: Double = 0.5,
             updateSalesBump: Double = 1.5,
             updateBumpDays: Int = 7,
@@ -313,6 +319,7 @@ extension BalanceConfig {
             self.premiumChurnPenalty = premiumChurnPenalty
             self.updatePoolFraction = updatePoolFraction
             self.updateQualityBonus = updateQualityBonus
+            self.updateQualityDecay = updateQualityDecay
             self.updateReviewWeight = updateReviewWeight
             self.updateSalesBump = updateSalesBump
             self.updateBumpDays = updateBumpDays

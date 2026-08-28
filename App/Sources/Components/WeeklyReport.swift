@@ -160,9 +160,20 @@ struct WeeklyReport: Equatable {
             .prefix(3)
             .map { UnhappyEmployee(id: $0.id, name: $0.name, morale: $0.morale) }
 
+        // Newest first, but critical events ahead of the rest: the card
+        // shows only the first eight, and the week a founder's guarantee
+        // was called or somebody resigned should never be pushed out of
+        // it by eight quieter days that happened to come later.
         events = state.eventLog
             .filter { range.contains(EventDay.of($0)) }
-            .reversed()
+            .enumerated()
+            .sorted { left, right in
+                let leftCritical = left.element.severity == .critical
+                let rightCritical = right.element.severity == .critical
+                if leftCritical != rightCritical { return leftCritical }
+                return left.offset > right.offset
+            }
+            .map(\.element)
 
         let meters = state.life.meters
         founderMeters = MeterSnapshot(
