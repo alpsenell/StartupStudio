@@ -1,7 +1,7 @@
 {
   "startingCash": 12000,
   "weeklyOperatingCost": 250,
-  "bankruptcyGraceDays": 14,
+  "bankruptcyGraceDays": 21,
   "offices": {
     "garage": { "upgradeCost": 0, "weeklyRent": 0, "headcountCap": 3 },
     "loft": { "upgradeCost": 15000, "weeklyRent": 400, "headcountCap": 6 },
@@ -294,7 +294,7 @@
   "difficulty": {
     "easy":   { "startingCashFactor": 1.5, "operatingCostFactor": 0.8, "officeCostFactor": 0.8,  "salaryFactor": 0.9,  "revenueFactor": 1.25, "reviewExpectationBonus": -5, "bankruptcyGraceDaysDelta": 7,  "candidateSkillBonus": 10, "lifeCostFactor": 0.8 },
     "normal": { "startingCashFactor": 1.0, "operatingCostFactor": 1.0, "officeCostFactor": 1.0,  "salaryFactor": 1.0,  "revenueFactor": 1.0,  "reviewExpectationBonus": 0,  "bankruptcyGraceDaysDelta": 0,  "candidateSkillBonus": 0,  "lifeCostFactor": 1.0 },
-    "hard":   { "startingCashFactor": 0.7, "operatingCostFactor": 1.3, "officeCostFactor": 1.25, "salaryFactor": 1.15, "revenueFactor": 0.8,  "reviewExpectationBonus": 6,  "bankruptcyGraceDaysDelta": -4, "candidateSkillBonus": -5, "lifeCostFactor": 1.2 }
+    "hard":   { "startingCashFactor": 0.55, "operatingCostFactor": 1.5, "officeCostFactor": 1.4, "salaryFactor": 1.25, "revenueFactor": 0.65, "reviewExpectationBonus": 10, "bankruptcyGraceDaysDelta": -10, "candidateSkillBonus": -8, "lifeCostFactor": 1.35 }
   },
   "life": {
     "startingWallet": 2000,

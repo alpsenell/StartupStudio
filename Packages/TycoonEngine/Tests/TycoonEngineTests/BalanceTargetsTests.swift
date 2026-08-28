@@ -223,12 +223,20 @@ struct BalanceTargetsTests {
 
     // MARK: - Difficulty means something
 
+    /// On Hard, growing a studio on product revenue alone does not hold:
+    /// most seeds are gone inside two years, and more of them are gone
+    /// inside one, than the same strategy on Normal.
     @Test func hardModeIsGenuinelyHard() throws {
-        let results = try Self.runAll(NeglectfulBot(), difficulty: .hard, days: 365)
-        let broke = Self.count(results) { $0.wentBankrupt }
+        let hard = try Self.runAll(CrunchHireBot(), difficulty: .hard)
+        let broke = Self.count(hard) { $0.wentBankrupt }
+        #expect(broke >= 5, "only \(broke)/10 hard crunch-hire seeds went under in two years")
+
+        let hardYearOne = try Self.runAll(CrunchHireBot(), difficulty: .hard, days: 365)
+        let normalYearOne = try Self.runAll(CrunchHireBot(), days: 365)
         #expect(
-            broke >= 5,
-            "only \(broke)/10 hard-mode neglectful seeds went under in year one"
+            Self.count(hardYearOne) { $0.wentBankrupt }
+                > Self.count(normalYearOne) { $0.wentBankrupt },
+            "Hard should sink more first-year seeds than Normal"
         )
     }
 

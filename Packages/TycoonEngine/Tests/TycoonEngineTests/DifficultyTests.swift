@@ -48,7 +48,7 @@ struct DifficultyTests {
         #expect(easy.startingCash > normal.startingCash)
         #expect(hard.startingCash < normal.startingCash)
         #expect(easy.startingCash == Int((Double(normal.startingCash) * 1.5).rounded()))
-        #expect(hard.startingCash == Int((Double(normal.startingCash) * 0.7).rounded()))
+        #expect(hard.startingCash == Int((Double(normal.startingCash) * 0.55).rounded()))
 
         // Weekly operating cost.
         #expect(easy.weeklyOperatingCost < normal.weeklyOperatingCost)
@@ -79,15 +79,15 @@ struct DifficultyTests {
 
         // Review expectation base is additive: easy −5, hard +6.
         #expect(easy.reviewExpectationBase == normal.reviewExpectationBase - 5)
-        #expect(hard.reviewExpectationBase == normal.reviewExpectationBase + 6)
+        #expect(hard.reviewExpectationBase == normal.reviewExpectationBase + 10)
 
         // Bankruptcy grace: easy 21 days, hard 10 (normal ships at 14).
-        #expect(easy.bankruptcyGraceDays == 21)
-        #expect(hard.bankruptcyGraceDays == 10)
+        #expect(easy.bankruptcyGraceDays == 28)
+        #expect(hard.bankruptcyGraceDays == 11)
 
         // Candidate skill base is additive: easy +10, hard −5.
         #expect(easy.candidateSkillBase == normal.candidateSkillBase + 10)
-        #expect(hard.candidateSkillBase == normal.candidateSkillBase - 5)
+        #expect(hard.candidateSkillBase == normal.candidateSkillBase - 8)
 
         // Life: hospital bill and home rents (upgrade costs untouched).
         #expect(easy.life.hospitalBill < normal.life.hospitalBill)
@@ -183,6 +183,10 @@ struct DifficultyTests {
             var state = GameState.newGame(
                 companyName: "Acme", seed: 77, balance: balance, difficulty: difficulty
             )
+            // A studio that ships nothing for a hundred days is bankrupt on
+            // Hard long before then, and a game-over state stops drawing —
+            // this test is about the draw order, so bankroll it.
+            state.company.cash = 10_000_000
             for _ in 0..<100 {
                 Reducer.tick(&state, balance: balance, content: content)
             }

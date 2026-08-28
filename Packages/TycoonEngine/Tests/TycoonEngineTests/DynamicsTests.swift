@@ -450,10 +450,20 @@ struct LoanTests {
         let balance = TestBalance.make(life: TestBalance.quietLife)
         let content = TestContent.tiny()
         var state = GameState.newGame(companyName: "Acme", seed: 3, balance: balance)
-        state.company.reputation = 10 // limit = 20 000 + 6 000 = 26 000
+        // The bank lends against a book, not a pitch: 20 000 base
+        // + 300 × 10 reputation + half of a trading history this studio
+        // does not have yet = 23 000.
+        state.company.reputation = 10
 
         Reducer.apply(.takeLoan(amount: 1_000_000), to: &state, balance: balance, content: content)
-        #expect(state.loanBalance == 26_000)
+        #expect(state.loanBalance == 23_000)
+
+        // A quarter of real revenue on the books raises the line.
+        state.ledger.entries.append(
+            LedgerEntry(day: state.day, amount: 40_000, category: .sales, label: "Hit")
+        )
+        Reducer.apply(.takeLoan(amount: 1_000_000), to: &state, balance: balance, content: content)
+        #expect(state.loanBalance == 43_000)
 
         // Maxed out: further borrowing is ignored.
         let more = Reducer.apply(.takeLoan(amount: 1), to: &state, balance: balance, content: content)
