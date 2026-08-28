@@ -6,6 +6,8 @@ import TycoonEngine
 struct MoneyCard: View {
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var shell
+
     /// Salary stepper increment.
     private static let salaryStep = 100
 
@@ -21,9 +23,13 @@ struct MoneyCard: View {
                     WalletBlock(label: "Rent", value: "\(rent.money)/wk", tint: .primary)
                 }
                 if life.wallet < 0 {
-                    Text("Your wallet is overdrawn — raise your salary or spend less.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.negativeCash)
+                    WalletDebtWarning(
+                        wallet: life.wallet,
+                        weeklyShortfall: weeklyShortfall(rent: rent, kids: kids),
+                        canRaiseSalary: life.founderSalary < engine.balance.life.founderSalaryMax
+                    ) {
+                        raiseSalaryToCover(rent: rent, kids: kids)
+                    }
                 }
 
                 Divider()
@@ -64,7 +70,36 @@ struct MoneyCard: View {
     private var salaryBinding: Binding<Int> {
         Binding(
             get: { engine.state.life.founderSalary },
-            set: { engine.send(.setFounderSalary($0)) }
+            set: { salary in
+                shell.toasts.send(
+                    .setFounderSalary(salary),
+                    to: engine,
+                    ack: "Your salary is now \(salary.money)/wk",
+                    icon: "wallet.pass.fill"
+                )
+            }
+        )
+    }
+
+    /// What the wallet loses each week after the salary lands: home rent
+    /// plus the per-child cost, minus the salary. Positive means the
+    /// wallet is draining.
+    private func weeklyShortfall(rent: Int, kids: Int) -> Int {
+        let costs = rent + kids * engine.balance.life.childWeeklyCost
+        return costs - engine.state.life.founderSalary
+    }
+
+    /// Raises the founder's salary to cover the weekly costs exactly,
+    /// clamped to the balance's maximum.
+    private func raiseSalaryToCover(rent: Int, kids: Int) {
+        let costs = rent + kids * engine.balance.life.childWeeklyCost
+        let target = min(costs, engine.balance.life.founderSalaryMax)
+        guard target > engine.state.life.founderSalary else { return }
+        shell.toasts.send(
+            .setFounderSalary(target),
+            to: engine,
+            ack: "Salary raised to \(target.money)/wk to cover the bills",
+            icon: "wallet.pass.fill"
         )
     }
 
@@ -96,5 +131,66 @@ private struct WalletBlock: View {
                 .animation(.spring(duration: 0.35), value: value)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+
+/// The overdrawn-wallet warning: how deep the hole is, how fast it is
+/// getting deeper, and the one-tap way out.
+private struct WalletDebtWarning: View {
+    let wallet: Int
+    let weeklyShortfall: Int
+    let canRaiseSalary: Bool
+    let raiseSalary: () -> Void
+
+    /// Weeks until the wallet is another thousand down — a concrete
+    /// countdown rather than a vague warning.
+    private var weeksPerThousand: Int? {
+        guard weeklyShortfall > 0 else { return nil }
+        return max(1, 1000 / weeklyShortfall)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.footnote.weight(.bold))
+                Text("Overdrawn by \(abs(wallet).money)")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .monospacedDigit()
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(Theme.negativeCash)
+
+            Text(detail)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if canRaiseSalary, weeklyShortfall > 0 {
+                Button {
+                    Haptics.commit()
+                    raiseSalary()
+                } label: {
+                    Label("Pay yourself enough to cover it", systemImage: "arrow.up.circle.fill")
+                        .font(.footnote.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(Theme.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Theme.negativeCash.opacity(0.10),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+        )
+        .accessibilityElement(children: .contain)
+    }
+
+    private var detail: String {
+        guard let weeks = weeksPerThousand else {
+            return "Your salary covers the bills — the hole stops getting deeper, but it does not fill itself."
+        }
+        return "Rent and home costs run \(weeklyShortfall.money) a week past your salary: another \(1000.money) down every \(weeks) week\(weeks == 1 ? "" : "s")."
     }
 }

@@ -6,6 +6,8 @@ import TycoonEngine
 struct WorkScheduleCard: View {
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var shell
+
     var body: some View {
         let schedule = engine.state.life.schedule
 
@@ -32,7 +34,14 @@ struct WorkScheduleCard: View {
     private var scheduleBinding: Binding<WorkSchedule> {
         Binding(
             get: { engine.state.life.schedule },
-            set: { engine.send(.setWorkSchedule($0)) }
+            set: { schedule in
+                shell.toasts.send(
+                    .setWorkSchedule(schedule),
+                    to: engine,
+                    ack: "Working \(schedule.displayName.lowercased()) from now on",
+                    icon: "clock.fill"
+                )
+            }
         )
     }
 }

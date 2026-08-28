@@ -12,6 +12,9 @@ import TycoonEngine
 struct HomeCard: View {
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var shell
+    @State private var confirmingUpgrade = false
+
     var body: some View {
         let state = engine.state
         let life = state.life
@@ -30,9 +33,11 @@ struct HomeCard: View {
                 HomeTierPill(tier: life.home)
             }
 
-            HomeSceneView(tier: tierStyle, occupants: occupants, activity: activity, mood: mood)
-                .frame(maxWidth: .infinity)
-                .accessibilityLabel(sceneAccessibilityLabel)
+            PixelPanel(contentPadding: Theme.Spacing.xs) {
+                HomeSceneView(tier: tierStyle, occupants: occupants, activity: activity, mood: mood)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityLabel(sceneAccessibilityLabel)
+            }
 
             if life.isAway(day: state.day) {
                 AwayBanner(reason: life.awayReason, untilDay: life.awayUntilDay, day: state.day)
@@ -46,7 +51,7 @@ struct HomeCard: View {
                     weeklyRent: homeWeeklyRent(next, balance: engine.balance),
                     wallet: life.wallet
                 ) {
-                    engine.send(.upgradeHome)
+                    confirmingUpgrade = true
                 }
             }
         }
@@ -54,6 +59,28 @@ struct HomeCard: View {
         // Moving day: the scene above re-renders with the new tier; add a
         // success haptic so the moment lands.
         .sensoryFeedback(.success, trigger: life.home)
+        .confirmationDialog(
+            "Move to the \(life.home.next?.displayName.lowercased() ?? "next place")?",
+            isPresented: $confirmingUpgrade,
+            titleVisibility: .visible
+        ) {
+            if let next = life.home.next {
+                Button("Pay \(homeUpgradeCost(next, balance: engine.balance).money) and move") {
+                    shell.toasts.send(
+                        .upgradeHome,
+                        to: engine,
+                        rejected: "The move fell through - check your wallet."
+                    )
+                }
+            }
+            Button("Stay", role: .cancel) {}
+        } message: {
+            if let next = life.home.next {
+                Text(
+                    "Rent goes from \(homeWeeklyRent(life.home, balance: engine.balance).money) to \(homeWeeklyRent(next, balance: engine.balance).money) a week, out of your own wallet."
+                )
+            }
+        }
     }
 
     /// `HomeTier` and `HomeTierStyle` share raw values by design; the

@@ -18,6 +18,8 @@ struct LifeScreen: View {
                     MoneyCard(engine: engine)
                     ActivitiesCard(engine: engine)
                     WeekendCard(engine: engine)
+                    WeekendRecapCard(engine: engine)
+                    PossessionsCard(engine: engine)
                     FamilyCard(engine: engine)
                 }
                 .padding(Theme.Spacing.lg)

@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import TycoonContent
 import TycoonEngine
 import TycoonSave
 
@@ -13,6 +14,11 @@ import TycoonSave
 final class GameSession {
     /// The live engine. Replaced wholesale by `startNewGame()`.
     private(set) var engine: GameEngine
+
+    /// True when the app came up without a save to resume and the player
+    /// has never been through the new-game flow — `AppRootView` shows
+    /// `NewGameFlow` over everything until they have.
+    private(set) var needsOnboarding: Bool
 
     /// Set when loading the save failed on launch (a new game was started
     /// instead). The UI shows it once; `clearLoadFailure()` dismisses it.
@@ -48,6 +54,9 @@ final class GameSession {
 
         self.engine = resumedEngine ?? Self.makeFreshEngine()
         self.loadFailureMessage = failureMessage
+        // A resumed save means this player already named themselves; a
+        // fresh launch with nothing to resume goes through onboarding.
+        self.needsOnboarding = resumedEngine == nil && !GameSettings.hasCompletedOnboarding
 
         wireAutosave()
         applyDebugLaunchArguments()
@@ -59,22 +68,55 @@ final class GameSession {
         startNewGame(difficulty: .normal)
     }
 
+    /// Deletes the save and replaces the engine with a fresh game built
+    /// from the new-game flow's choices: the founder's name, archetype and
+    /// look, the studio's name, and the difficulty.
+    func startNewGame(profile: FounderProfile, companyName: String, difficulty: Difficulty) {
+        replaceEngine {
+            GameEngine.newGame(
+                companyName: companyName,
+                seed: UInt64.random(in: .min ... .max),
+                difficulty: difficulty,
+                founder: profile
+            )
+        }
+        GameSettings.hasCompletedOnboarding = true
+        needsOnboarding = false
+    }
+
+    /// Re-opens the new-game flow (Settings → "Start a new game…"). The
+    /// running game keeps ticking underneath until the flow finishes.
+    func requestOnboarding() {
+        needsOnboarding = true
+    }
+
+    /// Abandons a new-game flow the player opened from Settings, leaving
+    /// the running game untouched.
+    func cancelOnboarding() {
+        needsOnboarding = false
+    }
+
     /// Deletes the save and replaces the engine with a fresh game at the
-    /// given difficulty, optionally as a founder the player built. Used by
-    /// the ending screens (which offer the founder setup sheet) and the
-    /// Settings sheet's "Start a new game…" (which does not, and so gets
-    /// the default founder).
-    func startNewGame(difficulty: Difficulty, founder: FounderProfile = .default) {
-        // Stop the outgoing engine for good: without this, a still-referenced
-        // old instance keeps ticking and its autosave overwrites the new
-        // game's save file (the "zombie engine" bug).
+    /// given difficulty, optionally as a founder the player built on the
+    /// ending screen. Used by the endings screens (which offer the founder
+    /// setup sheet) and the Settings sheet's "Start a new game…" (which
+    /// does not, and so gets a generated founder).
+    func startNewGame(difficulty: Difficulty, founder: FounderProfile? = nil) {
+        replaceEngine { Self.makeFreshEngine(difficulty: difficulty, founder: founder) }
+    }
+
+    /// Shared teardown/rebuild behind every "new game" path. Stopping the
+    /// outgoing engine for good matters: without it a still-referenced old
+    /// instance keeps ticking and its autosave overwrites the new game's
+    /// save file (the "zombie engine" bug).
+    private func replaceEngine(_ make: () -> GameEngine) {
         engine.shutdown()
         do {
             try store.deleteAll()
         } catch {
             lastSaveError = error.localizedDescription
         }
-        engine = Self.makeFreshEngine(difficulty: difficulty, founder: founder)
+        engine = make()
         wireAutosave()
         applyDebugLaunchArguments()
     }
@@ -112,13 +154,29 @@ final class GameSession {
     /// is fine.
     private static func makeFreshEngine(
         difficulty: Difficulty = .normal,
-        founder: FounderProfile = .default
+        founder: FounderProfile? = nil
     ) -> GameEngine {
-        GameEngine.newGame(
-            companyName: "Startup Studio",
+        // Nobody is ever called "Founder" at a company called "Startup
+        // Studio": the new-game flow names both, and the paths that skip
+        // it (a first launch waiting behind onboarding, "play again" from
+        // an ending) get a generated pair instead.
+        let index = Int.random(in: 0..<64)
+        let names = (try? ContentCatalog.loadBundled())?.names
+            ?? NamePools(firstNames: [], lastNames: [], clientCompanies: [])
+        // `usesArchetypeSkills: false` on the generated founder, matching
+        // `FounderProfile.default`: WS-F made the archetype spread opt-in
+        // on purpose (the +10 skill points move the whole balance), and
+        // nobody picked "hacker" on this path — it is only a name.
+        let generated = FounderProfile(
+            name: StudioNameGenerator.founderName(index: index, names: names),
+            archetype: .hacker,
+            usesArchetypeSkills: false
+        )
+        return GameEngine.newGame(
+            companyName: StudioNameGenerator.companyName(index: index),
             seed: UInt64.random(in: .min ... .max),
             difficulty: difficulty,
-            founder: founder
+            founder: founder ?? generated
         )
     }
 

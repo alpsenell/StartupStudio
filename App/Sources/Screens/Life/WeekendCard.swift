@@ -9,6 +9,8 @@ import TycoonEngine
 struct WeekendCard: View {
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var shell
+
     private let columns = [
         GridItem(.flexible(), spacing: Theme.Spacing.md),
         GridItem(.flexible(), spacing: Theme.Spacing.md),
@@ -28,7 +30,12 @@ struct WeekendCard: View {
                             note: note(for: activity, life: life, day: state.day),
                             isSelected: life.plannedActivity == activity
                         ) {
-                            engine.send(.planWeekend(activity))
+                            shell.toasts.send(
+                                .planWeekend(activity),
+                                to: engine,
+                                ack: "This weekend: \(activity.displayName.lowercased())",
+                                icon: activity.systemImage
+                            )
                         }
                     }
                 }

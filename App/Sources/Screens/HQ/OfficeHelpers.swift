@@ -89,13 +89,15 @@ extension Amenity {
     }
 }
 
-/// The Ops department's amenity upkeep discount, mirrored for the upkeep
-/// readout on the amenities sheet (the engine applies the real one).
-let opsAmenityUpkeepDiscount = 0.30
+/// The Ops department's amenity upkeep discount, as a percentage, read
+/// from the engine's own factor instead of duplicated as a literal.
+func opsAmenityUpkeepDiscountPercent(balance: BalanceConfig) -> Int {
+    Int(((1 - balance.company.opsUpkeepFactor) * 100).rounded())
+}
 
 /// Weekly upkeep as the player will actually pay it: the amenity's base
-/// `weeklyCost`, discounted while the Ops department is staffed.
-func amenityWeeklyUpkeep(_ weeklyCost: Int, opsActive: Bool) -> Int {
+/// `weeklyCost` times the engine's Ops factor while Operations is staffed.
+func amenityWeeklyUpkeep(_ weeklyCost: Int, opsActive: Bool, balance: BalanceConfig) -> Int {
     guard opsActive else { return weeklyCost }
-    return Int((Double(weeklyCost) * (1 - opsAmenityUpkeepDiscount)).rounded())
+    return Int((Double(weeklyCost) * balance.company.opsUpkeepFactor).rounded())
 }

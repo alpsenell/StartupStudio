@@ -170,7 +170,9 @@ public enum HomeSceneComposer {
         // five parameters.
         scene.append(PlacedSprite(
             sprite: SpriteCache.shared(
-                "home.\(tier.rawValue).\(l.width)x\(l.height).\(l.wallHeight).\(l.rug).\(time)"
+                "home.\(tier.rawValue).\(l.width)x\(l.height).\(l.wallHeight)."
+                    + (l.rug.map { "\($0.x),\($0.y),\($0.width),\($0.height)" } ?? "norug")
+                    + ".\(time)"
             ) {
                 RoomBuilder.homeRoom(
                     tier: tier, width: l.width, height: l.height, wallHeight: l.wallHeight,

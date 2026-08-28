@@ -9,8 +9,10 @@ struct FinancesView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
+            RunRateCard(engine: engine)
             LoanCard(engine: engine)
             CashflowCard(state: engine.state)
+            CategoryBreakdownCard(state: engine.state)
             RecentLedgerCard(state: engine.state)
         }
     }
@@ -22,6 +24,8 @@ struct FinancesView: View {
 /// posts weekly on whatever stays outstanding.
 private struct LoanCard: View {
     let engine: GameEngine
+
+    @Environment(GameShell.self) private var shell
 
     /// The chunk each borrow/repay tap moves.
     private static let step = 1_000
@@ -38,6 +42,33 @@ private struct LoanCard: View {
 
     private var weeklyInterest: Int {
         Int((Double(outstanding) * loans.weeklyInterestRate).rounded())
+    }
+
+    /// What the bank will still lend: the stepper can never ask for more
+    /// (it used to run to $100,000 regardless of the limit).
+    private var headroom: Int {
+        max(0, creditLimit - outstanding)
+    }
+
+    /// A repayment is capped by both the debt and the cash on hand.
+    private var repayable: Int {
+        max(0, min(amount, min(outstanding, engine.state.company.cash)))
+    }
+
+    /// Keeps the stepper's value inside the current headroom as the limit
+    /// moves with reputation and the outstanding balance.
+    private var clampedAmount: Binding<Int> {
+        Binding(
+            get: { min(amount, max(Self.step, headroom)) },
+            set: { amount = $0 }
+        )
+    }
+
+    private var headroomCaption: String {
+        if headroom < Self.step {
+            return "You are at the limit — repay some before borrowing again."
+        }
+        return "You can borrow up to \(headroom.money) more."
     }
 
     var body: some View {
@@ -75,7 +106,7 @@ private struct LoanCard: View {
                 }
 
                 HStack(spacing: Theme.Spacing.md) {
-                    Stepper(value: $amount, in: Self.step...100_000, step: Self.step) {
+                    Stepper(value: clampedAmount, in: Self.step...max(Self.step, headroom), step: Self.step) {
                         Text(amount.money)
                             .font(.system(.subheadline, design: .rounded).weight(.semibold))
                             .monospacedDigit()
@@ -86,23 +117,35 @@ private struct LoanCard: View {
 
                 HStack(spacing: Theme.Spacing.md) {
                     Button("Borrow") {
-                        engine.send(.takeLoan(amount: amount))
+                        shell.toasts.send(
+                            .takeLoan(amount: min(amount, headroom)),
+                            to: engine,
+                            rejected: "The bank turned that down."
+                        )
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Theme.accent)
-                    .disabled(outstanding >= creditLimit)
-                    .accessibilityLabel("Borrow \(amount.money)")
+                    .disabled(headroom < Self.step)
+                    .accessibilityLabel("Borrow \(min(amount, headroom).money)")
 
-                    Button("Repay") {
-                        engine.send(.repayLoan(amount: amount))
+                    Button("Repay \(repayable.money)") {
+                        shell.toasts.send(
+                            .repayLoan(amount: repayable),
+                            to: engine,
+                            rejected: "There is nothing to repay right now."
+                        )
                     }
                     .buttonStyle(.bordered)
-                    .disabled(outstanding == 0 || engine.state.company.cash <= 0)
-                    .accessibilityLabel("Repay \(amount.money)")
+                    .disabled(repayable <= 0)
+                    .accessibilityLabel("Repay \(repayable.money)")
 
                     Spacer(minLength: 0)
                 }
                 .font(.system(.footnote, design: .rounded).weight(.semibold))
+
+                Text(headroomCaption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -298,19 +341,165 @@ private struct LedgerRow: View {
         .accessibilityLabel("\(entry.label), day \(entry.day), \(entry.amount.money)")
     }
 
-    private var icon: String {
-        switch entry.category {
-        case .operating: "gearshape.fill"
-        case .rent: "house.fill"
-        case .payroll: "person.2.fill"
-        case .sales: "cart.fill"
-        case .contracts: "briefcase.fill"
-        case .marketing: "megaphone.fill"
-        case .research: "flask.fill"
-        case .other: "ellipsis.circle.fill"
-        // WS-A appends `.hosting`; the fallback keeps the App building
-        // until this file's owner gives it a proper icon.
-        @unknown default: "ellipsis.circle.fill"
+    /// One shared mapping for every category, so a bucket looks the same
+    /// in the ledger, the weekly report and the breakdown card.
+    private var icon: String { entry.category.systemImage }
+}
+
+// MARK: - Run rate
+
+/// Where the money is actually coming from right now: recurring revenue
+/// from subscription products, one-time sales, and what the live products
+/// cost to keep running.
+private struct RunRateCard: View {
+    let engine: GameEngine
+
+    /// Weekly subscription revenue across every live subscription product.
+    private var monthlyRecurring: Int {
+        engine.state.products.reduce(0) { total, product in
+            guard case .released(let info) = product.stage, info.isSubscription, !info.offMarket else {
+                return total
+            }
+            let price = engine.content.productType(product.typeID)?.unitPrice ?? 0
+            return total + Int((Double(info.subscribers) * price).rounded())
         }
+    }
+
+    /// The most recent full week of one-time sales revenue.
+    private var lastWeekSales: Int {
+        let week = max(0, engine.state.day / 7 - 1)
+        return engine.state.ledger.entries
+            .filter { $0.day / 7 == week && $0.category == .sales && $0.amount > 0 }
+            .reduce(0) { $0 + $1.amount }
+    }
+
+    /// Hosting and other running costs posted last week.
+    private var lastWeekRunningCosts: Int {
+        let week = max(0, engine.state.day / 7 - 1)
+        return engine.state.ledger.entries
+            .filter { $0.day / 7 == week && $0.amount < 0 && isRunningCost($0.category) }
+            .reduce(0) { $0 - $1.amount }
+    }
+
+    /// Operating-style buckets. Written as a positive list rather than a
+    /// `default`, so WS-A's `.hosting` shows up as a warning here instead
+    /// of being silently lumped in with payroll.
+    private func isRunningCost(_ category: LedgerEntry.Category) -> Bool {
+        switch category {
+        case .operating, .rent: true
+        case .payroll, .sales, .contracts, .marketing, .research, .other: false
+        @unknown default: true
+        }
+    }
+
+    var body: some View {
+        CardView("Run rate", systemImage: "speedometer") {
+            HStack(alignment: .top, spacing: Theme.Spacing.xl) {
+                if monthlyRecurring > 0 {
+                    FinanceStat(
+                        label: "Recurring",
+                        value: "\(monthlyRecurring.money)/wk",
+                        tint: Theme.positiveCash
+                    )
+                }
+                FinanceStat(
+                    label: "Sales last week",
+                    value: lastWeekSales.money,
+                    tint: lastWeekSales > 0 ? Theme.positiveCash : .secondary
+                )
+                FinanceStat(
+                    label: "Running costs",
+                    value: lastWeekRunningCosts.money,
+                    tint: Theme.negativeCash
+                )
+            }
+        }
+    }
+}
+
+/// Last week's postings summed per bucket, largest first — the same
+/// breakdown the weekly report shows, kept on the finances screen for the
+/// weeks the player skipped.
+private struct CategoryBreakdownCard: View {
+    let state: GameState
+
+    private var week: Int { max(0, state.day / 7 - 1) }
+
+    private var totals: [(category: LedgerEntry.Category, income: Int, expense: Int)] {
+        var income: [LedgerEntry.Category: Int] = [:]
+        var expense: [LedgerEntry.Category: Int] = [:]
+        for entry in state.ledger.entries where entry.day / 7 == week {
+            if entry.amount >= 0 {
+                income[entry.category, default: 0] += entry.amount
+            } else {
+                expense[entry.category, default: 0] -= entry.amount
+            }
+        }
+        let categories = Set(income.keys).union(expense.keys)
+        return categories
+            .map { (category: $0, income: income[$0] ?? 0, expense: expense[$0] ?? 0) }
+            .sorted {
+                let left = max($0.income, $0.expense)
+                let right = max($1.income, $1.expense)
+                return left == right
+                    ? $0.category.rawValue < $1.category.rawValue
+                    : left > right
+            }
+    }
+
+    var body: some View {
+        CardView("Last week by category", systemImage: "chart.pie.fill") {
+            if totals.isEmpty {
+                Text("Nothing posted last week.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                VStack(spacing: Theme.Spacing.sm) {
+                    ForEach(totals, id: \.category) { row in
+                        HStack(spacing: Theme.Spacing.md) {
+                            Image(systemName: row.category.systemImage)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 20)
+                            Text(row.category.displayName)
+                                .font(.subheadline)
+                            Spacer(minLength: Theme.Spacing.sm)
+                            if row.income > 0 {
+                                Text("+\(row.income.money)")
+                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                    .monospacedDigit()
+                                    .foregroundStyle(Theme.positiveCash)
+                            }
+                            if row.expense > 0 {
+                                Text("-\(row.expense.money)")
+                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                                    .monospacedDigit()
+                                    .foregroundStyle(Theme.negativeCash)
+                            }
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct FinanceStat: View {
+    let label: String
+    let value: String
+    var tint: Color = .primary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(.title3, design: .rounded).weight(.semibold))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+        }
+        .accessibilityElement(children: .combine)
     }
 }

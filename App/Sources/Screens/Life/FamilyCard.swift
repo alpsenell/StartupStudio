@@ -8,6 +8,15 @@ import TycoonEngine
 struct FamilyCard: View {
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var shell
+    @State private var confirmingProposal = false
+    @State private var confirmingChild = false
+
+    /// Every gate below is the engine's own number, read from balance
+    /// rather than copied — the thresholds used to be literals here and
+    /// silently disagreed with the reducer on easy and hard.
+    private var lifeBalance: BalanceConfig.LifeBalance { engine.balance.life }
+
     var body: some View {
         let state = engine.state
         let life = state.life
@@ -17,7 +26,8 @@ struct FamilyCard: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 StageHeader(stage: family.stage, relationships: life.meters.relationships)
 
-                if family.stage != .single, life.meters.relationships < 25 {
+                if family.stage != .single,
+                   life.meters.relationships < engine.balance.life.breakupThreshold + 10 {
                     BreakupWarning()
                 }
 
@@ -40,7 +50,15 @@ struct FamilyCard: View {
                 if let step = advanceStep(life: life, day: state.day) {
                     Divider()
                     GatedAction(title: step.title, reason: step.reason) {
-                        engine.send(.advanceRelationship)
+                        if family.stage.next == .married {
+                            confirmingProposal = true
+                        } else {
+                            shell.toasts.send(
+                                .advanceRelationship,
+                                to: engine,
+                                rejected: "Not yet — give it time."
+                            )
+                        }
                     }
                 }
 
@@ -48,14 +66,50 @@ struct FamilyCard: View {
                     Divider()
                     let child = childStep(life: life, day: state.day)
                     GatedAction(title: child.title, reason: child.reason) {
-                        engine.send(.haveChild)
+                        confirmingChild = true
                     }
                 }
             }
         }
+        .confirmationDialog(
+            "Propose?",
+            isPresented: $confirmingProposal,
+            titleVisibility: .visible
+        ) {
+            Button("Propose (\(engine.balance.life.weddingCost.money))") {
+                shell.toasts.send(
+                    .advanceRelationship,
+                    to: engine,
+                    rejected: "The moment was not right."
+                )
+            }
+            Button("Not yet", role: .cancel) {}
+        } message: {
+            Text(
+                "The wedding costs \(engine.balance.life.weddingCost.money) out of your own wallet."
+            )
+        }
+        .confirmationDialog(
+            "Try for a baby?",
+            isPresented: $confirmingChild,
+            titleVisibility: .visible
+        ) {
+            Button("Yes (\(engine.balance.life.childStartCost.money))") {
+                shell.toasts.send(
+                    .haveChild,
+                    to: engine,
+                    rejected: "Not right now."
+                )
+            }
+            Button("Not yet", role: .cancel) {}
+        } message: {
+            Text(
+                "\(engine.balance.life.childStartCost.money) up front, then \(engine.balance.life.childWeeklyCost.money) a week out of your wallet — for the rest of the run."
+            )
+        }
     }
 
-    // MARK: - Gates (mirror the engine; the engine enforces)
+    // MARK: - Gates (read from the engine's balance; the engine enforces)
 
     private struct Step {
         let title: String
@@ -73,23 +127,27 @@ struct FamilyCard: View {
         case .dating:
             return Step(
                 title: "Ask them out",
-                reason: rel >= 40 ? nil : "Relationships need to reach 40 — get out more on weekends."
+                reason: rel >= lifeBalance.datingMinRelationships
+                    ? nil
+                    : "Relationships need to reach \(Int(lifeBalance.datingMinRelationships)) — get out more on weekends."
             )
         case .partner:
-            let reason: String? = if rel < 60 {
-                "Relationships need to reach 60."
-            } else if daysAtStage < 56 {
-                "Give it \(56 - daysAtStage) more day\(56 - daysAtStage == 1 ? "" : "s") of dating."
+            let minDays = lifeBalance.partnerMinDaysAtStage
+            let reason: String? = if rel < lifeBalance.partnerMinRelationships {
+                "Relationships need to reach \(Int(lifeBalance.partnerMinRelationships))."
+            } else if daysAtStage < minDays {
+                "Give it \(minDays - daysAtStage) more day\(minDays - daysAtStage == 1 ? "" : "s") of dating."
             } else {
                 nil
             }
             return Step(title: "Move in together", reason: reason)
         case .married:
-            let cost = engine.balance.life.weddingCost
-            let reason: String? = if rel < 75 {
-                "Relationships need to reach 75."
-            } else if daysAtStage < 84 {
-                "Give it \(84 - daysAtStage) more day\(84 - daysAtStage == 1 ? "" : "s") together."
+            let cost = lifeBalance.weddingCost
+            let minDays = lifeBalance.marriedMinDaysAtStage
+            let reason: String? = if rel < lifeBalance.marriedMinRelationships {
+                "Relationships need to reach \(Int(lifeBalance.marriedMinRelationships))."
+            } else if daysAtStage < minDays {
+                "Give it \(minDays - daysAtStage) more day\(minDays - daysAtStage == 1 ? "" : "s") together."
             } else if life.wallet < cost {
                 "Need \((cost - life.wallet).money) more in your wallet."
             } else {
@@ -102,17 +160,19 @@ struct FamilyCard: View {
     }
 
     private func childStep(life: LifeState, day: Int) -> Step {
-        let cost = engine.balance.life.childStartCost
+        let config = lifeBalance
+        let cost = config.childStartCost
         let family = life.family
         let sinceLast = family.lastChildDay.map { day - $0 }
-        let reason: String? = if family.children.count >= 3 {
-            "Three kids is a full house."
+        let spacing = config.childSpacingDays
+        let reason: String? = if family.children.count >= config.maxChildren {
+            "\(config.maxChildren) kids is a full house."
         } else if !life.home.allowsChildren {
             "Needs at least an apartment — upgrade your home first."
-        } else if life.meters.relationships < 70 {
-            "Relationships need to reach 70."
-        } else if let sinceLast, sinceLast < 140 {
-            "Wait \(140 - sinceLast) more day\(140 - sinceLast == 1 ? "" : "s")."
+        } else if life.meters.relationships < config.childMinRelationships {
+            "Relationships need to reach \(Int(config.childMinRelationships))."
+        } else if let sinceLast, sinceLast < spacing {
+            "Wait \(spacing - sinceLast) more day\(spacing - sinceLast == 1 ? "" : "s")."
         } else if life.wallet < cost {
             "Need \((cost - life.wallet).money) more in your wallet."
         } else {

@@ -9,11 +9,15 @@ import TycoonEngine
 /// `engine.state` / `engine.content`.
 struct MarketReportScreen: View {
     let engine: GameEngine
+    /// A topic to push straight away, when the report was opened from a
+    /// deep link ("Details" on a market boom or crash).
+    var initialTopicID: String?
 
     @Environment(\.dismiss) private var dismiss
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
                     MarketPositionCard(engine: engine)
@@ -32,6 +36,11 @@ struct MarketReportScreen: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
+                }
+            }
+            .onAppear {
+                if let initialTopicID, engine.content.topic(initialTopicID) != nil {
+                    path.append(TopicRoute(topicID: initialTopicID))
                 }
             }
         }

@@ -40,6 +40,8 @@ struct DecisionSheet: View {
     let prompt: DecisionPrompt
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var shell
+
     var body: some View {
         NavigationStack {
             VStack(spacing: Theme.Spacing.lg) {
@@ -73,7 +75,16 @@ struct DecisionSheet: View {
                 VStack(spacing: Theme.Spacing.sm) {
                     ForEach(prompt.options) { option in
                         Button(role: option.role) {
-                            engine.send(option.action)
+                            // The answer to a paused question gets a line
+                            // of its own, so even an option the reducer
+                            // applies silently is acknowledged.
+                            shell.toasts.send(
+                                option.action,
+                                to: engine,
+                                ack: option.label,
+                                icon: prompt.systemImage,
+                                tint: prompt.tint
+                            )
                         } label: {
                             VStack(spacing: 2) {
                                 Text(option.label)
