@@ -32,7 +32,29 @@ enum EmployeeSystem {
             refreshCandidates(&state, balance, content)
             events.append(.candidatesRefreshed(day: state.day))
         }
+        if state.day % GameState.daysPerWeek == 0 {
+            pruneEconomyBookkeeping(&state, balance)
+        }
         return events
+    }
+
+    /// Weekly tidy-up of the economy's bookkeeping, so a long game does not
+    /// carry a growing tail of dead ids and ancient dates in its save: the
+    /// recognition log drops anyone who has left however they left (fired,
+    /// resigned, poached, absorbed), and the hospital and burnout logs keep
+    /// only the entries their "twice in a window" rules can still see.
+    private static func pruneEconomyBookkeeping(_ state: inout GameState, _ balance: BalanceConfig) {
+        let onPayroll = Set(state.employees.map(\.id))
+        state.economy.lastRecognitionDay = state.economy.lastRecognitionDay.filter {
+            onPayroll.contains($0.key)
+        }
+        let economy = balance.economy
+        state.economy.hospitalizationDays = state.economy.hospitalizationDays.filter {
+            state.day - $0 < max(economy.chronicWindowDays, 1)
+        }
+        state.economy.burnoutDays = state.economy.burnoutDays.filter {
+            state.day - $0 < max(economy.burnoutWindowDays, 1)
+        }
     }
 
     /// Days between candidate refreshes: the balance cadence, shortened by
@@ -70,10 +92,18 @@ enum EmployeeSystem {
 
     /// Every hired employee's morale drifts toward a target set by pay
     /// fairness (their salary vs. the hiring-market rate for their skills,
-    /// raised by seniority), the office tier, People & HR, and the owned
-    /// amenities. Morale below the quit threshold builds a streak; a streak
-    /// past `quitStreakDays` (extended by HR and the shuttle) makes the
-    /// employee resign. The founder has life meters instead of morale.
+    /// raised by seniority), the office tier, People & HR, the owned
+    /// amenities, and — new in the economy pass — how the place is actually
+    /// being run: the company's work pace, being stuck on the same rung for
+    /// a year, a room at its headcount cap, contracts running past their
+    /// deadline, and a founder who has been gone for over a week.
+    ///
+    /// Morale below the quit threshold builds a streak. Past the streak an
+    /// employee does not vanish: they hand in their notice
+    /// (`.resignationNotice`), keep working, and leave on `respondByDay`
+    /// unless the founder counters with a raise or a promotion. Only one
+    /// notice is open at a time — the next unhappy person waits their turn.
+    /// The founder has life meters instead of morale.
     private static func updateMoraleAndQuits(
         _ state: inout GameState,
         _ balance: BalanceConfig,
@@ -81,6 +111,7 @@ enum EmployeeSystem {
     ) -> [GameEvent] {
         let staff = balance.staff
         let company = balance.company
+        let economy = balance.economy
         let hasHR = state.hasDepartment(.hr)
         let officeBonus = (staff.officeMoraleBonus[state.company.officeTier.rawValue] ?? 0)
             + balance.city.district(state.city.district).moraleBonus
@@ -89,19 +120,27 @@ enum EmployeeSystem {
         let quitStreakDays = staff.quitStreakDays
             + (hasHR ? company.hrQuitStreakBonus : 0)
             + state.ownedAmenities.reduce(0) { $0 + company.amenity($1).quitStreakBonusDays }
+        let conditions = workplaceMoraleDelta(state, balance)
         var events: [GameEvent] = []
         var quitting: [Int] = []
+        var noticeCandidate: Int?
 
         for index in state.employees.indices where !state.employees[index].isFounder {
             let employee = state.employees[index]
             let fairPay = fairWeeklyPay(for: employee, balance: balance)
             let ratio = fairPay > 0 ? Double(employee.weeklySalary) / fairPay : 1
-            var target = staff.baselineMorale + officeBonus + perkBonus
+            var target = staff.baselineMorale + officeBonus + perkBonus + conditions
                 + TraitEffects.moraleTargetDelta(employee, content: content)
             if ratio < staff.underpaidThreshold {
                 target -= staff.underpaidTargetPenalty
             } else if ratio > staff.wellPaidThreshold {
                 target += staff.wellPaidTargetBonus
+            }
+            // Nobody has been promoted, raised or trained in a year: they
+            // start reading job ads.
+            let lastRecognised = state.economy.lastRecognitionDay[employee.id] ?? employee.hiredDay
+            if state.day - lastRecognised >= economy.stagnationDays {
+                target -= economy.stagnationMoralePenalty
             }
             target = min(100, max(0, target))
 
@@ -115,16 +154,51 @@ enum EmployeeSystem {
                 let personalStreak = quitStreakDays
                     + Int(state.employees[index].loyalty / balance.social.loyaltyQuitDivisor)
                     + TraitEffects.quitStreakBonus(employee, content: content)
-                if state.employees[index].lowMoraleStreakDays > personalStreak {
-                    quitting.append(index)
+                if state.employees[index].lowMoraleStreakDays > personalStreak,
+                   noticeCandidate == nil {
+                    noticeCandidate = index
                 }
             } else {
                 state.employees[index].lowMoraleStreakDays = 0
             }
         }
 
+        // A notice that ran out of road: they leave today.
+        if let pending = state.economy.pendingResignation, state.day >= pending.respondByDay {
+            state.economy.pendingResignation = nil
+            if let index = state.employees.firstIndex(where: { $0.id == pending.employeeID }) {
+                quitting.append(index)
+            }
+        }
+        // With no notice period configured (the neutral test economy) an
+        // unhappy employee simply walks, which is the pre-notice behavior.
+        if economy.resignationNoticeDays <= 0 {
+            if let index = noticeCandidate, !quitting.contains(index) {
+                quitting.append(index)
+            }
+        } else if state.economy.pendingResignation == nil,
+                  let index = noticeCandidate,
+                  !quitting.contains(index) {
+            let employee = state.employees[index]
+            let respondByDay = state.day + economy.resignationNoticeDays
+            state.economy.pendingResignation = PendingResignation(
+                employeeID: employee.id,
+                name: employee.name,
+                sinceDay: state.day,
+                respondByDay: respondByDay,
+                salaryAtNotice: employee.weeklySalary
+            )
+            events.append(.resignationNotice(
+                employeeID: employee.id,
+                name: employee.name,
+                respondByDay: respondByDay,
+                day: state.day
+            ))
+        }
+
         for index in quitting.reversed() {
             let employee = state.employees.remove(at: index)
+            state.economy.lastRecognitionDay[employee.id] = nil
             events.append(.employeeQuit(employeeID: employee.id, name: employee.name, day: state.day))
             events.append(contentsOf: SocialSystem.friendDeparted(
                 employee.id, state: &state, balance: balance
@@ -133,27 +207,87 @@ enum EmployeeSystem {
         return events
     }
 
-    /// The weekly pay an employee considers fair: the candidate-market rate
-    /// for their skills, raised by `levelPayExpectation` per seniority level.
+    /// What the company's own conduct does to everybody's morale target
+    /// today: the work pace, a room at its cap, contracts running late, and
+    /// a founder who has not been seen in over a week.
+    static func workplaceMoraleDelta(_ state: GameState, _ balance: BalanceConfig) -> Double {
+        let economy = balance.economy
+        var delta = economy.pace(state.economy.workPace).moraleTargetDelta
+
+        if state.headcount >= balance.office(state.company.officeTier).headcountCap {
+            delta -= economy.overcrowdingMoralePenalty
+        }
+        let overdue = state.activeContracts.count { $0.deadlineDay < state.day }
+        delta -= Double(overdue) * economy.overdueContractMoralePenalty
+        if let since = state.life.awaySinceDay,
+           state.life.isAway(day: state.day),
+           state.day - since > economy.founderAwayDays {
+            delta -= economy.founderAwayMoralePenalty
+        }
+        return delta
+    }
+
+    /// Records that an employee was recognised today — hired, raised,
+    /// promoted or trained — resetting the stagnation clock.
+    static func recordRecognition(_ employeeID: UUID, _ state: inout GameState) {
+        state.economy.lastRecognitionDay[employeeID] = state.day
+    }
+
+    /// Answers an open resignation notice. A raise that clears
+    /// `counterOfferRaiseFactor` of the salary they resigned on — or any
+    /// promotion — keeps them: morale jumps, the streak resets, and the
+    /// notice is withdrawn. Anything less is not a counter-offer.
+    private static func answerResignation(
+        _ employeeID: UUID,
+        newSalary: Int?,
+        promoted: Bool,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) {
+        guard let pending = state.economy.pendingResignation,
+              pending.employeeID == employeeID
+        else { return }
+        let enough = promoted || newSalary.map {
+            Double($0) >= Double(pending.salaryAtNotice) * balance.economy.counterOfferRaiseFactor
+        } ?? false
+        guard enough else { return }
+
+        state.economy.pendingResignation = nil
+        guard let index = state.employees.firstIndex(where: { $0.id == employeeID }) else { return }
+        bumpMorale(&state.employees[index], by: balance.economy.counterOfferMoraleBoost)
+        state.employees[index].lowMoraleStreakDays = 0
+    }
+
+    /// The weekly pay an employee considers fair. Lives on `BalanceConfig`
+    /// so screens can show the number the morale system actually uses
+    /// rather than re-deriving it.
     static func fairWeeklyPay(for employee: Employee, balance: BalanceConfig) -> Double {
-        (Double(balance.salaryBase) + balance.salaryPerSkillPoint * employee.skills.total)
-            * (1 + balance.staff.levelPayExpectation * Double(employee.level.rank))
+        balance.fairWeeklyPay(for: employee)
     }
 
     // MARK: - Daily sweep
 
-    /// Resets assignments pointing at gone targets back to `.idle`: products
-    /// that are released or nonexistent, and contracts that completed,
-    /// failed, or never existed. Research assignments are left alone.
+    /// Resets assignments pointing at gone targets back to `.idle`:
+    /// products that are released (unless a patch cycle is running on them)
+    /// or nonexistent, contracts that completed, failed, or never existed,
+    /// and support desks whose product has left the market. Research
+    /// assignments are left alone.
     private static func sweepStaleAssignments(_ state: inout GameState) {
         for index in state.employees.indices {
             switch state.employees[index].assignment {
             case .product(let productID):
                 if let product = state.product(id: productID),
                    case .development = product.stage { continue }
+                // A patch cycle keeps its crew on the released product it
+                // is patching.
+                if state.economy.update(for: productID) != nil { continue }
                 state.employees[index].assignment = .idle
             case .contract(let contractID):
                 if state.activeContract(id: contractID) != nil { continue }
+                state.employees[index].assignment = .idle
+            case .support(let productID):
+                if case .released(let info)? = state.product(id: productID)?.stage,
+                   !info.offMarket { continue }
                 state.employees[index].assignment = .idle
             case .idle, .research:
                 continue
@@ -163,7 +297,8 @@ enum EmployeeSystem {
 
     // MARK: - Daily output
 
-    /// Every employee assigned to the in-development product contributes
+    /// Every employee assigned to a product in development — or to a
+    /// released product with a patch cycle running — contributes
     /// points split by the product's focus and shaped by their role:
     /// `poolYield = focusShare * roleYield * (employeeBasePoints + relevantSkill / skillYieldDivisor)`
     /// where the code pool draws on coding, the design pool on design, and
@@ -179,34 +314,140 @@ enum EmployeeSystem {
         _ balance: BalanceConfig,
         _ content: ContentCatalog
     ) {
-        guard let productIndex = state.products.firstIndex(where: { product in
-            if case .development = product.stage { return true }
-            return false
-        }), case .development(let dev) = state.products[productIndex].stage else { return }
+        // Every product in development gets its own crew and its own day.
+        for productIndex in state.products.indices {
+            guard case .development(let dev) = state.products[productIndex].stage else { continue }
+            buildProduct(at: productIndex, focus: dev.focus, &state, balance, content)
+        }
+        // Patches on released products draw from the same pool of hands.
+        for updateIndex in state.economy.updates.indices {
+            patchProduct(at: updateIndex, &state, balance, content)
+        }
+    }
 
+    /// One day of work on one in-development product.
+    private static func buildProduct(
+        at productIndex: Int,
+        focus: PhaseFocus,
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) {
         let productID = state.products[productIndex].id
-        let focus = dev.focus
-        let company = balance.company
+        let crew = gatherCrewOutput(
+            productID: productID, focus: focus, state: state, balance: balance, content: content
+        )
+        let pace = balance.economy.pace(state.economy.workPace)
+        let output = state.devSpeedTechMultiplier(content: content)
+            * crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            * pace.outputFactor
 
-        let founderAway = state.life.isAway(day: state.day)
-        let founderFactor = state.founderOutputMultiplier(balance: balance)
-        // Working next to a friend lifts output (strongest co-assigned bond).
-        let crew = state.employees
-            .filter { if case .product(let id) = $0.assignment { return id == productID }; return false }
-            .map(\.id)
-        var design = 0.0, code = 0.0, polish = 0.0
+        ProductSystem.applyDailyProgress(
+            design: crew.design * output,
+            code: crew.code * output,
+            polish: crew.polish * output,
+            averageCoding: crew.producers.isEmpty
+                ? balance.founderCoding
+                : crew.codingSum / Double(crew.producers.count),
+            bugChanceMultiplier: (crew.founderWorked
+                ? state.founderBugChanceMultiplier(balance: balance)
+                : 1) * pace.bugFactor,
+            bugFixMultiplier: crew.bugFixMultiplier(balance: balance),
+            productIndex: productIndex, state: &state, balance: balance
+        )
+        // Record who built it today, for the ship-time quality ceiling.
+        if !crew.producers.isEmpty,
+           case .development(var progress) = state.products[productIndex].stage {
+            progress.hype += crew.hype
+            progress.crewSkillDaySum += ProductSystem.crewSkillSample(
+                designSkillSum: crew.designSum,
+                codingSkillSum: crew.codingSum,
+                crewCount: crew.producers.count,
+                balance: balance
+            )
+            progress.crewSkillDays += 1
+            state.products[productIndex].stage = .development(progress)
+        }
+        growProducers(crew.producers, focus: focus, pace: pace, &state, balance, content)
+    }
+
+    /// One day of work on one patch cycle. The crew is whoever is assigned
+    /// to the released product; the focus follows whatever the patch still
+    /// needs, so a patch always finishes rather than stalling on a pool the
+    /// player has no way to re-aim.
+    private static func patchProduct(
+        at updateIndex: Int,
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) {
+        let update = state.economy.updates[updateIndex]
+        let focus = PhaseFocus(
+            design: max(0, update.designPts - update.progressDesign),
+            code: max(0, update.codePts - update.progressCode),
+            polish: max(0, update.polishPts - update.progressPolish)
+        ).normalized
+        let crew = gatherCrewOutput(
+            productID: update.productID, focus: focus,
+            state: state, balance: balance, content: content
+        )
+        guard !crew.producers.isEmpty else { return }
+
+        let pace = balance.economy.pace(state.economy.workPace)
+        let output = state.devSpeedTechMultiplier(content: content)
+            * crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            * pace.outputFactor
+        state.economy.updates[updateIndex].progressDesign += crew.design * output
+        state.economy.updates[updateIndex].progressCode += crew.code * output
+        state.economy.updates[updateIndex].progressPolish += crew.polish * output
+        growProducers(crew.producers, focus: focus, pace: pace, &state, balance, content)
+    }
+
+    /// One day's raw pool output from everyone assigned to `productID`,
+    /// before the tech, crowding and pace multipliers.
+    private struct CrewOutput {
+        var design = 0.0
+        var code = 0.0
+        var polish = 0.0
         var qaPolish = 0.0
         var hype = 0.0
         var codingSum = 0.0
+        var designSum = 0.0
         var producers: [Int] = []
         var founderWorked = false
+
+        /// Bugs fixed per completed polish point, blended over who produced
+        /// today's polish (exactly 1 without QA, exactly the multiplier with
+        /// only QA).
+        func bugFixMultiplier(balance: BalanceConfig) -> Double {
+            guard polish > 0 else { return 1 }
+            return (polish - qaPolish + qaPolish * balance.company.qaBugFixMultiplier) / polish
+        }
+    }
+
+    private static func gatherCrewOutput(
+        productID: UUID,
+        focus: PhaseFocus,
+        state: GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> CrewOutput {
+        let company = balance.company
+        let founderAway = state.life.isAway(day: state.day)
+        let founderFactor = state.founderOutputMultiplier(balance: balance)
+        // Working next to a friend lifts output (strongest co-assigned bond).
+        let crewIDs = state.employees
+            .filter { if case .product(let id) = $0.assignment { return id == productID }; return false }
+            .map(\.id)
+
+        var out = CrewOutput()
         for index in state.employees.indices {
             guard case .product(let assignedID) = state.employees[index].assignment,
                   assignedID == productID else { continue }
             let isFounder = state.employees[index].isFounder
             if isFounder, founderAway { continue }
             let bond = SocialSystem.strongestBond(
-                for: state.employees[index].id, among: crew, in: state
+                for: state.employees[index].id, among: crewIDs, in: state
             )
             let friendFactor = 1 + balance.social.friendshipOutputBonus * bond / 100
             let factor = (isFounder
@@ -217,54 +458,44 @@ enum EmployeeSystem {
             let skills = state.employees[index].skills
             let role = state.employees[index].role
             let yield = company.roleYield(role)
-            design += factor * focus.design * yield.design
+            out.design += factor * focus.design * yield.design
                 * (balance.employeeBasePoints + skills.design / balance.skillYieldDivisor)
-            code += factor * focus.code * yield.code
+            out.code += factor * focus.code * yield.code
                 * (balance.employeeBasePoints + skills.coding / balance.skillYieldDivisor)
             let polishShare = factor * focus.polish * yield.polish
                 * (balance.employeeBasePoints + (skills.coding + skills.design) / 2 / balance.skillYieldDivisor)
-            polish += polishShare
-            if role == .qa { qaPolish += polishShare }
+            out.polish += polishShare
+            if role == .qa { out.qaPolish += polishShare }
             if role == .marketer {
-                hype += company.marketerDailyHype * (1 + skills.marketing / 100)
+                out.hype += company.marketerDailyHype * (1 + skills.marketing / 100)
             }
-            codingSum += skills.coding
-            producers.append(index)
-            if isFounder { founderWorked = true }
+            out.codingSum += skills.coding
+            out.designSum += skills.design
+            out.producers.append(index)
+            if isFounder { out.founderWorked = true }
         }
+        return out
+    }
 
-        let averageCoding = producers.isEmpty
-            ? balance.founderCoding
-            : codingSum / Double(producers.count)
-        let bugChanceMultiplier = founderWorked ? state.founderBugChanceMultiplier(balance: balance) : 1
-        // Bugs fixed per completed polish point, blended over who produced
-        // today's polish (exactly 1 without QA, exactly the multiplier with
-        // only QA).
-        let bugFixMultiplier = polish > 0
-            ? (polish - qaPolish + qaPolish * company.qaBugFixMultiplier) / polish
-            : 1
-        let devSpeed = state.devSpeedTechMultiplier(content: content)
-        ProductSystem.applyDailyProgress(
-            design: design * devSpeed, code: code * devSpeed, polish: polish * devSpeed,
-            averageCoding: averageCoding,
-            bugChanceMultiplier: bugChanceMultiplier,
-            bugFixMultiplier: bugFixMultiplier,
-            productIndex: productIndex, state: &state, balance: balance
-        )
-        if hype > 0, case .development(var progress) = state.products[productIndex].stage {
-            progress.hype += hype
-            state.products[productIndex].stage = .development(progress)
-        }
-
-        // Skill growth for the skills that fed a pool today: coding feeds the
-        // code and polish pools, design feeds the design and polish pools.
+    /// Skill growth for the skills that fed a pool today: coding feeds the
+    /// code and polish pools, design feeds the design and polish pools.
+    private static func growProducers(
+        _ producers: [Int],
+        focus: PhaseFocus,
+        pace: BalanceConfig.EconomyBalance.PaceDef,
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) {
         let growsCoding = focus.code > 0 || focus.polish > 0
         let growsDesign = focus.design > 0 || focus.polish > 0
+        guard growsCoding || growsDesign else { return }
         for index in producers {
             // Read the trait factor before the inout growth calls: taking
             // `&state.employees[index]...` and reading `state.employees`
             // in the same call would overlap exclusive access.
             let growthRate = balance.skillGrowthRate
+                * pace.skillGrowthFactor
                 * TraitEffects.growthFactor(state.employees[index], content: content)
             if growsCoding {
                 grow(&state.employees[index].skills.coding, rate: growthRate)
@@ -273,6 +504,14 @@ enum EmployeeSystem {
                 grow(&state.employees[index].skills.design, rate: growthRate)
             }
         }
+    }
+
+    /// Brooks's law as one number: `n` people working the same job each
+    /// produce `1 / (1 + brooksPenalty × (n − 1))` of a solo day. A penalty
+    /// of 0 (the neutral test economy) restores the old straight sum.
+    static func crowdingFactor(producerCount: Int, balance: BalanceConfig) -> Double {
+        guard producerCount > 1 else { return 1 }
+        return 1 / (1 + balance.economy.brooksPenalty * Double(producerCount - 1))
     }
 
     // MARK: - Daily contract output
@@ -292,6 +531,14 @@ enum EmployeeSystem {
         let devSpeed = state.devSpeedTechMultiplier(content: content)
         let founderAway = state.life.isAway(day: state.day)
         let founderFactor = state.founderOutputMultiplier(balance: balance)
+        let pace = balance.economy.pace(state.economy.workPace)
+        // A contract crew crowds the same way a product crew does.
+        var crewSizes: [UUID: Int] = [:]
+        for employee in state.employees {
+            if case .contract(let id) = employee.assignment {
+                crewSizes[id, default: 0] += 1
+            }
+        }
 
         for index in state.employees.indices {
             guard case .contract(let contractID) = state.employees[index].assignment,
@@ -312,15 +559,19 @@ enum EmployeeSystem {
 
             let skills = state.employees[index].skills
             let yield = balance.company.roleYield(state.employees[index].role)
+            let output = devSpeed * pace.outputFactor * crowdingFactor(
+                producerCount: crewSizes[contractID] ?? 1, balance: balance
+            )
             state.activeContracts[jobIndex].progressCode += factor * yield.code
-                * (balance.employeeBasePoints + skills.coding / balance.skillYieldDivisor) * devSpeed
+                * (balance.employeeBasePoints + skills.coding / balance.skillYieldDivisor) * output
             state.activeContracts[jobIndex].progressDesign += factor * yield.design
-                * (balance.employeeBasePoints + skills.design / balance.skillYieldDivisor) * devSpeed
+                * (balance.employeeBasePoints + skills.design / balance.skillYieldDivisor) * output
             // Record the crew's skill for the delivery-quality grade.
             state.activeContracts[jobIndex].skillDaySum += (skills.coding + skills.design) / 2
             state.activeContracts[jobIndex].skillDays += 1
-            grow(&state.employees[index].skills.coding, rate: balance.skillGrowthRate)
-            grow(&state.employees[index].skills.design, rate: balance.skillGrowthRate)
+            let growthRate = balance.skillGrowthRate * pace.skillGrowthFactor
+            grow(&state.employees[index].skills.coding, rate: growthRate)
+            grow(&state.employees[index].skills.design, rate: growthRate)
         }
     }
 
@@ -502,6 +753,7 @@ enum EmployeeSystem {
             level: .forSkillTotal(candidate.skills.total),
             role: candidate.role
         ))
+        recordRecognition(candidate.id, &state)
         return [.hired(employeeID: candidate.id, day: state.day)]
     }
 
@@ -544,6 +796,12 @@ enum EmployeeSystem {
             : fraction * staff.cutMoraleFactor
         state.employees[index].weeklySalary = weeklySalary
         bumpMorale(&state.employees[index], by: moraleDelta)
+        if moraleDelta > 0 {
+            recordRecognition(employeeID, &state)
+        }
+        answerResignation(
+            employeeID, newSalary: weeklySalary, promoted: false, state: &state, balance: balance
+        )
         return [.salaryChanged(employeeID: employeeID, weeklySalary: weeklySalary, day: state.day)]
     }
 
@@ -565,6 +823,10 @@ enum EmployeeSystem {
             (Double(state.employees[index].weeklySalary) * (1 + staff.promotionSalaryBump)).rounded()
         )
         bumpMorale(&state.employees[index], by: staff.promotionMoraleBoost)
+        recordRecognition(employeeID, &state)
+        answerResignation(
+            employeeID, newSalary: nil, promoted: true, state: &state, balance: balance
+        )
         return [.employeePromoted(employeeID: employeeID, level: next, day: state.day)]
     }
 
@@ -630,6 +892,7 @@ enum EmployeeSystem {
             bumpMorale(&state.employees[index], by: staff.trainingMoraleBoost)
         }
         state.employees[index].lastTrainedDay = state.day
+        recordRecognition(employeeID, &state)
         return [.employeeTrained(employeeID: employeeID, day: state.day)]
     }
 
@@ -660,11 +923,22 @@ enum EmployeeSystem {
         else { return [] }
 
         state.employees.remove(at: index)
+        state.economy.lastRecognitionDay[employeeID] = nil
+        if state.economy.pendingResignation?.employeeID == employeeID {
+            state.economy.pendingResignation = nil
+        }
         var events: [GameEvent] = [.fired(employeeID: employeeID, day: state.day)]
         events.append(contentsOf: SocialSystem.friendDeparted(
             employeeID, state: &state, balance: balance
         ))
         return events
+    }
+
+    /// Sets the pace the whole company works at. No event — the effects
+    /// show up in tomorrow's output, morale and bug rolls.
+    static func setWorkPace(_ pace: WorkPace, state: inout GameState) -> [GameEvent] {
+        state.economy.workPace = pace
+        return []
     }
 
     /// Reassigns an employee. Any assignment is accepted (a stale product

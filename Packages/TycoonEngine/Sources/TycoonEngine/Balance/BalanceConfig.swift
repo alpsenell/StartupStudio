@@ -1836,6 +1836,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         return copy
     }
 
+    /// The weekly pay an employee considers fair: the candidate-market
+    /// rate for their skills, raised by `staff.levelPayExpectation` per
+    /// seniority level. Pay below `staff.underpaidThreshold` of it drags
+    /// morale toward the door; above `staff.wellPaidThreshold` lifts it.
+    public func fairWeeklyPay(for employee: Employee) -> Double {
+        (Double(salaryBase) + salaryPerSkillPoint * employee.skills.total)
+            * (1 + staff.levelPayExpectation * Double(employee.level.rank))
+    }
+
     /// Decodes the bundled `Balance.json` via `Bundle.module`.
     public static func loadBundled() throws -> BalanceConfig {
         guard let url = Bundle.module.url(forResource: "Balance", withExtension: "json") else {

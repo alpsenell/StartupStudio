@@ -41,6 +41,11 @@ public enum Reducer {
 
         // MARK: WS-A
 
+        // Live ops runs last: support desks, the wild's bug discovery and
+        // landing patches all read the day the rest of the simulation just
+        // produced (notably the sales week `ProductSystem` posts).
+        LiveOpsSystem.run,
+
         // MARK: WS-B
 
         // MARK: WS-F
@@ -61,6 +66,15 @@ public enum Reducer {
         var events: [GameEvent] = []
         for system in systems {
             events.append(contentsOf: system(&state, balance, content))
+        }
+
+        // Decide here, not in the UI shell, so a headless run sees exactly
+        // the pauses a played game would: the policy needs the day's state
+        // and spends the pause budget.
+        let pausing = PausePolicy.pausingEvents(events, state: state, balance: balance)
+        state.economy.pauseEvents = pausing
+        if pausing.contains(where: { $0.severity != .critical }) {
+            state.economy.lastNonCriticalPauseDay = state.day
         }
 
         state.logEvents(events)
@@ -181,6 +195,17 @@ public enum Reducer {
         // nowhere else. The switch stays exhaustive: no `default`.
 
         // MARK: WS-A
+
+        case let .setPriceTier(productID, tier):
+            events = ProductSystem.setPriceTier(
+                productID: productID, tier: tier, state: &state, balance: balance
+            )
+        case let .startUpdate(productID):
+            events = ProductSystem.startUpdate(
+                productID: productID, state: &state, balance: balance, content: content
+            )
+        case let .setWorkPace(pace):
+            events = EmployeeSystem.setWorkPace(pace, state: &state)
 
         // MARK: WS-B
 

@@ -27,6 +27,10 @@ public enum Assignment: Codable, Equatable, Sendable {
     /// An accepted contract being worked (only valid while the job is
     /// active; the daily sweep resets stale contract assignments to `.idle`).
     case contract(UUID)
+    /// Keeping a released product alive: fixing the bugs players find in
+    /// the wild and holding down subscription churn. Only valid while the
+    /// product is on the market; the daily sweep clears it otherwise.
+    case support(UUID)
 }
 
 /// Seniority ladder for hired staff. Levels raise output and what the

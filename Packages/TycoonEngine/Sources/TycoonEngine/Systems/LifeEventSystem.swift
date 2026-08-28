@@ -80,6 +80,9 @@ enum LifeEventSystem {
             let until = day + impact.awayDays
             let reason = impact.awayReason ?? event.headline
             state.life.awayUntilDay = until
+            // WS-A: the team notices a long absence; every absence records
+            // when it started.
+            state.life.awaySinceDay = day
             state.life.awayReason = reason
             events.append(.founderAway(reason: reason, untilDay: until, day: day))
         }

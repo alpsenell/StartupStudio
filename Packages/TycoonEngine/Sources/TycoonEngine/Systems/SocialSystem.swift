@@ -105,6 +105,9 @@ enum SocialSystem {
             case .research: target = "research"
             case .product(let id): target = "product-\(id.uuidString)"
             case .contract(let id): target = "contract-\(id.uuidString)"
+            // Appended with `Assignment.support` (WS-A): people on the same
+            // support desk work side by side like any other crew.
+            case .support(let id): target = "support-\(id.uuidString)"
             }
             if let target {
                 groups[target, default: []].append(employee.id)

@@ -98,6 +98,7 @@ enum TestBalance {
         company: BalanceConfig.CompanyBalance = TestBalance.neutralCompany,
         rivals: BalanceConfig.RivalBalance = TestBalance.noRivals,
         social: BalanceConfig.SocialBalance = TestBalance.quietSocial,
+        economy: BalanceConfig.EconomyBalance = TestBalance.neutralEconomy,
         // The economy scale is 1× and launch saturation / genre fatigue
         // are off in tests so hand-computed sales hold; the difficulty
         // table is the shipped one (it only matters to `adjusted(for:)`).
@@ -214,11 +215,45 @@ enum TestBalance {
             genreFatigueWindowDays: genreFatigueWindowDays,
             marketHistoryWeeks: marketHistoryWeeks,
             marketEventLogCap: marketEventLogCap,
-            difficulty: difficulty
+            difficulty: difficulty,
+            economy: economy
         )
     }
 
     static var standard: BalanceConfig { make() }
+
+    /// An economy that changes nothing: no skill ceiling on quality (a
+    /// beginner crew still reaches 100), no complexity expectation, no
+    /// team-size penalty, no hosting bill, no live bugs, no price
+    /// trade-off, a neutral work pace, no extra morale pressure, no
+    /// founder debt spiral, and no pause budget — so the hand-computed
+    /// outputs and seeded choreography that predate the economy pass
+    /// still hold. Tests exercising a rule pass a real config explicitly
+    /// (`TestBalance.economy(...)`).
+    static var neutralEconomy: BalanceConfig.EconomyBalance {
+        var economy = BalanceConfig.EconomyBalance.default
+        economy.qualityCeilingBase = 1
+        economy.expectationPerComplexity = 0
+        economy.brooksPenalty = 0
+        economy.hostingCostPerSubscriber = 0
+        economy.liveBugSeedFraction = 0
+        economy.liveBugUnitsPerDiscovery = .infinity
+        economy.liveBugSalesPenalty = 0
+        economy.priceTiers = [:]
+        economy.pace = [:]
+        economy.stagnationDays = 1_000_000
+        economy.overcrowdingMoralePenalty = 0
+        economy.overdueContractMoralePenalty = 0
+        economy.founderAwayDays = 1_000_000
+        economy.resignationNoticeDays = 0
+        economy.walletInterestWeeklyRate = 0
+        economy.evictionWalletThreshold = Int.min
+        economy.chronicWindowDays = 0
+        economy.lonelinessDays = 1_000_000
+        economy.burnoutWindowDays = 0
+        economy.pauseBudgetDays = 0
+        return economy
+    }
 
     /// Roles, departments, and amenities change nothing: every role yields
     /// 1× on every pool, QA fixes one bug per polish point, marketers add

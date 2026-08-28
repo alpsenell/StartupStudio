@@ -36,6 +36,13 @@ public struct DevProgress: Codable, Equatable, Sendable {
     /// Marketing hype: fed by campaigns, decayed daily by `MarketingSystem`,
     /// and captured into `ReleaseInfo.hypeAtLaunch` at ship.
     public var hype: Double
+    /// Running sum of the crew's pool-weighted skill, one sample per day
+    /// anyone worked on this product. Divided by `crewSkillDays` at ship it
+    /// becomes the skill index behind the quality ceiling — a product can
+    /// only be as good as the people who built it (the `ContractJob`
+    /// `skillDaySum` / `skillDays` precedent).
+    public var crewSkillDaySum: Double
+    public var crewSkillDays: Int
 
     public init(
         designPts: Double,
@@ -43,7 +50,9 @@ public struct DevProgress: Codable, Equatable, Sendable {
         polishPts: Double,
         openBugs: Int,
         focus: PhaseFocus,
-        hype: Double
+        hype: Double,
+        crewSkillDaySum: Double = 0,
+        crewSkillDays: Int = 0
     ) {
         self.designPts = designPts
         self.codePts = codePts
@@ -51,6 +60,39 @@ public struct DevProgress: Codable, Equatable, Sendable {
         self.openBugs = openBugs
         self.focus = focus
         self.hype = hype
+        self.crewSkillDaySum = crewSkillDaySum
+        self.crewSkillDays = crewSkillDays
+    }
+
+    /// The crew's average pool-weighted skill over the build, 0...100.
+    /// A product nobody ever worked reads 0.
+    public var crewSkillIndex: Double {
+        guard crewSkillDays > 0 else { return 0 }
+        return crewSkillDaySum / Double(crewSkillDays)
+    }
+}
+
+// Hand-written decode so a product that was mid-build when the skill
+// ceiling landed keeps loading: no recorded crew skill reads as a build
+// nobody has worked yet, and the first day of work starts the average.
+extension DevProgress {
+    private enum CodingKeys: String, CodingKey {
+        case designPts, codePts, polishPts, openBugs, focus, hype
+        case crewSkillDaySum, crewSkillDays
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            designPts: try container.decode(Double.self, forKey: .designPts),
+            codePts: try container.decode(Double.self, forKey: .codePts),
+            polishPts: try container.decode(Double.self, forKey: .polishPts),
+            openBugs: try container.decode(Int.self, forKey: .openBugs),
+            focus: try container.decode(PhaseFocus.self, forKey: .focus),
+            hype: try container.decode(Double.self, forKey: .hype),
+            crewSkillDaySum: try container.decodeIfPresent(Double.self, forKey: .crewSkillDaySum) ?? 0,
+            crewSkillDays: try container.decodeIfPresent(Int.self, forKey: .crewSkillDays) ?? 0
+        )
     }
 }
 
@@ -82,10 +124,10 @@ public struct WeeklySale: Codable, Equatable, Sendable {
     }
 }
 
-/// How a released product is priced. WS-A attaches the demand/price
-/// trade-off (budget ×0.6 price ×1.5 demand, premium ×1.6 price ×0.6
-/// demand); every product ships `.standard`, which is exactly today's
-/// behavior.
+/// How a released product is priced. Budget charges ×0.6 for ×1.5 the
+/// demand, premium ×1.6 for ×0.6 — and a premium price the reviews do not
+/// back up drives subscribers away twice as fast. Every product ships
+/// `.standard`.
 public enum PriceTier: String, Codable, Equatable, Sendable, CaseIterable {
     case budget, standard, premium
 
@@ -118,18 +160,24 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// peak); multiplies the weekly sales peak for the product's life.
     /// 1 = untouched (also the fallback for pre-saturation saves).
     public var launchMarketScale: Double
-    /// Bugs found in the wild after launch. 0 (and inert) until WS-A's
-    /// live-ops pass seeds and discovers them.
+    /// Bugs players hit after launch: seeded at ship from whatever was
+    /// still open and discovered week by week as units sell. Each one
+    /// shaves a slice off sales until support clears it.
     public var liveBugs: Int
-    /// The price the product sells at. `.standard` is today's flat price.
+    /// Where the product sits on the price ladder: budget trades margin
+    /// for reach, premium the reverse.
     public var priceTier: PriceTier
-    /// Paying subscribers, for subscription products. 0 until WS-A's
-    /// revenue-model pass.
+    /// Paying subscribers, for subscription products; always 0 for
+    /// one-off sales.
     public var subscribers: Int
     /// Whether revenue comes from a recurring subscription rather than
-    /// one-time sales. `false` — today's one-time model — until WS-A reads
-    /// it from `ProductTypeDef.revenueModel` at ship.
+    /// one-time sales. Read from `ProductTypeDef.revenueModel` at ship.
     public var isSubscription: Bool
+    /// The day the most recent patch landed, `nil` if none ever has. Buys
+    /// one bumper sales week.
+    public var lastUpdateDay: Int?
+    /// How many patches have shipped for this product.
+    public var updateCount: Int
 
     public init(
         launchDay: Int,
@@ -143,7 +191,9 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         liveBugs: Int = 0,
         priceTier: PriceTier = .standard,
         subscribers: Int = 0,
-        isSubscription: Bool = false
+        isSubscription: Bool = false,
+        lastUpdateDay: Int? = nil,
+        updateCount: Int = 0
     ) {
         self.launchDay = launchDay
         self.quality = quality
@@ -157,6 +207,8 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         self.priceTier = priceTier
         self.subscribers = subscribers
         self.isSubscription = isSubscription
+        self.lastUpdateDay = lastUpdateDay
+        self.updateCount = updateCount
     }
 
     /// Rounded mean review score, 0 if there are no reviews.
@@ -181,6 +233,7 @@ extension ReleaseInfo {
     private enum CodingKeys: String, CodingKey {
         case launchDay, quality, reviews, weeklySales, offMarket, hypeAtLaunch, adoptionWeeks
         case launchMarketScale, liveBugs, priceTier, subscribers, isSubscription
+        case lastUpdateDay, updateCount
     }
 
     public init(from decoder: any Decoder) throws {
@@ -197,7 +250,9 @@ extension ReleaseInfo {
             liveBugs: try container.decodeIfPresent(Int.self, forKey: .liveBugs) ?? 0,
             priceTier: try container.decodeIfPresent(PriceTier.self, forKey: .priceTier) ?? .standard,
             subscribers: try container.decodeIfPresent(Int.self, forKey: .subscribers) ?? 0,
-            isSubscription: try container.decodeIfPresent(Bool.self, forKey: .isSubscription) ?? false
+            isSubscription: try container.decodeIfPresent(Bool.self, forKey: .isSubscription) ?? false,
+            lastUpdateDay: try container.decodeIfPresent(Int.self, forKey: .lastUpdateDay),
+            updateCount: try container.decodeIfPresent(Int.self, forKey: .updateCount) ?? 0
         )
     }
 }

@@ -51,6 +51,12 @@ public enum HomeTier: String, Codable, Equatable, Sendable, CaseIterable {
     /// gates (e.g. children need at least `balance.life.childMinHome`).
     var rank: Int { Self.allCases.firstIndex(of: self) ?? 0 }
 
+    /// The tier one rung down the ladder, `nil` at the bottom — where an
+    /// evicted founder ends up.
+    public var previous: HomeTier? {
+        rank > 0 ? Self.allCases[rank - 1] : nil
+    }
+
     /// The tier one rung up the ladder, `nil` at the top.
     public var next: HomeTier? {
         let ladder = Self.allCases
@@ -150,6 +156,9 @@ public struct LifeState: Codable, Equatable, Sendable {
     public var family: FamilyState
     /// The founder is absent (produces nothing) while `day < awayUntilDay`.
     public var awayUntilDay: Int?
+    /// The day the current absence began, so the team can notice a long
+    /// one. `nil` whenever the founder is around.
+    public var awaySinceDay: Int?
     /// Why the founder is away, e.g. "Burnout", "Hospital", "Vacation".
     public var awayReason: String?
     /// The founder has a cold (output × `coldOutputFactor`) while
@@ -177,6 +186,7 @@ public struct LifeState: Codable, Equatable, Sendable {
         home: HomeTier,
         family: FamilyState,
         awayUntilDay: Int?,
+        awaySinceDay: Int? = nil,
         awayReason: String?,
         coldUntilDay: Int?,
         lowRelationshipStreakDays: Int,
@@ -192,6 +202,7 @@ public struct LifeState: Codable, Equatable, Sendable {
         self.home = home
         self.family = family
         self.awayUntilDay = awayUntilDay
+        self.awaySinceDay = awaySinceDay
         self.awayReason = awayReason
         self.coldUntilDay = coldUntilDay
         self.lowRelationshipStreakDays = lowRelationshipStreakDays
@@ -240,6 +251,7 @@ public struct LifeState: Codable, Equatable, Sendable {
                 lastChildDay: nil
             ),
             awayUntilDay: nil,
+            awaySinceDay: nil,
             awayReason: nil,
             coldUntilDay: nil,
             lowRelationshipStreakDays: 0
@@ -257,7 +269,7 @@ public struct LifeState: Codable, Equatable, Sendable {
 extension LifeState {
     private enum CodingKeys: String, CodingKey {
         case meters, schedule, plannedActivity, wallet, founderSalary, home, family
-        case awayUntilDay, awayReason, coldUntilDay, lowRelationshipStreakDays
+        case awayUntilDay, awaySinceDay, awayReason, coldUntilDay, lowRelationshipStreakDays
         case instantCooldowns, instantActionsToday, possessions
     }
 
@@ -278,6 +290,7 @@ extension LifeState {
             home: try container.decode(HomeTier.self, forKey: .home),
             family: try container.decode(FamilyState.self, forKey: .family),
             awayUntilDay: try container.decodeIfPresent(Int.self, forKey: .awayUntilDay),
+            awaySinceDay: try container.decodeIfPresent(Int.self, forKey: .awaySinceDay),
             awayReason: try container.decodeIfPresent(String.self, forKey: .awayReason),
             coldUntilDay: try container.decodeIfPresent(Int.self, forKey: .coldUntilDay),
             lowRelationshipStreakDays: try container.decode(Int.self, forKey: .lowRelationshipStreakDays),
@@ -299,6 +312,7 @@ extension LifeState {
         try container.encode(home, forKey: .home)
         try container.encode(family, forKey: .family)
         try container.encodeIfPresent(awayUntilDay, forKey: .awayUntilDay)
+        try container.encodeIfPresent(awaySinceDay, forKey: .awaySinceDay)
         try container.encodeIfPresent(awayReason, forKey: .awayReason)
         try container.encodeIfPresent(coldUntilDay, forKey: .coldUntilDay)
         try container.encode(lowRelationshipStreakDays, forKey: .lowRelationshipStreakDays)
@@ -318,9 +332,11 @@ extension LifeState {
 extension GameState {
     /// The founder's daily output multiplier, applied to product, contract,
     /// and research output:
-    /// `scheduleFactor × (minOutputFactor + (1 − minOutputFactor) × wellbeing) × (cold ? coldOutputFactor : 1)`
+    /// `scheduleFactor × (minOutputFactor + (1 − minOutputFactor) × wellbeing) × (cold ? coldOutputFactor : 1) × chronic`
     /// where `wellbeing = (wE·energy + wH·health + wM·mood) / 100` with the
-    /// balance's wellbeing weights — and 0 while the founder is away.
+    /// balance's wellbeing weights, and `chronic` is
+    /// `economy.chronicOutputFactor` while the founder is living with a
+    /// long-term condition — and 0 while the founder is away.
     public func founderOutputMultiplier(balance: BalanceConfig) -> Double {
         guard !life.isAway(day: day) else { return 0 }
         let config = balance.life
@@ -330,7 +346,8 @@ extension GameState {
             + weights.mood * life.meters.mood) / 100
         let vitality = config.minOutputFactor + (1 - config.minOutputFactor) * wellbeing
         let cold = life.hasCold(day: day) ? config.coldOutputFactor : 1
-        return config.outputFactor(for: life.schedule) * vitality * cold
+        let chronic = economy.chronicCondition ? balance.economy.chronicOutputFactor : 1
+        return config.outputFactor(for: life.schedule) * vitality * cold * chronic
     }
 
     /// Multiplier on the bug chance of code the founder works on:

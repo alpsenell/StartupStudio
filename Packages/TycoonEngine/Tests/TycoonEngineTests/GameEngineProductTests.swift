@@ -70,7 +70,7 @@ struct GameEngineProductTests {
         // events are pushed out so only the weekends and the ship produce
         // events.
         let balance = TestBalance.make(
-            founderCoding: 50, skillGrowthRate: 0, candidateRefreshDays: 10_000,
+            founderCoding: 60, skillGrowthRate: 0, candidateRefreshDays: 10_000,
             contractOfferRefreshDays: 10_000, eventCheckIntervalDays: 10_000,
             life: TestBalance.quietLife
         )

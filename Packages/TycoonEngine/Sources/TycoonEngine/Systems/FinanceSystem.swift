@@ -97,18 +97,35 @@ enum FinanceSystem {
         return events
     }
 
+    /// What the bank will lend this studio in total: a base line of credit,
+    /// half of the last `economy.creditRevenueWeeks` of trading revenue
+    /// (sales and contract payouts — banks lend against a book, not a
+    /// pitch), and a premium per point of reputation. Public so the
+    /// finances screen can show the same number the engine enforces.
+    public static func creditLimit(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        let economy = balance.economy
+        let window = state.day - economy.creditRevenueWeeks * GameState.daysPerWeek
+        let trailingRevenue = state.ledger.entries.reduce(0) { total, entry in
+            guard entry.day > window, entry.amount > 0,
+                  entry.category == .sales || entry.category == .contracts
+            else { return total }
+            return total + entry.amount
+        }
+        return economy.creditLimitBase
+            + Int((Double(trailingRevenue) * economy.creditLimitRevenueFactor).rounded())
+            + Int((state.company.reputation * economy.creditLimitPerReputation).rounded())
+    }
+
     /// Borrows from the bank up to the remaining credit limit
-    /// (`baseLimit + reputation × perReputation − outstanding`). Interest
-    /// on the outstanding balance posts weekly. Ignored for non-positive
-    /// amounts and once the limit is reached.
+    /// (`creditLimit − outstanding`). Interest on the outstanding balance
+    /// posts weekly. Ignored for non-positive amounts and once the limit is
+    /// reached.
     static func takeLoan(
         amount: Int,
         state: inout GameState,
         balance: BalanceConfig
     ) -> [GameEvent] {
-        let limit = balance.loans.baseLimit
-            + Int((state.company.reputation * balance.loans.perReputation).rounded())
-        let headroom = limit - state.loanBalance
+        let headroom = creditLimit(state, balance) - state.loanBalance
         guard amount > 0, headroom > 0 else { return [] }
 
         let borrowed = min(amount, headroom)

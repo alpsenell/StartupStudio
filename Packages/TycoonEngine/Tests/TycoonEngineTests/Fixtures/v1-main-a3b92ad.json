@@ -1,0 +1,4149 @@
+{
+  "activeContracts" : [
+
+  ],
+  "amenities" : [
+
+  ],
+  "campaigns" : [
+
+  ],
+  "candidatePool" : [
+    {
+      "appearanceSeed" : 18433171746456343558,
+      "id" : "DC3C91BF-E0FE-72F0-7D89-C00CAF0BF5C7",
+      "name" : "Aylin Andersson",
+      "role" : "qa",
+      "skills" : {
+        "coding" : 9.2418459059215365,
+        "design" : 7.0608755730112991,
+        "marketing" : 5.4455198677612913
+      },
+      "weeklySalary" : 399
+    },
+    {
+      "appearanceSeed" : 5019329111350309751,
+      "id" : "68EF2CFE-950B-3643-4616-60F4656DA6D9",
+      "name" : "Jasmine Kowalski",
+      "role" : "backend",
+      "skills" : {
+        "coding" : 10.917055842290161,
+        "design" : 35.078756435931638,
+        "marketing" : 7.481947137890316
+      },
+      "weeklySalary" : 641
+    },
+    {
+      "appearanceSeed" : 9507196706693357200,
+      "id" : "B92AF916-BFA1-6D6F-4DDE-7D8BFD1C1EE7",
+      "name" : "Liam Rossi",
+      "role" : "frontend",
+      "skills" : {
+        "coding" : 28.235763591964698,
+        "design" : 5.9949920748706251,
+        "marketing" : 7.2339786398389361
+      },
+      "weeklySalary" : 584
+    },
+    {
+      "appearanceSeed" : 12080493178807867189,
+      "id" : "066CB762-4FF6-F673-1DD6-90FC229305F8",
+      "name" : "Tariq Abebe",
+      "role" : "designer",
+      "skills" : {
+        "coding" : 20.190438663530607,
+        "design" : 29.827878763365707,
+        "marketing" : 30.127604528796343
+      },
+      "weeklySalary" : 815
+    },
+    {
+      "appearanceSeed" : 15960023308382549857,
+      "id" : "0CA8DB0F-F601-F978-E210-6947C474ED49",
+      "name" : "Kenji Nguyen",
+      "role" : "backend",
+      "skills" : {
+        "coding" : 14.729699142606977,
+        "design" : 42.042765530165362,
+        "marketing" : 23.61221602997427
+      },
+      "weeklySalary" : 931
+    },
+    {
+      "appearanceSeed" : 3890229957620487253,
+      "id" : "D9B39B76-4BB3-9085-2A43-5D80A71AC189",
+      "name" : "Aylin Ivanov",
+      "role" : "backend",
+      "skills" : {
+        "coding" : 30.982535161342678,
+        "design" : 15.458498437092929,
+        "marketing" : 23.088875124018418
+      },
+      "weeklySalary" : 884
+    }
+  ],
+  "city" : {
+    "district" : "oldTown",
+    "ownership" : {
+      "renting" : {
+
+      }
+    },
+    "propertyValue" : 0
+  },
+  "company" : {
+    "cash" : 197497,
+    "daysInDebt" : 0,
+    "name" : "Determined",
+    "officeTier" : "garage",
+    "reputation" : 16.300000000000001
+  },
+  "contractOffers" : [
+    {
+      "clientName" : "Rusty Rocket Rentals",
+      "deadlineDays" : 66,
+      "expiresDay" : 406,
+      "id" : "8AE869F2-8958-3B70-433F-69C4401B1261",
+      "payout" : 7481,
+      "penalty" : 2244,
+      "requiredCodePts" : 84.989543496322682,
+      "requiredDesignPts" : 54.287342076407306,
+      "requiredSkill" : 37.796123580341806
+    },
+    {
+      "clientName" : "Turnip Analytics",
+      "deadlineDays" : 67,
+      "expiresDay" : 406,
+      "id" : "CDD793FF-CF13-E36D-55D9-D6CB25656701",
+      "payout" : 8121,
+      "penalty" : 2436,
+      "requiredCodePts" : 109.34781267285651,
+      "requiredDesignPts" : 34.453188977059582,
+      "requiredSkill" : 64.26236717206676
+    },
+    {
+      "clientName" : "Copper Comet Tools",
+      "deadlineDays" : 22,
+      "expiresDay" : 406,
+      "id" : "75699482-278B-59DD-BEBD-31EE0CBD0646",
+      "payout" : 2516,
+      "penalty" : 755,
+      "requiredCodePts" : 42.962487529931742,
+      "requiredDesignPts" : 11.104129108702558,
+      "requiredSkill" : 50.215472329197198
+    }
+  ],
+  "day" : 400,
+  "difficulty" : "normal",
+  "employees" : [
+    {
+      "appearanceSeed" : 6694171037031508525,
+      "assignment" : {
+        "idle" : {
+
+        }
+      },
+      "hiredDay" : 0,
+      "id" : "D74F6F6C-CBA0-20E3-5BDB-685821E4D4B2",
+      "isFounder" : true,
+      "level" : "junior",
+      "lowMoraleStreakDays" : 0,
+      "loyalty" : 50,
+      "morale" : 70,
+      "name" : "Founder",
+      "role" : "founder",
+      "skills" : {
+        "coding" : 45.537857811160563,
+        "design" : 36.46083411302066,
+        "marketing" : 20
+      },
+      "weeklySalary" : 0
+    },
+    {
+      "appearanceSeed" : 7512675780138716570,
+      "assignment" : {
+        "idle" : {
+
+        }
+      },
+      "hiredDay" : 41,
+      "id" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508",
+      "isFounder" : false,
+      "level" : "junior",
+      "lowMoraleStreakDays" : 0,
+      "loyalty" : 36.156111740471779,
+      "morale" : 55.306252151431607,
+      "name" : "Amara Suzuki",
+      "role" : "frontend",
+      "skills" : {
+        "coding" : 47.726098701946867,
+        "design" : 11.414332809836846,
+        "marketing" : 36.365908114584876
+      },
+      "weeklySalary" : 965
+    }
+  ],
+  "eventLog" : [
+    {
+      "productStarted" : {
+        "day" : 0,
+        "productID" : "B2D3459A-A1C2-0375-356B-A00BF5526EB4"
+      }
+    },
+    {
+      "loanTaken" : {
+        "amount" : 5000,
+        "day" : 0
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 7
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 7,
+        "topicID" : "social"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 7,
+        "topicID" : "education"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 7,
+        "topicID" : "health"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 7
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 14,
+        "eventID" : "old_friend_visits"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 14
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 14
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 14
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 21
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 21,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 21,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 21
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 28,
+        "eventID" : "neighbor_drums"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 28
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 28,
+        "topicID" : "education"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 28
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 28
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 35
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 35,
+        "topicID" : "food_delivery"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 35,
+        "topicID" : "dating"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 35
+      }
+    },
+    {
+      "hired" : {
+        "day" : 41,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 42
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 42,
+        "topicID" : "music"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 42
+      }
+    },
+    {
+      "staffBirthday" : {
+        "day" : 42,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 42
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 49
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 49,
+        "topicID" : "finance"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 49,
+        "topicID" : "social"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 49,
+        "topicID" : "travel"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 49,
+        "topicID" : "productivity"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 49,
+        "topicID" : "health"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 49
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 56
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 56,
+        "topicID" : "travel"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 56,
+        "topicID" : "dating"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 56
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 56
+      }
+    },
+    {
+      "randomEvent" : {
+        "day" : 60,
+        "eventID" : "negative_review"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 63
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 63,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 63,
+        "topicID" : "social"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 63,
+        "topicID" : "travel"
+      }
+    },
+    {
+      "staffBirthday" : {
+        "day" : 63,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 63
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 70,
+        "eventID" : "client_bonus"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 70
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 70
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 70
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 77
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 77,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 77,
+        "topicID" : "finance"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 77,
+        "topicID" : "music"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 77,
+        "topicID" : "productivity"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 77
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 84
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 84,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 84,
+        "topicID" : "social"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 84,
+        "topicID" : "music"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 84
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 84
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 91
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 91,
+        "topicID" : "social"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 91
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 98
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 98,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 98
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 98
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 105
+      }
+    },
+    {
+      "staffBirthday" : {
+        "day" : 105,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 105
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 112,
+        "eventID" : "neighbor_drums"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 112
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 112,
+        "topicID" : "finance"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 112,
+        "topicID" : "gaming"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 112,
+        "topicID" : "dating"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 112
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 112
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 119
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 119,
+        "topicID" : "finance"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 119,
+        "topicID" : "food_delivery"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 119
+      }
+    },
+    {
+      "shipped" : {
+        "day" : 121,
+        "productID" : "B2D3459A-A1C2-0375-356B-A00BF5526EB4"
+      }
+    },
+    {
+      "reviewsIn" : {
+        "averageScore" : 70,
+        "day" : 121,
+        "productID" : "B2D3459A-A1C2-0375-356B-A00BF5526EB4"
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 126,
+        "eventID" : "tax_refund"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 126
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 126,
+        "topicID" : "gaming"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 126
+      }
+    },
+    {
+      "staffBirthday" : {
+        "day" : 126,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 126
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 133
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 133,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 133
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 140,
+        "eventID" : "rent_hike"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 140
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 140
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 140
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 147
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 147,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 147,
+        "topicID" : "dating"
+      }
+    },
+    {
+      "staffEventOccurred" : {
+        "day" : 147,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508",
+        "kind" : "familyEmergency",
+        "respondByDay" : 152
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 147
+      }
+    },
+    {
+      "staffEventResolved" : {
+        "choice" : "strict",
+        "day" : 153,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 154
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 154
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 154
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 161
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 161,
+        "topicID" : "dating"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 161
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 168
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 168,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 168,
+        "topicID" : "social"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 168,
+        "topicID" : "food_delivery"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 168,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 168
+      }
+    },
+    {
+      "staffEventOccurred" : {
+        "day" : 168,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508",
+        "kind" : "familyEmergency",
+        "respondByDay" : 173
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 168
+      }
+    },
+    {
+      "staffEventResolved" : {
+        "choice" : "strict",
+        "day" : 174,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 175
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 175
+      }
+    },
+    {
+      "randomEvent" : {
+        "day" : 180,
+        "eventID" : "office_flu"
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 182,
+        "eventID" : "caught_cold"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 182
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 182,
+        "topicID" : "education"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 182
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 182
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 189
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 189,
+        "topicID" : "education"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 189,
+        "topicID" : "productivity"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 189,
+        "topicID" : "health"
+      }
+    },
+    {
+      "staffBirthday" : {
+        "day" : 189,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 189
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 196
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 196
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 196
+      }
+    },
+    {
+      "researchStarted" : {
+        "day" : 201,
+        "nodeID" : "code_reviews"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 203
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 203,
+        "topicID" : "education"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 203
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 210
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 210,
+        "topicID" : "education"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 210
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 210
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 217
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 217,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 217
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 224,
+        "eventID" : "parking_ticket"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 224
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 224,
+        "topicID" : "dating"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 224
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 224
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 231
+      }
+    },
+    {
+      "staffBirthday" : {
+        "day" : 231,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 231
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 238,
+        "eventID" : "viral_tweet"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 238
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 238,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 238,
+        "topicID" : "health"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 238
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 238
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 245
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 245,
+        "topicID" : "music"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 245
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 252,
+        "eventID" : "viral_tweet"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 252
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 252,
+        "topicID" : "finance"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 252
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 252
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 259
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 259,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 259
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 266
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 266,
+        "topicID" : "gaming"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 266,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 266
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 266
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 273
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 273,
+        "topicID" : "education"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 273,
+        "topicID" : "health"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 273
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 280
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 280
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 280
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 287
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 287,
+        "topicID" : "travel"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 287
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 294,
+        "eventID" : "client_bonus"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 294
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 294,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 294
+      }
+    },
+    {
+      "productOffMarket" : {
+        "day" : 294,
+        "productID" : "B2D3459A-A1C2-0375-356B-A00BF5526EB4"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 294
+      }
+    },
+    {
+      "randomEvent" : {
+        "day" : 300,
+        "eventID" : "viral_thread"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 301
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 301
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 308
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 308
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 308
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 315
+      }
+    },
+    {
+      "staffEventOccurred" : {
+        "day" : 315,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508",
+        "kind" : "rivalOfferRumor",
+        "respondByDay" : 320
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 315
+      }
+    },
+    {
+      "staffEventResolved" : {
+        "choice" : "strict",
+        "day" : 321,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 322
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 322,
+        "topicID" : "food_delivery"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 322
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 322
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 329
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 329,
+        "topicID" : "travel"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 329,
+        "topicID" : "dating"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 329
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 336,
+        "eventID" : "food_poisoning"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 336
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 336,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 336
+      }
+    },
+    {
+      "staffBirthday" : {
+        "day" : 336,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 336
+      }
+    },
+    {
+      "founderAway" : {
+        "day" : 337,
+        "reason" : "Hospital",
+        "untilDay" : 351
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 343
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 350,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 350,
+        "topicID" : "dating"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 350
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 350
+      }
+    },
+    {
+      "founderBack" : {
+        "day" : 351
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 357
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 357
+      }
+    },
+    {
+      "randomEvent" : {
+        "day" : 360,
+        "eventID" : "blog_feature"
+      }
+    },
+    {
+      "lifeEvent" : {
+        "day" : 364,
+        "eventID" : "food_poisoning"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 364
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 364,
+        "topicID" : "music"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 364,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 364
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 364
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 371
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 371,
+        "topicID" : "travel"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 371
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 378
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 378,
+        "topicID" : "social"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 378,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 378
+      }
+    },
+    {
+      "staffEventOccurred" : {
+        "day" : 378,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508",
+        "kind" : "rivalOfferRumor",
+        "respondByDay" : 383
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 378
+      }
+    },
+    {
+      "staffEventResolved" : {
+        "choice" : "strict",
+        "day" : 384,
+        "employeeID" : "7B31FBF8-DD6C-DB41-E3C6-86D594371508"
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 385
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 385,
+        "topicID" : "travel"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 385,
+        "topicID" : "productivity"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 385
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 392
+      }
+    },
+    {
+      "candidatesRefreshed" : {
+        "day" : 392
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 392
+      }
+    },
+    {
+      "weekendSpent" : {
+        "activity" : "rest",
+        "day" : 399
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 399,
+        "topicID" : "fitness"
+      }
+    },
+    {
+      "marketBoom" : {
+        "day" : 399,
+        "topicID" : "education"
+      }
+    },
+    {
+      "marketCrash" : {
+        "day" : 399,
+        "topicID" : "logistics"
+      }
+    },
+    {
+      "contractOffersRefreshed" : {
+        "day" : 399
+      }
+    }
+  ],
+  "friendships" : [
+
+  ],
+  "knownDepartments" : [
+
+  ],
+  "ledger" : {
+    "entries" : [
+      {
+        "amount" : 5000,
+        "category" : "other",
+        "day" : 0,
+        "label" : "Loan drawdown"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 7,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 7,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 7,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 14,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 14,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 14,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 21,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 21,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 21,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 28,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 28,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 28,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 35,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 35,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 35,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 42,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -100,
+        "category" : "other",
+        "day" : 42,
+        "label" : "Birthday cake: Amara Suzuki"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 42,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 42,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 42,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 49,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 49,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 49,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 49,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 56,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 56,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 56,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 56,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 63,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -100,
+        "category" : "other",
+        "day" : 63,
+        "label" : "Birthday cake: Amara Suzuki"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 63,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 63,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 63,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 70,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 70,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 70,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 70,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 77,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 77,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 77,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 77,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 84,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 84,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 84,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 84,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 91,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 91,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 91,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 91,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 98,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 98,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 98,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 98,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 105,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -100,
+        "category" : "other",
+        "day" : 105,
+        "label" : "Birthday cake: Amara Suzuki"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 105,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 105,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 105,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 112,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 112,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 112,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 112,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 119,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 119,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 119,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 119,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 126,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -100,
+        "category" : "other",
+        "day" : 126,
+        "label" : "Birthday cake: Amara Suzuki"
+      },
+      {
+        "amount" : 792,
+        "category" : "sales",
+        "day" : 126,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 126,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 126,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 126,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 126,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 133,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 1560,
+        "category" : "sales",
+        "day" : 133,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 133,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 133,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 133,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 133,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 140,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 2286,
+        "category" : "sales",
+        "day" : 140,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 140,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 140,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 140,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 140,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 147,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 2346,
+        "category" : "sales",
+        "day" : 147,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 147,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 147,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 147,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 147,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 154,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 2833,
+        "category" : "sales",
+        "day" : 154,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 154,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 154,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 154,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 154,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 161,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 3187,
+        "category" : "sales",
+        "day" : 161,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 161,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 161,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 161,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 161,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 168,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 1729,
+        "category" : "sales",
+        "day" : 168,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 168,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 168,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 168,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 168,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 175,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 1526,
+        "category" : "sales",
+        "day" : 175,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 175,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 175,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 175,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 175,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -400,
+        "category" : "other",
+        "day" : 180,
+        "label" : "Half the office catches the flu; contractors fill in."
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 182,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 1349,
+        "category" : "sales",
+        "day" : 182,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 182,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 182,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 182,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 182,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 189,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -100,
+        "category" : "other",
+        "day" : 189,
+        "label" : "Birthday cake: Amara Suzuki"
+      },
+      {
+        "amount" : 1038,
+        "category" : "sales",
+        "day" : 189,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 189,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 189,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 189,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 189,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 196,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 766,
+        "category" : "sales",
+        "day" : 196,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 196,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 196,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 196,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 196,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 203,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 644,
+        "category" : "sales",
+        "day" : 203,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 203,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 203,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 203,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 203,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 210,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 549,
+        "category" : "sales",
+        "day" : 210,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 210,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 210,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 210,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 210,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 217,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 537,
+        "category" : "sales",
+        "day" : 217,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 217,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 217,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 217,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 217,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 224,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 388,
+        "category" : "sales",
+        "day" : 224,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 224,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 224,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 224,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 224,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 231,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -100,
+        "category" : "other",
+        "day" : 231,
+        "label" : "Birthday cake: Amara Suzuki"
+      },
+      {
+        "amount" : 314,
+        "category" : "sales",
+        "day" : 231,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 231,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 231,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 231,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 231,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 238,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 206,
+        "category" : "sales",
+        "day" : 238,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 238,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 238,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 238,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 238,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 245,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 173,
+        "category" : "sales",
+        "day" : 245,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 245,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 245,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 245,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 245,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 252,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 149,
+        "category" : "sales",
+        "day" : 252,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 252,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 252,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 252,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 252,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 259,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 133,
+        "category" : "sales",
+        "day" : 259,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 259,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 259,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 259,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 259,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 266,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 113,
+        "category" : "sales",
+        "day" : 266,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 266,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 266,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 266,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 266,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 273,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 93,
+        "category" : "sales",
+        "day" : 273,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 273,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 273,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 273,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 273,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 280,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 79,
+        "category" : "sales",
+        "day" : 280,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 280,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 280,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 280,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 280,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 287,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : 87,
+        "category" : "sales",
+        "day" : 287,
+        "label" : "FitTrack"
+      },
+      {
+        "amount" : -25,
+        "category" : "hosting",
+        "day" : 287,
+        "label" : "Hosting & support"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 287,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 287,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 287,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 294,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 294,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 294,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 294,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 301,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 301,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 301,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 301,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 308,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 308,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 308,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 308,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 315,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 315,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 315,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 315,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 322,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 322,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 322,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 322,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 329,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 329,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 329,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 329,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 336,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -100,
+        "category" : "other",
+        "day" : 336,
+        "label" : "Birthday cake: Amara Suzuki"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 336,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 336,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 336,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 343,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 343,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 343,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 343,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 350,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 350,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 350,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 350,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 357,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 357,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 357,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 357,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 364,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 364,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 364,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 364,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 371,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 371,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 371,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 371,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 378,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 378,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 378,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 378,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 385,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 385,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 385,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 385,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 392,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 392,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 392,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 392,
+        "label" : "Loan interest"
+      },
+      {
+        "amount" : -200,
+        "category" : "payroll",
+        "day" : 399,
+        "label" : "Founder salary"
+      },
+      {
+        "amount" : -250,
+        "category" : "operating",
+        "day" : 399,
+        "label" : "Operating costs"
+      },
+      {
+        "amount" : -965,
+        "category" : "payroll",
+        "day" : 399,
+        "label" : "Payroll"
+      },
+      {
+        "amount" : -50,
+        "category" : "other",
+        "day" : 399,
+        "label" : "Loan interest"
+      }
+    ]
+  },
+  "life" : {
+    "family" : {
+      "children" : [
+
+      ],
+      "stage" : "single",
+      "stageSinceDay" : 0
+    },
+    "founderSalary" : 200,
+    "home" : "studioFlat",
+    "instantActionsToday" : 0,
+    "instantCooldowns" : [
+
+    ],
+    "lowRelationshipStreakDays" : 0,
+    "meters" : {
+      "energy" : 99.599999999999994,
+      "health" : 29.89999999999986,
+      "mood" : 100,
+      "relationships" : 0
+    },
+    "plannedActivity" : "rest",
+    "possessions" : [
+
+    ],
+    "schedule" : "normal",
+    "wallet" : 3270
+  },
+  "loanBalance" : 5000,
+  "market" : {
+    "history" : [
+      {
+        "topicID" : "dating",
+        "values" : [
+          0.71671781027655679,
+          0.73499137371117207,
+          0.80044525801539756,
+          0.85836225084022832,
+          0.82282674389815535,
+          0.91588537980567564,
+          0.98014050274950038,
+          1.0126262509305279,
+          0.98867966500323645,
+          1.0164540755275941,
+          0.97765001889993242,
+          0.99383652370944653,
+          0.97159352336567828,
+          0.98038385747252832,
+          0.99775512406532152,
+          0.629402406488352,
+          0.72552670691157939,
+          0.68286852874132298,
+          1.0855841026382302,
+          1.1133325569391443,
+          1.196943947551047,
+          1.2668978230190757,
+          1.2597290280670976,
+          1.292856152247122,
+          1.2811364119416471,
+          1.2085515725288225
+        ]
+      },
+      {
+        "topicID" : "education",
+        "values" : [
+          1.161684032503365,
+          1.0991409503222169,
+          1.0151675068631327,
+          0.95997095400237542,
+          0.90352901617680315,
+          0.9382131742351415,
+          1.0324046623821292,
+          1.4919075616122797,
+          1.5992090152895657,
+          1.6313985010837302,
+          1.7407915664567926,
+          1.8,
+          1.8,
+          1.786074602089111,
+          1.7943667672992767,
+          1.8,
+          1.7183439835267478,
+          1.5781143320504909,
+          1.6408176303231925,
+          1.6562032126219113,
+          1.6129422347064986,
+          1.6519682707255245,
+          1.4993532495170858,
+          1.5221452890589726,
+          1.5109882145401297,
+          1.8
+        ]
+      },
+      {
+        "topicID" : "finance",
+        "values" : [
+          0.7240244933126897,
+          0.71992843308841892,
+          0.82441054095241251,
+          0.6692107721372621,
+          1.129485813356244,
+          1.1179325509133258,
+          1.1472340487009896,
+          1.1366526189593071,
+          1.1454715279193233,
+          1.1761502955719858,
+          1.1784508050000826,
+          1.1487022733670615,
+          1.1288911222634721,
+          1.0547297848794808,
+          1.046028808800354,
+          1.0001225755792253,
+          1.0308165217879439,
+          1.1399950312720006,
+          1.1153491321510056,
+          1.1734942610647332,
+          1.1125764516818475,
+          1.2246632682408418,
+          1.2925704161006941,
+          1.3434596681585305,
+          1.2652543506819658,
+          1.1512395971417619
+        ]
+      },
+      {
+        "topicID" : "fitness",
+        "values" : [
+          0.54992504423165323,
+          0.51993453929137123,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.41802307438743708,
+          0.41592494288337101,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.51404668581627377,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.41387638240571045,
+          0.49325031282871523,
+          0.40000000000000002,
+          0.42571951374661327,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.42256389100025005,
+          0.5080943937737733,
+          0.44457579156918914,
+          0.45081047160001009,
+          0.40000000000000002
+        ]
+      },
+      {
+        "topicID" : "food_delivery",
+        "values" : [
+          0.57920507990320735,
+          0.55519931568558878,
+          0.57749034621239137,
+          0.58166469237488705,
+          0.58633435152883917,
+          0.58132620939156698,
+          0.56748776185865812,
+          0.56284130578082914,
+          0.5939748822169264,
+          0.59934439564946973,
+          0.58492906242706788,
+          0.64473812026670774,
+          0.69404987956320885,
+          0.69287282352867963,
+          0.40000000000000002,
+          0.42697141497132768,
+          0.40000000000000002,
+          0.41202084458089799,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.45469882922393096,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.45772059070133098
+        ]
+      },
+      {
+        "topicID" : "gaming",
+        "values" : [
+          0.59193722519451208,
+          0.52083682465723924,
+          0.44716871438565486,
+          0.50265397453643634,
+          0.55795421507654064,
+          0.48577925366059083,
+          0.93683914350114317,
+          0.97659818564906586,
+          0.87233099971877914,
+          0.87067889011664246,
+          0.87618905615795251,
+          0.94922131061005777,
+          0.95579391077875342,
+          0.96874296321181719,
+          0.96269090837387061,
+          0.89445753319783283,
+          1.0035639301219668,
+          1.0086799158528041,
+          0.94850048944536058,
+          0.92744716538716976,
+          0.99654235811549485,
+          0.96640846606928044,
+          1.0249325043227462,
+          0.95899590137709212,
+          0.96662751720510021,
+          0.90814743474243731
+        ]
+      },
+      {
+        "topicID" : "health",
+        "values" : [
+          1.1866703323504937,
+          1.1711332179598486,
+          1.6895979122498588,
+          1.6667052357176741,
+          1.728389350729264,
+          1.7732001835637228,
+          1.7410449912043313,
+          1.8,
+          1.793087898564576,
+          1.8,
+          1.7875746005946325,
+          1.7405748151227722,
+          1.7295715322314331,
+          1.7614417539140552,
+          1.7645108207144065,
+          1.7424657494977669,
+          1.6785720412963547,
+          1.6779587636803999,
+          1.6884123502945414,
+          1.6669772622606076,
+          1.6740613448536641,
+          1.7542793488005133,
+          1.7574301869763833,
+          1.8,
+          1.7770130063974299,
+          1.7880318879165422
+        ]
+      },
+      {
+        "topicID" : "logistics",
+        "values" : [
+          0.82851204364856279,
+          0.84120742703735574,
+          0.85469643641057924,
+          0.8703374452407695,
+          0.86937474895933842,
+          1.3134368735705881,
+          1.7765124722220333,
+          1.7812185373321121,
+          1.7329634563833054,
+          1.642441846882118,
+          1.6413720174487187,
+          1.6288358842274622,
+          1.5726732597864981,
+          1.5092124120573414,
+          1.4843996150521235,
+          1.5194687550854531,
+          1.367776054043178,
+          1.4081431354756402,
+          1.3664769523593248,
+          1.2396775536333287,
+          1.5909792432544805,
+          1.6392903774371261,
+          1.8,
+          1.8,
+          1.7963455414095968,
+          1.6023685119678692
+        ]
+      },
+      {
+        "topicID" : "music",
+        "values" : [
+          0.74314197289986783,
+          0.78638807893702822,
+          0.81079139145259083,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.57764125863255011,
+          0.56556840573496392,
+          0.53558087255728382,
+          0.5728164596985077,
+          0.59744634121152285,
+          0.58323673150162159,
+          0.59096639571787124,
+          0.62229655487953206,
+          0.67611549187476871,
+          0.55471832776301377,
+          0.54188693174797153,
+          0.59508207966764359,
+          0.62011374792070839,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.42625721943092498,
+          0.42912777615820752,
+          0.48539377170560882
+        ]
+      },
+      {
+        "topicID" : "productivity",
+        "values" : [
+          0.85641552701458912,
+          0.90258281191221579,
+          0.95689759675460162,
+          1.0037270445300923,
+          1.0798817330016528,
+          1.0367711372812816,
+          1.0362416651063524,
+          1.0961128334653307,
+          1.1573217837043754,
+          1.1336163762433735,
+          1.2464431805044938,
+          1.2035391308255434,
+          1.2075274780789402,
+          1.2232508044205266,
+          1.2098518674667651,
+          1.2265891891273215,
+          1.1041899723499373,
+          1.1256442975094711,
+          1.0024651665343656,
+          0.94989986224927725,
+          0.9728477008443962,
+          0.91033838796398858,
+          0.92934141943121584,
+          1.2920769968872443,
+          1.3732167753959614,
+          1.3970723709704147
+        ]
+      },
+      {
+        "topicID" : "social",
+        "values" : [
+          1.7895242220479748,
+          1.7812652474565409,
+          1.7996977346497993,
+          1.8,
+          1.7879760033864187,
+          1.7861714733273939,
+          1.8,
+          1.7205406965013634,
+          1.6986575088394826,
+          1.8,
+          1.6891649751750952,
+          1.6782565846920237,
+          1.5936414583732943,
+          1.7025569505279998,
+          1.6537333524199653,
+          1.6463397161226954,
+          1.6318317483730658,
+          1.5674067023637663,
+          1.5640344466588627,
+          1.5587870280823961,
+          1.5940197404786087,
+          1.6760051733407157,
+          1.2727415980403858,
+          1.2999863462528023,
+          1.3310080264323341,
+          1.3273825985418195
+        ]
+      },
+      {
+        "topicID" : "travel",
+        "values" : [
+          0.40000000000000002,
+          0.45418181729611712,
+          0.54465782342675184,
+          0.55357966458963859,
+          0.57636594641908501,
+          0.60870351329815953,
+          0.67520476261995088,
+          0.61570314108251101,
+          0.65165794278894384,
+          0.40000000000000002,
+          0.41141499726262709,
+          0.45450574294688573,
+          0.47676391045802552,
+          0.40000000000000002,
+          0.42911450179551924,
+          0.40000000000000002,
+          0.40000000000000002,
+          0.4117057747889295,
+          0.41207248792364143,
+          0.42978873323790406,
+          0.40341251626144137,
+          0.86411958646341624,
+          0.95722728725348938,
+          0.57906910733405925,
+          0.58135734614469092,
+          0.46955593666767975
+        ]
+      }
+    ],
+    "recentEvents" : [
+      {
+        "day" : 210,
+        "kind" : "crash",
+        "topicID" : "education"
+      },
+      {
+        "day" : 217,
+        "kind" : "crash",
+        "topicID" : "logistics"
+      },
+      {
+        "day" : 224,
+        "kind" : "crash",
+        "topicID" : "dating"
+      },
+      {
+        "day" : 238,
+        "kind" : "crash",
+        "topicID" : "fitness"
+      },
+      {
+        "day" : 238,
+        "kind" : "boom",
+        "topicID" : "health"
+      },
+      {
+        "day" : 245,
+        "kind" : "crash",
+        "topicID" : "music"
+      },
+      {
+        "day" : 252,
+        "kind" : "boom",
+        "topicID" : "finance"
+      },
+      {
+        "day" : 259,
+        "kind" : "boom",
+        "topicID" : "logistics"
+      },
+      {
+        "day" : 266,
+        "kind" : "boom",
+        "topicID" : "gaming"
+      },
+      {
+        "day" : 266,
+        "kind" : "boom",
+        "topicID" : "logistics"
+      },
+      {
+        "day" : 273,
+        "kind" : "boom",
+        "topicID" : "education"
+      },
+      {
+        "day" : 273,
+        "kind" : "boom",
+        "topicID" : "health"
+      },
+      {
+        "day" : 287,
+        "kind" : "crash",
+        "topicID" : "travel"
+      },
+      {
+        "day" : 294,
+        "kind" : "crash",
+        "topicID" : "fitness"
+      },
+      {
+        "day" : 322,
+        "kind" : "crash",
+        "topicID" : "food_delivery"
+      },
+      {
+        "day" : 329,
+        "kind" : "crash",
+        "topicID" : "travel"
+      },
+      {
+        "day" : 329,
+        "kind" : "crash",
+        "topicID" : "dating"
+      },
+      {
+        "day" : 336,
+        "kind" : "crash",
+        "topicID" : "fitness"
+      },
+      {
+        "day" : 350,
+        "kind" : "crash",
+        "topicID" : "fitness"
+      },
+      {
+        "day" : 350,
+        "kind" : "boom",
+        "topicID" : "dating"
+      },
+      {
+        "day" : 364,
+        "kind" : "crash",
+        "topicID" : "music"
+      },
+      {
+        "day" : 364,
+        "kind" : "boom",
+        "topicID" : "logistics"
+      },
+      {
+        "day" : 371,
+        "kind" : "boom",
+        "topicID" : "travel"
+      },
+      {
+        "day" : 378,
+        "kind" : "crash",
+        "topicID" : "social"
+      },
+      {
+        "day" : 378,
+        "kind" : "boom",
+        "topicID" : "logistics"
+      },
+      {
+        "day" : 385,
+        "kind" : "crash",
+        "topicID" : "travel"
+      },
+      {
+        "day" : 385,
+        "kind" : "boom",
+        "topicID" : "productivity"
+      },
+      {
+        "day" : 399,
+        "kind" : "crash",
+        "topicID" : "fitness"
+      },
+      {
+        "day" : 399,
+        "kind" : "boom",
+        "topicID" : "education"
+      },
+      {
+        "day" : 399,
+        "kind" : "crash",
+        "topicID" : "logistics"
+      }
+    ],
+    "topics" : {
+      "dating" : {
+        "lastChange" : -0.072584839412824564,
+        "multiplier" : 1.2085515725288225
+      },
+      "education" : {
+        "lastChange" : 0.28901178545987039,
+        "multiplier" : 1.8
+      },
+      "finance" : {
+        "lastChange" : -0.11401475354020385,
+        "multiplier" : 1.1512395971417619
+      },
+      "fitness" : {
+        "lastChange" : -0.050810471600010065,
+        "multiplier" : 0.40000000000000002
+      },
+      "food_delivery" : {
+        "lastChange" : 0.057720590701330954,
+        "multiplier" : 0.45772059070133098
+      },
+      "gaming" : {
+        "lastChange" : -0.058480082462662897,
+        "multiplier" : 0.90814743474243731
+      },
+      "health" : {
+        "lastChange" : 0.011018881519112345,
+        "multiplier" : 1.7880318879165422
+      },
+      "logistics" : {
+        "lastChange" : -0.19397702944172757,
+        "multiplier" : 1.6023685119678692
+      },
+      "music" : {
+        "lastChange" : 0.056265995547401304,
+        "multiplier" : 0.48539377170560882
+      },
+      "productivity" : {
+        "lastChange" : 0.02385559557445327,
+        "multiplier" : 1.3970723709704147
+      },
+      "social" : {
+        "lastChange" : -0.0036254278905145654,
+        "multiplier" : 1.3273825985418195
+      },
+      "travel" : {
+        "lastChange" : -0.11180140947701117,
+        "multiplier" : 0.46955593666767975
+      }
+    }
+  },
+  "milestonesReached" : [
+
+  ],
+  "products" : [
+    {
+      "id" : "B2D3459A-A1C2-0375-356B-A00BF5526EB4",
+      "name" : "FitTrack",
+      "stage" : {
+        "released" : {
+          "_0" : {
+            "adoptionWeeks" : 6.2385653714192228,
+            "hypeAtLaunch" : 0,
+            "launchDay" : 121,
+            "launchMarketScale" : 1,
+            "offMarket" : true,
+            "quality" : 66.458649776981744,
+            "reviews" : [
+              {
+                "blurb" : "Small studio, big craftsmanship.",
+                "outlet" : "TechDaily",
+                "score" : 68
+              },
+              {
+                "blurb" : "Polished where it counts.",
+                "outlet" : "AppVerdict",
+                "score" : 70
+              },
+              {
+                "blurb" : "Polished where it counts.",
+                "outlet" : "The Stack Review",
+                "score" : 68
+              },
+              {
+                "blurb" : "Small studio, big craftsmanship.",
+                "outlet" : "ByteSized",
+                "score" : 72
+              }
+            ],
+            "weeklySales" : [
+              {
+                "revenue" : 792,
+                "units" : 398,
+                "weekIndex" : 0
+              },
+              {
+                "revenue" : 1560,
+                "units" : 784,
+                "weekIndex" : 1
+              },
+              {
+                "revenue" : 2286,
+                "units" : 1149,
+                "weekIndex" : 2
+              },
+              {
+                "revenue" : 2346,
+                "units" : 1179,
+                "weekIndex" : 3
+              },
+              {
+                "revenue" : 2833,
+                "units" : 1424,
+                "weekIndex" : 4
+              },
+              {
+                "revenue" : 3187,
+                "units" : 1602,
+                "weekIndex" : 5
+              },
+              {
+                "revenue" : 1729,
+                "units" : 869,
+                "weekIndex" : 6
+              },
+              {
+                "revenue" : 1526,
+                "units" : 767,
+                "weekIndex" : 7
+              },
+              {
+                "revenue" : 1349,
+                "units" : 678,
+                "weekIndex" : 8
+              },
+              {
+                "revenue" : 1038,
+                "units" : 522,
+                "weekIndex" : 9
+              },
+              {
+                "revenue" : 766,
+                "units" : 385,
+                "weekIndex" : 10
+              },
+              {
+                "revenue" : 644,
+                "units" : 324,
+                "weekIndex" : 11
+              },
+              {
+                "revenue" : 549,
+                "units" : 276,
+                "weekIndex" : 12
+              },
+              {
+                "revenue" : 537,
+                "units" : 270,
+                "weekIndex" : 13
+              },
+              {
+                "revenue" : 388,
+                "units" : 195,
+                "weekIndex" : 14
+              },
+              {
+                "revenue" : 314,
+                "units" : 158,
+                "weekIndex" : 15
+              },
+              {
+                "revenue" : 206,
+                "units" : 104,
+                "weekIndex" : 16
+              },
+              {
+                "revenue" : 173,
+                "units" : 87,
+                "weekIndex" : 17
+              },
+              {
+                "revenue" : 149,
+                "units" : 75,
+                "weekIndex" : 18
+              },
+              {
+                "revenue" : 133,
+                "units" : 67,
+                "weekIndex" : 19
+              },
+              {
+                "revenue" : 113,
+                "units" : 57,
+                "weekIndex" : 20
+              },
+              {
+                "revenue" : 93,
+                "units" : 47,
+                "weekIndex" : 21
+              },
+              {
+                "revenue" : 79,
+                "units" : 40,
+                "weekIndex" : 22
+              },
+              {
+                "revenue" : 87,
+                "units" : 44,
+                "weekIndex" : 23
+              }
+            ]
+          }
+        }
+      },
+      "topicID" : "fitness",
+      "typeID" : "mobile_app"
+    }
+  ],
+  "research" : {
+    "activeNodeID" : "code_reviews",
+    "activeProgress" : 0,
+    "banked" : 0,
+    "unlocked" : [
+
+    ]
+  },
+  "rivals" : {
+    "rivals" : [
+
+    ]
+  },
+  "rng" : {
+    "state" : 14099197341404736098
+  },
+  "schemaVersion" : 1,
+  "speed" : "paused",
+  "worldRNG" : {
+    "state" : 8411377367987504212
+  }
+}

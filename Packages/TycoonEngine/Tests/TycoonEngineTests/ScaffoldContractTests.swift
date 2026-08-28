@@ -30,7 +30,18 @@ struct ScaffoldContractTests {
         }
         let legacy = try JSONSerialization.data(withJSONObject: object)
         let legacyState = try JSONDecoder().decode(GameState.self, from: legacy)
-        #expect(legacyState == state)
+        // Every omitted sub-state comes back as `.initial`…
+        #expect(legacyState.economy == .initial)
+        #expect(legacyState.narrative == .initial)
+        #expect(legacyState.progression == .initial)
+        #expect(legacyState.investors == .initial)
+        // …and nothing else about the save has moved. WS-A's economy now
+        // carries real data — by day 40 the pause-budget cursor has been
+        // spent — so the whole state is no longer equal to a save that
+        // never had one.
+        var withFreshEconomy = state
+        withFreshEconomy.economy = .initial
+        #expect(legacyState == withFreshEconomy)
 
         let employeeData = try encoder.encode(state.employees[0])
         var employeeObject = try #require(
@@ -54,7 +65,10 @@ struct ScaffoldContractTests {
         #expect(plain.employees[0].name == "Founder")
         #expect(plain.devSlots == 1)
         #expect(plain.productsInDevelopment.isEmpty)
-        #expect(GameEvent.gameOver(day: 1).severity == .info)
+        // Graded by WS-A's pause policy: running out of money always stops
+        // the clock, a hire never does.
+        #expect(GameEvent.gameOver(day: 1).severity == .critical)
+        #expect(GameEvent.hired(employeeID: UUID(), day: 1).severity == .info)
         #expect(plain.market.shareMultiplier(for: "fitness") == 1.0)
 
         let pinned = GameState.newGame(

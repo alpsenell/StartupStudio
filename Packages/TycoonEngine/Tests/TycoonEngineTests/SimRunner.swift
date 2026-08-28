@@ -21,6 +21,11 @@ protocol BotPolicy {
 
 /// Headless driver for bot runs.
 enum SimRunner {
+    /// Mirrors the engine's (internal) `GameState.daysPerYear`.
+    static let daysPerYear = 364
+    /// Mirrors the engine's (internal) `GameState.daysPerWeek`.
+    static let daysPerWeek = 7
+
     struct Result {
         var botName: String
         var state: GameState
@@ -36,8 +41,60 @@ enum SimRunner {
         var maxEventLogCount: Int
         var minCash: Int
 
+        // MARK: Pacing instrumentation (WS-A)
+
+        /// The day the studio's first product shipped, `nil` if it never did.
+        var firstShipDay: Int?
+        /// The average review score of that first product.
+        var firstProductScore: Int?
+        /// Lifetime revenue of the first product shipped.
+        var firstProductLifetimeRevenue: Int?
+        /// Total events that would have stopped the clock.
+        var pauses: Int
+        /// Employees who resigned over low morale.
+        var quits: Int
+        /// Employees who served a resignation notice.
+        var resignationNotices: Int
+        /// Times the founder was hospitalised.
+        var hospitalizations: Int
+        /// Times the founder burned out.
+        var burnouts: Int
+        /// Eviction warnings served on the founder.
+        var evictionWarnings: Int
+        /// Weekly samples (one per weekly tick) where the wallet was negative.
+        var weeksNegativeWallet: Int
+        /// The worst wallet balance seen.
+        var minWallet: Int
+        var peakHeadcount: Int
+        /// The day each office tier was first reached.
+        var daysToLoft: Int?
+        var daysToStudio: Int?
+        var daysToCampus: Int?
+        /// Updates shipped for already-released products.
+        var updatesShipped: Int
+        /// Live bugs discovered in the wild across every release.
+        var liveBugsDiscovered: Int
+
         var finalCash: Int { state.company.cash }
         var officeTier: OfficeTier { state.company.officeTier }
+
+        /// Pauses per game year over the days actually simulated.
+        var pausesPerYear: Double {
+            guard daysRun > 0 else { return 0 }
+            return Double(pauses) * Double(SimRunner.daysPerYear) / Double(daysRun)
+        }
+
+        /// Weekly recurring revenue in the final week: subscription revenue
+        /// posted by every on-market subscription product.
+        var finalWeeklySubscriptionRevenue: Int {
+            state.products.reduce(0) { total, product in
+                guard case .released(let info) = product.stage,
+                      info.isSubscription, !info.offMarket,
+                      let last = info.weeklySales.last
+                else { return total }
+                return total + last.revenue
+            }
+        }
 
         /// Lifetime revenue across every shipped product (products never
         /// leave `state.products`, so this sees the whole run).
@@ -84,21 +141,54 @@ enum SimRunner {
             randomEvents: 0,
             maxLedgerCount: 0,
             maxEventLogCount: 0,
-            minCash: state.company.cash
+            minCash: state.company.cash,
+            firstShipDay: nil,
+            firstProductScore: nil,
+            firstProductLifetimeRevenue: nil,
+            pauses: 0,
+            quits: 0,
+            resignationNotices: 0,
+            hospitalizations: 0,
+            burnouts: 0,
+            evictionWarnings: 0,
+            weeksNegativeWallet: 0,
+            minWallet: state.life.wallet,
+            peakHeadcount: state.headcount,
+            daysToLoft: nil,
+            daysToStudio: nil,
+            daysToCampus: nil,
+            updatesShipped: 0,
+            liveBugsDiscovered: 0
         )
+        var firstProductID: UUID?
 
         for _ in 0..<days {
-            tally(Reducer.tick(&state, balance: balance, content: content), into: &result)
+            tally(
+                Reducer.tick(&state, balance: balance, content: content),
+                day: state.day, into: &result, firstProductID: &firstProductID
+            )
             observe(state, into: &result)
+            // What the player would actually have seen: `PausePolicy` has
+            // already applied the owned-topic rule and the pause budget.
+            result.pauses += state.economy.pauseEvents.count
+            if state.day % daysPerWeek == 0, state.life.wallet < 0 {
+                result.weeksNegativeWallet += 1
+            }
             if state.gameOver != nil { break }
 
             for action in bot.actions(for: state, balance: balance, content: content) {
                 tally(
                     Reducer.apply(action, to: &state, balance: balance, content: content),
-                    into: &result
+                    day: state.day, into: &result, firstProductID: &firstProductID
                 )
             }
             observe(state, into: &result)
+        }
+
+        if let firstProductID,
+           case .released(let info)? = state.product(id: firstProductID)?.stage {
+            result.firstProductScore = info.averageReviewScore
+            result.firstProductLifetimeRevenue = info.totalRevenue
         }
 
         result.state = state
@@ -107,23 +197,54 @@ enum SimRunner {
         return result
     }
 
-    private static func tally(_ events: [GameEvent], into result: inout Result) {
+    private static func tally(
+        _ events: [GameEvent],
+        day: Int,
+        into result: inout Result,
+        firstProductID: inout UUID?
+    ) {
         for event in events {
             switch event {
             case .contractDelivered: result.contractsCompleted += 1
             case .contractFailed: result.contractsFailed += 1
-            case .shipped: result.productsShipped += 1
-            case .officeUpgraded: result.officeUpgrades += 1
+            case let .shipped(productID, shipDay):
+                result.productsShipped += 1
+                if firstProductID == nil {
+                    firstProductID = productID
+                    result.firstShipDay = shipDay
+                }
+            case let .officeUpgraded(tier, upgradeDay):
+                result.officeUpgrades += 1
+                switch tier {
+                case .garage: break
+                case .loft: result.daysToLoft = result.daysToLoft ?? upgradeDay
+                case .studio: result.daysToStudio = result.daysToStudio ?? upgradeDay
+                case .campus: result.daysToCampus = result.daysToCampus ?? upgradeDay
+                }
             case .randomEvent: result.randomEvents += 1
+            case .employeeQuit: result.quits += 1
+            case .resignationNotice: result.resignationNotices += 1
+            case .evictionWarning: result.evictionWarnings += 1
+            case .updateShipped: result.updatesShipped += 1
+            case let .founderAway(reason, _, _):
+                if reason == "Hospital" { result.hospitalizations += 1 }
+                if reason == "Burnout" { result.burnouts += 1 }
             default: break
             }
         }
+        _ = day
     }
 
     private static func observe(_ state: GameState, into result: inout Result) {
         result.maxLedgerCount = max(result.maxLedgerCount, state.ledger.entries.count)
         result.maxEventLogCount = max(result.maxEventLogCount, state.eventLog.count)
         result.minCash = min(result.minCash, state.company.cash)
+        result.minWallet = min(result.minWallet, state.life.wallet)
+        result.peakHeadcount = max(result.peakHeadcount, state.headcount)
+        result.liveBugsDiscovered = max(result.liveBugsDiscovered, state.products.reduce(0) { total, product in
+            guard case .released(let info) = product.stage else { return total }
+            return total + info.liveBugs
+        })
     }
 }
 
