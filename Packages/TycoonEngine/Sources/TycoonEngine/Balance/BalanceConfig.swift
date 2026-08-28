@@ -1573,6 +1573,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     public var investors: InvestorBalance
     /// Employee trait strengths (WS-F).
     public var traits: TraitBalance
+    /// The founder's own attributes and what training them costs.
+    public var founder: FounderBalance
+    /// The networking floor: who is in the room and what a deal costs.
+    public var networking: NetworkingBalance
+    /// A partner who needs tending, and a team that can become friends.
+    public var relationships: RelationshipBalance
 
     public init(
         startingCash: Int,
@@ -1671,7 +1677,10 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         narrative: NarrativeBalance = .default,
         progression: ProgressionBalance = .default,
         investors: InvestorBalance = .default,
-        traits: TraitBalance = .default
+        traits: TraitBalance = .default,
+        founder: FounderBalance = .default,
+        networking: NetworkingBalance = .default,
+        relationships: RelationshipBalance = .default
     ) {
         self.startingCash = startingCash
         self.weeklyOperatingCost = weeklyOperatingCost
@@ -1770,6 +1779,9 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         self.progression = progression
         self.investors = investors
         self.traits = traits
+        self.founder = founder
+        self.networking = networking
+        self.relationships = relationships
     }
 
     public func office(_ tier: OfficeTier) -> OfficeDef {

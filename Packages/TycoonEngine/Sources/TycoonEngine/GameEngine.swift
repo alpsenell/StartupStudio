@@ -88,12 +88,21 @@ public final class GameEngine {
     }
 
     /// Applies a player action synchronously via `Reducer.apply` (which owns
-    /// appending the returned events to the event log).
-    public func send(_ action: GameAction) {
+    /// appending the returned events to the event log), and hands back what
+    /// it produced.
+    ///
+    /// The events are returned so a caller that needs to know *what
+    /// happened* — did that conversation land, did the activity actually
+    /// go ahead — can read it from the reducer rather than re-deriving it
+    /// from the state or fishing the tail of the capped event log. An
+    /// empty array means the action was refused.
+    @discardableResult
+    public func send(_ action: GameAction) -> [GameEvent] {
         let events = Reducer.apply(action, to: &state, balance: balance, content: content)
         if !events.isEmpty {
             autosave?(state)
         }
+        return events
     }
 
     public func setSpeed(_ speed: SimSpeed) {

@@ -24,7 +24,7 @@ struct LifeMetersCard: View {
                 Divider()
 
                 HStack(spacing: Theme.Spacing.sm) {
-                    OutputLine(multiplier: founderOutputEstimate(life: life, day: state.day), isAway: isAway)
+                    OutputLine(multiplier: founderOutputEstimate(state: state, balance: engine.balance), isAway: isAway)
                     Spacer(minLength: 0)
                     if hasCold {
                         ColdChip()

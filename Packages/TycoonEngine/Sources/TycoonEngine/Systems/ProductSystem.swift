@@ -124,6 +124,9 @@ enum ProductSystem {
                 * hypeBoost
                 * info.launchMarketScale
                 * pricing.demandFactor
+                // A founder who knows the market puts the product in front
+                // of the people who want it. Neutral until they train it.
+                * state.founderMarketFactor(balance)
             let price = type.unitPrice * pricing.priceFactor
             let world = marketMultiplier * shareMultiplier * liveBugDrag * updateBump
 

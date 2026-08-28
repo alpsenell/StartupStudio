@@ -121,6 +121,10 @@ enum EmployeeSystem {
             + (hasHR ? company.hrQuitStreakBonus : 0)
             + state.ownedAmenities.reduce(0) { $0 + company.amenity($1).quitStreakBonusDays }
         let conditions = workplaceMoraleDelta(state, balance)
+        // Whoever is running this place is part of the conditions. Zero at
+        // the balance's `skillMidpoint`, so an untrained founder changes
+        // nothing and the pre-attribute morale numbers stand.
+        let leadership = state.founderLeadershipMoraleDelta(balance)
         // The share of `conditions` that is the work pace, so a crunch can
         // land differently on different people. Only a *penalty* is
         // personal — a relaxed week is good for everybody.
@@ -140,6 +144,10 @@ enum EmployeeSystem {
             var target = staff.baselineMorale + officeBonus + perkBonus + conditions
                 + TraitEffects.moraleTargetDelta(employee, content: content)
                 + crunchAdjustment
+                + leadership
+                // Being close to the person you work for is worth
+                // something on its own.
+                + employee.founderBond * balance.relationships.bondMoraleTargetFactor
             if ratio < staff.underpaidThreshold {
                 target -= staff.underpaidTargetPenalty
             } else if ratio > staff.wellPaidThreshold {

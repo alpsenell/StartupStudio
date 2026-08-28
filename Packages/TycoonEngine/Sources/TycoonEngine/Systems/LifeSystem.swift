@@ -34,8 +34,9 @@ enum LifeSystem {
     ) -> [GameEvent] {
         var events: [GameEvent] = []
 
-        // 0. A new day resets the instant-activity cap.
+        // 0. A new day resets the instant-activity and training caps.
         state.life.instantActionsToday = 0
+        state.life.trainingsToday = 0
 
         // 1. Expiry.
         if let until = state.life.awayUntilDay, state.day >= until {
@@ -66,7 +67,7 @@ enum LifeSystem {
 
         // 5. Weekly flows.
         if state.day % GameState.daysPerWeek == 0 {
-            events.append(contentsOf: runWeekly(&state, balance))
+            events.append(contentsOf: runWeekly(&state, balance, content))
         }
 
         return events
@@ -187,6 +188,10 @@ enum LifeSystem {
             state.life.family.stageSinceDay = day
             state.life.family.partnerName = nil
             state.life.family.partnerAppearanceSeed = nil
+            state.life.family.partnerContactID = nil
+            state.life.family.affection = 0
+            state.life.family.lastPartnerDay = nil
+            state.life.family.partnerCooldowns = [:]
             state.life.meters.apply(mood: -config.breakupMoodPenalty)
             state.life.lowRelationshipStreakDays = 0
             events.append(.breakup(day: day))
@@ -356,7 +361,8 @@ enum LifeSystem {
     /// the founder is away. Costs debit the wallet even into the negative.
     private static func runWeekly(
         _ state: inout GameState,
-        _ balance: BalanceConfig
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
     ) -> [GameEvent] {
         let config = balance.life
         let day = state.day
@@ -410,6 +416,19 @@ enum LifeSystem {
         )
         state.life.wallet -= def.cost
 
+        // A weekend actually spent with the person you are with counts as
+        // spending it with them — the Life tab's date night and the
+        // partner card's are the same evening.
+        if activity == .dateNight || activity == .familyTime,
+           state.life.family.stage != .single {
+            state.life.family.affection = min(
+                100,
+                state.life.family.affection
+                    + def.relationships * state.founderCharmFactor(balance)
+            )
+            state.life.family.lastPartnerDay = day
+        }
+
         var events: [GameEvent] = [.weekendSpent(activity: activity, day: day)]
         events.append(contentsOf: applyWeekendRecovery(activity, &state, balance))
         switch activity {
@@ -422,7 +441,15 @@ enum LifeSystem {
             events.append(.founderAway(reason: vacationReason, untilDay: until, day: day))
         case .doctor:
             state.life.coldUntilDay = nil
-        case .rest, .gym, .dateNight, .friends, .hobby, .familyTime, .spa, .networking:
+        case .networking:
+            // The evening is not just a meter change: it opens a room full
+            // of people, which stays open for a couple of days so the
+            // player can work it at their own pace.
+            events.append(contentsOf: NetworkingSystem.startEvent(
+                state: &state, balance: balance, content: content
+            ))
+            FounderSystem.practice(.conversation, multiplier: 2, state: &state, balance: balance)
+        case .rest, .gym, .dateNight, .friends, .hobby, .familyTime, .spa:
             break
         }
         return events
@@ -527,6 +554,7 @@ enum LifeSystem {
     ) -> [GameEvent] {
         let config = balance.life
         let relationships = state.life.meters.relationships
+        let affection = state.life.family.affection
         let daysAtStage = state.day - state.life.family.stageSinceDay
 
         switch state.life.family.stage {
@@ -534,15 +562,21 @@ enum LifeSystem {
             guard relationships >= config.datingMinRelationships else { return [] }
             state.life.family.partnerName = pick(content.names.partnerNames, &state.rng)
             state.life.family.partnerAppearanceSeed = state.rng.next()
+            state.life.family.partnerContactID = nil
+            state.life.family.affection = balance.relationships.startingAffection
+            state.life.family.lastPartnerDay = state.day
+            state.life.family.partnerCooldowns = [:]
             state.life.family.stage = .dating
         case .dating:
             guard relationships >= config.partnerMinRelationships,
-                  daysAtStage >= config.partnerMinDaysAtStage
+                  daysAtStage >= config.partnerMinDaysAtStage,
+                  affection >= balance.relationships.minAffection(for: .partner)
             else { return [] }
             state.life.family.stage = .partner
         case .partner:
             guard relationships >= config.marriedMinRelationships,
                   daysAtStage >= config.marriedMinDaysAtStage,
+                  affection >= balance.relationships.minAffection(for: .married),
                   state.life.wallet >= config.weddingCost
             else { return [] }
             state.life.wallet -= config.weddingCost

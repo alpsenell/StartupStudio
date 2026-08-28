@@ -266,6 +266,42 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// The player was interviewed a candidate and learned their second
     /// trait.
     case candidateInterviewed(candidateID: UUID, day: Int)
+
+    // MARK: Founder & people
+
+    /// The founder trained one of their own attributes.
+    case founderTrained(skill: FounderSkill, method: TrainingMethod, gained: Double, day: Int)
+    /// A networking weekend opened a room.
+    case networkingEventStarted(venue: NetworkingVenue, contactCount: Int, day: Int)
+    /// One exchange with somebody in the room. `landed` is whether it went
+    /// well; a miss costs rapport.
+    case networkingTalk(contactID: UUID, topic: ConversationTopic, landed: Bool, day: Int)
+    /// The founder walked out, or the room closed.
+    case networkingEventEnded(day: Int)
+    /// Somebody from the address book took a salaried job.
+    case contactRecruited(contactID: UUID, name: String, day: Int)
+    /// Somebody from the address book joined as an owner, for equity out
+    /// of the founder's own stake.
+    case contactJoinedForEquity(contactID: UUID, name: String, equity: Double, day: Int)
+    /// The founder put their own money into somebody else's startup.
+    case stakeAcquired(contactID: UUID, companyName: String, stakePercent: Double, amount: Int, day: Int)
+    /// One of those startups was bought. The proceeds land in the wallet.
+    case stakeExited(companyName: String, proceeds: Int, day: Int)
+    /// One of those startups folded.
+    case stakeLost(companyName: String, invested: Int, day: Int)
+    /// A contact put money into the founder's company.
+    case angelInvestment(contactID: UUID, name: String, amount: Int, equity: Double, day: Int)
+    /// A contact became the founder's partner.
+    case romanceStarted(contactID: UUID, name: String, day: Int)
+    /// The founder spent time with their partner.
+    case partnerTime(activity: PartnerActivity, affection: Double, day: Int)
+    /// The partner has had enough of being an afterthought — a warning
+    /// before the breakup, and the only one there is.
+    case partnerDrifting(affection: Double, day: Int)
+    /// The founder spent their own evening with somebody on the team.
+    case hungOutWith(employeeID: UUID, day: Int)
+    /// The founder taught somebody something.
+    case employeeMentored(employeeID: UUID, skill: TrainableSkill, day: Int)
 }
 
 extension GameEvent {
@@ -345,6 +381,21 @@ extension GameEvent {
         case .goalCompleted, .investmentAccepted, .rivalProductLaunched, .rivalCopycat:
             .info
         case .investmentDeclined, .investmentWithdrawn, .boardReviewed, .candidateInterviewed:
+            .quiet
+
+        // MARK: Founder & people
+
+        // The founder's own money coming back — or not — is worth stopping
+        // for, and a partner who is drifting is the last warning before a
+        // breakup that ends the same way a bankruptcy does: suddenly, and
+        // with the player saying they never saw it.
+        case .stakeExited, .stakeLost, .partnerDrifting:
+            .notable
+        case .networkingEventStarted, .contactRecruited, .contactJoinedForEquity,
+             .stakeAcquired, .angelInvestment, .romanceStarted:
+            .info
+        case .founderTrained, .networkingTalk, .networkingEventEnded, .partnerTime,
+             .hungOutWith, .employeeMentored:
             .quiet
 
         default:
@@ -450,6 +501,17 @@ public struct GameState: Codable, Equatable, Sendable {
     /// changing, purely by shifting the stream underneath it. Pricing the
     /// board is now orthogonal to the rest of the world by construction.
     public var investorRNG: SeededRNG = SeededRNG(seed: 0x1D0B_E5EE_D1D0_B5EE)
+    /// A fourth stream, for the people the founder meets: who is standing
+    /// in the networking room, whether a chat lands, and how the founder's
+    /// personal stakes in other studios move.
+    ///
+    /// The same argument as `investorRNG`, and it matters more here: the
+    /// venue is rolled the moment a networking weekend resolves, which is
+    /// mid-`LifeSystem`, in the middle of the original `rng` stream. Drawn
+    /// from there, every founder who ever plans a Friday night would
+    /// reshuffle their own life events, contract offers and candidate
+    /// pools for the rest of the run.
+    public var socialRNG: SeededRNG = SeededRNG(seed: 0x50C1_A150_C1A1_50C1)
     /// Ticks since founding; starts at 0.
     public var day: Int
     public var speed: SimSpeed
@@ -500,6 +562,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Rounds raised, equity and board pressure (WS-F). Empty in the
     /// scaffold.
     public var investors: InvestorState
+    /// The address book, the room the founder is standing in, and the
+    /// stakes they hold in other people's startups.
+    public var networking: NetworkingState = .empty
     public var gameOver: GameOverInfo?
 
     /// Starts a fresh company. `balance` is used as given — pass the
@@ -550,6 +615,8 @@ public struct GameState: Codable, Equatable, Sendable {
             // Likewise derived, with a different odd multiplier so the two
             // world streams never run in lockstep.
             investorRNG: SeededRNG(seed: seed &* 0xD1B5_4A32_D192_ED03 &+ 2),
+            // A third derived stream, a third odd multiplier.
+            socialRNG: SeededRNG(seed: seed &* 0xA24B_AED4_963E_E407 &+ 3),
             day: 0,
             speed: .paused,
             company: Company(
@@ -583,6 +650,7 @@ public struct GameState: Codable, Equatable, Sendable {
             narrative: .initial,
             progression: .initial(founder: founder),
             investors: .initial,
+            networking: .empty,
             gameOver: nil
         )
     }
@@ -735,6 +803,7 @@ extension GameState {
         case worldRNG, investorRNG, rivals, city, friendships, pendingStaffEvent
         case lastTeamDinnerDay
         case economy, narrative, progression, investors
+        case socialRNG, networking
     }
 
     public init(from decoder: any Decoder) throws {
@@ -753,6 +822,9 @@ extension GameState {
             // is all determinism asks of it.
             investorRNG: try container.decodeIfPresent(SeededRNG.self, forKey: .investorRNG)
                 ?? SeededRNG(seed: 0x1D0B_E5EE_D1D0_B5EE),
+            // And again for the people stream.
+            socialRNG: try container.decodeIfPresent(SeededRNG.self, forKey: .socialRNG)
+                ?? SeededRNG(seed: 0x50C1_A150_C1A1_50C1),
             day: try container.decode(Int.self, forKey: .day),
             speed: try container.decode(SimSpeed.self, forKey: .speed),
             company: try container.decode(Company.self, forKey: .company),
@@ -786,6 +858,8 @@ extension GameState {
             progression: try container.decodeIfPresent(ProgressionState.self, forKey: .progression)
                 ?? .initial,
             investors: try container.decodeIfPresent(InvestorState.self, forKey: .investors) ?? .initial,
+            networking: try container.decodeIfPresent(NetworkingState.self, forKey: .networking)
+                ?? .empty,
             gameOver: try container.decodeIfPresent(GameOverInfo.self, forKey: .gameOver)
         )
     }
@@ -797,6 +871,7 @@ extension GameState {
         try container.encode(rng, forKey: .rng)
         try container.encode(worldRNG, forKey: .worldRNG)
         try container.encode(investorRNG, forKey: .investorRNG)
+        try container.encode(socialRNG, forKey: .socialRNG)
         try container.encode(day, forKey: .day)
         try container.encode(speed, forKey: .speed)
         try container.encode(company, forKey: .company)
@@ -831,6 +906,7 @@ extension GameState {
         try container.encode(narrative, forKey: .narrative)
         try container.encode(progression, forKey: .progression)
         try container.encode(investors, forKey: .investors)
+        try container.encode(networking, forKey: .networking)
         try container.encodeIfPresent(gameOver, forKey: .gameOver)
     }
 }

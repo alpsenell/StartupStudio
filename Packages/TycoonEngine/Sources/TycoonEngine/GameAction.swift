@@ -107,6 +107,25 @@ public enum GameAction: Codable, Equatable, Sendable {
     case interviewCandidate(candidateID: UUID)
     /// Clears a candidate out of the pool without hiring them.
     case passOnCandidate(candidateID: UUID)
+
+    // MARK: Founder & people
+
+    /// Spends the day getting better at one of the founder's own five
+    /// attributes. Wallet money above self-study, energy always.
+    case trainFounderSkill(skill: FounderSkill, method: TrainingMethod)
+    /// One exchange with somebody standing in the networking room.
+    case talkToContact(contactID: UUID, topic: ConversationTopic)
+    /// Puts a deal to a contact on the terms they have already named.
+    case makeNetworkingOffer(contactID: UUID, offer: NetworkingOffer)
+    /// Calls it a night and closes the room.
+    case leaveNetworkingEvent
+    /// Spends the founder's own evening on their partner.
+    case spendTimeWithPartner(PartnerActivity)
+    /// An evening out with somebody on the team, on the founder rather
+    /// than on the company.
+    case hangOutWith(employeeID: UUID)
+    /// The founder teaches somebody one of the three trainable skills.
+    case mentorEmployee(employeeID: UUID, skill: TrainableSkill)
 }
 
 /// The skill a training course targets.

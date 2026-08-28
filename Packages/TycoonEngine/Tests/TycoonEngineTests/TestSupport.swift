@@ -110,7 +110,14 @@ enum TestBalance {
         genreFatigueWindowDays: Int = 84,
         marketHistoryWeeks: Int = 26,
         marketEventLogCap: Int = 30,
-        difficulty: [String: BalanceConfig.DifficultyBalance] = BalanceConfig.DifficultyBalance.standardTable
+        difficulty: [String: BalanceConfig.DifficultyBalance] = BalanceConfig.DifficultyBalance.standardTable,
+        // The founder-as-a-person blocks default to `.default`, which is
+        // every effect at zero and no networking floor — so every test
+        // written before these existed measures exactly what it measured
+        // before, and only the tests that opt in see them.
+        founder: BalanceConfig.FounderBalance = .default,
+        networking: BalanceConfig.NetworkingBalance = .default,
+        relationships: BalanceConfig.RelationshipBalance = .default
     ) -> BalanceConfig {
         BalanceConfig(
             startingCash: startingCash,
@@ -216,7 +223,10 @@ enum TestBalance {
             marketHistoryWeeks: marketHistoryWeeks,
             marketEventLogCap: marketEventLogCap,
             difficulty: difficulty,
-            economy: economy
+            economy: economy,
+            founder: founder,
+            networking: networking,
+            relationships: relationships
         )
     }
 

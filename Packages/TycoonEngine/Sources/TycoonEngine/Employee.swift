@@ -114,6 +114,14 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
     /// and gets the same derivation on the way in, which is why an old run
     /// picks up traits without any migration.
     public var traits: [String]
+    /// 0...100: how close this person is to the *founder*, as opposed to
+    /// how they feel about the job. Grown by the founder's own time
+    /// (coffee, a one-on-one, a hang-out, being mentored) and decayed by
+    /// being ignored. A strong bond is worth output, morale and staying
+    /// put when a rival calls. The founder's own is unused.
+    public var founderBond: Double
+    /// The last day the founder mentored this person (cooldown).
+    public var lastMentoredDay: Int?
 
     /// `role` defaults to the pre-roles inference (founder, else the
     /// stronger of coding and design) so callers that predate roles keep
@@ -142,7 +150,9 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         loyalty: Double = 50,
         lastSocialDay: Int? = nil,
         role: EmployeeRole? = nil,
-        traits: [String] = []
+        traits: [String] = [],
+        founderBond: Double = 0,
+        lastMentoredDay: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -159,6 +169,8 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         self.lastTrainedDay = lastTrainedDay
         self.loyalty = loyalty
         self.lastSocialDay = lastSocialDay
+        self.founderBond = founderBond
+        self.lastMentoredDay = lastMentoredDay
         self.role = role ?? .inferred(isFounder: isFounder, skills: skills)
         self.traits = if !traits.isEmpty || isFounder {
             traits
@@ -167,7 +179,8 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         }
     }
 
-    /// Output multiplier from morale and seniority (the founder's output is
+    /// Output multiplier from morale, seniority and how close this person
+    /// is to the founder (the founder's own output is
     /// scaled by the life system instead and always reads 1 here).
     public func performanceMultiplier(balance: BalanceConfig) -> Double {
         guard !isFounder else { return 1 }
@@ -175,7 +188,11 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         let moraleFactor = min(staff.performanceMax, max(staff.performanceMin,
             1 + (morale - staff.moraleNeutral) * staff.performancePerMoralePoint
         ))
-        return moraleFactor * (1 + staff.levelOutputBonus * Double(level.rank))
+        // People do their best work for someone they'd go to the wall for.
+        // Zero-valued in a balance without the relationships block, which
+        // is exactly the pre-bond output.
+        let bondBonus = 1 + founderBond / 100 * balance.relationships.bondOutputFactor
+        return moraleFactor * (1 + staff.levelOutputBonus * Double(level.rank)) * bondBonus
     }
 }
 
@@ -190,7 +207,7 @@ extension Employee {
     private enum CodingKeys: String, CodingKey {
         case id, name, skills, weeklySalary, assignment, isFounder, hiredDay
         case appearanceSeed, morale, level, lowMoraleStreakDays, lastPraisedDay, lastTrainedDay
-        case loyalty, lastSocialDay, role, traits
+        case loyalty, lastSocialDay, role, traits, founderBond, lastMentoredDay
     }
 
     public init(from decoder: any Decoder) throws {
@@ -212,7 +229,9 @@ extension Employee {
             loyalty: try container.decodeIfPresent(Double.self, forKey: .loyalty) ?? 50,
             lastSocialDay: try container.decodeIfPresent(Int.self, forKey: .lastSocialDay),
             role: try container.decodeIfPresent(EmployeeRole.self, forKey: .role),
-            traits: try container.decodeIfPresent([String].self, forKey: .traits) ?? []
+            traits: try container.decodeIfPresent([String].self, forKey: .traits) ?? [],
+            founderBond: try container.decodeIfPresent(Double.self, forKey: .founderBond) ?? 0,
+            lastMentoredDay: try container.decodeIfPresent(Int.self, forKey: .lastMentoredDay)
         )
     }
 }

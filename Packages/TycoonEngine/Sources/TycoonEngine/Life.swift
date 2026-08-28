@@ -121,6 +121,19 @@ public struct FamilyState: Codable, Equatable, Sendable {
     /// Children stay through a breakup.
     public var children: [Child]
     public var lastChildDay: Int?
+    /// 0...100: how the partner feels about being with this founder, as
+    /// opposed to how the founder's *life* is going. It drifts down on its
+    /// own and only the founder's own time brings it back, which is the
+    /// point — the relationships meter can be carried by a night out with
+    /// friends, but a partner cannot.
+    public var affection: Double
+    /// Last day each partner activity was done, keyed by raw value.
+    public var partnerCooldowns: [String: Int]
+    /// The last day the founder did anything with their partner at all.
+    public var lastPartnerDay: Int?
+    /// Set when the partner came out of the address book, so the contact
+    /// and the relationship stay the same person.
+    public var partnerContactID: UUID?
 
     public init(
         stage: RelationshipStage,
@@ -128,7 +141,11 @@ public struct FamilyState: Codable, Equatable, Sendable {
         partnerName: String?,
         partnerAppearanceSeed: UInt64?,
         children: [Child],
-        lastChildDay: Int?
+        lastChildDay: Int?,
+        affection: Double = 0,
+        partnerCooldowns: [String: Int] = [:],
+        lastPartnerDay: Int? = nil,
+        partnerContactID: UUID? = nil
     ) {
         self.stage = stage
         self.stageSinceDay = stageSinceDay
@@ -136,6 +153,70 @@ public struct FamilyState: Codable, Equatable, Sendable {
         self.partnerAppearanceSeed = partnerAppearanceSeed
         self.children = children
         self.lastChildDay = lastChildDay
+        self.affection = affection
+        self.partnerCooldowns = partnerCooldowns
+        self.lastPartnerDay = lastPartnerDay
+        self.partnerContactID = partnerContactID
+    }
+}
+
+// MARK: - Codable
+
+// Hand-written (in an extension, so the memberwise initializer survives)
+// so a save written before the partner had an inner life keeps loading,
+// and so the cooldown map encodes as a sorted array of entries — the same
+// determinism argument as `LifeState.instantCooldowns`.
+extension FamilyState {
+    private enum CodingKeys: String, CodingKey {
+        case stage, stageSinceDay, partnerName, partnerAppearanceSeed, children, lastChildDay
+        case affection, partnerCooldowns, lastPartnerDay, partnerContactID
+    }
+
+    private struct CooldownEntry: Codable {
+        var activity: String
+        var day: Int
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let cooldowns = try container.decodeIfPresent(
+            [CooldownEntry].self, forKey: .partnerCooldowns
+        ) ?? []
+        self.init(
+            stage: try container.decode(RelationshipStage.self, forKey: .stage),
+            stageSinceDay: try container.decode(Int.self, forKey: .stageSinceDay),
+            partnerName: try container.decodeIfPresent(String.self, forKey: .partnerName),
+            partnerAppearanceSeed: try container.decodeIfPresent(
+                UInt64.self, forKey: .partnerAppearanceSeed
+            ),
+            children: try container.decode([Child].self, forKey: .children),
+            lastChildDay: try container.decodeIfPresent(Int.self, forKey: .lastChildDay),
+            affection: try container.decodeIfPresent(Double.self, forKey: .affection) ?? 0,
+            partnerCooldowns: Dictionary(
+                cooldowns.map { ($0.activity, $0.day) }, uniquingKeysWith: { _, last in last }
+            ),
+            lastPartnerDay: try container.decodeIfPresent(Int.self, forKey: .lastPartnerDay),
+            partnerContactID: try container.decodeIfPresent(UUID.self, forKey: .partnerContactID)
+        )
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(stage, forKey: .stage)
+        try container.encode(stageSinceDay, forKey: .stageSinceDay)
+        try container.encodeIfPresent(partnerName, forKey: .partnerName)
+        try container.encodeIfPresent(partnerAppearanceSeed, forKey: .partnerAppearanceSeed)
+        try container.encode(children, forKey: .children)
+        try container.encodeIfPresent(lastChildDay, forKey: .lastChildDay)
+        try container.encode(affection, forKey: .affection)
+        try container.encode(
+            partnerCooldowns.keys.sorted().map {
+                CooldownEntry(activity: $0, day: partnerCooldowns[$0] ?? 0)
+            },
+            forKey: .partnerCooldowns
+        )
+        try container.encodeIfPresent(lastPartnerDay, forKey: .lastPartnerDay)
+        try container.encodeIfPresent(partnerContactID, forKey: .partnerContactID)
     }
 }
 
@@ -176,6 +257,15 @@ public struct LifeState: Codable, Equatable, Sendable {
     /// Item ids the founder owns, kept sorted (bought via `.buyItem`;
     /// their daily mood drift joins the meter drift).
     public var possessions: [String]
+    /// The founder's five personal attributes, trained with
+    /// `.trainFounderSkill` and picked up in smaller doses just by doing
+    /// the work.
+    public var skills: FounderSkillSet
+    /// Last day each training method was used, keyed by raw value.
+    public var trainingCooldowns: [String: Int]
+    /// Training sessions done today; resets at the top of each daily tick
+    /// and caps at `balance.founder.maxTrainingsPerDay`.
+    public var trainingsToday: Int
 
     public init(
         meters: LifeMeters,
@@ -192,7 +282,12 @@ public struct LifeState: Codable, Equatable, Sendable {
         lowRelationshipStreakDays: Int,
         instantCooldowns: [String: Int] = [:],
         instantActionsToday: Int = 0,
-        possessions: [String] = []
+        possessions: [String] = [],
+        skills: FounderSkillSet = FounderSkillSet(
+            conversation: 50, technical: 50, marketKnowledge: 50, leadership: 50, finance: 50
+        ),
+        trainingCooldowns: [String: Int] = [:],
+        trainingsToday: Int = 0
     ) {
         self.meters = meters
         self.schedule = schedule
@@ -209,6 +304,9 @@ public struct LifeState: Codable, Equatable, Sendable {
         self.instantCooldowns = instantCooldowns
         self.instantActionsToday = instantActionsToday
         self.possessions = possessions
+        self.skills = skills
+        self.trainingCooldowns = trainingCooldowns
+        self.trainingsToday = trainingsToday
     }
 
     /// Whether the founder is absent on `day` (half-open: back on
@@ -228,7 +326,12 @@ public struct LifeState: Codable, Equatable, Sendable {
     /// A fresh life for `GameState.newGame`: rested, single, in a studio
     /// flat, with the balance's starting wallet and default salary.
     static func newGame(balance: BalanceConfig) -> LifeState {
-        newGame(wallet: balance.life.startingWallet, founderSalary: balance.life.defaultFounderSalary)
+        var life = newGame(
+            wallet: balance.life.startingWallet,
+            founderSalary: balance.life.defaultFounderSalary
+        )
+        life.skills = balance.founder.starting
+        return life
     }
 
     /// The starting life with explicit money values. Also the fallback for
@@ -271,6 +374,7 @@ extension LifeState {
         case meters, schedule, plannedActivity, wallet, founderSalary, home, family
         case awayUntilDay, awaySinceDay, awayReason, coldUntilDay, lowRelationshipStreakDays
         case instantCooldowns, instantActionsToday, possessions
+        case skills, trainingCooldowns, trainingsToday
     }
 
     private struct CooldownEntry: Codable {
@@ -281,6 +385,7 @@ extension LifeState {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let cooldowns = try container.decodeIfPresent([CooldownEntry].self, forKey: .instantCooldowns) ?? []
+        let training = try container.decodeIfPresent([CooldownEntry].self, forKey: .trainingCooldowns) ?? []
         self.init(
             meters: try container.decode(LifeMeters.self, forKey: .meters),
             schedule: try container.decode(WorkSchedule.self, forKey: .schedule),
@@ -298,7 +403,16 @@ extension LifeState {
                 cooldowns.map { ($0.activity, $0.day) }, uniquingKeysWith: { _, last in last }
             ),
             instantActionsToday: try container.decodeIfPresent(Int.self, forKey: .instantActionsToday) ?? 0,
-            possessions: try container.decodeIfPresent([String].self, forKey: .possessions) ?? []
+            possessions: try container.decodeIfPresent([String].self, forKey: .possessions) ?? [],
+            // A save written before the founder had attributes decodes
+            // with the shipped starting sheet, which is what that founder
+            // has been playing with all along.
+            skills: try container.decodeIfPresent(FounderSkillSet.self, forKey: .skills)
+                ?? BalanceConfig.FounderBalance.default.starting,
+            trainingCooldowns: Dictionary(
+                training.map { ($0.activity, $0.day) }, uniquingKeysWith: { _, last in last }
+            ),
+            trainingsToday: try container.decodeIfPresent(Int.self, forKey: .trainingsToday) ?? 0
         )
     }
 
@@ -324,6 +438,14 @@ extension LifeState {
         )
         try container.encode(instantActionsToday, forKey: .instantActionsToday)
         try container.encode(possessions.sorted(), forKey: .possessions)
+        try container.encode(skills, forKey: .skills)
+        try container.encode(
+            trainingCooldowns.keys.sorted().map {
+                CooldownEntry(activity: $0, day: trainingCooldowns[$0] ?? 0)
+            },
+            forKey: .trainingCooldowns
+        )
+        try container.encode(trainingsToday, forKey: .trainingsToday)
     }
 }
 
@@ -332,11 +454,13 @@ extension LifeState {
 extension GameState {
     /// The founder's daily output multiplier, applied to product, contract,
     /// and research output:
-    /// `scheduleFactor × (minOutputFactor + (1 − minOutputFactor) × wellbeing) × (cold ? coldOutputFactor : 1) × chronic`
+    /// `scheduleFactor × (minOutputFactor + (1 − minOutputFactor) × wellbeing) × (cold ? coldOutputFactor : 1) × chronic × talent`
     /// where `wellbeing = (wE·energy + wH·health + wM·mood) / 100` with the
     /// balance's wellbeing weights, and `chronic` is
     /// `economy.chronicOutputFactor` while the founder is living with a
-    /// long-term condition — and 0 while the founder is away.
+    /// long-term condition, and `talent` is the founder's technical
+    /// attribute read through `BalanceConfig.FounderBalance.factor` — and 0
+    /// while the founder is away.
     public func founderOutputMultiplier(balance: BalanceConfig) -> Double {
         guard !life.isAway(day: day) else { return 0 }
         let config = balance.life
@@ -347,7 +471,11 @@ extension GameState {
         let vitality = config.minOutputFactor + (1 - config.minOutputFactor) * wellbeing
         let cold = life.hasCold(day: day) ? config.coldOutputFactor : 1
         let chronic = economy.chronicCondition ? balance.economy.chronicOutputFactor : 1
+        // ...and how good at this the founder actually is. Neutral at the
+        // balance's `skillMidpoint`, so a fresh run is unchanged and every
+        // point of training is visible on the Life tab's output line.
         return config.outputFactor(for: effectiveSchedule) * vitality * cold * chronic
+            * founderTalentFactor(balance)
     }
 
     /// The schedule the founder is actually keeping, as opposed to the one
@@ -363,6 +491,17 @@ extension GameState {
     /// `1 + max(0, lowEnergyBugThreshold − energy) / lowEnergyBugDivisor`.
     public func founderBugChanceMultiplier(balance: BalanceConfig) -> Double {
         let config = balance.life
-        return 1 + max(0, config.lowEnergyBugThreshold - life.meters.energy) / config.lowEnergyBugDivisor
+        let tired = 1 + max(0, config.lowEnergyBugThreshold - life.meters.energy)
+            / config.lowEnergyBugDivisor
+        // A founder who actually knows the stack writes fewer of them, and
+        // one who doesn't writes more. The divisor is zero in a balance
+        // without the founder block, which leaves the pre-attribute
+        // formula exactly as it was.
+        let divisor = balance.founder.technicalBugDivisor
+        guard divisor > 0 else { return tired }
+        let skilled = max(
+            0.5, 1 - (life.skills.technical - balance.founder.skillMidpoint) / divisor
+        )
+        return tired * skilled
     }
 }

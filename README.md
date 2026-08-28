@@ -24,11 +24,12 @@ Five tabs over the persistent cash/date/speed HUD:
   gym); the journal; burn rate and runway; office upgrades; and the
   activity feed
 - **Life** — the founder's own life: the pixel home (studio flat →
-  penthouse), energy/health/mood/relationship meters, work schedule and
-  work pace, founder salary and wallet, weekend plans and thirteen
-  illustrated activity vignettes, shopping, the city map (five districts to
-  relocate to, and an office you can rent, buy or sell), and family —
-  dating, moving in, marriage and kids
+  penthouse), energy/health/mood/relationship meters, your own five
+  attributes and the training that raises them, work schedule and work
+  pace, founder salary and wallet, weekend plans and thirteen illustrated
+  activity vignettes, shopping, the networking floor and address book, the
+  city map (five districts to relocate to, and an office you can rent, buy
+  or sell), and family — dating, moving in, marriage and kids
 - **Team** — a searchable, sortable roster with mood faces, trait chips,
   roles and seniority, and bulk assignment; hiring from a rotating pool
   where each candidate shows one trait and hides the second behind an
@@ -62,6 +63,32 @@ Five tabs over the persistent cash/date/speed HUD:
   output against morale and bugs. An unhappy employee does not vanish: they
   hand in notice and keep working, and a real raise or a promotion inside
   the notice period still turns it around.
+- **You are a character sheet.** Five attributes — conversation,
+  technical, market sense, leadership, finance — each with exactly one job:
+  your own build output and bug rate, the sales a release finds, the morale
+  your team settles at, what a delivered contract actually pays, and how
+  far a conversation gets. Train them with an evening's reading, an online
+  course or a private coach; the closer to 100, the less each session adds.
+  They also grow quietly from doing the thing.
+- **The networking floor.** Plan a networking weekend and you walk into a
+  room — a co-working mixer, a rooftop party, a demo day — with three to
+  five people standing in it, drawn rather than listed. You get a handful
+  of exchanges: small talk is safe, talking shop is graded on what you
+  actually know, listening is how you learn what somebody wants, and
+  pitching a stranger costs you. Warm somebody up and the deals open, in
+  both directions: hire them for salary; give away a slice of your own
+  company to get somebody who would never take the salary; buy a stake in
+  *their* startup out of your own wallet and hold it until it exits or
+  folds; take their cheque into yours; or, if you are single and the
+  evening went unusually well, stop talking about work. Contacts persist —
+  rapport fades if you never call.
+- **People, not payroll.** Every hire has a bond with *you*, separate from
+  how they feel about the job — grown by your own time and money (an
+  evening out, an afternoon teaching them something) rather than the
+  company's, decayed by being ignored, and worth output, morale and staying
+  put when a rival calls. A partner has affection, which only your own
+  time moves: it slides every day, faster once a fortnight has passed with
+  no contact, and you get exactly one warning before it ends things.
 - **The founder is a person.** Miss rent long enough and the landlord
   evicts you into somewhere cheaper. Two hospital stays in a year and you
   live with a chronic condition; three restorative weekends clear it. Burn

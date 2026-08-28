@@ -29,6 +29,7 @@ struct EmployeeManageSheet: View {
                     traitSection(employee)
                     moraleSection(employee)
                     relationshipSection(employee)
+                    bondSection(employee)
                     salarySection(employee)
                     careerSection(employee)
                     trainingSection(employee)
@@ -285,6 +286,89 @@ struct EmployeeManageSheet: View {
                 Text("You've spent time together recently — give it a few days.")
             }
         }
+    }
+
+    /// The founder's *own* relationship with this person, as distinct from
+    /// how they feel about the job.
+    ///
+    /// Everything above this section is the company's money: coffee, a
+    /// gift, a raise. Everything in it is the founder's — their wallet,
+    /// their evening, their energy — which is exactly why it is worth
+    /// more, and why it is the only lever that keeps working when the
+    /// company has no cash left.
+    @ViewBuilder
+    private func bondSection(_ employee: Employee) -> some View {
+        let relationships = engine.balance.relationships
+        let hangOutBlocker = engine.state.hangOutBlocker(
+            employeeID: employeeID, balance: engine.balance
+        )
+        let mentorBlocker = engine.state.mentorBlocker(
+            employeeID: employeeID, balance: engine.balance
+        )
+
+        Section {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    Text("Bond with you")
+                        .font(.subheadline)
+                    Spacer()
+                    Text("\(Int(employee.founderBond.rounded()))/100")
+                        .font(.subheadline.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(lifeMeterTint(employee.founderBond))
+                }
+                ProgressView(value: employee.founderBond, total: 100)
+                    .tint(lifeMeterTint(employee.founderBond))
+                Text(bondBlurb(employee))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, Theme.Spacing.xs)
+
+            Button {
+                engine.send(.hangOutWith(employeeID: employeeID))
+            } label: {
+                Label(
+                    "Hang out (\(relationships.hangOut.cost.money) of your own)",
+                    systemImage: "figure.2"
+                )
+            }
+            .disabled(hangOutBlocker != nil)
+
+            Menu {
+                ForEach(TrainableSkill.allCases, id: \.self) { skill in
+                    Button(skill.displayName) {
+                        engine.send(.mentorEmployee(employeeID: employeeID, skill: skill))
+                    }
+                }
+            } label: {
+                Label("Mentor them", systemImage: "graduationcap.fill")
+            }
+            .disabled(mentorBlocker != nil)
+        } header: {
+            Text("You and them")
+        } footer: {
+            Text(bondFooter(hangOut: hangOutBlocker, mentor: mentorBlocker))
+        }
+    }
+
+    private func bondBlurb(_ employee: Employee) -> String {
+        switch employee.founderBond {
+        case ..<20: "You barely know each other outside of standups."
+        case ..<50: "You get on. They'd hear you out."
+        case ..<80: "They're in your corner — and it shows in their work."
+        default: "They'd follow you to the next company. Don't waste that."
+        }
+    }
+
+    private func bondFooter(hangOut: String?, mentor: String?) -> String {
+        if let hangOut, let mentor, hangOut == mentor { return hangOut }
+        var lines: [String] = []
+        if let hangOut { lines.append("Hang out: \(hangOut).") }
+        if let mentor { lines.append("Mentor: \(mentor).") }
+        guard lines.isEmpty else { return lines.joined(separator: " ") }
+        return "Your time, not the company's. A close team works better, "
+            + "stays longer, and turns down rivals."
     }
 
     private func salarySection(_ employee: Employee) -> some View {

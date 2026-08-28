@@ -457,11 +457,15 @@ enum SocialSystem {
         state.ledger.post(LedgerEntry(
             day: state.day, amount: -cost, category: .other, label: "Team dinner"
         ))
+        let charm = state.founderCharmFactor(balance)
         for index in state.employees.indices where !state.employees[index].isFounder {
             state.employees[index].morale = min(100,
                 state.employees[index].morale + config.dinnerMorale)
             state.employees[index].loyalty = min(100,
                 state.employees[index].loyalty + config.dinnerLoyalty)
+            state.employees[index].founderBond = min(100,
+                state.employees[index].founderBond
+                    + balance.relationships.bondPerSocialAction / 2 * charm)
         }
         state.lastTeamDinnerDay = state.day
         return [.socialActivity(kind: .teamDinner, employeeID: nil, day: state.day)]
@@ -498,6 +502,13 @@ enum SocialSystem {
         }
         state.employees[index].morale = min(100, max(0, state.employees[index].morale + morale))
         state.employees[index].loyalty = min(100, max(0, state.employees[index].loyalty + loyalty))
+        // Every one of these is the founder's own time, so every one of
+        // them is worth a little of the founder's own bond with them — and
+        // a founder who is good at talking to people gets more out of the
+        // same coffee.
+        state.employees[index].founderBond = min(100,
+            state.employees[index].founderBond
+                + balance.relationships.bondPerSocialAction * state.founderCharmFactor(balance))
         state.employees[index].lastSocialDay = state.day
         return [.socialActivity(kind: kind, employeeID: employeeID, day: state.day)]
     }

@@ -69,6 +69,16 @@ struct EventCopy {
         case .evictionWarning, .homeDowngraded, .chronicConditionDiagnosed,
              .chronicConditionCleared, .founderMeltdown:
             .life
+        // The founder as a person: what they're learning, who they've met,
+        // the money that is theirs rather than the company's, and how the
+        // person they go home to is doing.
+        case .founderTrained, .networkingEventStarted, .networkingTalk, .networkingEventEnded,
+             .stakeAcquired, .stakeExited, .stakeLost, .romanceStarted,
+             .partnerTime, .partnerDrifting:
+            .life
+        // Somebody joining, from wherever, is team news.
+        case .contactRecruited, .contactJoinedForEquity, .hungOutWith, .employeeMentored:
+            .team
         // Somebody handing in notice, and somebody being interviewed, are
         // team news wherever they were raised.
         case .resignationNotice, .candidateInterviewed:
@@ -313,6 +323,95 @@ struct EventCopy {
                 day,
                 Theme.warning
             )
+
+        // MARK: Founder & people
+
+        case .founderTrained(let skill, let method, let gained, let day):
+            (
+                "brain.head.profile",
+                "\(method.displayName): \(skill.displayName) "
+                    + "+\(gained.formatted(.number.precision(.fractionLength(1))))",
+                day,
+                Theme.accent
+            )
+        case .networkingEventStarted(let venue, let contactCount, let day):
+            (
+                "person.2.wave.2.fill",
+                "\(venue.displayName) — \(contactCount) people worth talking to",
+                day,
+                Theme.accent
+            )
+        case .networkingEventEnded(let day):
+            ("moon.fill", "You called it a night", day, Color.secondary)
+        case .contactRecruited(_, let name, let day):
+            ("person.badge.plus", "\(name) is joining you", day, Theme.positiveCash)
+        case .contactJoinedForEquity(_, let name, let equity, let day):
+            (
+                "person.2.badge.key.fill",
+                "\(name) came in as a partner for "
+                    + "\(equity.formatted(.number.precision(.fractionLength(1))))%",
+                day,
+                Theme.positiveCash
+            )
+        case .stakeAcquired(_, let companyName, let stakePercent, let amount, let day):
+            (
+                "chart.pie.fill",
+                "Bought \(stakePercent.formatted(.number.precision(.fractionLength(1))))% "
+                    + "of \(companyName) for \(amount.money)",
+                day,
+                Theme.accent
+            )
+        case .stakeExited(let companyName, let proceeds, let day):
+            (
+                "sparkles",
+                "\(companyName) got bought — your stake paid \(proceeds.money)",
+                day,
+                Theme.positiveCash
+            )
+        case .stakeLost(let companyName, let invested, let day):
+            (
+                "xmark.circle.fill",
+                "\(companyName) folded. Your \(invested.money) went with it.",
+                day,
+                Theme.negativeCash
+            )
+        case .angelInvestment(_, let name, let amount, let equity, let day):
+            (
+                "banknote.fill",
+                "\(name) put \(amount.money) in for "
+                    + "\(equity.formatted(.number.precision(.fractionLength(1))))%",
+                day,
+                Theme.positiveCash
+            )
+        case .romanceStarted(_, let name, let day):
+            ("heart.fill", "You and \(name) are seeing each other", day, Theme.positiveCash)
+        case .partnerTime(_, _, let day):
+            ("heart.circle.fill", "An evening that wasn't about work", day, Theme.positiveCash)
+        case .partnerDrifting(_, let day):
+            (
+                "heart.slash.fill",
+                "Your partner has stopped expecting you home. Do something about it.",
+                day,
+                Theme.warning
+            )
+        case .hungOutWith(let employeeID, let day):
+            (
+                "figure.2",
+                "A night out with \(employeeName(employeeID))",
+                day,
+                Theme.accent
+            )
+        case .employeeMentored(let employeeID, let skill, let day):
+            (
+                "graduationcap.fill",
+                "Taught \(employeeName(employeeID)) some \(skill.displayName.lowercased())",
+                day,
+                Theme.accent
+            )
+        // One line per exchange would bury the feed under an evening's
+        // small talk; the conversation sheet is where that feedback lives.
+        case .networkingTalk:
+            fallbackEntry(for: event)
 
         // MARK: WS-B and WS-F
         //

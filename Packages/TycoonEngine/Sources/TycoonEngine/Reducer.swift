@@ -10,7 +10,8 @@ public enum Reducer {
 
     /// Systems run in this order every day:
     /// Life → Market → Rival → Employee → Social → Product → Contract →
-    /// Research → Marketing → City → Finance → Event.
+    /// Research → Marketing → City → Finance → Event, then each
+    /// workstream's own, then Relationship → Networking.
     /// Life runs first so today's founder condition scales today's output;
     /// Market shifts before sales post so a weekly shift prices the same
     /// day's sales; Rival runs after Market (a rival shipping dents the
@@ -66,6 +67,16 @@ public enum Reducer {
         // Progression measures last, so a goal that a system finished
         // today completes today.
         ProgressionSystem.run,
+
+        // MARK: Founder & people
+
+        // The founder's own life, after the company's day. Relationships
+        // sees the post-quit roster and the loyalty `SocialSystem` settled
+        // on; networking closes a room the player is done with and settles
+        // the founder's personal stakes. Both draw only from `socialRNG`,
+        // their own stream, so their position here disturbs nothing.
+        RelationshipSystem.run,
+        NetworkingSystem.run,
     ]
 
     /// Advances the state by one game day. No-op once the game is over.
@@ -247,6 +258,36 @@ public enum Reducer {
             )
         case let .passOnCandidate(candidateID):
             events = HiringSystem.pass(candidateID: candidateID, state: &state)
+
+        // MARK: Founder & people
+
+        case let .trainFounderSkill(skill, method):
+            events = FounderSystem.train(
+                skill, method: method, state: &state, balance: balance
+            )
+        case let .talkToContact(contactID, topic):
+            events = NetworkingSystem.talk(
+                contactID: contactID, topic: topic, state: &state, balance: balance
+            )
+        case let .makeNetworkingOffer(contactID, offer):
+            events = NetworkingSystem.makeOffer(
+                contactID: contactID, offer: offer,
+                state: &state, balance: balance, content: content
+            )
+        case .leaveNetworkingEvent:
+            events = NetworkingSystem.leaveEvent(state: &state, balance: balance)
+        case let .spendTimeWithPartner(activity):
+            events = RelationshipSystem.spendTimeWithPartner(
+                activity, state: &state, balance: balance
+            )
+        case let .hangOutWith(employeeID):
+            events = RelationshipSystem.hangOut(
+                employeeID: employeeID, state: &state, balance: balance
+            )
+        case let .mentorEmployee(employeeID, skill):
+            events = RelationshipSystem.mentor(
+                employeeID: employeeID, skill: skill, state: &state, balance: balance
+            )
         }
 
         state.logEvents(events)

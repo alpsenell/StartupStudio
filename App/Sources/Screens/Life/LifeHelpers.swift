@@ -26,15 +26,17 @@ func homeWeeklyRent(_ tier: HomeTier, balance: BalanceConfig) -> Int {
 
 // MARK: - Founder output
 
-/// The design formula for the founder's output multiplier:
-/// schedule factor × wellbeing (0.5–1.0 from weighted meters) × cold
-/// penalty × presence. Mirrors the engine for the meters card estimate.
-func founderOutputEstimate(life: LifeState, day: Int) -> Double {
-    guard !life.isAway(day: day) else { return 0 }
-    let meters = life.meters
-    let wellbeing = (0.4 * meters.energy + 0.3 * meters.health + 0.3 * meters.mood) / 100
-    let coldFactor = life.hasCold(day: day) ? 0.6 : 1.0
-    return life.schedule.outputFactor * (0.5 + 0.5 * wellbeing) * coldFactor
+/// The founder's output multiplier, asked of the engine rather than
+/// re-derived here.
+///
+/// This used to be a hand-copied version of the formula, which was already
+/// a little out of date (it knew nothing about a chronic condition) and
+/// would have gone further out the moment the founder's own attributes
+/// started scaling it. The engine's own number is public; use it, and the
+/// line on the Wellbeing card can never quote a multiplier the simulation
+/// is not applying.
+func founderOutputEstimate(state: GameState, balance: BalanceConfig) -> Double {
+    state.founderOutputMultiplier(balance: balance)
 }
 
 /// Tint for a 0–100 life meter: red below 25, warning below 50, healthy
@@ -140,7 +142,7 @@ extension WeekendActivity {
         case .vacation: "Big reset — away for a week"
         case .doctor: "Cures a cold, health up"
         case .spa: "Energy and mood up, pricey"
-        case .networking: "Meet people, mood up"
+        case .networking: "Opens a room full of people you could deal with"
         }
     }
 }
