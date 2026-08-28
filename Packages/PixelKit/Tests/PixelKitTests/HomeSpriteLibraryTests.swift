@@ -121,7 +121,7 @@ struct HomeSpriteLibraryTests {
             let bytes = rgbaBytes(of: sprite.cgImage(frame: 0))
             #expect(bytes.contains { $0 != 0 }, "\(name) draws something")
         }
-        #expect(SpriteLibrary.HomePropName.allCases.count == 16)
+        #expect(SpriteLibrary.HomePropName.allCases.count == 22, "16 original props plus the six mood/kitchen props")
     }
 
     @Test func animatedPropsHaveTwoFrames() {
@@ -165,18 +165,28 @@ struct HomeSpriteLibraryTests {
         for tier in HomeTierStyle.allCases {
             let room = RoomBuilder.homeRoom(tier: tier, width: 60, height: 40, wallHeight: 20)
             #expect(room.width == 60 && room.height == 40)
+            // The room is stamped by `PixelCanvas`, which assigns its own
+            // palette characters, so the frame is checked by color.
             let frame = room.frames[0]
-            #expect(frame.first!.allSatisfy { $0 == "O" })
-            #expect(frame.last!.allSatisfy { $0 == "O" })
-            #expect(frame.allSatisfy { $0.first == "O" && $0.last == "O" })
-            // Wall and floor use different characters.
-            #expect(frame[5][frame[5].index(frame[5].startIndex, offsetBy: 5)] != frame[30][frame[30].index(frame[30].startIndex, offsetBy: 5)])
+            func color(_ x: Int, _ y: Int) -> PixelSprite.RGBA? {
+                let row = Array(frame[y])
+                return room.palette[row[x]]
+            }
+            #expect((0..<60).allSatisfy { color($0, 0) == Palettes.outline })
+            #expect((0..<60).allSatisfy { color($0, 39) == Palettes.outline })
+            #expect((0..<40).allSatisfy { color(0, $0) == Palettes.outline && color(59, $0) == Palettes.outline })
+            // Wall and floor are visibly different surfaces.
+            #expect(color(5, 5) != color(5, 30))
         }
     }
 
     @Test func homeTypesAreFrozen() {
         #expect(HomeTierStyle.allCases == [.studioFlat, .apartment, .house, .penthouse])
-        #expect(HomeActivity.allCases == [.relaxing, .sleeping, .gaming, .dinner, .exercising, .reading, .withBaby, .away])
+        #expect(HomeActivity.allCases == [
+            .relaxing, .sleeping, .gaming, .dinner, .exercising, .reading, .withBaby, .away,
+            .crunching, .awayPartnerAlone,
+        ], "v2 activities are appended, never inserted")
+        #expect(HomeActivity.allCases.filter { !$0.isFounderHome } == [.away, .awayPartnerAlone])
         #expect(MoodLevel.allCases == [.great, .okay, .low])
         let occupants = HomeOccupants(founder: CharacterAppearance(seed: 1))
         #expect(occupants.partner == nil && occupants.children.isEmpty)

@@ -1,6 +1,9 @@
-/// Evening room backgrounds for the home tiers: cool night walls, warm wood
-/// (or marble) floors, a door on the back wall, and the same 1px dark frame
-/// as the office rooms. Deterministic modular patterns, no randomness.
+/// Room backgrounds for the home tiers: walls that change with the hour,
+/// warm floors that keep catching lamplight after the walls have gone to
+/// evening, a panelled door, a woven rug, and the same skirting shadow and
+/// depth banding as the office rooms.
+///
+/// Deterministic modular patterns, no randomness.
 extension RoomBuilder {
     struct Rect: Equatable {
         let x: Int, y: Int, width: Int, height: Int
@@ -10,19 +13,90 @@ extension RoomBuilder {
         }
     }
 
-    static func homeRoom(tier: HomeTierStyle, width: Int, height: Int, wallHeight: Int, rug: Rect? = nil) -> PixelSprite {
-        var rows: [String] = []
-        rows.reserveCapacity(height)
-        for y in 0..<height {
-            var chars: [Character] = []
-            chars.reserveCapacity(width)
-            for x in 0..<width {
-                chars.append(homeCharacter(tier: tier, x: x, y: y, width: width, height: height, wallHeight: wallHeight, rug: rug))
-            }
-            rows.append(String(chars))
+    // MARK: - Home schemes
+
+    /// Wall and floor tones per tier per hour. The design rule: the walls
+    /// carry the hour (cream morning → sunset amber → indigo night) and the
+    /// floors stay warm, because the lamp and the fireplace are on. That
+    /// keeps the founder and the furniture readable at every hour while
+    /// still making a night at home feel like night.
+    static func homeSurfaces(tier: HomeTierStyle, time: TimeOfDay = .night) -> Surfaces {
+        let p = Palettes.self
+        // Warm boards, the shared floor of the first three tiers.
+        let boardsBright = (light: Tone(p.sand, 1), dark: Tone(p.sand, 2))
+        let boards = (light: Tone(p.sand, 2), dark: Tone(p.sand, 3))
+        // Pale marble, penthouse only.
+        let marble: [(light: Tone, dark: Tone)] = [
+            (Tone(p.stone, 0), Tone(p.stone, 1)),
+            (Tone(p.stone, 1), Tone(p.stone, 2)),
+            (Tone(p.stone, 2), Tone(p.stone, 3)),
+            (Tone(p.stone, 3), Tone(p.stone, 4)),
+        ]
+
+        func surfaces(
+            wall: Tone, texture: Tone, trim: Tone, accent: RGBA, baseboard: Tone,
+            floor: (light: Tone, dark: Tone)
+        ) -> Surfaces {
+            Surfaces(
+                wall: wall, wallTexture: texture, trim: trim, accent: accent,
+                baseboard: baseboard, floorLight: floor.light, floorDark: floor.dark
+            )
         }
-        return PixelSprite(frames: [rows], palette: homePalette(for: tier))
+
+        // The hour's wall, shared by the first three tiers with a per-tier
+        // daylight color.
+        func eveningWall(_ time: TimeOfDay, day: Tone, morning: Tone) -> (wall: Tone, texture: Tone, accent: RGBA) {
+            switch time {
+            case .morning: (morning, morning.deeper(), p.gold[1])
+            case .day: (day, day.deeper(), p.teal[2])
+            case .dusk: (Tone(p.ember, 4), Tone(p.ink, 4), p.ember[1])
+            case .night: (Tone(p.indigo, 4), Tone(p.ink, 4), p.gold[2])
+            }
+        }
+
+        let floor: (light: Tone, dark: Tone) = time == .morning ? boardsBright : boards
+
+        switch tier {
+        case .studioFlat:
+            let w = eveningWall(time, day: Tone(p.clay, 1), morning: Tone(p.clay, 0))
+            return surfaces(
+                wall: w.wall, texture: w.texture, trim: Tone(p.clay, 3), accent: w.accent,
+                baseboard: Tone(p.ink, 4), floor: floor
+            )
+        case .apartment:
+            let w = eveningWall(time, day: Tone(p.stone, 1), morning: Tone(p.sky, 0))
+            return surfaces(
+                wall: w.wall, texture: w.texture, trim: Tone(p.stone, 3), accent: w.accent,
+                baseboard: Tone(p.ink, 4), floor: floor
+            )
+        case .house:
+            let w = eveningWall(time, day: Tone(p.moss, 1), morning: Tone(p.moss, 0))
+            return surfaces(
+                wall: w.wall, texture: w.texture, trim: Tone(p.sand, 3), accent: w.accent,
+                baseboard: Tone(p.sand, 4), floor: floor
+            )
+        case .penthouse:
+            let wall: Tone
+            switch time {
+            case .morning, .day: wall = Tone(p.ink, 0)
+            case .dusk: wall = Tone(p.ink, 1)
+            case .night: wall = Tone(p.ink, 3)
+            }
+            let marbleStep: Int
+            switch time {
+            case .morning: marbleStep = 0
+            case .day: marbleStep = 1
+            case .dusk: marbleStep = 2
+            case .night: marbleStep = 3
+            }
+            return surfaces(
+                wall: wall, texture: wall.deeper(), trim: Tone(p.indigo, 2), accent: p.indigo[2],
+                baseboard: Tone(p.ink, 4), floor: marble[marbleStep]
+            )
+        }
     }
+
+    // MARK: - Home room
 
     /// Door on the back wall, right side: 10 wide, 22 tall, sitting on the
     /// baseboard. Scenes put the suitcase at its foot.
@@ -30,108 +104,120 @@ extension RoomBuilder {
         (x: width - 15, y: wallHeight - 23, width: 10, height: 22)
     }
 
-    private static func homeCharacter(
-        tier: HomeTierStyle, x: Int, y: Int, width: Int, height: Int, wallHeight: Int, rug: Rect?
-    ) -> Character {
-        if x == 0 || y == 0 || x == width - 1 || y == height - 1 { return "O" }
+    static func homeRoom(
+        tier: HomeTierStyle, width: Int, height: Int, wallHeight: Int,
+        rug: Rect? = nil, time: TimeOfDay = .night
+    ) -> PixelSprite {
+        let s = homeSurfaces(tier: tier, time: time)
+        var canvas = PixelCanvas(width: width, height: height)
+        let door = doorFrame(width: width, wallHeight: wallHeight)
+        let trimY = max(2, wallHeight / 3)
 
-        if y < wallHeight {
-            if y == wallHeight - 1 { return "B" } // baseboard
-
-            let door = doorFrame(width: width, wallHeight: wallHeight)
-            if (door.x..<door.x + door.width).contains(x) && (door.y..<door.y + door.height).contains(y) {
-                let edge = x == door.x || x == door.x + door.width - 1 || y == door.y
-                if edge { return "f" }
-                if x == door.x + door.width - 3 && y == door.y + door.height / 2 { return "K" } // knob
-                // Two recessed panels.
-                let panelX = (door.x + 2..<door.x + door.width - 2).contains(x)
-                let upper = (door.y + 3..<door.y + 9).contains(y)
-                let lower = (door.y + 12..<door.y + door.height - 2).contains(y)
-                return panelX && (upper || lower) ? "g" : "F"
-            }
-
-            switch tier {
-            case .house:
-                // Wainscot panelling on the lower wall with a trim line.
-                if y == wallHeight - 13 { return "T" }
-                if y > wallHeight - 13 { return x % 8 == 0 ? "T" : "W" }
-                return "A"
-            case .penthouse:
-                // Subtle vertical seams between wall panels.
-                return x % 44 == 3 && x > 3 ? "B" : "A"
-            default:
-                return "A"
+        for y in 0..<height {
+            for x in 0..<width {
+                if x == 0 || y == 0 || x == width - 1 || y == height - 1 {
+                    canvas.set(x: x, y: y, Palettes.outline)
+                } else if y < wallHeight {
+                    canvas.set(x: x, y: y, homeWallColor(
+                        tier: tier, x: x, y: y, wallHeight: wallHeight, trimY: trimY, door: door, s: s
+                    ))
+                } else {
+                    canvas.set(x: x, y: y, homeFloorColor(
+                        tier: tier, x: x, y: y, wallHeight: wallHeight, height: height, rug: rug, s: s
+                    ))
+                }
             }
         }
 
-        // Rug: a bordered weave with an inset band.
+        // Skirting shadow, matching the office rooms.
+        for x in 1..<(width - 1) {
+            if let under = canvas.color(x: x, y: wallHeight) {
+                canvas.set(x: x, y: wallHeight, Palettes.blended(under, toward: Palettes.ink[4], amount: 0.45))
+            }
+            if let under = canvas.color(x: x, y: wallHeight + 1) {
+                canvas.set(x: x, y: wallHeight + 1, Palettes.blended(under, toward: Palettes.ink[4], amount: 0.18))
+            }
+        }
+        return canvas.sprite()
+    }
+
+    private static func homeWallColor(
+        tier: HomeTierStyle, x: Int, y: Int, wallHeight: Int, trimY: Int,
+        door: (x: Int, y: Int, width: Int, height: Int), s: Surfaces
+    ) -> RGBA {
+        if y >= wallHeight - 2 { return s.baseboard.color }
+
+        if (door.x..<door.x + door.width).contains(x) && (door.y..<door.y + door.height).contains(y) {
+            let edge = x == door.x || x == door.x + door.width - 1 || y == door.y
+            if edge { return Palettes.sand[4] }
+            if x == door.x + door.width - 3 && y == door.y + door.height / 2 { return Palettes.gold[1] } // knob
+            let panelX = (door.x + 2..<door.x + door.width - 2).contains(x)
+            let upper = (door.y + 3..<door.y + 9).contains(y)
+            let lower = (door.y + 12..<door.y + door.height - 2).contains(y)
+            return panelX && (upper || lower) ? Palettes.sand[3] : Palettes.sand[2]
+        }
+
+        switch tier {
+        case .house:
+            // Wainscot panelling on the lower wall with a chair rail.
+            if y == wallHeight - 13 { return s.trim.color }
+            if y > wallHeight - 13 { return x % 8 == 0 ? s.trim.color : s.wallTexture.color }
+        case .penthouse:
+            // Slim vertical seams between the wall panels, and a brand-color
+            // reveal running under the ceiling.
+            if y == trimY { return s.accent }
+            if x % 44 == 3 && x > 3 { return s.wallTexture.color }
+        case .apartment, .studioFlat:
+            if y == trimY { return s.trim.color }
+            if y == trimY + 1 { return s.accent }
+        }
+        return x % 24 == 5 ? s.wallTexture.color : s.wall.color
+    }
+
+    private static func homeFloorColor(
+        tier: HomeTierStyle, x: Int, y: Int, wallHeight: Int, height: Int,
+        rug: Rect?, s: Surfaces
+    ) -> RGBA {
+        // Rug: a bordered weave with an inset band, in the tier's accent.
         if let rug, rug.contains(x, y) {
             let dx = min(x - rug.x, rug.x + rug.width - 1 - x)
             let dy = min(y - rug.y, rug.y + rug.height - 1 - y)
             let inset = min(dx, dy)
-            if inset == 0 || inset == 2 { return "R" }
-            return (x + y).isMultiple(of: 5) && inset > 3 ? "R" : "r"
+            let border = rugTones(for: tier)
+            if inset == 0 || inset == 2 { return border.dark }
+            return (x + y).isMultiple(of: 5) && inset > 3 ? border.dark : border.light
         }
 
-        // Floors.
-        let fy = y - wallHeight
+        let depth = height - wallHeight
+        let fromWall = y - wallHeight
+        let far = depth > 0 && fromWall * 3 < depth
+        let light = (far ? s.farFloorLight : s.floorLight).color
+        let dark = (far ? s.farFloorDark : s.floorDark).color
+
+        // Board seams every few rows with sparse staggered plank ends: any
+        // denser and the floor reads as brickwork instead of wood.
         switch tier {
         case .studioFlat:
-            // Narrow worn planks: seam every 3rd row, staggered ends.
-            if fy % 3 == 2 { return "D" }
-            return (x + (fy / 3) * 5) % 11 == 0 ? "D" : "C"
+            if fromWall % 4 == 3 { return dark }
+            return (x + (fromWall / 4) * 11) % 29 == 0 ? dark : light
         case .apartment:
-            // Wider oak planks.
-            if fy % 4 == 3 { return "D" }
-            return (x + (fy / 4) * 9) % 16 == 0 ? "D" : "C"
+            if fromWall % 5 == 4 { return dark }
+            return (x + (fromWall / 5) * 13) % 33 == 0 ? dark : light
         case .house:
-            // Broad walnut boards.
-            if fy % 5 == 4 { return "D" }
-            return (x + (fy / 5) * 11) % 20 == 0 ? "D" : "C"
+            if fromWall % 6 == 5 { return dark }
+            return (x + (fromWall / 6) * 17) % 37 == 0 ? dark : light
         case .penthouse:
-            // Large pale tiles with grout.
-            return (x % 12 == 0 || fy % 6 == 5) ? "D" : "C"
+            return (x % 16 == 0 || fromWall % 8 == 7) ? dark : light
         }
     }
 
-    private static func homePalette(for tier: HomeTierStyle) -> [Character: RGBA] {
-        var palette: [Character: RGBA] = [
-            "O": Palettes.outline,
-            "F": RGBA(r: 110, g: 78, b: 54),  // door
-            "g": RGBA(r: 96, g: 66, b: 46),   // door panel
-            "f": RGBA(r: 58, g: 42, b: 34),   // door frame
-            "K": RGBA(r: 236, g: 204, b: 120), // knob
-        ]
+    /// Each home's rug, in a color the tier's own palette already contains.
+    private static func rugTones(for tier: HomeTierStyle) -> (light: RGBA, dark: RGBA) {
         switch tier {
-        case .studioFlat:
-            palette["A"] = RGBA(r: 70, g: 72, b: 98)
-            palette["B"] = RGBA(r: 46, g: 46, b: 66)
-            palette["C"] = RGBA(r: 124, g: 90, b: 60)
-            palette["D"] = RGBA(r: 102, g: 72, b: 48)
-        case .apartment:
-            palette["A"] = RGBA(r: 56, g: 64, b: 104)
-            palette["B"] = RGBA(r: 38, g: 42, b: 72)
-            palette["C"] = RGBA(r: 152, g: 112, b: 72)
-            palette["D"] = RGBA(r: 128, g: 92, b: 58)
-            palette["R"] = RGBA(r: 150, g: 70, b: 76)
-            palette["r"] = RGBA(r: 178, g: 92, b: 96)
-        case .house:
-            palette["A"] = RGBA(r: 84, g: 70, b: 100)
-            palette["W"] = RGBA(r: 64, g: 52, b: 80)
-            palette["T"] = RGBA(r: 104, g: 88, b: 120)
-            palette["B"] = RGBA(r: 46, g: 38, b: 58)
-            palette["C"] = RGBA(r: 112, g: 74, b: 48)
-            palette["D"] = RGBA(r: 92, g: 60, b: 40)
-            palette["R"] = RGBA(r: 58, g: 110, b: 104)
-            palette["r"] = RGBA(r: 76, g: 136, b: 128)
-        case .penthouse:
-            palette["A"] = RGBA(r: 42, g: 46, b: 66)
-            palette["B"] = RGBA(r: 30, g: 32, b: 48)
-            palette["C"] = RGBA(r: 98, g: 102, b: 122)
-            palette["D"] = RGBA(r: 84, g: 88, b: 108)
-            palette["R"] = RGBA(r: 64, g: 70, b: 104)
-            palette["r"] = RGBA(r: 84, g: 92, b: 130)
+        case .studioFlat: (Palettes.ember[2], Palettes.ember[3])
+        case .apartment: (Palettes.ember[3], Palettes.ember[4])
+        case .house: (Palettes.teal[3], Palettes.teal[4])
+        case .penthouse: (Palettes.indigo[3], Palettes.indigo[4])
         }
-        return palette
     }
 }

@@ -1,13 +1,197 @@
-/// Generates the room background sprite (walls + floor + 1px dark outline
-/// frame) for a tier. Patterns are fixed modular functions — deterministic,
-/// no randomness.
+/// Builds the room background sprite for a tier: walls with trim and
+/// texture, a floor with depth banding and a skirting shadow, and the fixed
+/// wall dressing that gives each tier its personality.
+///
+/// Everything static about a room is baked into this one sprite. The
+/// dressing therefore costs nothing at draw time, can never drift outside
+/// the room, and never collides with the desk lattice: it lives in the
+/// *upper wall band* (above head height for the back desk row) and in the
+/// narrow floor margins the desk grid leaves free.
+///
+/// Patterns are fixed modular functions — deterministic, no randomness.
 enum RoomBuilder {
-    /// The office room at a time of day.
+    // MARK: - Tones
+
+    /// One master-palette color, remembered as its ramp position so the art
+    /// can ask for "the same color, one step deeper" and always land on a
+    /// real palette entry (blending-and-snapping usually rounds back to
+    /// where it started, which is why depth banding needs this).
+    struct Tone: Equatable {
+        let ramp: Palettes.Ramp
+        let index: Int
+
+        init(_ ramp: Palettes.Ramp, _ index: Int) {
+            self.ramp = ramp
+            self.index = index
+        }
+
+        var color: RGBA { ramp[index] }
+        func deeper(_ steps: Int = 1) -> Tone { Tone(ramp, min(index + steps, 4)) }
+        func lighter(_ steps: Int = 1) -> Tone { Tone(ramp, max(index - steps, 0)) }
+        var luminance: Double { Palettes.luminance(color) }
+
+        static func == (lhs: Tone, rhs: Tone) -> Bool {
+            lhs.ramp.name == rhs.ramp.name && lhs.index == rhs.index
+        }
+    }
+
+    /// The surface scheme for one room at one hour: what the wall, the trim
+    /// and the floor are made of. Exposed so the palette gate can measure
+    /// wall-vs-floor contrast without having to guess which pixels are wall.
+    struct Surfaces {
+        let wall: Tone
+        let wallTexture: Tone
+        /// The horizontal trim line that breaks up the wall.
+        let trim: Tone
+        /// The accent stripe: the tier's signature color.
+        let accent: RGBA
+        let baseboard: Tone
+        /// Floor tones nearest the camera (front of the room).
+        let floorLight: Tone
+        let floorDark: Tone
+
+        /// Floor tones at the back wall — one ramp step deeper, which is
+        /// what makes the room read as having depth.
+        var farFloorLight: Tone { floorLight.deeper() }
+        var farFloorDark: Tone { floorDark.deeper() }
+
+        /// The floor in three depth bands, back to front.
+        func floor(band: Int) -> (light: Tone, dark: Tone) {
+            switch band {
+            case 0: (floorLight.deeper(), floorDark.deeper())
+            case 1: (floorLight, floorDark.deeper())
+            default: (floorLight, floorDark)
+            }
+        }
+
+        var wallLuminance: Double { wall.luminance }
+        var floorLuminance: Double { (floorLight.luminance + floorDark.luminance) / 2 }
+        /// The wall/floor separation the art direction gate measures.
+        var contrast: Double { abs(wallLuminance - floorLuminance) }
+    }
+
+    // MARK: - Office schemes
+
+    /// Every tier at every hour, hand-tuned so the wall and the floor always
+    /// separate by at least 18% perceived luminance (`PaletteTests`).
     ///
-    /// Scaffold placeholder: delegates straight to `room(...)` and ignores
-    /// `time`, so every hour draws today's daylight room. WS-D tints the
-    /// wall and floor per `time` behind this signature; WS-C calls it from
-    /// day one.
+    /// The hours are not a single global dimming curve: a garage floor keeps
+    /// catching the bare bulb long after its walls have gone to ink, and a
+    /// campus atrium keeps its cool tile bright while the off-white walls
+    /// drop into evening grey. Rooms are lit, not tinted.
+    static func officeSurfaces(tier: OfficeTierStyle, time: TimeOfDay = .day) -> Surfaces {
+        let p = Palettes.self
+        switch (tier, time) {
+        // Garage: raw warm concrete under one bare bulb.
+        case (.garage, .morning):
+            return Surfaces(
+                wall: Tone(p.clay, 3), wallTexture: Tone(p.clay, 4), trim: Tone(p.clay, 4),
+                accent: p.ember[2], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.clay, 0), floorDark: Tone(p.clay, 1)
+            )
+        case (.garage, .day):
+            return Surfaces(
+                wall: Tone(p.clay, 3), wallTexture: Tone(p.clay, 4), trim: Tone(p.clay, 4),
+                accent: p.ember[2], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.clay, 1), floorDark: Tone(p.clay, 2)
+            )
+        case (.garage, .dusk):
+            return Surfaces(
+                wall: Tone(p.ember, 4), wallTexture: Tone(p.ink, 4), trim: Tone(p.ink, 4),
+                accent: p.gold[2], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.clay, 2), floorDark: Tone(p.clay, 3)
+            )
+        case (.garage, .night):
+            return Surfaces(
+                wall: Tone(p.ink, 3), wallTexture: Tone(p.ink, 4), trim: Tone(p.ink, 4),
+                accent: p.gold[1], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.clay, 2), floorDark: Tone(p.clay, 3)
+            )
+
+        // Loft: cream plaster over oak boards.
+        case (.loft, .morning):
+            return Surfaces(
+                wall: Tone(p.sand, 0), wallTexture: Tone(p.sand, 1), trim: Tone(p.sand, 3),
+                accent: p.teal[2], baseboard: Tone(p.sand, 4),
+                floorLight: Tone(p.sand, 1), floorDark: Tone(p.sand, 2)
+            )
+        case (.loft, .day):
+            return Surfaces(
+                wall: Tone(p.sand, 0), wallTexture: Tone(p.sand, 1), trim: Tone(p.sand, 3),
+                accent: p.teal[2], baseboard: Tone(p.sand, 4),
+                floorLight: Tone(p.sand, 2), floorDark: Tone(p.sand, 3)
+            )
+        case (.loft, .dusk):
+            return Surfaces(
+                wall: Tone(p.sand, 1), wallTexture: Tone(p.sand, 2), trim: Tone(p.sand, 4),
+                accent: p.ember[2], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.sand, 3), floorDark: Tone(p.sand, 4)
+            )
+        case (.loft, .night):
+            return Surfaces(
+                wall: Tone(p.sand, 2), wallTexture: Tone(p.sand, 3), trim: Tone(p.ink, 4),
+                accent: p.gold[1], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.sand, 4), floorDark: Tone(p.ink, 3)
+            )
+
+        // Studio: sage walls, warm oak, a designer's room.
+        case (.studio, .morning):
+            return Surfaces(
+                wall: Tone(p.teal, 0), wallTexture: Tone(p.teal, 1), trim: Tone(p.moss, 3),
+                accent: p.ember[2], baseboard: Tone(p.moss, 4),
+                floorLight: Tone(p.sand, 2), floorDark: Tone(p.sand, 3)
+            )
+        case (.studio, .day):
+            return Surfaces(
+                wall: Tone(p.moss, 0), wallTexture: Tone(p.moss, 1), trim: Tone(p.moss, 3),
+                accent: p.ember[2], baseboard: Tone(p.moss, 4),
+                floorLight: Tone(p.sand, 2), floorDark: Tone(p.sand, 3)
+            )
+        case (.studio, .dusk):
+            return Surfaces(
+                wall: Tone(p.moss, 1), wallTexture: Tone(p.moss, 2), trim: Tone(p.moss, 4),
+                accent: p.ember[1], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.sand, 3), floorDark: Tone(p.sand, 4)
+            )
+        case (.studio, .night):
+            return Surfaces(
+                wall: Tone(p.indigo, 4), wallTexture: Tone(p.ink, 4), trim: Tone(p.indigo, 3),
+                accent: p.gold[1], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.sand, 2), floorDark: Tone(p.sand, 3)
+            )
+
+        // Campus: off-white walls, an indigo brand stripe, cool tile.
+        case (.campus, .morning):
+            return Surfaces(
+                wall: Tone(p.stone, 0), wallTexture: Tone(p.stone, 1), trim: Tone(p.stone, 3),
+                accent: p.indigo[2], baseboard: Tone(p.stone, 4),
+                floorLight: Tone(p.stone, 1), floorDark: Tone(p.sky, 2)
+            )
+        case (.campus, .day):
+            return Surfaces(
+                wall: Tone(p.stone, 0), wallTexture: Tone(p.stone, 1), trim: Tone(p.stone, 3),
+                accent: p.indigo[2], baseboard: Tone(p.stone, 4),
+                floorLight: Tone(p.stone, 2), floorDark: Tone(p.stone, 3)
+            )
+        case (.campus, .dusk):
+            return Surfaces(
+                wall: Tone(p.stone, 1), wallTexture: Tone(p.stone, 2), trim: Tone(p.stone, 4),
+                accent: p.indigo[2], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.stone, 3), floorDark: Tone(p.stone, 4)
+            )
+        case (.campus, .night):
+            return Surfaces(
+                wall: Tone(p.stone, 3), wallTexture: Tone(p.stone, 4), trim: Tone(p.ink, 4),
+                accent: p.indigo[1], baseboard: Tone(p.ink, 4),
+                floorLight: Tone(p.stone, 4), floorDark: Tone(p.ink, 2)
+            )
+        }
+    }
+
+    // MARK: - Office room
+
+    /// The office room at a time of day: surfaces, trim, depth-banded floor,
+    /// skirting shadow, and the tier's baked-in wall dressing.
     static func officeRoom(
         tier: OfficeTierStyle,
         width: Int,
@@ -15,85 +199,190 @@ enum RoomBuilder {
         wallHeight: Int,
         time: TimeOfDay = .day
     ) -> PixelSprite {
-        room(tier: tier, width: width, height: height, wallHeight: wallHeight)
+        let surfaces = officeSurfaces(tier: tier, time: time)
+        var canvas = PixelCanvas(width: width, height: height)
+        paintShell(&canvas, tier: tier, surfaces: surfaces, wallHeight: wallHeight)
+        dressOffice(&canvas, tier: tier, surfaces: surfaces, wallHeight: wallHeight, time: time)
+        return canvas.sprite()
     }
 
+    /// Daylight office room — the call site every existing composer uses.
     static func room(tier: OfficeTierStyle, width: Int, height: Int, wallHeight: Int) -> PixelSprite {
-        var rows: [String] = []
-        rows.reserveCapacity(height)
-        let bulbX = width / 2
+        officeRoom(tier: tier, width: width, height: height, wallHeight: wallHeight, time: .day)
+    }
+
+    // MARK: Shell
+
+    /// Walls, trim, floor pattern, depth bands, skirting shadow, outline.
+    private static func paintShell(
+        _ canvas: inout PixelCanvas, tier: OfficeTierStyle, surfaces s: Surfaces, wallHeight: Int
+    ) {
+        let width = canvas.width
+        let height = canvas.height
+        // The trim line sits a third of the way down the wall — high enough
+        // to stay clear of the back row's heads.
+        let trimY = max(2, wallHeight / 3)
+
         for y in 0..<height {
-            var chars: [Character] = []
-            chars.reserveCapacity(width)
             for x in 0..<width {
-                chars.append(character(tier: tier, x: x, y: y, width: width, height: height, wallHeight: wallHeight, bulbX: bulbX))
+                if x == 0 || y == 0 || x == width - 1 || y == height - 1 {
+                    canvas.set(x: x, y: y, Palettes.outline)
+                    continue
+                }
+                if y < wallHeight {
+                    canvas.set(x: x, y: y, wallColor(x: x, y: y, trimY: trimY, wallHeight: wallHeight, s: s))
+                } else {
+                    canvas.set(x: x, y: y, floorColor(
+                        tier: tier, x: x, y: y, wallHeight: wallHeight, height: height, s: s
+                    ))
+                }
             }
-            rows.append(String(chars))
-        }
-        return PixelSprite(frames: [rows], palette: palette(for: tier))
-    }
-
-    private static func character(
-        tier: OfficeTierStyle, x: Int, y: Int,
-        width: Int, height: Int, wallHeight: Int, bulbX: Int
-    ) -> Character {
-        // 1px dark outline frame so the scene reads on light and dark surroundings.
-        if x == 0 || y == 0 || x == width - 1 || y == height - 1 { return "O" }
-
-        if y < wallHeight {
-            // Garage charm: a bare bulb hanging from the ceiling on a cord.
-            if tier == .garage {
-                if x == bulbX && (1...3).contains(y) { return "E" }
-                if (bulbX - 1...bulbX).contains(x) && (4...5).contains(y) { return "Y" }
-            }
-            if y == wallHeight - 1 { return "B" } // baseboard
-            return "A"
         }
 
-        // Floor patterns.
-        switch tier {
-        case .garage:
-            // Concrete with sparse deterministic speckle.
-            return (x * 7 + y * 13) % 31 == 0 ? "D" : "C"
-        case .loft:
-            // Wood planks: seam row every 3rd line, staggered plank ends.
-            if y % 3 == 2 { return "D" }
-            return (x + (y / 3) * 7) % 14 == 0 ? "D" : "C"
-        case .studio:
-            // Two-tone carpet checker.
-            return ((x / 2) + (y / 2)).isMultiple(of: 2) ? "C" : "D"
-        case .campus:
-            // Large tiles.
-            return (x % 12 == 0 || (y - wallHeight) % 6 == 0) ? "D" : "C"
+        // Skirting shadow: the wall casts one soft pixel row onto the floor,
+        // plus a second, fainter row — the cheapest depth cue there is.
+        for x in 1..<(width - 1) {
+            if let under = canvas.color(x: x, y: wallHeight) {
+                canvas.set(x: x, y: wallHeight, Palettes.blended(under, toward: Palettes.ink[4], amount: 0.45))
+            }
+            if let under = canvas.color(x: x, y: wallHeight + 1) {
+                canvas.set(x: x, y: wallHeight + 1, Palettes.blended(under, toward: Palettes.ink[4], amount: 0.18))
+            }
         }
     }
 
-    private static func palette(for tier: OfficeTierStyle) -> [Character: RGBA] {
-        var palette: [Character: RGBA] = ["O": Palettes.outline]
+    private static func wallColor(
+        x: Int, y: Int, trimY: Int, wallHeight: Int, s: Surfaces
+    ) -> RGBA {
+        // Baseboard: two rows at the bottom of the wall.
+        if y >= wallHeight - 2 { return s.baseboard.color }
+        // Trim: a line with the tier's accent stripe riding just under it.
+        if y == trimY { return s.trim.color }
+        if y == trimY + 1 { return s.accent }
+        // Wall texture: one faint vertical seam per plaster panel. Anything
+        // busier turns into visual noise behind the people, which is the
+        // opposite of what a background is for.
+        return x % 24 == 5 ? s.wallTexture.color : s.wall.color
+    }
+
+    private static func floorColor(
+        tier: OfficeTierStyle, x: Int, y: Int, wallHeight: Int, height: Int, s: Surfaces
+    ) -> RGBA {
+        let depth = max(1, height - wallHeight)
+        let fromWall = y - wallHeight
+        // Three depth bands: the floor steps one ramp tone deeper for each
+        // third further from the camera, so the room recedes instead of
+        // reading as one flat sheet.
+        let band = min(2, fromWall * 3 / depth)
+        let tones = s.floor(band: band)
+        let light = tones.light.color
+        let dark = tones.dark.color
+
         switch tier {
         case .garage:
-            palette["A"] = RGBA(r: 124, g: 118, b: 112)
-            palette["B"] = RGBA(r: 86, g: 80, b: 76)
-            palette["C"] = RGBA(r: 158, g: 154, b: 148)
-            palette["D"] = RGBA(r: 144, g: 140, b: 134)
-            palette["E"] = RGBA(r: 60, g: 56, b: 54)
-            palette["Y"] = RGBA(r: 255, g: 222, b: 120)
-        case .loft:
-            palette["A"] = RGBA(r: 216, g: 198, b: 174)
-            palette["B"] = RGBA(r: 140, g: 120, b: 100)
-            palette["C"] = RGBA(r: 182, g: 140, b: 96)
-            palette["D"] = RGBA(r: 156, g: 116, b: 76)
-        case .studio:
-            palette["A"] = RGBA(r: 190, g: 194, b: 204)
-            palette["B"] = RGBA(r: 120, g: 122, b: 134)
-            palette["C"] = RGBA(r: 128, g: 132, b: 158)
-            palette["D"] = RGBA(r: 120, g: 124, b: 149)
+            // Poured concrete: expansion joints, nothing else. Concrete is
+            // meant to look like a big empty slab.
+            if fromWall % 16 == 11 { return dark }
+            return x % 38 == 7 ? dark : light
+        case .loft, .studio:
+            // Boards: a seam every few rows and a sparse staggered plank end.
+            let seam = tier == .loft ? 4 : 5
+            if fromWall % seam == seam - 1 { return dark }
+            return (x + (fromWall / seam) * 13) % 47 == 0 ? dark : light
         case .campus:
-            palette["A"] = RGBA(r: 224, g: 226, b: 232)
-            palette["B"] = RGBA(r: 150, g: 152, b: 160)
-            palette["C"] = RGBA(r: 203, g: 205, b: 212)
-            palette["D"] = RGBA(r: 192, g: 194, b: 202)
+            // Large tiles with grout lines.
+            return (x % 16 == 0 || fromWall % 8 == 0) ? dark : light
         }
-        return palette
+    }
+
+    // MARK: Dressing
+
+    /// The top band of the wall — above every head and speech bubble in the
+    /// back desk row, so anything hung here can never be covered.
+    private static func wallBand(wallHeight: Int) -> (top: Int, bottom: Int) {
+        (top: 2, bottom: max(4, wallHeight - 18))
+    }
+
+    /// Per-tier wall dressing and floor clutter, baked into the room.
+    private static func dressOffice(
+        _ canvas: inout PixelCanvas, tier: OfficeTierStyle, surfaces s: Surfaces,
+        wallHeight: Int, time: TimeOfDay
+    ) {
+        let width = canvas.width
+        let height = canvas.height
+        let band = wallBand(wallHeight: wallHeight)
+
+        /// Hangs a sprite in the wall band, bottom-aligned to it, and gives
+        /// it a one-pixel cast shadow down the wall.
+        func hang(_ sprite: PixelSprite, x: Int, bottomInset: Int = 0) {
+            let y = max(band.top, band.bottom - sprite.height - bottomInset)
+            canvas.stamp(sprite, x: x, y: y)
+            for px in (x + 1)..<(x + sprite.width) {
+                if let under = canvas.color(x: px, y: y + sprite.height) {
+                    canvas.set(x: px, y: y + sprite.height, Palettes.blended(under, toward: Palettes.ink[4], amount: 0.3))
+                }
+            }
+        }
+
+        /// Stands a sprite on the floor at (x, its feet at `floorY`) with a
+        /// contact shadow.
+        func stand(_ sprite: PixelSprite, x: Int, floorY: Int) {
+            canvas.stamp(sprite, x: x, y: floorY - sprite.height)
+            canvas.contactShadow(x: x, y: floorY, width: sprite.width)
+        }
+
+        let window = SpriteLibrary.window(style: .office, time: time)
+        let backFloor = wallHeight + 2
+
+        switch tier {
+        case .garage:
+            // A cord and a bare bulb, a small high window, a band poster,
+            // the pegboard, and the founder's own clutter in the corners the
+            // desk grid never reaches.
+            hang(window, x: 10)
+            hang(SpriteLibrary.prop(.poster), x: 30)
+            hang(SpriteLibrary.prop(.pegboard), x: 50)
+            let bulbX = width / 2 + 16
+            canvas.vLine(x: bulbX, y: 1, length: 4, Palettes.ink[3])
+            canvas.stamp(SpriteLibrary.prop(.bulb), x: bulbX - 2, y: 4)
+            stand(SpriteLibrary.prop(.cardboardBoxes), x: 2, floorY: height - 3)
+            stand(SpriteLibrary.prop(.pizzaBoxes), x: width - 21, floorY: height - 3)
+            // Extension cord snaking along the skirting.
+            for x in stride(from: 20, to: width - 24, by: 1) {
+                canvas.set(x: x, y: backFloor + ((x / 7) % 2), Palettes.ink[3])
+            }
+
+        case .loft:
+            hang(window, x: 12)
+            hang(window, x: width - 12 - window.width)
+            // The bike goes on the wall, the way it does in every real loft.
+            hang(SpriteLibrary.prop(.bike), x: 28)
+            hang(SpriteLibrary.prop(.wallClock), x: 56)
+            hang(SpriteLibrary.prop(.poster), x: 68)
+            stand(SpriteLibrary.prop(.beanbag), x: width - 19, floorY: height - 3)
+            stand(SpriteLibrary.prop(.bookshelfOffice), x: width - 24, floorY: height - 15)
+
+        case .studio:
+            hang(window, x: 6)
+            hang(window, x: width - 6 - window.width)
+            hang(SpriteLibrary.prop(.framedReviews), x: width / 2 - 34)
+            hang(SpriteLibrary.prop(.wallClock), x: width / 2 + 22)
+            // Floor kit lives along the bottom edge, below the desk grid.
+            stand(SpriteLibrary.prop(.serverRack), x: 1, floorY: height - 2)
+            stand(SpriteLibrary.prop(.kitchenette), x: width - 28, floorY: height - 2)
+            stand(SpriteLibrary.prop(.pingPongTable), x: width / 2 - 17, floorY: height - 2)
+
+        case .campus:
+            for index in 0..<3 {
+                hang(window, x: 22 + index * ((width - 44) / 3))
+            }
+            hang(SpriteLibrary.prop(.ledSign), x: width / 2 - 11, bottomInset: 3)
+            // The lift is part of the back wall; reception sits out on the
+            // floor where visitors would actually meet it.
+            stand(SpriteLibrary.prop(.elevatorDoors), x: width - 62, floorY: wallHeight + 2)
+            stand(SpriteLibrary.prop(.receptionDesk), x: width / 2 - 11, floorY: height - 2)
+            stand(SpriteLibrary.prop(.atriumPlant), x: width - 16, floorY: height - 2)
+            stand(SpriteLibrary.prop(.atriumPlant), x: width - 32, floorY: height - 2)
+        }
     }
 }
