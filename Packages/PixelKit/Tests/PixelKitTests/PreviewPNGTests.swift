@@ -155,52 +155,113 @@ struct PreviewPNGTests {
     }
 
     @Test func propsSheet() throws {
-        // Row 1 (props, bottom-aligned, left→right): plant, garageDoor,
-        //   toolbox, whiteboard, coffeeMachine, windowDay.
-        // Row 2: desk, monitor frame 0 (dim), monitor frame 1 (bright).
-        // Row 3 (bubbles, left→right): coding, designing, marketing,
-        //   researching (idle is intentionally empty and omitted).
+        // A grid of every room prop (four across), then the desk, both
+        // monitor frames, and the non-idle status bubbles.
         let props = SpriteLibrary.PropName.allCases.map(SpriteLibrary.prop)
         let gap = 4
-        let row1Height = props.map(\.height).max()!
-        let row1Width = props.map(\.width).reduce(0, +) + gap * (props.count + 1)
+        let columns = 6
+        let cellWidth = props.map(\.width).max()! + gap
+        let cellHeight = props.map(\.height).max()! + gap
+        let rows = (props.count + columns - 1) / columns
 
         let desk = SpriteLibrary.desk()
         let monitor = SpriteLibrary.monitor()
         let bubbles = WorkStatus.allCases.filter { $0 != .idle }.map(SpriteLibrary.statusBubble)
 
-        let width = max(row1Width, 96)
-        let row2Y = 2 + row1Height + gap
-        let row3Y = row2Y + max(desk.height, monitor.height) + gap
-        let height = row3Y + bubbles[0].height + 2
+        let width = gap + columns * cellWidth
+        let extrasY = gap + rows * cellHeight
+        let height = extrasY + max(desk.height, monitor.height) + gap + bubbles[0].height + gap
 
         let context = makeCanvas(
             width: width * Self.scale,
             height: height * Self.scale,
-            background: .init(r: 208, g: 202, b: 192)
+            background: .init(r: 190, g: 178, b: 166)
         )
         let canvasHeight = height * Self.scale
 
-        var x = gap
-        for prop in props {
-            blit(prop, frame: 0, x: x, y: 2 + row1Height - prop.height, into: context, canvasHeight: canvasHeight)
-            x += prop.width + gap
+        for (index, prop) in props.enumerated() {
+            let column = index % columns
+            let row = index / columns
+            blit(
+                prop, frame: 0,
+                x: gap + column * cellWidth,
+                y: gap + row * cellHeight + (cellHeight - gap - prop.height),
+                into: context, canvasHeight: canvasHeight
+            )
         }
 
-        x = gap
-        blit(desk, frame: 0, x: x, y: row2Y, into: context, canvasHeight: canvasHeight)
+        var x = gap
+        blit(desk, frame: 0, x: x, y: extrasY, into: context, canvasHeight: canvasHeight)
         x += desk.width + gap
-        blit(monitor, frame: 0, x: x, y: row2Y, into: context, canvasHeight: canvasHeight)
+        blit(monitor, frame: 0, x: x, y: extrasY, into: context, canvasHeight: canvasHeight)
         x += monitor.width + gap
-        blit(monitor, frame: 1, x: x, y: row2Y, into: context, canvasHeight: canvasHeight)
+        blit(monitor, frame: 1, x: x, y: extrasY, into: context, canvasHeight: canvasHeight)
 
         x = gap
+        let bubbleY = extrasY + max(desk.height, monitor.height) + gap
         for bubble in bubbles {
-            blit(bubble, frame: 0, x: x, y: row3Y, into: context, canvasHeight: canvasHeight)
+            blit(bubble, frame: 0, x: x, y: bubbleY, into: context, canvasHeight: canvasHeight)
             x += bubble.width + gap
         }
 
         try writePNG(context.makeImage()!, named: "props_sheet.png")
+    }
+
+    /// Every tier's room at every hour, with the lighting overlay on top —
+    /// the sheet to look at when judging whether an evening in the office
+    /// reads as an evening.
+    @Test func officeRoomsByHour() throws {
+        let gap = 6
+        let cellWidth = 130
+        let cellHeight = 70
+        let hours = TimeOfDay.allCases
+        let width = gap + hours.count * (cellWidth + gap)
+        let height = gap + OfficeTierStyle.allCases.count * (cellHeight + gap)
+        let canvasHeight = height * Self.scale
+        let context = makeCanvas(
+            width: width * Self.scale, height: canvasHeight, background: .init(r: 32, g: 30, b: 42)
+        )
+        for (row, tier) in OfficeTierStyle.allCases.enumerated() {
+            for (column, hour) in hours.enumerated() {
+                let x = gap + column * (cellWidth + gap)
+                let y = gap + row * (cellHeight + gap)
+                let room = RoomBuilder.officeRoom(
+                    tier: tier, width: cellWidth, height: cellHeight, wallHeight: 34, time: hour
+                )
+                blit(room, frame: 0, x: x, y: y, into: context, canvasHeight: canvasHeight)
+                let overlay = SpriteLibrary.lightingOverlay(width: cellWidth, height: cellHeight, time: hour)
+                blit(overlay, frame: 0, x: x, y: y, into: context, canvasHeight: canvasHeight)
+            }
+        }
+        try writePNG(context.makeImage()!, named: "office_rooms_by_hour.png")
+    }
+
+    /// Every window: office and home, four hours, three kinds of weather.
+    @Test func windowSheet() throws {
+        let gap = 3
+        let sample = SpriteLibrary.window(style: .office)
+        let columns = TimeOfDay.allCases.count * Weather.allCases.count
+        let width = gap + columns * (sample.width + gap)
+        let height = gap + WindowStyle.allCases.count * (sample.height + gap)
+        let canvasHeight = height * Self.scale
+        let context = makeCanvas(
+            width: width * Self.scale, height: canvasHeight, background: .init(r: 112, g: 100, b: 92)
+        )
+        for (row, style) in WindowStyle.allCases.enumerated() {
+            var column = 0
+            for time in TimeOfDay.allCases {
+                for weather in Weather.allCases {
+                    blit(
+                        SpriteLibrary.window(style: style, time: time, weather: weather), frame: 0,
+                        x: gap + column * (sample.width + gap),
+                        y: gap + row * (sample.height + gap),
+                        into: context, canvasHeight: canvasHeight
+                    )
+                    column += 1
+                }
+            }
+        }
+        try writePNG(context.makeImage()!, named: "windows_sheet.png")
     }
 
     /// Bonus coverage: the two remaining tiers render end-to-end too.

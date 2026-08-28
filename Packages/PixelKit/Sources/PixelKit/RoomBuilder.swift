@@ -165,7 +165,7 @@ enum RoomBuilder {
             return Surfaces(
                 wall: Tone(p.stone, 0), wallTexture: Tone(p.stone, 1), trim: Tone(p.stone, 3),
                 accent: p.indigo[2], baseboard: Tone(p.stone, 4),
-                floorLight: Tone(p.sky, 1), floorDark: Tone(p.sky, 2)
+                floorLight: Tone(p.stone, 1), floorDark: Tone(p.sky, 2)
             )
         case (.campus, .day):
             return Surfaces(

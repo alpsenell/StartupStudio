@@ -91,8 +91,8 @@ public enum HomeSceneComposer {
         case .studioFlat:
             Layout(
                 width: 108, height: 70, wallHeight: 34,
-                bed: Point(x: 3, y: 30), lamp: Point(x: 34, y: 24), couch: Point(x: 46, y: 32),
-                fridge: Point(x: 60, y: 14), tv: nil, table: nil, armchair: nil, crib: nil, plant: nil,
+                bed: Point(x: 3, y: 30), lamp: Point(x: 30, y: 8), couch: Point(x: 44, y: 36),
+                fridge: Point(x: 46, y: 8), tv: nil, table: nil, armchair: nil, crib: nil, plant: nil,
                 fireplace: nil, bookshelf: nil,
                 windows: [Point(x: 8, y: 6)], skylines: [], rug: nil,
                 mat: Point(x: 6, y: 58), babySpot: Point(x: 84, y: 44),
@@ -127,11 +127,11 @@ public enum HomeSceneComposer {
             Layout(
                 width: 200, height: 90, wallHeight: 46,
                 bed: Point(x: 3, y: 42), lamp: Point(x: 34, y: 36), couch: Point(x: 92, y: 50),
-                fridge: nil, tv: Point(x: 106, y: 30), table: Point(x: 58, y: 62), armchair: nil,
+                fridge: nil, tv: Point(x: 106, y: 26), table: Point(x: 58, y: 62), armchair: nil,
                 crib: Point(x: 156, y: 60), plant: Point(x: 48, y: 34), fireplace: nil, bookshelf: nil,
                 windows: [], skylines: [Point(x: 8, y: 6)],
                 rug: RoomBuilder.Rect(x: 88, y: 66, width: 42, height: 20),
-                mat: Point(x: 6, y: 76), babySpot: Point(x: 176, y: 54),
+                mat: Point(x: 6, y: 76), babySpot: Point(x: 176, y: 48),
                 childSpots: [Point(x: 90, y: 70), Point(x: 101, y: 72), Point(x: 112, y: 70)],
                 kitchen: Point(x: 158, y: 26), moodCorner: Point(x: 166, y: 76)
             )

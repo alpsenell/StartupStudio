@@ -392,6 +392,54 @@ struct HomeSceneComposerTests {
         }
     }
 
+    /// Nobody stands inside the tall furniture. People may of course occupy
+    /// the thing they are *using* (bed, couch, armchair, table, crib, mat,
+    /// range) and may stand among floor-level clutter — a kid beside the
+    /// laundry pile is the point — but a person drawn through the fridge,
+    /// the TV, the bookshelf, the fireplace, the lamp, a plant or a window
+    /// is a layout bug.
+    @Test func peopleNeverStandInsideTallFurniture() {
+        let tall: Set<SpriteLibrary.HomePropName> = [
+            .fridge, .tv, .bookshelf, .fireplace, .lamp, .plantHome, .deadPlant,
+            .flowerVase, .skylineWindow, .windowNight,
+        ]
+        for (tier, activity) in allCombos {
+            for mood in MoodLevel.allCases {
+                let scene = HomeSceneComposer.compose(
+                    tier: tier, occupants: occupants(partner: true, children: 3), activity: activity, mood: mood
+                )
+                let people = scene.filter { [.person, .partner, .child].contains($0.kind) }
+                for placement in scene {
+                    guard case .homeProp(let name) = placement.kind, tall.contains(name) else { continue }
+                    for person in people {
+                        #expect(
+                            !overlaps(person, placement),
+                            "\(tier) \(activity) \(mood): \(person.kind) is drawn inside the \(name)"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /// Floor clutter is drawn before the people who walk among it, so a
+    /// person always occludes the mess rather than the other way round.
+    @Test func floorClutterIsDrawnBehindPeople() {
+        let clutter: Set<SpriteLibrary.HomePropName> = [.laundryPile, .takeoutBoxes, .dumbbells, .yogaMat, .catBed]
+        for (tier, activity) in allCombos {
+            let scene = HomeSceneComposer.compose(
+                tier: tier, occupants: occupants(partner: true, children: 3), activity: activity, mood: .low
+            )
+            guard let firstPerson = scene.firstIndex(where: { [.person, .partner, .child].contains($0.kind) }) else {
+                continue
+            }
+            for (index, placement) in scene.enumerated() {
+                guard case .homeProp(let name) = placement.kind, clutter.contains(name) else { continue }
+                #expect(index < firstPerson, "\(tier) \(activity): \(name) draws over people")
+            }
+        }
+    }
+
     @Test func peopleStandOnTheFloorNotTheWall() {
         for (tier, activity) in allCombos where activity.isFounderHome {
             let scene = HomeSceneComposer.compose(
