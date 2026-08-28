@@ -133,6 +133,11 @@ public struct EconomyState: Codable, Equatable, Sendable {
     /// The last day a non-critical event was allowed to stop the clock —
     /// the pause budget's cursor.
     public var lastNonCriticalPauseDay: Int?
+    /// Why the clock stopped on the last tick that stopped it, decided by
+    /// `PausePolicy`. Empty whenever the pause did not come from an event.
+    /// Persisted, so "why did time stop?" survives a relaunch the way the
+    /// pending-decision sheets do.
+    public var pauseEvents: [GameEvent]
 
     public init(
         workPace: WorkPace = .normal,
@@ -145,7 +150,8 @@ public struct EconomyState: Codable, Equatable, Sendable {
         recoveryWeeks: Int = 0,
         lonelySinceDay: Int? = nil,
         evictionWarningDay: Int? = nil,
-        lastNonCriticalPauseDay: Int? = nil
+        lastNonCriticalPauseDay: Int? = nil,
+        pauseEvents: [GameEvent] = []
     ) {
         self.workPace = workPace
         self.pendingResignation = pendingResignation
@@ -158,6 +164,7 @@ public struct EconomyState: Codable, Equatable, Sendable {
         self.lonelySinceDay = lonelySinceDay
         self.evictionWarningDay = evictionWarningDay
         self.lastNonCriticalPauseDay = lastNonCriticalPauseDay
+        self.pauseEvents = pauseEvents
     }
 
     /// A fresh company's economy state.
@@ -182,7 +189,7 @@ extension EconomyState {
     private enum CodingKeys: String, CodingKey {
         case workPace, pendingResignation, lastRecognitionDay, updates
         case chronicCondition, hospitalizationDays, burnoutDays, recoveryWeeks
-        case lonelySinceDay, evictionWarningDay, lastNonCriticalPauseDay
+        case lonelySinceDay, evictionWarningDay, lastNonCriticalPauseDay, pauseEvents
     }
 
     private struct RecognitionEntry: Codable {
@@ -214,7 +221,8 @@ extension EconomyState {
             evictionWarningDay: try container.decodeIfPresent(Int.self, forKey: .evictionWarningDay),
             lastNonCriticalPauseDay: try container.decodeIfPresent(
                 Int.self, forKey: .lastNonCriticalPauseDay
-            )
+            ),
+            pauseEvents: try container.decodeIfPresent([GameEvent].self, forKey: .pauseEvents) ?? []
         )
     }
 
@@ -236,5 +244,6 @@ extension EconomyState {
         try container.encodeIfPresent(lonelySinceDay, forKey: .lonelySinceDay)
         try container.encodeIfPresent(evictionWarningDay, forKey: .evictionWarningDay)
         try container.encodeIfPresent(lastNonCriticalPauseDay, forKey: .lastNonCriticalPauseDay)
+        try container.encode(pauseEvents, forKey: .pauseEvents)
     }
 }

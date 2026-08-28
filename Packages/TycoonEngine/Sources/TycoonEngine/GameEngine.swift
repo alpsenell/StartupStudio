@@ -100,6 +100,7 @@ public final class GameEngine {
         guard state.gameOver == nil else { return }
         // The player answered the pause; the banner's reason goes with it.
         lastPauseEvents = []
+        state.economy.pauseEvents = []
         state.speed = speed
         restartTickLoop()
     }
@@ -148,11 +149,11 @@ public final class GameEngine {
         tickCount += 1
         if state.gameOver != nil {
             cancelTickLoop()
-        } else if events.contains(where: \.pausesTimeline), state.speed != .paused {
-            // Notable events stop the clock so the player can react; the
-            // speed control resumes it. The reasons are kept so the UI can
-            // say why.
-            lastPauseEvents = events.filter(\.pausesTimeline)
+        } else if !state.economy.pauseEvents.isEmpty, state.speed != .paused {
+            // `PausePolicy` already graded the day and spent the pause
+            // budget; the speed control resumes. The reasons are kept so
+            // the UI can say why.
+            lastPauseEvents = state.economy.pauseEvents
             state.speed = .paused
             cancelTickLoop()
         }

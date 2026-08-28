@@ -201,39 +201,49 @@ public enum GameEvent: Codable, Equatable, Sendable {
 }
 
 extension GameEvent {
-    /// Whether this event is notable enough to auto-pause the timeline so
-    /// the player can react. Checked by the engine after every tick.
+    /// Whether this event is loud enough to stop the clock at all —
+    /// `.notable` or `.critical`. This is the *static* grade; whether a
+    /// given occurrence actually pauses also depends on the state and the
+    /// pause budget, which is `PausePolicy`'s job.
     public var pausesTimeline: Bool {
-        switch self {
-        case .bankruptcyWarning, .gameOver, .reviewsIn, .contractFailed,
-             .contractDelivered, .randomEvent, .lifeEvent, .founderAway,
-             .breakup, .childBorn, .marketBoom, .marketCrash, .employeeQuit,
-             .poachAttempt, .buyoutOffered, .companySold, .rivalAcquired,
-             .employeePoached, .officeRelocated, .staffEventOccurred:
-            true
-
-        // Reserved regions — each workstream adds its pausing cases inside
-        // its own region, above the `default`, which stays `false`.
-
-        // MARK: WS-A
-
-        // MARK: WS-B
-
-        // MARK: WS-F
-
-        default:
-            false
+        switch severity {
+        case .quiet, .info: false
+        case .notable, .critical: true
         }
     }
 
-    /// How loudly an event should interrupt the player. WS-A grades every
-    /// case (and derives `pausesTimeline` from it); until then everything
-    /// reads `.info`, which changes nothing — `pausesTimeline` is still the
-    /// switch above.
+    /// How loudly an event should interrupt the player.
+    ///
+    /// `.critical` always stops the clock: money running out, an offer with
+    /// a deadline, somebody leaving, the founder in hospital. `.notable`
+    /// stops it too, but within the pause budget — one non-critical
+    /// interruption every `economy.pauseBudgetDays`. `.info` and `.quiet`
+    /// never stop it; they are there for the feed and the log.
     public var severity: EventSeverity {
         switch self {
 
         // MARK: WS-A
+
+        // Money, deadlines, and people walking out the door: always stop.
+        case .bankruptcyWarning, .gameOver, .companySold, .rivalAcquired,
+             .poachAttempt, .buyoutOffered, .staffEventOccurred,
+             .resignationNotice, .employeeQuit, .employeePoached, .breakup:
+            .critical
+        // The founder's own body only interrupts when it is serious.
+        case .founderAway(let reason, _, _):
+            reason == "Burnout" || reason == "Hospital" ? .critical : .notable
+        // Worth looking up for, once the budget allows.
+        case .reviewsIn, .updateShipped, .contractFailed, .productOffMarket,
+             .liveBugsSpiking, .childBorn, .relationshipChanged, .officeUpgraded,
+             .officeRelocated, .homeUpgraded, .homeDowngraded, .researchCompleted,
+             .marketBoom, .marketCrash, .randomEvent, .lifeEvent,
+             .evictionWarning, .chronicConditionDiagnosed, .chronicConditionCleared,
+             .founderMeltdown:
+            .notable
+        // Background texture: the feed shows it, the clock keeps running.
+        case .weekendSpent, .instantActivityDone, .socialActivity, .staffBirthday,
+             .friendshipFormed, .candidatesRefreshed, .contractOffersRefreshed:
+            .quiet
 
         // MARK: WS-B
 
@@ -241,6 +251,61 @@ extension GameEvent {
 
         default:
             .info
+        }
+    }
+}
+
+/// Decides which of a tick's events actually stop the clock.
+///
+/// Grading alone is not enough: a market boom in a topic the studio has
+/// nothing in is somebody else's news, and a run of `.notable` events in
+/// one week would put the player back where they started — one pause every
+/// four days at 4× speed, with no idea why. So on top of the severity:
+///
+/// - `.critical` always pauses;
+/// - `.marketBoom` / `.marketCrash` only pause for a topic the studio has
+///   something on the market in;
+/// - everything else `.notable` pauses at most once every
+///   `economy.pauseBudgetDays`, and is otherwise left as a feed line.
+public enum PausePolicy {
+    /// The events from this tick that should stop the clock, in order.
+    public static func pausingEvents(
+        _ events: [GameEvent],
+        state: GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        var pausing: [GameEvent] = []
+        var budgetSpent = false
+        let budgetDays = balance.economy.pauseBudgetDays
+        let sinceLast = state.economy.lastNonCriticalPauseDay.map { state.day - $0 }
+
+        for event in events {
+            switch event.severity {
+            case .quiet, .info:
+                continue
+            case .critical:
+                pausing.append(event)
+            case .notable:
+                guard isRelevant(event, to: state) else { continue }
+                guard budgetDays <= 0 || (!budgetSpent && (sinceLast ?? Int.max) >= budgetDays)
+                else { continue }
+                budgetSpent = true
+                pausing.append(event)
+            }
+        }
+        return pausing
+    }
+
+    /// Whether a notable event is about this studio at all.
+    private static func isRelevant(_ event: GameEvent, to state: GameState) -> Bool {
+        switch event {
+        case .marketBoom(let topicID, _), .marketCrash(let topicID, _):
+            state.products.contains { product in
+                guard case .released(let info) = product.stage else { return false }
+                return product.topicID == topicID && !info.offMarket
+            }
+        default:
+            true
         }
     }
 }

@@ -385,8 +385,10 @@ struct ContractQualityTests {
         #expect(delivered.first?.0 == 30)
         #expect(delivered.first?.1 == 500) // poorPayoutFraction 0.5
         #expect(state.company.reputation < 10) // penalty applied
+        // A delivery is good news with nothing to answer, so under WS-A's
+        // pause policy it no longer stops the clock — it is a feed line.
         if let quality = delivered.first?.0 {
-            #expect(GameEvent.contractDelivered(
+            #expect(!GameEvent.contractDelivered(
                 contractID: UUID(), quality: quality, payout: 0, day: 0
             ).pausesTimeline)
         }

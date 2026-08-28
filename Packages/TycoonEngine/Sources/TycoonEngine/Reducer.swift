@@ -68,6 +68,15 @@ public enum Reducer {
             events.append(contentsOf: system(&state, balance, content))
         }
 
+        // Decide here, not in the UI shell, so a headless run sees exactly
+        // the pauses a played game would: the policy needs the day's state
+        // and spends the pause budget.
+        let pausing = PausePolicy.pausingEvents(events, state: state, balance: balance)
+        state.economy.pauseEvents = pausing
+        if pausing.contains(where: { $0.severity != .critical }) {
+            state.economy.lastNonCriticalPauseDay = state.day
+        }
+
         state.logEvents(events)
         return events
     }

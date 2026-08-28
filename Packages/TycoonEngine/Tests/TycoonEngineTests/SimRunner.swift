@@ -168,6 +168,9 @@ enum SimRunner {
                 day: state.day, into: &result, firstProductID: &firstProductID
             )
             observe(state, into: &result)
+            // What the player would actually have seen: `PausePolicy` has
+            // already applied the owned-topic rule and the pause budget.
+            result.pauses += state.economy.pauseEvents.count
             if state.day % daysPerWeek == 0, state.life.wallet < 0 {
                 result.weeksNegativeWallet += 1
             }
@@ -201,7 +204,6 @@ enum SimRunner {
         firstProductID: inout UUID?
     ) {
         for event in events {
-            if event.pausesTimeline { result.pauses += 1 }
             switch event {
             case .contractDelivered: result.contractsCompleted += 1
             case .contractFailed: result.contractsFailed += 1
