@@ -315,6 +315,20 @@ enum HomePersonArt {
         return rows
     }()
 
+    /// The same defeat, in a chair. Rows 0-13 are the standing slump — the
+    /// hanging head, the rolled shoulders, the hands fallen into the lap —
+    /// and rows 14-17 are the office pose's own lap and chair, which begin
+    /// at exactly the hip line both poses share (`" OOOPPPPPPOOO "`). So a
+    /// miserable person at their desk stays in their seat: only the top of
+    /// them changes, which is the whole point.
+    static let seatedSlumpA: [String] =
+        Array(slumpA[0...13]) + Array(PersonArt.frameA[14...17])
+
+    /// The seated slump's slow breath, taken from the standing one so the
+    /// two read as the same person.
+    static let seatedSlumpB: [String] =
+        Array(slumpB[0...13]) + Array(PersonArt.frameA[14...17])
+
     /// A mug held at chest height, and the same mug raised for a sip.
     static let mugLow: [String] = [
         "              ",

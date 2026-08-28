@@ -121,6 +121,10 @@ enum EmployeeSystem {
             + (hasHR ? company.hrQuitStreakBonus : 0)
             + state.ownedAmenities.reduce(0) { $0 + company.amenity($1).quitStreakBonusDays }
         let conditions = workplaceMoraleDelta(state, balance)
+        // The share of `conditions` that is the work pace, so a crunch can
+        // land differently on different people. Only a *penalty* is
+        // personal — a relaxed week is good for everybody.
+        let paceMoralePenalty = min(0, economy.pace(state.economy.workPace).moraleTargetDelta)
         var events: [GameEvent] = []
         var quitting: [Int] = []
         var noticeCandidate: Int?
@@ -129,8 +133,13 @@ enum EmployeeSystem {
             let employee = state.employees[index]
             let fairPay = fairWeeklyPay(for: employee, balance: balance)
             let ratio = fairPay > 0 ? Double(employee.weeklySalary) / fairPay : 1
+            // Exactly zero when the trait factor is 1, so a trait-less
+            // roster keeps the target it had to the last bit.
+            let crunchAdjustment = paceMoralePenalty
+                * (TraitEffects.crunchMoraleFactor(employee, content: content) - 1)
             var target = staff.baselineMorale + officeBonus + perkBonus + conditions
                 + TraitEffects.moraleTargetDelta(employee, content: content)
+                + crunchAdjustment
             if ratio < staff.underpaidThreshold {
                 target -= staff.underpaidTargetPenalty
             } else if ratio > staff.wellPaidThreshold {
@@ -306,7 +315,8 @@ enum EmployeeSystem {
     /// scaled by the tech dev-speed multiplier. Polish from QA engineers
     /// fixes `qaBugFixMultiplier` bugs per point (the day's blended rate is
     /// handed to `applyDailyProgress`), and every marketer on the product
-    /// adds `marketerDailyHype × (1 + marketing/100)` hype. Afterwards each
+    /// adds `marketerDailyHype × (1 + marketing/100) × hypeFactor` hype.
+    /// The crew's `bugMult` traits scale the day's bug chance. Afterwards each
     /// skill that fed a pool grows by `skillGrowthRate * (1 - skill/100)`,
     /// capped at 100.
     private static func produceDailyOutput(
@@ -342,6 +352,12 @@ enum EmployeeSystem {
             * crowdingFactor(producerCount: crew.producers.count, balance: balance)
             * pace.outputFactor
 
+        // Read out of `state` before the `&state` call below: the crew's
+        // care is a property of who is at the desk today.
+        let crewBugFactor = TraitEffects.crewBugFactor(
+            crew.producers.map { state.employees[$0] }, content: content
+        )
+
         ProductSystem.applyDailyProgress(
             design: crew.design * output,
             code: crew.code * output,
@@ -351,7 +367,7 @@ enum EmployeeSystem {
                 : crew.codingSum / Double(crew.producers.count),
             bugChanceMultiplier: (crew.founderWorked
                 ? state.founderBugChanceMultiplier(balance: balance)
-                : 1) * pace.bugFactor,
+                : 1) * pace.bugFactor * crewBugFactor,
             bugFixMultiplier: crew.bugFixMultiplier(balance: balance),
             productIndex: productIndex, state: &state, balance: balance
         )
@@ -468,6 +484,7 @@ enum EmployeeSystem {
             if role == .qa { out.qaPolish += polishShare }
             if role == .marketer {
                 out.hype += company.marketerDailyHype * (1 + skills.marketing / 100)
+                    * TraitEffects.hypeFactor(state.employees[index], content: content)
             }
             out.codingSum += skills.coding
             out.designSum += skills.design

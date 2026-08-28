@@ -238,6 +238,15 @@ public enum SceneComposer {
         return (cell.x + 8, cell.y)
     }
 
+    /// Top of the founder's own desk cell — the front row, and the line the
+    /// amenity zones sit on. Extracted so `floorZoneReserve` can lay the
+    /// zones out without composing a whole scene.
+    static func founderRowY(for tier: OfficeTierStyle) -> Int {
+        let l = layout(for: tier)
+        return l.rowsStartY + deskRows(for: tier, cols: l.cols) * Layout.cellHeight
+            + Layout.founderGap
+    }
+
     public static func sceneSize(for tier: OfficeTierStyle) -> SceneSize {
         let l = layout(for: tier)
         let rows = deskRows(for: tier, cols: l.cols)
@@ -262,12 +271,19 @@ public enum SceneComposer {
     ) -> [PlacedSprite] {
         let l = layout(for: tier)
         let size = sceneSize(for: tier)
-        let rows = deskRows(for: tier, cols: l.cols)
         let shown = shownAmenities(for: tier, amenities: amenities)
+        let founderY = founderRowY(for: tier)
+        // The room needs to know where the zones are going: its baked floor
+        // dressing is drawn under them, so it skips whatever they cover.
+        let zones = zoneFrames(for: tier, shown: shown, size: size, founderY: founderY)
+            .map { (x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
 
         var scene: [PlacedSprite] = []
         scene.append(PlacedSprite(
-            sprite: RoomBuilder.room(tier: tier, width: size.width, height: size.height, wallHeight: l.wallHeight),
+            sprite: RoomBuilder.room(
+                tier: tier, width: size.width, height: size.height,
+                wallHeight: l.wallHeight, amenityRects: zones
+            ),
             x: 0, y: 0, kind: .room, animation: .still, phase: 0
         ))
         scene += props(for: tier, size: size, layout: l)
@@ -292,7 +308,6 @@ public enum SceneComposer {
         }
 
         // Founder desk: front row, left, slightly separated.
-        let founderY = l.rowsStartY + rows * Layout.cellHeight + Layout.founderGap
         scene += deskCell(x: Layout.sideMargin, y: founderY, occupant: founder, index: tier.deskCapacity)
 
         scene += amenityZones(

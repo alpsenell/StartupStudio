@@ -8,6 +8,11 @@ import TycoonEngine
 /// This is the game's retention loop. It never blocks: the clock stays
 /// paused behind it and "Next week" resumes at the speed the player was
 /// already running.
+///
+/// For the first eight weeks it also opens itself, which is right for a
+/// player learning the loop and an interruption for one who is not. The
+/// bottom bar carries the off switch, so nobody has to go and find
+/// Settings to stop something that is happening to them right now.
 struct WeeklyReportSheet: View {
     let engine: GameEngine
     let report: WeeklyReport
@@ -43,7 +48,13 @@ struct WeeklyReportSheet: View {
                     Button("Close") { dismiss() }
                 }
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) { nextWeekBar }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                WeeklyReportBottomBar(nextWeekIndex: report.weekIndex + 1) {
+                    Sounds.play(.weekEnd)
+                    engine.setSpeed(resumeSpeed == .paused ? .x1 : resumeSpeed)
+                    dismiss()
+                }
+            }
         }
     }
 
@@ -284,33 +295,80 @@ struct WeeklyReportSheet: View {
         return "\(weeks) week\(weeks == 1 ? "" : "s") of runway at \(report.weeklyBurn.money)/wk"
     }
 
-    // MARK: - Bottom bar
-
-    private var nextWeekBar: some View {
-        Button {
-            Haptics.commit()
-            Sounds.play(.weekEnd)
-            engine.setSpeed(resumeSpeed == .paused ? .x1 : resumeSpeed)
-            dismiss()
-        } label: {
-            HStack(spacing: Theme.Spacing.sm) {
-                Text("Next week")
-                    .font(.system(.headline, design: .rounded))
-                Image(systemName: "play.fill")
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Theme.Spacing.sm)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(Theme.accent)
-        .padding(Theme.Spacing.lg)
-        .background(.bar)
-        .accessibilityLabel("Start week \(report.weekIndex + 1)")
-    }
-
     private func signed(_ value: Double) -> String {
         let rounded = value.rounded()
         return (rounded >= 0 ? "+" : "") + rounded.formatted(.number.precision(.fractionLength(0)))
+    }
+}
+
+// MARK: - Bottom bar
+
+/// The sheet's bottom bar: the button that starts the next week, and — on
+/// the thing that just opened itself — the off switch for that.
+///
+/// Its own view for two reasons: `ImageRenderer` cannot draw a
+/// `NavigationStack`'s safe-area inset, so this is the only way the bar
+/// gets a review snapshot; and the auto-open state belongs with the
+/// control that owns it.
+struct WeeklyReportBottomBar: View {
+    /// The week the button starts, for the accessibility label.
+    let nextWeekIndex: Int
+    let onNextWeek: () -> Void
+
+    /// Mirrors `GameSettings.weeklyReportAuto` so the row redraws when it
+    /// is flipped. Re-read on appear: this view's state outlives one
+    /// presentation, and Settings can change the value between weeks.
+    @State private var opensAutomatically = GameSettings.weeklyReportAuto
+
+    var body: some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            Button {
+                Haptics.commit()
+                onNextWeek()
+            } label: {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Text("Next week")
+                        .font(.system(.headline, design: .rounded))
+                    Image(systemName: "play.fill")
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Theme.Spacing.sm)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.accent)
+            .accessibilityLabel("Start week \(nextWeekIndex)")
+
+            autoOpenButton
+        }
+        .padding(Theme.Spacing.lg)
+        .background(.bar)
+        .onAppear { opensAutomatically = GameSettings.weeklyReportAuto }
+    }
+
+    /// Writes to the same `GameSettings` key the Settings sheet does, so
+    /// the two always agree — and so nobody has to go and find Settings to
+    /// stop something that is happening to them right now.
+    private var autoOpenButton: some View {
+        Button {
+            Haptics.tap()
+            opensAutomatically.toggle()
+            GameSettings.weeklyReportAuto = opensAutomatically
+        } label: {
+            Label(
+                opensAutomatically
+                    ? "Don't open this automatically"
+                    : "Open this automatically again",
+                systemImage: opensAutomatically ? "bell.slash" : "bell"
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(
+            opensAutomatically
+                ? "Stops the weekly report opening on its own. The week chip in the HUD still opens it."
+                : "The weekly report will open on its own at the end of each week again."
+        )
     }
 }
 

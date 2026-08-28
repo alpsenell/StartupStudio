@@ -29,6 +29,15 @@ public struct TraitDef: Codable, Equatable, Sendable, Identifiable {
         /// Daily company reputation nudge while this person is on payroll
         /// (the showman, who is always on a podcast).
         public var dailyReputationBonus: Double
+        /// Multiplies the hype this person's marketing generates — their own
+        /// daily hype on a product, and their share of a campaign's push.
+        public var hypeMult: Double
+        /// Multiplies the chance a code point they wrote carries a bug.
+        /// Below 1 is a careful pair of hands, above 1 a fast and loose one.
+        public var bugMult: Double
+        /// Multiplies how hard a crunch week lands on *this* person's
+        /// morale. Above 1 takes it badly, below 1 barely notices.
+        public var crunchMoraleMult: Double
 
         public init(
             outputMult: Double = 1,
@@ -38,7 +47,10 @@ public struct TraitDef: Codable, Equatable, Sendable, Identifiable {
             poachResist: Double = 1,
             teamGrowthBonus: Double = 0,
             teamMoraleBonus: Double = 0,
-            dailyReputationBonus: Double = 0
+            dailyReputationBonus: Double = 0,
+            hypeMult: Double = 1,
+            bugMult: Double = 1,
+            crunchMoraleMult: Double = 1
         ) {
             self.outputMult = outputMult
             self.skillGrowthMult = skillGrowthMult
@@ -48,6 +60,9 @@ public struct TraitDef: Codable, Equatable, Sendable, Identifiable {
             self.teamGrowthBonus = teamGrowthBonus
             self.teamMoraleBonus = teamMoraleBonus
             self.dailyReputationBonus = dailyReputationBonus
+            self.hypeMult = hypeMult
+            self.bugMult = bugMult
+            self.crunchMoraleMult = crunchMoraleMult
         }
 
         /// A trait that changes nothing — what an unknown trait id reads as.
@@ -113,6 +128,7 @@ extension TraitDef.Effects {
     private enum CodingKeys: String, CodingKey {
         case outputMult, skillGrowthMult, moraleTargetDelta, quitStreakBonus
         case poachResist, teamGrowthBonus, teamMoraleBonus, dailyReputationBonus
+        case hypeMult, bugMult, crunchMoraleMult
     }
 
     public init(from decoder: any Decoder) throws {
@@ -127,7 +143,12 @@ extension TraitDef.Effects {
             teamMoraleBonus: try container.decodeIfPresent(Double.self, forKey: .teamMoraleBonus) ?? 0,
             dailyReputationBonus: try container.decodeIfPresent(
                 Double.self, forKey: .dailyReputationBonus
-            ) ?? 0
+            ) ?? 0,
+            hypeMult: try container.decodeIfPresent(Double.self, forKey: .hypeMult) ?? 1,
+            bugMult: try container.decodeIfPresent(Double.self, forKey: .bugMult) ?? 1,
+            crunchMoraleMult: try container.decodeIfPresent(
+                Double.self, forKey: .crunchMoraleMult
+            ) ?? 1
         )
     }
 }

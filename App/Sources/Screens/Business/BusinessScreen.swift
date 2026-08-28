@@ -1,10 +1,11 @@
 import SwiftUI
 import TycoonEngine
 
-/// The Business tab: client contracts, marketing campaigns, and company
-/// finances, switched with a segmented picker pinned above the scroll
-/// content (nav-bar toolbars sit underneath the opaque top HUD in this
-/// design, and content inside the ScrollView would scroll under the HUD).
+/// The Business tab: client contracts, the market, marketing campaigns,
+/// finances, rivals and investors, switched with a pill bar pinned above
+/// the scroll content (nav-bar toolbars sit underneath the opaque top HUD
+/// in this design, and content inside the ScrollView would scroll under
+/// the HUD).
 struct BusinessScreen: View {
     let engine: GameEngine
 
@@ -17,6 +18,19 @@ struct BusinessScreen: View {
         case investors = "Investors"
 
         var id: String { rawValue }
+
+        /// Each section's own icon, taken from the headers inside it, so
+        /// the pill and the screen it opens agree.
+        var systemImage: String {
+            switch self {
+            case .contracts: "briefcase.fill"
+            case .market: "chart.xyaxis.line"
+            case .marketing: "megaphone.fill"
+            case .finances: "banknote.fill"
+            case .rivals: "flag.2.crossed.fill"
+            case .investors: "chart.pie.fill"
+            }
+        }
     }
 
     @State private var section: BusinessSection = .contracts
@@ -26,19 +40,23 @@ struct BusinessScreen: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Pinned below the top HUD inset, outside the ScrollView, so
-                // it can never scroll under the opaque HUD.
-                Picker("Section", selection: $section) {
-                    ForEach(BusinessSection.allCases) { section in
-                        Text(section.rawValue).tag(section)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .accessibilityLabel("Business section")
-                .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.top, Theme.Spacing.md)
-                .padding(.bottom, Theme.Spacing.sm)
+                // Pinned below the top HUD inset, outside the ScrollView,
+                // so it can never scroll under the opaque HUD.
+                //
+                // Six segments do not fit an iPhone as a segmented picker:
+                // they truncate to "Contr…" / "Market…" / "Investo…" at the
+                // default text size, and worse above it. The pill bar keeps
+                // every label whole and scrolls instead.
+                SegmentPillBar(
+                    segments: BusinessSection.allCases,
+                    title: \.rawValue,
+                    systemImage: \.systemImage,
+                    accessibilityLabel: "Business section",
+                    selection: $section
+                )
+                .padding(.top, Theme.Spacing.xs)
                 .background(Theme.screenBackground)
+                .overlay(alignment: .bottom) { Divider() }
 
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
@@ -63,7 +81,7 @@ struct BusinessScreen: View {
                 }
             }
             // The HUD inset lives on the stack's root content (this VStack),
-            // not on the NavigationStack, so the picker lands below it.
+            // not on the NavigationStack, so the pill bar lands below it.
             .withTopHUD(engine: engine)
             .background(Theme.screenBackground)
             .navigationTitle("Business")

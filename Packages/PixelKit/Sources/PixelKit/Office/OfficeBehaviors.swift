@@ -361,16 +361,13 @@ public enum OfficeBehaviors {
         let seat = SceneComposer.seatOrigin(tier: tier, index: seatIndex)
         let seatPoint = ScenePoint(x: seat.x, y: seat.y)
         let deskAnchor = OfficeWaypoints.deskAnchor(tier: tier, index: seatIndex)
-        // Low morale reads through the cloud over the head and the slumped
-        // stance when they are up and about; in the chair everyone types.
-        // WS-C left this line to be reverted to
-        // `occupant.mood == .low ? .slump : .desk` once a *seated* slump
-        // existed. Checked at integration: WS-D's `.slump` is real art now
-        // but it is a standing figure (head two rows low, both legs drawn,
-        // HomePersonArt.slumpA), so using it here would still stand people
-        // out of their chairs. Workaround stands; a seated slump is a
-        // follow-up for WS-D.
-        let deskPose: ActorPose = .desk
+        // Low morale reads through the cloud over the head *and* the
+        // slumped shoulders — at the desk as well as away from it. WS-C
+        // asked for this line the moment a seated slump existed; it does
+        // now (`HomePersonArt.seatedSlumpA`, the standing slump above the
+        // hip line over the office chair), so a miserable person no longer
+        // types away happily under their own rain cloud.
+        let deskPose: ActorPose = occupant.mood == .low ? .seatedSlump : .desk
         var segments: [ActorSegment] = []
         var cursor: TimeInterval = 0
 

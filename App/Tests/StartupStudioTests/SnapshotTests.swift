@@ -118,6 +118,21 @@ final class SnapshotTests: XCTestCase {
         _ = engine
     }
 
+    /// The report's bottom bar: "Next week" and, under it, the off switch
+    /// for the auto-open that a player was otherwise sent to Settings to
+    /// find. Rendered in both states.
+    func testRendersTheWeeklyReportBottomBar() {
+        GameSettings.weeklyReportAuto = true
+        snapshot("weekly_report_bar_auto_on", width: 393) {
+            WeeklyReportBottomBar(nextWeekIndex: 13) {}
+        }
+        GameSettings.weeklyReportAuto = false
+        snapshot("weekly_report_bar_auto_off", width: 393) {
+            WeeklyReportBottomBar(nextWeekIndex: 13) {}
+        }
+        GameSettings.weeklyReportAuto = true
+    }
+
     func testRendersLaunchDayChrome() {
         snapshot("launch_day") {
             VStack(spacing: Theme.Spacing.lg) {

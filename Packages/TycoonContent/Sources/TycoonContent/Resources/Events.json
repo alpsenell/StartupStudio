@@ -1770,6 +1770,7 @@
   {
     "id": "team_offsite",
     "headline": "The team wants an offsite. Not a trust fall — a week somewhere with a whiteboard.",
+    "body": "Somebody has already found a place with a fireplace and sent the link round. A week away is a week not shipping, and everybody knows it.",
     "weight": 3,
     "category": "team",
     "cooldownDays": 240,
@@ -2002,6 +2003,7 @@
   {
     "id": "referral_hire",
     "headline": "Someone on the team wants to refer a friend, and is nervous about asking.",
+    "body": "They have worked together before and they are not exaggerating. What they actually want to know is whether asking counts against them.",
     "weight": 3,
     "category": "team",
     "cooldownDays": 150,
@@ -2303,6 +2305,7 @@
   {
     "id": "grant_application",
     "headline": "A regional innovation grant is open. The form is forty pages.",
+    "body": "The money is real and so is the weekend it costs. Roughly one application in three gets anything at all.",
     "weight": 3,
     "category": "money",
     "cooldownDays": 240,
@@ -2378,6 +2381,7 @@
   {
     "id": "insurance_renewal",
     "headline": "Your business insurance renews at double, citing \"sector risk\".",
+    "body": "Nothing has changed at your end. The broker says everyone in software got the same letter, and says it like that settles it.",
     "weight": 3,
     "category": "money",
     "cooldownDays": 300,
@@ -2452,6 +2456,7 @@
   {
     "id": "coffee_machine",
     "headline": "The coffee machine has died and the team is treating it as a bereavement.",
+    "body": "There is a printed note taped to it. Three people have already looked up replacements and sent you the expensive one.",
     "weight": 4,
     "category": "office",
     "cooldownDays": 180,
@@ -2506,6 +2511,7 @@
   {
     "id": "neighbour_noise",
     "headline": "The startup next door has installed a gong for closed deals.",
+    "body": "They are closing a lot of deals. It comes through the wall at roughly ninety-minute intervals, and it is a good gong.",
     "weight": 3,
     "category": "office",
     "cooldownDays": 200,
@@ -2548,6 +2554,7 @@
   {
     "id": "campus_sign",
     "headline": "Facilities wants to know what goes on the sign above reception.",
+    "body": "It is the first thing every candidate and every journalist will see. Facilities need an answer by Friday to get it made.",
     "weight": 2,
     "category": "office",
     "cooldownDays": 300,
@@ -2708,6 +2715,7 @@
   {
     "id": "analyst_report",
     "headline": "An analyst firm puts you in a quadrant and offers to explain it for a fee.",
+    "body": "You are in the bottom left. The briefing will not move you, but the people who read these reports notice who turns up.",
     "weight": 3,
     "category": "market",
     "cooldownDays": 240,
@@ -2782,6 +2790,7 @@
   {
     "id": "enterprise_procurement",
     "headline": "A large customer's procurement team sends a 200-question security review.",
+    "body": "Question 84 asks which data centre you operate. You do not operate a data centre. The contract at the end of it is the biggest you have been offered.",
     "weight": 3,
     "category": "market",
     "cooldownDays": 200,
@@ -2825,6 +2834,7 @@
   {
     "id": "conference_booth",
     "headline": "The big industry conference has one booth left and a deadline of Friday.",
+    "body": "Everyone you compete with will be there. A booth buys you the room; the hallway is free and about half as good.",
     "weight": 3,
     "category": "market",
     "cooldownDays": 240,
@@ -2882,6 +2892,7 @@
   {
     "id": "charity_ask",
     "headline": "A nonprofit wants your software free, forever, for a good reason.",
+    "body": "They are small, they are serious, and they will use it properly. “Free forever” is a support cost with no invoice attached.",
     "weight": 3,
     "category": "press",
     "cooldownDays": 240,
@@ -2981,6 +2992,7 @@
   {
     "id": "founder_dinner",
     "headline": "A founder dinner invitation arrives. Twelve people, one long table, no phones.",
+    "body": "You would know two of the twelve. It is the kind of evening that is either the best thing this month or four hours you do not get back.",
     "weight": 3,
     "category": "personal",
     "cooldownDays": 150,

@@ -175,4 +175,69 @@ final class EventCopyTests: XCTestCase {
             return XCTFail("the office upgrade must survive as its own line")
         }
     }
+
+    // MARK: - Decision sheets
+
+    /// The sheet prints the title big and the message underneath in grey.
+    /// A definition with no `body` is snapshotted with the headline in
+    /// both fields, and the sheet then says the same sentence twice — the
+    /// bug this guards. The auto-answer line still gets through.
+    func testANarrativeChoiceNeverRepeatsItsHeadlineAsItsBody() {
+        var state = GameState.newGame(
+            companyName: "Fixture Softworks", seed: 7, balance: Self.balance, difficulty: .normal
+        )
+        let headline = "Your family does Sunday lunch and has stopped expecting you."
+        state.narrative.pendingChoice = PendingChoice(
+            id: "sunday_lunch",
+            source: .life,
+            title: headline,
+            body: headline,
+            options: [
+                ChoiceOption(id: "go", label: "Turn up unannounced", index: 0),
+                ChoiceOption(id: "call", label: "Call instead", index: 1),
+            ],
+            respondByDay: state.day + 4,
+            autoOptionIndex: 1,
+            category: "life",
+            raisedDay: state.day
+        )
+
+        guard let prompt = NarrativeChoicePresenter.prompt(
+            for: state, content: Self.content, balance: Self.balance
+        ) else {
+            return XCTFail("a pending choice must reach the sheet")
+        }
+        XCTAssertEqual(prompt.title, headline)
+        XCTAssertFalse(
+            prompt.message.contains(headline),
+            "the sheet printed its own title again as the body"
+        )
+        XCTAssertTrue(
+            prompt.message.contains("Call instead"),
+            "the deadline's answer still has to be spelled out"
+        )
+    }
+
+    /// And a real body survives untouched.
+    func testARealBodyIsShown() {
+        var state = GameState.newGame(
+            companyName: "Fixture Softworks", seed: 7, balance: Self.balance, difficulty: .normal
+        )
+        let body = "Nobody has said anything about it, which is worse."
+        state.narrative.pendingChoice = PendingChoice(
+            id: "sunday_lunch",
+            source: .life,
+            title: "Your family does Sunday lunch and has stopped expecting you.",
+            body: body,
+            options: [ChoiceOption(id: "go", label: "Turn up", index: 0)],
+            respondByDay: state.day + 4,
+            autoOptionIndex: 0,
+            category: "life",
+            raisedDay: state.day
+        )
+        let prompt = NarrativeChoicePresenter.prompt(
+            for: state, content: Self.content, balance: Self.balance
+        )
+        XCTAssertEqual(prompt?.message.hasPrefix(body), true)
+    }
 }

@@ -49,32 +49,46 @@ struct DecisionSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: Theme.Spacing.lg) {
-                Spacer(minLength: 0)
+                // The question scrolls and the answers stay put: at the
+                // medium detent a two-sentence body plus the deadline's
+                // answer does not fit, and clipping the sentence that says
+                // what silence costs is the worst thing to lose.
+                ScrollView {
+                    VStack(spacing: Theme.Spacing.lg) {
+                        Image(systemName: prompt.systemImage)
+                            .font(.system(size: 44))
+                            .foregroundStyle(prompt.tint)
 
-                Image(systemName: prompt.systemImage)
-                    .font(.system(size: 44))
-                    .foregroundStyle(prompt.tint)
+                        VStack(spacing: Theme.Spacing.sm) {
+                            Text(prompt.title)
+                                .font(.system(.title2, design: .rounded).weight(.bold))
+                                .multilineTextAlignment(.center)
+                            // A prompt with nothing to add beyond its title
+                            // shows its title once, not twice.
+                            if !prompt.message.isEmpty {
+                                Text(prompt.message)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        .padding(.horizontal, Theme.Spacing.xl)
 
-                VStack(spacing: Theme.Spacing.sm) {
-                    Text(prompt.title)
-                        .font(.system(.title2, design: .rounded).weight(.bold))
-                        .multilineTextAlignment(.center)
-                    Text(prompt.message)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, Theme.Spacing.xl)
-
-                if !prompt.stats.isEmpty {
-                    HStack(spacing: Theme.Spacing.sm) {
-                        ForEach(Array(prompt.stats.enumerated()), id: \.offset) { _, stat in
-                            StatPill(systemImage: "circle.fill", value: "\(stat.label) \(stat.value)")
+                        if !prompt.stats.isEmpty {
+                            HStack(spacing: Theme.Spacing.sm) {
+                                ForEach(Array(prompt.stats.enumerated()), id: \.offset) { _, stat in
+                                    StatPill(
+                                        systemImage: "circle.fill",
+                                        value: "\(stat.label) \(stat.value)"
+                                    )
+                                }
+                            }
                         }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.xl)
                 }
-
-                Spacer(minLength: 0)
+                .scrollBounceBehavior(.basedOnSize)
 
                 VStack(spacing: Theme.Spacing.sm) {
                     ForEach(prompt.options) { option in
@@ -111,7 +125,11 @@ struct DecisionSheet: View {
             }
             .background(Theme.screenBackground)
         }
-        .presentationDetents([.medium])
+        // Medium by default, draggable to full height: a two-sentence
+        // body plus the deadline's answer does not fit a half sheet, and
+        // the copy scrolls inside it either way.
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
         .interactiveDismissDisabled()
     }
 }

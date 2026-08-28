@@ -129,8 +129,18 @@ extension SceneComposer {
     }
 
     /// Floor zones may not run into the tier's own front-row props.
+    ///
+    /// The loft's is wide enough for the bookshelf and beanbag baked into
+    /// its corner (`RoomBuilder.floorDressing`) — a loft is small enough
+    /// that a game room would otherwise clip them both. Campus keeps its
+    /// coffee machine, and its lobby run is anchored to the right of the
+    /// zone band rather than reserved for here.
     private static func rightReserve(for tier: OfficeTierStyle) -> Int {
-        tier == .campus ? 16 : 2 // campus keeps a coffee machine front-right
+        switch tier {
+        case .garage, .studio: 2
+        case .loft: 24
+        case .campus: 16
+        }
     }
 
     // MARK: Placement
@@ -162,6 +172,41 @@ extension SceneComposer {
             x += zone.width + gap
         }
         return frames
+    }
+
+    /// The strip the floor zones can *ever* claim in a tier: the union of
+    /// `zoneFrames` over every set of amenities the player could own.
+    /// `nil` for a tier with no floor zones at all.
+    ///
+    /// Amenity zones are placements laid on top of the room bitmap, while
+    /// the tier's own floor dressing is baked *into* it, so anything the
+    /// room paints inside this rect is simply lost behind a vending machine.
+    /// `RoomBuilder.floorDressing` reads this and keeps out of it; the union
+    /// is enumerated rather than reasoned about (sixteen subsets is nothing)
+    /// so it cannot drift out of agreement with the layout when a zone's art
+    /// changes size.
+    static func floorZoneReserve(
+        for tier: OfficeTierStyle
+    ) -> (x: Int, y: Int, width: Int, height: Int)? {
+        let size = sceneSize(for: tier)
+        let founderY = founderRowY(for: tier)
+        let all = AmenityStyle.allCases
+        var minX = Int.max, minY = Int.max, maxX = Int.min, maxY = Int.min
+
+        for mask in 0..<(1 << all.count) {
+            let owned = Set(all.enumerated().compactMap { mask & (1 << $0.offset) == 0 ? nil : $0.element })
+            for frame in zoneFrames(
+                for: tier, shown: shownAmenities(for: tier, amenities: owned),
+                size: size, founderY: founderY
+            ) {
+                minX = min(minX, frame.x)
+                minY = min(minY, frame.y)
+                maxX = max(maxX, frame.x + frame.width)
+                maxY = max(maxY, frame.y + frame.height)
+            }
+        }
+        guard minX <= maxX else { return nil }
+        return (x: minX, y: minY, width: maxX - minX, height: maxY - minY)
     }
 
     static func amenityZones(
