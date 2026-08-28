@@ -137,6 +137,50 @@ final class FounderLifeSnapshotTests: XCTestCase {
         }
     }
 
+    /// The two work switches, with the founder on chill during a team
+    /// crunch so the impact note is showing.
+    func testRendersTheWorkCard() {
+        let engine = scene { state, _, _ in
+            state.employees.append(
+                Employee(
+                    id: UUID(), name: "Dara Okonkwo",
+                    skills: SkillSet(coding: 60, design: 30, marketing: 20),
+                    weeklySalary: 1_200, assignment: .idle, isFounder: false,
+                    hiredDay: 0, appearanceSeed: 0xC0DE
+                )
+            )
+            state.economy.workPace = .crunch
+            state.life.schedule = .chill
+        }
+        snapshot("work_card") {
+            WorkScheduleCard(engine: engine)
+                .environment(GameShell())
+                .padding(Theme.Spacing.lg)
+        }
+    }
+
+    /// The founder's salary against the room's, over the band.
+    func testRendersThePayBand() {
+        let engine = scene { state, _, _ in
+            for _ in 0..<3 {
+                state.employees.append(
+                    Employee(
+                        id: UUID(), name: "Hire",
+                        skills: SkillSet(coding: 50, design: 30, marketing: 20),
+                        weeklySalary: 1_000, assignment: .idle, isFounder: false,
+                        hiredDay: 0, appearanceSeed: 0xFACE
+                    )
+                )
+            }
+            state.life.founderSalary = 4_000
+        }
+        snapshot("pay_band") {
+            MoneyCard(engine: engine)
+                .environment(GameShell())
+                .padding(Theme.Spacing.lg)
+        }
+    }
+
     func testRendersAConversation() throws {
         let engine = sceneAtAnEvent()
         let contact = try XCTUnwrap(engine.state.networking.contactsInRoom.first)

@@ -173,9 +173,15 @@ enum InvestorSystem {
             let patience = state.investors.rounds.last { $0.takesBoardSeat }?.patienceWeeks
             let harshness = min(2.5, max(0.5, config.patienceReferenceWeeks / Double(max(1, patience ?? 26))))
             let step = met ? -config.pressurePerHit : config.pressurePerMiss
+            // The board reads the founder's own pay line too. A founder
+            // drawing several times what they pay their engineers is a
+            // governance question, and it is the one number on the Life
+            // tab the Business tab can see directly.
+            let payPressure = state.founderPayExcess(balance: balance)
+                * balance.economy.founderPayBoardPressure
             var pressure = min(config.boardOustPressure, max(
                 0,
-                state.investors.boardPressure + step * harshness
+                state.investors.boardPressure + step * harshness + payPressure
             ))
             let crossedWarning = pressure >= config.boardWarningPressure
                 && state.investors.boardPressure < config.boardWarningPressure

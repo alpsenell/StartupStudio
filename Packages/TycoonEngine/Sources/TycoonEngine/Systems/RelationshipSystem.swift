@@ -118,6 +118,7 @@ enum RelationshipSystem {
         guard let def = config.partnerActivity(activity),
               state.life.family.stage != .single,
               !state.life.isAway(day: state.day),
+              state.hasEveningFree(balance),
               def.cost == 0 || state.life.wallet >= def.cost
         else { return [] }
         if let last = state.life.family.partnerCooldowns[activity.rawValue],
@@ -133,6 +134,7 @@ enum RelationshipSystem {
             energy: def.energy, mood: def.mood, relationships: def.relationships
         )
         state.economy.lonelySinceDay = nil
+        state.spendEvening(balance)
         FounderSystem.practice(.conversation, multiplier: 0.5, state: &state, balance: balance)
 
         return [.partnerTime(
@@ -149,6 +151,7 @@ enum RelationshipSystem {
         guard let def = balance.relationships.partnerActivity(activity) else { return "Not available" }
         if state.life.family.stage == .single { return "You're not seeing anyone" }
         if state.life.isAway(day: state.day) { return "You're away" }
+        if let reason = state.eveningBlocker(balance) { return reason }
         if let last = state.life.family.partnerCooldowns[activity.rawValue] {
             let left = def.cooldownDays - (state.day - last)
             if left > 0 { return "Again in \(left) day\(left == 1 ? "" : "s")" }
@@ -175,6 +178,7 @@ enum RelationshipSystem {
         guard let index = state.employees.firstIndex(where: { $0.id == employeeID }),
               !state.employees[index].isFounder,
               !state.life.isAway(day: state.day),
+              state.hasEveningFree(balance),
               def.cost == 0 || state.life.wallet >= def.cost
         else { return [] }
         if let last = state.employees[index].lastSocialDay,
@@ -196,6 +200,7 @@ enum RelationshipSystem {
             energy: def.energy, mood: def.mood, relationships: def.relationships
         )
         state.economy.lonelySinceDay = nil
+        state.spendEvening(balance)
         FounderSystem.practice(.conversation, multiplier: 0.5, state: &state, balance: balance)
         return [.hungOutWith(employeeID: employeeID, day: state.day)]
     }
@@ -213,7 +218,8 @@ enum RelationshipSystem {
         let config = balance.relationships
         guard let index = state.employees.firstIndex(where: { $0.id == employeeID }),
               !state.employees[index].isFounder,
-              !state.life.isAway(day: state.day)
+              !state.life.isAway(day: state.day),
+              state.hasEveningFree(balance)
         else { return [] }
         if let last = state.employees[index].lastMentoredDay,
            state.day - last < config.mentorCooldownDays { return [] }
@@ -245,6 +251,7 @@ enum RelationshipSystem {
         // Being taught is being invested in.
         state.economy.lastRecognitionDay[employeeID] = state.day
         state.life.meters.apply(energy: -config.mentorEnergyCost)
+        state.spendEvening(balance)
         FounderSystem.practice(.leadership, state: &state, balance: balance)
 
         return [.employeeMentored(employeeID: employeeID, skill: skill, day: state.day)]
@@ -261,6 +268,7 @@ enum RelationshipSystem {
               !employee.isFounder
         else { return "Not available" }
         if state.life.isAway(day: state.day) { return "You're away" }
+        if let reason = state.eveningBlocker(balance) { return reason }
         if let last = employee.lastSocialDay {
             let left = balance.social.socialCooldownDays - (state.day - last)
             if left > 0 { return "Again in \(left) day\(left == 1 ? "" : "s")" }
@@ -281,6 +289,7 @@ enum RelationshipSystem {
               !employee.isFounder
         else { return "Not available" }
         if state.life.isAway(day: state.day) { return "You're away" }
+        if let reason = state.eveningBlocker(balance) { return reason }
         if let last = employee.lastMentoredDay {
             let left = balance.relationships.mentorCooldownDays - (state.day - last)
             if left > 0 { return "Again in \(left) day\(left == 1 ? "" : "s")" }

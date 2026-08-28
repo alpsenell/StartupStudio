@@ -16,7 +16,8 @@ struct MoneyCard: View {
     private static let salaryStep = 100
 
     var body: some View {
-        let life = engine.state.life
+        let state = engine.state
+        let life = state.life
         let rent = homeWeeklyRent(life.home, balance: engine.balance)
         let kids = life.family.children.count
 
@@ -62,6 +63,19 @@ struct MoneyCard: View {
                     .font(.caption)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
+
+                // What the team makes of the number. The stepper used to
+                // have exactly one downside — company cash — which made it
+                // the free pipe behind every personal purchase in the game.
+                if let median = state.teamMedianSalary {
+                    PayBandNote(
+                        median: median,
+                        ceiling: state.fairFounderSalaryCeiling(balance: engine.balance) ?? 0,
+                        moralePenalty: state.founderPayMoralePenalty(balance: engine.balance),
+                        hasBoard: state.investors.boardExpectation != nil
+                    )
+                }
+
                 Text("The company pays your salary out of cash each week; rent comes out of your wallet.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
@@ -196,5 +210,58 @@ private struct WalletDebtWarning: View {
             return "Your salary covers the bills — the hole stops getting deeper, but it does not fill itself."
         }
         return "Rent and home costs run \(weeklyShortfall.money) a week past your salary: another \(1000.money) down every \(weeks) week\(weeks == 1 ? "" : "s")."
+    }
+}
+
+
+// MARK: - The pay band
+
+/// Where the founder's salary sits against the team's, and what it costs
+/// when it sits too far above.
+///
+/// A multiple of the median rather than a fixed number, so the line moves
+/// with the roster: the same $2,000 a week is unremarkable in a studio of
+/// leads and conspicuous in a room of juniors.
+private struct PayBandNote: View {
+    let median: Int
+    let ceiling: Int
+    let moralePenalty: Double
+    let hasBoard: Bool
+
+    var body: some View {
+        if moralePenalty > 0 {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                Image(systemName: "eye.fill")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.warning)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("−\(moralePenalty.formatted(.number.precision(.fractionLength(1)))) morale across the team")
+                        .font(.caption.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.warning)
+                    Text(detail)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(Theme.Spacing.sm)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                Theme.warning.opacity(0.12),
+                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+            )
+            .accessibilityElement(children: .combine)
+        } else {
+            Text("Your team's median is \(median.money)/wk. Up to \(ceiling.money) raises no eyebrows.")
+                .font(.caption)
+                .monospacedDigit()
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private var detail: String {
+        let base = "They know what you pay them — the median is \(median.money)/wk."
+        return hasBoard ? base + " Your board has noticed too." : base
     }
 }

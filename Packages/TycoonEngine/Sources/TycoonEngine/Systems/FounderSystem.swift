@@ -14,9 +14,10 @@ enum FounderSystem {
     ///
     /// Gates, all mirrored by the Life tab so a disabled button can say
     /// why: the method has to exist in the balance, the founder has to be
-    /// around, the day's training cap has to have room, the method's
-    /// cooldown has to have run out, and the wallet has to cover it —
-    /// self-study being free is always affordable, overdrawn or not.
+    /// around, the day's training cap has to have room, the week has to
+    /// have an evening left in it, the method's cooldown has to have run
+    /// out, and the wallet has to cover it — self-study being free is
+    /// always affordable, overdrawn or not.
     ///
     /// The gain runs through `FounderSkillSet.grow`, so the same course
     /// is worth a lot at 20 and almost nothing at 90.
@@ -30,6 +31,7 @@ enum FounderSystem {
         guard let def = config.training(method),
               !state.life.isAway(day: state.day),
               state.life.trainingsToday < config.maxTrainingsPerDay,
+              state.hasEveningFree(balance),
               def.cost == 0 || state.life.wallet >= def.cost
         else { return [] }
         if let last = state.life.trainingCooldowns[method.rawValue],
@@ -41,6 +43,7 @@ enum FounderSystem {
         state.life.meters.apply(energy: -def.energy, mood: def.mood)
         state.life.trainingCooldowns[method.rawValue] = state.day
         state.life.trainingsToday += 1
+        state.spendEvening(balance)
 
         return [.founderTrained(
             skill: skill,
@@ -80,6 +83,7 @@ enum FounderSystem {
         if state.life.trainingsToday >= config.maxTrainingsPerDay {
             return "That's enough studying for one day"
         }
+        if let reason = state.eveningBlocker(balance) { return reason }
         if let last = state.life.trainingCooldowns[method.rawValue] {
             let left = def.cooldownDays - (state.day - last)
             if left > 0 { return "Again in \(left) day\(left == 1 ? "" : "s")" }

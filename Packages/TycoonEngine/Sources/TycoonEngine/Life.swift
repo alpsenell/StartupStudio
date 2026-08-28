@@ -252,7 +252,9 @@ public struct LifeState: Codable, Equatable, Sendable {
     /// (cooldowns).
     public var instantCooldowns: [String: Int]
     /// Instant activities done today; resets at the top of each daily tick
-    /// and caps at `balance.instantLife.maxPerDay`.
+    /// and caps at `balance.instantLife.maxPerDay`. A second, smaller cap
+    /// under the weekly evening budget: it stops a whole week being spent
+    /// on one Tuesday.
     public var instantActionsToday: Int
     /// Item ids the founder owns, kept sorted (bought via `.buyItem`;
     /// their daily mood drift joins the meter drift).
@@ -264,8 +266,21 @@ public struct LifeState: Codable, Equatable, Sendable {
     /// Last day each training method was used, keyed by raw value.
     public var trainingCooldowns: [String: Int]
     /// Training sessions done today; resets at the top of each daily tick
-    /// and caps at `balance.founder.maxTrainingsPerDay`.
+    /// and caps at `balance.founder.maxTrainingsPerDay`. Like
+    /// `instantActionsToday`, a per-day guard under the weekly budget.
     public var trainingsToday: Int
+    /// Evenings spent this week. Reset on the weekly boundary, and capped
+    /// at `balance.life.eveningsPerWeek` for the founder's *effective*
+    /// schedule — see `GameState.eveningsLeftThisWeek`.
+    ///
+    /// This is the Life tab's scarce resource. Before it existed, every
+    /// personal action sat on its own independent cooldown, so nothing
+    /// competed with anything and the optimal play was to tap each button
+    /// on the day it stopped being grey. One pool means an evening spent
+    /// on a course is an evening not spent on a partner whose affection is
+    /// sliding, or on the new hire a rival has been taking to lunch — and
+    /// it gives crunch a cost that is not another meter.
+    public var eveningsSpentThisWeek: Int
 
     public init(
         meters: LifeMeters,
@@ -283,6 +298,7 @@ public struct LifeState: Codable, Equatable, Sendable {
         instantCooldowns: [String: Int] = [:],
         instantActionsToday: Int = 0,
         possessions: [String] = [],
+        eveningsSpentThisWeek: Int = 0,
         skills: FounderSkillSet = FounderSkillSet(
             conversation: 50, technical: 50, marketKnowledge: 50, leadership: 50, finance: 50
         ),
@@ -304,6 +320,7 @@ public struct LifeState: Codable, Equatable, Sendable {
         self.instantCooldowns = instantCooldowns
         self.instantActionsToday = instantActionsToday
         self.possessions = possessions
+        self.eveningsSpentThisWeek = eveningsSpentThisWeek
         self.skills = skills
         self.trainingCooldowns = trainingCooldowns
         self.trainingsToday = trainingsToday
@@ -374,7 +391,7 @@ extension LifeState {
         case meters, schedule, plannedActivity, wallet, founderSalary, home, family
         case awayUntilDay, awaySinceDay, awayReason, coldUntilDay, lowRelationshipStreakDays
         case instantCooldowns, instantActionsToday, possessions
-        case skills, trainingCooldowns, trainingsToday
+        case skills, trainingCooldowns, trainingsToday, eveningsSpentThisWeek
     }
 
     private struct CooldownEntry: Codable {
@@ -414,6 +431,11 @@ extension LifeState {
             ),
             trainingsToday: try container.decodeIfPresent(Int.self, forKey: .trainingsToday) ?? 0
         )
+        // A save written before the evening budget existed starts the week
+        // with a full one, which is the generous reading and costs nothing.
+        eveningsSpentThisWeek = try container.decodeIfPresent(
+            Int.self, forKey: .eveningsSpentThisWeek
+        ) ?? 0
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -446,6 +468,54 @@ extension LifeState {
             forKey: .trainingCooldowns
         )
         try container.encode(trainingsToday, forKey: .trainingsToday)
+        try container.encode(eveningsSpentThisWeek, forKey: .eveningsSpentThisWeek)
+    }
+}
+
+// MARK: - The evening budget
+
+/// The founder's week, as a resource.
+///
+/// Every personal action — a course, a date, a night out with somebody on
+/// the team, an afternoon teaching them something, a trip to the gym —
+/// spends one evening from a pool the work schedule sets. Company social
+/// actions (a coffee, a one-on-one, a gift, the team dinner) do not: those
+/// happen during the working day on the company's money, and keeping them
+/// free is what makes the founder's own time worth something by contrast.
+///
+/// A balance with no `life.eveningsPerWeek` has no budget, and every gate
+/// falls back to the per-day caps it used before this existed.
+extension GameState {
+    /// Evenings this week, or `nil` when this balance has no budget.
+    ///
+    /// Read off `effectiveSchedule`, not `life.schedule`, so a founder
+    /// signed off after a hospital stay actually gets the chill week's
+    /// evenings rather than the crunch they still intend to go back to.
+    public func eveningsPerWeek(_ balance: BalanceConfig) -> Int? {
+        balance.life.evenings(for: effectiveSchedule)
+    }
+
+    /// Evenings left this week, or `nil` when there is no budget.
+    public func eveningsLeftThisWeek(_ balance: BalanceConfig) -> Int? {
+        eveningsPerWeek(balance).map { max(0, $0 - life.eveningsSpentThisWeek) }
+    }
+
+    /// Whether the founder has an evening to give. Always true without a
+    /// budget.
+    func hasEveningFree(_ balance: BalanceConfig) -> Bool {
+        eveningsLeftThisWeek(balance).map { $0 > 0 } ?? true
+    }
+
+    /// Books one evening. A no-op without a budget, so the counter stays
+    /// at zero and nothing downstream reads a number that means nothing.
+    mutating func spendEvening(_ balance: BalanceConfig) {
+        guard eveningsPerWeek(balance) != nil else { return }
+        life.eveningsSpentThisWeek += 1
+    }
+
+    /// The blocker every personal action shares, in the player's words.
+    func eveningBlocker(_ balance: BalanceConfig) -> String? {
+        hasEveningFree(balance) ? nil : "No evenings left this week"
     }
 }
 

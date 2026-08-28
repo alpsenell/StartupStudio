@@ -35,12 +35,29 @@ private struct LoanCard: View {
     private static let step = 1_000
 
     @State private var amount = 5_000
+    @State private var confirmingGuarantee = false
 
     private var loans: BalanceConfig.LoanBalance { engine.balance.loans }
 
+    /// Asked of the engine. This used to be computed here out of
+    /// `balance.loans` while `FinanceSystem` lent against `balance.economy`
+    /// — a studio with revenue could borrow more than this screen said,
+    /// and the reputation term shown was double the one honoured.
     private var creditLimit: Int {
-        loans.baseLimit + Int((engine.state.company.reputation * loans.perReputation).rounded())
+        engine.state.creditLimit(balance: engine.balance)
     }
+
+    /// What the bank will lend on the company's name alone; the rest needs
+    /// the founder's signature and their house behind it.
+    private var unsecuredHeadroom: Int {
+        engine.state.unsecuredHeadroom(balance: engine.balance)
+    }
+
+    private var securedHeadroom: Int {
+        engine.state.securedHeadroom(balance: engine.balance)
+    }
+
+    private var guaranteedDebt: Int { engine.state.guaranteedDebt }
 
     private var outstanding: Int { engine.state.loanBalance }
 
@@ -75,6 +92,11 @@ private struct LoanCard: View {
         return "You can borrow up to \(headroom.money) more."
     }
 
+    /// The stepper is bounded by the unsecured line, because the two
+    /// buttons draw against different things: `Borrow` takes what the bank
+    /// will give the company, `Borrow against your home` goes past it.
+    private var unsecuredAmount: Int { min(amount, unsecuredHeadroom) }
+
     var body: some View {
         CardView("Bank loan", systemImage: "banknote.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
@@ -104,10 +126,16 @@ private struct LoanCard: View {
                         .font(.caption)
                         .foregroundStyle(Theme.warning)
                 } else {
-                    Text("Reputation raises the limit. Interest posts weekly.")
+                    Text("Revenue and reputation raise the limit. Interest posts weekly.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                CreditSplitBar(
+                    unsecuredHeadroom: unsecuredHeadroom,
+                    securedHeadroom: securedHeadroom,
+                    guaranteedDebt: guaranteedDebt
+                )
 
                 HStack(spacing: Theme.Spacing.md) {
                     Stepper(value: clampedAmount, in: Self.step...max(Self.step, headroom), step: Self.step) {
@@ -119,18 +147,34 @@ private struct LoanCard: View {
                     .accessibilityValue(amount.money)
                 }
 
+                if securedHeadroom >= Self.step {
+                    Button {
+                        confirmingGuarantee = true
+                    } label: {
+                        Label(
+                            "Borrow against your home",
+                            systemImage: "house.fill"
+                        )
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Theme.warning)
+                    .accessibilityHint("Puts your home up as collateral")
+                }
+
                 HStack(spacing: Theme.Spacing.md) {
                     Button("Borrow") {
                         shell.toasts.send(
-                            .takeLoan(amount: min(amount, headroom)),
+                            .takeLoan(amount: unsecuredAmount),
                             to: engine,
                             rejected: "The bank turned that down."
                         )
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Theme.accent)
-                    .disabled(headroom < Self.step)
-                    .accessibilityLabel("Borrow \(min(amount, headroom).money)")
+                    .disabled(unsecuredHeadroom < Self.step)
+                    .accessibilityLabel("Borrow \(unsecuredAmount.money)")
 
                     Button("Repay \(repayable.money)") {
                         shell.toasts.send(
@@ -151,6 +195,28 @@ private struct LoanCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+        .confirmationDialog(
+            "Put your home up?",
+            isPresented: $confirmingGuarantee,
+            titleVisibility: .visible
+        ) {
+            Button("Sign the guarantee", role: .destructive) {
+                shell.toasts.send(
+                    .takeSecuredLoan(amount: max(amount, unsecuredHeadroom + Self.step)),
+                    to: engine,
+                    ack: "Signed. The bank has your house on file.",
+                    rejected: "The bank turned that down.",
+                    icon: "house.fill",
+                    tint: Theme.warning
+                )
+            }
+            Button("Not that desperate", role: .cancel) {}
+        } message: {
+            Text(
+                "The bank will lend past \(unsecuredHeadroom.money) only against your home. "
+                    + "If the company stays in the red, they take your savings and then the house."
+            )
         }
     }
 }
@@ -508,5 +574,79 @@ private struct FinanceStat: View {
                 .foregroundStyle(tint)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - The credit split
+
+/// Where the bank's ceiling divides: what it will lend the company, what
+/// it will lend only against the founder's house, and how much of the
+/// house is already spoken for.
+///
+/// A bar rather than three numbers, because the point is the *proportion*
+/// — that the second half of the credit line is a different kind of money,
+/// and that signing for it moves the risk onto the person rather than the
+/// company.
+private struct CreditSplitBar: View {
+    let unsecuredHeadroom: Int
+    let securedHeadroom: Int
+    let guaranteedDebt: Int
+
+    private var total: Int { max(1, unsecuredHeadroom + securedHeadroom) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            if unsecuredHeadroom + securedHeadroom > 0 {
+                GeometryReader { geometry in
+                    HStack(spacing: 2) {
+                        Capsule()
+                            .fill(Theme.accent)
+                            .frame(width: width(unsecuredHeadroom, in: geometry.size.width))
+                        Capsule()
+                            .fill(Theme.warning.opacity(0.65))
+                    }
+                }
+                .frame(height: 6)
+
+                HStack(spacing: Theme.Spacing.md) {
+                    LegendDot(color: Theme.accent, label: "\(unsecuredHeadroom.money) on the company")
+                    if securedHeadroom > 0 {
+                        LegendDot(
+                            color: Theme.warning.opacity(0.65),
+                            label: "\(securedHeadroom.money) on your house"
+                        )
+                    }
+                }
+            }
+
+            if guaranteedDebt > 0 {
+                Label(
+                    "\(guaranteedDebt.money) of this debt is personally guaranteed.",
+                    systemImage: "house.fill"
+                )
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.warning)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func width(_ value: Int, in available: CGFloat) -> CGFloat {
+        max(0, available * CGFloat(value) / CGFloat(total))
+    }
+}
+
+private struct LegendDot: View {
+    let color: Color
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(label)
+                .font(.caption2)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
     }
 }

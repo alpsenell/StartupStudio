@@ -241,6 +241,61 @@ enum EmployeeSystem {
            state.day - since > economy.founderAwayDays {
             delta -= economy.founderAwayMoralePenalty
         }
+        delta += founderMoraleDelta(state, balance)
+        return delta
+    }
+
+    /// What the founder personally is doing to the room.
+    ///
+    /// Both hooks are **penalties only**: the founder can cost the team
+    /// morale and can never hand it any. That is a balance decision before
+    /// it is a design one — the pacing suite encodes "crunch-and-hire
+    /// mostly fails", and a room-wide morale *bonus* for a founder who was
+    /// crunching anyway is a free buff the bots collect without ever
+    /// paying the evening budget or the meters that are supposed to price
+    /// it. Measured: a symmetric version of these two hooks took board
+    /// oustings from 3 in 10 to 0 and pulled `hardModeIsGenuinelyHard`
+    /// under its floor, at every rebate size, because a bot's founder
+    /// keeps their mood topped up with weekends.
+    ///
+    /// It also reads better. Nobody's morale goes up because the boss
+    /// seems cheerful; everybody notices when the boss is falling apart,
+    /// and everybody notices who went home at five during a crunch.
+    ///
+    /// - **A founder in a bad way.** Below `founderMoodMoraleFloor` the
+    ///   room takes `founderMoodMoraleFactor` per point. This is what
+    ///   finally gives the hobby / shopping / home half of the Life tab a
+    ///   company-side reason to exist: it used to feed nothing but the
+    ///   founder's own small share of output.
+    /// - **What the founder takes home.** Pay above
+    ///   `founderPayFairRatio` × the team's median is noticed, on a slope,
+    ///   capped. The salary stepper used to have exactly one downside —
+    ///   company cash — which made it the free pipe behind every personal
+    ///   purchase in the game.
+    /// - **Whose crunch is it.** The company has a work pace and the
+    ///   founder has a work schedule, and until now neither knew the other
+    ///   existed: a founder could put the team on crunch from a deckchair.
+    ///   While the *team* is crunching, a founder on chill costs the room
+    ///   `paceMismatchMoralePenalty`, one on normal half of it, and one
+    ///   crunching alongside them nothing. A relaxed company does not care
+    ///   what hours the founder keeps.
+    static func founderMoraleDelta(_ state: GameState, _ balance: BalanceConfig) -> Double {
+        let economy = balance.economy
+        var delta = min(
+            0,
+            (state.life.meters.mood - economy.founderMoodMoraleFloor) * economy.founderMoodMoraleFactor
+        )
+
+        if state.economy.workPace == .crunch, !state.life.isAway(day: state.day) {
+            switch state.effectiveSchedule {
+            case .chill: delta -= economy.paceMismatchMoralePenalty
+            case .normal: delta -= economy.paceMismatchMoralePenalty / 2
+            case .crunch: break
+            }
+        }
+        // And what the founder is paying themselves, against what they pay
+        // everybody else.
+        delta -= state.founderPayMoralePenalty(balance: balance)
         return delta
     }
 

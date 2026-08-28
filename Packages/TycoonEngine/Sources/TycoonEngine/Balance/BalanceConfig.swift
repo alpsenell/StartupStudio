@@ -142,6 +142,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
         /// Keyed by `HomeTier` raw value.
         public var homes: [String: HomeDef]
+        /// Evenings the founder has in a week, keyed by `WorkSchedule` raw
+        /// value — the Life tab's scarce resource, spent by training, a
+        /// partner activity, a hang-out, mentoring or an instant activity.
+        ///
+        /// An empty map means no budget at all, which is the pre-budget
+        /// behaviour: every action back on its own independent cooldown.
+        /// A balance file without the key therefore plays exactly as it
+        /// did, and so does every test written before this existed.
+        public var eveningsPerWeek: [String: Int]
 
         public init(
             startingWallet: Int,
@@ -184,7 +193,10 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             maxChildren: Int,
             childSpacingDays: Int,
             childMoodBonus: Double,
-            homes: [String: HomeDef]
+            homes: [String: HomeDef],
+            // Last, with a default, so every caller written before the
+            // evening budget existed still compiles — and gets no budget.
+            eveningsPerWeek: [String: Int] = [:]
         ) {
             self.startingWallet = startingWallet
             self.defaultFounderSalary = defaultFounderSalary
@@ -227,6 +239,7 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             self.childSpacingDays = childSpacingDays
             self.childMoodBonus = childMoodBonus
             self.homes = homes
+            self.eveningsPerWeek = eveningsPerWeek
         }
 
         public func drift(for schedule: WorkSchedule) -> MeterDrift {
@@ -259,6 +272,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
                 preconditionFailure("BalanceConfig.life is missing a home definition for tier '\(tier.rawValue)'")
             }
             return def
+        }
+
+        /// Evenings this schedule leaves the founder, or `nil` when the
+        /// balance has no budget — the caller then applies only the
+        /// per-day caps, as it did before the budget existed.
+        public func evenings(for schedule: WorkSchedule) -> Int? {
+            eveningsPerWeek[schedule.rawValue]
         }
     }
 
@@ -488,23 +508,24 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     }
 
     /// Tuning for company loans.
+    ///
+    /// The ceiling itself is *not* here: it is
+    /// `economy.creditLimitBase / creditLimitRevenueFactor /
+    /// creditLimitPerReputation`, split into an unsecured share and a share
+    /// the founder's home secures. This block used to carry a second,
+    /// unused `baseLimit + reputation × perReputation` that only the
+    /// Business tab read, so the screen and the bank quietly disagreed
+    /// about what could be borrowed; both now go through
+    /// `GameState.creditLimit(balance:)`.
     public struct LoanBalance: Codable, Equatable, Sendable {
-        /// Borrowing limit: `baseLimit + reputation × perReputation`, minus
-        /// what's already outstanding.
-        public var baseLimit: Int
-        public var perReputation: Double
         /// Interest charged weekly on the outstanding balance.
         public var weeklyInterestRate: Double
 
-        public init(baseLimit: Int, perReputation: Double, weeklyInterestRate: Double) {
-            self.baseLimit = baseLimit
-            self.perReputation = perReputation
+        public init(weeklyInterestRate: Double) {
             self.weeklyInterestRate = weeklyInterestRate
         }
 
-        public static let standard = LoanBalance(
-            baseLimit: 20_000, perReputation: 600, weeklyInterestRate: 0.01
-        )
+        public static let standard = LoanBalance(weeklyInterestRate: 0.01)
     }
 
     /// Tuning for company depth: how employee roles route build output,

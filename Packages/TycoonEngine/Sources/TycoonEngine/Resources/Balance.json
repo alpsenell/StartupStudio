@@ -177,8 +177,6 @@
     "poorReputationPenalty": 2.0
   },
   "loans": {
-    "baseLimit": 20000,
-    "perReputation": 600.0,
     "weeklyInterestRate": 0.01
   },
   "company": {
@@ -699,6 +697,11 @@
         "weeklyRent": 2500,
         "moodBonus": 0.5
       }
+    },
+    "eveningsPerWeek": {
+      "chill": 5,
+      "normal": 3,
+      "crunch": 1
     }
   },
   "_workstreamBlocks": "One tunables object per workstream: WS-A owns economy, WS-B narrative, WS-F progression/investors/traits. Nobody edits another workstream's object.",
@@ -787,7 +790,17 @@
     "creditLimitBase": 20000,
     "creditLimitRevenueFactor": 0.5,
     "creditLimitPerReputation": 300.0,
-    "creditRevenueWeeks": 12
+    "creditRevenueWeeks": 12,
+    "founderMoodMoraleFactor": 0.12,
+    "paceMismatchMoralePenalty": 6.0,
+    "founderMoodMoraleFloor": 50.0,
+    "founderPayFairRatio": 1.5,
+    "founderPayMoralePerRatioPoint": 3.0,
+    "founderPayMoraleCap": 10.0,
+    "founderPayBoardPressure": 4.0,
+    "unsecuredCreditFraction": 0.45,
+    "guaranteeHomeFactor": 1.0,
+    "guaranteeCallDays": 7
   },
   "narrative": {
     "companyEventIntervalDays": 7,

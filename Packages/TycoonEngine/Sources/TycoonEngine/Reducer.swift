@@ -288,6 +288,10 @@ public enum Reducer {
             events = RelationshipSystem.mentor(
                 employeeID: employeeID, skill: skill, state: &state, balance: balance
             )
+        case let .takeSecuredLoan(amount):
+            events = FinanceSystem.takeSecuredLoan(
+                amount: amount, state: &state, balance: balance
+            )
         }
 
         state.logEvents(events)

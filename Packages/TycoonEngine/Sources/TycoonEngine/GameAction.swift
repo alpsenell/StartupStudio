@@ -126,6 +126,9 @@ public enum GameAction: Codable, Equatable, Sendable {
     case hangOutWith(employeeID: UUID)
     /// The founder teaches somebody one of the three trainable skills.
     case mentorEmployee(employeeID: UUID, skill: TrainableSkill)
+    /// Borrows past what the bank will lend the company on its own name,
+    /// against the founder's home. Draws the unsecured headroom first.
+    case takeSecuredLoan(amount: Int)
 }
 
 /// The skill a training course targets.

@@ -93,6 +93,42 @@ extension BalanceConfig {
         /// The founder being away longer than this many days costs morale.
         public var founderAwayDays: Int
         public var founderAwayMoralePenalty: Double
+        /// The founder mood below which the room starts to notice. Only
+        /// the downside is modelled — see `founderMoraleDelta`.
+        public var founderMoodMoraleFloor: Double
+        /// Morale-target points per point of founder mood below that
+        /// floor. Zero disables the hook, which is the default.
+        public var founderMoodMoraleFactor: Double
+        /// Morale-target points taken from a team on crunch when the
+        /// founder has put themselves on chill. A founder on `normal`
+        /// pays half of it; one crunching alongside them pays none.
+        public var paceMismatchMoralePenalty: Double
+        /// The multiple of the team's *median* weekly salary the founder
+        /// can pay themselves before anybody minds. A multiple, not a
+        /// number, so the band moves with the roster: a garage founder on
+        /// a grand a week is fine and a fourteen-person studio founder on
+        /// the same is invisible, while the reverse is a problem.
+        public var founderPayFairRatio: Double
+        /// Morale-target points per whole multiple of median pay above the
+        /// band. A slope, not a cliff, so the player cannot park exactly
+        /// on the threshold and forget it. Zero disables it.
+        public var founderPayMoralePerRatioPoint: Double
+        /// The most the pay gap can cost morale, however greedy.
+        public var founderPayMoraleCap: Double
+        /// Extra board pressure per quarter, per whole multiple above the
+        /// band, once a board is seated. Zero disables it.
+        public var founderPayBoardPressure: Double
+        /// The share of the bank's ceiling the company can draw on its own
+        /// name. The rest needs the founder's signature. `1.0` — the
+        /// default — means all of it, which is how borrowing worked before
+        /// a guarantee existed.
+        public var unsecuredCreditFraction: Double
+        /// What a home is worth as collateral, as a multiple of its
+        /// `upgradeCost`. Zero disables guarantees, and a studio flat
+        /// (upgrade cost 0) can never secure anything whatever this is.
+        public var guaranteeHomeFactor: Double
+        /// Days of company debt before the bank calls a guarantee in.
+        public var guaranteeCallDays: Int
         /// How long a resignation notice stays open for a counter-offer.
         public var resignationNoticeDays: Int
         /// A counter-offer has to beat the salary at notice by this factor.
@@ -223,6 +259,16 @@ extension BalanceConfig {
             overdueContractMoralePenalty: Double = 4,
             founderAwayDays: Int = 7,
             founderAwayMoralePenalty: Double = 5,
+            founderMoodMoraleFloor: Double = 50,
+            founderMoodMoraleFactor: Double = 0,
+            paceMismatchMoralePenalty: Double = 0,
+            founderPayFairRatio: Double = 1.5,
+            founderPayMoralePerRatioPoint: Double = 0,
+            founderPayMoraleCap: Double = 10,
+            founderPayBoardPressure: Double = 0,
+            unsecuredCreditFraction: Double = 1,
+            guaranteeHomeFactor: Double = 0,
+            guaranteeCallDays: Int = 7,
             resignationNoticeDays: Int = 7,
             counterOfferRaiseFactor: Double = 1.12,
             counterOfferMoraleBoost: Double = 30,
@@ -277,6 +323,16 @@ extension BalanceConfig {
             self.overdueContractMoralePenalty = overdueContractMoralePenalty
             self.founderAwayDays = founderAwayDays
             self.founderAwayMoralePenalty = founderAwayMoralePenalty
+            self.founderMoodMoraleFloor = founderMoodMoraleFloor
+            self.founderMoodMoraleFactor = founderMoodMoraleFactor
+            self.paceMismatchMoralePenalty = paceMismatchMoralePenalty
+            self.founderPayFairRatio = founderPayFairRatio
+            self.founderPayMoralePerRatioPoint = founderPayMoralePerRatioPoint
+            self.founderPayMoraleCap = founderPayMoraleCap
+            self.founderPayBoardPressure = founderPayBoardPressure
+            self.unsecuredCreditFraction = unsecuredCreditFraction
+            self.guaranteeHomeFactor = guaranteeHomeFactor
+            self.guaranteeCallDays = guaranteeCallDays
             self.resignationNoticeDays = resignationNoticeDays
             self.counterOfferRaiseFactor = counterOfferRaiseFactor
             self.counterOfferMoraleBoost = counterOfferMoraleBoost

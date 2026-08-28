@@ -26,7 +26,8 @@ struct ActivitiesCard: View {
     var body: some View {
         let state = engine.state
         let instant = engine.balance.instantLife
-        let remaining = max(0, instant.maxPerDay - state.life.instantActionsToday)
+        let remainingToday = max(0, instant.maxPerDay - state.life.instantActionsToday)
+        let eveningsLeft = state.eveningsLeftThisWeek(engine.balance)
 
         CardView("Today", systemImage: "figure.walk.circle.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
@@ -38,7 +39,7 @@ struct ActivitiesCard: View {
                                 systemImage: activity.systemImage,
                                 cost: def.cost,
                                 summary: effectSummary(def),
-                                blocker: blocker(for: activity, def: def)
+                                blocker: blocker(for: activity)
                             ) {
                                 // Only celebrate what actually happened:
                                 // the vignette waits for the engine's
@@ -75,9 +76,7 @@ struct ActivitiesCard: View {
                         showingShop = true
                     }
                 }
-                Text(remaining > 0
-                    ? "\(remaining) activit\(remaining == 1 ? "y" : "ies") left today · paid from your wallet"
-                    : "Done for today — more energy tomorrow.")
+                Text(activityFooter(remainingToday: remainingToday, eveningsLeft: eveningsLeft))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .monospacedDigit()
@@ -98,30 +97,34 @@ struct ActivitiesCard: View {
         engine.state.life.isAway(day: engine.state.day)
     }
 
+    /// Whichever budget is actually about to run out. The week is the
+    /// scarcer one once it is down to its last evening or two, and saying
+    /// "2 left today" while the week has none is how a player ends up
+    /// tapping a grey button and wondering why.
+    private func activityFooter(remainingToday: Int, eveningsLeft: Int?) -> String {
+        if let eveningsLeft {
+            guard eveningsLeft > 0 else {
+                return "No evenings left this week — these cost one, like everything else you do for yourself."
+            }
+            if eveningsLeft <= remainingToday {
+                return "\(eveningsLeft) evening\(eveningsLeft == 1 ? "" : "s") left this week · paid from your wallet"
+            }
+        }
+        return remainingToday > 0
+            ? "\(remainingToday) activit\(remainingToday == 1 ? "y" : "ies") left today · paid from your wallet"
+            : "Done for today — more energy tomorrow."
+    }
+
     private var founderAppearanceSeed: UInt64 {
         engine.state.employees.first(where: \.isFounder)?.appearanceSeed ?? 7
     }
 
-    /// Mirrors `LifeSystem.doInstantActivity`'s gates for the disabled
-    /// state; the engine remains the enforcer.
-    private func blocker(
-        for activity: InstantActivity,
-        def: BalanceConfig.InstantLifeBalance.InstantActivityDef
-    ) -> String? {
-        let state = engine.state
-        if founderAway { return "The founder is away" }
-        if state.life.instantActionsToday >= engine.balance.instantLife.maxPerDay {
-            return "Done for today"
-        }
-        if let last = state.life.instantCooldowns[activity.rawValue],
-           state.day - last < def.cooldownDays {
-            let left = def.cooldownDays - (state.day - last)
-            return "Again in \(left) day\(left == 1 ? "" : "s")"
-        }
-        if def.cost > 0, state.life.wallet < def.cost {
-            return "Need \((def.cost - state.life.wallet).money) more"
-        }
-        return nil
+    /// Asked of the engine rather than re-derived here. This used to be a
+    /// hand-copied mirror of `LifeSystem.doInstantActivity`'s gates, which
+    /// is the shape of bug where a button looks available and does
+    /// nothing — and it would have missed the evening budget entirely.
+    private func blocker(for activity: InstantActivity) -> String? {
+        engine.state.instantActivityBlocker(activity, balance: engine.balance)
     }
 
     private func effectSummary(

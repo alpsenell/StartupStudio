@@ -51,6 +51,10 @@ enum FinanceSystem {
                 events.append(.bankruptcyWarning(day: state.day))
             }
             state.company.daysInDebt += 1
+            // The bank comes for the founder before it comes for the
+            // company: money the guarantee releases lands in company cash,
+            // so it can also be what saves the run.
+            events.append(contentsOf: callGuarantee(&state, balance))
             if state.company.daysInDebt > balance.bankruptcyGraceDays {
                 state.gameOver = GameOverInfo(
                     day: state.day,
@@ -116,22 +120,114 @@ enum FinanceSystem {
             + Int((state.company.reputation * economy.creditLimitPerReputation).rounded())
     }
 
-    /// Borrows from the bank up to the remaining credit limit
-    /// (`creditLimit − outstanding`). Interest on the outstanding balance
-    /// posts weekly. Ignored for non-positive amounts and once the limit is
-    /// reached.
+    /// What the bank will lend on the company's own name — a fraction of
+    /// the full ceiling. The rest needs the founder's signature.
+    ///
+    /// The full ceiling was never the thing stopping anybody: measured
+    /// over ten seeds of two years, the bots that ever ran short sat below
+    /// a fortnight's burn in 7–11% of weeks, and at those moments the
+    /// limit was worth 8.6 and 18.7 weeks of burn. Raising a ceiling
+    /// nobody reaches is a button nobody presses; splitting the one that
+    /// already exists turns credit that was free into a decision.
+    public static func unsecuredCreditLimit(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        Int((Double(creditLimit(state, balance))
+            * min(1, max(0, balance.economy.unsecuredCreditFraction))).rounded())
+    }
+
+    /// What the founder's home is worth as collateral. A studio flat
+    /// secures nothing: the ladder finally means something beyond a mood
+    /// bonus.
+    public static func guaranteeCapacity(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        Int((Double(balance.life.home(state.life.home).upgradeCost)
+            * balance.economy.guaranteeHomeFactor).rounded())
+    }
+
+    /// Borrows from the bank on the company's name alone, up to
+    /// `unsecuredCreditLimit − outstanding`. Interest on the outstanding
+    /// balance posts weekly. Ignored for non-positive amounts and once the
+    /// limit is reached.
     static func takeLoan(
         amount: Int,
         state: inout GameState,
         balance: BalanceConfig
     ) -> [GameEvent] {
-        let headroom = creditLimit(state, balance) - state.loanBalance
+        let headroom = unsecuredCreditLimit(state, balance) - state.loanBalance
         guard amount > 0, headroom > 0 else { return [] }
 
         let borrowed = min(amount, headroom)
         state.loanBalance += borrowed
         post(amount: borrowed, category: .other, label: "Loan drawdown", to: &state)
         return [.loanTaken(amount: borrowed, day: state.day)]
+    }
+
+    /// Borrows against the founder's house.
+    ///
+    /// Draws the unsecured headroom first — nobody stakes their home for
+    /// money the bank would have lent anyway — and secures only the
+    /// remainder, capped by what the home is worth and by the bank's full
+    /// ceiling. While any of it is outstanding the company's debt is the
+    /// founder's problem: see `callGuarantee`.
+    static func takeSecuredLoan(
+        amount: Int,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard amount > 0 else { return [] }
+        let unsecuredHeadroom = max(0, unsecuredCreditLimit(state, balance) - state.loanBalance)
+        let securedHeadroom = max(0, min(
+            creditLimit(state, balance) - state.loanBalance - unsecuredHeadroom,
+            guaranteeCapacity(state, balance) - state.economy.guaranteedLoanAmount
+        ))
+        let borrowed = min(amount, unsecuredHeadroom + securedHeadroom)
+        guard borrowed > 0 else { return [] }
+
+        state.loanBalance += borrowed
+        state.economy.guaranteedLoanAmount += max(0, borrowed - unsecuredHeadroom)
+        post(amount: borrowed, category: .other, label: "Loan drawdown", to: &state)
+        return [.loanTaken(amount: borrowed, day: state.day)]
+    }
+
+    /// The bank calling the founder's guarantee in.
+    ///
+    /// Runs once the company has been in debt for `guaranteeCallDays` with
+    /// guaranteed borrowing outstanding. The wallet pays what it can; if
+    /// it cannot, the house goes — one tier down, through the same
+    /// `.homeDowngraded` path an eviction uses, with its value credited
+    /// against what is owed. The company's own bankruptcy clock keeps
+    /// running underneath: this is the founder losing their house *and*
+    /// possibly the company, which is what a personal guarantee is.
+    static func callGuarantee(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let economy = balance.economy
+        guard state.economy.guaranteedLoanAmount > 0,
+              state.company.daysInDebt > economy.guaranteeCallDays
+        else { return [] }
+
+        // Cash first, house second.
+        if state.life.wallet > 0 {
+            let paid = min(state.life.wallet, state.economy.guaranteedLoanAmount)
+            state.life.wallet -= paid
+            state.economy.guaranteedLoanAmount -= paid
+            state.loanBalance = max(0, state.loanBalance - paid)
+            post(amount: paid, category: .other, label: "Personal guarantee called", to: &state)
+        }
+        guard state.economy.guaranteedLoanAmount > 0,
+              let cheaper = state.life.home.previous
+        else { return [] }
+
+        let released = min(
+            state.economy.guaranteedLoanAmount,
+            Int((Double(balance.life.home(state.life.home).upgradeCost)
+                * economy.guaranteeHomeFactor).rounded())
+        )
+        state.life.home = cheaper
+        state.economy.guaranteedLoanAmount -= released
+        state.loanBalance = max(0, state.loanBalance - released)
+        post(amount: released, category: .other, label: "Guarantee: home sold", to: &state)
+        state.life.meters.apply(mood: -balance.life.breakupMoodPenalty)
+        return [.homeDowngraded(tier: cheaper, day: state.day)]
     }
 
     /// Buys an office amenity: the cost posts to the ledger and the amenity
@@ -167,6 +263,9 @@ enum FinanceSystem {
 
         let repaid = min(amount, state.loanBalance, state.company.cash)
         state.loanBalance -= repaid
+        // Clear the guaranteed slice first: a founder paying down debt
+        // wants their house out of it before the bank's unsecured half.
+        state.economy.guaranteedLoanAmount = max(0, state.economy.guaranteedLoanAmount - repaid)
         post(amount: -repaid, category: .other, label: "Loan repayment", to: &state)
         return [.loanRepaid(amount: repaid, day: state.day)]
     }

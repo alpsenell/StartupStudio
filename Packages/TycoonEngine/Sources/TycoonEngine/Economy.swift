@@ -144,6 +144,10 @@ public struct EconomyState: Codable, Equatable, Sendable {
     /// back down once the overdraft is cleared — and so a salary the
     /// player set themselves is never touched.
     public var rescueSalary: Int?
+    /// How much of `loanBalance` the founder has personally guaranteed
+    /// against their home. Nothing until they sign for it, and the first
+    /// thing the bank comes for when the company stops paying.
+    public var guaranteedLoanAmount: Int
     /// The last day a non-critical event was allowed to stop the clock —
     /// the pause budget's cursor.
     public var lastNonCriticalPauseDay: Int?
@@ -167,6 +171,7 @@ public struct EconomyState: Codable, Equatable, Sendable {
         convalescingUntilDay: Int? = nil,
         walletLastWeek: Int? = nil,
         rescueSalary: Int? = nil,
+        guaranteedLoanAmount: Int = 0,
         lastNonCriticalPauseDay: Int? = nil,
         pauseEvents: [GameEvent] = []
     ) {
@@ -183,6 +188,7 @@ public struct EconomyState: Codable, Equatable, Sendable {
         self.convalescingUntilDay = convalescingUntilDay
         self.walletLastWeek = walletLastWeek
         self.rescueSalary = rescueSalary
+        self.guaranteedLoanAmount = guaranteedLoanAmount
         self.lastNonCriticalPauseDay = lastNonCriticalPauseDay
         self.pauseEvents = pauseEvents
     }
@@ -210,7 +216,7 @@ extension EconomyState {
         case workPace, pendingResignation, lastRecognitionDay, updates
         case chronicCondition, hospitalizationDays, burnoutDays, recoveryWeeks
         case lonelySinceDay, evictionWarningDay, lastNonCriticalPauseDay, pauseEvents
-        case convalescingUntilDay, walletLastWeek, rescueSalary
+        case convalescingUntilDay, walletLastWeek, rescueSalary, guaranteedLoanAmount
     }
 
     private struct RecognitionEntry: Codable {
@@ -245,6 +251,9 @@ extension EconomyState {
             ),
             walletLastWeek: try container.decodeIfPresent(Int.self, forKey: .walletLastWeek),
             rescueSalary: try container.decodeIfPresent(Int.self, forKey: .rescueSalary),
+            guaranteedLoanAmount: try container.decodeIfPresent(
+                Int.self, forKey: .guaranteedLoanAmount
+            ) ?? 0,
             lastNonCriticalPauseDay: try container.decodeIfPresent(
                 Int.self, forKey: .lastNonCriticalPauseDay
             ),
@@ -272,6 +281,7 @@ extension EconomyState {
         try container.encodeIfPresent(convalescingUntilDay, forKey: .convalescingUntilDay)
         try container.encodeIfPresent(walletLastWeek, forKey: .walletLastWeek)
         try container.encodeIfPresent(rescueSalary, forKey: .rescueSalary)
+        try container.encode(guaranteedLoanAmount, forKey: .guaranteedLoanAmount)
         try container.encodeIfPresent(lastNonCriticalPauseDay, forKey: .lastNonCriticalPauseDay)
         try container.encode(pauseEvents, forKey: .pauseEvents)
     }

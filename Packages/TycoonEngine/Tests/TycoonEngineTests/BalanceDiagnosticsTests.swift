@@ -563,3 +563,80 @@ struct BalanceDiagnosticsTests {
         #expect(Self.seeds.count == 10)
     }
 }
+
+// MARK: - Credit pressure
+
+/// Would a personal guarantee on the company's credit line ever bind?
+///
+/// The question a founder's-house-as-collateral mechanic turns on is
+/// whether the bank's ceiling is ever the thing stopping a player, and no
+/// pacing bot borrows — so "count the loans" answers nothing. This measures
+/// the pressure instead: weeks where the company held less than a
+/// fortnight's burn (a week a player would reach for credit), and what the
+/// limit was worth in weeks of burn at that moment.
+///
+/// A diagnostic, not a gate: it prints, and asserts only that it ran.
+extension BalanceDiagnosticsTests {
+    @Test func creditPressureProfile() throws {
+        Swift.print("=== credit pressure (10 seeds × 730d, Normal, sampled weekly) ===")
+        Swift.print("bot             tight wks  unsecured@tight burn@tight   unsecured in wks")
+
+        func row(_ label: String, _ bot: @autoclosure () -> any BotPolicy) throws {
+            let balance = try BalanceTargetsTests.balance(.normal)
+            let content = TestContent.bundled
+            var tightWeeks = 0
+            var totalWeeks = 0
+            var limitsAtTight: [Int] = []
+            var burnsAtTight: [Int] = []
+
+            for seed in Self.seeds {
+                var state = GameState.newGame(companyName: bot().name, seed: seed, balance: balance)
+                for _ in 0..<730 {
+                    _ = Reducer.tick(&state, balance: balance, content: content)
+                    if state.gameOver != nil { break }
+                    for action in bot().actions(for: state, balance: balance, content: content) {
+                        _ = Reducer.apply(action, to: &state, balance: balance, content: content)
+                    }
+                    guard state.day % GameState.daysPerWeek == 0 else { continue }
+                    totalWeeks += 1
+                    let burn = weeklyBurn(state, balance)
+                    guard burn > 0, state.company.cash < burn * 2 else { continue }
+                    tightWeeks += 1
+                    limitsAtTight.append(state.unsecuredCreditLimit(balance: balance))
+                    burnsAtTight.append(burn)
+                }
+            }
+
+            let medianLimit = limitsAtTight.sorted().dropFirst(limitsAtTight.count / 2).first ?? 0
+            let medianBurn = burnsAtTight.sorted().dropFirst(burnsAtTight.count / 2).first ?? 0
+            let weeksOfRunway = medianBurn > 0
+                ? String(format: "%.1f", Double(medianLimit) / Double(medianBurn)) : "—"
+            Swift.print(
+                "  \(label.padding(toLength: 14, withPad: " ", startingAt: 0))"
+                    + " \(tightWeeks)/\(totalWeeks)".padding(toLength: 11, withPad: " ", startingAt: 0)
+                    + " \(medianLimit)".padding(toLength: 16, withPad: " ", startingAt: 0)
+                    + " \(medianBurn)".padding(toLength: 13, withPad: " ", startingAt: 0)
+                    + " \(weeksOfRunway)"
+            )
+        }
+
+        try row("solo-slow", SoloSlowBot())
+        try row("crunch-hire", CrunchHireBot())
+        try row("saas-builder", SaaSBuilderBot())
+        try row("grinder", ContractGrinderBot())
+        try row("neglectful", NeglectfulBot())
+        #expect(Self.seeds.count == 10)
+    }
+
+    /// Close enough to `GameEngine.weeklyBurn` for a pressure reading:
+    /// operating cost, list rent, payroll and the founder's salary. The two
+    /// terms it drops — the Operations rent discount and amenity upkeep —
+    /// are engine-internal, and neither moves the "is the ceiling binding?"
+    /// question these bots are being asked.
+    private func weeklyBurn(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        balance.weeklyOperatingCost
+            + balance.office(state.company.officeTier).weeklyRent
+            + state.employees.reduce(0) { $0 + $1.weeklySalary }
+            + state.life.founderSalary
+    }
+}

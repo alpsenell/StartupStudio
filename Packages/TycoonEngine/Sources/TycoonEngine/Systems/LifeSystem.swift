@@ -34,9 +34,13 @@ enum LifeSystem {
     ) -> [GameEvent] {
         var events: [GameEvent] = []
 
-        // 0. A new day resets the instant-activity and training caps.
+        // 0. A new day resets the per-day caps; a new week refills the
+        //    evening budget those caps sit under.
         state.life.instantActionsToday = 0
         state.life.trainingsToday = 0
+        if state.day % GameState.daysPerWeek == 1 {
+            state.life.eveningsSpentThisWeek = 0
+        }
 
         // 1. Expiry.
         if let until = state.life.awayUntilDay, state.day >= until {
@@ -623,8 +627,9 @@ enum LifeSystem {
     }
 
     /// Does an instant activity right now: applies the meter deltas and
-    /// debits the wallet. Gated on the shared per-day cap, the activity's
-    /// cooldown, the wallet, and the founder being around. Zero RNG.
+    /// debits the wallet. Gated on the shared per-day cap, the week's
+    /// evening budget, the activity's cooldown, the wallet, and the founder
+    /// being around. Zero RNG.
     static func doInstantActivity(
         _ activity: InstantActivity,
         state: inout GameState,
@@ -633,6 +638,7 @@ enum LifeSystem {
         let instant = balance.instantLife
         guard let def = instant.activity(activity),
               state.life.instantActionsToday < instant.maxPerDay,
+              state.hasEveningFree(balance),
               // Free activities are always affordable, even overdrawn.
               def.cost == 0 || state.life.wallet >= def.cost,
               !state.life.isAway(day: state.day)
@@ -646,6 +652,7 @@ enum LifeSystem {
         state.life.wallet -= def.cost
         state.life.instantCooldowns[activity.rawValue] = state.day
         state.life.instantActionsToday += 1
+        state.spendEvening(balance)
         return [.instantActivityDone(activity: activity, day: state.day)]
     }
 

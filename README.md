@@ -63,6 +63,34 @@ Five tabs over the persistent cash/date/speed HUD:
   output against morale and bugs. An unhappy employee does not vanish: they
   hand in notice and keep working, and a real raise or a promotion inside
   the notice period still turns it around.
+- **One founder, one week.** Your work schedule buys output and spends
+  *evenings*: five a week on chill, three on normal, one on crunch. Every
+  personal thing you do — a course, a date, a night out with someone on the
+  team, an afternoon teaching them something, an hour at the gym — spends
+  one. Company gestures (a coffee, a gift, the team dinner) stay free,
+  because those are the company's time and money. So crunch finally costs
+  something that isn't another meter: the one evening you have goes to the
+  coach, or the partner whose affection is sliding, or the new hire a rival
+  has been taking to lunch.
+- **The two crunches can see each other.** The company has a work pace and
+  you have a work schedule, and they now sit on the same card. While the
+  team is crunching, being on chill costs the room morale and normal costs
+  half of it — you can put everyone on crunch from a deckchair, and the car
+  park will tell them. Your own mood reaches them too, but only downward: a
+  founder falling apart drags the room, and a cheerful one buys nothing.
+- **A salary the room can read.** Pay yourself more than 1.5× your team's
+  median and morale slides on a slope, and a seated board adds it to the
+  quarterly pressure. The band moves with the roster, so a garage founder
+  on a grand a week is fine and a fourteen-person studio founder on the
+  same is invisible. A salary the *company* raised to stop you being
+  evicted is exempt — the team resents a founder who helped themselves,
+  not one who had to be bailed out.
+- **The house is collateral.** The bank lends about half its ceiling on the
+  company's name; the rest needs your signature and your home behind it. A
+  studio flat secures nothing, a penthouse secures a great deal. Stay in
+  the red with guaranteed debt outstanding and they take your savings, and
+  then the house — one tier down, the same way an eviction does. The home
+  ladder is no longer a mood bonus you buy once.
 - **You are a character sheet.** Five attributes — conversation,
   technical, market sense, leadership, finance — each with exactly one job:
   your own build output and bug rate, the sales a release finds, the morale
