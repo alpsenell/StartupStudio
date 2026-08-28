@@ -724,15 +724,18 @@
     "priceTiers": {
       "budget": {
         "priceFactor": 0.6,
-        "demandFactor": 1.5
+        "demandFactor": 1.5,
+        "shareWeight": 1.35
       },
       "standard": {
         "priceFactor": 1.0,
-        "demandFactor": 1.0
+        "demandFactor": 1.0,
+        "shareWeight": 1.0
       },
       "premium": {
         "priceFactor": 1.6,
-        "demandFactor": 0.6
+        "demandFactor": 0.6,
+        "shareWeight": 0.85
       }
     },
     "premiumQualityThreshold": 70.0,
@@ -804,7 +807,8 @@
     "updateQualityDecay": 0.6,
     "campaignCooldownDays": 14,
     "campaignRepeatHypeDecay": 0.7,
-    "liveHypeSalesFactor": 1.0
+    "liveHypeSalesFactor": 1.0,
+    "premiumOverpricedSalesFactor": 0.6
   },
   "narrative": {
     "companyEventIntervalDays": 7,
@@ -867,7 +871,8 @@
     "strategicDominanceFactor": 2.0,
     "strategicMinReputation": 60.0,
     "strategicPremiumMin": 1.5,
-    "strategicPremiumMax": 2.5
+    "strategicPremiumMax": 2.5,
+    "raisePressureRelief": 0.5
   },
   "traits": {
     "teamGrowthStrength": 1.0,

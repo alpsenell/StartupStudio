@@ -25,6 +25,9 @@ extension BalanceConfig {
         /// Board reviews run every quarter.
         public var reviewIntervalDays: Int
         /// Pressure added by a missed quarter, removed by a met one.
+        /// The share of board pressure that survives a new board-seat
+        /// round. `0` — the default — is the old full pardon.
+        public var raisePressureRelief: Double
         public var pressurePerMiss: Double
         public var pressurePerHit: Double
         /// Pressure at which the board formally demands a plan.
@@ -73,6 +76,7 @@ extension BalanceConfig {
             responseDays: Int = 7,
             earliestOfferDay: Int = 120,
             reviewIntervalDays: Int = 91,
+            raisePressureRelief: Double = 0,
             pressurePerMiss: Double = 22,
             pressurePerHit: Double = 18,
             boardWarningPressure: Double = 60,
@@ -98,6 +102,7 @@ extension BalanceConfig {
             self.responseDays = responseDays
             self.earliestOfferDay = earliestOfferDay
             self.reviewIntervalDays = reviewIntervalDays
+            self.raisePressureRelief = raisePressureRelief
             self.pressurePerMiss = pressurePerMiss
             self.pressurePerHit = pressurePerHit
             self.boardWarningPressure = boardWarningPressure
@@ -130,7 +135,7 @@ extension BalanceConfig.InvestorBalance {
     private enum CodingKeys: String, CodingKey {
         case offerIntervalDays, offerCooldownDays, offerChance, minReputation
         case responseDays, earliestOfferDay
-        case reviewIntervalDays, pressurePerMiss, pressurePerHit
+        case reviewIntervalDays, pressurePerMiss, pressurePerHit, raisePressureRelief
         case boardWarningPressure, boardOustPressure
         case expectedQuarterlyRevenueGrowth, expectedQuarterlyShips
         case expectedQuarterlyHeadcountGrowth
@@ -158,6 +163,9 @@ extension BalanceConfig.InvestorBalance {
                 ?? fallback.earliestOfferDay,
             reviewIntervalDays: try container.decodeIfPresent(Int.self, forKey: .reviewIntervalDays)
                 ?? fallback.reviewIntervalDays,
+            raisePressureRelief: try container.decodeIfPresent(
+                Double.self, forKey: .raisePressureRelief
+            ) ?? 0,
             pressurePerMiss: try container.decodeIfPresent(Double.self, forKey: .pressurePerMiss)
                 ?? fallback.pressurePerMiss,
             pressurePerHit: try container.decodeIfPresent(Double.self, forKey: .pressurePerHit)

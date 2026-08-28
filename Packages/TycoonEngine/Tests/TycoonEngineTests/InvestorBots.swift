@@ -138,14 +138,19 @@ struct InvestorBot: BotPolicy {
     ) -> [GameAction] {
         guard let offer = state.investors.pendingOffer else { return [] }
         guard takesTheMoney else { return [.declineInvestment] }
-        // A founder who has settled down to make the thing properly is not
-        // out raising again — and it matters that they are not, because
-        // accepting a new board-seat round wipes the pressure. This bot is
-        // the harness's only measurement of what happens when a founder
-        // *cannot* buy their way out of the boardroom, so letting it raise
-        // again would have it measuring the escape hatch instead of the
-        // vote.
-        guard !coasting(state) else { return [.declineInvestment] }
+        // This bot used to refuse a second round outright. It had to:
+        // accepting a board-seat round wiped the pressure, so a founder
+        // could buy their way out of the boardroom for equity alone and
+        // the bot would have been measuring the escape hatch instead of
+        // the vote.
+        //
+        // The hatch is closed — a raise now keeps half the pressure and
+        // *adds* the new investor's number to what the room watches — so
+        // the ban is gone and the bot raises whenever the terms are worth
+        // it, which is what a founder would do. Every gate in
+        // `InvestorTargetsTests` still holds with it raising freely, which
+        // is the evidence the mechanic works rather than the ban hiding a
+        // hole.
         let payroll = max(1, state.employees.reduce(0) { $0 + $1.weeklySalary })
         let worthIt = offer.equity <= maxEquityPerRound
             && offer.amount >= payroll * minRunwayWeeksBought

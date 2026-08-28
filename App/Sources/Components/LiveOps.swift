@@ -29,13 +29,31 @@ enum LiveOps {
         .support(productID)
     }
 
-    /// What each price tier does to price and demand, for the picker's
-    /// caption. Mirrors WS-A's documented multipliers.
-    static func priceCaption(for tier: PriceTier) -> String {
+    /// What each price tier is actually for, read off the balance rather
+    /// than restated here.
+    ///
+    /// The caption used to give price and demand separately — "60% of list
+    /// price, half again as many buyers" — which reads like a trade and
+    /// hides the product: 0.6 × 1.5 is 0.90 against standard's 1.00 and
+    /// premium's 0.96, so on revenue alone standard won every time and the
+    /// picker had one answer. Now the revenue effect is stated as one
+    /// number and each tier names the thing it buys that revenue does not.
+    static func priceCaption(for tier: PriceTier, balance: BalanceConfig) -> String {
+        let def = balance.economy.priceTier(tier)
+        let revenue = def.priceFactor * def.demandFactor
+        let percent = Int(((revenue - 1) * 100).rounded())
+        let revenueLine = percent == 0
+            ? "List price"
+            : "\(percent > 0 ? "+" : "")\(percent)% revenue per buyer reached"
+
         switch tier {
-        case .budget: "60% of list price, half again as many buyers"
-        case .standard: "List price"
-        case .premium: "60% more per sale, far fewer buyers — and it needs the quality to justify it"
+        case .budget:
+            return revenueLine + " · undercuts rivals for share of the topic"
+        case .standard:
+            return revenueLine + " · no edge either way"
+        case .premium:
+            return revenueLine
+                + " · needs reviews of \(Int(balance.economy.premiumQualityThreshold)) or it drives buyers away"
         }
     }
 }

@@ -356,6 +356,30 @@ private struct TermSheetCard: View {
                 .foregroundStyle(offer.takesBoardSeat ? Theme.warning : .secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+                if offer.takesBoardSeat {
+                    // Patience swings how hard every quarterly verdict
+                    // lands by more than four times, and it was nowhere on
+                    // the term sheet: two identical cheques could be very
+                    // different boards.
+                    Text(temperament(offer.patienceWeeks))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if !engine.state.investors.boardExpectations.isEmpty {
+                        Text(
+                            "You already answer to "
+                                + engine.state.investors.boardExpectations
+                                    .map { $0.displayName.lowercased() }
+                                    .formatted(.list(type: .and))
+                                + ". Taking this adds another, and only halves the pressure you're under."
+                        )
+                        .font(.caption)
+                        .foregroundStyle(Theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
                 HStack(spacing: Theme.Spacing.sm) {
                     Button {
                         engine.send(.acceptInvestment)
@@ -379,6 +403,20 @@ private struct TermSheetCard: View {
             }
         }
     }
+
+    /// What this investor's patience means in the boardroom, since the
+    /// number itself ("20 weeks") tells a player nothing.
+    private func temperament(_ patienceWeeks: Int) -> String {
+        switch patienceWeeks {
+        case ..<16:
+            "Impatient money: they react hard to a bad quarter, and just as hard to a good one."
+        case ..<28:
+            "Ordinary patience — a miss costs you, a recovery buys it back."
+        default:
+            "Patient money. They will sit through a rough year without reaching for the phone."
+        }
+    }
+
 }
 
 // MARK: - Equity bar

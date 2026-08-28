@@ -51,8 +51,8 @@ enum RivalSystem {
         if state.day % config.evolveIntervalDays == 0 {
             events.append(contentsOf: evolve(&state, balance, content))
             events.append(contentsOf: copycatCheck(&state, balance, content))
-            recomputeShare(&state)
-            events.append(contentsOf: priceWarCheck(&state))
+            recomputeShare(&state, balance)
+            events.append(contentsOf: priceWarCheck(&state, balance))
         }
         // Re-applied every day, not just on evolution days: `MarketSystem`
         // rebuilds each `TopicMarket` on its weekly shift, and this system
@@ -290,8 +290,11 @@ enum RivalSystem {
     /// a 70 keeps about a quarter — before the floor, which guarantees
     /// every topic is worth *something*. A rival running a price war takes
     /// a further flat slice. Deterministic: no draws.
-    private static func recomputeShare(_ state: inout GameState) {
-        var shares: [String: Double] = [:]
+    private static func recomputeShare(_ state: inout GameState, _ balance: BalanceConfig) {
+        // The best product's review score, and what it is priced at: a
+        // topic is fought over on quality *and* on price, and undercutting
+        // is the only thing that makes the budget tier worth choosing.
+        var shares: [String: (quality: Double, tier: PriceTier)] = [:]
         let day = state.day
 
         for product in state.products {
@@ -299,18 +302,20 @@ enum RivalSystem {
             let topicID = product.topicID
             let playerQuality = max(1, Double(info.averageReviewScore))
             // The player's best product in the topic sets the standard.
-            if let existing = shares[topicID], existing >= playerQuality { continue }
-            shares[topicID] = playerQuality
+            if let existing = shares[topicID], existing.quality >= playerQuality { continue }
+            shares[topicID] = (playerQuality, info.priceTier)
         }
 
         var computed: [String: Double] = [:]
-        for (topicID, playerQuality) in shares {
+        for (topicID, entry) in shares {
+            let playerQuality = entry.quality
             let competitors = state.rivals.competitors(in: topicID, on: day)
             guard !competitors.isEmpty else {
                 computed[topicID] = RivalDepthTuning.shareMax
                 continue
             }
             let playerWeight = pow(playerQuality, RivalDepthTuning.shareExponent)
+                * balance.economy.priceTier(entry.tier).shareWeight
             let rivalWeight = competitors.reduce(0.0) { sum, entry in
                 sum + pow(max(1, entry.product.quality), RivalDepthTuning.shareExponent)
             }
@@ -404,7 +409,10 @@ enum RivalSystem {
     /// cuts prices: the player's share drops for a few weeks. Beating a
     /// `marketDarling` company takes one extra week of humiliation first.
     /// Deterministic — no draws.
-    private static func priceWarCheck(_ state: inout GameState) -> [GameEvent] {
+    private static func priceWarCheck(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
         var events: [GameEvent] = []
         let day = state.day
         let darling = state.progression.hasPerk(.marketDarling)
@@ -441,7 +449,7 @@ enum RivalSystem {
             ))
         }
         // The war's bite lands on this week's share.
-        if !events.isEmpty { recomputeShare(&state) }
+        if !events.isEmpty { recomputeShare(&state, balance) }
         return events
     }
 

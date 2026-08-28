@@ -75,6 +75,12 @@ extension BalanceConfig {
         /// Hype multiplier per previous campaign of the same kind on the
         /// same product. `1` is no decay, and the default.
         public var campaignRepeatHypeDecay: Double
+        /// What a premium price costs in sales when the reviews do not
+        /// carry it. `1` — the default — is the old behaviour, where
+        /// `overpriced` was computed for every product and read only in
+        /// the subscription branch, so four of the six product types could
+        /// overprice a bad product for free.
+        public var premiumOverpricedSalesFactor: Double
         /// What a point of post-launch hype is worth to weekly sales,
         /// through `salesHypeDivisor`. Zero disables the channel, which is
         /// the default and matches a game where post-launch campaigns were
@@ -210,10 +216,22 @@ extension BalanceConfig {
         public struct PriceTierDef: Codable, Equatable, Sendable {
             public var priceFactor: Double
             public var demandFactor: Double
+            /// Weight this tier carries in the fight for a topic's share
+            /// (`RivalSystem.recomputeShare`). `1` is neutral, and the
+            /// default.
+            ///
+            /// Without it the tier was revenue and nothing else — and the
+            /// shipped numbers multiply out to 0.90 / 1.00 / 0.96, so
+            /// standard was strictly best for every product type in the
+            /// game and the picker was a three-way control with one
+            /// answer. Undercutting has to buy something, and what it buys
+            /// is customers taken off somebody else.
+            public var shareWeight: Double
 
-            public init(priceFactor: Double, demandFactor: Double) {
+            public init(priceFactor: Double, demandFactor: Double, shareWeight: Double = 1) {
                 self.priceFactor = priceFactor
                 self.demandFactor = demandFactor
+                self.shareWeight = shareWeight
             }
         }
 
@@ -269,6 +287,7 @@ extension BalanceConfig {
             campaignCooldownDays: Int = 0,
             campaignRepeatHypeDecay: Double = 1,
             liveHypeSalesFactor: Double = 0,
+            premiumOverpricedSalesFactor: Double = 1,
             updateQualityBonus: Double = 8,
             updateQualityDecay: Double = 1,
             updateReviewWeight: Double = 0.5,
@@ -337,6 +356,7 @@ extension BalanceConfig {
             self.campaignCooldownDays = campaignCooldownDays
             self.campaignRepeatHypeDecay = campaignRepeatHypeDecay
             self.liveHypeSalesFactor = liveHypeSalesFactor
+            self.premiumOverpricedSalesFactor = premiumOverpricedSalesFactor
             self.updateQualityBonus = updateQualityBonus
             self.updateQualityDecay = updateQualityDecay
             self.updateReviewWeight = updateReviewWeight

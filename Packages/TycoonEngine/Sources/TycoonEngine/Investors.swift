@@ -294,8 +294,26 @@ public struct InvestorState: Codable, Equatable, Sendable {
 
     /// What the board is watching, if anyone is: the expectation of the
     /// most recent round that took a seat.
+    ///
+    /// Kept for the screens and the copy, which speak about "the board" in
+    /// the singular. The *review* grades `boardExpectations`.
     public var boardExpectation: BoardExpectation? {
         rounds.last { $0.takesBoardSeat }?.expects
+    }
+
+    /// Everything the boardroom is watching: one entry per distinct ask
+    /// across every round that took a seat, oldest first.
+    ///
+    /// A second cheque used to replace the first board's ask with its own
+    /// and wipe the pressure — a full pardon priced in equity. Now each
+    /// seated investor keeps watching their own number, so raising again
+    /// is "take the money and answer to two people" rather than an escape
+    /// hatch.
+    public var boardExpectations: [BoardExpectation] {
+        var seen: Set<BoardExpectation> = []
+        return rounds.filter(\.takesBoardSeat).compactMap { round in
+            seen.insert(round.expects).inserted ? round.expects : nil
+        }
     }
 
     /// The most recent quarterly review.

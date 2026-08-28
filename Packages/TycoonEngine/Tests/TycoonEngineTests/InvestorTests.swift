@@ -346,13 +346,23 @@ struct InvestorTests {
         )
     }
 
-    /// Raising again clears the boardroom — the founder's way out of a
-    /// hostile board, paid for in equity.
-    @Test func anotherRoundBuysTheFounderOutOfTheBoardroom() throws {
+    /// Raising again buys goodwill, not amnesia: half the pressure goes,
+    /// the rest carries, and the new investor's number is added to what
+    /// the room is watching rather than replacing it. A full pardon made
+    /// the second cheque an escape hatch priced only in equity — the
+    /// harness's own investor bot had to be forbidden from re-raising to
+    /// measure an ousting at all.
+    @Test func anotherRoundHalvesTheGrudgeRatherThanClearingIt() throws {
         let balance = try Self.balance()
         var state = Self.fundableState(balance: balance)
         state.investors.boardPressure = 80
         state.investors.equityRemaining = 85
+        // A board is already in the room, watching revenue.
+        state.investors.rounds = [RaisedRound(
+            investorID: "first_light", investorName: "First Light",
+            amount: 400_000, equity: 15, valuation: 2_600_000, day: 0,
+            takesBoardSeat: true, expects: .mrrGrowth, patienceWeeks: 26
+        )]
         state.investors.pendingOffer = InvestmentOffer(
             investorID: "corvus_capital", investorName: "Corvus Capital",
             amount: 1_200_000, equity: 18, valuation: 6_600_000,
@@ -360,8 +370,13 @@ struct InvestorTests {
             respondByDay: state.day + 7
         )
         Reducer.apply(.acceptInvestment, to: &state, balance: balance, content: Self.content)
-        #expect(state.investors.boardPressure == 0, "the new board inherited the old one's grudge")
+        #expect(
+            state.investors.boardPressure == 80 * balance.investors.raisePressureRelief,
+            "a cheque should buy goodwill, not a clean slate"
+        )
         #expect(state.investors.equityRemaining == 67, "the reprieve was free")
+        // And the founder now answers to two numbers, not one.
+        #expect(state.investors.boardExpectations.count == 2)
     }
 
     /// …but only a board seat buys it. An angel's cheque does not silence

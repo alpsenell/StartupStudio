@@ -156,9 +156,16 @@ enum ProductSystem {
                 delisted = adoption >= 1 && units < economy.subscriptionFloorSubscribers
             } else {
                 // One-off sales: a launch spike that decays week by week.
+                // A premium price the reviews do not carry costs sales
+                // here, the way it costs subscribers above. Until this
+                // existed the `overpriced` flag was computed for every
+                // product and read only in the subscription branch, so
+                // four of the six product types could charge premium for
+                // a poorly reviewed product at no cost whatever.
+                let overpricedDrag = overpriced ? economy.premiumOverpricedSalesFactor : 1
                 let decay = balance.salesDecayBase + balance.salesDecayQualityFactor * qHat
                 let decayWeeks = max(0, Double(week) - (rampWeeks - 1))
-                units = Int(demand * adoption * pow(decay, decayWeeks) * world)
+                units = Int(demand * adoption * pow(decay, decayWeeks) * world * overpricedDrag)
                 delisted = units == 0
                     || (adoption >= 1 && Double(units) < balance.delistFraction * demand)
             }

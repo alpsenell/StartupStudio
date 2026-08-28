@@ -47,7 +47,7 @@ struct RivalProductTests {
         ))
     }
 
-    private static func addRival(
+    static func addRival(
         to state: inout GameState,
         personality: RivalPersonality,
         topicID: String,
@@ -334,5 +334,100 @@ struct RivalProductTests {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         #expect(try encoder.encode(a) == encoder.encode(b))
+    }
+}
+
+// MARK: - Price as a weapon
+
+/// The price tier used to be revenue and nothing else, and the shipped
+/// multipliers make standard strictly best (0.90 / 1.00 / 0.96). These pin
+/// the two things that now make it a decision: undercutting takes share,
+/// and a premium price the reviews cannot carry costs sales.
+@Suite("Price as a weapon")
+struct PriceTierWeaponTests {
+    private static func economy(
+        budgetShare: Double = 1.35,
+        premiumShare: Double = 0.85,
+        premiumOverpricedSalesFactor: Double = 0.6
+    ) -> BalanceConfig.EconomyBalance {
+        var economy = TestBalance.neutralEconomy
+        economy.premiumOverpricedSalesFactor = premiumOverpricedSalesFactor
+        economy.priceTiers = [
+            PriceTier.budget.rawValue: .init(
+                priceFactor: 0.6, demandFactor: 1.5, shareWeight: budgetShare
+            ),
+            PriceTier.standard.rawValue: .init(
+                priceFactor: 1, demandFactor: 1, shareWeight: 1
+            ),
+            PriceTier.premium.rawValue: .init(
+                priceFactor: 1.6, demandFactor: 0.6, shareWeight: premiumShare
+            ),
+        ]
+        return economy
+    }
+
+    @Test("Undercutting takes share off a rival")
+    func budgetTakesShare() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        let content = TestContent.bundled
+
+        /// The player's share of a contested topic at a given price.
+        func share(at tier: PriceTier) throws -> Double {
+            var state = GameState.newGame(companyName: "Acme", seed: 21, balance: balance)
+            state.products.append(Product(
+                id: UUID(), name: "Ours", typeID: "mobile_app", topicID: "productivity",
+                stage: .released(ReleaseInfo(
+                    launchDay: 0, quality: 60,
+                    reviews: [Review(outlet: "T", score: 60, blurb: "")],
+                    weeklySales: [], offMarket: false, priceTier: tier
+                ))
+            ))
+            // One rival, shipping into the same topic at the same quality.
+            _ = RivalProductTests.addRival(
+                to: &state, personality: .copycat,
+                topicID: "productivity", productQuality: 60
+            )
+            // Share is recomputed on evolution days, not every tick.
+            let interval = balance.rivals.evolveIntervalDays
+            for _ in 0..<interval {
+                Reducer.tick(&state, balance: balance, content: content)
+            }
+            return state.market.shareMultiplier(for: "productivity")
+        }
+
+        let budget = try share(at: .budget)
+        let standard = try share(at: .standard)
+        let premium = try share(at: .premium)
+        #expect(budget > standard)
+        #expect(standard > premium)
+    }
+
+    @Test("A premium price the reviews can't carry costs one-off sales")
+    func overpricingCostsSales() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        let content = TestContent.tiny(marketSize: 100_000)
+
+        /// One week's units at a given review score, priced premium.
+        func units(reviewScore: Int) throws -> Int {
+            var state = GameState.newGame(companyName: "Acme", seed: 8, balance: balance)
+            state.products.append(Product(
+                id: UUID(), name: "Ours", typeID: "tool", topicID: "testing",
+                stage: .released(ReleaseInfo(
+                    launchDay: 0, quality: Double(reviewScore),
+                    reviews: [Review(outlet: "T", score: reviewScore, blurb: "")],
+                    weeklySales: [], offMarket: false, priceTier: .premium
+                ))
+            ))
+            for _ in 0..<GameState.daysPerWeek {
+                Reducer.tick(&state, balance: balance, content: content)
+            }
+            guard case .released(let info) = try #require(state.products.last).stage else { return 0 }
+            return info.weeklySales.last?.units ?? 0
+        }
+
+        // Same tier, same market, either side of `premiumQualityThreshold`.
+        let carried = try units(reviewScore: 85)
+        let notCarried = try units(reviewScore: 40)
+        #expect(carried > notCarried)
     }
 }

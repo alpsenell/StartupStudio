@@ -277,7 +277,7 @@ private struct LiveOpsCard: View {
             .pickerStyle(.segmented)
             .accessibilityLabel("Price tier for \(product.name)")
 
-            Text(LiveOps.priceCaption(for: info.priceTier))
+            Text(LiveOps.priceCaption(for: info.priceTier, balance: engine.balance))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

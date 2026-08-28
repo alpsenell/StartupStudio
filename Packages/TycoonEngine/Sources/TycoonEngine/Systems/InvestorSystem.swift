@@ -159,11 +159,25 @@ enum InvestorSystem {
         }
 
         var events: [GameEvent] = []
-        if let expectation = state.investors.boardExpectation {
-            let met = meets(
-                expectation, revenue: revenue, shipped: shipped,
-                profitable: profitable, state: state, balance: balance
-            )
+        let watching = state.investors.boardExpectations
+        if let expectation = watching.last {
+            // Every seated investor grades their own number. The step is
+            // the *share* missed rather than the sum, so a second board is
+            // harder to satisfy without being an unwinnable pincer: two
+            // boards asking for profitability and headcount at once would
+            // otherwise step twice a quarter and oust a founder who was
+            // doing one of them well.
+            let results = watching.map {
+                meets(
+                    $0, revenue: revenue, shipped: shipped,
+                    profitable: profitable, state: state, balance: balance
+                )
+            }
+            let metShare = Double(results.count(where: { $0 })) / Double(max(1, results.count))
+            let met = metShare >= 1
+            // The review line names a number that was actually missed,
+            // which is the one the founder can act on.
+            let reported = zip(watching, results).first { !$0.1 }?.0 ?? expectation
             // `patienceWeeks` finally does something. A twelve-week fund
             // reacts twice as hard as a twenty-four-week one, in both
             // directions — the impatient board is quicker to lose faith
@@ -172,7 +186,8 @@ enum InvestorSystem {
             // than a countdown.
             let patience = state.investors.rounds.last { $0.takesBoardSeat }?.patienceWeeks
             let harshness = min(2.5, max(0.5, config.patienceReferenceWeeks / Double(max(1, patience ?? 26))))
-            let step = met ? -config.pressurePerHit : config.pressurePerMiss
+            let step = -config.pressurePerHit * metShare
+                + config.pressurePerMiss * (1 - metShare)
             // The board reads the founder's own pay line too. A founder
             // drawing several times what they pay their engineers is a
             // governance question, and it is the one number on the Life
@@ -199,10 +214,10 @@ enum InvestorSystem {
             state.investors.boardPressure = pressure
             state.investors.record(BoardReview(
                 day: state.day,
-                expectation: expectation,
+                expectation: reported,
                 met: met,
                 pressure: pressure,
-                note: met ? metNote(expectation) : missNote(expectation)
+                note: met ? metNote(reported) : missNote(reported)
             ))
             events.append(.boardReviewed(met: met, pressure: pressure, day: state.day))
 
@@ -359,7 +374,13 @@ enum InvestorSystem {
         if offer.takesBoardSeat {
             state.investors.lastQuarterCash = state.company.cash
             state.investors.lastQuarterHeadcount = state.headcount
-            state.investors.boardPressure = 0
+            // A fresh cheque buys goodwill, not amnesia. Wiping the
+            // pressure outright made raising again a full pardon priced in
+            // equity — the harness's own investor bot had to be forbidden
+            // from re-raising to measure an ousting at all. What is left
+            // carries, and the new investor's expectation is *added* to
+            // what the room is watching rather than replacing it.
+            state.investors.boardPressure *= balance.investors.raisePressureRelief
         }
         return [.investmentAccepted(
             investorID: offer.investorID, amount: offer.amount, equity: offer.equity, day: state.day
