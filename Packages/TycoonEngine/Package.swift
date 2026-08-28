@@ -23,7 +23,11 @@ let package = Package(
             dependencies: [
                 "TycoonEngine",
                 .product(name: "TycoonContent", package: "TycoonContent"),
-            ]
+            ],
+            // The legacy save `LegacySaveCompatibilityTests` reads: a real
+            // pre-iteration-2 save file, kept as a fixture so the format
+            // can never quietly break.
+            resources: [.process("Fixtures")]
         ),
     ],
     swiftLanguageModes: [.v6]

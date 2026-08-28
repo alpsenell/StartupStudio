@@ -42,6 +42,14 @@ struct FullLoopDeterminismTests {
         balance.rivals.rivalCount = 0
         let content = TestContent.bundled
         var state = GameState.newGame(companyName: "Determined", seed: seed, balance: balance)
+        // The script is about draw order and event choreography, not about
+        // affording the loft: under the economy pass this studio cannot pay
+        // for the day-130 upgrade on its own, and without the loft there are
+        // no lawyers on the sheet and half the choreography never fires.
+        // A founding grant takes money out of the equation entirely, so the
+        // script tests what it is for; being applied on both runs, it keeps
+        // them byte-identical.
+        state.company.cash += 1_000_000
         var productID: UUID?
         var secondProductID: UUID?
         var hiredID: UUID?
