@@ -642,11 +642,18 @@ enum EmployeeSystem {
         let count = state.rng.nextInt(in: balance.candidateCountMin...balance.candidateCountMax)
         let tierBonus = balance.candidateSkillTierBonus[state.company.officeTier.rawValue] ?? 0
         let districtBonus = balance.city.district(state.city.district).candidateSkillBonus
+        // WS-F's `talentMagnet` perk had no consumer: candidate ceilings are
+        // computed here, in WS-A's file. Wired at integration — a studio
+        // that earned the perk sees better people on the sheet.
+        let perkBonus = state.progression.hasPerk(.talentMagnet)
+            ? balance.progression.talentMagnetSkillBonus
+            : 0
         let ceiling = min(100, max(5,
             balance.candidateSkillBase
                 + state.company.reputation * balance.candidateSkillPerReputation
                 + tierBonus
                 + districtBonus
+                + perkBonus
         ))
         let eligibleRoles = EmployeeRole.allCases.filter { role in
             role != .founder

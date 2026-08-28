@@ -316,9 +316,9 @@ extension GameState {
     }
 
     /// Products currently on the market that bill monthly — the third IPO
-    /// gate. Reads WS-A's `ReleaseInfo.isSubscription`, which is `false`
-    /// for every product until their live-ops work lands, so the gate is
-    /// simply unmet until then rather than wrong.
+    /// gate. Reads WS-A's `ReleaseInfo.isSubscription`, which is real now
+    /// that live ops has merged: a SaaS or enterprise product bills its
+    /// subscribers weekly, so `ipoRequiresSubscription` is on.
     public var hasSubscriptionProduct: Bool {
         products.contains { product in
             guard case .released(let info) = product.stage else { return false }

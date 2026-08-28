@@ -29,6 +29,32 @@ struct InvestorTests {
         return state
     }
 
+    /// A subscription product on the market. `ipoRequiresSubscription` is
+    /// on now that WS-A's live ops makes `ReleaseInfo.isSubscription` real,
+    /// so the bankers' third condition needs something that bills weekly.
+    private static func withSubscriptionProduct(
+        _ state: GameState,
+        balance: BalanceConfig
+    ) -> GameState {
+        var state = state
+        _ = balance
+        state.products.append(Product(
+            id: UUID(from: &state.rng),
+            name: "Ledger",
+            typeID: "saas",
+            topicID: "productivity",
+            stage: .released(ReleaseInfo(
+                launchDay: state.day,
+                quality: 80,
+                reviews: [Review(outlet: "Test", score: 80, blurb: "")],
+                weeklySales: [],
+                offMarket: false,
+                isSubscription: true
+            ))
+        ))
+        return state
+    }
+
     // MARK: - Content
 
     @Test func everyPersonaIsAuthoredAndItsExpectationResolves() throws {
@@ -234,6 +260,13 @@ struct InvestorTests {
         #expect(!state.canFileIPO(balance: balance), "profitable quarters still missing")
 
         state.investors.profitableQuarters = balance.investors.ipoProfitableQuarters
+        #expect(!state.canFileIPO(balance: balance), "recurring revenue still missing")
+        #expect(
+            state.ipoBlocker(balance: balance)
+                == "Nothing on the market bills monthly. They want recurring revenue."
+        )
+
+        state = Self.withSubscriptionProduct(state, balance: balance)
         #expect(state.canFileIPO(balance: balance))
         #expect(state.ipoBlocker(balance: balance) == nil)
 
@@ -252,6 +285,7 @@ struct InvestorTests {
         var state = Self.fundableState(balance: balance)
         state.company.cash = balance.investors.ipoValuationFloor * 2
         state.investors.profitableQuarters = balance.investors.ipoProfitableQuarters
+        state = Self.withSubscriptionProduct(state, balance: balance)
         Reducer.apply(.fileIPO, to: &state, balance: balance, content: Self.content)
         #expect(state.investors.ipoDay != nil)
         // The run is over, so the reducer ignores everything.

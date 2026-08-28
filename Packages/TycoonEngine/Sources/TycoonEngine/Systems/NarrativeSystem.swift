@@ -358,11 +358,29 @@ enum NarrativeSystem {
             text = text.replacingOccurrences(of: "{rival}", with: name)
         }
         if text.contains("{product}") {
+            // Prefer something a rival has actually shipped (WS-F's
+            // `Rival.products`, wired at integration) so the ticker names
+            // the app the player can see on the Rivals screen; fall back to
+            // two words from the pool when nobody has launched yet. Both
+            // paths draw the same two words, in the same order, so the
+            // sentence stays a pure function of the seed either way.
             let words = content.names.productWords
-            let product = words.count >= 2
-                ? "\(words[Int(state.worldRNG.next() % UInt64(words.count))]) "
-                    + "\(words[Int(state.worldRNG.next() % UInt64(words.count))])"
-                : "an unnamed app"
+            let shipped = state.rivals.rivals
+                .sorted { $0.id.uuidString < $1.id.uuidString }
+                .flatMap(\.products)
+            let product: String
+            if shipped.isEmpty, words.count < 2 {
+                product = "an unnamed app"
+            } else {
+                let first = state.worldRNG.next()
+                let second = state.worldRNG.next()
+                product = if shipped.isEmpty {
+                    "\(words[Int(first % UInt64(words.count))]) "
+                        + "\(words[Int(second % UInt64(words.count))])"
+                } else {
+                    shipped[Int(first % UInt64(shipped.count))].name
+                }
+            }
             text = text.replacingOccurrences(of: "{product}", with: product)
         }
         if text.contains("{topic}") {
