@@ -84,6 +84,9 @@ public enum TraitEffects {
             result.teamGrowthBonus += effects.teamGrowthBonus
             result.teamMoraleBonus += effects.teamMoraleBonus
             result.dailyReputationBonus += effects.dailyReputationBonus
+            result.hypeMult *= effects.hypeMult
+            result.bugMult *= effects.bugMult
+            result.crunchMoraleMult *= effects.crunchMoraleMult
         }
         return result
     }
@@ -103,6 +106,12 @@ public enum TraitEffects {
         static let quitStreakBonus = 12
         static let poachResistMin = 0.40
         static let poachResistMax = 3.00
+        static let hypeMultMin = 0.60
+        static let hypeMultMax = 1.80
+        static let bugMultMin = 0.50
+        static let bugMultMax = 2.00
+        static let crunchMoraleMultMin = 0.40
+        static let crunchMoraleMultMax = 2.00
     }
 
     // MARK: - Hooks
@@ -147,6 +156,76 @@ public enum TraitEffects {
             combined(employee, content: content).poachResist,
             min: Limits.poachResistMin, max: Limits.poachResistMax
         )
+    }
+
+    /// Multiplies the hype this person's marketing work generates: their
+    /// own `marketerDailyHype` on a product they are assigned to, and their
+    /// share of a campaign's push (see `campaignHypeFactor`).
+    public static func hypeFactor(_ employee: Employee, content: ContentCatalog) -> Double {
+        clamp(
+            combined(employee, content: content).hypeMult,
+            min: Limits.hypeMultMin, max: Limits.hypeMultMax
+        )
+    }
+
+    /// Multiplies the chance that a code point this person wrote today
+    /// carries a bug. Above 1 is fast and loose, below 1 is careful.
+    public static func bugFactor(_ employee: Employee, content: ContentCatalog) -> Double {
+        clamp(
+            combined(employee, content: content).bugMult,
+            min: Limits.bugMultMin, max: Limits.bugMultMax
+        )
+    }
+
+    /// Multiplies how hard a crunch week lands on this person's morale
+    /// target. Above 1 takes it badly, below 1 barely notices.
+    public static func crunchMoraleFactor(_ employee: Employee, content: ContentCatalog) -> Double {
+        clamp(
+            combined(employee, content: content).crunchMoraleMult,
+            min: Limits.crunchMoraleMultMin, max: Limits.crunchMoraleMultMax
+        )
+    }
+
+    // MARK: - Crew aggregates
+
+    /// The mean of a crew's factors, computed with `each`. The mean (rather
+    /// than a product) so that hiring more people does not multiply the
+    /// effect: a crew is as careful, or as loud, as its average member.
+    /// An empty crew is exactly 1, so a founder working alone in a bundle
+    /// without traits is untouched.
+    private static func crewMean(
+        _ employees: some Collection<Employee>,
+        content: ContentCatalog,
+        each factor: (Employee, ContentCatalog) -> Double
+    ) -> Double {
+        guard !employees.isEmpty else { return 1 }
+        let sum = employees.reduce(0.0) { $0 + factor($1, content) }
+        return sum / Double(employees.count)
+    }
+
+    /// How much louder (or quieter) a campaign lands because of who is
+    /// running marketing. Averaged over the marketers on payroll; exactly 1
+    /// when nobody holds the role, so a solo founder's press release is
+    /// unchanged.
+    public static func campaignHypeFactor(
+        _ employees: some Collection<Employee>,
+        content: ContentCatalog
+    ) -> Double {
+        // The founder carries the `.founder` role and no traits, so this
+        // is the hired marketing team and nobody else.
+        crewMean(
+            employees.filter { $0.role == .marketer }, content: content, each: hypeFactor
+        )
+    }
+
+    /// How buggy today's code is because of who wrote it. Averaged over the
+    /// crew that produced, mirroring the average coding skill the same call
+    /// site already computes; exactly 1 for an empty or trait-less crew.
+    public static func crewBugFactor(
+        _ employees: some Collection<Employee>,
+        content: ContentCatalog
+    ) -> Double {
+        crewMean(employees, content: content, each: bugFactor)
     }
 
     // MARK: - Roster-wide effects (read by `TraitSystem`)
@@ -207,6 +286,15 @@ public enum TraitEffects {
         }
         if effects.dailyReputationBonus != 0 {
             parts.append("gets you press")
+        }
+        if effects.hypeMult != 1 {
+            parts.append("campaign hype \(percent(effects.hypeMult))")
+        }
+        if effects.bugMult != 1 {
+            parts.append("bugs \(percent(effects.bugMult))")
+        }
+        if effects.crunchMoraleMult != 1 {
+            parts.append(effects.crunchMoraleMult > 1 ? "crunch hits hard" : "shrugs off crunch")
         }
         return parts.isEmpty ? "No measurable effect." : parts.joined(separator: " · ")
     }

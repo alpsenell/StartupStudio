@@ -23,7 +23,8 @@ enum ProductSystem {
     /// Bug rolls happen per completed code point (fractional progress
     /// accumulates), with the chance scaled by the producers' average coding
     /// skill and by `bugChanceMultiplier` (the founder's low-energy penalty
-    /// when the founder worked today, else 1); each completed polish point
+    /// when the founder worked today, the work pace, and the crew's `bugMult`
+    /// traits — each exactly 1 when it does not apply); each completed polish point
     /// fixes `bugFixMultiplier` open bugs (1 without QA on the crew; the
     /// day's total rounds to the nearest bug).
     static func applyDailyProgress(

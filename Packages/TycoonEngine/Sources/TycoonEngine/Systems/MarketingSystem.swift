@@ -6,6 +6,10 @@ import TycoonContent
 /// their daily hype. Expired or orphaned social pushes are removed; one-shot
 /// campaign records stay in `campaigns` as history. Also hosts the
 /// startCampaign action handler used by `Reducer.apply`.
+///
+/// Every hype figure a campaign adds is multiplied by the marketing team's
+/// `hypeMult` traits — a showman's press release lands harder than a
+/// loner's. With no marketers on payroll the factor is exactly 1.
 enum MarketingSystem {
     @Sendable
     static func run(
@@ -14,7 +18,7 @@ enum MarketingSystem {
         _ content: ContentCatalog
     ) -> [GameEvent] {
         decayHype(&state, balance)
-        runSocialPushes(&state, balance)
+        runSocialPushes(&state, balance, content)
         return []
     }
 
@@ -29,11 +33,19 @@ enum MarketingSystem {
     }
 
     /// Bills each social push still attached to an in-development product
-    /// and adds its daily hype. A push past its `endDay`, or orphaned by its
-    /// product shipping, is removed without billing. One-shot records pass
-    /// through untouched.
-    private static func runSocialPushes(_ state: inout GameState, _ balance: BalanceConfig) {
+    /// and adds its daily hype, scaled by the marketing team's personalities
+    /// (`TraitEffects.campaignHypeFactor`, exactly 1 with no marketers on
+    /// payroll). A push past its `endDay`, or orphaned by its product
+    /// shipping, is removed without billing. One-shot records pass through
+    /// untouched.
+    private static func runSocialPushes(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) {
         guard !state.campaigns.isEmpty else { return }
+
+        let hypeFactor = TraitEffects.campaignHypeFactor(state.employees, content: content)
 
         var kept: [MarketingCampaign] = []
         kept.reserveCapacity(state.campaigns.count)
@@ -54,7 +66,7 @@ enum MarketingSystem {
                 category: .marketing,
                 label: CampaignKind.socialPush.ledgerLabel
             ))
-            dev.hype += balance.socialPushDailyHype
+            dev.hype += balance.socialPushDailyHype * hypeFactor
             state.products[index].stage = .development(dev)
             kept.append(campaign)
         }
@@ -115,13 +127,15 @@ enum MarketingSystem {
             ))
         }
 
+        // Who is running marketing decides how far a one-shot carries.
+        let hypeFactor = TraitEffects.campaignHypeFactor(state.employees, content: content)
         switch kind {
         case .socialPush:
             break // Hype accrues daily while the push runs.
         case .pressRelease:
-            dev.hype += balance.pressReleaseHype
+            dev.hype += balance.pressReleaseHype * hypeFactor
         case .launchEvent:
-            dev.hype += balance.launchEventHype
+            dev.hype += balance.launchEventHype * hypeFactor
         }
         state.products[productIndex].stage = .development(dev)
 
