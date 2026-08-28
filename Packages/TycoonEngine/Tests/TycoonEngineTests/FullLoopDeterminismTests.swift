@@ -71,6 +71,24 @@ struct FullLoopDeterminismTests {
                 Reducer.apply(.planWeekend(plan), to: &state, balance: balance, content: content)
             }
 
+            // A founder who answers a resignation notice. WS-A's notice
+            // gives seven days and takes a raise clearing
+            // `counterOfferRaiseFactor`; without this the script loses two
+            // of its four hires by day 400 and everything below about the
+            // Legal department and the QA engineer stops being testable.
+            // Deterministic: the branch is a pure function of state, and
+            // `adjustSalary` draws nothing.
+            if let pending = state.economy.pendingResignation {
+                let raised = Int(
+                    (Double(pending.salaryAtNotice)
+                        * balance.economy.counterOfferRaiseFactor).rounded(.up)
+                )
+                Reducer.apply(
+                    .adjustSalary(employeeID: pending.employeeID, weeklySalary: raised),
+                    to: &state, balance: balance, content: content
+                )
+            }
+
             // Scripted candidate picks once the loft is in: the first
             // lawyer and the first QA engineer on any sheet.
             if state.day >= 131 {
@@ -212,13 +230,13 @@ struct FullLoopDeterminismTests {
         #expect(info.launchDay == 60)
         #expect(!info.weeklySales.isEmpty)
         #expect(state.eventLog.contains(.shipped(productID: try #require(productID), day: 60)))
-        // Four hires land, and one of them leaves: with WS-A's morale rules
-        // and WS-F's traits both live, Ingrid serves notice on day 136 and
-        // walks on 143 because the script never answers it. That is the
-        // game working, so the sanity check is "four arrived, three stayed".
-        #expect(state.employees.count == 3)
+        // The founder plus three hires, all still on the payroll: with
+        // WS-A's morale rules and WS-F's traits live, three notices are
+        // served over the 400 days and the script answers every one of
+        // them with a raise, so nobody actually walks.
+        #expect(state.employees.count == 4)
         #expect(state.eventLog.contains { if case .resignationNotice = $0 { true } else { false } })
-        #expect(state.eventLog.contains { if case .employeeQuit = $0 { true } else { false } })
+        #expect(!state.eventLog.contains { if case .employeeQuit = $0 { true } else { false } })
         #expect(state.eventLog.contains(.hired(employeeID: try #require(hiredID), day: 15)))
         #expect(state.eventLog.contains(.candidatesRefreshed(day: 14)))
 

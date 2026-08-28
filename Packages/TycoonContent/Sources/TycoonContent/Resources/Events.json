@@ -1,62 +1,3063 @@
 [
   {
     "id": "blog_feature",
-    "headline": "A tech blog features your studio!",
-    "impact": { "type": "hypeDeltaOnActiveProduct", "amount": 10 },
-    "weight": 4
+    "headline": "A tech blog puts your build in its Friday roundup.",
+    "impact": {
+      "type": "hypeDeltaOnActiveProduct",
+      "amount": 10
+    },
+    "weight": 4,
+    "category": "press",
+    "cooldownDays": 90,
+    "requires": {
+      "hasProductInDev": true
+    }
   },
   {
     "id": "influencer_shoutout",
-    "headline": "A famous streamer can't stop talking about your latest build.",
-    "impact": { "type": "hypeDeltaOnActiveProduct", "amount": 15 },
-    "weight": 2
+    "headline": "A streamer with too much time uses your build on camera for an hour.",
+    "impact": {
+      "type": "hypeDeltaOnActiveProduct",
+      "amount": 15
+    },
+    "weight": 2,
+    "category": "press",
+    "cooldownDays": 150,
+    "requires": {
+      "hasProductInDev": true
+    }
   },
   {
     "id": "viral_thread",
-    "headline": "Your founder's late-night debugging story goes viral.",
-    "impact": { "type": "reputationDelta", "amount": 3 },
-    "weight": 3
+    "headline": "Your 2am debugging thread does numbers overnight.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 3
+    },
+    "weight": 3,
+    "category": "press",
+    "cooldownDays": 120
   },
   {
     "id": "conference_invite",
-    "headline": "Your team is invited to speak at DevWorld Conf.",
-    "impact": { "type": "reputationDelta", "amount": 2 },
-    "weight": 3
+    "headline": "DevWorld wants someone from your studio on a panel.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 2
+    },
+    "weight": 3,
+    "category": "press",
+    "cooldownDays": 120
   },
   {
     "id": "negative_review",
-    "headline": "A grumpy reviewer pans your studio in a weekend roundup.",
-    "impact": { "type": "reputationDelta", "amount": -3 },
-    "weight": 3
+    "headline": "A reviewer spends four paragraphs on your onboarding, none of them kind.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": -3
+    },
+    "weight": 3,
+    "category": "press",
+    "cooldownDays": 120,
+    "requires": {
+      "minReputation": 18
+    }
   },
   {
     "id": "data_scare",
-    "headline": "A minor data hiccup makes the local news.",
-    "impact": { "type": "reputationDelta", "amount": -4 },
-    "weight": 2
+    "headline": "A logging misconfiguration makes the local tech press.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": -4
+    },
+    "weight": 2,
+    "category": "tech",
+    "cooldownDays": 150,
+    "requires": {
+      "minReputation": 18
+    }
   },
   {
     "id": "angel_gift",
-    "headline": "A retired angel investor wires you a thank-you gift.",
-    "impact": { "type": "cashDelta", "amount": 2000 },
-    "weight": 1
+    "headline": "A retired angel wires you money for no reason he'll explain.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": 2000
+    },
+    "weight": 1,
+    "category": "money",
+    "cooldownDays": 240
   },
   {
     "id": "server_outage",
     "headline": "Your hosting provider has a very bad Tuesday.",
-    "impact": { "type": "cashDelta", "amount": -800 },
-    "weight": 3
+    "impact": {
+      "type": "cashDelta",
+      "amount": -800
+    },
+    "weight": 3,
+    "category": "tech",
+    "cooldownDays": 100,
+    "requires": {
+      "minCash": 4000
+    }
   },
   {
     "id": "office_flu",
-    "headline": "Half the office catches the flu; contractors fill in.",
-    "impact": { "type": "cashDelta", "amount": -400 },
-    "weight": 5
+    "headline": "Half the room is coughing. You pay contractors to cover the week.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": -400
+    },
+    "weight": 5,
+    "category": "team",
+    "cooldownDays": 90,
+    "requires": {
+      "minHeadcount": 3,
+      "minCash": 3000
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -3
+      }
+    ]
   },
   {
     "id": "patent_troll",
-    "headline": "A patent troll sends a scary letter. Legal shrugs it off — for a fee.",
-    "impact": { "type": "cashDelta", "amount": -1200 },
-    "weight": 2
+    "headline": "A letter arrives about a patent on \"transmitting data over a network\".",
+    "body": "It is eleven pages of nothing. It is also from real lawyers with real letterhead, and ignoring it has a price.",
+    "weight": 2,
+    "category": "legal",
+    "cooldownDays": 200,
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay them to go away",
+        "detail": "−$1,200 · it ends today",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1200
+          }
+        ]
+      },
+      {
+        "id": "fight",
+        "label": "Forward it to a lawyer and forget it",
+        "detail": "Free if you have Legal · otherwise it drags on",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -300
+          }
+        ],
+        "requires": {
+          "requiresDepartment": "legal"
+        }
+      },
+      {
+        "id": "ignore",
+        "label": "File it under \"later\"",
+        "detail": "Free now · reputation −2 when it resurfaces",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          },
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "laptop_dies",
+    "headline": "Your laptop makes a noise laptops should not make.",
+    "body": "The fan gave up somewhere around the third all-nighter. You can replace it today, or you can nurse it and lose hours to crashes.",
+    "weight": 5,
+    "category": "money",
+    "cooldownDays": 180,
+    "requires": {
+      "maxTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "replace",
+        "label": "Buy a new one",
+        "detail": "−$1,400 · back to full speed",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1400
+          }
+        ]
+      },
+      {
+        "id": "nurse",
+        "label": "Nurse it along",
+        "detail": "Free · slower week, worse mood",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "energy": -6
+          },
+          {
+            "type": "hype",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "garage_landlord",
+    "headline": "Your landlord wants the garage back for his cousin's boat.",
+    "body": "He is apologetic about it in the way people are when they have already decided. The lease is on your side. His cousin is not.",
+    "weight": 4,
+    "category": "office",
+    "cooldownDays": 200,
+    "requires": {
+      "maxTier": "garage"
+    },
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Offer him three months up front",
+        "detail": "−$900 · the boat finds another home",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -900
+          }
+        ],
+        "setFlags": [
+          "landlord_paid"
+        ]
+      },
+      {
+        "id": "lease",
+        "label": "Read the lease back to him",
+        "detail": "Free · he remembers this",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ],
+        "setFlags": [
+          "landlord_annoyed"
+        ],
+        "followUpEventID": "garage_landlord_returns",
+        "followUpDelayDays": 45
+      }
+    ]
+  },
+  {
+    "id": "garage_landlord_returns",
+    "headline": "The landlord is back, and this time he brought a rent schedule.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": -600
+    },
+    "weight": 1,
+    "category": "office",
+    "followUpOnly": true
+  },
+  {
+    "id": "first_customer_email",
+    "headline": "Someone you have never met emails to say your thing helped them.",
+    "body": "No feature request, no bug report. They just wanted you to know. You read it four times.",
+    "weight": 4,
+    "category": "press",
+    "once": true,
+    "requires": {
+      "hasLiveProduct": true,
+      "maxTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "reply",
+        "label": "Write back properly",
+        "detail": "An hour gone · reputation +2 · mood +8",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 2
+          },
+          {
+            "type": "founderMeters",
+            "mood": 8
+          }
+        ]
+      },
+      {
+        "id": "pin",
+        "label": "Print it and pin it over your desk",
+        "detail": "Team morale +6 · mood +5",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 6
+          },
+          {
+            "type": "founderMeters",
+            "mood": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "angel_offer",
+    "headline": "A friend offers you $5,000 for ten percent, over coffee.",
+    "body": "He sold a logistics company in 2019 and has been bored since. He means it kindly. He will also want to know how it's going, forever.",
+    "weight": 3,
+    "category": "investor",
+    "once": true,
+    "requires": {
+      "maxTier": "loft",
+      "maxCash": 20000
+    },
+    "choices": [
+      {
+        "id": "take",
+        "label": "Take the money",
+        "detail": "+$5,000 · he calls every month",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": 5000
+          }
+        ],
+        "setFlags": [
+          "angel_invested"
+        ],
+        "followUpEventID": "angel_checks_in",
+        "followUpDelayDays": 60
+      },
+      {
+        "id": "decline",
+        "label": "Keep it a friendship",
+        "detail": "Nothing changes · mood +4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4
+          }
+        ],
+        "setFlags": [
+          "angel_declined"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "angel_checks_in",
+    "headline": "Your angel wants a call about \"the plan\".",
+    "body": "He has read one blog post about your market and has thoughts. Some of them are good. All of them will take an afternoon.",
+    "weight": 1,
+    "category": "investor",
+    "followUpOnly": true,
+    "choices": [
+      {
+        "id": "humor",
+        "label": "Give him the afternoon",
+        "detail": "Mood −4 · he opens his contacts",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4,
+            "energy": -5
+          },
+          {
+            "type": "reputation",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "brush",
+        "label": "Send a two-line update instead",
+        "detail": "Free · he stops offering to help",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ],
+        "setFlags": [
+          "angel_cooled"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "coworking_desk",
+    "headline": "A coworking space offers you a free month to leave the garage.",
+    "body": "Free coffee, a printer, and thirty people who will ask what you're building. After the month it's real money.",
+    "weight": 3,
+    "category": "office",
+    "cooldownDays": 200,
+    "requires": {
+      "maxTier": "garage"
+    },
+    "choices": [
+      {
+        "id": "take",
+        "label": "Take the desk",
+        "detail": "Mood +6 · reputation +2 · −$200 in coffee",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 6
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          },
+          {
+            "type": "cash",
+            "amount": -200
+          }
+        ]
+      },
+      {
+        "id": "stay",
+        "label": "Stay where the rent is zero",
+        "detail": "Free · you keep the quiet",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "power_cut",
+    "headline": "The street loses power for six hours. Nothing was committed.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": -150
+    },
+    "effects": [
+      {
+        "type": "founderMeters",
+        "mood": -5
+      }
+    ],
+    "weight": 3,
+    "category": "tech",
+    "cooldownDays": 120,
+    "requires": {
+      "maxTier": "loft",
+      "minCash": 1500
+    }
+  },
+  {
+    "id": "cheap_domain",
+    "headline": "The domain you actually wanted is for sale.",
+    "body": "The squatter who has been sitting on it since 2011 has decided this is the year. He is asking $2,300 and will not be negotiating.",
+    "weight": 3,
+    "category": "money",
+    "cooldownDays": 240,
+    "requires": {
+      "maxTier": "studio"
+    },
+    "choices": [
+      {
+        "id": "buy",
+        "label": "Pay the squatter",
+        "detail": "−$2,300 · reputation +5",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2300
+          },
+          {
+            "type": "reputation",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "skip",
+        "label": "Add another hyphen",
+        "detail": "Free · reputation −1",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hackathon_invite",
+    "headline": "A student hackathon wants a judge and offers nothing but pizza.",
+    "body": "Forty hours of other people's demos. Some of them will be looking for a job in eighteen months.",
+    "weight": 3,
+    "category": "press",
+    "cooldownDays": 150,
+    "requires": {
+      "maxTier": "studio"
+    },
+    "choices": [
+      {
+        "id": "judge",
+        "label": "Spend the weekend judging",
+        "detail": "Energy −8 · reputation +4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -8
+          },
+          {
+            "type": "reputation",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "Send a polite no",
+        "detail": "Free · you sleep",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "accelerator_invite",
+    "headline": "An accelerator emails a form letter with your company name pasted in.",
+    "body": "Three months, a demo day, and seven percent. Every founder you know has an opinion about this and none of them agree.",
+    "weight": 2,
+    "category": "investor",
+    "cooldownDays": 300,
+    "requires": {
+      "maxTier": "loft",
+      "minYear": 1
+    },
+    "choices": [
+      {
+        "id": "apply",
+        "label": "Fill in the application",
+        "detail": "Two evenings gone · reputation +3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -6,
+            "mood": -2
+          },
+          {
+            "type": "reputation",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "ignore",
+        "label": "Archive it",
+        "detail": "Free · you keep the evenings",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "server_wobble",
+    "headline": "Latency has been creeping up for a week and nobody has said it out loud.",
+    "body": "The graphs are still green. They are green the way a bridge is standing.",
+    "weight": 4,
+    "category": "tech",
+    "cooldownDays": 200,
+    "requires": {
+      "hasLiveProduct": true,
+      "flagsNone": [
+        "infra_hardened"
+      ]
+    },
+    "choices": [
+      {
+        "id": "invest",
+        "label": "Stop the week and fix the infrastructure",
+        "detail": "−$2,500 · nothing ships this week",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2500
+          },
+          {
+            "type": "hype",
+            "amount": -8
+          }
+        ],
+        "setFlags": [
+          "infra_hardened"
+        ]
+      },
+      {
+        "id": "patch",
+        "label": "Restart it nightly and move on",
+        "detail": "Free · this gets worse",
+        "effects": [],
+        "setFlags": [
+          "infra_neglected"
+        ],
+        "followUpEventID": "server_meltdown",
+        "followUpDelayDays": 35
+      }
+    ]
+  },
+  {
+    "id": "server_meltdown",
+    "headline": "Everything is down, and it has been down for two hours.",
+    "body": "Support is a wall of the same screenshot. Somebody on social media is timing you.",
+    "weight": 1,
+    "category": "tech",
+    "followUpOnly": true,
+    "choices": [
+      {
+        "id": "allhands",
+        "label": "Pull everyone onto it",
+        "detail": "−$1,800 · team morale −8 · back up tonight",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1800
+          },
+          {
+            "type": "moraleAll",
+            "amount": -8
+          },
+          {
+            "type": "reputation",
+            "amount": -3
+          }
+        ],
+        "setFlags": [
+          "infra_hardened"
+        ],
+        "clearFlags": [
+          "infra_neglected"
+        ],
+        "followUpEventID": "server_postmortem",
+        "followUpDelayDays": 7
+      },
+      {
+        "id": "wait",
+        "label": "Wait for the provider",
+        "detail": "Free · reputation −9 · customers leave",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -9
+          },
+          {
+            "type": "founderMeters",
+            "mood": -10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "server_postmortem",
+    "headline": "You publish the postmortem. It is unflattering and people respect it.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 5
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 4
+      }
+    ],
+    "weight": 1,
+    "category": "tech",
+    "followUpOnly": true
+  },
+  {
+    "id": "free_tier_abuse",
+    "headline": "One customer is using ninety percent of your free tier.",
+    "body": "They are a fourteen-year-old running something ambitious in a country where your prices are absurd. They are also expensive.",
+    "weight": 3,
+    "category": "tech",
+    "cooldownDays": 200,
+    "requires": {
+      "hasLiveProduct": true
+    },
+    "choices": [
+      {
+        "id": "sponsor",
+        "label": "Comp the account and say so publicly",
+        "detail": "−$600 · reputation +6",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -600
+          },
+          {
+            "type": "reputation",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "cap",
+        "label": "Ship a hard cap tonight",
+        "detail": "+$400 saved · reputation −2",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": 400
+          },
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "security_researcher",
+    "headline": "A stranger emails you a working exploit and a 90-day clock.",
+    "body": "The email is polite, precise, and correct. There is no bounty programme to pay them from.",
+    "weight": 3,
+    "category": "tech",
+    "cooldownDays": 240,
+    "requires": {
+      "hasLiveProduct": true
+    },
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay a bounty and fix it this week",
+        "detail": "−$1,500 · reputation +5",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1500
+          },
+          {
+            "type": "reputation",
+            "amount": 5
+          },
+          {
+            "type": "hype",
+            "amount": -3
+          }
+        ],
+        "setFlags": [
+          "security_serious"
+        ]
+      },
+      {
+        "id": "quiet",
+        "label": "Fix it quietly, thank them by email",
+        "detail": "Free · they post about it anyway",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "app_store_rejection",
+    "headline": "The store rejects your update over a guideline written in 2016.",
+    "body": "The reviewer's note is three sentences and contradicts itself once. There is an appeal form.",
+    "weight": 3,
+    "category": "tech",
+    "cooldownDays": 150,
+    "requires": {
+      "hasLiveProduct": true
+    },
+    "choices": [
+      {
+        "id": "appeal",
+        "label": "Appeal it",
+        "detail": "Ten days of waiting · hype −10",
+        "effects": [
+          {
+            "type": "hype",
+            "amount": -10
+          }
+        ]
+      },
+      {
+        "id": "comply",
+        "label": "Rip the feature out",
+        "detail": "Team morale −5 · ships tomorrow",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "app_store_feature",
+    "headline": "The store puts you on a shelf called \"Quietly Excellent\".",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 6
+    },
+    "effects": [
+      {
+        "type": "hype",
+        "amount": 10
+      }
+    ],
+    "weight": 2,
+    "category": "press",
+    "cooldownDays": 200,
+    "requires": {
+      "hasLiveProduct": true,
+      "minReputation": 30
+    }
+  },
+  {
+    "id": "open_source_ask",
+    "headline": "Two of your engineers want to open-source an internal tool.",
+    "body": "It is the scheduler they built in a weekend. It is genuinely good. It is also the only thing you do faster than anyone else.",
+    "weight": 3,
+    "category": "team",
+    "cooldownDays": 240,
+    "requires": {
+      "minHeadcount": 4
+    },
+    "choices": [
+      {
+        "id": "release",
+        "label": "Ship it under your name",
+        "detail": "Reputation +7 · team morale +8 · rivals get it too",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 7
+          },
+          {
+            "type": "moraleAll",
+            "amount": 8
+          }
+        ],
+        "setFlags": [
+          "open_source_friendly"
+        ]
+      },
+      {
+        "id": "keep",
+        "label": "Keep it internal",
+        "detail": "Team morale −7",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -7
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wifi_saga",
+    "headline": "The office wifi drops every time the microwave runs.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": -350
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ],
+    "weight": 4,
+    "category": "office",
+    "cooldownDays": 120,
+    "requires": {
+      "minTier": "loft",
+      "minCash": 4000
+    }
+  },
+  {
+    "id": "journalist_call",
+    "headline": "A reporter who actually covers this beat wants twenty minutes.",
+    "body": "She has read your changelog, which nobody does. She wants to know why you started, and she will print whatever you say.",
+    "weight": 4,
+    "category": "press",
+    "once": true,
+    "requires": {
+      "minHeadcount": 2,
+      "flagsNone": [
+        "journalist_burned"
+      ]
+    },
+    "respondByDays": 4,
+    "choices": [
+      {
+        "id": "candid",
+        "label": "Tell her the truth, including the bad parts",
+        "detail": "Reputation +3 now · the profile lands in three weeks",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 3
+          }
+        ],
+        "setFlags": [
+          "journalist_candid"
+        ],
+        "followUpEventID": "journalist_profile",
+        "followUpDelayDays": 21
+      },
+      {
+        "id": "polished",
+        "label": "Give her the polished version",
+        "detail": "Safe · she notices",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ],
+        "setFlags": [
+          "journalist_polished"
+        ],
+        "followUpEventID": "journalist_thin_piece",
+        "followUpDelayDays": 21
+      },
+      {
+        "id": "decline",
+        "label": "Say you're heads-down",
+        "detail": "Free · she writes about someone else",
+        "effects": [],
+        "setFlags": [
+          "journalist_burned"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "journalist_profile",
+    "headline": "The profile runs. It quotes the part where you said you almost quit.",
+    "body": "Three people email to say they needed to read that today. Two investors email to ask if it's still true.",
+    "weight": 1,
+    "category": "press",
+    "followUpOnly": true,
+    "choices": [
+      {
+        "id": "lean",
+        "label": "Lean into it — write your own follow-up",
+        "detail": "Reputation +8 · hype +12",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 8
+          },
+          {
+            "type": "hype",
+            "amount": 12
+          }
+        ],
+        "setFlags": [
+          "public_founder"
+        ],
+        "followUpEventID": "journalist_followup",
+        "followUpDelayDays": 60
+      },
+      {
+        "id": "quiet",
+        "label": "Let it stand on its own",
+        "detail": "Reputation +5",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "journalist_thin_piece",
+    "headline": "The piece runs. It is four paragraphs and one of them is your boilerplate.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 1
+    },
+    "weight": 1,
+    "category": "press",
+    "followUpOnly": true
+  },
+  {
+    "id": "journalist_followup",
+    "headline": "The same reporter is writing about founders who overshare.",
+    "body": "You are the friendly example. She wants to know whether it worked out. She will run the piece either way.",
+    "weight": 1,
+    "category": "press",
+    "followUpOnly": true,
+    "choices": [
+      {
+        "id": "again",
+        "label": "Go on the record again",
+        "detail": "Reputation +6 · team morale −3",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 6
+          },
+          {
+            "type": "moraleAll",
+            "amount": -3
+          }
+        ]
+      },
+      {
+        "id": "stop",
+        "label": "Point her at the product instead",
+        "detail": "Reputation +2 · hype +8",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 2
+          },
+          {
+            "type": "hype",
+            "amount": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "activist_journalist",
+    "headline": "A reporter is asking your ex-employees what it was like to work here.",
+    "body": "She has three on the record and one who will not go on it. You have a week before it runs.",
+    "weight": 3,
+    "category": "press",
+    "cooldownDays": 300,
+    "requires": {
+      "minTier": "studio",
+      "minHeadcount": 10
+    },
+    "respondByDays": 6,
+    "choices": [
+      {
+        "id": "engage",
+        "label": "Sit down with her",
+        "detail": "Reputation −2 · morale +5 · it could be worse",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          },
+          {
+            "type": "moraleAll",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "pr",
+        "label": "Send a statement through a PR firm",
+        "detail": "−$3,000 · reputation −6 · nobody believes it",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -3000
+          },
+          {
+            "type": "reputation",
+            "amount": -6
+          },
+          {
+            "type": "moraleAll",
+            "amount": -4
+          }
+        ]
+      },
+      {
+        "id": "silence",
+        "label": "No comment",
+        "detail": "Free · reputation −9",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -9
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "keynote_invite",
+    "headline": "A conference offers you a keynote slot and no fee.",
+    "body": "Eight hundred people, forty minutes, and three weeks of writing it in the evenings.",
+    "weight": 3,
+    "category": "press",
+    "cooldownDays": 200,
+    "requires": {
+      "minReputation": 40
+    },
+    "choices": [
+      {
+        "id": "take",
+        "label": "Write the talk",
+        "detail": "Energy −12 · reputation +9",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -12,
+            "mood": -3
+          },
+          {
+            "type": "reputation",
+            "amount": 9
+          }
+        ]
+      },
+      {
+        "id": "send",
+        "label": "Send your best engineer instead",
+        "detail": "Reputation +4 · their morale +12",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 4
+          },
+          {
+            "type": "morale",
+            "amount": 12,
+            "pick": "highestSkill"
+          },
+          {
+            "type": "loyalty",
+            "amount": 8,
+            "pick": "highestSkill"
+          }
+        ],
+        "requires": {
+          "minHeadcount": 3
+        }
+      },
+      {
+        "id": "decline",
+        "label": "Decline",
+        "detail": "Free · reputation −1, they ask someone else",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "award_shortlist",
+    "headline": "You are shortlisted for an award nobody in the office has heard of.",
+    "body": "The ceremony is black tie and the table costs money. The trophy is, apparently, quite heavy.",
+    "weight": 2,
+    "category": "press",
+    "cooldownDays": 300,
+    "requires": {
+      "minReputation": 35,
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "go",
+        "label": "Buy a table and take the team",
+        "detail": "−$2,400 · morale +10 · reputation +5",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2400
+          },
+          {
+            "type": "moraleAll",
+            "amount": 10
+          },
+          {
+            "type": "reputation",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "skip",
+        "label": "Skip it",
+        "detail": "Free · morale −3",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cofounder_letter",
+    "headline": "Someone who left before the company had a name is claiming equity.",
+    "body": "You remember the whiteboard session. You do not remember promising twenty percent. Neither of you wrote anything down.",
+    "weight": 3,
+    "category": "legal",
+    "once": true,
+    "requires": {
+      "minTier": "loft",
+      "minYear": 2
+    },
+    "respondByDays": 7,
+    "choices": [
+      {
+        "id": "lawyer",
+        "label": "Hire a lawyer and fight it",
+        "detail": "−$6,000 · months of it · you probably win",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -6000
+          },
+          {
+            "type": "founderMeters",
+            "mood": -10,
+            "energy": -6
+          }
+        ],
+        "setFlags": [
+          "cofounder_fighting"
+        ],
+        "followUpEventID": "cofounder_verdict",
+        "followUpDelayDays": 60
+      },
+      {
+        "id": "settle",
+        "label": "Settle quietly",
+        "detail": "−$14,000 · it ends this week",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -14000
+          }
+        ],
+        "setFlags": [
+          "cofounder_settled"
+        ],
+        "followUpEventID": "cofounder_settled_after",
+        "followUpDelayDays": 30
+      },
+      {
+        "id": "ignore",
+        "label": "Ignore the letter",
+        "detail": "Free · this gets louder",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5
+          }
+        ],
+        "setFlags": [
+          "cofounder_ignored"
+        ],
+        "followUpEventID": "cofounder_public",
+        "followUpDelayDays": 40
+      }
+    ]
+  },
+  {
+    "id": "cofounder_verdict",
+    "headline": "The claim is dismissed. Your lawyer sends a final invoice and a smiley face.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": -2200
+    },
+    "effects": [
+      {
+        "type": "founderMeters",
+        "mood": 12
+      },
+      {
+        "type": "clearFlag",
+        "flag": "cofounder_fighting"
+      }
+    ],
+    "weight": 1,
+    "category": "legal",
+    "followUpOnly": true
+  },
+  {
+    "id": "cofounder_settled_after",
+    "headline": "Your ex-cofounder posts a gracious thread about the early days.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 4
+    },
+    "weight": 1,
+    "category": "legal",
+    "followUpOnly": true
+  },
+  {
+    "id": "cofounder_public",
+    "headline": "Your ex-cofounder writes it all up publicly, with screenshots.",
+    "body": "The screenshots are real. The framing is not. It is the third-most-read thing on the internet this morning.",
+    "weight": 1,
+    "category": "legal",
+    "followUpOnly": true,
+    "choices": [
+      {
+        "id": "respond",
+        "label": "Respond in public, calmly",
+        "detail": "Reputation −4 · morale −4",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -4
+          },
+          {
+            "type": "moraleAll",
+            "amount": -4
+          }
+        ]
+      },
+      {
+        "id": "settle_now",
+        "label": "Settle now, at the worse price",
+        "detail": "−$20,000 · it stops today",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -20000
+          },
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ],
+        "setFlags": [
+          "cofounder_settled"
+        ]
+      }
+    ],
+    "autoChoiceIndex": 0
+  },
+  {
+    "id": "tax_letter",
+    "headline": "The tax office has questions about your second year.",
+    "body": "Nothing is alleged. Everything is requested, in triplicate, by the fifteenth.",
+    "weight": 3,
+    "category": "legal",
+    "cooldownDays": 300,
+    "requires": {
+      "minYear": 2
+    },
+    "choices": [
+      {
+        "id": "accountant",
+        "label": "Pay an accountant to handle it",
+        "detail": "−$2,800 · it goes away",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2800
+          }
+        ]
+      },
+      {
+        "id": "diy",
+        "label": "Do it yourself over two weekends",
+        "detail": "Energy −14 · mood −8 · free",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -14,
+            "mood": -8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "data_breach",
+    "headline": "A vendor you use had a breach, and your customer emails were in it.",
+    "body": "Not your bug. Entirely your problem. Disclosure law starts a clock the moment you know.",
+    "weight": 3,
+    "category": "legal",
+    "cooldownDays": 300,
+    "requires": {
+      "minTier": "studio",
+      "hasLiveProduct": true
+    },
+    "respondByDays": 3,
+    "choices": [
+      {
+        "id": "disclose",
+        "label": "Tell everyone today",
+        "detail": "Reputation −5 now · trust holds",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -5
+          },
+          {
+            "type": "cash",
+            "amount": -2000
+          }
+        ],
+        "setFlags": [
+          "breach_disclosed"
+        ]
+      },
+      {
+        "id": "wait",
+        "label": "Wait for the vendor's statement",
+        "detail": "Free · this comes back",
+        "effects": [],
+        "setFlags": [
+          "breach_hidden"
+        ],
+        "followUpEventID": "breach_fallout",
+        "followUpDelayDays": 28
+      }
+    ]
+  },
+  {
+    "id": "breach_fallout",
+    "headline": "The breach makes the trade press, and so does your silence.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": -14
+    },
+    "effects": [
+      {
+        "type": "cash",
+        "amount": -6000
+      },
+      {
+        "type": "moraleAll",
+        "amount": -6
+      }
+    ],
+    "weight": 1,
+    "category": "legal",
+    "followUpOnly": true
+  },
+  {
+    "id": "trademark_letter",
+    "headline": "A company in another country has your name and got there first.",
+    "body": "Their product is a brand of shelving. Their lawyers are thorough.",
+    "weight": 2,
+    "category": "legal",
+    "cooldownDays": 300,
+    "requires": {
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "rebrand",
+        "label": "Rebrand in that market",
+        "detail": "−$4,500 · reputation −2",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -4500
+          },
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      },
+      {
+        "id": "license",
+        "label": "License the name from them",
+        "detail": "−$7,000 · nothing changes",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -7000
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 0
+  },
+  {
+    "id": "contract_clause",
+    "headline": "A client's standard contract quietly assigns them your source code.",
+    "body": "It is on page eleven, in the same font as everything else. Their procurement team says it is non-negotiable, which is what procurement teams say.",
+    "weight": 3,
+    "category": "legal",
+    "cooldownDays": 200,
+    "requires": {
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "push",
+        "label": "Push back on the clause",
+        "detail": "Reputation +2 · they might walk",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 2
+          },
+          {
+            "type": "cash",
+            "amount": -500
+          }
+        ],
+        "requires": {
+          "requiresDepartment": "legal"
+        }
+      },
+      {
+        "id": "sign",
+        "label": "Sign it and hope",
+        "detail": "+$3,500 now · reputation −3",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": 3500
+          },
+          {
+            "type": "reputation",
+            "amount": -3
+          }
+        ]
+      },
+      {
+        "id": "walk",
+        "label": "Walk away from the deal",
+        "detail": "Free · morale +3",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "recruiter_calls",
+    "headline": "A recruiter has been messaging your whole team on the same day.",
+    "body": "Two of them mentioned it. The rest did not, which is the part worth thinking about.",
+    "weight": 4,
+    "category": "team",
+    "cooldownDays": 150,
+    "requires": {
+      "minHeadcount": 4
+    },
+    "choices": [
+      {
+        "id": "raise",
+        "label": "Do a pay review this week",
+        "detail": "−$3,000 · morale +10 · loyalty holds",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -3000
+          },
+          {
+            "type": "moraleAll",
+            "amount": 10
+          },
+          {
+            "type": "loyalty",
+            "amount": 8,
+            "pick": "everyone"
+          }
+        ]
+      },
+      {
+        "id": "talk",
+        "label": "Talk to everyone individually instead",
+        "detail": "Free · morale +4 · energy −8",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 4
+          },
+          {
+            "type": "founderMeters",
+            "energy": -8
+          }
+        ]
+      },
+      {
+        "id": "nothing",
+        "label": "Trust them",
+        "detail": "Free · loyalty −6",
+        "effects": [
+          {
+            "type": "loyalty",
+            "amount": -6,
+            "pick": "everyone"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "intern_ask",
+    "headline": "A student asks to intern for free.",
+    "body": "She is better than her CV. Free is not actually free, and it is also not actually fair.",
+    "weight": 3,
+    "category": "team",
+    "cooldownDays": 200,
+    "requires": {
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay her properly",
+        "detail": "−$1,800 · team morale +6 · reputation +3",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1800
+          },
+          {
+            "type": "moraleAll",
+            "amount": 6
+          },
+          {
+            "type": "reputation",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "free",
+        "label": "Take the free labour",
+        "detail": "Free · team morale −8",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -8
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "Tell her to come back with a salary line",
+        "detail": "Free · mood −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "burnout_talk",
+    "headline": "Someone stayed until 3am three nights running and nobody asked them to.",
+    "body": "They think this is what commitment looks like. They learned it from watching you.",
+    "weight": 4,
+    "category": "team",
+    "cooldownDays": 150,
+    "requires": {
+      "minHeadcount": 4
+    },
+    "choices": [
+      {
+        "id": "intervene",
+        "label": "Send them home and mean it",
+        "detail": "Morale +12 for them · team morale +5",
+        "effects": [
+          {
+            "type": "morale",
+            "amount": 12,
+            "pick": "lowestMorale"
+          },
+          {
+            "type": "moraleAll",
+            "amount": 5
+          },
+          {
+            "type": "loyalty",
+            "amount": 10,
+            "pick": "lowestMorale"
+          }
+        ]
+      },
+      {
+        "id": "praise",
+        "label": "Praise the hustle publicly",
+        "detail": "Their morale +6 · everyone else −6",
+        "effects": [
+          {
+            "type": "morale",
+            "amount": 6,
+            "pick": "lowestMorale"
+          },
+          {
+            "type": "moraleAll",
+            "amount": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "glassdoor_review",
+    "headline": "An anonymous review of your company appears, and it is specific.",
+    "body": "Specific enough that you know roughly who wrote it. Accurate enough that arguing would be worse.",
+    "weight": 3,
+    "category": "team",
+    "cooldownDays": 200,
+    "requires": {
+      "minHeadcount": 6
+    },
+    "choices": [
+      {
+        "id": "fix",
+        "label": "Bring it to the team meeting",
+        "detail": "Morale +8 · reputation −1",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 8
+          },
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      },
+      {
+        "id": "hunt",
+        "label": "Work out who wrote it",
+        "detail": "Morale −12 · you never find out",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -12
+          },
+          {
+            "type": "founderMeters",
+            "mood": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "team_offsite",
+    "headline": "The team wants an offsite. Not a trust fall — a week somewhere with a whiteboard.",
+    "weight": 3,
+    "category": "team",
+    "cooldownDays": 240,
+    "requires": {
+      "minHeadcount": 5
+    },
+    "choices": [
+      {
+        "id": "book",
+        "label": "Book it",
+        "detail": "−$6,000 · morale +14 · nothing ships that week",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -6000
+          },
+          {
+            "type": "moraleAll",
+            "amount": 14
+          },
+          {
+            "type": "hype",
+            "amount": -5
+          }
+        ]
+      },
+      {
+        "id": "dinner",
+        "label": "Do a long dinner instead",
+        "detail": "−$900 · morale +6",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -900
+          },
+          {
+            "type": "moraleAll",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "later",
+        "label": "After the next launch",
+        "detail": "Free · morale −4",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "union_whisper",
+    "headline": "Two people booked a meeting room with no meeting in it.",
+    "body": "There is a group chat you are not in. There has been for a while.",
+    "weight": 3,
+    "category": "team",
+    "once": true,
+    "requires": {
+      "minTier": "campus",
+      "minHeadcount": 18
+    },
+    "respondByDays": 6,
+    "choices": [
+      {
+        "id": "listen",
+        "label": "Ask them what they want, in writing",
+        "detail": "Morale +8 · this becomes a negotiation",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 8
+          }
+        ],
+        "setFlags": [
+          "union_engaged"
+        ],
+        "followUpEventID": "union_terms",
+        "followUpDelayDays": 21
+      },
+      {
+        "id": "consultants",
+        "label": "Bring in consultants",
+        "detail": "−$9,000 · morale −14 · reputation −5",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -9000
+          },
+          {
+            "type": "moraleAll",
+            "amount": -14
+          },
+          {
+            "type": "reputation",
+            "amount": -5
+          }
+        ],
+        "setFlags": [
+          "union_fought"
+        ],
+        "followUpEventID": "union_vote",
+        "followUpDelayDays": 28
+      }
+    ],
+    "autoChoiceIndex": 0
+  },
+  {
+    "id": "union_terms",
+    "headline": "They have a list. It is shorter and more reasonable than you feared.",
+    "body": "Predictable hours, a written promotion ladder, and one number you would rather not pay.",
+    "weight": 1,
+    "category": "team",
+    "followUpOnly": true,
+    "choices": [
+      {
+        "id": "agree",
+        "label": "Agree to all of it",
+        "detail": "−$8,000 · morale +18 · reputation +6",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -8000
+          },
+          {
+            "type": "moraleAll",
+            "amount": 18
+          },
+          {
+            "type": "loyalty",
+            "amount": 15,
+            "pick": "everyone"
+          },
+          {
+            "type": "reputation",
+            "amount": 6
+          }
+        ],
+        "setFlags": [
+          "union_agreed"
+        ]
+      },
+      {
+        "id": "partial",
+        "label": "Agree to everything but the number",
+        "detail": "−$2,500 · morale +6",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2500
+          },
+          {
+            "type": "moraleAll",
+            "amount": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "union_vote",
+    "headline": "The vote happens. You find out the result from the trade press.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": -8
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -10
+      },
+      {
+        "type": "cash",
+        "amount": -4000
+      }
+    ],
+    "weight": 1,
+    "category": "team",
+    "followUpOnly": true
+  },
+  {
+    "id": "star_engineer_bored",
+    "headline": "Your best engineer has started fixing things nobody asked about.",
+    "body": "That is what boredom looks like on someone who cannot sit still. The next stage is a resignation you did not see coming.",
+    "weight": 3,
+    "category": "team",
+    "cooldownDays": 200,
+    "requires": {
+      "minHeadcount": 5
+    },
+    "choices": [
+      {
+        "id": "project",
+        "label": "Give them something hard to own",
+        "detail": "Their morale +14 · nothing else moves this week",
+        "effects": [
+          {
+            "type": "morale",
+            "amount": 14,
+            "pick": "highestSkill"
+          },
+          {
+            "type": "loyalty",
+            "amount": 12,
+            "pick": "highestSkill"
+          },
+          {
+            "type": "hype",
+            "amount": -4
+          }
+        ]
+      },
+      {
+        "id": "roadmap",
+        "label": "Point them at the roadmap",
+        "detail": "Free · loyalty −8",
+        "effects": [
+          {
+            "type": "loyalty",
+            "amount": -8,
+            "pick": "highestSkill"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "referral_hire",
+    "headline": "Someone on the team wants to refer a friend, and is nervous about asking.",
+    "weight": 3,
+    "category": "team",
+    "cooldownDays": 150,
+    "requires": {
+      "minHeadcount": 3
+    },
+    "choices": [
+      {
+        "id": "bonus",
+        "label": "Set a referral bonus and say so publicly",
+        "detail": "−$1,000 · morale +7 · better candidates",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1000
+          },
+          {
+            "type": "moraleAll",
+            "amount": 7
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "interview",
+        "label": "Just interview the friend",
+        "detail": "Free · morale +3",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mentor_lunch",
+    "headline": "A senior on your team has been teaching the juniors on their own time.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 1
+    },
+    "effects": [
+      {
+        "type": "skill",
+        "skill": "coding",
+        "amount": 2,
+        "pick": "everyone"
+      },
+      {
+        "type": "moraleAll",
+        "amount": 4
+      }
+    ],
+    "weight": 3,
+    "category": "team",
+    "cooldownDays": 120,
+    "requires": {
+      "minHeadcount": 5
+    }
+  },
+  {
+    "id": "acquisition_rumor",
+    "headline": "A bigger company suggests coffee, twice, in a way that is not about coffee.",
+    "body": "Their corp-dev lead has a spreadsheet with your name in it. Coffee is how this always starts.",
+    "weight": 3,
+    "category": "investor",
+    "once": true,
+    "requires": {
+      "minTier": "studio",
+      "minReputation": 45
+    },
+    "respondByDays": 6,
+    "choices": [
+      {
+        "id": "meet",
+        "label": "Take the coffee",
+        "detail": "Diligence starts · reputation +3",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 3
+          }
+        ],
+        "setFlags": [
+          "acquirer_talking"
+        ],
+        "followUpEventID": "acquirer_diligence",
+        "followUpDelayDays": 28
+      },
+      {
+        "id": "decline",
+        "label": "Say you're not for sale",
+        "detail": "Free · team morale +6",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 6
+          }
+        ],
+        "setFlags": [
+          "not_for_sale"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acquirer_diligence",
+    "headline": "Diligence begins. They want four years of everything by Friday.",
+    "body": "Two of your engineers are now full-time on a data room. Nobody is building anything.",
+    "weight": 1,
+    "category": "investor",
+    "followUpOnly": true,
+    "choices": [
+      {
+        "id": "commit",
+        "label": "Give them everything",
+        "detail": "−$5,000 · nothing ships · they make an offer",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -5000
+          },
+          {
+            "type": "hype",
+            "amount": -12
+          },
+          {
+            "type": "moraleAll",
+            "amount": -5
+          }
+        ],
+        "setFlags": [
+          "diligence_done"
+        ],
+        "followUpEventID": "acquirer_offer",
+        "followUpDelayDays": 21
+      },
+      {
+        "id": "stall",
+        "label": "Slow-walk it and keep building",
+        "detail": "Free · they lose interest",
+        "effects": [],
+        "clearFlags": [
+          "acquirer_talking"
+        ],
+        "followUpEventID": "acquirer_walks",
+        "followUpDelayDays": 14
+      }
+    ]
+  },
+  {
+    "id": "acquirer_offer",
+    "headline": "The offer arrives. It is real, and it is lower than the coffee implied.",
+    "body": "There is a two-year earn-out with a performance gate you would not have agreed to sober. Their corp-dev lead calls it \"standard\".",
+    "weight": 1,
+    "category": "investor",
+    "followUpOnly": true,
+    "respondByDays": 7,
+    "choices": [
+      {
+        "id": "counter",
+        "label": "Counter, hard",
+        "detail": "Reputation +4 · they respect it or they don't",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 4
+          },
+          {
+            "type": "founderMeters",
+            "mood": -5,
+            "energy": -5
+          }
+        ],
+        "followUpEventID": "acquirer_walks",
+        "followUpDelayDays": 21
+      },
+      {
+        "id": "walk",
+        "label": "Walk, and tell the team why",
+        "detail": "Morale +12 · reputation +2",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 12
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ],
+        "setFlags": [
+          "not_for_sale"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "acquirer_walks",
+    "headline": "Corp-dev goes quiet. Someone else announces an acquisition in your space two weeks later.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": -2
+    },
+    "effects": [
+      {
+        "type": "clearFlag",
+        "flag": "acquirer_talking"
+      }
+    ],
+    "weight": 1,
+    "category": "investor",
+    "followUpOnly": true
+  },
+  {
+    "id": "investor_intro",
+    "headline": "Someone offers to introduce you to a fund, unprompted.",
+    "body": "The introduction is free. The meeting is two days of preparation you do not have.",
+    "weight": 3,
+    "category": "investor",
+    "cooldownDays": 200,
+    "requires": {
+      "minTier": "loft",
+      "minReputation": 25
+    },
+    "choices": [
+      {
+        "id": "take",
+        "label": "Prepare properly and take the meeting",
+        "detail": "Energy −10 · reputation +6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -10
+          },
+          {
+            "type": "reputation",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "later",
+        "label": "Ask for it after the next launch",
+        "detail": "Free · you keep the two days",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bank_calls",
+    "headline": "Your bank would like a word about the loan.",
+    "body": "Nothing is overdue. They are checking, in the way that means someone flagged the account.",
+    "weight": 3,
+    "category": "money",
+    "cooldownDays": 150,
+    "requires": {
+      "hasLoan": true
+    },
+    "choices": [
+      {
+        "id": "pay_down",
+        "label": "Pay a chunk down early",
+        "detail": "−$5,000 off the balance · they relax",
+        "effects": [
+          {
+            "type": "loan",
+            "amount": -5000
+          },
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "id": "explain",
+        "label": "Walk them through the numbers",
+        "detail": "Energy −6 · nothing changes",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grant_application",
+    "headline": "A regional innovation grant is open. The form is forty pages.",
+    "weight": 3,
+    "category": "money",
+    "cooldownDays": 240,
+    "choices": [
+      {
+        "id": "apply",
+        "label": "Fill in the forty pages",
+        "detail": "Energy −10 · +$8,000 if it lands",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -10,
+            "mood": -4
+          },
+          {
+            "type": "cash",
+            "amount": 8000
+          }
+        ]
+      },
+      {
+        "id": "skip",
+        "label": "Spend the weekend building instead",
+        "detail": "Free · hype +6",
+        "effects": [
+          {
+            "type": "hype",
+            "amount": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "invoice_unpaid",
+    "headline": "A client is ninety days late and has stopped replying to invoices.",
+    "body": "Their office phone rings out. Their marketing account posts twice a day.",
+    "weight": 4,
+    "category": "money",
+    "cooldownDays": 150,
+    "requires": {
+      "minYear": 1
+    },
+    "choices": [
+      {
+        "id": "chase",
+        "label": "Put a lawyer on it",
+        "detail": "−$800 now · +$4,000 back",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -800
+          },
+          {
+            "type": "cash",
+            "amount": 4000
+          }
+        ]
+      },
+      {
+        "id": "writeoff",
+        "label": "Write it off and stop working for them",
+        "detail": "Free · mood −6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "insurance_renewal",
+    "headline": "Your business insurance renews at double, citing \"sector risk\".",
+    "weight": 3,
+    "category": "money",
+    "cooldownDays": 300,
+    "requires": {
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay it",
+        "detail": "−$3,200",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -3200
+          }
+        ]
+      },
+      {
+        "id": "shop",
+        "label": "Spend a week shopping around",
+        "detail": "−$1,600 · energy −8",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1600
+          },
+          {
+            "type": "founderMeters",
+            "energy": -8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "accountant_finds",
+    "headline": "Your accountant found something you have been paying for since year one.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": 1800
+    },
+    "weight": 2,
+    "category": "money",
+    "cooldownDays": 300,
+    "requires": {
+      "minYear": 2
+    }
+  },
+  {
+    "id": "office_flood",
+    "headline": "A pipe upstairs decides to become everyone's problem at 4am.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": -2600
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -6
+      }
+    ],
+    "weight": 2,
+    "category": "office",
+    "cooldownDays": 300,
+    "requires": {
+      "minTier": "loft",
+      "minCash": 15000,
+      "minYear": 2
+    }
+  },
+  {
+    "id": "coffee_machine",
+    "headline": "The coffee machine has died and the team is treating it as a bereavement.",
+    "weight": 4,
+    "category": "office",
+    "cooldownDays": 180,
+    "requires": {
+      "minTier": "loft",
+      "minHeadcount": 4
+    },
+    "choices": [
+      {
+        "id": "good",
+        "label": "Buy the good one",
+        "detail": "−$1,900 · morale +9",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1900
+          },
+          {
+            "type": "moraleAll",
+            "amount": 9
+          }
+        ]
+      },
+      {
+        "id": "cheap",
+        "label": "Buy the cheap one",
+        "detail": "−$300 · morale +1",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -300
+          },
+          {
+            "type": "moraleAll",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "id": "kettle",
+        "label": "There is a kettle",
+        "detail": "Free · morale −7",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -7
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "neighbour_noise",
+    "headline": "The startup next door has installed a gong for closed deals.",
+    "weight": 3,
+    "category": "office",
+    "cooldownDays": 200,
+    "requires": {
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "gong",
+        "label": "Buy a bigger gong",
+        "detail": "−$400 · morale +8 · nobody works",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -400
+          },
+          {
+            "type": "moraleAll",
+            "amount": 8
+          },
+          {
+            "type": "hype",
+            "amount": -3
+          }
+        ]
+      },
+      {
+        "id": "landlord",
+        "label": "Complain to the landlord",
+        "detail": "Free · morale −3",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "campus_sign",
+    "headline": "Facilities wants to know what goes on the sign above reception.",
+    "weight": 2,
+    "category": "office",
+    "cooldownDays": 300,
+    "requires": {
+      "minTier": "campus"
+    },
+    "choices": [
+      {
+        "id": "logo",
+        "label": "The logo, lit, six feet tall",
+        "detail": "−$12,000 · reputation +5 · morale +6",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -12000
+          },
+          {
+            "type": "reputation",
+            "amount": 5
+          },
+          {
+            "type": "moraleAll",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "plain",
+        "label": "The company name, small, in a decent typeface",
+        "detail": "−$1,200 · reputation +1",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1200
+          },
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "competitor_copies",
+    "headline": "A competitor ships your best feature, badly, with a better landing page.",
+    "body": "The screenshots are close enough to be a compliment and far enough to be legal.",
+    "weight": 4,
+    "category": "market",
+    "cooldownDays": 150,
+    "requires": {
+      "hasLiveProduct": true
+    },
+    "choices": [
+      {
+        "id": "ship",
+        "label": "Ship the next three things faster",
+        "detail": "Hype +12 · team morale −5",
+        "effects": [
+          {
+            "type": "hype",
+            "amount": 12
+          },
+          {
+            "type": "moraleAll",
+            "amount": -5
+          }
+        ]
+      },
+      {
+        "id": "post",
+        "label": "Write the comparison post yourself",
+        "detail": "Reputation +4 · they link to it",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "ignore",
+        "label": "Ignore them",
+        "detail": "Free · morale +3",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pricing_backlash",
+    "headline": "Your pricing page changed and three hundred people noticed.",
+    "body": "The loudest of them has been a customer since the beginning and is not wrong.",
+    "weight": 3,
+    "category": "market",
+    "cooldownDays": 200,
+    "requires": {
+      "hasLiveProduct": true
+    },
+    "choices": [
+      {
+        "id": "grandfather",
+        "label": "Grandfather everyone who was already paying",
+        "detail": "−$2,000 · reputation +7",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2000
+          },
+          {
+            "type": "reputation",
+            "amount": 7
+          }
+        ]
+      },
+      {
+        "id": "hold",
+        "label": "Hold the line",
+        "detail": "Free · reputation −6",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "platform_change",
+    "headline": "The platform announces an API change that breaks a third of your product.",
+    "impact": {
+      "type": "cashDelta",
+      "amount": -1500
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -5
+      },
+      {
+        "type": "hype",
+        "amount": -8
+      }
+    ],
+    "weight": 3,
+    "category": "market",
+    "cooldownDays": 180,
+    "requires": {
+      "hasLiveProduct": true,
+      "minCash": 8000
+    }
+  },
+  {
+    "id": "analyst_report",
+    "headline": "An analyst firm puts you in a quadrant and offers to explain it for a fee.",
+    "weight": 3,
+    "category": "market",
+    "cooldownDays": 240,
+    "requires": {
+      "minTier": "studio"
+    },
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay for the briefing",
+        "detail": "−$4,000 · reputation +8",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -4000
+          },
+          {
+            "type": "reputation",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "Decline the briefing",
+        "detail": "Free · reputation −2",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fitness_fad",
+    "headline": "Every second app on the front page is suddenly about running.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 0
+    },
+    "effects": [
+      {
+        "type": "market",
+        "topicID": "fitness",
+        "amount": 0.18
+      }
+    ],
+    "weight": 2,
+    "category": "market",
+    "cooldownDays": 240
+  },
+  {
+    "id": "gaming_backlash",
+    "headline": "A high-profile launch goes badly and takes the whole category's goodwill with it.",
+    "impact": {
+      "type": "reputationDelta",
+      "amount": 0
+    },
+    "effects": [
+      {
+        "type": "market",
+        "topicID": "gaming",
+        "amount": -0.15
+      }
+    ],
+    "weight": 2,
+    "category": "market",
+    "cooldownDays": 240
+  },
+  {
+    "id": "enterprise_procurement",
+    "headline": "A large customer's procurement team sends a 200-question security review.",
+    "weight": 3,
+    "category": "market",
+    "cooldownDays": 200,
+    "requires": {
+      "minTier": "studio",
+      "hasLiveProduct": true
+    },
+    "choices": [
+      {
+        "id": "answer",
+        "label": "Answer all 200 questions",
+        "detail": "Two weeks · +$9,000 · morale −6",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": 9000
+          },
+          {
+            "type": "moraleAll",
+            "amount": -6
+          },
+          {
+            "type": "hype",
+            "amount": -6
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "Tell them you're not enterprise-ready yet",
+        "detail": "Free · reputation +1 for the honesty",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "conference_booth",
+    "headline": "The big industry conference has one booth left and a deadline of Friday.",
+    "weight": 3,
+    "category": "market",
+    "cooldownDays": 240,
+    "requires": {
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "booth",
+        "label": "Take the booth",
+        "detail": "−$7,500 · reputation +9 · hype +15",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -7500
+          },
+          {
+            "type": "reputation",
+            "amount": 9
+          },
+          {
+            "type": "hype",
+            "amount": 15
+          }
+        ]
+      },
+      {
+        "id": "hallway",
+        "label": "Go without a booth and work the hallway",
+        "detail": "−$900 · reputation +3",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -900
+          },
+          {
+            "type": "reputation",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "skip",
+        "label": "Skip it",
+        "detail": "Free · reputation −2, everyone else went",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "charity_ask",
+    "headline": "A nonprofit wants your software free, forever, for a good reason.",
+    "weight": 3,
+    "category": "press",
+    "cooldownDays": 240,
+    "requires": {
+      "minTier": "studio",
+      "hasLiveProduct": true
+    },
+    "choices": [
+      {
+        "id": "give",
+        "label": "Give it to them and say nothing publicly",
+        "detail": "−$1,200 · morale +8 · mood +6",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1200
+          },
+          {
+            "type": "moraleAll",
+            "amount": 8
+          },
+          {
+            "type": "founderMeters",
+            "mood": 6
+          }
+        ]
+      },
+      {
+        "id": "announce",
+        "label": "Give it to them and put out a press release",
+        "detail": "−$1,800 · reputation +7 · morale +2",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1800
+          },
+          {
+            "type": "reputation",
+            "amount": 7
+          },
+          {
+            "type": "moraleAll",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "discount",
+        "label": "Offer a discount instead",
+        "detail": "Free · team morale −3",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "old_manager_calls",
+    "headline": "Your old manager calls to offer you your job back, with a title.",
+    "body": "The number is more than you have paid yourself all year. He is not being unkind; he genuinely thinks he is helping.",
+    "weight": 3,
+    "category": "personal",
+    "cooldownDays": 300,
+    "requires": {
+      "maxTier": "loft",
+      "maxCash": 15000
+    },
+    "choices": [
+      {
+        "id": "decline",
+        "label": "Say no, and mean it",
+        "detail": "Mood +10 · nothing else changes",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 10
+          }
+        ]
+      },
+      {
+        "id": "think",
+        "label": "Say you'll think about it",
+        "detail": "Mood −6 · you think about it for a month",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "energy": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "founder_dinner",
+    "headline": "A founder dinner invitation arrives. Twelve people, one long table, no phones.",
+    "weight": 3,
+    "category": "personal",
+    "cooldownDays": 150,
+    "requires": {
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "go",
+        "label": "Go",
+        "detail": "Energy −5 · mood +8 · reputation +3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -5,
+            "mood": 8,
+            "relationships": 4
+          },
+          {
+            "type": "reputation",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "stay",
+        "label": "Stay and finish the sprint",
+        "detail": "Hype +5 · mood −3",
+        "effects": [
+          {
+            "type": "hype",
+            "amount": 5
+          },
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "advisor_offer",
+    "headline": "Someone respected offers to advise you for a small slice.",
+    "body": "You have seen their name on three companies you admire. You have also seen it on eleven you have not heard of.",
+    "weight": 3,
+    "category": "investor",
+    "cooldownDays": 300,
+    "requires": {
+      "minTier": "loft"
+    },
+    "choices": [
+      {
+        "id": "sign",
+        "label": "Sign the advisor agreement",
+        "detail": "Reputation +6 · they open doors",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 6
+          }
+        ],
+        "setFlags": [
+          "has_advisor"
+        ]
+      },
+      {
+        "id": "coffee",
+        "label": "Buy them coffee quarterly instead",
+        "detail": "Free · reputation +2",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      }
+    ]
   }
 ]

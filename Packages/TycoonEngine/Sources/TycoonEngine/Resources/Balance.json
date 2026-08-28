@@ -421,7 +421,17 @@
     "creditLimitPerReputation": 300.0,
     "creditRevenueWeeks": 12
   },
-  "narrative": {},
+  "narrative": {
+    "companyEventIntervalDays": 7,
+    "companyEventChance": 0.3,
+    "lifeEventIntervalDays": 14,
+    "lifeEventChance": 0.35,
+    "respondByDays": 5,
+    "minDaysBetweenBeats": 4,
+    "defaultCooldownDays": 240,
+    "newsIntervalDays": 7,
+    "newsChance": 0.55
+  },
   "progression": {
     "archetypes": {
       "hacker": { "coding": 55.0, "design": 25.0, "marketing": 20.0 },

@@ -86,6 +86,12 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: WS-B
 
+    /// Answers the pending narrative choice. `eventID` must match the
+    /// choice on screen (a stale sheet can't resolve a newer beat) and
+    /// `optionIndex` is the option's index in the definition, which
+    /// `ChoiceOption.index` carries.
+    case resolveChoice(eventID: String, optionIndex: Int)
+
     // MARK: WS-F
 
     /// Takes the investor's money: cash in, equity out, and a board seat

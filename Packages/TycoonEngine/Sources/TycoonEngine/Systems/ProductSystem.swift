@@ -351,6 +351,23 @@ enum ProductSystem {
             - balance.reviewShortfallPenalty * max(0, expected - quality)
             + hypeAtLaunch / balance.reviewHypeDivisor
 
+        // What the outlets have to work with: the product's own name, its
+        // type and topic, and the three things that make a launch worth a
+        // remark — bugs, polish, and hype the release cannot cash.
+        let marketScale = launchMarketScale(
+            for: state.products[index], state: state, balance: balance
+        )
+        let reviewContext = ReviewContext(
+            productName: state.products[index].name,
+            typeName: type.name,
+            topicName: content.topic(state.products[index].topicID)?.name
+                ?? state.products[index].topicID,
+            bugRatio: type.codePts > 0 ? Double(dev.openBugs) / type.codePts : 0,
+            polishRatio: type.polishPts > 0 ? min(1, dev.polishPts / type.polishPts) : 1,
+            hype: hypeAtLaunch,
+            marketScale: marketScale
+        )
+
         var reviews: [Review] = []
         for outlet in balance.reviewOutlets {
             let noise = state.rng.nextGaussian(sigma: balance.reviewNoiseSigma)
@@ -358,7 +375,10 @@ enum ProductSystem {
             reviews.append(Review(
                 outlet: outlet,
                 score: score,
-                blurb: ReviewBlurbs.pick(for: score, rng: &state.rng)
+                blurb: ReviewBlurbs.pick(
+                    for: score, rng: &state.rng,
+                    outlet: outlet, context: reviewContext, catalog: content.reviews
+                )
             ))
         }
 
@@ -382,9 +402,9 @@ enum ProductSystem {
             offMarket: false,
             hypeAtLaunch: hypeAtLaunch,
             adoptionWeeks: adoptionWeeks,
-            launchMarketScale: launchMarketScale(
-                for: state.products[index], state: state, balance: balance
-            ),
+            // WS-B computes the same discount once, above, for the review
+            // context; reuse it rather than calling it twice.
+            launchMarketScale: marketScale,
             liveBugs: Int((Double(dev.openBugs) * balance.economy.liveBugSeedFraction).rounded()),
             isSubscription: type.revenueModel == .subscription
         )

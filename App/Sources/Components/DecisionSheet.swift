@@ -120,7 +120,7 @@ extension DecisionPrompt {
             return buyoutPrompt(buyout, state: state)
         }
         if let staffEvent = state.pendingStaffEvent {
-            return staffEventPrompt(staffEvent, state: state, balance: balance)
+            return staffEventPrompt(staffEvent, state: state, content: content, balance: balance)
         }
         // WS-F: a term sheet pauses the clock, so the question has to be on
         // screen whatever tab the player was on.
@@ -130,43 +130,55 @@ extension DecisionPrompt {
         return NarrativeChoicePresenter.prompt(for: state, content: content, balance: balance)
     }
 
+    /// The staff moment on screen. Wording, both answers and their
+    /// consequence lines come from `StaffEvents.json`; a kind with no
+    /// definition falls back to the generic phrasing and the balance's
+    /// support cost, which is what the two original kinds used.
     private static func staffEventPrompt(
         _ event: StaffEvent,
         state: GameState,
+        content: ContentCatalog,
         balance: BalanceConfig
     ) -> DecisionPrompt? {
         guard let employee = state.employee(id: event.employeeID) else { return nil }
         let social = balance.social
-        let (title, message, supportDetail): (String, String, String) = switch event.kind {
-        case .familyEmergency: (
-            "\(employee.name) has a family emergency",
-            "They need some time. Cover for them and pay \(social.supportCost.money), or insist the work comes first.",
-            "Costs \(social.supportCost.money) · time off · loyalty way up"
-        )
-        case .rivalOfferRumor: (
-            "\(employee.name) is being courted",
-            "Word is a rival has been buying them lunch. Show them they matter — or trust they'll stay.",
-            "Costs \(social.supportCost.money) · loyalty way up"
-        )
+        let def = content.staffEvent(event.kind.rawValue)
+
+        func fill(_ text: String) -> String {
+            text
+                .replacingOccurrences(of: "{name}", with: employee.name)
+                .replacingOccurrences(of: "{company}", with: state.company.name)
         }
+
+        let title = def.map { fill($0.title) }
+            ?? "\(employee.name) needs an answer"
+        let message = def.map { fill($0.body) }
+            ?? "They came to you with something. Back them, or hold the line."
+        let supportLabel = def?.supportive.label ?? "Be supportive"
+        let supportDetail = def?.supportive.detail
+            ?? "Costs \(social.supportCost.money) · loyalty way up"
+        let strictLabel = def?.strict.label ?? "Business first"
+        let strictDetail = def?.strict.detail ?? "Free, but loyalty takes a hit"
+
         return DecisionPrompt(
             id: "staff-\(event.employeeID.uuidString)-\(event.respondByDay)",
-            systemImage: event.kind == .familyEmergency
-                ? "heart.text.square.fill"
-                : "person.fill.questionmark",
+            systemImage: staffIcon(for: event.kind),
             tint: Theme.warning,
             title: title,
             message: message,
-            stats: [("Loyalty", "\(Int(employee.loyalty.rounded()))")],
+            stats: [
+                ("Morale", "\(Int(employee.morale.rounded()))"),
+                ("Loyalty", "\(Int(employee.loyalty.rounded()))"),
+            ],
             options: [
                 Option(
-                    label: "Be supportive",
+                    label: supportLabel,
                     detail: supportDetail,
                     action: .resolveStaffEvent(choice: .supportive)
                 ),
                 Option(
-                    label: "Business first",
-                    detail: "Free, but loyalty takes a hit",
+                    label: strictLabel,
+                    detail: strictDetail,
                     role: .destructive,
                     action: .resolveStaffEvent(choice: .strict)
                 ),
@@ -212,6 +224,21 @@ extension DecisionPrompt {
                 ),
             ]
         )
+    }
+
+    private static func staffIcon(for kind: StaffEventKind) -> String {
+        switch kind {
+        case .familyEmergency: "heart.text.square.fill"
+        case .rivalOfferRumor: "person.fill.questionmark"
+        case .raiseRequest, .promotionDemand: "arrow.up.forward.circle.fill"
+        case .roleSwitch: "arrow.triangle.swap"
+        case .teamConflict: "person.2.slash.fill"
+        case .burnoutWarning: "moon.zzz.fill"
+        case .sideProject: "lightbulb.fill"
+        case .parentalLeave: "figure.and.child.holdinghands"
+        case .remoteRequest: "airplane.departure"
+        case .harassmentComplaint: "exclamationmark.shield.fill"
+        }
     }
 
     private static func poachPrompt(_ offer: PoachOffer, state: GameState) -> DecisionPrompt? {

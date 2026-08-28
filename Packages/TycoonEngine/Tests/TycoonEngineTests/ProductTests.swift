@@ -330,7 +330,8 @@ struct ProductActionTests {
 
         // The nudge is measured from the reputation the company actually
         // had when it shipped, not from the starting 10: chapter goals
-        // (WS-F) pay out a little reputation over the first four weeks.
+        // (WS-F) pay out a little reputation over the first four weeks, and
+        // a weekly company beat (WS-B) can move it too.
         func shippedState(seed: UInt64) -> (state: GameState, reputationAtShip: Double) {
             var state = GameState.newGame(companyName: "Acme", seed: seed, balance: balance)
             Reducer.apply(
