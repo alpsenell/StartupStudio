@@ -18,6 +18,9 @@ public enum ActorPose: String, Sendable, Equatable, Hashable, CaseIterable {
     case cheer
     /// Shoulders down. Low morale, or a bad review.
     case slump
+    /// Shoulders down, still in the chair. What low morale looks like at a
+    /// desk — `slump` stands the person up, which is wrong at a seat.
+    case seatedSlump
     /// Carrying a cardboard box to the door. Last day.
     case carryBox
 
@@ -31,6 +34,7 @@ public enum ActorPose: String, Sendable, Equatable, Hashable, CaseIterable {
         case .chat: .chat
         case .cheer: .cheer
         case .slump: .slump
+        case .seatedSlump: .seatedSlump
         case .carryBox: .carryBox
         }
     }

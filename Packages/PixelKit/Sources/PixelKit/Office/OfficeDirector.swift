@@ -365,7 +365,8 @@ public enum OfficeDirector {
 
         let segment = plan.segment(at: dayT)
         let state = plan.state(at: dayT)
-        let seated = state.waypointID == "desk" && (segment.pose == .desk || segment.pose == .slump)
+        let seated = state.waypointID == "desk"
+            && (segment.pose == .desk || segment.pose == .slump || segment.pose == .seatedSlump)
         let leg = segment.track.leg(at: dayT)
 
         var pose = state.pose
@@ -433,7 +434,7 @@ public enum OfficeDirector {
             return .sequence(frames: [0, 1], fps: 4, loop: true)
         case .chat, .coffee:
             return .toggle(period: 3)
-        case .slump, .stand, .carryBox:
+        case .slump, .seatedSlump, .stand, .carryBox:
             return .toggle(period: 5)
         }
     }

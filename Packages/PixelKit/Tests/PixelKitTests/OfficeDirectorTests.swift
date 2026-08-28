@@ -196,6 +196,38 @@ struct OfficeDirectorTests {
         }
     }
 
+    /// A miserable person at their desk slumps in the chair instead of
+    /// typing away happily under their own rain cloud. They stay seated —
+    /// the pose is only ever `seatedSlump` at the desk waypoint — and a
+    /// cheerful room never produces it.
+    @Test func aLowMoodOccupantSlumpsAtTheirDesk() {
+        func poses(mood: MoodLevel) -> Set<ActorPose> {
+            let scene = OfficeSceneInput(
+                tier: .loft,
+                occupants: occupants(6, moods: [mood]),
+                amenities: [.gameRoom, .cafeteria]
+            )
+            var seen: Set<ActorPose> = []
+            for t in stride(from: 0.0, to: 240.0, by: 0.5) {
+                for actor in OfficeDirector.actorFrames(input: scene, timing: .none, at: t) {
+                    seen.insert(actor.pose)
+                    if actor.pose == .seatedSlump {
+                        #expect(actor.waypointID == "desk", "a seated slump belongs in a chair")
+                    }
+                }
+            }
+            return seen
+        }
+
+        let low = poses(mood: .low)
+        #expect(low.contains(.seatedSlump), "a low-mood room should slump at its desks")
+        #expect(!low.contains(.desk), "nobody in this room is happily typing")
+
+        let great = poses(mood: .great)
+        #expect(!great.contains(.seatedSlump))
+        #expect(great.contains(.desk))
+    }
+
     @Test func peopleActuallyMoveOverTheDay() {
         let scene = input(tier: .studio, count: 12, friends: true)
         var positions: [UUID: Set<Int>] = [:]

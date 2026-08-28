@@ -54,6 +54,22 @@ struct HomeSpriteLibraryTests {
         #expect(baby != standing, "bundle is visible")
     }
 
+    /// The seated slump has to sit in the office chair, not stand in it:
+    /// same canvas as `.seated`, and a different picture from both the
+    /// upright desk pose and the standing slump.
+    @Test func seatedSlumpSharesTheSeatedCanvas() {
+        let a = CharacterAppearance(seed: 5)
+        let seated = SpriteLibrary.person(appearance: a, pose: .seated)
+        let slumped = SpriteLibrary.person(appearance: a, pose: .seatedSlump)
+        let standingSlump = SpriteLibrary.person(appearance: a, pose: .slump)
+        #expect(slumped.width == seated.width && slumped.height == seated.height)
+        #expect(slumped.frameCount == 2, "a slow breath, not a typing cycle")
+        #expect(slumped.frames[0] != seated.frames[0], "the head hangs")
+        #expect(slumped.height != standingSlump.height, "the standing slump is taller")
+        // The chair rows are the office pose's own, untouched.
+        #expect(slumped.frames[0].suffix(4) == seated.frames[0].suffix(4))
+    }
+
     @Test func founderVariantIsDistinctButSameSize() {
         let a = CharacterAppearance(seed: 9)
         for pose in SpriteLibrary.PersonPose.allCases {

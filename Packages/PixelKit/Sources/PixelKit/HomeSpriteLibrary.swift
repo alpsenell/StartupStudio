@@ -14,6 +14,9 @@ extension SpriteLibrary {
     public enum PersonPose: String, Sendable, Equatable, CaseIterable {
         case seated, standing, lying, seatedCouch, holdingBaby, exercising
         case walkLeft, walkRight, walkDown, cheer, slump, coffee, chat, carryBox, portrait
+        /// `slump` without leaving the chair: the office `seated` canvas
+        /// with the standing slump's head and shoulders.
+        case seatedSlump
     }
 
     /// A person in a pose. `seated` is the office sprite (3 frames: typing
@@ -92,6 +95,15 @@ extension SpriteLibrary {
         case .slump:
             return composePerson(
                 frames: [HomePersonArt.slumpA, HomePersonArt.slumpB],
+                headOffsets: [2, 3], torsoOffsets: [1, 1],
+                appearance: appearance, isFounder: isFounder, role: look
+            )
+        case .seatedSlump:
+            // The same head and torso offsets as `.slump`: the art is the
+            // standing slump above the hip line, so every overlay lands
+            // where it does there.
+            return composePerson(
+                frames: [HomePersonArt.seatedSlumpA, HomePersonArt.seatedSlumpB],
                 headOffsets: [2, 3], torsoOffsets: [1, 1],
                 appearance: appearance, isFounder: isFounder, role: look
             )
