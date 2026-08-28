@@ -47,6 +47,9 @@ enum LifeSystem {
         if let until = state.life.coldUntilDay, state.day >= until {
             state.life.coldUntilDay = nil
         }
+        if let until = state.economy.convalescingUntilDay, state.day >= until {
+            state.economy.convalescingUntilDay = nil
+        }
 
         // 2. Drift.
         applyDailyDrift(&state, balance)
@@ -73,8 +76,7 @@ enum LifeSystem {
 
     private static func applyDailyDrift(_ state: inout GameState, _ balance: BalanceConfig) {
         let config = balance.life
-        let schedule = state.life.isAway(day: state.day) ? WorkSchedule.chill : state.life.schedule
-        let drift = config.drift(for: schedule)
+        let drift = config.drift(for: state.effectiveSchedule)
         let childCount = Double(state.life.family.children.count)
         let child = config.childDrift
         let amenityHealth = state.ownedAmenities.reduce(0.0) {
@@ -99,7 +101,14 @@ enum LifeSystem {
             + possessionPrestige * instant.prestigeRelationshipFactor
         var mood = drift.mood + childCount * child.mood + config.home(state.life.home).moodBonus
             + possessionMood
-        if state.life.wallet < 0 {
+        // Being broke is grim; climbing out of it is not. The penalty
+        // stands while the wallet is level or still falling week on week,
+        // and lifts the moment it starts recovering — so a founder whose
+        // company has finally started paying them properly can get their
+        // head above water instead of being pinned at mood zero (and so at
+        // `minOutputFactor`) for the rest of the run.
+        if state.life.wallet < 0,
+           state.life.wallet <= state.economy.walletLastWeek ?? Int.max {
             mood -= config.debtMoodPenalty
         }
         // Nobody has called in two months.
@@ -150,9 +159,19 @@ enum LifeSystem {
             state.life.awayUntilDay = until
             state.life.awaySinceDay = day
             state.life.awayReason = hospitalReason
-            state.life.wallet -= config.hospitalBill
+            state.life.wallet -= hospitalBill(state, balance)
             state.life.meters.health = LifeMeters.clamped(config.hospitalRecoveryHealth)
             state.economy.hospitalizationDays.append(day)
+            // Signed off. The ward, then a fortnight of being told to take
+            // it easy: `effectiveSchedule` reads `.chill` throughout and
+            // `setWorkSchedule` refuses to crunch, so a founder cannot
+            // discharge themselves straight back into the loop that put
+            // them there. `life.schedule` keeps their intent, so the run
+            // they were on resumes by itself afterwards. Without this the
+            // same crunch that caused the stay picks up the day the bed is
+            // free and health falls the same forty days to the same
+            // threshold, five to twelve times over two years.
+            state.economy.convalescingUntilDay = until + balance.economy.convalescenceDays
             events.append(.founderAway(reason: hospitalReason, untilDay: until, day: day))
         }
 
@@ -249,23 +268,60 @@ enum LifeSystem {
         guard economy.evictionWalletThreshold > Int.min else { return [] }
 
         guard state.life.wallet < economy.evictionWalletThreshold else {
-            // Back in the black: the warning is withdrawn.
+            // Back in the black: the warning is withdrawn, and once the
+            // overdraft is actually cleared the rescue salary steps back
+            // down to what it costs the founder to live. The company
+            // covers you until you are square; it does not keep paying
+            // three times the going rate for the rest of the run because
+            // of one bad quarter. A salary the *player* set is never
+            // touched — only the one this function raised.
             state.economy.evictionWarningDay = nil
+            if let rescue = state.economy.rescueSalary,
+               state.life.wallet >= 0,
+               state.life.founderSalary == rescue {
+                state.life.founderSalary = min(
+                    rescue, max(balance.life.defaultFounderSalary, livingCosts(state, balance))
+                )
+                state.economy.rescueSalary = nil
+            }
             return []
         }
         guard let warned = state.economy.evictionWarningDay else {
             state.economy.evictionWarningDay = day
             return [.evictionWarning(untilDay: day + economy.evictionGraceDays, day: day)]
         }
-        guard day - warned == economy.evictionGraceDays else { return [] }
+        // Re-checked every grace period, not once. The warning stands
+        // until the wallet is back above the threshold, so a founder
+        // stuck at the bottom is not re-served every fortnight — but the
+        // *rescue* has to be re-offered, or a company that happened to be
+        // short of cash on one particular day never bails its founder out
+        // at all, however rich it gets afterwards.
+        let elapsed = day - warned
+        guard elapsed > 0, elapsed.isMultiple(of: max(1, economy.evictionGraceDays)) else {
+            return []
+        }
 
-        // The warning stands until the wallet is back above the threshold,
-        // so a founder stuck at the bottom is not re-served every fortnight.
-        // The company bails them out if it can carry the salary.
+        // The company bails them out if it can carry the salary — and the
+        // salary is sized to *clear the hole*, not merely to cover the
+        // rent. Paying somebody £240 a week against a £30,000 overdraft is
+        // not a rescue, it is a rounding error: it would take fifteen
+        // years. This pays the weekly costs plus the overdraft amortised
+        // over `evictionRecoveryWeeks`, capped at `founderSalaryMax`.
         let rent = balance.life.home(state.life.home).weeklyRent
-        let rescue = min(balance.life.founderSalaryMax, max(state.life.founderSalary, rent * 2))
-        if state.company.cash > rescue * GameState.daysPerWeek, rescue > state.life.founderSalary {
+        let weeklyCosts = livingCosts(state, balance)
+        let deficit = max(0, -state.life.wallet)
+        let amortised = weeklyCosts
+            + Int((Double(deficit) / Double(max(1, economy.evictionRecoveryWeeks))).rounded())
+        let rescue = min(
+            balance.life.founderSalaryMax,
+            max(state.life.founderSalary, rent * 2, amortised)
+        )
+        // Affordable means the company could carry it for a quarter on
+        // today's balance, not merely make this week's payment.
+        if state.company.cash >= rescue * GameState.daysPerWeek * 2,
+           rescue > state.life.founderSalary {
             state.life.founderSalary = rescue
+            state.economy.rescueSalary = rescue
             return []
         }
         // Otherwise they move somewhere they can afford.
@@ -273,6 +329,23 @@ enum LifeSystem {
         state.life.home = cheaper
         state.life.meters.apply(mood: -balance.life.breakupMoodPenalty / 2)
         return [.homeDowngraded(tier: cheaper, day: day)]
+    }
+
+    /// What the founder's week costs them before they eat: rent and the
+    /// children.
+    static func livingCosts(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        balance.life.home(state.life.home).weeklyRent
+            + state.life.family.children.count * balance.life.childWeeklyCost
+    }
+
+    /// What a hospital stay actually costs the founder. A company with a
+    /// People & HR department carries `hospitalInsuredFraction` of it —
+    /// the department's first reason to exist that is not morale, and the
+    /// answer to "why would a studio ever staff HR?".
+    static func hospitalBill(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        let full = balance.life.hospitalBill
+        guard state.activeDepartments.contains(.hr) else { return full }
+        return Int((Double(full) * (1 - balance.economy.hospitalInsuredFraction)).rounded())
     }
 
     // MARK: - Weekly flows
@@ -287,6 +360,10 @@ enum LifeSystem {
     ) -> [GameEvent] {
         let config = balance.life
         let day = state.day
+        // Snapshot *before* this week's settlement, so the following week
+        // can ask "did the wallet go up?" and the debt mood penalty can
+        // lift while the founder is climbing out.
+        state.economy.walletLastWeek = state.life.wallet
 
         let salary = state.life.founderSalary
         if salary > 0 {
@@ -300,10 +377,22 @@ enum LifeSystem {
         state.life.wallet -= config.home(state.life.home).weeklyRent
             + state.life.family.children.count * config.childWeeklyCost
 
-        // An overdrawn personal account is not free money.
+        // An overdrawn personal account is not free money — but the
+        // overdraft is only extended as far as the eviction threshold.
+        // Past that nobody is lending the founder anything, so the
+        // interest stops growing with the hole instead of compounding on
+        // it. (Uncapped, a founder who is hospitalised eight times reaches
+        // −$90k on a $200-a-week salary, of which roughly $38k is interest
+        // on interest, and there is no arithmetic that gets them back.)
         if state.life.wallet < 0 {
+            // `Int.min` is the "no eviction in this test balance" sentinel,
+            // and `abs` would trap on it — an uncapped overdraft is the
+            // right reading of a threshold that never arrives.
+            let ceiling = balance.economy.evictionWalletThreshold
+            let cap = Int(exactly: ceiling.magnitude) ?? Int.max
+            let charged = min(-state.life.wallet, cap)
             let interest = Int(
-                (Double(-state.life.wallet) * balance.economy.walletInterestWeeklyRate).rounded()
+                (Double(charged) * balance.economy.walletInterestWeeklyRate).rounded()
             )
             state.life.wallet -= interest
         }
@@ -384,9 +473,20 @@ enum LifeSystem {
     // MARK: - Actions
 
     /// Changes the work schedule. No event.
+    ///
+    /// Refuses `.crunch` while the founder is signed off after a hospital
+    /// stay: they are physically unable to, and a player (or a bot) that
+    /// re-issues the order every day would otherwise walk straight back
+    /// into the loop that hospitalised them.
     static func setWorkSchedule(_ schedule: WorkSchedule, state: inout GameState) -> [GameEvent] {
+        if schedule == .crunch, isConvalescing(state) { return [] }
         state.life.schedule = schedule
         return []
+    }
+
+    /// Whether the founder is still signed off after a hospital stay.
+    public static func isConvalescing(_ state: GameState) -> Bool {
+        state.economy.convalescingUntilDay.map { state.day < $0 } ?? false
     }
 
     /// Sets the weekly founder salary, clamped to 0...`founderSalaryMax`.

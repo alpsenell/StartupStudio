@@ -5,7 +5,7 @@
   "offices": {
     "garage": { "upgradeCost": 0, "weeklyRent": 0, "headcountCap": 3 },
     "loft": { "upgradeCost": 15000, "weeklyRent": 400, "headcountCap": 6 },
-    "studio": { "upgradeCost": 55000, "weeklyRent": 2500, "headcountCap": 14 },
+    "studio": { "upgradeCost": 55000, "weeklyRent": 1800, "headcountCap": 14 },
     "campus": { "upgradeCost": 300000, "weeklyRent": 12000, "headcountCap": 40 }
   },
   "bugChanceBase": 0.3,
@@ -304,7 +304,7 @@
     "drift": {
       "chill":  { "energy": 1.5,  "health": 0.3,  "mood": 0.5,  "relationships": 0.3 },
       "normal": { "energy": -0.4, "health": -0.2, "mood": 0.0,  "relationships": -0.3 },
-      "crunch": { "energy": -2.0, "health": -0.8, "mood": -0.6, "relationships": -1.2 }
+      "crunch": { "energy": -2.0, "health": -0.5, "mood": -0.6, "relationships": -1.2 }
     },
     "scheduleOutputFactor": { "chill": 0.8, "normal": 1.0, "crunch": 1.3 },
     "wellbeingWeights": { "energy": 0.4, "health": 0.3, "mood": 0.3 },
@@ -318,7 +318,7 @@
     "hospitalHealthThreshold": 10.0,
     "hospitalDays": 14,
     "hospitalBill": 5000,
-    "hospitalRecoveryHealth": 40.0,
+    "hospitalRecoveryHealth": 70.0,
     "breakupThreshold": 15.0,
     "breakupStreakDays": 14,
     "breakupMoodPenalty": 25.0,
@@ -407,6 +407,9 @@
     "walletInterestWeeklyRate": 0.015,
     "evictionWalletThreshold": -3000,
     "evictionGraceDays": 14,
+    "evictionRecoveryWeeks": 26,
+    "convalescenceDays": 14,
+    "hospitalInsuredFraction": 0.6,
     "chronicWindowDays": 364,
     "chronicMaxEnergy": 80.0,
     "chronicOutputFactor": 0.9,

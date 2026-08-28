@@ -59,8 +59,15 @@ struct LifeConsequenceTests {
         for _ in 0..<7 {
             Reducer.tick(&state, balance: balance, content: content)
         }
-        // −10,000 − 120 rent = −10,120, then 1.5% interest = −152.
-        #expect(state.life.wallet == -10_272)
+        // −10,000 − 120 rent = −10,120, then 1.5% interest — charged on
+        // the first −3,000 only, because the overdraft is extended exactly
+        // as far as the eviction threshold and no further: −45, not −152.
+        //
+        // Uncapped this compounds: a founder hospitalised eight times over
+        // two years reached −$90k on a $200-a-week salary, of which some
+        // $38k was interest on interest, and no arithmetic got them back.
+        // Now the hole grows linearly and the rescue below can clear it.
+        #expect(state.life.wallet == -10_165)
     }
 
     @Test func theLandlordWarnsBeforeActing() throws {
@@ -104,8 +111,60 @@ struct LifeConsequenceTests {
         for _ in 0..<15 {
             Reducer.tick(&state, balance: balance, content: content)
         }
-        // Two weeks of the studio flat's 120 rent, doubled.
-        #expect(state.life.founderSalary == 240)
+        // The rescue is sized to *clear the hole*, not merely to cover the
+        // rent: living costs (the studio flat's 120) plus the 5,000
+        // overdraft amortised over `evictionRecoveryWeeks` (26) — 120 +
+        // 193 = 313, and 325 once two weeks of rent have deepened it.
+        //
+        // It used to be `max(salary, rent × 2)` = 240, which against a
+        // 5,000 overdraft is 68 weeks of repayment and against the 30,000
+        // a crunching founder actually reaches is fifteen years. That is
+        // not a rescue, it is a rounding error.
+        #expect(state.life.founderSalary == 325)
+    }
+
+    /// …and steps back down once the founder is square, rather than
+    /// leaving the company paying three times the going rate for the rest
+    /// of the run because of one bad quarter.
+    @Test func theRescueStepsBackDownOnceTheFounderIsSquare() throws {
+        var (state, balance, content) = Self.studio(economy: Self.economy())
+        state.life.wallet = -5_000
+        state.life.founderSalary = 0
+        state.company.cash = 1_000_000
+        for _ in 0..<15 {
+            Reducer.tick(&state, balance: balance, content: content)
+        }
+        let rescued = state.life.founderSalary
+        #expect(rescued > 240)
+        #expect(state.economy.rescueSalary == rescued)
+
+        state.life.wallet = 1_000
+        Reducer.tick(&state, balance: balance, content: content)
+        // Living costs (this balance's studio flat is 120 a week, and its
+        // `defaultFounderSalary` is 0), not the repayment plan: the debt
+        // is cleared, so there is nothing left to amortise.
+        #expect(state.life.founderSalary == 120)
+        #expect(state.economy.rescueSalary == nil)
+    }
+
+    /// A salary the player set themselves is never stepped down — the
+    /// rescue only ever unwinds its own raise.
+    @Test func aSalaryTheFounderSetThemselvesSurvivesRecovery() throws {
+        var (state, balance, content) = Self.studio(economy: Self.economy())
+        state.life.wallet = -5_000
+        state.life.founderSalary = 0
+        state.company.cash = 1_000_000
+        for _ in 0..<15 {
+            Reducer.tick(&state, balance: balance, content: content)
+        }
+        #expect(state.economy.rescueSalary != nil)
+
+        _ = Reducer.apply(
+            .setFounderSalary(900), to: &state, balance: balance, content: content
+        )
+        state.life.wallet = 1_000
+        Reducer.tick(&state, balance: balance, content: content)
+        #expect(state.life.founderSalary == 900)
     }
 
     @Test func aCompanyThatCannotAffordItMovesTheFounderSomewhereCheaper() throws {

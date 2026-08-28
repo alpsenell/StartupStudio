@@ -91,10 +91,15 @@ enum BotHelp {
     /// four, which is the least any engaged player does and more than any
     /// bot did before the balance pass.
     ///
-    /// Deliberately blind to the health meter: this founder does not go to
-    /// the doctor, so the crunch still ends in hospital. And deliberately
-    /// not called by `SoloSlowBot` or `NeglectfulBot`, whose whole job is
-    /// to show what never looking up costs.
+    /// Deliberately blind to the health meter. Measured, *any* reactive
+    /// gym rule zeroes hospitalisations outright — a gym weekend is +12
+    /// health against crunch's −3.5 a week, so the first time the bot
+    /// reacts it never stops reacting — and a harness whose founder never
+    /// falls over cannot measure whether falling over hurts. This bot is
+    /// the control for "what does never looking up cost?", and the engine
+    /// is calibrated so that even *that* founder is hospitalised three or
+    /// four times in two years rather than seven to twelve. Also not
+    /// called by `SoloSlowBot` or `NeglectfulBot`.
     ///
     /// It matters beyond flavour: `rest` is the do-nothing default and
     /// `ProgressionSystem` only counts a weekend the founder actually
@@ -175,6 +180,12 @@ struct CrunchHireBot: BotPolicy {
     /// hands it is the better build — and a bot that waits for four hands
     /// waits forever, because mobile apps alone never pay for the third.
     var bigProductHeadcount = 2
+    /// Whether a bigger office is bought when the current one runs out of
+    /// desks — what it is *for* — rather than the day the sticker price
+    /// becomes affordable. False: "growth at any cost" means the letterhead
+    /// too, and measured, waiting for a full loft means the studio is
+    /// reached on 4 seeds in 40 rather than 25.
+    var upgradeWhenFull = false
     let raiseMoraleFloor = 45.0
     /// What "a good employer" pays: this much of the candidate-market rate
     /// for the person's skills. Above `staff.wellPaidThreshold` (1.15), so
@@ -236,8 +247,10 @@ struct CrunchHireBot: BotPolicy {
             ))
         }
 
+        let atCap = state.headcount >= balance.office(state.company.officeTier).headcountCap
         if let next = state.company.officeTier.next,
-           state.company.cash >= balance.office(next).upgradeCost + payroll * 4 {
+           state.company.cash >= balance.office(next).upgradeCost + payroll * 4,
+           !upgradeWhenFull || atCap {
             actions.append(.upgradeOffice)
         }
 

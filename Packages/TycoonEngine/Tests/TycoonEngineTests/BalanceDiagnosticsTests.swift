@@ -139,7 +139,7 @@ struct BalanceDiagnosticsTests {
                 for raises in [CrunchHireBot.RaisePolicy.marketAnchored, .compounding] {
                     var bot = CrunchHireBot()
                     bot.hireRunwayWeeks = runway
-                    bot.bigProductHeadcount = big
+                    bot.upgradeWhenFull = big == 2
                     bot.raises = raises
                     let compounding = raises == .compounding
                     let results = try Self.seeds.map {
@@ -267,6 +267,66 @@ struct BalanceDiagnosticsTests {
         noEvents.narrative.companyEventChance = 0
         rate("company events: switched off", noEvents, content)
 
+        #expect(Self.seeds.count == 10)
+    }
+
+    /// The founder's books: what a crunching founder actually owes at the
+    /// end of two years, how often they were in hospital, and whether the
+    /// landlord ever wrote. Not a gate.
+    @Test func founderDebtProfile() throws {
+        Swift.print("=== founder debt profile (10 seeds × 730d, Normal) ===")
+        Swift.print("bot              final wallet          min wallet       hosp evict chronic salary")
+        func row(_ label: String, _ bot: @autoclosure () -> any BotPolicy) throws {
+            let results = try Self.seeds.map { try BalanceTargetsTests.run(bot(), seed: $0) }
+            let final = results.map(\.state.life.wallet).sorted()
+            let low = results.map(\.minWallet).sorted()
+            Swift.print(
+                "  \(label.padding(toLength: 15, withPad: " ", startingAt: 0))"
+                    + " \(final.first ?? 0)…\(final.last ?? 0)".padding(toLength: 21, withPad: " ", startingAt: 0)
+                    + " \(low.first ?? 0)…\(low.last ?? 0)".padding(toLength: 17, withPad: " ", startingAt: 0)
+                    + " \(results.reduce(0) { $0 + $1.hospitalizations })".padding(toLength: 5, withPad: " ", startingAt: 0)
+                    + " \(results.reduce(0) { $0 + $1.evictionWarnings })".padding(toLength: 6, withPad: " ", startingAt: 0)
+                    + " \(results.count { $0.state.economy.chronicCondition })".padding(toLength: 8, withPad: " ", startingAt: 0)
+                    + " \(results.map(\.state.life.founderSalary).sorted().last ?? 0)"
+            )
+        }
+        try row("solo-slow", SoloSlowBot())
+        try row("crunch-hire", CrunchHireBot())
+        try row("neglectful", NeglectfulBot())
+        try row("saas-builder", SaaSBuilderBot())
+        try row("grinder", ContractGrinderBot())
+        #expect(Self.seeds.count == 10)
+    }
+
+    /// What Hard actually does to each strategy, since the crunch-hire bot
+    /// on Hard cannot afford the hires that ruin it on Normal and so is
+    /// not a clean control for "is Hard harder?". Not a gate.
+    @Test func hardModeProfile() throws {
+        Swift.print("=== Normal vs Hard (10 seeds) ===")
+        Swift.print("bot            days  normal: dead cash    peak | hard: dead cash    peak")
+        func row(_ label: String, _ bot: @autoclosure () -> any BotPolicy, days: Int) throws {
+            func stats(_ difficulty: Difficulty) throws -> String {
+                let results = try Self.seeds.map {
+                    try BalanceTargetsTests.run(bot(), seed: $0, difficulty: difficulty, days: days)
+                }
+                let cash = results.map(\.finalCash).sorted()
+                return "\(results.filter(\.wentBankrupt).count)/10".padding(toLength: 6, withPad: " ", startingAt: 0)
+                    + "\(cash[cash.count / 2])".padding(toLength: 8, withPad: " ", startingAt: 0)
+                    + "\(results.map(\.peakHeadcount).sorted()[5])"
+            }
+            Swift.print(
+                "  \(label.padding(toLength: 13, withPad: " ", startingAt: 0))"
+                    + " \(days)".padding(toLength: 6, withPad: " ", startingAt: 0)
+                    + "        \(try stats(.normal)) | "
+                    + "      \(try stats(.hard))"
+            )
+        }
+        for days in [365, 730] {
+            try row("crunch-hire", CrunchHireBot(), days: days)
+            try row("neglectful", NeglectfulBot(), days: days)
+            try row("solo-slow", SoloSlowBot(), days: days)
+            try row("saas-builder", SaaSBuilderBot(), days: days)
+        }
         #expect(Self.seeds.count == 10)
     }
 

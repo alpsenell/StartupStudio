@@ -347,7 +347,16 @@ extension GameState {
         let vitality = config.minOutputFactor + (1 - config.minOutputFactor) * wellbeing
         let cold = life.hasCold(day: day) ? config.coldOutputFactor : 1
         let chronic = economy.chronicCondition ? balance.economy.chronicOutputFactor : 1
-        return config.outputFactor(for: life.schedule) * vitality * cold * chronic
+        return config.outputFactor(for: effectiveSchedule) * vitality * cold * chronic
+    }
+
+    /// The schedule the founder is actually keeping, as opposed to the one
+    /// set on the Life tab: `.chill` while they are away, and `.chill`
+    /// again for the fortnight they are signed off after a hospital stay.
+    /// `life.schedule` keeps the founder's *intent*, so the run they were
+    /// on resumes by itself when the sick note runs out.
+    public var effectiveSchedule: WorkSchedule {
+        life.isAway(day: day) || LifeSystem.isConvalescing(self) ? .chill : life.schedule
     }
 
     /// Multiplier on the bug chance of code the founder works on:

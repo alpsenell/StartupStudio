@@ -132,6 +132,18 @@ public struct EconomyState: Codable, Equatable, Sendable {
     public var lonelySinceDay: Int?
     /// The last day an eviction warning was served (one per debt spiral).
     public var evictionWarningDay: Int?
+    /// The day the founder is signed off until after a hospital stay.
+    /// While it stands the schedule is pinned to `.chill` and a request to
+    /// crunch is refused: somebody who has just been discharged is not
+    /// pulling another all-nighter, whatever the roadmap says.
+    public var convalescingUntilDay: Int?
+    /// The wallet at the last weekly settlement, so the debt mood penalty
+    /// can tell "broke and sinking" from "broke and climbing out".
+    public var walletLastWeek: Int?
+    /// The founder salary the eviction rescue set, so it can be stepped
+    /// back down once the overdraft is cleared — and so a salary the
+    /// player set themselves is never touched.
+    public var rescueSalary: Int?
     /// The last day a non-critical event was allowed to stop the clock —
     /// the pause budget's cursor.
     public var lastNonCriticalPauseDay: Int?
@@ -152,6 +164,9 @@ public struct EconomyState: Codable, Equatable, Sendable {
         recoveryWeeks: Int = 0,
         lonelySinceDay: Int? = nil,
         evictionWarningDay: Int? = nil,
+        convalescingUntilDay: Int? = nil,
+        walletLastWeek: Int? = nil,
+        rescueSalary: Int? = nil,
         lastNonCriticalPauseDay: Int? = nil,
         pauseEvents: [GameEvent] = []
     ) {
@@ -165,6 +180,9 @@ public struct EconomyState: Codable, Equatable, Sendable {
         self.recoveryWeeks = recoveryWeeks
         self.lonelySinceDay = lonelySinceDay
         self.evictionWarningDay = evictionWarningDay
+        self.convalescingUntilDay = convalescingUntilDay
+        self.walletLastWeek = walletLastWeek
+        self.rescueSalary = rescueSalary
         self.lastNonCriticalPauseDay = lastNonCriticalPauseDay
         self.pauseEvents = pauseEvents
     }
@@ -192,6 +210,7 @@ extension EconomyState {
         case workPace, pendingResignation, lastRecognitionDay, updates
         case chronicCondition, hospitalizationDays, burnoutDays, recoveryWeeks
         case lonelySinceDay, evictionWarningDay, lastNonCriticalPauseDay, pauseEvents
+        case convalescingUntilDay, walletLastWeek, rescueSalary
     }
 
     private struct RecognitionEntry: Codable {
@@ -221,6 +240,11 @@ extension EconomyState {
             recoveryWeeks: try container.decodeIfPresent(Int.self, forKey: .recoveryWeeks) ?? 0,
             lonelySinceDay: try container.decodeIfPresent(Int.self, forKey: .lonelySinceDay),
             evictionWarningDay: try container.decodeIfPresent(Int.self, forKey: .evictionWarningDay),
+            convalescingUntilDay: try container.decodeIfPresent(
+                Int.self, forKey: .convalescingUntilDay
+            ),
+            walletLastWeek: try container.decodeIfPresent(Int.self, forKey: .walletLastWeek),
+            rescueSalary: try container.decodeIfPresent(Int.self, forKey: .rescueSalary),
             lastNonCriticalPauseDay: try container.decodeIfPresent(
                 Int.self, forKey: .lastNonCriticalPauseDay
             ),
@@ -245,6 +269,9 @@ extension EconomyState {
         try container.encode(recoveryWeeks, forKey: .recoveryWeeks)
         try container.encodeIfPresent(lonelySinceDay, forKey: .lonelySinceDay)
         try container.encodeIfPresent(evictionWarningDay, forKey: .evictionWarningDay)
+        try container.encodeIfPresent(convalescingUntilDay, forKey: .convalescingUntilDay)
+        try container.encodeIfPresent(walletLastWeek, forKey: .walletLastWeek)
+        try container.encodeIfPresent(rescueSalary, forKey: .rescueSalary)
         try container.encodeIfPresent(lastNonCriticalPauseDay, forKey: .lastNonCriticalPauseDay)
         try container.encode(pauseEvents, forKey: .pauseEvents)
     }

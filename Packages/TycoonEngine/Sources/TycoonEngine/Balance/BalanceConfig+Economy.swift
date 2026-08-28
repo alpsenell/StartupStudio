@@ -108,6 +108,15 @@ extension BalanceConfig {
         public var evictionWalletThreshold: Int
         /// Days after a warning before the forced downgrade lands.
         public var evictionGraceDays: Int
+        /// Weeks the company's rescue salary is sized to clear the
+        /// founder's overdraft over, once the landlord has written.
+        public var evictionRecoveryWeeks: Int
+        /// Days signed off after a hospital stay ends. The schedule is
+        /// pinned to `.chill` and a request to crunch is refused.
+        public var convalescenceDays: Int
+        /// The share of a hospital bill a company with a People & HR
+        /// department carries for the founder.
+        public var hospitalInsuredFraction: Double
         /// Two hospital stays inside this window become a chronic condition.
         public var chronicWindowDays: Int
         /// Energy ceiling while chronically ill.
@@ -220,6 +229,9 @@ extension BalanceConfig {
             walletInterestWeeklyRate: Double = 0.015,
             evictionWalletThreshold: Int = -3_000,
             evictionGraceDays: Int = 14,
+            evictionRecoveryWeeks: Int = 26,
+            convalescenceDays: Int = 14,
+            hospitalInsuredFraction: Double = 0.6,
             chronicWindowDays: Int = 364,
             chronicMaxEnergy: Double = 80,
             chronicOutputFactor: Double = 0.9,
@@ -271,6 +283,9 @@ extension BalanceConfig {
             self.walletInterestWeeklyRate = walletInterestWeeklyRate
             self.evictionWalletThreshold = evictionWalletThreshold
             self.evictionGraceDays = evictionGraceDays
+            self.evictionRecoveryWeeks = evictionRecoveryWeeks
+            self.convalescenceDays = convalescenceDays
+            self.hospitalInsuredFraction = hospitalInsuredFraction
             self.chronicWindowDays = chronicWindowDays
             self.chronicMaxEnergy = chronicMaxEnergy
             self.chronicOutputFactor = chronicOutputFactor
