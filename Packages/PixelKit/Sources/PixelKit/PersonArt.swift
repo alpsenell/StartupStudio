@@ -114,21 +114,21 @@ enum PersonArt {
     /// Style 0 is a thin wire pair, style 1 adds a brow bar and a bottom rim
     /// so it reads from across a campus.
     static let glassesOverlays: [[String]] = [
-        // 0 — wire rims
+        // 0 — wire rims: pale lenses with a dark rim at each outer edge.
         [
             "              ",
             "              ",
             "              ",
             "              ",
-            "   Nn NN nN   ",
+            "   Nn nn nN   ",
         ],
-        // 1 — bold frames
+        // 1 — bold frames: the same lenses under a heavy brow bar.
         [
             "              ",
             "              ",
             "              ",
-            "   NN    NN   ",
-            "   Nn NN nN   ",
+            "   NNNNNNNN   ",
+            "   Nn nn nN   ",
             "   NN    NN   ",
         ],
     ]

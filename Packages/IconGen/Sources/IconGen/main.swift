@@ -19,12 +19,14 @@ import UniformTypeIdentifiers
 
 let canvasSize = 1024
 
-/// Brand indigo family (#5B4FE8) — background gradient and floor band.
-/// Apple masks the corners; the full square is filled.
-let bgTop = (r: 0x6B, g: 0x60, b: 0xF2)
-let bgBottom = (r: 0x53, g: 0x47, b: 0xDE)
-let floorColor = (r: 0x46, g: 0x3A, b: 0xC8)
-let floorEdge = (r: 0x3E, g: 0x33, b: 0xB4)
+/// Brand indigo family — background gradient and floor band. The values
+/// are the master palette's own `indigo` ramp, so the icon is painted from
+/// the same box of crayons as the game. Apple masks the corners; the full
+/// square is filled.
+let bgTop = (r: 94, g: 96, b: 206)       // indigo[2]
+let bgBottom = (r: 44, g: 46, b: 104)    // indigo[4]
+let floorColor = (r: 46, g: 42, b: 60)   // ink[3]
+let floorEdge = (r: 32, g: 30, b: 42)    // ink[4]
 
 // MARK: - Scene
 
@@ -38,24 +40,31 @@ struct Placement {
 }
 
 func composition() -> [Placement] {
-    // The founder, authored rather than random: short black hair, coral
-    // shirt (pops against the indigo), medium skin.
+    // The v2 founder, authored rather than random: short chestnut hair and
+    // medium skin — and the indigo hoodie, which is the
+    // founder's whole identity in this game. The desk sits low enough that
+    // the hoodie and its drawstrings still read.
     var appearance = CharacterAppearance(seed: 1)
     appearance.skinTone = 1
     appearance.hairStyle = 0
-    appearance.hairColor = 0
+    appearance.hairColor = 2
     appearance.shirtColor = 1
+    appearance.glasses = nil
+    appearance.hasBeard = false
+    appearance.outfit = 0
 
-    let person = SpriteLibrary.person(appearance: appearance)
+    let person = SpriteLibrary.person(
+        appearance: appearance, pose: .seated, isFounder: true, role: .founder
+    )
     let desk = SpriteLibrary.desk()
     let monitor = SpriteLibrary.monitor()
-
-    // Desk-cell layout from SceneComposer: person behind, desk in front,
-    // monitor on top. Monitor frame 1 is the bright screen-glow frame.
+    // Desk-cell layout from SceneComposer, dropped a few pixels so the
+    // hoodie is not hidden behind the monitor. Monitor frame 1 is the
+    // bright screen-glow frame.
     return [
         Placement(image: person.cgImage(frame: 0), x: 8, y: 0),
-        Placement(image: desk.cgImage(frame: 0), x: 3, y: 13),
-        Placement(image: monitor.cgImage(frame: 1), x: 10, y: 7),
+        Placement(image: monitor.cgImage(frame: 1), x: 10, y: 10),
+        Placement(image: desk.cgImage(frame: 0), x: 3, y: 16),
     ]
 }
 
