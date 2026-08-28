@@ -77,7 +77,10 @@ final class GameShell {
 
         // Auto-open only in the early game, only at a speed where the
         // player is watching, and never on top of another pause reason.
-        let autoOpen = GameSettings.weeklyReportAuto
+        // A headless QA pass has nobody to press "Next week", and the
+        // report holds the clock until somebody does — three minutes of
+        // wall time got nine game days before this. Players are unaffected.
+        let autoOpen = GameSettings.weeklyReportAuto && !DebugLaunch.isHeadlessPass
             && week <= Self.autoOpenWeeks
             && engine.state.speed != .paused
             && engine.lastPauseEvents.isEmpty
