@@ -261,6 +261,45 @@ struct LiveOpsTests {
         #expect(state.economy.updates.count == 1)
     }
 
+    /// The daily sweep frees people from *released* products — a patch has
+    /// to be the exception, or its crew is swept off every morning and the
+    /// patch never moves.
+    @Test func aPatchCrewIsNotSweptOffTheReleasedProduct() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        let content = Self.content()
+        var (state, id) = try Self.withRelease(balance: balance, content: content)
+        TestLife.pinPeak(&state)
+        Reducer.apply(.startUpdate(productID: id), to: &state, balance: balance, content: content)
+
+        for _ in 0..<5 {
+            Reducer.tick(&state, balance: balance, content: content)
+        }
+        #expect(state.employees[0].assignment == .product(id), "the founder was swept off the patch")
+        let update = try #require(state.economy.update(for: id))
+        #expect(update.completion > 0, "five days of work should move the patch")
+        #expect(update.progressCode > 0)
+    }
+
+    /// Left alone, a patch finishes on its own and lands.
+    @Test func aPatchFinishesUnderItsOwnSteam() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        // Small pools so a lone founder can finish the 30% patch.
+        let content = TestContent.tiny(designPts: 10, codePts: 10, polishPts: 10, marketSize: 1_000)
+        var (state, id) = try Self.withRelease(balance: balance, content: content)
+        TestLife.pinPeak(&state)
+        Reducer.apply(.startUpdate(productID: id), to: &state, balance: balance, content: content)
+
+        var landed = false
+        for _ in 0..<40 {
+            for event in Reducer.tick(&state, balance: balance, content: content) {
+                if case .updateShipped = event { landed = true }
+            }
+            if landed { break }
+        }
+        #expect(landed, "a patch left running should land")
+        #expect(state.economy.updates.isEmpty)
+    }
+
     @Test func aFinishedPatchLiftsQualityBugsAndReviews() throws {
         let balance = TestBalance.make(
             reviewNoiseSigma: 0, life: TestBalance.quietLife, economy: Self.economy()

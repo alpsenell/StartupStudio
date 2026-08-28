@@ -267,15 +267,20 @@ enum EmployeeSystem {
 
     // MARK: - Daily sweep
 
-    /// Resets assignments pointing at gone targets back to `.idle`: products
-    /// that are released or nonexistent, and contracts that completed,
-    /// failed, or never existed. Research assignments are left alone.
+    /// Resets assignments pointing at gone targets back to `.idle`:
+    /// products that are released (unless a patch cycle is running on them)
+    /// or nonexistent, contracts that completed, failed, or never existed,
+    /// and support desks whose product has left the market. Research
+    /// assignments are left alone.
     private static func sweepStaleAssignments(_ state: inout GameState) {
         for index in state.employees.indices {
             switch state.employees[index].assignment {
             case .product(let productID):
                 if let product = state.product(id: productID),
                    case .development = product.stage { continue }
+                // A patch cycle keeps its crew on the released product it
+                // is patching.
+                if state.economy.update(for: productID) != nil { continue }
                 state.employees[index].assignment = .idle
             case .contract(let contractID):
                 if state.activeContract(id: contractID) != nil { continue }

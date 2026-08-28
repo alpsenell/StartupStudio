@@ -50,7 +50,7 @@ enum LiveOpsSystem {
         var fixesByProduct: [UUID: Double] = [:]
         for employee in state.employees {
             guard case .support(let productID) = employee.assignment else { continue }
-            if employee.isFounder, state.life.isAway(day: state.day) { continue }
+            // An away founder's multiplier is already 0; everyone else works.
             let factor = employee.isFounder
                 ? state.founderOutputMultiplier(balance: balance)
                 : employee.performanceMultiplier(balance: balance)
