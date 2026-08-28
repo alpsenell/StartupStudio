@@ -386,6 +386,39 @@ struct EffectImpactCodableTests {
         #expect(node.effect == .unlockProductType(id: "game"))
     }
 
+    /// A choice-bearing event reaches the player as a decision sheet whose
+    /// title is the headline and whose grey body is `body`. When `body` is
+    /// missing the engine stores the headline in both, and the sheet prints
+    /// the same sentence twice. Every event that asks a question has to say
+    /// something the headline did not.
+    @Test("every choice-bearing event has a body that is not its headline")
+    func choiceBearingEventsHaveARealBody() throws {
+        let catalog = try ContentCatalog.loadBundled()
+
+        func check(id: String, headline: String, body: String?, kind: String) {
+            guard let body, !body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                Issue.record("\(kind) \(id) offers choices but has no body")
+                return
+            }
+            #expect(
+                body.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    != headline.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                "\(kind) \(id) repeats its headline as its body"
+            )
+        }
+
+        for def in catalog.events where !def.choices.isEmpty {
+            check(id: def.id, headline: def.headline, body: def.body, kind: "event")
+        }
+        for def in catalog.lifeEvents where !def.choices.isEmpty {
+            check(id: def.id, headline: def.headline, body: def.body, kind: "life event")
+        }
+        // Staff moments reach the same sheet through their own def.
+        for def in catalog.staffEvents {
+            check(id: def.id, headline: def.title, body: def.body, kind: "staff event")
+        }
+    }
+
     @Test("unknown discriminator values are rejected")
     func unknownDiscriminatorsThrow() {
         let decoder = JSONDecoder()

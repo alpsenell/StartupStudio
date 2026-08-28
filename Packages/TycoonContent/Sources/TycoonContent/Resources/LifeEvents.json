@@ -208,6 +208,7 @@
   {
     "id": "friend_startup_advisor",
     "headline": "A friend's startup wants you as an advisor, for equity in something unproven.",
+    "body": "They want the name as much as the hours, and they are honest about that. The equity is worth nothing today and might stay that way.",
     "weight": 4,
     "cooldownDays": 240,
     "impact": {},
@@ -276,6 +277,7 @@
   {
     "id": "recital_vs_dinner",
     "headline": "Your kid's recital is at the same hour as a dinner you were told to attend.",
+    "body": "She has practised the same eight bars every evening for a month. The dinner is the kind you get asked to once.",
     "weight": 4,
     "requiresChildren": true,
     "cooldownDays": 200,
@@ -328,6 +330,7 @@
   {
     "id": "landlord_sells_flat",
     "headline": "Your landlord is selling. You have sixty days.",
+    "body": "The letter is polite and final. Sixty days is plenty if you start this week and not nearly enough if you don't.",
     "weight": 3,
     "cooldownDays": 400,
     "impact": {},
@@ -349,6 +352,7 @@
   {
     "id": "sibling_asks_money",
     "headline": "Your brother asks to borrow money and will not say what for.",
+    "body": "He asked by text, at eleven at night, with the amount in it. He has never asked before.",
     "weight": 3,
     "cooldownDays": 300,
     "category": "family",
@@ -378,6 +382,7 @@
   {
     "id": "partner_job_offer",
     "headline": "Your partner has an offer in another city and is waiting to see your face.",
+    "body": "It is the job they talked about long before they met you. They have not said what they want you to say.",
     "weight": 3,
     "minStage": "partner",
     "cooldownDays": 400,
@@ -402,6 +407,7 @@
   {
     "id": "school_run",
     "headline": "The school has changed pickup to 3pm and nobody asked the parents.",
+    "body": "Three o'clock is the middle of the afternoon and the middle of everything. The other parents already have a rota spreadsheet.",
     "weight": 4,
     "requiresChildren": true,
     "cooldownDays": 200,
@@ -428,6 +434,7 @@
   {
     "id": "reunion_invite",
     "headline": "A school reunion invitation arrives, addressed to who you used to be.",
+    "body": "There is a form asking what you have been up to. You start typing and delete it four times.",
     "weight": 3,
     "cooldownDays": 400,
     "impact": {},
@@ -449,6 +456,7 @@
   {
     "id": "burnout_friend",
     "headline": "A founder friend calls at midnight and does not really want advice.",
+    "body": "He is talking fast about nothing in particular, which is how he does this. You have both been here before, on different ends of the phone.",
     "weight": 4,
     "cooldownDays": 180,
     "impact": {},
@@ -470,6 +478,7 @@
   {
     "id": "car_dies",
     "headline": "Your car makes the noise and then stops making any noise at all.",
+    "body": "The mechanic says “at this mileage” twice, in the tone that means it. The bus goes near enough, most days.",
     "weight": 3,
     "cooldownDays": 300,
     "impact": {},
@@ -491,6 +500,7 @@
   {
     "id": "therapy_referral",
     "headline": "Someone who loves you suggests, carefully, that you talk to somebody.",
+    "body": "They have clearly been working up to saying it for a while. They also have a name and a number written down already.",
     "weight": 3,
     "cooldownDays": 300,
     "requires": { "maxMood": 45 },
@@ -513,6 +523,7 @@
   {
     "id": "dog_adoption",
     "headline": "There is a dog at the shelter that has decided you are its person.",
+    "body": "She came to the front of the pen and stayed there. The volunteer mentions, lightly, that nobody has asked about her in six weeks.",
     "weight": 3,
     "cooldownDays": 400,
     "once": true,
@@ -536,6 +547,7 @@
   {
     "id": "savings_talk",
     "headline": "You look at your personal account and it is smaller than the company's.",
+    "body": "You have been paying yourself the minimum for long enough that it stopped feeling like a decision you were making.",
     "weight": 4,
     "cooldownDays": 200,
     "requires": { "maxWallet": 1500 },
@@ -561,6 +573,7 @@
   {
     "id": "sunday_lunch",
     "headline": "Your family does Sunday lunch and has stopped expecting you.",
+    "body": "Nobody has said anything about it, which is worse. They set the table for the number of people who usually come.",
     "weight": 4,
     "cooldownDays": 150,
     "category": "family",
@@ -629,6 +642,7 @@
   {
     "id": "neighbour_dinner",
     "headline": "Your neighbours invite you over and you cannot remember their names.",
+    "body": "You have lived next to them for two years and exchanged nods. The invitation is handwritten and pushed under the door.",
     "weight": 4,
     "cooldownDays": 200,
     "impact": {},
@@ -650,6 +664,7 @@
   {
     "id": "cousin_wedding_speech",
     "headline": "You have been asked to give a speech and given three weeks' notice.",
+    "body": "You were asked because you are the one who is good at talking to rooms. Three weeks is plenty, and three weeks vanishes.",
     "weight": 3,
     "cooldownDays": 400,
     "category": "family",
@@ -688,6 +703,7 @@
   {
     "id": "run_a_race",
     "headline": "You sign up for a 10k in a moment of optimism.",
+    "body": "It is eight weeks out and you were feeling good about yourself at the time. The entry fee has already left your account.",
     "weight": 3,
     "cooldownDays": 240,
     "impact": {},
@@ -745,6 +761,7 @@
   {
     "id": "old_boss_reference",
     "headline": "Someone lists you as a reference without asking.",
+    "body": "The call comes in cold, from a recruiter who assumes you are pleased to help. You remember exactly how they worked.",
     "weight": 3,
     "cooldownDays": 240,
     "impact": {},
@@ -769,6 +786,7 @@
   {
     "id": "holiday_alone",
     "headline": "You are single, it is a holiday, and everyone else has plans.",
+    "body": "The office is empty, the flat is quiet, and the group chat is full of other people's photographs.",
     "weight": 4,
     "cooldownDays": 180,
     "requires": { "maxStage": "single" },
@@ -794,6 +812,7 @@
   {
     "id": "dating_app_match",
     "headline": "Someone interesting matches with you and asks a real question.",
+    "body": "They asked something you actually want to answer. You have been leaving messages four days out of habit rather than strategy.",
     "weight": 4,
     "cooldownDays": 120,
     "requires": { "maxStage": "single" },
@@ -816,6 +835,7 @@
   {
     "id": "kid_sick_night",
     "headline": "Your kid is up all night with a fever and the meeting is at nine.",
+    "body": "By four in the morning it is a bad night rather than an emergency. The meeting was booked three weeks ago and cannot easily move twice.",
     "weight": 4,
     "requiresChildren": true,
     "cooldownDays": 150,
@@ -857,6 +877,7 @@
   {
     "id": "vacation_never_taken",
     "headline": "Your flight credit from a cancelled holiday expires in a month.",
+    "body": "It is enough for five days somewhere warm, and it disappears at the end of the month whatever you do.",
     "weight": 3,
     "cooldownDays": 300,
     "impact": {},
@@ -895,6 +916,7 @@
   {
     "id": "gym_membership_lapse",
     "headline": "The gym emails to say they miss you. You have paid them for fourteen months.",
+    "body": "The email says they miss you and includes a graph of your visits. There is one bar on it, in March.",
     "weight": 4,
     "cooldownDays": 200,
     "impact": {},
@@ -916,6 +938,7 @@
   {
     "id": "partner_asks_future",
     "headline": "Your partner asks where this is going, and means the company as much as the two of you.",
+    "body": "It is not a fight. They ask it calmly, at the kitchen table, and then wait for as long as it takes.",
     "weight": 3,
     "minStage": "partner",
     "cooldownDays": 300,
