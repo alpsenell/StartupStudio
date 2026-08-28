@@ -35,8 +35,16 @@ public struct InvestorDef: Codable, Equatable, Sendable, Identifiable {
     public var id: String
     public var name: String
     public var flavor: Flavor
-    /// The smallest cheque they will write. The actual offer scales with
-    /// what the company is worth.
+    /// The **largest** cheque they will write. The offer itself is
+    /// `equityAsk` per cent of what the company is worth to an investor
+    /// (`companyValuation` × `investors.roundValuationPremium`), and this
+    /// is the ceiling on it — the most this fund puts into one company.
+    ///
+    /// It used to be the *floor*, which is how a seed fund came to put
+    /// $250,000 into a company worth $250,000 for twelve per cent: an
+    /// implied valuation four times the real one, a burn rate the round
+    /// had just quintupled, and a board arriving next quarter expecting
+    /// growth to match. Taking money was not a trade-off, it was a trap.
     public var checkSize: Int
     /// Percentage points of equity they ask for.
     public var equityAsk: Double

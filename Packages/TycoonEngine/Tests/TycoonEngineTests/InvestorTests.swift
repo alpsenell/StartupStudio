@@ -223,6 +223,163 @@ struct InvestorTests {
         #expect(state.investors.profitableQuarters >= 1)
     }
 
+    /// A board counting desks does not fire a founder for a room with no
+    /// desk left in it.
+    ///
+    /// "One more head than last quarter, every quarter, forever" is not a
+    /// demanding board, it is a countdown: every office fills up in the
+    /// end, and an expectation the company is physically unable to satisfy
+    /// removes the founder on a schedule regardless of how well they run
+    /// it. Measured over five game years before this rule, *every* funded
+    /// founder was voted out sooner or later while the bootstrapper next
+    /// door sailed on — the money was a trap with extra steps. A full
+    /// house counts as met; the board's ask becomes "buy the bigger room",
+    /// which is a decision the founder can actually make.
+    @Test func aBoardCountingDesksAcceptsAFullHouse() throws {
+        let balance = try Self.balance()
+        // One tick short of a review, so the roster the board grades is
+        // the one this test built rather than whatever a quarter of
+        // simulated idleness leaves behind.
+        var state = Self.fundableState(
+            balance: balance, cash: 400_000, reputation: 60,
+            day: balance.investors.reviewIntervalDays - 1
+        )
+        state.investors.rounds = [RaisedRound(
+            investorID: "corvus_capital", investorName: "Corvus Capital",
+            amount: 1_200_000, equity: 18, valuation: 6_600_000, day: 0,
+            takesBoardSeat: true, expects: .headcount
+        )]
+        state.investors.boardPressure = 50
+        // The founder plus two: a garage seats three, and it is full.
+        let cap = balance.office(.garage).headcountCap
+        while state.headcount < cap {
+            state.employees.append(TestPeople.employee(name: "Hire \(state.headcount)"))
+        }
+        state.investors.lastQuarterHeadcount = state.headcount
+
+        Reducer.tick(&state, balance: balance, content: Self.content)
+        #expect(state.headcount == cap, "the garage grew a desk")
+        #expect(state.investors.latestReview?.met == true, "a full garage read as a failure to hire")
+        #expect(state.investors.boardPressure < 50)
+    }
+
+    /// A growth board is satisfied by a record quarter, even one that did
+    /// not beat the last by the asked-for margin.
+    ///
+    /// Ten per cent more revenue than last quarter, compounding without a
+    /// ceiling, is the same countdown as the headcount ask: no studio grows
+    /// at 46% a year forever, so the board eventually fires everybody. What
+    /// it is really watching for is a company sliding off its peak — and
+    /// holding a peak is real work, because a shipped product's sales decay
+    /// from the week it lands, so the only way to stay level is to keep
+    /// launching into it.
+    @Test func aGrowthBoardAcceptsTheCompanySPeakAsWellAsItsGrowth() throws {
+        let balance = try Self.balance()
+        let quarter = balance.investors.reviewIntervalDays
+
+        func run(thisQuarter: Int, peak: Int) throws -> BoardReview? {
+            var state = Self.fundableState(
+                balance: balance, cash: 400_000, reputation: 60, day: quarter - 1
+            )
+            state.investors.rounds = [RaisedRound(
+                investorID: "lantern_partners", investorName: "Lantern Partners",
+                amount: 400_000, equity: 15, valuation: 2_600_000, day: 0,
+                takesBoardSeat: true, expects: .mrrGrowth
+            )]
+            state.investors.lastQuarterRevenue = peak
+            state.investors.peakQuarterRevenue = peak
+            state.ledger.post(LedgerEntry(
+                day: 1, amount: thisQuarter, category: .sales, label: "Sales"
+            ))
+            Reducer.tick(&state, balance: balance, content: Self.content)
+            return state.investors.latestReview
+        }
+
+        // Flat against a $10,000 peak: no growth, but no slide either.
+        #expect(try run(thisQuarter: 10_000, peak: 10_000)?.met == true)
+        // Growth on the nose against a lower peak: met the old way too.
+        #expect(try run(thisQuarter: 11_000, peak: 10_000)?.met == true)
+        // Off the peak by a fifth: that is what this board is watching for.
+        #expect(try run(thisQuarter: 8_000, peak: 10_000)?.met == false)
+    }
+
+    /// A board never fires a founder at the meeting where it first says it
+    /// is unhappy.
+    ///
+    /// `boardDemandedPlan` asks the founder for a plan; a plan the board
+    /// never gave them a quarter to execute is a formality, not a warning.
+    /// It matters because the step is scaled by the persona's patience: a
+    /// twelve-week strategic board moves 65 points at a time, which without
+    /// this rule takes a founder sitting on 35 straight past the warning
+    /// line and out of the door in the same minute.
+    @Test func theWarningAndTheVoteAreNeverTheSameMeeting() throws {
+        let balance = try Self.balance()
+        var state = Self.fundableState(balance: balance, cash: 400_000, reputation: 60, day: 0)
+        state.investors.rounds = [RaisedRound(
+            investorID: "kestrel_industries", investorName: "Kestrel Industries",
+            amount: 3_500_000, equity: 25, valuation: 14_000_000, day: 0,
+            takesBoardSeat: true, expects: .headcount, patienceWeeks: 12
+        )]
+        state.investors.equityRemaining = 75
+        state.investors.lastQuarterHeadcount = 40  // never reachable in a garage
+        // 35 + 65 (30 x 26/12) = 100 on the nose, and the warning line is
+        // at 60 — so without the rule this single review both warns and
+        // votes.
+        state.investors.boardPressure = 35
+
+        var warnedOnDay: Int?
+        var oustedOnDay: Int?
+        for _ in 0..<(balance.investors.reviewIntervalDays * 3) {
+            for event in Reducer.tick(&state, balance: balance, content: Self.content) {
+                if case .boardDemandedPlan(_, let day) = event, warnedOnDay == nil {
+                    warnedOnDay = day
+                }
+                if case .founderOusted(let day) = event { oustedOnDay = day }
+            }
+            if state.gameOver != nil { break }
+        }
+        let warned = try #require(warnedOnDay, "the board never demanded a plan")
+        let out = try #require(oustedOnDay, "the board never voted")
+        #expect(
+            out - warned >= balance.investors.reviewIntervalDays,
+            "the founder was warned on day \(warned) and gone on day \(out)"
+        )
+    }
+
+    /// Raising again clears the boardroom — the founder's way out of a
+    /// hostile board, paid for in equity.
+    @Test func anotherRoundBuysTheFounderOutOfTheBoardroom() throws {
+        let balance = try Self.balance()
+        var state = Self.fundableState(balance: balance)
+        state.investors.boardPressure = 80
+        state.investors.equityRemaining = 85
+        state.investors.pendingOffer = InvestmentOffer(
+            investorID: "corvus_capital", investorName: "Corvus Capital",
+            amount: 1_200_000, equity: 18, valuation: 6_600_000,
+            takesBoardSeat: true, expects: .headcount, patienceWeeks: 20,
+            respondByDay: state.day + 7
+        )
+        Reducer.apply(.acceptInvestment, to: &state, balance: balance, content: Self.content)
+        #expect(state.investors.boardPressure == 0, "the new board inherited the old one's grudge")
+        #expect(state.investors.equityRemaining == 67, "the reprieve was free")
+    }
+
+    /// …but only a board seat buys it. An angel's cheque does not silence
+    /// the partner already in the room.
+    @Test func anAngelChequeDoesNotClearTheBoardroom() throws {
+        let balance = try Self.balance()
+        var state = Self.fundableState(balance: balance)
+        state.investors.boardPressure = 80
+        state.investors.pendingOffer = InvestmentOffer(
+            investorID: "marguerite_okafor", investorName: "Marguerite Okafor",
+            amount: 25_000, equity: 5, valuation: 500_000,
+            takesBoardSeat: false, expects: .shipCadence,
+            respondByDay: state.day + 7
+        )
+        Reducer.apply(.acceptInvestment, to: &state, balance: balance, content: Self.content)
+        #expect(state.investors.boardPressure == 80)
+    }
+
     /// No board, no reviews — an unfunded founder answers to nobody.
     @Test func anUnfundedFounderIsNeverReviewed() throws {
         let balance = try Self.balance()

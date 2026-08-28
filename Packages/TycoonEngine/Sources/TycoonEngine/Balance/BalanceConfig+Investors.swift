@@ -47,6 +47,14 @@ extension BalanceConfig {
         /// The founder's slice is cashed out at this multiple of the
         /// valuation when the bell rings.
         public var ipoValuationMultiple: Double
+        /// What an investor prices the company at, over what an acquirer
+        /// would pay for it today (`GameState.companyValuation`). A round
+        /// is bought forward; an acquisition is bought as-is.
+        public var roundValuationPremium: Double
+        /// How harshly a board of `patienceWeeks` reacts, relative to this
+        /// many weeks. A twelve-week fund is twice as quick to lose
+        /// patience as a twenty-four-week one.
+        public var patienceReferenceWeeks: Double
 
         /// A rival with at least this much of the player's valuation, and
         /// the player at or above `strategicMinReputation`, makes a
@@ -76,6 +84,8 @@ extension BalanceConfig {
             ipoProfitableQuarters: Int = 3,
             ipoRequiresSubscription: Bool = false,
             ipoValuationMultiple: Double = 1.4,
+            roundValuationPremium: Double = 2.5,
+            patienceReferenceWeeks: Double = 26,
             strategicDominanceFactor: Double = 2,
             strategicMinReputation: Double = 60,
             strategicPremiumMin: Double = 1.5,
@@ -99,6 +109,8 @@ extension BalanceConfig {
             self.ipoProfitableQuarters = ipoProfitableQuarters
             self.ipoRequiresSubscription = ipoRequiresSubscription
             self.ipoValuationMultiple = ipoValuationMultiple
+            self.roundValuationPremium = roundValuationPremium
+            self.patienceReferenceWeeks = patienceReferenceWeeks
             self.strategicDominanceFactor = strategicDominanceFactor
             self.strategicMinReputation = strategicMinReputation
             self.strategicPremiumMin = strategicPremiumMin
@@ -123,7 +135,7 @@ extension BalanceConfig.InvestorBalance {
         case expectedQuarterlyRevenueGrowth, expectedQuarterlyShips
         case expectedQuarterlyHeadcountGrowth
         case ipoValuationFloor, ipoProfitableQuarters, ipoRequiresSubscription
-        case ipoValuationMultiple
+        case ipoValuationMultiple, roundValuationPremium, patienceReferenceWeeks
         case strategicDominanceFactor, strategicMinReputation
         case strategicPremiumMin, strategicPremiumMax
     }
@@ -174,6 +186,12 @@ extension BalanceConfig.InvestorBalance {
             ipoValuationMultiple: try container.decodeIfPresent(
                 Double.self, forKey: .ipoValuationMultiple
             ) ?? fallback.ipoValuationMultiple,
+            roundValuationPremium: try container.decodeIfPresent(
+                Double.self, forKey: .roundValuationPremium
+            ) ?? fallback.roundValuationPremium,
+            patienceReferenceWeeks: try container.decodeIfPresent(
+                Double.self, forKey: .patienceReferenceWeeks
+            ) ?? fallback.patienceReferenceWeeks,
             strategicDominanceFactor: try container.decodeIfPresent(
                 Double.self, forKey: .strategicDominanceFactor
             ) ?? fallback.strategicDominanceFactor,

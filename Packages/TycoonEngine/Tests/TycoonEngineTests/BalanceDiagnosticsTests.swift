@@ -330,6 +330,117 @@ struct BalanceDiagnosticsTests {
         #expect(Self.seeds.count == 10)
     }
 
+    /// The investor and board layer, which nothing measured before this
+    /// pass. Not a gate.
+    @Test func investorProfile() throws {
+        Swift.print("=== investor bot (10 seeds × 730d, Normal, rivals live) ===")
+        func run(_ bot: InvestorBot, _ label: String, days: Int = 730) throws {
+            let balance = try BalanceTargetsTests.balance()
+            var withRivals = balance
+            withRivals.rivals.rivalCount = 4
+            let results = BalanceTargetsTests.seeds.map { seed in
+                SimRunner.run(
+                    days: days, seed: seed, bot: bot,
+                    balance: withRivals, content: TestContent.bundled
+                )
+            }
+            func kinds(_ kind: EndingKind?) -> Int {
+                results.count { $0.endingKind == kind }
+            }
+            let rounds = results.map(\.state.investors.rounds.count)
+            let pressure = results.map { Int($0.state.investors.boardPressure) }
+            let chapters = results.map(\.state.progression.chapter)
+            let goals = results.map(\.state.progression.completedGoalIDs.count)
+            let cash = results.map(\.finalCash).sorted()
+            let equity = results.map { Int($0.state.investors.equityRemaining) }
+            let worth = results.map { $0.state.founderNetWorth(balance: withRivals) / 1_000 }
+            let reviews = results.flatMap(\.state.investors.reviews)
+            Swift.print("""
+              \(label.padding(toLength: 14, withPad: " ", startingAt: 0))\
+            alive \(kinds(nil)) bankrupt \(kinds(.bankruptcy)) ousted \(kinds(.oustedByBoard)) \
+            ipo \(kinds(.ipo)) acquired \(kinds(.acquired))
+                rounds \(rounds.sorted()) pressure \(pressure.sorted())
+                chapters \(chapters.sorted()) goals \(goals.sorted()) cash \(cash[5])
+                equity \(equity.sorted()) net worth $k \(worth.sorted())
+                reviews met \(reviews.count { $0.met })/\(reviews.count) \
+            \(BoardExpectation.allCases.map { expectation in
+                let asked = reviews.filter { $0.expectation == expectation }
+                return "\(expectation) \(asked.count { $0.met })/\(asked.count)"
+            }.joined(separator: " "))
+            """)
+        }
+        try run(InvestorBot(), "investor")
+        try run(InvestorBot.bootstrapper, "bootstrapper")
+        try run(InvestorBot.ignoresTheBoard, "ignores-board")
+        try run(InvestorBot.coasts, "coasts")
+        // …and again over three years, where the board's arithmetic has
+        // room to finish: a seat arrives around day 250, the review is
+        // quarterly, and four clear misses are needed.
+        try run(InvestorBot(), "investor/3y", days: 1_092)
+        try run(InvestorBot.coasts, "coasts/3y", days: 1_092)
+        #expect(BalanceTargetsTests.seeds.count == 10)
+    }
+
+    /// Every board review across ten runs: what the board asked for, and
+    /// whether the pressure moved. Not a gate.
+    @Test func boardReviewLog() throws {
+        var balance = try BalanceTargetsTests.balance()
+        balance.rivals.rivalCount = 4
+        Swift.print("=== board reviews (the founder who stops growing, 3 years) ===")
+        for seed in BalanceTargetsTests.seeds.prefix(4) {
+            let result = SimRunner.run(
+                days: 1_092, seed: seed, bot: InvestorBot.coasts,
+                balance: balance, content: TestContent.bundled
+            )
+            let rounds = result.state.investors.rounds
+            Swift.print("""
+              seed \(seed): \(result.endingKind.map { "\($0)" } ?? "alive") \
+            rounds \(rounds.map { "\($0.investorName)(\($0.expects), seat \($0.takesBoardSeat), d\($0.day))" })
+            """)
+            for review in result.state.investors.reviews {
+                Swift.print(
+                    "      d\(review.day) \(review.expectation) "
+                        + (review.met ? "met " : "MISS")
+                        + " pressure \(Int(review.pressure))"
+                )
+            }
+        }
+        #expect(BalanceTargetsTests.seeds.count == 10)
+    }
+
+    /// What the company is actually worth as the run goes on, against the
+    /// valuation floors `Investors.json` asks for. Not a gate.
+    @Test func valuationAgainstInvestorFloors() throws {
+        var balance = try BalanceTargetsTests.balance()
+        balance.rivals.rivalCount = 4
+        Swift.print("=== company valuation by day (investor bot, 10 seeds) ===")
+        for day in [182, 364, 546, 728] {
+            let values = BalanceTargetsTests.seeds.map { seed -> Int in
+                let result = SimRunner.run(
+                    days: day, seed: seed, bot: InvestorBot(),
+                    balance: balance, content: TestContent.bundled
+                )
+                return result.state.companyValuation(balance: balance)
+            }.sorted()
+            Swift.print("  d\(day): \(values)")
+        }
+        Swift.print("  floors: \(TestContent.bundled.investors.map { "\($0.id.prefix(9))=\($0.valuationFloor)\($0.boardSeat ? "*" : "")" })")
+        #expect(BalanceTargetsTests.seeds.count == 10)
+    }
+
+    @Test func investorCauseOfDeath() throws {
+        Swift.print("=== investor bot cause of death ===")
+        var balance = try BalanceTargetsTests.balance()
+        balance.rivals.rivalCount = 4
+        for seed in Self.seeds.prefix(3) {
+            let (samples, result) = try Self.trace(
+                InvestorBot(), seed: seed, balanceOverride: balance
+            )
+            Self.print(samples, result, seed: seed)
+        }
+        #expect(Self.seeds.count == 10)
+    }
+
     @Test func crunchHireCauseOfDeath() throws {
         Swift.print("=== crunch-hire cause of death (Normal, 730d) ===")
         for seed in Self.seeds.prefix(4) {

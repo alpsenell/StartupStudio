@@ -31,7 +31,16 @@ enum SimRunner {
         var state: GameState
         /// Days actually simulated (a bankruptcy ends the run early).
         var daysRun: Int
-        var wentBankrupt: Bool
+        /// How the run ended, `nil` if it was still going at the horizon.
+        /// Distinguishing these matters as soon as a bot answers a term
+        /// sheet: a board ousting and an IPO both set `gameOver`, and
+        /// counting either as a bankruptcy would have the investor gates
+        /// measuring the opposite of what they say.
+        var endingKind: EndingKind?
+        /// Ran out of money. *Not* "the run ended" — see `endingKind`.
+        var wentBankrupt: Bool { endingKind == .bankruptcy }
+        /// The run ended before the horizon, however it ended.
+        var runEnded: Bool { endingKind != nil }
         var contractsCompleted: Int
         var contractsFailed: Int
         var productsShipped: Int
@@ -133,7 +142,7 @@ enum SimRunner {
             botName: bot.name,
             state: state,
             daysRun: 0,
-            wentBankrupt: false,
+            endingKind: nil,
             contractsCompleted: 0,
             contractsFailed: 0,
             productsShipped: 0,
@@ -193,7 +202,7 @@ enum SimRunner {
 
         result.state = state
         result.daysRun = state.day
-        result.wentBankrupt = state.gameOver != nil
+        result.endingKind = state.gameOver?.kind
         return result
     }
 

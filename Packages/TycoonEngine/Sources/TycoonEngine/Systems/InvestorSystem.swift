@@ -9,11 +9,16 @@ import TycoonContent
 /// at 100 they thank the founder for their service and bring in a grown-up.
 /// Hit it and the pressure falls away.
 ///
-/// All randomness draws from `state.worldRNG`, never `state.rng`, so the
-/// original systems' documented draw order is untouched. World draw order
-/// per tick: expired-offer sweep (no draws) → offer check (one uniform, and
-/// on a hit one more for the persona pick and one for the check jitter) →
-/// quarterly review (no draws).
+/// All randomness draws from `state.investorRNG` — not `state.rng`, and not
+/// the shared `worldRNG` either. Whether a term sheet is on the table on a
+/// given day is a function of `Investors.json`'s valuation floors, so
+/// retuning those floors changes how many draws this system has taken by
+/// day N; on a shared stream that silently reshuffles rivals, the city, the
+/// social round and every life event for every seed, and a pass that priced
+/// the board would come back with the founder's health gates broken for no
+/// reason it could name. Investor draw order per tick: expired-offer sweep
+/// (no draws) → offer check (one uniform, and on a hit one more for the
+/// persona pick and one for the cheque jitter) → quarterly review (no draws).
 enum InvestorSystem {
     @Sendable
     static func run(
@@ -78,18 +83,29 @@ enum InvestorSystem {
         }
         guard !eligible.isEmpty else { return [] }
 
-        guard state.worldRNG.nextUniform() < config.offerChance else { return [] }
+        guard state.investorRNG.nextUniform() < config.offerChance else { return [] }
 
-        let index = state.worldRNG.nextInt(in: 0...(eligible.count - 1))
+        let index = state.investorRNG.nextInt(in: 0...(eligible.count - 1))
         let persona = eligible[index]
         // The cheque scales with what the company is worth, jittered a
         // little so two runs at the same valuation don't read identically.
-        let jitter = 0.9 + state.worldRNG.nextUniform() * 0.3
-        let impliedByEquity = Double(valuation) * persona.equityAsk / 100
-        let amount = max(
-            persona.checkSize,
-            Int((max(Double(persona.checkSize), impliedByEquity) * jitter).rounded())
-        )
+        let jitter = 0.9 + state.investorRNG.nextUniform() * 0.3
+        // An investor buys `equityAsk`% of what the company is worth *to
+        // an investor* — `companyValuation` is what an acquirer would pay
+        // today, and a round is bought forward, hence the premium. The
+        // persona's `checkSize` is the ceiling on what they will write,
+        // not a floor under it.
+        //
+        // It used to be the floor, which meant a seed fund put $250,000
+        // into a company worth $250,000 for twelve per cent — an implied
+        // valuation of $2.08M against a real one of a quarter of that.
+        // The company then hired to the cap on money that had nothing to
+        // do with its own size, and the board arrived expecting growth
+        // from a burn rate the round had just quintupled. Taking money
+        // was not a trade-off, it was a trap.
+        let priced = Double(valuation) * config.roundValuationPremium
+        let impliedByEquity = priced * persona.equityAsk / 100
+        let amount = max(1, Int((min(impliedByEquity, Double(persona.checkSize)) * jitter).rounded()))
         let offerValuation = Int((Double(amount) * 100 / max(1, persona.equityAsk)).rounded())
 
         let offer = InvestmentOffer(
@@ -100,6 +116,7 @@ enum InvestorSystem {
             valuation: offerValuation,
             takesBoardSeat: persona.boardSeat,
             expects: persona.expectation,
+            patienceWeeks: persona.patienceWeeks,
             respondByDay: state.day + config.responseDays
         )
         state.investors.pendingOffer = offer
@@ -145,14 +162,34 @@ enum InvestorSystem {
         if let expectation = state.investors.boardExpectation {
             let met = meets(
                 expectation, revenue: revenue, shipped: shipped,
-                profitable: profitable, state: state, config: config
+                profitable: profitable, state: state, balance: balance
             )
-            let pressure = min(config.boardOustPressure, max(
+            // `patienceWeeks` finally does something. A twelve-week fund
+            // reacts twice as hard as a twenty-four-week one, in both
+            // directions — the impatient board is quicker to lose faith
+            // *and* quicker to be won back, which is what makes the
+            // pressure meter a thing the player can play against rather
+            // than a countdown.
+            let patience = state.investors.rounds.last { $0.takesBoardSeat }?.patienceWeeks
+            let harshness = min(2.5, max(0.5, config.patienceReferenceWeeks / Double(max(1, patience ?? 26))))
+            let step = met ? -config.pressurePerHit : config.pressurePerMiss
+            var pressure = min(config.boardOustPressure, max(
                 0,
-                state.investors.boardPressure + (met ? -config.pressurePerHit : config.pressurePerMiss)
+                state.investors.boardPressure + step * harshness
             ))
             let crossedWarning = pressure >= config.boardWarningPressure
                 && state.investors.boardPressure < config.boardWarningPressure
+            // Nobody is fired at the meeting where the problem is first
+            // raised. `boardDemandedPlan` asks the founder for a plan, and
+            // a plan the board never gave them a quarter to execute is not
+            // a warning, it is a formality — so a review that crosses the
+            // warning line cannot also carry the vote, however hard the
+            // step was. An impatient strategic board steps 65 at a time,
+            // which without this would take a founder from 35 straight to
+            // the door with the warning and the vote in the same minute.
+            if crossedWarning {
+                pressure = min(pressure, config.boardOustPressure - 1)
+            }
             state.investors.boardPressure = pressure
             state.investors.record(BoardReview(
                 day: state.day,
@@ -173,6 +210,7 @@ enum InvestorSystem {
 
         state.investors.lastQuarterCash = state.company.cash
         state.investors.lastQuarterRevenue = revenue
+        state.investors.peakQuarterRevenue = max(state.investors.peakQuarterRevenue, revenue)
         state.investors.lastQuarterShipped = shipped
         state.investors.lastQuarterHeadcount = state.headcount
         return events
@@ -186,25 +224,56 @@ enum InvestorSystem {
             .reduce(0) { $0 + $1.amount }
     }
 
+    /// Whether the quarter met the one number the board is watching.
+    ///
+    /// Two of the four asks used to compound without a ceiling — "ten per
+    /// cent more revenue than last quarter" and "one more head than last
+    /// quarter", *every quarter, forever*. Measured over five game years
+    /// that is not a demanding board, it is a countdown: every company
+    /// eventually stops growing at ten per cent a quarter, and every
+    /// office eventually fills up, so a founder who took money was fired
+    /// sooner or later on **every** seed (6/10 by year five, and every
+    /// surviving funded run under warning), while the bootstrapper next
+    /// door sailed on. That is a trap with extra steps, not a trade-off.
+    /// Both asks now have a ceiling that a company which has *arrived* can
+    /// stand on, and neither is satisfied by a company sliding backwards.
     private static func meets(
         _ expectation: BoardExpectation,
         revenue: Int,
         shipped: Int,
         profitable: Bool,
         state: GameState,
-        config: BalanceConfig.InvestorBalance
+        balance: BalanceConfig
     ) -> Bool {
+        let config = balance.investors
         switch expectation {
         case .mrrGrowth:
             let previous = Double(state.investors.lastQuarterRevenue)
             // A first quarter with any revenue at all counts as growth.
             guard previous > 0 else { return revenue > 0 }
-            return Double(revenue) >= previous * (1 + config.expectedQuarterlyRevenueGrowth)
+            if Double(revenue) >= previous * (1 + config.expectedQuarterlyRevenueGrowth) {
+                return true
+            }
+            // Or a record quarter. A company at the top of its own range
+            // is not failing its investors — it is where the last round
+            // was betting it would get to. Falling off that peak is what
+            // this board is actually watching for, and a studio only holds
+            // its peak by launching into it, because a shipped product's
+            // sales decay from the week it lands.
+            return revenue >= state.investors.peakQuarterRevenue && revenue > 0
         case .shipCadence:
             return shipped >= config.expectedQuarterlyShips
         case .headcount:
-            return state.headcount
-                >= state.investors.lastQuarterHeadcount + config.expectedQuarterlyHeadcountGrowth
+            if state.headcount
+                >= state.investors.lastQuarterHeadcount + config.expectedQuarterlyHeadcountGrowth {
+                return true
+            }
+            // Or a full house: nobody can hire into a room with no desk in
+            // it, and a board that fires a founder for that is asking for
+            // an office upgrade rather than for a hire. The founder can
+            // still buy the bigger room — that is the decision this ask is
+            // meant to force — but standing at the cap is not a miss.
+            return state.headcount >= balance.office(state.company.officeTier).headcountCap
         case .profitability:
             return profitable
         }
@@ -266,13 +335,25 @@ enum InvestorSystem {
             valuation: offer.valuation,
             day: state.day,
             takesBoardSeat: offer.takesBoardSeat,
-            expects: offer.expects
+            expects: offer.expects,
+            patienceWeeks: offer.patienceWeeks
         ))
         // A fresh board starts its clock from today's numbers rather than
-        // grading the founder on a quarter it wasn't in the room for.
+        // grading the founder on a quarter it wasn't in the room for —
+        // and the pressure goes with the old board.
+        //
+        // This is the founder's way out of a hostile board, and it costs
+        // exactly what it should: somebody has just looked at the company,
+        // priced it *above* what the last round paid, and wired the money,
+        // which is a harder vote of confidence than any quarter's numbers.
+        // The price of it is another slice of the company, so a founder
+        // who keeps buying their way out of the boardroom arrives at the
+        // exit owning very little of it. That is the trade-off the whole
+        // layer is for.
         if offer.takesBoardSeat {
             state.investors.lastQuarterCash = state.company.cash
             state.investors.lastQuarterHeadcount = state.headcount
+            state.investors.boardPressure = 0
         }
         return [.investmentAccepted(
             investorID: offer.investorID, amount: offer.amount, equity: offer.equity, day: state.day

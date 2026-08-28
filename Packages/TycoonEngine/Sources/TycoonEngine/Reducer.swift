@@ -60,7 +60,8 @@ public enum Reducer {
         // whole team (mentoring, the mood of the room, press).
         TraitSystem.run,
         // Then the investor cadence (offers, quarterly board reviews),
-        // which can end the run.
+        // which can end the run. Draws only from `investorRNG`, its own
+        // stream, so repricing the term sheets never reshuffles the world.
         InvestorSystem.run,
         // Progression measures last, so a goal that a system finished
         // today completes today.

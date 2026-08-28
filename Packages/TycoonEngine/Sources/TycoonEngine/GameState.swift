@@ -437,6 +437,19 @@ public struct GameState: Codable, Equatable, Sendable {
     /// shift the long-established `rng` stream that the original systems
     /// (and their determinism tests) document word by word.
     public var worldRNG: SeededRNG
+    /// A third stream, for the investor and board layer alone.
+    ///
+    /// Same reasoning as `worldRNG`, one level down. Whether a term sheet
+    /// is on the table on a given day depends on `Investors.json`'s
+    /// valuation floors, so every time those floors are retuned the number
+    /// of draws taken before day N changes — and if the investors drew
+    /// from `worldRNG` that would reshuffle rivals, the city, the social
+    /// round and every life event for every seed. It did: halving the
+    /// floors in this pass moved `NeglectfulBot`'s worst wallet from
+    /// −$7,610 to −$8,647 without a single number in the founder's life
+    /// changing, purely by shifting the stream underneath it. Pricing the
+    /// board is now orthogonal to the rest of the world by construction.
+    public var investorRNG: SeededRNG = SeededRNG(seed: 0x1D0B_E5EE_D1D0_B5EE)
     /// Ticks since founding; starts at 0.
     public var day: Int
     public var speed: SimSpeed
@@ -534,6 +547,9 @@ public struct GameState: Codable, Equatable, Sendable {
             // Derived from the seed (not drawn from `rng`) so the original
             // stream's draw count at newGame is unchanged.
             worldRNG: SeededRNG(seed: seed &* 0x9E37_79B9_7F4A_7C15 &+ 1),
+            // Likewise derived, with a different odd multiplier so the two
+            // world streams never run in lockstep.
+            investorRNG: SeededRNG(seed: seed &* 0xD1B5_4A32_D192_ED03 &+ 2),
             day: 0,
             speed: .paused,
             company: Company(
@@ -716,7 +732,8 @@ extension GameState {
         case candidatePool, research, contractOffers, activeContracts, campaigns
         case eventLog, milestonesReached, life, market, loanBalance, gameOver
         case amenities, knownDepartments, difficulty
-        case worldRNG, rivals, city, friendships, pendingStaffEvent, lastTeamDinnerDay
+        case worldRNG, investorRNG, rivals, city, friendships, pendingStaffEvent
+        case lastTeamDinnerDay
         case economy, narrative, progression, investors
     }
 
@@ -731,6 +748,11 @@ extension GameState {
             // constant is.
             worldRNG: try container.decodeIfPresent(SeededRNG.self, forKey: .worldRNG)
                 ?? SeededRNG(seed: 0xC0FF_EE00_C0FF_EE00),
+            // Same rule for saves written before the investors had their
+            // own stream: a constant is stable across round-trips, which
+            // is all determinism asks of it.
+            investorRNG: try container.decodeIfPresent(SeededRNG.self, forKey: .investorRNG)
+                ?? SeededRNG(seed: 0x1D0B_E5EE_D1D0_B5EE),
             day: try container.decode(Int.self, forKey: .day),
             speed: try container.decode(SimSpeed.self, forKey: .speed),
             company: try container.decode(Company.self, forKey: .company),
@@ -774,6 +796,7 @@ extension GameState {
         try container.encode(difficulty, forKey: .difficulty)
         try container.encode(rng, forKey: .rng)
         try container.encode(worldRNG, forKey: .worldRNG)
+        try container.encode(investorRNG, forKey: .investorRNG)
         try container.encode(day, forKey: .day)
         try container.encode(speed, forKey: .speed)
         try container.encode(company, forKey: .company)

@@ -57,6 +57,10 @@ public struct InvestmentOffer: Codable, Equatable, Sendable {
     /// Whether taking it puts them on the board.
     public var takesBoardSeat: Bool
     public var expects: BoardExpectation
+    /// How long this investor will sit with a miss before it starts to
+    /// cost the founder — carried from the persona so the board room can
+    /// grade on it without re-reading the catalog.
+    public var patienceWeeks: Int
     /// Last day the player can answer.
     public var respondByDay: Int
 
@@ -68,6 +72,7 @@ public struct InvestmentOffer: Codable, Equatable, Sendable {
         valuation: Int,
         takesBoardSeat: Bool,
         expects: BoardExpectation,
+        patienceWeeks: Int = 26,
         respondByDay: Int
     ) {
         self.investorID = investorID
@@ -77,6 +82,7 @@ public struct InvestmentOffer: Codable, Equatable, Sendable {
         self.valuation = valuation
         self.takesBoardSeat = takesBoardSeat
         self.expects = expects
+        self.patienceWeeks = patienceWeeks
         self.respondByDay = respondByDay
     }
 }
@@ -91,6 +97,9 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
     public var day: Int
     public var takesBoardSeat: Bool
     public var expects: BoardExpectation
+    /// The persona's patience, carried onto the cap table so the quarterly
+    /// review can scale its verdict by it.
+    public var patienceWeeks: Int
 
     /// Stable across a save: one investor closes at most one round.
     public var id: String { investorID }
@@ -103,7 +112,8 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
         valuation: Int,
         day: Int,
         takesBoardSeat: Bool,
-        expects: BoardExpectation
+        expects: BoardExpectation,
+        patienceWeeks: Int = 26
     ) {
         self.investorID = investorID
         self.investorName = investorName
@@ -113,6 +123,53 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
         self.day = day
         self.takesBoardSeat = takesBoardSeat
         self.expects = expects
+        self.patienceWeeks = patienceWeeks
+    }
+}
+
+// Hand-written so a save written before `patienceWeeks` existed decodes as
+// a board of ordinary patience rather than failing outright.
+extension RaisedRound {
+    private enum CodingKeys: String, CodingKey {
+        case investorID, investorName, amount, equity, valuation, day
+        case takesBoardSeat, expects, patienceWeeks
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            investorID: try container.decode(String.self, forKey: .investorID),
+            investorName: try container.decode(String.self, forKey: .investorName),
+            amount: try container.decode(Int.self, forKey: .amount),
+            equity: try container.decode(Double.self, forKey: .equity),
+            valuation: try container.decode(Int.self, forKey: .valuation),
+            day: try container.decode(Int.self, forKey: .day),
+            takesBoardSeat: try container.decode(Bool.self, forKey: .takesBoardSeat),
+            expects: try container.decode(BoardExpectation.self, forKey: .expects),
+            patienceWeeks: try container.decodeIfPresent(Int.self, forKey: .patienceWeeks) ?? 26
+        )
+    }
+}
+
+extension InvestmentOffer {
+    private enum CodingKeys: String, CodingKey {
+        case investorID, investorName, amount, equity, valuation
+        case takesBoardSeat, expects, patienceWeeks, respondByDay
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            investorID: try container.decode(String.self, forKey: .investorID),
+            investorName: try container.decode(String.self, forKey: .investorName),
+            amount: try container.decode(Int.self, forKey: .amount),
+            equity: try container.decode(Double.self, forKey: .equity),
+            valuation: try container.decode(Int.self, forKey: .valuation),
+            takesBoardSeat: try container.decode(Bool.self, forKey: .takesBoardSeat),
+            expects: try container.decode(BoardExpectation.self, forKey: .expects),
+            patienceWeeks: try container.decodeIfPresent(Int.self, forKey: .patienceWeeks) ?? 26,
+            respondByDay: try container.decode(Int.self, forKey: .respondByDay)
+        )
     }
 }
 
@@ -167,6 +224,10 @@ public struct InvestorState: Codable, Equatable, Sendable {
     public var lastQuarterCash: Int
     /// Revenue booked in the last quarter, for the growth expectation.
     public var lastQuarterRevenue: Int
+    /// The best quarter the company has ever booked. A growth board is
+    /// satisfied by a company that beats its own record even when it did
+    /// not beat it by the asked-for margin — see `InvestorSystem.meets`.
+    public var peakQuarterRevenue: Int
     /// Products shipped as of the last quarter, for the cadence
     /// expectation.
     public var lastQuarterShipped: Int
@@ -191,6 +252,7 @@ public struct InvestorState: Codable, Equatable, Sendable {
         profitableQuarters: Int = 0,
         lastQuarterCash: Int = 0,
         lastQuarterRevenue: Int = 0,
+        peakQuarterRevenue: Int = 0,
         lastQuarterShipped: Int = 0,
         lastQuarterHeadcount: Int = 0,
         ipoDay: Int? = nil
@@ -206,6 +268,7 @@ public struct InvestorState: Codable, Equatable, Sendable {
         self.profitableQuarters = profitableQuarters
         self.lastQuarterCash = lastQuarterCash
         self.lastQuarterRevenue = lastQuarterRevenue
+        self.peakQuarterRevenue = peakQuarterRevenue
         self.lastQuarterShipped = lastQuarterShipped
         self.lastQuarterHeadcount = lastQuarterHeadcount
         self.ipoDay = ipoDay
@@ -258,7 +321,8 @@ extension InvestorState {
     private enum CodingKeys: String, CodingKey {
         case equityRemaining, rounds, pendingOffer, approachedInvestorIDs, boardPressure
         case reviews, lastReviewDay, lastOfferDay, profitableQuarters
-        case lastQuarterCash, lastQuarterRevenue, lastQuarterShipped, lastQuarterHeadcount
+        case lastQuarterCash, lastQuarterRevenue, peakQuarterRevenue
+        case lastQuarterShipped, lastQuarterHeadcount
         case ipoDay
     }
 
@@ -278,6 +342,10 @@ extension InvestorState {
             profitableQuarters: try container.decodeIfPresent(Int.self, forKey: .profitableQuarters) ?? 0,
             lastQuarterCash: try container.decodeIfPresent(Int.self, forKey: .lastQuarterCash) ?? 0,
             lastQuarterRevenue: try container.decodeIfPresent(Int.self, forKey: .lastQuarterRevenue) ?? 0,
+            // A save written before the peak was tracked starts from its
+            // last quarter, which is the most that save knows.
+            peakQuarterRevenue: try container.decodeIfPresent(Int.self, forKey: .peakQuarterRevenue)
+                ?? container.decodeIfPresent(Int.self, forKey: .lastQuarterRevenue) ?? 0,
             lastQuarterShipped: try container.decodeIfPresent(Int.self, forKey: .lastQuarterShipped) ?? 0,
             lastQuarterHeadcount: try container.decodeIfPresent(
                 Int.self, forKey: .lastQuarterHeadcount
@@ -299,6 +367,7 @@ extension InvestorState {
         try container.encode(profitableQuarters, forKey: .profitableQuarters)
         try container.encode(lastQuarterCash, forKey: .lastQuarterCash)
         try container.encode(lastQuarterRevenue, forKey: .lastQuarterRevenue)
+        try container.encode(peakQuarterRevenue, forKey: .peakQuarterRevenue)
         try container.encode(lastQuarterShipped, forKey: .lastQuarterShipped)
         try container.encode(lastQuarterHeadcount, forKey: .lastQuarterHeadcount)
         try container.encodeIfPresent(ipoDay, forKey: .ipoDay)
