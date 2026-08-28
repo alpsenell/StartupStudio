@@ -29,6 +29,11 @@ public struct Occupant: Sendable, Equatable, Hashable, Identifiable {
     public var speech: String?
     /// The role accessory WS-D draws on the sprite.
     public var role: RoleLook
+    /// Shown on the name plate when the player taps this person.
+    public var name: String?
+    /// Out of the building today — a trip, leave, an off-site. Their desk
+    /// stays empty with a note stuck to the monitor instead of a person.
+    public var isAway: Bool
 
     public init(
         id: UUID,
@@ -38,7 +43,9 @@ public struct Occupant: Sendable, Equatable, Hashable, Identifiable {
         mood: MoodLevel = .okay,
         friendIDs: [UUID] = [],
         speech: String? = nil,
-        role: RoleLook = .none
+        role: RoleLook = .none,
+        name: String? = nil,
+        isAway: Bool = false
     ) {
         self.id = id
         self.appearance = appearance
@@ -48,5 +55,7 @@ public struct Occupant: Sendable, Equatable, Hashable, Identifiable {
         self.friendIDs = friendIDs
         self.speech = speech
         self.role = role
+        self.name = name
+        self.isAway = isAway
     }
 }

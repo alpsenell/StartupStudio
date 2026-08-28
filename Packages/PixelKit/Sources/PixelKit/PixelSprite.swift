@@ -77,6 +77,7 @@ public struct PixelSprite: Sendable, Equatable {
     }
 
     private func renderFrame(_ index: Int) -> CGImage {
+        SpriteRenderStats.recordRender()
         var data = [UInt8](repeating: 0, count: width * height * 4)
         for (y, row) in frames[index].enumerated() {
             for (x, ch) in row.enumerated() {
@@ -122,15 +123,58 @@ private final class FrameCache: @unchecked Sendable {
     }
 }
 
+/// How many frames have been rasterized, for the performance suite.
+///
+/// `PixelSprite.renderFrame` is the expensive step (a full RGBA buffer plus
+/// a `CGImage`); everything else in the pipeline is arithmetic. Counting
+/// renders is therefore the cheapest honest proxy for "did the cache work",
+/// and `OfficePerfTests` asserts it goes to zero after warm-up.
+enum SpriteRenderStats {
+    /// The counter for the task currently measuring. Task-local so two
+    /// tests measuring in parallel cannot see each other's rasterizations.
+    @TaskLocal private static var active: Counter?
+
+    private final class Counter: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = 0
+
+        func increment() {
+            lock.lock()
+            value += 1
+            lock.unlock()
+        }
+
+        func read() -> Int {
+            lock.lock()
+            defer { lock.unlock() }
+            return value
+        }
+    }
+
+    static func recordRender() { active?.increment() }
+
+    /// Runs `body` and reports how many sprite frames it rasterized.
+    static func rasterizations(during body: () -> Void) -> Int {
+        let counter = Counter()
+        return $active.withValue(counter) {
+            body()
+            return counter.read()
+        }
+    }
+}
+
 /// Shared, keyed store of composed person sprites.
 ///
 /// `SpriteLibrary.person` builds a brand-new `PixelSprite` — and so a brand
-/// new frame cache — on every call, which means the office re-rasterizes
-/// every sprite on every rebuild. WS-C turns this into an `NSCache`-backed
-/// store so identical people share one instance (and one frame cache).
+/// new frame cache — on every call, which meant the office re-rasterized
+/// every sprite on every rebuild: at 4× speed on a campus that is ~130
+/// sprites four times a second. This is the `NSCache`-backed store that
+/// makes identical people share one instance, and therefore one frame
+/// cache, for the life of the process.
 ///
-/// Scaffold stub: `sprite(for:make:)` just calls `make()`, so behavior is
-/// unchanged while call sites can already route through the cache.
+/// Route *every* person lookup through it: the office composer and the
+/// director do, and any other scene that draws repeated people should too.
+/// `NSCache` evicts under memory pressure, so a miss is always safe.
 public enum SpriteCache {
     /// What makes one composed person sprite different from another.
     public struct Key: Hashable, Sendable {
@@ -152,9 +196,81 @@ public enum SpriteCache {
         }
     }
 
-    /// The sprite for `key`, building it with `make` on a miss. Every call
-    /// is a miss until WS-C lands the real cache.
+    /// The sprite for `key`, building it with `make` only on a miss.
     public static func sprite(for key: Key, make: () -> PixelSprite) -> PixelSprite {
-        make()
+        if let hit = store.object(forKey: KeyBox(key)) { return hit.sprite }
+        let sprite = make()
+        store.setObject(SpriteBox(sprite), forKey: KeyBox(key))
+        return sprite
+    }
+
+    /// Convenience for the common case: a person in a pose.
+    public static func person(
+        appearance: CharacterAppearance,
+        pose: SpriteLibrary.PersonPose,
+        isFounder: Bool = false,
+        role: RoleLook = .none
+    ) -> PixelSprite {
+        sprite(for: Key(appearance: appearance, pose: pose, isFounder: isFounder, role: role)) {
+            SpriteLibrary.person(appearance: appearance, pose: pose, isFounder: isFounder, role: role)
+        }
+    }
+
+    /// The sprite for an arbitrary string key.
+    ///
+    /// People are not the only thing rebuilt per frame: the room itself is
+    /// a 260×144 grid of strings on a campus, and desks, monitors, bubbles
+    /// and props are all rebuilt on every call too. Anything whose art is a
+    /// pure function of a few parameters belongs here, keyed by those
+    /// parameters — `"room.campus.260x144.36.night"`, `"desk"`, and so on.
+    public static func shared(_ key: String, make: () -> PixelSprite) -> PixelSprite {
+        let boxed = key as NSString
+        if let hit = named.object(forKey: boxed) { return hit.sprite }
+        let sprite = make()
+        named.setObject(SpriteBox(sprite), forKey: boxed)
+        return sprite
+    }
+
+    /// Empties the cache. Tests use it to measure a cold pipeline; the app
+    /// never needs to.
+    public static func removeAll() {
+        store.removeAllObjects()
+        named.removeAllObjects()
+    }
+
+    // MARK: Storage
+
+    /// One entry per (appearance × pose × founder × role) actually seen. A
+    /// campus of forty people in four poses is 160 entries of ~1 KB.
+    nonisolated(unsafe) private static let store: NSCache<KeyBox, SpriteBox> = {
+        let cache = NSCache<KeyBox, SpriteBox>()
+        cache.countLimit = 512
+        return cache
+    }()
+
+    /// Rooms, furniture, props, bubbles and effect art, keyed by the
+    /// parameters they are built from.
+    nonisolated(unsafe) private static let named: NSCache<NSString, SpriteBox> = {
+        let cache = NSCache<NSString, SpriteBox>()
+        cache.countLimit = 256
+        return cache
+    }()
+
+    private final class KeyBox: NSObject {
+        let key: Key
+
+        init(_ key: Key) { self.key = key }
+
+        override var hash: Int { key.hashValue }
+
+        override func isEqual(_ object: Any?) -> Bool {
+            (object as? KeyBox)?.key == key
+        }
+    }
+
+    private final class SpriteBox: NSObject {
+        let sprite: PixelSprite
+
+        init(_ sprite: PixelSprite) { self.sprite = sprite }
     }
 }
