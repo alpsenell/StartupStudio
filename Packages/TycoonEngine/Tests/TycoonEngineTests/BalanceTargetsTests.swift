@@ -248,6 +248,43 @@ struct BalanceTargetsTests {
         )
     }
 
+    // MARK: - Three years of one company
+
+    /// The long view: three game years of one studio have to *contain* the
+    /// consequences, not merely permit them. Consequences that only happen
+    /// in unit tests are not consequences.
+    @Test func threeYearsOfPlayProducesRealConsequences() throws {
+        let years = 3 * 364
+        let crunch = try Self.seeds.prefix(4).map {
+            try Self.run(CrunchHireBot(), seed: $0, days: years)
+        }
+        let neglect = try Self.seeds.prefix(4).map {
+            try Self.run(NeglectfulBot(), seed: $0, days: years)
+        }
+
+        // Someone hands in their notice under a boss who never says thank
+        // you — and gets an answer, or does not.
+        #expect(
+            neglect.contains { $0.resignationNotices >= 1 },
+            "nobody handed in their notice in three years of being ignored"
+        )
+        // …and does not under one who hands out raises.
+        #expect(
+            crunch.allSatisfy { $0.resignationNotices <= 3 },
+            "raises should keep notices rare: \(crunch.map(\.resignationNotices))"
+        )
+        // The founder who crunches for three years ends up in hospital and
+        // hears from the landlord.
+        #expect(
+            crunch.contains { $0.hospitalizations >= 1 },
+            "a founder who crunched for three years was never once in hospital"
+        )
+        #expect(
+            (crunch + neglect).contains { $0.evictionWarnings >= 1 },
+            "the landlord never wrote in three years across eight runs"
+        )
+    }
+
     // MARK: - The table behind the gates
 
     /// Not a gate: prints the per-bot pacing table the gates above are
