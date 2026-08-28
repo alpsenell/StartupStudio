@@ -192,23 +192,129 @@ enum RoomBuilder {
 
     /// The office room at a time of day: surfaces, trim, depth-banded floor,
     /// skirting shadow, and the tier's baked-in wall dressing.
+    ///
+    /// `amenityRects` are the floor zones the composer is about to lay on
+    /// top (`SceneComposer.zoneFrames`). Baked dressing that would land
+    /// under one is not drawn at all: it would be invisible, and a
+    /// half-covered prop reads as a bug. See `floorDressing`.
     static func officeRoom(
         tier: OfficeTierStyle,
         width: Int,
         height: Int,
         wallHeight: Int,
-        time: TimeOfDay = .day
+        time: TimeOfDay = .day,
+        amenityRects: [SceneRect] = []
     ) -> PixelSprite {
         let surfaces = officeSurfaces(tier: tier, time: time)
         var canvas = PixelCanvas(width: width, height: height)
         paintShell(&canvas, tier: tier, surfaces: surfaces, wallHeight: wallHeight)
-        dressOffice(&canvas, tier: tier, surfaces: surfaces, wallHeight: wallHeight, time: time)
+        dressOffice(
+            &canvas, tier: tier, surfaces: surfaces, wallHeight: wallHeight,
+            time: time, amenityRects: amenityRects
+        )
         return canvas.sprite()
     }
 
     /// Daylight office room — the call site every existing composer uses.
-    static func room(tier: OfficeTierStyle, width: Int, height: Int, wallHeight: Int) -> PixelSprite {
-        officeRoom(tier: tier, width: width, height: height, wallHeight: wallHeight, time: .day)
+    static func room(
+        tier: OfficeTierStyle, width: Int, height: Int, wallHeight: Int,
+        amenityRects: [SceneRect] = []
+    ) -> PixelSprite {
+        officeRoom(
+            tier: tier, width: width, height: height, wallHeight: wallHeight,
+            time: .day, amenityRects: amenityRects
+        )
+    }
+
+    // MARK: Floor dressing
+
+    /// A rectangle in scene pixels. The office layout already speaks in
+    /// these tuples (`OfficeWaypoints.furnitureRects`,
+    /// `SceneComposer.zoneFrames`); this is the same shape with a name.
+    typealias SceneRect = (x: Int, y: Int, width: Int, height: Int)
+
+    /// One piece of dressing that stands on the room floor.
+    ///
+    /// Floor dressing is baked into the room bitmap, *under* everything the
+    /// composer places on top of it, so the positions live here as data
+    /// rather than buried in the painting code: the amenity zones can be
+    /// asked whether they are about to sit on one, and a test can prove
+    /// they never do. Wall dressing needs none of this — nothing is ever
+    /// placed against the wall band.
+    struct FloorProp: Equatable {
+        var name: SpriteLibrary.PropName
+        /// Left edge.
+        var x: Int
+        /// The floor line the prop's feet stand on (its bottom edge).
+        var floorY: Int
+
+        var rect: SceneRect {
+            let sprite = SpriteLibrary.prop(name)
+            return (x: x, y: floorY - sprite.height, width: sprite.width, height: sprite.height)
+        }
+    }
+
+    /// Everything a tier stands on its floor, before the amenity zones get
+    /// a say. `officeRoom` draws the subset that stays clear of them.
+    static func floorDressing(
+        tier: OfficeTierStyle, width: Int, height: Int, wallHeight: Int
+    ) -> [FloorProp] {
+        switch tier {
+        case .garage:
+            return [
+                FloorProp(name: .cardboardBoxes, x: 2, floorY: height - 3),
+                FloorProp(name: .pizzaBoxes, x: width - 21, floorY: height - 3),
+            ]
+        case .loft:
+            return [
+                FloorProp(name: .beanbag, x: width - 19, floorY: height - 3),
+                FloorProp(name: .bookshelfOffice, x: width - 24, floorY: height - 15),
+            ]
+        case .studio:
+            return [
+                FloorProp(name: .serverRack, x: 1, floorY: height - 2),
+                FloorProp(name: .kitchenette, x: width - 28, floorY: height - 2),
+                FloorProp(name: .pingPongTable, x: width / 2 - 17, floorY: height - 2),
+            ]
+        case .campus:
+            // The lift is part of the back wall; reception sits out on the
+            // floor where visitors would actually meet it — directly under
+            // the lift, to the right of the strip the amenity zones can
+            // claim, with the atrium figs beside it. The whole lobby run is
+            // anchored off `floorZoneReserve` so it cannot drift back under
+            // a vending machine when a zone's art changes size.
+            let reserve = SceneComposer.floorZoneReserve(for: .campus)
+            let lobbyStart = (reserve.map { $0.x + $0.width + 4 }) ?? (width / 2 - 11)
+            let reception = SpriteLibrary.prop(.receptionDesk)
+            let plant = SpriteLibrary.prop(.atriumPlant)
+            return [
+                FloorProp(name: .elevatorDoors, x: width - 62, floorY: wallHeight + 2),
+                FloorProp(name: .receptionDesk, x: lobbyStart, floorY: height - 2),
+                FloorProp(
+                    name: .atriumPlant, x: lobbyStart + reception.width + 2, floorY: height - 2
+                ),
+                FloorProp(
+                    name: .atriumPlant,
+                    x: lobbyStart + reception.width + plant.width + 4, floorY: height - 2
+                ),
+            ]
+        }
+    }
+
+    /// The floor dressing a room actually paints: everything the tier owns,
+    /// minus anything an amenity zone is about to be laid over. The single
+    /// definition, shared by `dressOffice` and the composer invariant test.
+    static func visibleFloorDressing(
+        tier: OfficeTierStyle, width: Int, height: Int, wallHeight: Int,
+        amenityRects: [SceneRect]
+    ) -> [FloorProp] {
+        floorDressing(tier: tier, width: width, height: height, wallHeight: wallHeight)
+            .filter { prop in !amenityRects.contains { intersects(prop.rect, $0) } }
+    }
+
+    static func intersects(_ a: SceneRect, _ b: SceneRect) -> Bool {
+        a.x < b.x + b.width && b.x < a.x + a.width
+            && a.y < b.y + b.height && b.y < a.y + a.height
     }
 
     // MARK: Shell
@@ -306,7 +412,7 @@ enum RoomBuilder {
     /// Per-tier wall dressing and floor clutter, baked into the room.
     private static func dressOffice(
         _ canvas: inout PixelCanvas, tier: OfficeTierStyle, surfaces s: Surfaces,
-        wallHeight: Int, time: TimeOfDay
+        wallHeight: Int, time: TimeOfDay, amenityRects: [SceneRect]
     ) {
         let width = canvas.width
         let height = canvas.height
@@ -331,6 +437,17 @@ enum RoomBuilder {
             canvas.contactShadow(x: x, y: floorY, width: sprite.width)
         }
 
+        // Floor dressing first, and only where an amenity zone is not about
+        // to be laid on top of it: a prop drawn under a vending machine is
+        // not dressing, it is a smudge. On a crowded studio this is how the
+        // makeshift ping-pong table gives way to a real game room.
+        for prop in visibleFloorDressing(
+            tier: tier, width: width, height: height, wallHeight: wallHeight,
+            amenityRects: amenityRects
+        ) {
+            stand(SpriteLibrary.prop(prop.name), x: prop.x, floorY: prop.floorY)
+        }
+
         let window = SpriteLibrary.window(style: .office, time: time)
         let backFloor = wallHeight + 2
 
@@ -345,8 +462,6 @@ enum RoomBuilder {
             let bulbX = width / 2 + 16
             canvas.vLine(x: bulbX, y: 1, length: 4, Palettes.ink[3])
             canvas.stamp(SpriteLibrary.prop(.bulb), x: bulbX - 2, y: 4)
-            stand(SpriteLibrary.prop(.cardboardBoxes), x: 2, floorY: height - 3)
-            stand(SpriteLibrary.prop(.pizzaBoxes), x: width - 21, floorY: height - 3)
             // Extension cord snaking along the skirting.
             for x in stride(from: 20, to: width - 24, by: 1) {
                 canvas.set(x: x, y: backFloor + ((x / 7) % 2), Palettes.ink[3])
@@ -359,30 +474,18 @@ enum RoomBuilder {
             hang(SpriteLibrary.prop(.bike), x: 28)
             hang(SpriteLibrary.prop(.wallClock), x: 56)
             hang(SpriteLibrary.prop(.poster), x: 68)
-            stand(SpriteLibrary.prop(.beanbag), x: width - 19, floorY: height - 3)
-            stand(SpriteLibrary.prop(.bookshelfOffice), x: width - 24, floorY: height - 15)
 
         case .studio:
             hang(window, x: 6)
             hang(window, x: width - 6 - window.width)
             hang(SpriteLibrary.prop(.framedReviews), x: width / 2 - 34)
             hang(SpriteLibrary.prop(.wallClock), x: width / 2 + 22)
-            // Floor kit lives along the bottom edge, below the desk grid.
-            stand(SpriteLibrary.prop(.serverRack), x: 1, floorY: height - 2)
-            stand(SpriteLibrary.prop(.kitchenette), x: width - 28, floorY: height - 2)
-            stand(SpriteLibrary.prop(.pingPongTable), x: width / 2 - 17, floorY: height - 2)
 
         case .campus:
             for index in 0..<3 {
                 hang(window, x: 22 + index * ((width - 44) / 3))
             }
             hang(SpriteLibrary.prop(.ledSign), x: width / 2 - 11, bottomInset: 3)
-            // The lift is part of the back wall; reception sits out on the
-            // floor where visitors would actually meet it.
-            stand(SpriteLibrary.prop(.elevatorDoors), x: width - 62, floorY: wallHeight + 2)
-            stand(SpriteLibrary.prop(.receptionDesk), x: width / 2 - 11, floorY: height - 2)
-            stand(SpriteLibrary.prop(.atriumPlant), x: width - 16, floorY: height - 2)
-            stand(SpriteLibrary.prop(.atriumPlant), x: width - 32, floorY: height - 2)
         }
     }
 }

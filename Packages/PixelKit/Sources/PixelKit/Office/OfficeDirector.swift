@@ -177,14 +177,23 @@ public enum OfficeDirector {
 
         var scene: [PlacedSprite] = []
 
-        // 1. The room itself, at the hour.
+        // 1. The room itself, at the hour. The amenity zones go on top of
+        //    it, so it is told where they land and leaves its own floor
+        //    dressing out from under them; the shown set is part of the
+        //    cache key for exactly that reason.
+        let shownAmenities = SceneComposer.shownAmenities(for: tier, amenities: input.amenities)
+        let zoneRects = SceneComposer.zoneFrames(
+            for: tier, shown: shownAmenities, size: size,
+            founderY: SceneComposer.founderRowY(for: tier)
+        ).map { (x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
         scene.append(PlacedSprite(
             sprite: SpriteCache.shared(
-                "room.\(tier.rawValue).\(size.width)x\(size.height).\(l.wallHeight).\(ambience.timeOfDay.rawValue)"
+                "room.\(tier.rawValue).\(size.width)x\(size.height).\(l.wallHeight)"
+                    + ".\(ambience.timeOfDay.rawValue).\(shownAmenities.map(\.rawValue).joined(separator: "-"))"
             ) {
                 RoomBuilder.officeRoom(
                     tier: tier, width: size.width, height: size.height,
-                    wallHeight: l.wallHeight, time: ambience.timeOfDay
+                    wallHeight: l.wallHeight, time: ambience.timeOfDay, amenityRects: zoneRects
                 )
             },
             x: 0, y: 0, kind: .room, animation: .still, phase: 0
@@ -253,7 +262,7 @@ public enum OfficeDirector {
         // 7. Amenity furniture (people are placed by the director, not here).
         scene += SceneComposer.amenityZones(
             for: tier,
-            shown: SceneComposer.shownAmenities(for: tier, amenities: input.amenities),
+            shown: shownAmenities,
             size: size, founderY: founderY, onBreak: nil
         )
 

@@ -235,6 +235,122 @@ struct AmenitySceneTests {
         #expect(!busyPeople.contains { person in busy.contains { $0.kind == .amenityProp(.cafeteriaTable) && overlaps(person, $0) } })
     }
 
+    // MARK: Floor dressing vs amenity zones
+
+    /// The tier's own floor dressing is baked into the room bitmap and the
+    /// amenity zones are laid on top of it, so anything the room paints
+    /// inside a zone is simply lost. Nothing the room paints may land under
+    /// one — on any tier, for any of the sixteen sets of amenities.
+    @Test(arguments: OfficeTierStyle.allCases)
+    func bakedDressingNeverLandsUnderAnAmenityZone(tier: OfficeTierStyle) {
+        let size = SceneComposer.sceneSize(for: tier)
+        let wallHeight = SceneComposer.layout(for: tier).wallHeight
+        for owned in Self.powerSet {
+            let zones = SceneComposer.zoneFrames(
+                for: tier,
+                shown: SceneComposer.shownAmenities(for: tier, amenities: owned),
+                size: size, founderY: SceneComposer.founderRowY(for: tier)
+            ).map { (x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
+
+            for prop in RoomBuilder.visibleFloorDressing(
+                tier: tier, width: size.width, height: size.height,
+                wallHeight: wallHeight, amenityRects: zones
+            ) {
+                let rect = prop.rect
+                #expect(
+                    rect.x >= 0 && rect.y >= 0
+                        && rect.x + rect.width <= size.width && rect.y + rect.height <= size.height,
+                    "\(tier) \(prop.name) falls outside the room"
+                )
+                for zone in zones {
+                    #expect(
+                        !RoomBuilder.intersects(rect, zone),
+                        """
+                        \(tier) with \(owned.map(\.rawValue).sorted()): \
+                        \(prop.name) at \(rect) is drawn under the zone at \(zone)
+                        """
+                    )
+                }
+            }
+        }
+    }
+
+    /// The reserve the campus lobby is anchored to has to be a real bound:
+    /// no layout of any amenity set may put a zone outside it.
+    @Test(arguments: OfficeTierStyle.allCases)
+    func theFloorZoneReserveBoundsEveryLayout(tier: OfficeTierStyle) {
+        let size = SceneComposer.sceneSize(for: tier)
+        let reserve = SceneComposer.floorZoneReserve(for: tier)
+        for owned in Self.powerSet {
+            let zones = SceneComposer.zoneFrames(
+                for: tier,
+                shown: SceneComposer.shownAmenities(for: tier, amenities: owned),
+                size: size, founderY: SceneComposer.founderRowY(for: tier)
+            )
+            guard let reserve else {
+                #expect(zones.isEmpty, "\(tier) has no reserve but lays out zones")
+                continue
+            }
+            for zone in zones {
+                #expect(zone.x >= reserve.x && zone.y >= reserve.y, "\(tier) zone starts outside the reserve")
+                #expect(
+                    zone.x + zone.width <= reserve.x + reserve.width
+                        && zone.y + zone.height <= reserve.y + reserve.height,
+                    "\(tier) zone runs past the reserve"
+                )
+            }
+        }
+    }
+
+    /// The dressing a tier is *known* for survives every amenity it can
+    /// own: a campus keeps its reception desk and both atrium figs however
+    /// much it builds (this is the bug that started this — the desk used to
+    /// be drawn under the gym/cafeteria cluster), and a loft keeps its
+    /// bookshelf and beanbag. Studio floor kit is allowed to give way: a
+    /// real game room replaces the makeshift ping-pong table.
+    @Test func aTiersSignatureDressingSurvivesEveryAmenity() {
+        func alwaysDrawn(_ tier: OfficeTierStyle) -> Set<SpriteLibrary.PropName> {
+            let size = SceneComposer.sceneSize(for: tier)
+            let wallHeight = SceneComposer.layout(for: tier).wallHeight
+            var survivors: Set<SpriteLibrary.PropName>?
+            for owned in Self.powerSet {
+                let zones = SceneComposer.zoneFrames(
+                    for: tier,
+                    shown: SceneComposer.shownAmenities(for: tier, amenities: owned),
+                    size: size, founderY: SceneComposer.founderRowY(for: tier)
+                ).map { (x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
+                let names = Set(RoomBuilder.visibleFloorDressing(
+                    tier: tier, width: size.width, height: size.height,
+                    wallHeight: wallHeight, amenityRects: zones
+                ).map(\.name))
+                survivors = survivors.map { $0.intersection(names) } ?? names
+            }
+            return survivors ?? []
+        }
+
+        #expect(alwaysDrawn(.garage).isSuperset(of: [.cardboardBoxes, .pizzaBoxes]))
+        #expect(alwaysDrawn(.loft).isSuperset(of: [.beanbag, .bookshelfOffice]))
+        #expect(alwaysDrawn(.studio).contains(.serverRack))
+        #expect(alwaysDrawn(.campus).isSuperset(of: [.receptionDesk, .atriumPlant, .elevatorDoors]))
+    }
+
+    /// And with nothing built, every tier still shows all of its own kit —
+    /// the skip rule only ever fires because a zone is genuinely on top.
+    @Test(arguments: OfficeTierStyle.allCases)
+    func anUnimprovedOfficeKeepsAllItsDressing(tier: OfficeTierStyle) {
+        let size = SceneComposer.sceneSize(for: tier)
+        let wallHeight = SceneComposer.layout(for: tier).wallHeight
+        #expect(
+            RoomBuilder.visibleFloorDressing(
+                tier: tier, width: size.width, height: size.height,
+                wallHeight: wallHeight, amenityRects: []
+            )
+                == RoomBuilder.floorDressing(
+                    tier: tier, width: size.width, height: size.height, wallHeight: wallHeight
+                )
+        )
+    }
+
     @Test func idleFounderNeverLeavesTheFounderDesk() {
         let crowd = [occupant(seed: 1, status: .idle, isFounder: true), occupant(seed: 2, status: .coding)]
         let with = SceneComposer.compose(tier: .studio, occupants: crowd, amenities: [.cafeteria])
