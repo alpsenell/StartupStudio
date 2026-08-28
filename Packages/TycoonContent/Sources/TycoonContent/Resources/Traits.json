@@ -5,7 +5,10 @@
     "blurb": "Ships at 2am. Unreachable before eleven.",
     "bio": "I do my best thinking when the office is empty.",
     "isPositive": true,
-    "effects": { "outputMult": 1.12, "moraleTargetDelta": -4.0 }
+    "effects": {
+      "outputMult": 1.12, "moraleTargetDelta": -4.0, "bugMult": 1.15,
+      "crunchMoraleMult": 0.8
+    }
   },
   {
     "id": "mentor",
@@ -21,7 +24,10 @@
     "blurb": "Slower, but they learn something from every pass.",
     "bio": "It's nearly done. I just want one more look at it.",
     "isPositive": true,
-    "effects": { "outputMult": 0.88, "skillGrowthMult": 1.35, "moraleTargetDelta": -2.0 }
+    "effects": {
+      "outputMult": 0.88, "skillGrowthMult": 1.35,
+      "moraleTargetDelta": -2.0, "bugMult": 0.85
+    }
   },
   {
     "id": "speedster",
@@ -29,7 +35,9 @@
     "blurb": "Fast hands, shallow roots — output up, learning down.",
     "bio": "Ship it, see what breaks, fix that.",
     "isPositive": true,
-    "effects": { "outputMult": 1.18, "skillGrowthMult": 0.75 }
+    "effects": {
+      "outputMult": 1.18, "skillGrowthMult": 0.75, "bugMult": 1.25
+    }
   },
   {
     "id": "socialButterfly",
@@ -37,7 +45,10 @@
     "blurb": "Knows everyone, happier for it, and harder to tempt away.",
     "bio": "Coffee? I'll get the whole floor to come.",
     "isPositive": true,
-    "effects": { "outputMult": 0.95, "moraleTargetDelta": 6.0, "poachResist": 1.15 }
+    "effects": {
+      "outputMult": 0.95, "moraleTargetDelta": 6.0,
+      "poachResist": 1.15, "hypeMult": 1.15
+    }
   },
   {
     "id": "loner",
@@ -45,7 +56,10 @@
     "blurb": "Headphones on, output up — and no reason to stay if a rival calls.",
     "bio": "Put the ticket in the queue and I'll get to it.",
     "isPositive": true,
-    "effects": { "outputMult": 1.08, "moraleTargetDelta": -3.0, "poachResist": 0.85 }
+    "effects": {
+      "outputMult": 1.08, "moraleTargetDelta": -3.0,
+      "poachResist": 0.85, "hypeMult": 0.85
+    }
   },
   {
     "id": "flightRisk",
@@ -96,7 +110,10 @@
     "blurb": "Steady, tireless, and slow to complain.",
     "bio": "Tell me what's on fire and I'll start there.",
     "isPositive": true,
-    "effects": { "outputMult": 1.15, "skillGrowthMult": 0.9, "quitStreakBonus": 5 }
+    "effects": {
+      "outputMult": 1.15, "skillGrowthMult": 0.9,
+      "quitStreakBonus": 5, "bugMult": 0.85, "crunchMoraleMult": 0.7
+    }
   },
   {
     "id": "fragile",
@@ -104,7 +121,10 @@
     "blurb": "Brilliant on a good week. Bad weeks land hard.",
     "bio": "I'm fine. It's been a lot lately, that's all.",
     "isPositive": false,
-    "effects": { "skillGrowthMult": 1.1, "moraleTargetDelta": -8.0, "quitStreakBonus": -2 }
+    "effects": {
+      "skillGrowthMult": 1.1, "moraleTargetDelta": -8.0,
+      "quitStreakBonus": -2, "crunchMoraleMult": 1.5
+    }
   },
   {
     "id": "showman",
@@ -114,7 +134,8 @@
     "isPositive": true,
     "effects": {
       "outputMult": 0.92, "moraleTargetDelta": 3.0,
-      "teamMoraleBonus": 0.2, "dailyReputationBonus": 0.02
+      "teamMoraleBonus": 0.2, "dailyReputationBonus": 0.02,
+      "hypeMult": 1.35
     }
   }
 ]

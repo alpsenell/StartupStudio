@@ -420,21 +420,45 @@ struct TraitHookTests {
 
     // MARK: - The shipped bundle
 
-    /// `Traits.json` does not author the three new fields yet, so the shipped
-    /// game is exactly the game it was. This test is the tripwire: when the
-    /// balance pass authors them the hooks go live, which is a real balance
-    /// change, and the harness table has to be re-recorded in the same edit.
-    @Test func theShippedCatalogStillAuthorsNoneOfTheThree() {
+    /// The three fields are authored, the hooks are live, and every value
+    /// is one the trait's own copy already promised.
+    ///
+    /// This replaces `theShippedCatalogStillAuthorsNoneOfTheThree`, the
+    /// tripwire this suite shipped with — its instruction was to author the
+    /// table and re-record the harness in the same edit, which is what
+    /// happened (BALANCE-PASS.md §6.8). It is still a tripwire, just a
+    /// two-sided one now: eleven traits must author *nothing* here, so a
+    /// personality cannot quietly acquire a bug rate or a crunch tolerance
+    /// its blurb never claimed, and the three that do are pinned to the
+    /// number the balance run was recorded against.
+    @Test func theShippedCatalogAuthorsExactlyTheThreeTablesTheCopyPromises() {
+        // "Fast hands, shallow roots" / "Ships at 2am" against "slower, but
+        // they learn something from every pass" and "steady, tireless".
+        let bugs = ["speedster": 1.25, "nightOwl": 1.15, "perfectionist": 0.85, "workhorse": 0.85]
+        // "Always on somebody's podcast" / "knows everyone" against
+        // "headphones on".
+        let hype = ["showman": 1.35, "socialButterfly": 1.15, "loner": 0.85]
+        // "Bad weeks land hard" against "slow to complain" and a night owl
+        // who was going to be there anyway.
+        let crunch = ["fragile": 1.5, "workhorse": 0.7, "nightOwl": 0.8]
+
         for def in TestContent.bundled.traits {
             #expect(
-                def.effects.hypeMult == 1 && def.effects.bugMult == 1
-                    && def.effects.crunchMoraleMult == 1,
-                """
-                \(def.id) now authors hypeMult/bugMult/crunchMoraleMult. The \
-                hooks are live, so this is a real balance change: re-run the \
-                balance harness and update its recorded table.
-                """
+                def.effects.bugMult == (bugs[def.id] ?? 1),
+                Comment(rawValue: "\(def.id) authors bugMult \(def.effects.bugMult)")
             )
+            #expect(
+                def.effects.hypeMult == (hype[def.id] ?? 1),
+                Comment(rawValue: "\(def.id) authors hypeMult \(def.effects.hypeMult)")
+            )
+            #expect(
+                def.effects.crunchMoraleMult == (crunch[def.id] ?? 1),
+                Comment(rawValue: "\(def.id) authors crunchMoraleMult \(def.effects.crunchMoraleMult)")
+            )
+        }
+        let ids = Set(TestContent.bundled.traits.map(\.id))
+        for table in [bugs, hype, crunch] {
+            #expect(Set(table.keys).isSubset(of: ids), "a table names a trait that is not in the catalog")
         }
     }
 }

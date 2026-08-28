@@ -18,6 +18,11 @@ struct BalanceTargetsTests {
         86_420, 20_002, 999_331, 64_064, 123_457,
     ]
 
+    /// The large sample, for the two gates that assert a *rate* rather
+    /// than a fact about a run. Ten seeds cannot tell 45% from 70%, and —
+    /// measured — neither can forty.
+    static let manySeeds: [UInt64] = (0..<120).map { 1_000 + UInt64($0) * 7_919 }
+
     /// The shipped balance at a difficulty, with rivals disabled: the bots
     /// never answer poach or buyout offers, so auto-resolved poaches would
     /// measure the rival system rather than the economy.
@@ -156,14 +161,27 @@ struct BalanceTargetsTests {
     /// bankrupt or lose an employee" — and it is worth its own gate,
     /// because for the whole of integration the answer was 10 out of 10.
     ///
-    /// Forty seeds, not the ten the other gates use: the failure rate here
-    /// is genuinely chaotic seed to seed (the strategy runs at roughly
-    /// break-even, so a single market swing decides a run), and a
-    /// ten-sample of a ~45% rate lands anywhere from 3 to 7. This is the
-    /// one number worth measuring properly.
+    /// **A hundred and twenty seeds**, not the ten the other gates use and
+    /// no longer the forty this gate shipped with. The failure rate here is
+    /// genuinely chaotic seed to seed — the strategy runs at roughly
+    /// break-even, so a single market swing decides a run — and the sample
+    /// has to be big enough to carry the claim in the assertion.
+    ///
+    /// Forty was not. When `Traits.json` authored `crunchMoraleMult` this
+    /// gate failed at 67%, which read as a personality layer that had made
+    /// permanent crunch a death sentence. It had not: on a hundred and
+    /// twenty seeds the authored table is **55%** against **52%** with the
+    /// crunch column blanked — three seeds in a hundred and twenty. The
+    /// first forty are simply a bad draw for it. The tell was that blanking
+    /// only the *punitive* value (fragile) and keeping the two protective
+    /// ones still read 25/40, and sweeping fragile from 1.0 to 1.5 wandered
+    /// between 22 and 29 with no trend: a reshuffle, not a dose.
+    ///
+    /// At forty seeds the 95% interval on a ~55% rate is ±15 points, which
+    /// is most of the window this gate asserts. At a hundred and twenty it
+    /// is ±9, which fits inside it. That is the whole reason for the number.
     @Test func growthOnProductRevenueIsACoinFlip() throws {
-        let seeds: [UInt64] = (0..<40).map { 1_000 + UInt64($0) * 7_919 }
-        let results = try seeds.map { seed in
+        let results = try Self.manySeeds.map { seed in
             SimRunner.run(
                 days: Self.days, seed: seed, bot: CrunchHireBot(),
                 balance: try Self.balance(), content: TestContent.bundled
@@ -172,11 +190,15 @@ struct BalanceTargetsTests {
         let dead = Double(Self.count(results) { $0.wentBankrupt }) / Double(results.count)
         #expect(
             (0.25...0.65).contains(dead),
-            "crunch-hire went under on \(Int(dead * 100))% of forty seeds"
+            Comment(rawValue: "crunch-hire went under on \(Int(dead * 100))% of "
+                + "\(results.count) seeds")
         )
         // The survivors are not merely surviving.
         let studio = Self.count(results) { $0.daysToStudio != nil }
-        #expect(studio >= 10, "only \(studio)/40 crunch-hire seeds reached the studio")
+        #expect(
+            studio * 4 >= results.count,
+            Comment(rawValue: "only \(studio)/\(results.count) crunch-hire seeds reached the studio")
+        )
     }
 
     /// Growing fast has to be able to go wrong.
@@ -204,24 +226,34 @@ struct BalanceTargetsTests {
     /// not the game: for the whole of integration this bot was the
     /// evidence that growth had become unsurvivable.
     @Test func mismanagingPayrollStillKillsYou() throws {
-        // The same forty seeds `growthOnProductRevenueIsACoinFlip` uses,
-        // and for the same reason: on ten, both policies can land on 7.
+        // The same hundred and twenty seeds
+        // `growthOnProductRevenueIsACoinFlip` uses, and for the same
+        // reason: on ten, both policies can land on 7, and on forty the
+        // gap between them swings by twenty points on a sample that has
+        // not changed strategy at all.
         func deaths(_ bot: any BotPolicy) throws -> Int {
-            let seeds: [UInt64] = (0..<40).map { 1_000 + UInt64($0) * 7_919 }
-            return try seeds.count { seed in
+            try Self.manySeeds.count { seed in
                 SimRunner.run(
                     days: Self.days, seed: seed, bot: bot,
                     balance: try Self.balance(), content: TestContent.bundled
                 ).wentBankrupt
             }
         }
+        let total = Self.manySeeds.count
         let sensible = try deaths(CrunchHireBot())
         let runaway = try deaths(CrunchHireBot.runawayRaise)
+        // Measured: 86% against 55%, a thirty-one point gap. The bar is
+        // twenty points, which is more than twice the sampling error on
+        // either rate.
         #expect(
-            runaway >= sensible + 10,
-            "runaway raises killed \(runaway)/40 against \(sensible)/40 for anchored ones"
+            runaway >= sensible + total / 5,
+            Comment(rawValue: "runaway raises killed \(runaway)/\(total) against "
+                + "\(sensible)/\(total) for anchored ones")
         )
-        #expect(runaway >= 28, "only \(runaway)/40 runaway-raise seeds went under")
+        #expect(
+            runaway * 10 >= total * 7,
+            Comment(rawValue: "only \(runaway)/\(total) runaway-raise seeds went under")
+        )
     }
 
     // MARK: - Recurring revenue is a real strategy
