@@ -85,6 +85,30 @@ enum BotHelp {
             .filter { $0.penalty <= state.company.cash }
             .max { $0.payout < $1.payout }
     }
+
+    /// One weekend a month out of the office. Not self-care — a founder
+    /// who crunches eleven months of the year and takes one Saturday in
+    /// four, which is the least any engaged player does and more than any
+    /// bot did before the balance pass.
+    ///
+    /// Deliberately blind to the health meter: this founder does not go to
+    /// the doctor, so the crunch still ends in hospital. And deliberately
+    /// not called by `SoloSlowBot` or `NeglectfulBot`, whose whole job is
+    /// to show what never looking up costs.
+    ///
+    /// It matters beyond flavour: `rest` is the do-nothing default and
+    /// `ProgressionSystem` only counts a weekend the founder actually
+    /// planned, so a bot that never plans one can never complete chapter
+    /// 2's `g2_take_a_weekend` — and, four goals being the gate, can never
+    /// see chapter 3 at all.
+    static func weekendPlan(_ state: GameState) -> [GameAction] {
+        guard !state.life.isAway(day: state.day) else { return [] }
+        let monthly = state.weekOfYear.isMultiple(of: 4)
+        let wanted: WeekendActivity = monthly
+            ? (state.life.family.stage == .single ? .friends : .dateNight)
+            : .rest
+        return state.life.plannedActivity == wanted ? [] : [.planWeekend(wanted)]
+    }
 }
 
 /// The archetype solo founder: never hires, never crunches, builds one
@@ -122,14 +146,42 @@ struct SoloSlowBot: BotPolicy {
 /// Growth at any cost: crunches the whole company, hires the best-value
 /// candidate up to the office cap whenever there is a quarter's runway,
 /// upgrades the office as soon as it is affordable with a month of payroll
-/// to spare, and ships at 85% — but hands out raises and answers
-/// resignation notices, so it measures "can you grow fast if you *do* look
-/// after people?".
+/// to spare, and ships at 85% — but pays over the market rate, answers
+/// resignation notices, and takes one weekend a month, so it measures "can
+/// you grow fast if you *do* look after people?".
 struct CrunchHireBot: BotPolicy {
-    let name = "crunch-hire"
-    /// Weeks of payroll kept in the bank before hiring.
-    let hireRunwayWeeks = 12
+    /// How the bot answers an unhappy employee.
+    enum RaisePolicy {
+        /// What a founder counting the runway does: pay a generous
+        /// multiple of what the market says the person is worth.
+        case marketAnchored
+        /// What the bot did before the balance pass, and what a panicking
+        /// founder does: add a fifth to whatever they happen to be paying,
+        /// every day the person is unhappy, with nothing to anchor it.
+        case compounding
+    }
+
+    var name = "crunch-hire"
+    var raises: RaisePolicy = .marketAnchored
+    /// Weeks of payroll kept in the bank before hiring. Unchanged by the
+    /// balance pass: at 40 seeds the strategy's failure rate is flat
+    /// between 10 and 16 weeks (42–57%) and chaotic within it, so there is
+    /// no honest reason to move it.
+    var hireRunwayWeeks = 12
+    /// Headcount at which the studio graduates from mobile apps to the
+    /// bigger, better-paying web builds. Two: the day it is not just the
+    /// founder any more. A web app is 1.5× the points of a mobile app for
+    /// 2.2× the lifetime revenue, so the moment there is a second pair of
+    /// hands it is the better build — and a bot that waits for four hands
+    /// waits forever, because mobile apps alone never pay for the third.
+    var bigProductHeadcount = 2
     let raiseMoraleFloor = 45.0
+    /// What "a good employer" pays: this much of the candidate-market rate
+    /// for the person's skills. Above `staff.wellPaidThreshold` (1.15), so
+    /// it buys the morale bonus and keeps poachers honest, and *anchored*
+    /// — a founder counting the runway pays over the odds, not over the
+    /// last number they happened to write down.
+    let payPremium = 1.3
 
     func actions(
         for state: GameState,
@@ -143,6 +195,10 @@ struct CrunchHireBot: BotPolicy {
         if state.economy.workPace != .crunch {
             actions.append(.setWorkPace(.crunch))
         }
+        // Crunches the week and still spends the weekend somewhere — which
+        // is what "engaged" means, and the only thing standing between
+        // this bot and chapter 2.
+        actions.append(contentsOf: BotHelp.weekendPlan(state))
 
         let payroll = state.employees.reduce(0) { $0 + $1.weeklySalary }
         if state.headcount < balance.office(state.company.officeTier).headcountCap,
@@ -151,19 +207,32 @@ struct CrunchHireBot: BotPolicy {
             actions.append(.hire(candidateID: candidate.id))
         }
 
-        // Keep people: anyone drifting down gets a raise, and a resignation
-        // notice is answered on the spot.
+        // Keep people: anyone drifting down gets a raise, and a
+        // resignation notice is answered on the spot.
         for employee in state.employees
         where !employee.isFounder && employee.morale < raiseMoraleFloor {
-            actions.append(.adjustSalary(
-                employeeID: employee.id,
-                weeklySalary: Int(Double(employee.weeklySalary) * 1.2)
-            ))
+            switch raises {
+            case .marketAnchored:
+                let target = Int((balance.fairWeeklyPay(for: employee) * payPremium).rounded())
+                guard employee.weeklySalary < target else { continue }
+                actions.append(.adjustSalary(employeeID: employee.id, weeklySalary: target))
+            case .compounding:
+                actions.append(.adjustSalary(
+                    employeeID: employee.id,
+                    weeklySalary: Int(Double(employee.weeklySalary) * 1.2)
+                ))
+            }
         }
         if let pending = state.economy.pendingResignation {
+            // Whatever the policy, a notice is met with a real counter —
+            // `counterOfferRaiseFactor` is 1.12, so 1.15 always clears it.
+            let floor = Int(Double(pending.salaryAtNotice) * 1.15)
+            let fair = state.employees
+                .first { $0.id == pending.employeeID }
+                .map { Int((balance.fairWeeklyPay(for: $0) * payPremium).rounded()) } ?? 0
             actions.append(.adjustSalary(
                 employeeID: pending.employeeID,
-                weeklySalary: Int(Double(pending.salaryAtNotice) * 1.3)
+                weeklySalary: raises == .marketAnchored ? max(floor, fair) : floor
             ))
         }
 
@@ -184,7 +253,7 @@ struct CrunchHireBot: BotPolicy {
             }
         } else {
             actions.append(.startProduct(
-                typeID: state.headcount >= 4 ? "web_app" : "mobile_app",
+                typeID: state.headcount >= bigProductHeadcount ? "web_app" : "mobile_app",
                 topicID: BotHelp.topic(forProductNumber: state.products.count),
                 name: "Sprint \(state.products.count + 1)",
                 focus: .balanced
@@ -221,6 +290,7 @@ struct SaaSBuilderBot: BotPolicy {
         content: ContentCatalog
     ) -> [GameAction] {
         var actions: [GameAction] = []
+        actions.append(contentsOf: BotHelp.weekendPlan(state))
         let payroll = state.employees.reduce(0) { $0 + $1.weeklySalary }
 
         let livePlatform = state.products.first { product in
@@ -390,5 +460,20 @@ struct NeglectfulBot: BotPolicy {
             ))
         }
         return actions
+    }
+}
+
+extension CrunchHireBot {
+    /// The same strategy, with the raise rule the bot used before the
+    /// balance pass: a fifth on top of the current salary, every day the
+    /// person is unhappy, anchored to nothing. Crunch holds morale near
+    /// the floor, so the rule fires again and again and payroll compounds
+    /// clean off the end of the revenue curve.
+    ///
+    /// Kept as a control: growth plus crunch is survivable, mismanaging
+    /// payroll on top of it is not, and the only difference between this
+    /// bot and `crunch-hire` is those four lines.
+    static var runawayRaise: CrunchHireBot {
+        CrunchHireBot(name: "runaway-raise", raises: .compounding)
     }
 }

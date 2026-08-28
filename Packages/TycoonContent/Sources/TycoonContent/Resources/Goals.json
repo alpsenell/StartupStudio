@@ -131,10 +131,10 @@
   },
   {
     "id": "g3_a_hundred_and_fifty_k_product",
-    "title": "Earn $150,000 from one product",
+    "title": "Earn $75,000 from one product",
     "detail": "Lifetime revenue, not a good week.",
     "chapter": 3,
-    "condition": { "kind": "bestProductRevenue", "amount": 150000 },
+    "condition": { "kind": "bestProductRevenue", "amount": 75000 },
     "reward": { "cash": 5000, "reputation": 3.0 }
   },
   {

@@ -29,6 +29,7 @@ struct GoalCrunchBot: BotPolicy {
         content: ContentCatalog
     ) -> [GameAction] {
         var actions: [GameAction] = []
+        var researcherID: UUID?
 
         // Fill the office. Headroom is the engine's rule, so this never
         // sends a hire the reducer would ignore.
@@ -53,7 +54,21 @@ struct GoalCrunchBot: BotPolicy {
             actions.append(.advanceRelationship)
         }
 
-        // Somebody is always learning something.
+        // Somebody is always learning something — which needs somebody
+        // *on* research. Before the balance pass this block only ever
+        // looked at `research.banked`, and nothing in the bot ever put a
+        // person on the bench, so `banked` stayed at zero for two game
+        // years and `g2_research_two_techs` was unreachable by
+        // construction. One pair of hands out of three, once there are
+        // three.
+        if state.headcount >= 3,
+           !state.employees.contains(where: { $0.assignment == .research }),
+           let spare = state.employees.last(where: { !$0.isFounder }) {
+            actions.append(.assign(employeeID: spare.id, to: .research))
+            researcherID = spare.id
+        } else {
+            researcherID = state.employees.first { $0.assignment == .research }?.id
+        }
         if state.research.activeNodeID == nil,
            let node = content.techTree.first(where: { node in
                !state.research.unlocked.contains(node.id)
@@ -74,14 +89,21 @@ struct GoalCrunchBot: BotPolicy {
                 actions.append(.ship(productID: product.id))
             } else {
                 for employee in state.employees
-                where employee.assignment != .product(product.id) {
+                where employee.assignment != .product(product.id)
+                    && employee.id != researcherID {
                     actions.append(.assign(employeeID: employee.id, to: .product(product.id)))
                 }
             }
         } else if state.company.cash > productCashFloor {
+            // Rotates topics, and moves up to web apps once there is a
+            // team. Before the balance pass this shipped a fitness mobile
+            // app every time: `saturationPerRelease` is 0.75 over a
+            // 182-day window and `genreFatigueFactor` 0.78 over 84, so by
+            // the fourth one it was launching into a market it had itself
+            // flooded, and the studio never earned the loft.
             actions.append(.startProduct(
-                typeID: "mobile_app",
-                topicID: "fitness",
+                typeID: state.headcount >= 2 ? "web_app" : "mobile_app",
+                topicID: BotHelp.topic(forProductNumber: state.products.count),
                 name: "Momentum \(state.products.count + 1)",
                 focus: .balanced
             ))

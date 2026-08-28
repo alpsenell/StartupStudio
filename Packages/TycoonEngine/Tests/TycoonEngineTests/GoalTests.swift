@@ -146,23 +146,27 @@ struct GoalTests {
             days: 730, seed: 7_301, bot: GoalSoloBot(), balance: balance, content: Self.content
         ).state.progression
 
-        // Relaxed from 10 at integration. This bar was set against the
-        // scaffold's economy; WS-A's retune (a first product worth ~$30k
-        // rather than ~$500k, real rent, hosting on every live product) and
-        // WS-F's own rival share model together mean two years of engaged
-        // play now clears nine goals rather than a dozen. The early chapters
-        // still have to be reachable, which is what this measures.
+        // Back to 10 after the balance pass, having been relaxed to 8 at
+        // integration on the reading that the tuned economy no longer paid
+        // for the later chapters. It wasn't the economy: `GoalCrunchBot`
+        // shipped a fitness mobile app every single time (flooding a market
+        // it had itself saturated) and never put anybody on the research
+        // bench, so `research.banked` sat at zero for two game years and
+        // three of chapter 2's six goals were unreachable by construction.
+        // With both fixed the same bot finishes 11–15 goals over ten seeds
+        // and reaches chapter 3 on every one of them.
         #expect(
-            engaged.completedGoalIDs.count >= 8,
+            engaged.completedGoalIDs.count >= 10,
             "crunch-hire finished \(engaged.completedGoalIDs.count) goals in two years"
         )
         #expect(
             solo.completedGoalIDs.count >= 4,
             "solo-slow finished \(solo.completedGoalIDs.count) goals in two years"
         )
-        // Likewise: chapter 2 of 5 after two years under the merged economy.
-        // Reaching chapter 3+ takes the money the tuned economy no longer
-        // hands out for free — see the integration notes.
-        #expect(engaged.chapter >= 2, "crunch-hire only reached chapter \(engaged.chapter)")
+        // Chapter 3 — the studio — is what the plan asks an engaged player
+        // to be able to see inside two years. Chapters 4 and 5 are the
+        // year-three game and are gated on raising a round, acquiring a
+        // rival and a campus, none of which a two-year run reaches.
+        #expect(engaged.chapter >= 3, "crunch-hire only reached chapter \(engaged.chapter)")
     }
 }

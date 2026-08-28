@@ -64,6 +64,30 @@ struct PausePolicyTests {
         #expect(GameEvent.founderAway(reason: "Hospital", untilDay: 8, day: 1).severity == .critical)
     }
 
+    /// A story beat the player can answer stops the clock. One that only
+    /// happened to them does not.
+    ///
+    /// The catalog these two cases carried at the scaffold was ten
+    /// one-line events with a single numeric delta each, and grading them
+    /// `.notable` was right then. WS-B's rewrite split the difference in
+    /// the *event*: a beat with options and a deadline arrives as
+    /// `.narrativeChoice`, and what is left in `.randomEvent` and
+    /// `.lifeEvent` is by construction news with nothing to decide. Those
+    /// two were nineteen of a solo run's forty-four annual stops.
+    @Test func aStoryBeatOnlyStopsTheClockWhenItAsksSomething() {
+        #expect(
+            GameEvent.narrativeChoice(eventID: "journalist", respondByDay: 5, day: 1)
+                .severity == .critical
+        )
+        for event: GameEvent in [
+            .randomEvent(eventID: "laptop_dies", day: 1),
+            .lifeEvent(eventID: "old_friend_calls", day: 1),
+        ] {
+            #expect(event.severity == .info, "\(event)")
+            #expect(!event.pausesTimeline, "\(event) should not stop the clock")
+        }
+    }
+
     // MARK: - The owned-topic rule
 
     @Test func aMarketSwingInSomebodyElsesTopicIsSomebodyElsesNews() throws {

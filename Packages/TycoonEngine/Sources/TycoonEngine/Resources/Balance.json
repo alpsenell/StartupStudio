@@ -5,8 +5,8 @@
   "offices": {
     "garage": { "upgradeCost": 0, "weeklyRent": 0, "headcountCap": 3 },
     "loft": { "upgradeCost": 15000, "weeklyRent": 400, "headcountCap": 6 },
-    "studio": { "upgradeCost": 90000, "weeklyRent": 2500, "headcountCap": 14 },
-    "campus": { "upgradeCost": 750000, "weeklyRent": 12000, "headcountCap": 40 }
+    "studio": { "upgradeCost": 55000, "weeklyRent": 2500, "headcountCap": 14 },
+    "campus": { "upgradeCost": 300000, "weeklyRent": 12000, "headcountCap": 40 }
   },
   "bugChanceBase": 0.3,
   "bugChanceSkillDivisor": 120.0,
@@ -416,7 +416,7 @@
     "lonelinessRelationshipThreshold": 1.0,
     "burnoutWindowDays": 364,
     "burnoutReputationPenalty": 3.0,
-    "pauseBudgetDays": 5,
+    "pauseBudgetDays": 10,
     "creditLimitBase": 20000,
     "creditLimitRevenueFactor": 0.5,
     "creditLimitPerReputation": 300.0,

@@ -306,10 +306,22 @@ extension GameEvent {
         case .reviewsIn, .updateShipped, .contractFailed, .productOffMarket,
              .liveBugsSpiking, .childBorn, .relationshipChanged, .officeUpgraded,
              .officeRelocated, .homeUpgraded, .homeDowngraded, .researchCompleted,
-             .marketBoom, .marketCrash, .randomEvent, .lifeEvent,
+             .marketBoom, .marketCrash,
              .evictionWarning, .chronicConditionDiagnosed, .chronicConditionCleared,
              .founderMeltdown:
             .notable
+        // A story beat that asked the player nothing. It happened, its
+        // effects are applied, the feed and the journal have it — but
+        // there is no answer to give, so the clock does not stop for it.
+        //
+        // These graded `.notable` when the scaffold's ten one-line events
+        // were the only events in the game. WS-B's catalog then made every
+        // beat that *does* want an answer a `.narrativeChoice`, which is
+        // critical and always pauses; what is left in these two cases is
+        // by definition the news you cannot act on. Together they were
+        // nineteen of a solo run's forty-four annual stops.
+        case .randomEvent, .lifeEvent:
+            .info
         // Background texture: the feed shows it, the clock keeps running.
         case .weekendSpent, .instantActivityDone, .socialActivity, .staffBirthday,
              .friendshipFormed, .candidatesRefreshed, .contractOffersRefreshed:
