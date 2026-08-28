@@ -133,6 +133,11 @@ extension DecisionPrompt {
         if let staffEvent = state.pendingStaffEvent {
             return staffEventPrompt(staffEvent, state: state, content: content, balance: balance)
         }
+        // WS-A: somebody handed in notice. It is a critical pause with a
+        // deadline and a real answer, so it has to reach a sheet.
+        if let resignation = state.economy.pendingResignation {
+            return resignationPrompt(resignation, state: state, balance: balance)
+        }
         // WS-F: a term sheet pauses the clock, so the question has to be on
         // screen whatever tab the player was on.
         if let offer = state.investors.pendingOffer {
@@ -194,6 +199,63 @@ extension DecisionPrompt {
                     action: .resolveStaffEvent(choice: .strict)
                 ),
             ]
+        )
+    }
+
+    /// Somebody is leaving unless the founder answers. WS-A grades a
+    /// counter as enough when it clears `counterOfferRaiseFactor` on the
+    /// salary they were on at notice, or when it is a promotion — so those
+    /// are the two answers, and the third is letting them go, which is the
+    /// only other thing that clears the notice.
+    private static func resignationPrompt(
+        _ resignation: PendingResignation,
+        state: GameState,
+        balance: BalanceConfig
+    ) -> DecisionPrompt? {
+        guard let employee = state.employee(id: resignation.employeeID) else { return nil }
+        let raise = Int(
+            (Double(resignation.salaryAtNotice) * balance.economy.counterOfferRaiseFactor)
+                .rounded(.up)
+        )
+        let daysLeft = max(0, resignation.respondByDay - state.day)
+        var options: [Option] = [
+            Option(
+                label: "Raise them to \(raise.money)/wk",
+                detail: "Up from \(resignation.salaryAtNotice.money) — enough to keep them",
+                action: .adjustSalary(employeeID: employee.id, weeklySalary: raise)
+            )
+        ]
+        if let next = employee.level.next {
+            options.append(
+                Option(
+                    label: "Promote to \(next.displayName)",
+                    detail: "A title and the raise that comes with it",
+                    action: .promote(employeeID: employee.id)
+                )
+            )
+        }
+        options.append(
+            Option(
+                label: "Let them go",
+                detail: "They clear their desk today. Their friends will notice.",
+                role: .destructive,
+                action: .fire(employeeID: employee.id)
+            )
+        )
+        return DecisionPrompt(
+            id: "resignation-\(resignation.employeeID)-\(resignation.sinceDay)",
+            systemImage: "figure.walk.departure",
+            tint: Theme.warning,
+            title: "\(resignation.name) is leaving",
+            message: "\(resignation.name) has handed in notice after "
+                + "\(state.day - employee.hiredDay) days at \(state.company.name). "
+                + "A real raise or a promotion still turns it around — "
+                + "anything less and they walk.",
+            stats: [
+                ("On", "\(resignation.salaryAtNotice.money)/wk"),
+                ("Answer by", daysLeft == 0 ? "today" : "\(daysLeft) day\(daysLeft == 1 ? "" : "s")"),
+            ],
+            options: options
         )
     }
 

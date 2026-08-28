@@ -19,23 +19,25 @@ struct CoachTip: Identifiable, Equatable {
     /// Label for that button.
     var routeLabel: String?
 
-    /// The full tip catalog, keyed to Chapter 1's goal ids.
+    /// The full tip catalog, keyed to Chapter 1's goal ids in
+    /// `Goals.json` (WS-F). `ProgressionContentTests` pins those ids, so a
+    /// rename there is caught before it silently mutes a tip.
     static let all: [CoachTip] = [
         CoachTip(
             id: "tip.first_product",
-            goalID: "ch1_name_a_product",
+            goalID: "g1_name_a_product",
             message: "Start a product from HQ. Pick a type you can actually build, and a topic the market likes.",
             systemImage: "hammer.fill"
         ),
         CoachTip(
             id: "tip.ship_it",
-            goalID: "ch1_ship_it",
+            goalID: "g1_ship_it",
             message: "You can ship before the polish bar is full — it just reviews worse. Check the ship sheet's estimate first.",
             systemImage: "shippingbox.fill"
         ),
         CoachTip(
             id: "tip.first_hire",
-            goalID: "ch1_first_hire",
+            goalID: "g1_first_hire",
             message: "Candidates refresh every two weeks. A hire costs their salary every week, forever.",
             systemImage: "person.badge.plus",
             route: .hiring,
@@ -43,7 +45,7 @@ struct CoachTip: Identifiable, Equatable {
         ),
         CoachTip(
             id: "tip.first_contract",
-            goalID: "ch1_first_contract",
+            goalID: "g1_first_contract",
             message: "Contracts pay cash on a deadline. They're the bridge between products — and they grade your work.",
             systemImage: "briefcase.fill",
             route: .contracts,
@@ -51,13 +53,13 @@ struct CoachTip: Identifiable, Equatable {
         ),
         CoachTip(
             id: "tip.cash_positive",
-            goalID: "ch1_cash_positive",
+            goalID: "g1_week_in_the_black",
             message: "Runway is cash ÷ weekly burn. Under four weeks and the burn card turns orange.",
             systemImage: "flame.fill"
         ),
         CoachTip(
             id: "tip.first_review",
-            goalID: "ch1_review_40",
+            goalID: "g1_review_40",
             message: "Reviews land a week after launch. Early scores are meant to sting — the skill ceiling rises with your crew.",
             systemImage: "star.fill"
         ),
@@ -67,9 +69,9 @@ struct CoachTip: Identifiable, Equatable {
 /// The dismissible hint under the HUD, showing the tip for the player's
 /// most recently activated goal.
 ///
-/// Reads WS-F's active goal ids through `ProgressionReader`, which returns
-/// an empty list until progression exists — so on a branch without WS-F
-/// the strip simply never appears rather than showing stale advice.
+/// Reads WS-F's active goal ids through `ProgressionReader`. A tip shows
+/// while its goal is active and never again once dismissed or once the
+/// goal is done, so the strip empties itself as the player learns.
 struct TipStrip: View {
     let engine: GameEngine
     /// Deep-link handler, so a tip's button can jump to the screen it
@@ -133,25 +135,20 @@ struct TipStrip: View {
 
     private func dismiss(_ tip: CoachTip) {
         withAnimation(.spring(duration: 0.3)) {
-            dismissed.insert(tip.id)
+            _ = dismissed.insert(tip.id)
         }
         GameSettings.dismissedTips = dismissed
     }
 }
 
-/// Reads WS-F's progression state without depending on its shape.
+/// Reads WS-F's progression state.
 ///
-/// The scaffold's `ProgressionState` is empty; once WS-F lands its
-/// `activeGoals: [GoalProgress]`, the one line below starts returning real
-/// ids. Keeping the read in one place means the tip strip, the journal and
-/// anything else that wants goals has a single seam to update.
+/// Keeping the read in one place means the tip strip, the journal and
+/// anything else that wants goals has a single place to look.
 enum ProgressionReader {
     /// Goal ids the player is currently working on, newest chapter first.
     /// Empty whenever progression has no goals yet.
     static func activeGoalIDs(in state: GameState) -> [String] {
-        // WS-F contract: `state.progression.activeGoals.map(\.id)`.
-        // Until that property exists, no goals are active and no tip shows.
-        _ = state
-        return []
+        state.progression.activeGoals.map(\.id)
     }
 }

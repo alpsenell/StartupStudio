@@ -382,11 +382,14 @@ private struct RunRateCard: View {
     }
 
     /// Operating-style buckets. Written as a positive list rather than a
-    /// `default`, so WS-A's `.hosting` shows up as a warning here instead
-    /// of being silently lumped in with payroll.
+    /// `default`, so a category appended by another workstream shows up as
+    /// a warning here instead of being silently lumped in with payroll.
+    /// `.hosting` is the truest running cost in the game — every product
+    /// left on the market bills for servers every week, whether it sells
+    /// anything or not.
     private func isRunningCost(_ category: LedgerEntry.Category) -> Bool {
         switch category {
-        case .operating, .rent: true
+        case .operating, .rent, .hosting: true
         case .payroll, .sales, .contracts, .marketing, .research, .other: false
         @unknown default: true
         }

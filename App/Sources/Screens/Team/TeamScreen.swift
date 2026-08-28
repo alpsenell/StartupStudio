@@ -392,8 +392,9 @@ struct MoodFace: View {
 
 // MARK: - Assignment menu
 
-/// Compact chip menu that reassigns an employee: Idle, the product in
-/// development (if any), Research, or any active contract.
+/// Compact chip menu that reassigns an employee: Idle, anything in
+/// development, Research, a live product's support desk, or any active
+/// contract.
 private struct AssignmentMenu: View {
     let engine: GameEngine
     let employee: Employee
@@ -401,10 +402,27 @@ private struct AssignmentMenu: View {
     var body: some View {
         Menu {
             assignmentButton(.idle, label: "Idle", systemImage: "moon.zzz.fill")
-            if let product = engine.state.productInDevelopment {
-                assignmentButton(.product(product.id), label: product.name, systemImage: "hammer.fill")
+            // An office runs one to five builds at a time now (WS-A's
+            // concurrent dev slots), so every one of them is offered.
+            ForEach(engine.state.productsInDevelopment) { product in
+                assignmentButton(
+                    .product(product.id), label: product.name, systemImage: "hammer.fill"
+                )
             }
             assignmentButton(.research, label: "Research", systemImage: "flask.fill")
+            if !supportable.isEmpty {
+                Section("Support") {
+                    ForEach(supportable, id: \.product.id) { entry in
+                        assignmentButton(
+                            entry.assignment,
+                            label: entry.bugs > 0
+                                ? "\(entry.product.name) — \(entry.bugs) bug\(entry.bugs == 1 ? "" : "s")"
+                                : entry.product.name,
+                            systemImage: "lifepreserver.fill"
+                        )
+                    }
+                }
+            }
             if !engine.state.activeContracts.isEmpty {
                 Section("Contracts") {
                     ForEach(engine.state.activeContracts) { job in
@@ -446,6 +464,18 @@ private struct AssignmentMenu: View {
         }
     }
 
+    /// Everything on the market that somebody could be put on, with the
+    /// bugs the wild has found so far — the number is the whole reason to
+    /// staff a support desk.
+    private var supportable: [(product: Product, bugs: Int, assignment: Assignment)] {
+        engine.state.products.compactMap { product in
+            guard case .released(let info) = product.stage, !info.offMarket,
+                  let assignment = LiveOps.supportAssignment(productID: product.id)
+            else { return nil }
+            return (product, info.liveBugs, assignment)
+        }
+    }
+
     private var currentLabel: String {
         switch employee.assignment {
         case .idle:
@@ -458,8 +488,9 @@ private struct AssignmentMenu: View {
         case .product(let productID):
             // Defensive: the product should always resolve while assigned.
             engine.state.product(id: productID)?.name ?? "Product"
-        // WS-A appends `.support`; the fallback keeps the App building
-        // until this file's owner gives it a proper label.
+        case .support(let productID):
+            // Defensive: the product should always resolve while assigned.
+            engine.state.product(id: productID).map { "Support: \($0.name)" } ?? "Support"
         @unknown default:
             "Assigned"
         }

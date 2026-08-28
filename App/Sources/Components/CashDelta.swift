@@ -109,6 +109,7 @@ extension LedgerEntry.Category {
         case .contracts: "Contracts"
         case .marketing: "Marketing"
         case .research: "Research"
+        case .hosting: "Servers"
         case .other: "Other"
         @unknown default: "Other"
         }
@@ -125,8 +126,9 @@ extension LedgerEntry.Category {
         case .contracts: "briefcase.fill"
         case .marketing: "megaphone.fill"
         case .research: "flask.fill"
+        case .hosting: "server.rack"
         case .other: "ellipsis.circle.fill"
-        @unknown default: "server.rack"
+        @unknown default: "ellipsis.circle.fill"
         }
     }
 }

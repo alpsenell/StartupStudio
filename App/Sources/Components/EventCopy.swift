@@ -58,11 +58,21 @@ struct EventCopy {
              .friendshipFormed, .friendLostMorale, .staffBirthday, .staffEventOccurred,
              .staffEventResolved:
             .team
-        case .marketBoom, .marketCrash:
+        case .marketBoom, .marketCrash, .industryNews:
             .market
         case .rivalFounded, .rivalShipped, .rivalFolded, .poachAttempt, .poachDefeated,
-             .employeePoached, .buyoutOffered, .buyoutWithdrawn, .companySold, .rivalAcquired:
+             .employeePoached, .buyoutOffered, .buyoutWithdrawn, .companySold, .rivalAcquired,
+             .rivalProductLaunched, .priceWarStarted, .rivalCopycat:
             .rivals
+        // WS-A's founder consequences are life, not company: the landlord,
+        // the diagnosis and the meltdown all happen to the person.
+        case .evictionWarning, .homeDowngraded, .chronicConditionDiagnosed,
+             .chronicConditionCleared, .founderMeltdown:
+            .life
+        // Somebody handing in notice, and somebody being interviewed, are
+        // team news wherever they were raised.
+        case .resignationNotice, .candidateInterviewed:
+            .team
         default:
             .company
         }
@@ -244,9 +254,85 @@ struct EventCopy {
                 choice == .supportive ? Theme.positiveCash : Color.secondary
             )
 
-        // Events added after the scaffold land here instead of breaking
-        // the build: `@unknown default` keeps this switch compiling (with
-        // a warning naming the new case) when a workstream appends one.
+        // MARK: WS-A — live ops, resignations, the founder's own life
+
+        case .liveBugsSpiking(let productID, let liveBugs, let day):
+            (
+                "ant.fill",
+                "\(liveBugs) live bug\(liveBugs == 1 ? "" : "s") in \(productName(productID)) — "
+                    + "sales are bleeding until somebody works the queue",
+                day,
+                Theme.warning
+            )
+        case .updateShipped(let productID, let newScore, let day):
+            (
+                "arrow.triangle.2.circlepath",
+                "Update out for \(productName(productID)) — it reviews \(newScore) now",
+                day,
+                Theme.scoreTint(newScore)
+            )
+        case .priceChanged(let productID, let tier, let day):
+            (
+                "tag.fill",
+                "\(productName(productID)) moved to \(tier.displayName) pricing",
+                day,
+                Theme.accent
+            )
+        case .resignationNotice(_, let name, let respondByDay, let day):
+            (
+                "figure.walk.departure",
+                "\(name) handed in notice — \(max(0, respondByDay - state.day)) day"
+                    + "\(max(0, respondByDay - state.day) == 1 ? "" : "s") to answer with a raise "
+                    + "or a promotion",
+                day,
+                Theme.warning
+            )
+        case .evictionWarning(let untilDay, let day):
+            (
+                "house.badge.exclamationmark",
+                "The landlord wants the arrears cleared by day \(untilDay)",
+                day,
+                Theme.negativeCash
+            )
+        case .homeDowngraded(let tier, let day):
+            ("box.truck.fill", "Moved somewhere cheaper: \(tier.displayName)", day, Theme.negativeCash)
+        case .chronicConditionDiagnosed(let day):
+            (
+                "cross.case.fill",
+                "Second hospital stay this year — the doctor calls it chronic. "
+                    + "Energy is capped until three weekends are properly off.",
+                day,
+                Theme.negativeCash
+            )
+        case .chronicConditionCleared(let day):
+            ("heart.fill", "Three restful weekends did it — the cap is off", day, Theme.positiveCash)
+        case .founderMeltdown(let day):
+            (
+                "flame.fill",
+                "Burning out twice in a year made the trade press",
+                day,
+                Theme.warning
+            )
+
+        // MARK: WS-B and WS-F
+        //
+        // Both workstreams ship a presenter that already renders their own
+        // events — the story beats read out of the catalog, the chapter and
+        // board lines out of the progression state. Spelling the cases out
+        // here keeps the switch exhaustive (so the *next* appended case is
+        // a compiler error, not a silent "Something happened") while the
+        // copy stays in the one place its owner maintains.
+
+        case .narrativeChoice, .narrativeResolved, .industryNews,
+             .goalCompleted, .chapterReached,
+             .investmentOffered, .investmentAccepted, .investmentDeclined, .investmentWithdrawn,
+             .boardReviewed, .boardDemandedPlan, .founderOusted, .wentPublic,
+             .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .candidateInterviewed:
+            fallbackEntry(for: event)
+
+        // Events added after this file land here instead of breaking the
+        // build: `@unknown default` keeps the switch compiling (with a
+        // warning naming the new case) when a workstream appends one.
         // `EventPresenter` (WS-B) describes it; anything it doesn't know
         // still gets a line rather than vanishing.
         @unknown default:
