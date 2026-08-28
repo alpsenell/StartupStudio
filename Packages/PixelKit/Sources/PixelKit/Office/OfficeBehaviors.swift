@@ -363,8 +363,13 @@ public enum OfficeBehaviors {
         let deskAnchor = OfficeWaypoints.deskAnchor(tier: tier, index: seatIndex)
         // Low morale reads through the cloud over the head and the slumped
         // stance when they are up and about; in the chair everyone types.
-        // (A seated slump is WS-D art that does not exist yet — using the
-        // standing placeholder here would stand people out of their chairs.)
+        // WS-C left this line to be reverted to
+        // `occupant.mood == .low ? .slump : .desk` once a *seated* slump
+        // existed. Checked at integration: WS-D's `.slump` is real art now
+        // but it is a standing figure (head two rows low, both legs drawn,
+        // HomePersonArt.slumpA), so using it here would still stand people
+        // out of their chairs. Workaround stands; a seated slump is a
+        // follow-up for WS-D.
         let deskPose: ActorPose = .desk
         var segments: [ActorSegment] = []
         var cursor: TimeInterval = 0

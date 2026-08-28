@@ -164,11 +164,19 @@ public enum HomeSceneComposer {
             ))
         }
 
+        // Keyed through SpriteCache for the same reason WS-C keys the
+        // office room: this is a grid of a few thousand strings rebuilt on
+        // every frame of the Life tab, and it is a pure function of these
+        // five parameters.
         scene.append(PlacedSprite(
-            sprite: RoomBuilder.homeRoom(
-                tier: tier, width: l.width, height: l.height, wallHeight: l.wallHeight,
-                rug: l.rug, time: time
-            ),
+            sprite: SpriteCache.shared(
+                "home.\(tier.rawValue).\(l.width)x\(l.height).\(l.wallHeight).\(l.rug).\(time)"
+            ) {
+                RoomBuilder.homeRoom(
+                    tier: tier, width: l.width, height: l.height, wallHeight: l.wallHeight,
+                    rug: l.rug, time: time
+                )
+            },
             x: 0, y: 0, kind: .room, animation: .still, phase: 0
         ))
 

@@ -80,7 +80,9 @@ public enum CityMapComposer {
             let spots = buildingSpots(for: info.style)
             var claimed: [Int: PlacedSprite] = [:]
             if info.hasPlayerOffice, let index = tallestSpotIndex(in: spots) {
-                let hq = CitySpriteLibrary.playerHQ(tier: ambience.playerTier, time: time)
+                let hq = SpriteCache.shared("city.hq.\(ambience.playerTier.rawValue).\(time)") {
+                    CitySpriteLibrary.playerHQ(tier: ambience.playerTier, time: time)
+                }
                 let spot = spots[index]
                 claimed[index] = PlacedSprite(
                     sprite: hq,
@@ -92,7 +94,9 @@ public enum CityMapComposer {
             for (offset, seed) in info.rivalSeeds.prefix(2).enumerated() {
                 let index = rivalSpotIndex(in: spots, avoiding: Set(claimed.keys), offset: offset)
                 guard let index else { continue }
-                let hq = CitySpriteLibrary.rivalHQ(seed: seed, district: info.style, time: time)
+                let hq = SpriteCache.shared("city.rival.\(seed).\(info.style).\(time)") {
+                    CitySpriteLibrary.rivalHQ(seed: seed, district: info.style, time: time)
+                }
                 let spot = spots[index]
                 claimed[index] = PlacedSprite(
                     sprite: hq,
@@ -108,9 +112,13 @@ public enum CityMapComposer {
                     continue
                 }
                 placements.append(PlacedSprite(
-                    sprite: CitySpriteLibrary.building(
-                        width: spot.width, height: spot.height, district: info.style, time: time
-                    ),
+                    sprite: SpriteCache.shared(
+                        "city.bldg.\(spot.width)x\(spot.height).\(info.style).\(time)"
+                    ) {
+                        CitySpriteLibrary.building(
+                            width: spot.width, height: spot.height, district: info.style, time: time
+                        )
+                    },
                     x: spot.x, y: spot.y,
                     kind: .cityProp("building"),
                     animation: .glow,
