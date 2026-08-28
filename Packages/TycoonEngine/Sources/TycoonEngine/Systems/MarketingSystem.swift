@@ -26,9 +26,19 @@ enum MarketingSystem {
     /// additions land.
     private static func decayHype(_ state: inout GameState, _ balance: BalanceConfig) {
         for index in state.products.indices {
-            guard case .development(var dev) = state.products[index].stage else { continue }
-            dev.hype *= 1 - balance.hypeDecayRate
-            state.products[index].stage = .development(dev)
+            switch state.products[index].stage {
+            case .development(var dev):
+                dev.hype *= 1 - balance.hypeDecayRate
+                state.products[index].stage = .development(dev)
+            case .released(var info) where info.liveHype > 0:
+                // A post-launch push fades the same way, which is what
+                // makes it a temporary bet against the launch's permanent
+                // one.
+                info.liveHype *= 1 - balance.hypeDecayRate
+                state.products[index].stage = .released(info)
+            default:
+                continue
+            }
         }
     }
 
@@ -55,9 +65,23 @@ enum MarketingSystem {
                 continue
             }
             guard state.day <= campaign.endDay,
-                  let index = state.products.firstIndex(where: { $0.id == campaign.productID }),
-                  case .development(var dev) = state.products[index].stage
+                  let index = state.products.firstIndex(where: { $0.id == campaign.productID })
             else { continue }
+            // A push bought before launch dies at the launch — its job
+            // was the launch, and billing it on past that is charging the
+            // player for something they did not buy. A push bought *on* a
+            // release keeps running until its own end day.
+            let target: ProductStage
+            switch state.products[index].stage {
+            case .development(var dev):
+                dev.hype += balance.socialPushDailyHype * hypeFactor
+                target = .development(dev)
+            case .released(var info) where campaign.startedOnRelease && !info.offMarket:
+                info.liveHype += balance.socialPushDailyHype * hypeFactor
+                target = .released(info)
+            default:
+                continue
+            }
 
             state.company.cash -= balance.socialPushDailyCost
             state.ledger.post(LedgerEntry(
@@ -66,8 +90,7 @@ enum MarketingSystem {
                 category: .marketing,
                 label: CampaignKind.socialPush.ledgerLabel
             ))
-            dev.hype += balance.socialPushDailyHype * hypeFactor
-            state.products[index].stage = .development(dev)
+            state.products[index].stage = target
             kept.append(campaign)
         }
         state.campaigns = kept
@@ -89,9 +112,15 @@ enum MarketingSystem {
         content: ContentCatalog
     ) -> [GameEvent] {
         guard let kind = CampaignKind(rawValue: kindID),
-              let productIndex = state.products.firstIndex(where: { $0.id == productID }),
-              case .development(var dev) = state.products[productIndex].stage
+              let productIndex = state.products.firstIndex(where: { $0.id == productID })
         else { return [] }
+        // A released product is a valid target. It was not, while the
+        // Marketing tab listed released products and told the player "a
+        // push now keeps it in front of people" — so every post-launch
+        // campaign was silently refused. A delisted one is still no target.
+        if case .released(let info) = state.products[productIndex].stage, info.offMarket {
+            return []
+        }
 
         switch kind {
         case .socialPush:
@@ -113,12 +142,18 @@ enum MarketingSystem {
         }
         if upfrontCost > 0, state.company.cash < upfrontCost { return [] }
 
-        let duplicate = state.campaigns.contains { campaign in
-            campaign.kindID == kind.rawValue
-                && campaign.productID == productID
-                && campaign.endDay >= state.day
+        // Previous runs of this kind on this product, kept in `campaigns`
+        // as history. They gate the repeat and price it.
+        let previous = state.campaigns.filter {
+            $0.kindID == kind.rawValue && $0.productID == productID
         }
-        if duplicate { return [] }
+        let cooldown = balance.economy.campaignCooldownDays
+        // The old guard only refused a campaign still *running*, and a
+        // one-shot ends the day it starts — so a press release could be
+        // repeated every day, converging on 750 hype and +37 review
+        // points for $500 a time.
+        let blocked = previous.contains { state.day - $0.endDay < max(0, cooldown) || $0.endDay >= state.day }
+        if blocked { return [] }
 
         if upfrontCost > 0 {
             state.company.cash -= upfrontCost
@@ -127,24 +162,40 @@ enum MarketingSystem {
             ))
         }
 
-        // Who is running marketing decides how far a one-shot carries.
+        // Who is running marketing decides how far a one-shot carries —
+        // and how often you have already told this story.
         let hypeFactor = TraitEffects.campaignHypeFactor(state.employees, content: content)
-        switch kind {
-        case .socialPush:
-            break // Hype accrues daily while the push runs.
-        case .pressRelease:
-            dev.hype += balance.pressReleaseHype * hypeFactor
-        case .launchEvent:
-            dev.hype += balance.launchEventHype * hypeFactor
+            * pow(balance.economy.campaignRepeatHypeDecay, Double(previous.count))
+        let oneShotHype: Double = switch kind {
+        case .socialPush: 0 // Hype accrues daily while the push runs.
+        case .pressRelease: balance.pressReleaseHype * hypeFactor
+        case .launchEvent: balance.launchEventHype * hypeFactor
         }
-        state.products[productIndex].stage = .development(dev)
+        if oneShotHype > 0 {
+            switch state.products[productIndex].stage {
+            case .development(var dev):
+                dev.hype += oneShotHype
+                state.products[productIndex].stage = .development(dev)
+            case .released(var info):
+                // After launch the press has already filed: this buys
+                // attention, which is sales, not a better review.
+                info.liveHype += oneShotHype
+                state.products[productIndex].stage = .released(info)
+            }
+        }
 
         let id = UUID(from: &state.rng)
         let endDay = kind == .socialPush
             ? state.day + balance.socialPushDurationDays
             : state.day
+        let onRelease: Bool = if case .released = state.products[productIndex].stage {
+            true
+        } else {
+            false
+        }
         state.campaigns.append(MarketingCampaign(
-            id: id, kindID: kind.rawValue, productID: productID, endDay: endDay
+            id: id, kindID: kind.rawValue, productID: productID,
+            endDay: endDay, startedOnRelease: onRelease
         ))
         return [.campaignStarted(campaignID: id, day: state.day)]
     }

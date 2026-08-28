@@ -801,7 +801,10 @@
     "unsecuredCreditFraction": 0.45,
     "guaranteeHomeFactor": 0.7,
     "guaranteeCallDays": 7,
-    "updateQualityDecay": 0.6
+    "updateQualityDecay": 0.6,
+    "campaignCooldownDays": 14,
+    "campaignRepeatHypeDecay": 0.7,
+    "liveHypeSalesFactor": 1.0
   },
   "narrative": {
     "companyEventIntervalDays": 7,

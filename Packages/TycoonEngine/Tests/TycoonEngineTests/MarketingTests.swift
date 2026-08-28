@@ -6,7 +6,7 @@ import TycoonEngine
 @Suite("Marketing campaigns")
 struct MarketingTests {
     /// A tiny catalog whose tech tree can unlock both gated campaign kinds.
-    private static func campaignContent(
+    static func campaignContent(
         designPts: Double = 1_000, codePts: Double = 1_000, polishPts: Double = 1_000
     ) -> ContentCatalog {
         TestContent.tiny(
@@ -61,16 +61,19 @@ struct MarketingTests {
         state.company.cash = 4_999
         rejected(.startCampaign(kindID: "launch_event", productID: productID), "can't afford the launch event")
 
-        // A campaign on a released product is ignored too.
+        // A campaign on a *delisted* product is ignored. A released one
+        // that is still selling is a valid target: the Marketing tab has
+        // always listed those and promised "a push now keeps it in front
+        // of people", while `startCampaign` silently refused every one.
         state.company.cash = 50_000
         let shipped = Product(
             id: UUID(), name: "Old", typeID: "tool", topicID: "testing",
             stage: .released(ReleaseInfo(
-                launchDay: 0, quality: 50, reviews: [], weeklySales: [], offMarket: false
+                launchDay: 0, quality: 50, reviews: [], weeklySales: [], offMarket: true
             ))
         )
         state.products.append(shipped)
-        rejected(.startCampaign(kindID: "social_push", productID: shipped.id), "released product")
+        rejected(.startCampaign(kindID: "social_push", productID: shipped.id), "delisted product")
 
         // Duplicate kind on the same product while one is still active.
         #expect(Reducer.apply(
@@ -234,5 +237,139 @@ struct MarketingTests {
         Reducer.tick(&state, balance: balance, content: content)
         #expect(state.campaigns.isEmpty)
         #expect(marketingEntries(in: state).count == 3)
+    }
+}
+
+// MARK: - Repeats and the post-launch channel
+
+/// The exploit and the missing channel: a one-shot ends the day it starts,
+/// so before a cooldown existed the duplicate guard lapsed overnight and a
+/// $500 press release could be bought every day.
+@Suite("Campaign repeats and post-launch pushes")
+struct CampaignRepeatTests {
+    private static func economy(
+        campaignCooldownDays: Int = 14,
+        campaignRepeatHypeDecay: Double = 0.7,
+        liveHypeSalesFactor: Double = 1
+    ) -> BalanceConfig.EconomyBalance {
+        var economy = TestBalance.neutralEconomy
+        economy.campaignCooldownDays = campaignCooldownDays
+        economy.campaignRepeatHypeDecay = campaignRepeatHypeDecay
+        economy.liveHypeSalesFactor = liveHypeSalesFactor
+        return economy
+    }
+
+    private static func started(
+        _ balance: BalanceConfig
+    ) throws -> (GameState, UUID, ContentCatalog) {
+        let content = MarketingTests.campaignContent()
+        var state = GameState.newGame(companyName: "Acme", seed: 3, balance: balance)
+        state.company.cash = 500_000
+        state.research.unlocked.insert("press_kit")
+        Reducer.apply(
+            .startProduct(typeID: "tool", topicID: "testing", name: "T", focus: .balanced),
+            to: &state, balance: balance, content: content
+        )
+        let id = try #require(state.productInDevelopment?.id)
+        return (state, id, content)
+    }
+
+    @Test("A press release cannot be repeated the next day")
+    func oneShotsHaveACooldown() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        var (state, id, content) = try Self.started(balance)
+
+        #expect(!Reducer.apply(
+            .startCampaign(kindID: "press_release", productID: id),
+            to: &state, balance: balance, content: content
+        ).isEmpty)
+
+        Reducer.tick(&state, balance: balance, content: content)
+        #expect(Reducer.apply(
+            .startCampaign(kindID: "press_release", productID: id),
+            to: &state, balance: balance, content: content
+        ).isEmpty)
+    }
+
+    @Test("Telling the same story again is worth less")
+    func repeatsDecay() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        var (state, id, content) = try Self.started(balance)
+
+        func pressRelease() throws -> Double {
+            guard case .development(let before) = try #require(state.product(id: id)).stage else {
+                return 0
+            }
+            Reducer.apply(
+                .startCampaign(kindID: "press_release", productID: id),
+                to: &state, balance: balance, content: content
+            )
+            guard case .development(let after) = try #require(state.product(id: id)).stage else {
+                return 0
+            }
+            return after.hype - before.hype
+        }
+
+        let first = try pressRelease()
+        // Past the cooldown, and hype decay does not touch the delta.
+        for _ in 0..<15 { Reducer.tick(&state, balance: balance, content: content) }
+        let second = try pressRelease()
+
+        #expect(first > 0)
+        #expect(second < first)
+        #expect(abs(second - first * 0.7) < 0.01)
+    }
+
+    @Test("A push on a released product feeds sales, not reviews")
+    func postLaunchPushIsRealNow() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        let content = MarketingTests.campaignContent()
+        var state = GameState.newGame(companyName: "Acme", seed: 3, balance: balance)
+        state.company.cash = 500_000
+        let released = Product(
+            id: UUID(), name: "Live", typeID: "tool", topicID: "testing",
+            stage: .released(ReleaseInfo(
+                launchDay: 0, quality: 60, reviews: [], weeklySales: [], offMarket: false
+            ))
+        )
+        state.products.append(released)
+
+        // The tab always offered this and the engine always refused it.
+        #expect(!Reducer.apply(
+            .startCampaign(kindID: "social_push", productID: released.id),
+            to: &state, balance: balance, content: content
+        ).isEmpty)
+
+        Reducer.tick(&state, balance: balance, content: content)
+        guard case .released(let info) = try #require(state.product(id: released.id)).stage else {
+            return
+        }
+        #expect(info.liveHype > 0)
+        // The press has already filed: this buys attention, not a better
+        // score.
+        #expect(info.hypeAtLaunch == 0)
+    }
+
+    @Test("A push bought for the launch ends at the launch")
+    func launchPushDoesNotBillOnPastRelease() throws {
+        let balance = TestBalance.make(life: TestBalance.quietLife, economy: Self.economy())
+        var (state, id, content) = try Self.started(balance)
+        Reducer.apply(
+            .startCampaign(kindID: "social_push", productID: id),
+            to: &state, balance: balance, content: content
+        )
+        #expect(state.campaigns.count == 1)
+
+        // Ship it out from under the running push.
+        if case .development = state.product(id: id)?.stage {
+            let index = try #require(state.products.firstIndex { $0.id == id })
+            state.products[index].stage = .released(ReleaseInfo(
+                launchDay: state.day, quality: 60, reviews: [], weeklySales: [], offMarket: false
+            ))
+        }
+        Reducer.tick(&state, balance: balance, content: content)
+
+        // Its job was the launch; the player is not billed past it.
+        #expect(state.campaigns.isEmpty)
     }
 }

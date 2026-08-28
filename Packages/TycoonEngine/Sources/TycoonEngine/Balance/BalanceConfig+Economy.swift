@@ -67,6 +67,19 @@ extension BalanceConfig {
         /// A patch costs this share of the original point pools.
         public var updatePoolFraction: Double
         /// Quality a finished patch adds (capped at 100).
+        /// Days a campaign kind must wait before running again on the
+        /// same product. Zero — the default — is the old behaviour, where
+        /// a one-shot's duplicate guard lapsed the day after it ran and a
+        /// $500 press release could be repeated daily.
+        public var campaignCooldownDays: Int
+        /// Hype multiplier per previous campaign of the same kind on the
+        /// same product. `1` is no decay, and the default.
+        public var campaignRepeatHypeDecay: Double
+        /// What a point of post-launch hype is worth to weekly sales,
+        /// through `salesHypeDivisor`. Zero disables the channel, which is
+        /// the default and matches a game where post-launch campaigns were
+        /// silently refused.
+        public var liveHypeSalesFactor: Double
         public var updateQualityBonus: Double
         /// Geometric decay applied to that bonus per patch already
         /// shipped, read off `ReleaseInfo.updateCount`. `1` is the old
@@ -253,6 +266,9 @@ extension BalanceConfig {
             premiumQualityThreshold: Double = 70,
             premiumChurnPenalty: Double = 2.0,
             updatePoolFraction: Double = 0.30,
+            campaignCooldownDays: Int = 0,
+            campaignRepeatHypeDecay: Double = 1,
+            liveHypeSalesFactor: Double = 0,
             updateQualityBonus: Double = 8,
             updateQualityDecay: Double = 1,
             updateReviewWeight: Double = 0.5,
@@ -318,6 +334,9 @@ extension BalanceConfig {
             self.premiumQualityThreshold = premiumQualityThreshold
             self.premiumChurnPenalty = premiumChurnPenalty
             self.updatePoolFraction = updatePoolFraction
+            self.campaignCooldownDays = campaignCooldownDays
+            self.campaignRepeatHypeDecay = campaignRepeatHypeDecay
+            self.liveHypeSalesFactor = liveHypeSalesFactor
             self.updateQualityBonus = updateQualityBonus
             self.updateQualityDecay = updateQualityDecay
             self.updateReviewWeight = updateReviewWeight

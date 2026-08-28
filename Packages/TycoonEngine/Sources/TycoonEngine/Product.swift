@@ -151,6 +151,11 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// The development hype captured at ship; feeds the review hype bonus
     /// and the weekly sales peak multiplier.
     public var hypeAtLaunch: Double
+    /// Hype from campaigns run *after* launch. Decays daily like a
+    /// development product's does, and feeds sales rather than reviews —
+    /// the press has already filed, but people can still be told the thing
+    /// exists. `hypeAtLaunch` is frozen at ship and cannot serve this.
+    public var liveHype: Double
     /// How many weeks sales take to ramp up to the full peak, computed at
     /// ship from the team's marketing skill and launch hype. 1 = the old
     /// instant-peak behavior (also the fallback for pre-adoption saves).
@@ -186,6 +191,7 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         weeklySales: [WeeklySale],
         offMarket: Bool,
         hypeAtLaunch: Double = 0,
+        liveHype: Double = 0,
         adoptionWeeks: Double = 1,
         launchMarketScale: Double = 1,
         liveBugs: Int = 0,
@@ -201,6 +207,7 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         self.weeklySales = weeklySales
         self.offMarket = offMarket
         self.hypeAtLaunch = hypeAtLaunch
+        self.liveHype = liveHype
         self.adoptionWeeks = adoptionWeeks
         self.launchMarketScale = launchMarketScale
         self.liveBugs = liveBugs
@@ -232,6 +239,7 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
 extension ReleaseInfo {
     private enum CodingKeys: String, CodingKey {
         case launchDay, quality, reviews, weeklySales, offMarket, hypeAtLaunch, adoptionWeeks
+        case liveHype
         case launchMarketScale, liveBugs, priceTier, subscribers, isSubscription
         case lastUpdateDay, updateCount
     }
@@ -245,6 +253,7 @@ extension ReleaseInfo {
             weeklySales: try container.decode([WeeklySale].self, forKey: .weeklySales),
             offMarket: try container.decode(Bool.self, forKey: .offMarket),
             hypeAtLaunch: try container.decodeIfPresent(Double.self, forKey: .hypeAtLaunch) ?? 0,
+            liveHype: try container.decodeIfPresent(Double.self, forKey: .liveHype) ?? 0,
             adoptionWeeks: try container.decodeIfPresent(Double.self, forKey: .adoptionWeeks) ?? 1,
             launchMarketScale: try container.decodeIfPresent(Double.self, forKey: .launchMarketScale) ?? 1,
             liveBugs: try container.decodeIfPresent(Int.self, forKey: .liveBugs) ?? 0,

@@ -106,11 +106,16 @@ private struct ProductPicker: View {
 private struct HypeCard: View {
     let product: Product
 
-    /// In-development hype, or nil for a released product (hype is
-    /// captured at launch and no longer moves).
-    private var hype: Double? {
-        if case .development(let progress) = product.stage { return progress.hype }
-        return nil
+    /// The hype that is actually live on this product: the pre-launch
+    /// figure while it is building, and the post-launch one once it is
+    /// out. Released products used to read `nil` here because hype was
+    /// frozen at ship — but a campaign run *since* launch is a real,
+    /// decaying number now, and this card is where the player watches it.
+    private var hype: Double {
+        switch product.stage {
+        case .development(let progress): progress.hype
+        case .released(let release): release.liveHype
+        }
     }
 
     private var launchHype: Double? {
@@ -118,7 +123,12 @@ private struct HypeCard: View {
         return nil
     }
 
-    private var hypeValue: Int { Int((hype ?? 0).rounded()) }
+    private var isLive: Bool {
+        if case .released = product.stage { return true }
+        return false
+    }
+
+    private var hypeValue: Int { Int(hype.rounded()) }
 
     var body: some View {
         CardView("Hype", systemImage: "flame.fill") {
@@ -127,29 +137,29 @@ private struct HypeCard: View {
                     Text(product.name)
                         .font(.system(.headline, design: .rounded))
                     Spacer(minLength: Theme.Spacing.sm)
-                    if hype != nil {
-                        Text("\(hypeValue)")
+                    Text("\(hypeValue)")
                             .font(.system(.title2, design: .rounded).weight(.bold))
                             .monospacedDigit()
                             .foregroundStyle(Theme.accent)
-                            .contentTransition(.numericText())
-                            .animation(.spring(duration: 0.35), value: hypeValue)
-                    }
+                        .contentTransition(.numericText())
+                        .animation(.spring(duration: 0.35), value: hypeValue)
                 }
 
-                if hype != nil {
-                    Gauge(value: normalizedHype) {
-                        EmptyView()
-                    }
-                    .gaugeStyle(.accessoryLinearCapacity)
-                    .tint(Theme.accent)
+                Gauge(value: normalizedHype) {
+                    EmptyView()
+                }
+                .gaugeStyle(.accessoryLinearCapacity)
+                .tint(Theme.accent)
 
-                    Text("Hype boosts launch reviews and sales, and decays daily.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } else {
+                Text(isLive
+                    ? "Attention on a product that's already out: it lifts sales while it lasts, and decays daily. The reviews are already written."
+                    : "Hype before launch buys reviews and sales, permanently — it is baked in at ship. It decays daily until then.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                if isLive {
                     Text(
-                        "Already on the market — it launched on \(Int((launchHype ?? 0).rounded())) hype. A push now keeps it in front of people."
+                        "Launched on \(Int((launchHype ?? 0).rounded())) hype, which still carries. This is what you've spent since."
                     )
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -160,7 +170,7 @@ private struct HypeCard: View {
     }
 
     private var normalizedHype: Double {
-        min(max((hype ?? 0) / 100, 0), 1)
+        min(max(hype / 100, 0), 1)
     }
 }
 
@@ -180,6 +190,23 @@ private struct CampaignKindSpec: Identifiable {
     let requiresResearch: Bool
     /// The office tier the kind needs, if any.
     let minTier: OfficeTier?
+
+    /// What a hype figure is actually worth, in the two currencies it
+    /// buys — the exchange rate the tab never printed.
+    ///
+    /// A player was asked to choose between three prices for a scalar with
+    /// no stated effect, which is why the gated, expensive launch event
+    /// (~$125 per point) reads the same as the social push (~$25) unless
+    /// you go and do the arithmetic.
+    static func worth(_ hype: Double, balance: BalanceConfig, live: Bool) -> String {
+        if live {
+            let sales = hype * balance.economy.liveHypeSalesFactor / balance.salesHypeDivisor * 100
+            return "≈ +\(format(sales))% sales while it lasts"
+        }
+        let reviewPoints = hype / balance.reviewHypeDivisor
+        let sales = hype * balance.hypeLaunchCarryFraction / balance.salesHypeDivisor * 100
+        return "≈ +\(format(reviewPoints)) review pts, +\(format(sales))% sales"
+    }
 
     static func all(balance: BalanceConfig) -> [CampaignKindSpec] {
         [
@@ -254,6 +281,19 @@ private struct CampaignKindCard: View {
         return .ready
     }
 
+    /// What this kind's hype is worth against the selected product —
+    /// reviews and permanent sales before launch, temporary sales after.
+    private var exchangeRate: String {
+        let balance = engine.balance
+        let hype: Double = switch kind.id {
+        case "social_push": balance.socialPushDailyHype * Double(balance.socialPushDurationDays)
+        case "press_release": balance.pressReleaseHype
+        default: balance.launchEventHype
+        }
+        let live: Bool = if case .released = product.stage { true } else { false }
+        return CampaignKindSpec.worth(hype, balance: balance, live: live)
+    }
+
     /// The tech node whose effect unlocks this campaign kind, for the
     /// locked caption. Defensive fallback if content ever drifts.
     private var unlockingTech: TechNode? {
@@ -274,6 +314,11 @@ private struct CampaignKindCard: View {
                     StatPill(systemImage: "flame.fill", value: kind.hypeLine, tint: Theme.accent)
                     Spacer(minLength: 0)
                 }
+
+                Text(exchangeRate)
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
 
                 switch availability {
                 case .running(let endDay):

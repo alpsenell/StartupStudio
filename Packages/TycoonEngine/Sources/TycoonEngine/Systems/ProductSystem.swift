@@ -98,7 +98,14 @@ enum ProductSystem {
             let productID = state.products[index].id
             let economy = balance.economy
             let qHat = Double(info.averageReviewScore) / 100.0
-            let hypeBoost = 1 + info.hypeAtLaunch * balance.hypeLaunchCarryFraction / balance.salesHypeDivisor
+            // Launch hype carries at a fraction, because it is months old
+            // by now; a campaign run *since* launch counts at full weight
+            // and fades on its own. That is the trade the marketing tab is
+            // now actually offering: money before launch buys reviews and
+            // keeps paying, money after buys a few weeks of attention.
+            let hypeBoost = 1
+                + info.hypeAtLaunch * balance.hypeLaunchCarryFraction / balance.salesHypeDivisor
+                + info.liveHype * economy.liveHypeSalesFactor / balance.salesHypeDivisor
             let marketMultiplier = state.market.multiplier(for: state.products[index].topicID)
             // WS-F's rival products dent the player's slice of a topic
             // through this accessor; 1.0 until their data exists.
