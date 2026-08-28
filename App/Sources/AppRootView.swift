@@ -11,7 +11,7 @@ import TycoonEngine
 struct AppRootView: View {
     let session: GameSession
 
-    @State private var selectedTab: GameTab = .hq
+    @State private var selectedTab: GameTab = .launchTab
     /// Cross-tab navigation, injected for the screens to read. WS-E takes
     /// over `selectedTab` with `router.tab` and fills in the deep links.
     @State private var router = AppRouter()

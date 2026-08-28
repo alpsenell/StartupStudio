@@ -77,10 +77,11 @@ enum RivalSystem {
     ) -> Rival {
         let id = UUID(from: &state.worldRNG)
         // Software studios, not bakeries: WS-B's `rivalStudios` pool once
-        // it exists, the built-in one until then, and the client companies
-        // that used to name every rival only as a last resort.
+        // it exists, the built-in one until then. The client-company pool
+        // that used to name every rival is deliberately not in the mix —
+        // it is where "Moonbeam Dairy" came from.
         let namePool = content.names.rivalStudios.isEmpty
-            ? fallbackStudioNames + content.names.clientCompanies
+            ? fallbackStudioNames
             : content.names.rivalStudios
         let name = pick(namePool, &state.worldRNG) ?? "Nimbus Labs"
         let strength = config.foundingStrengthMin

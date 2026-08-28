@@ -111,10 +111,13 @@ struct RivalProductTests {
         var state = GameState.newGame(companyName: "Acme", seed: 42, balance: balance)
         Reducer.tick(&state, balance: balance, content: Self.content)
         #expect(!state.rivals.rivals.isEmpty)
-        // Every founding name comes from the studio pool while WS-B's is
-        // empty; the client-company pool is only the tail fallback.
+        // Every founding name comes from a studio pool — WS-B's when it
+        // has one, the built-in one until then. Never the client-company
+        // pool that used to make rivals sound like bakeries.
+        let clientNames = Set(Self.content.names.clientCompanies)
         for rival in state.rivals.rivals {
             #expect(!rival.name.isEmpty)
+            #expect(!clientNames.contains(rival.name), "\(rival.name) is a client company name")
         }
         #expect(RivalPersonality.allCases.contains(state.rivals.rivals[0].personality))
     }
