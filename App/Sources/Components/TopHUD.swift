@@ -12,7 +12,11 @@ import TycoonEngine
 struct TopHUD: View {
     let engine: GameEngine
 
-    @Environment(GameShell.self) private var shell
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
     @Environment(AppRouter.self) private var router
 
     private var calendar: GameCalendar { engine.state.gameCalendar }
@@ -87,7 +91,11 @@ struct TopHUD: View {
 private struct WeeklyReportChip: View {
     let engine: GameEngine
 
-    @Environment(GameShell.self) private var shell
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
 
     var body: some View {
         if let week = shell.pendingReportWeek {

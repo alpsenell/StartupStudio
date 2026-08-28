@@ -15,7 +15,11 @@ struct ProductDetailScreen: View {
     let engine: GameEngine
     let productID: UUID
 
-    @Environment(GameShell.self) private var shell
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
     @State private var confirmingShip = false
 
     var body: some View {

@@ -26,7 +26,11 @@ struct NewProductFlow: View {
     let engine: GameEngine
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(GameShell.self) private var shell
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
 
     @State private var step: NewProductStep = .type
     @State private var selectedTypeID: String?

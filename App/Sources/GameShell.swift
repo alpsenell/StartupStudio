@@ -36,6 +36,18 @@ final class GameShell {
     /// The run's day the shell last saw, to detect week boundaries.
     @ObservationIgnored private var lastSeenDay = -1
 
+    /// The app's one shell.
+    ///
+    /// `AppRootView` owns it and puts it in the environment, which is how
+    /// every screen should reach it. The shared instance exists because
+    /// SwiftUI updates a modally-presented view's `@Environment` dynamic
+    /// properties *before* the presentation's environment is installed,
+    /// and a non-optional `@Environment(GameShell.self)` traps at that
+    /// moment rather than waiting for `body`. Reading it optionally with
+    /// this as the fallback is correct rather than defensive: there is
+    /// exactly one shell for an app run either way.
+    @MainActor static let shared = GameShell()
+
     init() {
         // Every fresh batch of events flows through the toast center;
         // this is where the shell picks the ones that deserve a sheet.

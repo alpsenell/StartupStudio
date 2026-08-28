@@ -86,7 +86,11 @@ private struct InDevelopmentCard: View {
     let product: Product
     let progress: DevProgress
 
-    @Environment(GameShell.self) private var shell
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
     @State private var confirmingShip = false
 
     private var type: ProductTypeDef? {

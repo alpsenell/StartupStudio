@@ -17,7 +17,7 @@ struct AppRootView: View {
     /// `-autoTab` flag a headless screenshot pass uses.
     @State private var router = AppRouter(tab: .launchTab)
     /// Toasts, the weekly-report loop, and the launch-day moment.
-    @State private var shell = GameShell()
+    @State private var shell = GameShell.shared
 
     var body: some View {
         let engine = session.engine

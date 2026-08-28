@@ -175,7 +175,11 @@ private struct TechNodeRow: View {
     let node: TechNode
     let onSelect: (TechNode) -> Void
 
-    @Environment(GameShell.self) private var shell
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
     /// Drives the one-shot flip when this node's research lands.
     @State private var flip: Double = 0
 

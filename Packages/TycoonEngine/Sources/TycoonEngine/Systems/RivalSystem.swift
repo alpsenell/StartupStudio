@@ -612,7 +612,11 @@ enum RivalSystem {
         guard weak || strong else { return [] }
 
         let roll = state.worldRNG.nextUniform()
-        guard roll < config.buyoutChance else { return [] }
+        // The draw happens either way, so the grace period below cannot
+        // shift `worldRNG` for anything else in the world.
+        guard roll < config.buyoutChance,
+              state.day >= (config.buyoutEarliestDay ?? 0)
+        else { return [] }
 
         // Both paths draw exactly one more uniform, so the world stream
         // advances identically whichever approach this is.

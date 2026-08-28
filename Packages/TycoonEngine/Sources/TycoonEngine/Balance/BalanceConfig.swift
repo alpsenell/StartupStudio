@@ -751,6 +751,14 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         /// only while the company looks weak.
         public var buyoutIntervalDays: Int
         public var buyoutOffsetDays: Int
+        /// No buyout offer before this day.
+        ///
+        /// Reputation starts at 10 and `weakRepThreshold` is 20, so without
+        /// this a brand-new garage looks "weak" from day one and gets a
+        /// distress offer inside its first month — a critical pause, with a
+        /// deadline, before the player has shipped anything. Optional so an
+        /// older Balance.json still decodes; `nil` means the old behaviour.
+        public var buyoutEarliestDay: Int?
         public var buyoutCooldownDays: Int
         public var buyoutChance: Double
         public var weakCashThreshold: Int
@@ -803,6 +811,7 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             matchLoyaltyBoost: Double,
             buyoutIntervalDays: Int,
             buyoutOffsetDays: Int,
+            buyoutEarliestDay: Int? = nil,
             buyoutCooldownDays: Int,
             buyoutChance: Double,
             weakCashThreshold: Int,
@@ -846,6 +855,7 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             self.matchLoyaltyBoost = matchLoyaltyBoost
             self.buyoutIntervalDays = buyoutIntervalDays
             self.buyoutOffsetDays = buyoutOffsetDays
+            self.buyoutEarliestDay = buyoutEarliestDay
             self.buyoutCooldownDays = buyoutCooldownDays
             self.buyoutChance = buyoutChance
             self.weakCashThreshold = weakCashThreshold

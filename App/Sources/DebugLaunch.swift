@@ -10,6 +10,25 @@ import Foundation
 /// the app on that tab.
 ///
 /// Release builds ignore the argument entirely.
+enum DebugLaunch {
+    /// Whether this launch is a headless QA pass — `-autoSpeed` or
+    /// `-autoTab` on the command line.
+    ///
+    /// Those two flags exist so a screenshot pass can land on a running
+    /// game without tapping anything, and the onboarding flow (which
+    /// cannot be tapped either) would otherwise sit in front of every one
+    /// of them on a fresh install. A headless launch therefore skips
+    /// straight into a generated new game. Release builds never see it.
+    static var isHeadlessPass: Bool {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        return arguments.contains("-autoSpeed") || arguments.contains("-autoTab")
+        #else
+        return false
+        #endif
+    }
+}
+
 extension GameTab {
     /// The tab the app opens on: `-autoTab <name>` in debug builds, HQ
     /// otherwise.

@@ -56,7 +56,9 @@ final class GameSession {
         self.loadFailureMessage = failureMessage
         // A resumed save means this player already named themselves; a
         // fresh launch with nothing to resume goes through onboarding.
-        self.needsOnboarding = resumedEngine == nil && !GameSettings.hasCompletedOnboarding
+        self.needsOnboarding = resumedEngine == nil
+            && !GameSettings.hasCompletedOnboarding
+            && !DebugLaunch.isHeadlessPass
 
         wireAutosave()
         applyDebugLaunchArguments()

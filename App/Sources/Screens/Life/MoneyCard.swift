@@ -6,7 +6,11 @@ import TycoonEngine
 struct MoneyCard: View {
     let engine: GameEngine
 
-    @Environment(GameShell.self) private var shell
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
 
     /// Salary stepper increment.
     private static let salaryStep = 100

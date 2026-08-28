@@ -213,6 +213,7 @@
     "matchLoyaltyBoost": 12,
     "buyoutIntervalDays": 7,
     "buyoutOffsetDays": 5,
+    "buyoutEarliestDay": 56,
     "buyoutCooldownDays": 28,
     "buyoutChance": 0.4,
     "weakCashThreshold": 5000,
