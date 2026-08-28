@@ -1,14 +1,30 @@
 import SwiftUI
+import TycoonContent
 import TycoonEngine
 
-/// The Team tab: the roster (portraits, skills, salaries, assignments)
-/// with swipe-to-fire, plus the hiring sheet.
+/// The Team tab: the roster with portraits, mood faces, trait chips,
+/// skills, salaries and assignments — searchable, sortable, and with a
+/// bulk "everyone onto this" move for the days when the whole studio has
+/// to swing onto one thing. Swipe to fire; tap anyone to manage them.
 struct TeamScreen: View {
     let engine: GameEngine
+
+    /// How the roster is ordered. Founder-first is the default, matching
+    /// desk order in the office scene.
+    private enum SortOrder: String, CaseIterable, Identifiable {
+        case tenure = "Tenure"
+        case role = "Role"
+        case morale = "Morale"
+        case salary = "Salary"
+
+        var id: String { rawValue }
+    }
 
     @State private var showingHiring = false
     @State private var employeeToFire: Employee?
     @State private var employeeToManage: Employee?
+    @State private var search = ""
+    @State private var sortOrder: SortOrder = .tenure
 
     var body: some View {
         NavigationStack {
@@ -37,9 +53,19 @@ struct TeamScreen: View {
                     .accessibilityLabel("Open hiring")
 
                     teamDinnerRow
+                    bulkAssignRow
                 }
 
                 Section {
+                    if roster.isEmpty {
+                        Text(
+                            search.isEmpty
+                                ? "Nobody on payroll yet."
+                                : "Nobody matches \u{201C}\(search)\u{201D}."
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    }
                     ForEach(roster) { employee in
                         EmployeeRow(engine: engine, employee: employee)
                             .contentShape(Rectangle())
@@ -63,11 +89,12 @@ struct TeamScreen: View {
                             }
                     }
                 } header: {
-                    Text("Roster")
+                    rosterHeader
                 } footer: {
                     payrollFooter
                 }
             }
+            .searchable(text: $search, prompt: "Search the team")
             // The HUD inset lives on the stack's root content (not on the
             // NavigationStack) so the list scrolls below it and any pushed
             // destination shows the navigation bar instead.
@@ -98,8 +125,116 @@ struct TeamScreen: View {
         }
     }
 
-    /// Founder first, then by hire day — matching desk order in the
-    /// office scene.
+    // MARK: - Roster
+
+    /// Everyone matching the search, in the chosen order. The founder
+    /// always leads, whatever the sort — they are not a row you compare.
+    private var roster: [Employee] {
+        let matching = engine.state.employees.filter(matchesSearch)
+        return matching.sorted { lhs, rhs in
+            if lhs.isFounder != rhs.isFounder { return lhs.isFounder }
+            switch sortOrder {
+            case .tenure:
+                if lhs.hiredDay != rhs.hiredDay { return lhs.hiredDay < rhs.hiredDay }
+            case .role:
+                if lhs.role != rhs.role { return lhs.role.displayName < rhs.role.displayName }
+            case .morale:
+                if lhs.morale != rhs.morale { return lhs.morale < rhs.morale }
+            case .salary:
+                if lhs.weeklySalary != rhs.weeklySalary { return lhs.weeklySalary > rhs.weeklySalary }
+            }
+            return lhs.name < rhs.name
+        }
+    }
+
+    /// Matches on name, role and trait name, so "flight" finds the people
+    /// about to leave.
+    private func matchesSearch(_ employee: Employee) -> Bool {
+        let query = search.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !query.isEmpty else { return true }
+        if employee.name.lowercased().contains(query) { return true }
+        if employee.role.displayName.lowercased().contains(query) { return true }
+        return employee.traits.contains { id in
+            guard let trait = engine.content.traits.first(where: { $0.id == id }) else { return false }
+            return trait.name.lowercased().contains(query)
+        }
+    }
+
+    private var rosterHeader: some View {
+        HStack {
+            Text("Roster")
+            Spacer()
+            Picker("Sort by", selection: $sortOrder) {
+                ForEach(SortOrder.allCases) { order in
+                    Text(order.rawValue).tag(order)
+                }
+            }
+            .pickerStyle(.menu)
+            .font(.caption)
+            .textCase(nil)
+            .accessibilityLabel("Sort the roster")
+            .accessibilityValue(sortOrder.rawValue)
+        }
+    }
+
+    // MARK: - Bulk assign
+
+    /// "Everyone onto Nimbus Notes" — the move you want on the day before a
+    /// deadline, without twelve taps.
+    @ViewBuilder
+    private var bulkAssignRow: some View {
+        let hired = engine.state.employees.filter { !$0.isFounder }
+        if !hired.isEmpty {
+            Menu {
+                if let product = engine.state.productInDevelopment {
+                    bulkButton(
+                        .product(product.id),
+                        label: "Everyone → \(product.name)",
+                        systemImage: "hammer.fill"
+                    )
+                }
+                ForEach(engine.state.activeContracts) { job in
+                    bulkButton(
+                        .contract(job.id),
+                        label: "Everyone → \(job.clientName)",
+                        systemImage: "briefcase.fill"
+                    )
+                }
+                bulkButton(.research, label: "Everyone → Research", systemImage: "flask.fill")
+                bulkButton(.idle, label: "Everyone → Idle", systemImage: "moon.zzz.fill")
+            } label: {
+                HStack {
+                    Label("Assign everyone", systemImage: "person.3.sequence.fill")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(Theme.accent)
+                    Spacer()
+                    Text("\(hired.count) staff")
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityLabel("Assign the whole team to one thing")
+        }
+    }
+
+    private func bulkButton(
+        _ assignment: Assignment,
+        label: String,
+        systemImage: String
+    ) -> some View {
+        Button {
+            // The founder keeps their own assignment: their time is
+            // managed on the Life tab, not here.
+            for employee in engine.state.employees
+            where !employee.isFounder && employee.assignment != assignment {
+                engine.send(.assign(employeeID: employee.id, to: assignment))
+            }
+        } label: {
+            Label(label, systemImage: systemImage)
+        }
+    }
+
     /// Team dinner: morale + loyalty for everyone, per-head cost, global
     /// cooldown. Mirrors the engine's gates to disable with a reason.
     @ViewBuilder
@@ -137,13 +272,6 @@ struct TeamScreen: View {
         }
         .disabled(blocker != nil)
         .accessibilityLabel("Team dinner. \(blocker ?? "\(cost.money), lifts morale and loyalty")")
-    }
-
-    private var roster: [Employee] {
-        engine.state.employees.sorted { lhs, rhs in
-            if lhs.isFounder != rhs.isFounder { return lhs.isFounder }
-            return lhs.hiredDay < rhs.hiredDay
-        }
     }
 
     private var fireDialogPresented: Binding<Bool> {
@@ -202,7 +330,7 @@ private struct EmployeeRow: View {
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                         if !employee.isFounder {
-                            MoraleDot(morale: employee.morale)
+                            MoodFace(morale: employee.morale)
                         }
                     }
                 }
@@ -213,27 +341,52 @@ private struct EmployeeRow: View {
                 AssignmentMenu(engine: engine, employee: employee)
             }
 
+            if !employee.traits.isEmpty {
+                TraitChipRow(traits: employee.traits, content: engine.content)
+            }
+
             SkillBars(skills: employee.skills)
         }
         .padding(.vertical, Theme.Spacing.xs)
     }
 }
 
-/// Tiny colored dot plus label summarizing morale in the roster row.
-private struct MoraleDot: View {
+/// Morale as a face, not a dot: you can read the room at a glance.
+struct MoodFace: View {
     let morale: Double
 
     var body: some View {
         HStack(spacing: 3) {
-            Circle()
-                .fill(lifeMeterTint(morale))
-                .frame(width: 6, height: 6)
-            Text("Morale \(Int(morale.rounded()))")
+            Image(systemName: symbol)
                 .font(.caption)
-                .monospacedDigit()
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(lifeMeterTint(morale))
+            Text(label)
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .accessibilityLabel("Morale \(Int(morale.rounded())) out of 100")
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label), morale \(Int(morale.rounded())) out of 100")
+    }
+
+    private var symbol: String {
+        switch morale {
+        case ..<20: "face.dashed.fill"
+        case ..<40: "cloud.rain.fill"
+        case ..<60: "face.smiling"
+        case ..<80: "face.smiling.inverse"
+        default: "star.circle.fill"
+        }
+    }
+
+    private var label: String {
+        switch morale {
+        case ..<20: "Miserable"
+        case ..<40: "Unhappy"
+        case ..<60: "Fine"
+        case ..<80: "Happy"
+        default: "Thriving"
+        }
     }
 }
 

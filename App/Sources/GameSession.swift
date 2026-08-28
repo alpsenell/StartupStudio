@@ -60,9 +60,11 @@ final class GameSession {
     }
 
     /// Deletes the save and replaces the engine with a fresh game at the
-    /// given difficulty. Used by the game-over screen and the Settings
-    /// sheet's "Start a new game…".
-    func startNewGame(difficulty: Difficulty) {
+    /// given difficulty, optionally as a founder the player built. Used by
+    /// the ending screens (which offer the founder setup sheet) and the
+    /// Settings sheet's "Start a new game…" (which does not, and so gets
+    /// the default founder).
+    func startNewGame(difficulty: Difficulty, founder: FounderProfile = .default) {
         // Stop the outgoing engine for good: without this, a still-referenced
         // old instance keeps ticking and its autosave overwrites the new
         // game's save file (the "zombie engine" bug).
@@ -72,7 +74,7 @@ final class GameSession {
         } catch {
             lastSaveError = error.localizedDescription
         }
-        engine = Self.makeFreshEngine(difficulty: difficulty)
+        engine = Self.makeFreshEngine(difficulty: difficulty, founder: founder)
         wireAutosave()
         applyDebugLaunchArguments()
     }
@@ -108,11 +110,15 @@ final class GameSession {
 
     /// Determinism lives inside the engine; a random seed at the app layer
     /// is fine.
-    private static func makeFreshEngine(difficulty: Difficulty = .normal) -> GameEngine {
+    private static func makeFreshEngine(
+        difficulty: Difficulty = .normal,
+        founder: FounderProfile = .default
+    ) -> GameEngine {
         GameEngine.newGame(
             companyName: "Startup Studio",
             seed: UInt64.random(in: .min ... .max),
-            difficulty: difficulty
+            difficulty: difficulty,
+            founder: founder
         )
     }
 

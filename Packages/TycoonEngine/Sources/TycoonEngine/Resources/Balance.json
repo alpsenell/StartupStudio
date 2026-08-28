@@ -422,7 +422,50 @@
     "creditRevenueWeeks": 12
   },
   "narrative": {},
-  "progression": {},
-  "investors": {},
-  "traits": {}
+  "progression": {
+    "archetypes": {
+      "hacker": { "coding": 55.0, "design": 25.0, "marketing": 20.0 },
+      "designer": { "coding": 25.0, "design": 55.0, "marketing": 20.0 },
+      "hustler": { "coding": 25.0, "design": 20.0, "marketing": 55.0 }
+    },
+    "goalsToAdvanceChapter": 4,
+    "rewardReputationScale": 1.0,
+    "rewardCashScale": 1.0,
+    "pressContactsHypeBonus": 5.0,
+    "veteranCrewMoraleBonus": 4.0,
+    "talentMagnetSkillBonus": 6.0,
+    "investorRolodexWeeksEarlier": 4
+  },
+  "investors": {
+    "offerIntervalDays": 7,
+    "offerCooldownDays": 56,
+    "offerChance": 0.45,
+    "minReputation": 25.0,
+    "responseDays": 7,
+    "earliestOfferDay": 120,
+    "reviewIntervalDays": 91,
+    "pressurePerMiss": 22.0,
+    "pressurePerHit": 18.0,
+    "boardWarningPressure": 60.0,
+    "boardOustPressure": 100.0,
+    "expectedQuarterlyRevenueGrowth": 0.1,
+    "expectedQuarterlyShips": 1,
+    "expectedQuarterlyHeadcountGrowth": 1,
+    "ipoValuationFloor": 5000000,
+    "ipoProfitableQuarters": 3,
+    "ipoRequiresSubscription": false,
+    "ipoValuationMultiple": 1.4,
+    "strategicDominanceFactor": 2.0,
+    "strategicMinReputation": 60.0,
+    "strategicPremiumMin": 1.5,
+    "strategicPremiumMax": 2.5
+  },
+  "traits": {
+    "teamGrowthStrength": 1.0,
+    "teamGrowthLimit": 1.2,
+    "teamMoraleLimit": 1.2,
+    "reputationBonusCap": 0.06,
+    "reputationBonusCeiling": 70.0,
+    "interviewEnergyCost": 6.0
+  }
 }

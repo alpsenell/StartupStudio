@@ -328,7 +328,10 @@ struct ProductActionTests {
         let balance = try BalanceConfig.loadBundled()
         let content = TestContent.bundled
 
-        func shippedState(seed: UInt64) -> GameState {
+        // The nudge is measured from the reputation the company actually
+        // had when it shipped, not from the starting 10: chapter goals
+        // (WS-F) pay out a little reputation over the first four weeks.
+        func shippedState(seed: UInt64) -> (state: GameState, reputationAtShip: Double) {
             var state = GameState.newGame(companyName: "Acme", seed: seed, balance: balance)
             Reducer.apply(
                 .startProduct(
@@ -345,11 +348,12 @@ struct ProductActionTests {
             for _ in 0..<28 {
                 Reducer.tick(&state, balance: balance, content: content)
             }
+            let reputationAtShip = state.company.reputation
             Reducer.apply(.ship(productID: id), to: &state, balance: balance, content: content)
-            return state
+            return (state, reputationAtShip)
         }
 
-        let state = shippedState(seed: 7)
+        let (state, reputationAtShip) = shippedState(seed: 7)
         guard case .released(let info) = try #require(state.products.first).stage else {
             Issue.record("expected a released stage")
             return
@@ -368,15 +372,16 @@ struct ProductActionTests {
         #expect(info.averageReviewScore == Int(mean.rounded()))
 
         // Deterministic for a fixed seed.
-        let rerun = shippedState(seed: 7)
+        let rerun = shippedState(seed: 7).state
         guard case .released(let rerunInfo) = try #require(rerun.products.first).stage else {
             Issue.record("expected a released stage")
             return
         }
         #expect(rerunInfo.reviews == info.reviews)
 
-        // Reputation nudged from 10 toward the average score.
-        let expectedReputation = 10.0 + (Double(info.averageReviewScore) - 10.0) * balance.reputationReviewNudge
+        // Reputation nudged from where it stood toward the average score.
+        let expectedReputation = reputationAtShip
+            + (Double(info.averageReviewScore) - reputationAtShip) * balance.reputationReviewNudge
         #expect(abs(state.company.reputation - expectedReputation) < 1e-9)
     }
 

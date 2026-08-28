@@ -53,8 +53,20 @@ struct LegacySaveCompatibilityTests {
         #expect(!state.economy.chronicCondition)
         #expect(state.economy.pauseEvents.isEmpty)
         #expect(state.life.awaySinceDay == nil)
-        for employee in state.employees {
-            #expect(employee.traits.isEmpty)
+        // Traits are the one iteration-2 field that does *not* come back
+        // empty: WS-F derives them from the appearance seed and backfills
+        // them in `Employee.init(from:)`, so a pre-iteration-2 employee
+        // gains their two traits on decode rather than being trait-less
+        // forever. Deterministic, and the seed is a v1 key. The founder is
+        // exempt by design and stays trait-less.
+        #expect(try #require(state.employees.first { $0.isFounder }).traits.isEmpty)
+        for employee in state.employees where !employee.isFounder {
+            #expect(employee.traits.count == TraitEffects.traitsPerEmployee)
+            #expect(employee.traits.allSatisfy(TraitEffects.canonicalTraitIDs.contains))
+            #expect(
+                employee.traits
+                    == TraitEffects.derivedTraitIDs(appearanceSeed: employee.appearanceSeed)
+            )
         }
         guard case .released(let info) = try #require(state.products.first).stage else {
             Issue.record("the fixture's product should be released")

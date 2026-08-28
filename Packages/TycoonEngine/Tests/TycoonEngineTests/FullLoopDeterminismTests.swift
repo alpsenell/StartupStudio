@@ -212,7 +212,13 @@ struct FullLoopDeterminismTests {
         #expect(info.launchDay == 60)
         #expect(!info.weeklySales.isEmpty)
         #expect(state.eventLog.contains(.shipped(productID: try #require(productID), day: 60)))
-        #expect(state.employees.count == 4)
+        // Four hires land, and one of them leaves: with WS-A's morale rules
+        // and WS-F's traits both live, Ingrid serves notice on day 136 and
+        // walks on 143 because the script never answers it. That is the
+        // game working, so the sanity check is "four arrived, three stayed".
+        #expect(state.employees.count == 3)
+        #expect(state.eventLog.contains { if case .resignationNotice = $0 { true } else { false } })
+        #expect(state.eventLog.contains { if case .employeeQuit = $0 { true } else { false } })
         #expect(state.eventLog.contains(.hired(employeeID: try #require(hiredID), day: 15)))
         #expect(state.eventLog.contains(.candidatesRefreshed(day: 14)))
 

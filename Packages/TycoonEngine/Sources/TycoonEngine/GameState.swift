@@ -54,6 +54,33 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
     case bankruptcy
     /// The founder sold the company to a rival — a successful exit.
     case acquired
+
+    // MARK: WS-F
+
+    /// The company went public and the founder rang the bell — the best
+    /// ending in the game.
+    case ipo
+    /// The board lost patience and replaced the founder with a hire.
+    case oustedByBoard
+
+    /// Whether the run ended somewhere the founder would call a win. The
+    /// endings screen picks its tone from this.
+    public var isSuccess: Bool {
+        switch self {
+        case .acquired, .ipo: true
+        case .bankruptcy, .oustedByBoard: false
+        }
+    }
+
+    /// The headline the founder biography leads with.
+    public var headline: String {
+        switch self {
+        case .bankruptcy: "Bankrupt"
+        case .acquired: "Acquired"
+        case .ipo: "Public"
+        case .oustedByBoard: "Replaced"
+        }
+    }
 }
 
 /// Terminal state details once the run has ended.
@@ -198,6 +225,37 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: WS-B
 
     // MARK: WS-F
+
+    /// A chapter goal was finished (and its reward paid).
+    case goalCompleted(goalID: String, day: Int)
+    /// A new chapter opened.
+    case chapterReached(chapter: Int, day: Int)
+    /// An investor put a term sheet on the table; open until
+    /// `respondByDay`.
+    case investmentOffered(investorID: String, amount: Int, equity: Double, respondByDay: Int, day: Int)
+    /// The founder took the money.
+    case investmentAccepted(investorID: String, amount: Int, equity: Double, day: Int)
+    /// The founder turned it down.
+    case investmentDeclined(investorID: String, day: Int)
+    /// The offer expired unanswered.
+    case investmentWithdrawn(investorID: String, day: Int)
+    /// A quarterly board review landed.
+    case boardReviewed(met: Bool, pressure: Double, day: Int)
+    /// Board pressure crossed the warning line: they want a plan.
+    case boardDemandedPlan(pressure: Double, day: Int)
+    /// The board replaced the founder — the run ends.
+    case founderOusted(day: Int)
+    /// The company filed to go public — the run ends.
+    case wentPublic(proceeds: Int, day: Int)
+    /// A rival shipped a *named* product into a topic.
+    case rivalProductLaunched(rivalID: UUID, productName: String, topicID: String, quality: Int, day: Int)
+    /// A rival started a price war in a topic the player leads.
+    case priceWarStarted(rivalID: UUID, topicID: String, untilDay: Int, day: Int)
+    /// A rival cloned the player's best topic.
+    case rivalCopycat(rivalID: UUID, topicID: String, day: Int)
+    /// The player was interviewed a candidate and learned their second
+    /// trait.
+    case candidateInterviewed(candidateID: UUID, day: Int)
 }
 
 extension GameEvent {
@@ -206,6 +264,8 @@ extension GameEvent {
     /// given occurrence actually pauses also depends on the state and the
     /// pause budget, which is `PausePolicy`'s job.
     public var pausesTimeline: Bool {
+        // Derived from `severity` in place: WS-A grades every case, and the
+        // grade is the single source of truth for whether the clock can stop.
         switch severity {
         case .quiet, .info: false
         case .notable, .critical: true
@@ -248,6 +308,15 @@ extension GameEvent {
         // MARK: WS-B
 
         // MARK: WS-F
+
+        case .founderOusted, .wentPublic, .investmentOffered:
+            .critical
+        case .boardDemandedPlan, .chapterReached, .priceWarStarted:
+            .notable
+        case .goalCompleted, .investmentAccepted, .rivalProductLaunched, .rivalCopycat:
+            .info
+        case .investmentDeclined, .investmentWithdrawn, .boardReviewed, .candidateInterviewed:
+            .quiet
 
         default:
             .info
@@ -324,7 +393,7 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Days per game year (52 weeks of 7 days).
     static let daysPerYear = 364
     /// Days per game week.
-    static let daysPerWeek = 7
+    public static let daysPerWeek = 7
     /// The maximum number of `eventLog` entries retained (mirrors
     /// `FinancialLedger.maxEntries`).
     static let maxEventLogEntries = 500
@@ -409,13 +478,18 @@ public struct GameState: Codable, Equatable, Sendable {
         let drawnAppearanceSeed = rng.next()
         let founderEmployee = Employee(
             id: founderID,
-            name: founder.name,
-            // WS-F gives each archetype its own spread here; every
-            // archetype starts from the balance's founder skills today.
-            skills: SkillSet(
-                coding: balance.founderCoding,
-                design: balance.founderDesign,
-                marketing: balance.founderMarketing
+            name: founder.displayName,
+            // The chosen archetype's spread from the progression balance.
+            // The default founder — and any archetype the balance does not
+            // list — falls back to the flat founder skills, which is
+            // exactly the pre-archetype founder.
+            skills: founder.startingSkills(
+                balance: balance,
+                fallback: SkillSet(
+                    coding: balance.founderCoding,
+                    design: balance.founderDesign,
+                    marketing: balance.founderMarketing
+                )
             ),
             weeklySalary: 0,
             assignment: .idle,
@@ -462,7 +536,7 @@ public struct GameState: Codable, Equatable, Sendable {
             knownDepartments: [],
             economy: .initial,
             narrative: .initial,
-            progression: .initial,
+            progression: .initial(founder: founder),
             investors: .initial,
             gameOver: nil
         )

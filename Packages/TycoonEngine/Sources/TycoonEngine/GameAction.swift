@@ -87,6 +87,20 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: WS-B
 
     // MARK: WS-F
+
+    /// Takes the investor's money: cash in, equity out, and a board seat
+    /// if the term sheet asked for one.
+    case acceptInvestment
+    /// Turns the term sheet down and stays independent.
+    case declineInvestment
+    /// Files to go public. Gated on valuation, profitable quarters and
+    /// recurring revenue; ends the run as an IPO.
+    case fileIPO
+    /// Spends a day of founder time interviewing a candidate, revealing
+    /// the trait their CV didn't mention.
+    case interviewCandidate(candidateID: UUID)
+    /// Clears a candidate out of the pool without hiring them.
+    case passOnCandidate(candidateID: UUID)
 }
 
 /// The skill a training course targets.

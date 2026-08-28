@@ -1,66 +1,17 @@
 import SwiftUI
 import TycoonEngine
 
-/// Full-screen "successful exit" screen for the acquired ending — the
-/// celebratory sibling of `GameOverView`. "New game" wipes the save and
-/// starts a fresh run via the session at the chosen difficulty.
+/// The screen a successful run ends on — an acquisition, or the bell.
+///
+/// A thin wrapper: every ending, win or lose, is told by
+/// `FounderBiographyView`, which picks its headline and tone from
+/// `GameOverInfo.kind`.
 struct GameWonView: View {
+    let engine: GameEngine
     let info: GameOverInfo
-    let dateLabel: String
-    let onNewGame: (Difficulty) -> Void
-
-    /// Starting over deletes the save, so "New game" first opens the
-    /// difficulty choice (with Cancel); picking one starts the game.
-    @State private var choosingDifficulty = false
+    let onNewGame: (Difficulty, FounderProfile) -> Void
 
     var body: some View {
-        ZStack {
-            Theme.screenBackground.ignoresSafeArea()
-
-            VStack(spacing: Theme.Spacing.xl) {
-                Spacer()
-
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(Theme.positiveCash)
-
-                VStack(spacing: Theme.Spacing.sm) {
-                    Text("Acquired!")
-                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
-                    Text(info.reason)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Theme.Spacing.xl)
-                }
-
-                HStack(spacing: Theme.Spacing.sm) {
-                    StatPill(systemImage: "calendar", value: "Day \(info.day)")
-                    StatPill(systemImage: "clock", value: dateLabel)
-                }
-
-                Spacer()
-
-                Button {
-                    choosingDifficulty = true
-                } label: {
-                    Text("New game")
-                        .font(.system(.headline, design: .rounded))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Theme.Spacing.sm)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
-                .accessibilityLabel("Start a new game")
-                .padding(.horizontal, Theme.Spacing.xl)
-                .padding(.bottom, Theme.Spacing.xl)
-            }
-        }
-        .sheet(isPresented: $choosingDifficulty) {
-            DifficultyPickerSheet { difficulty in
-                choosingDifficulty = false
-                onNewGame(difficulty)
-            }
-        }
+        FounderBiographyView(engine: engine, info: info, onNewGame: onNewGame)
     }
 }

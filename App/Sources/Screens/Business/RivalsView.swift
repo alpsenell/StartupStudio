@@ -1,9 +1,10 @@
 import SwiftUI
+import TycoonContent
 import TycoonEngine
 
-/// The Rivals segment of the Business tab: one card per competitor studio,
-/// strongest first, each with an acquisition move once the player can
-/// afford (and dominate) it.
+/// The Rivals segment of the Business tab: who you are up against, what
+/// they have shipped, how the market is split in every topic you share,
+/// and the acquisition move once you can afford (and dominate) them.
 struct RivalsView: View {
     let engine: GameEngine
 
@@ -15,7 +16,26 @@ struct RivalsView: View {
         }
     }
 
+    /// Topics where the player and at least one rival both have something
+    /// on the market, worst share first — the ones that need attention.
+    private var contestedTopics: [(topicID: String, share: Double)] {
+        engine.state.rivals.playerShare
+            .filter { $0.value < 1.0 }
+            .map { (topicID: $0.key, share: $0.value) }
+            .sorted { lhs, rhs in
+                if lhs.share != rhs.share { return lhs.share < rhs.share }
+                return lhs.topicID < rhs.topicID
+            }
+    }
+
     var body: some View {
+        if !contestedTopics.isEmpty {
+            BusinessSectionHeader(title: "Head to head", systemImage: "chart.bar.xaxis")
+            ForEach(contestedTopics, id: \.topicID) { entry in
+                TopicBattleCard(engine: engine, topicID: entry.topicID, share: entry.share)
+            }
+        }
+
         BusinessSectionHeader(title: "Rival studios", systemImage: "flag.2.crossed.fill")
 
         if rivals.isEmpty {
@@ -30,6 +50,146 @@ struct RivalsView: View {
     }
 }
 
+// MARK: - Head to head
+
+/// One contested topic: the player's best product against the best thing
+/// every rival has in it, and the share bar between them.
+private struct TopicBattleCard: View {
+    let engine: GameEngine
+    let topicID: String
+    let share: Double
+
+    private var topicName: String {
+        engine.content.topic(topicID)?.name ?? topicID
+    }
+
+    /// The player's best on-market product in this topic.
+    private var playerEntry: (name: String, score: Int)? {
+        engine.state.products
+            .compactMap { product -> (String, Int)? in
+                guard product.topicID == topicID,
+                      case .released(let info) = product.stage,
+                      !info.offMarket
+                else { return nil }
+                return (product.name, info.averageReviewScore)
+            }
+            .max { $0.1 < $1.1 }
+    }
+
+    private var competitors: [(rival: Rival, product: RivalProduct)] {
+        engine.state.rivals.competitors(in: topicID, on: engine.state.day)
+    }
+
+    private var priceWar: Rival? {
+        competitors
+            .map(\.rival)
+            .first { $0.isInPriceWar(on: engine.state.day) && $0.priceWarTopicID == topicID }
+    }
+
+    var body: some View {
+        CardView(topicName, systemImage: "target") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("\(Int((share * 100).rounded()))% of the market")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .foregroundStyle(shareTint)
+                    Spacer()
+                    if share >= RivalDepthTuning.dominanceShare {
+                        Text("YOU LEAD")
+                            .font(.caption2.weight(.bold))
+                            .kerning(0.5)
+                            .foregroundStyle(Theme.positiveCash)
+                    }
+                }
+
+                ShareBar(share: share)
+                    .accessibilityLabel(
+                        "You hold \(Int((share * 100).rounded())) percent of the \(topicName) market"
+                    )
+
+                if let player = playerEntry {
+                    contender(
+                        name: player.name, score: player.score, subtitle: "yours", isPlayer: true
+                    )
+                }
+                ForEach(competitors.prefix(3), id: \.product.id) { entry in
+                    contender(
+                        name: entry.product.name,
+                        score: Int(entry.product.quality.rounded()),
+                        subtitle: entry.rival.name,
+                        isPlayer: false
+                    )
+                }
+
+                if let priceWar {
+                    Label(
+                        "\(priceWar.name) is running a price war here — "
+                            + "\(Int(RivalDepthTuning.priceWarSharePenalty * 100))% of your share, "
+                            + "until day \(priceWar.priceWarUntilDay ?? engine.state.day).",
+                        systemImage: "arrow.down.right.circle.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(Theme.negativeCash)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private var shareTint: Color {
+        if share >= RivalDepthTuning.dominanceShare { return Theme.positiveCash }
+        if share >= 0.45 { return Theme.warning }
+        return Theme.negativeCash
+    }
+
+    private func contender(name: String, score: Int, subtitle: String, isPlayer: Bool) -> some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: isPlayer ? "person.fill" : "flag.fill")
+                .font(.caption2)
+                .foregroundStyle(isPlayer ? Theme.accent : .secondary)
+                .frame(width: 14)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(name)
+                    .font(.system(.subheadline, design: .rounded).weight(isPlayer ? .semibold : .regular))
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            Spacer(minLength: Theme.Spacing.sm)
+            Text("\(score)")
+                .font(.caption.weight(.bold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.scoreTint(score))
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(name), \(subtitle), scores \(score)")
+    }
+}
+
+/// The split of one topic's demand: the player's slice against everyone
+/// else's.
+private struct ShareBar: View {
+    let share: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(Theme.accent)
+                    .frame(width: proxy.size.width * min(1, max(0, share)))
+                Rectangle()
+                    .fill(Theme.chipBackground)
+            }
+            .clipShape(Capsule())
+        }
+        .frame(height: 10)
+        .animation(.spring(duration: 0.5), value: share)
+    }
+}
+
 // MARK: - Rival card
 
 private struct RivalCard: View {
@@ -37,6 +197,19 @@ private struct RivalCard: View {
     let rival: Rival
 
     @State private var confirmingAcquisition = false
+
+    private var shipped: [RivalProduct] {
+        // Newest first: what they are selling right now matters most.
+        rival.products.sorted { $0.launchDay > $1.launchDay }
+    }
+
+    /// A topic they are winning against the player, if any — the line they
+    /// would say to your face.
+    private var isBeatingPlayer: Bool {
+        rival.competingProducts(on: engine.state.day).contains { product in
+            engine.state.rivals.share(for: product.topicID) < 0.5
+        }
+    }
 
     var body: some View {
         CardView(rival.name, systemImage: "flag.fill") {
@@ -52,21 +225,40 @@ private struct RivalCard: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 0)
-                    if let shipped = rival.lastShippedDay {
-                        Text("Shipped D\(shipped)")
-                            .font(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(.tertiary)
-                    }
+                    personalityBadge
+                }
+
+                Text(rival.personality.blurb)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if isBeatingPlayer {
+                    Text(rival.personality.taunt)
+                        .font(.caption)
+                        .italic()
+                        .foregroundStyle(Theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 meter("Strength", value: rival.strength, tint: Theme.warning)
                 meter("Reputation", value: rival.reputation, tint: Theme.accent)
 
-                if !rival.focusTopicIDs.isEmpty {
-                    Text("Focus: \(focusNames)")
+                if shipped.isEmpty {
+                    Text("Nothing on the market yet.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
+                } else {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("On the market")
+                            .font(.caption2.weight(.semibold))
+                            .textCase(.uppercase)
+                            .kerning(0.5)
+                            .foregroundStyle(.tertiary)
+                        ForEach(shipped.prefix(4)) { product in
+                            productRow(product)
+                        }
+                    }
                 }
 
                 acquireRow
@@ -86,10 +278,46 @@ private struct RivalCard: View {
         }
     }
 
-    private var focusNames: String {
-        rival.focusTopicIDs
-            .map { engine.content.topic($0)?.name ?? $0 }
-            .joined(separator: ", ")
+    private var personalityBadge: some View {
+        Label(rival.personality.displayName, systemImage: rival.personality.systemImageName)
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, 3)
+            .background(Theme.chipBackground, in: Capsule())
+            .accessibilityLabel("\(rival.personality.displayName): \(rival.personality.blurb)")
+    }
+
+    private func productRow(_ product: RivalProduct) -> some View {
+        let faded = !product.isCompeting(on: engine.state.day)
+        return HStack(spacing: Theme.Spacing.sm) {
+            Text(product.name)
+                .font(.system(.subheadline, design: .rounded))
+                .lineLimit(1)
+                .foregroundStyle(faded ? .secondary : .primary)
+            Text(topicName(product.topicID))
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            Spacer(minLength: Theme.Spacing.xs)
+            if faded {
+                Text("faded")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            Text("\(Int(product.quality.rounded()))")
+                .font(.caption.weight(.bold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.scoreTint(Int(product.quality.rounded())))
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(product.name), \(topicName(product.topicID)), scores "
+                + "\(Int(product.quality.rounded()))\(faded ? ", no longer competing" : "")"
+        )
+    }
+
+    private func topicName(_ id: String) -> String {
+        engine.content.topic(id)?.name ?? id
     }
 
     private func meter(_ label: String, value: Double, tint: Color) -> some View {
@@ -107,6 +335,8 @@ private struct RivalCard: View {
             ProgressView(value: value, total: 100)
                 .tint(tint)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label) \(Int(value.rounded())) out of 100")
     }
 
     // MARK: Acquisition

@@ -1,9 +1,13 @@
 import SwiftUI
+import TycoonContent
 import TycoonEngine
 
-/// The hiring sheet: one card per candidate in the pool (portrait, skills,
-/// salary, Hire button). Hiring is blocked at the office tier's headcount
-/// cap; the engine enforces it, the UI explains it.
+/// The hiring sheet: one card per candidate in the pool — portrait, a line
+/// in their own voice, skills, salary, the trait their CV admits to, and
+/// the one it doesn't until you interview them.
+///
+/// Hiring is blocked at the office tier's headcount cap; the engine
+/// enforces it, the UI explains it.
 struct HiringSheet: View {
     let engine: GameEngine
 
@@ -18,14 +22,16 @@ struct HiringSheet: View {
                     } else {
                         ForEach(candidates) { candidate in
                             CandidateCard(
+                                engine: engine,
                                 candidate: candidate,
                                 atCap: atCap,
+                                interviewed: engine.state.progression
+                                    .interviewedCandidateIDs.contains(candidate.id),
+                                interviewBlocker: interviewBlocker,
                                 departmentActive: candidate.role.department.map {
                                     engine.state.hasDepartment($0)
                                 } ?? false
-                            ) {
-                                engine.send(.hire(candidateID: candidate.id))
-                            }
+                            )
                         }
                         if atCap {
                             capFooter
@@ -57,6 +63,19 @@ struct HiringSheet: View {
         engine.state.headcount >= headcountCap
     }
 
+    /// Why no interview can happen right now, mirroring `HiringSystem`'s
+    /// gates so the button explains itself instead of doing nothing.
+    private var interviewBlocker: String? {
+        let state = engine.state
+        if state.life.isAway(day: state.day) {
+            return "You're away — \(state.life.awayReason?.lowercased() ?? "not in the office")"
+        }
+        if state.progression.lastInterviewDay == state.day {
+            return "One interview a day. You do have a company to run."
+        }
+        return nil
+    }
+
     private var emptyState: some View {
         ContentUnavailableView(
             "No candidates right now",
@@ -70,23 +89,48 @@ struct HiringSheet: View {
     /// stays true after the garage era.
     private var capFooter: some View {
         let tierName = engine.state.company.officeTier.displayName.lowercased()
-        return Text("Your \(tierName) only fits \(headcountCap) people. Upgrade coming soon.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity)
-            .multilineTextAlignment(.center)
+        let next = engine.state.company.officeTier.next?.displayName
+        return Text(
+            "Your \(tierName) only fits \(headcountCap) people."
+                + (next.map { " Move to the \($0.lowercased()) from the HQ tab to hire more." } ?? "")
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.center)
     }
 }
 
 // MARK: - Candidate card
 
 private struct CandidateCard: View {
+    let engine: GameEngine
     let candidate: Candidate
     let atCap: Bool
+    /// Whether the founder has spent a day with this person.
+    let interviewed: Bool
+    /// Why an interview can't happen right now, if it can't.
+    let interviewBlocker: String?
     /// Whether the candidate's department (if their role has one) is
     /// already staffed — flips the hint from "forms" to "joins".
     let departmentActive: Bool
-    let hire: () -> Void
+
+    @State private var confirmingPass = false
+
+    private var traits: [String] { candidate.traits }
+
+    /// A line in their own voice: WS-B's dialogue when it has one, the
+    /// first trait's authored bio otherwise.
+    private var bio: String? {
+        if let line = engine.content.dialogue.line(
+            for: traits, mood: 70, context: .hired, seed: candidate.appearanceSeed
+        ) {
+            return line
+        }
+        return traits.first
+            .flatMap { id in engine.content.traits.first { $0.id == id } }?
+            .bio
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
@@ -111,7 +155,23 @@ private struct CandidateCard: View {
                 Spacer(minLength: Theme.Spacing.sm)
             }
 
+            if let bio {
+                Text("\u{201C}\(bio)\u{201D}")
+                    .font(.subheadline)
+                    .italic()
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             SkillBars(skills: candidate.skills)
+
+            // The CV admits to one trait. The other takes a day of your
+            // time to find out.
+            TraitChipRow(
+                traits: traits,
+                content: engine.content,
+                revealedCount: interviewed ? traits.count : 1
+            )
 
             if let hint = departmentHint {
                 Label(hint, systemImage: "building.columns")
@@ -119,18 +179,74 @@ private struct CandidateCard: View {
                     .foregroundStyle(.secondary)
             }
 
-            Button(action: hire) {
-                Label("Hire", systemImage: "person.badge.plus")
-                    .font(.system(.headline, design: .rounded))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Theme.Spacing.xs)
+            if !interviewed {
+                interviewButton
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
-            .disabled(atCap)
-            .accessibilityLabel("Hire \(candidate.name), \(candidate.role.displayName), for \(candidate.weeklySalary.money) per week")
+
+            HStack(spacing: Theme.Spacing.sm) {
+                Button {
+                    engine.send(.hire(candidateID: candidate.id))
+                } label: {
+                    Label("Hire", systemImage: "person.badge.plus")
+                        .font(.system(.headline, design: .rounded))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Theme.Spacing.xs)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
+                .disabled(atCap)
+                .accessibilityLabel(
+                    "Hire \(candidate.name), \(candidate.role.displayName), "
+                        + "for \(candidate.weeklySalary.money) per week"
+                )
+
+                Button {
+                    confirmingPass = true
+                } label: {
+                    Text("Pass")
+                        .font(.system(.headline, design: .rounded))
+                        .padding(.vertical, Theme.Spacing.xs)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Pass on \(candidate.name)")
+            }
         }
         .cardStyle()
+        .confirmationDialog(
+            "Pass on \(candidate.name)?",
+            isPresented: $confirmingPass,
+            titleVisibility: .visible
+        ) {
+            Button("Pass", role: .destructive) {
+                engine.send(.passOnCandidate(candidateID: candidate.id))
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("They leave the pool. A new batch shows up every two weeks.")
+        }
+    }
+
+    private var interviewButton: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Button {
+                engine.send(.interviewCandidate(candidateID: candidate.id))
+            } label: {
+                Label("Interview — costs you a day", systemImage: "bubble.left.and.bubble.right")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .disabled(interviewBlocker != nil)
+            .accessibilityLabel(
+                "Interview \(candidate.name). Reveals the trait their CV left out, "
+                    + "and costs a day of your energy."
+            )
+
+            Text(interviewBlocker ?? "Reveals the trait their CV left out.")
+                .font(.caption)
+                .foregroundStyle(interviewBlocker == nil ? .secondary : Theme.warning)
+        }
     }
 
     /// "Hiring a lawyer forms your Legal department" — only for roles that

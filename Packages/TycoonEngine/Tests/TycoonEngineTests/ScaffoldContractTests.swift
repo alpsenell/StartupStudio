@@ -30,18 +30,22 @@ struct ScaffoldContractTests {
         }
         let legacy = try JSONSerialization.data(withJSONObject: object)
         let legacyState = try JSONDecoder().decode(GameState.self, from: legacy)
-        // Every omitted sub-state comes back as `.initial`…
+
+        // Each stripped sub-state comes back as `.initial` and everything
+        // else survives. (The scaffold compared whole states, which only
+        // held while every sub-state was still empty; WS-A's economy and
+        // WS-F's progression both carry real data after 40 ticks.)
         #expect(legacyState.economy == .initial)
         #expect(legacyState.narrative == .initial)
         #expect(legacyState.progression == .initial)
         #expect(legacyState.investors == .initial)
-        // …and nothing else about the save has moved. WS-A's economy now
-        // carries real data — by day 40 the pause-budget cursor has been
-        // spent — so the whole state is no longer equal to a save that
-        // never had one.
-        var withFreshEconomy = state
-        withFreshEconomy.economy = .initial
-        #expect(legacyState == withFreshEconomy)
+
+        var expected = state
+        expected.economy = .initial
+        expected.narrative = .initial
+        expected.progression = .initial
+        expected.investors = .initial
+        #expect(legacyState == expected)
 
         let employeeData = try encoder.encode(state.employees[0])
         var employeeObject = try #require(
@@ -91,6 +95,24 @@ struct ScaffoldContractTests {
         }
         let stripped = try JSONSerialization.data(withJSONObject: object)
         let reloaded = try JSONDecoder().decode(BalanceConfig.self, from: stripped)
-        #expect(reloaded == balance)
+
+        // Every workstream block falls back to `.default`; everything else
+        // survives the round trip untouched. (The scaffold could compare
+        // the whole config because every block was still empty; once a
+        // workstream tunes its object — WS-F's `progression` is the first —
+        // only the non-workstream fields can match.)
+        #expect(reloaded.progression == .default)
+        #expect(reloaded.economy == .default)
+        #expect(reloaded.narrative == .default)
+        #expect(reloaded.investors == .default)
+        #expect(reloaded.traits == .default)
+
+        var expected = balance
+        expected.economy = .default
+        expected.narrative = .default
+        expected.progression = .default
+        expected.investors = .default
+        expected.traits = .default
+        #expect(reloaded == expected)
     }
 }
