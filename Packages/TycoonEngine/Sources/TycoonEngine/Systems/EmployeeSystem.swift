@@ -32,7 +32,29 @@ enum EmployeeSystem {
             refreshCandidates(&state, balance, content)
             events.append(.candidatesRefreshed(day: state.day))
         }
+        if state.day % GameState.daysPerWeek == 0 {
+            pruneEconomyBookkeeping(&state, balance)
+        }
         return events
+    }
+
+    /// Weekly tidy-up of the economy's bookkeeping, so a long game does not
+    /// carry a growing tail of dead ids and ancient dates in its save: the
+    /// recognition log drops anyone who has left however they left (fired,
+    /// resigned, poached, absorbed), and the hospital and burnout logs keep
+    /// only the entries their "twice in a window" rules can still see.
+    private static func pruneEconomyBookkeeping(_ state: inout GameState, _ balance: BalanceConfig) {
+        let onPayroll = Set(state.employees.map(\.id))
+        state.economy.lastRecognitionDay = state.economy.lastRecognitionDay.filter {
+            onPayroll.contains($0.key)
+        }
+        let economy = balance.economy
+        state.economy.hospitalizationDays = state.economy.hospitalizationDays.filter {
+            state.day - $0 < max(economy.chronicWindowDays, 1)
+        }
+        state.economy.burnoutDays = state.economy.burnoutDays.filter {
+            state.day - $0 < max(economy.burnoutWindowDays, 1)
+        }
     }
 
     /// Days between candidate refreshes: the balance cadence, shortened by

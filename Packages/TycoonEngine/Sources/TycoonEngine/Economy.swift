@@ -117,10 +117,12 @@ public struct EconomyState: Codable, Equatable, Sendable {
     /// output permanently docked until three straight weeks of looking
     /// after themselves.
     public var chronicCondition: Bool
-    /// The day each hospital stay began (used for the "twice in a year"
-    /// chronic trigger). Kept sorted, capped at the last few years.
+    /// The day each hospital stay began, oldest first — the "twice in a
+    /// year" chronic trigger reads it, and a weekly sweep drops anything
+    /// older than the window.
     public var hospitalizationDays: [Int]
-    /// The day each burnout began ("twice in a year" makes the news).
+    /// The day each burnout began, oldest first, on the same weekly sweep.
+    /// Twice inside the window makes the news.
     public var burnoutDays: [Int]
     /// Consecutive weeks the founder spent a weekend on gym / spa / doctor,
     /// counting toward curing a chronic condition.
