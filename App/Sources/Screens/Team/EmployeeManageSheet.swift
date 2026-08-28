@@ -1,4 +1,5 @@
 import SwiftUI
+import TycoonContent
 import TycoonEngine
 
 /// One-on-one with an employee: morale, seniority, and the management
@@ -10,6 +11,10 @@ struct EmployeeManageSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingFire = false
+    @State private var confirmingCut = false
+    /// The custom weekly salary the stepper holds, seeded from the
+    /// employee's current pay the first time the sheet opens.
+    @State private var customSalary: Int?
 
     /// Live lookup so the sheet tracks state changes while open.
     private var employee: Employee? {
@@ -21,6 +26,7 @@ struct EmployeeManageSheet: View {
             if let employee {
                 List {
                     headerSection(employee)
+                    traitSection(employee)
                     moraleSection(employee)
                     relationshipSection(employee)
                     salarySection(employee)
@@ -71,6 +77,34 @@ struct EmployeeManageSheet: View {
         }
     }
 
+    /// Who they are, and exactly what it costs you: the trait chips plus a
+    /// line per trait spelling out the numbers it moves.
+    @ViewBuilder
+    private func traitSection(_ employee: Employee) -> some View {
+        let explanations = TraitEffects.explanations(for: employee, content: engine.content)
+        if !explanations.isEmpty {
+            Section {
+                TraitChipRow(traits: employee.traits, content: engine.content)
+                    .padding(.vertical, Theme.Spacing.xs)
+                ForEach(Array(explanations.enumerated()), id: \.offset) { _, entry in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(entry.name)
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        Text(entry.detail)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            } header: {
+                Text("Personality")
+            } footer: {
+                Text("Traits come with the person and never change. They shape output, learning, mood, patience and how hard a rival finds it to hire them away.")
+            }
+        }
+    }
+
     private func moraleSection(_ employee: Employee) -> some View {
         let staff = engine.balance.staff
         let performance = employee.performanceMultiplier(balance: engine.balance)
@@ -94,10 +128,17 @@ struct EmployeeManageSheet: View {
                 Text(String(format: "Output ×%.2f from morale and seniority.", performance))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                ForEach(Array(moraleCauses(employee).enumerated()), id: \.offset) { _, cause in
+                    Label(cause.text, systemImage: cause.isGood ? "arrow.up" : "arrow.down")
+                        .font(.caption)
+                        .foregroundStyle(cause.isGood ? Theme.positiveCash : Theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if employee.morale < staff.quitMoraleThreshold {
-                    Text("Miserable — they'll quit if this doesn't improve soon.")
+                    Text(quitWarning(employee))
                         .font(.caption)
                         .foregroundStyle(Theme.negativeCash)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(.vertical, Theme.Spacing.xs)
@@ -112,6 +153,64 @@ struct EmployeeManageSheet: View {
             }
             .disabled(onCooldown)
         }
+    }
+
+    /// Why this person's mood is where it is, read off the same balance the
+    /// engine settles morale from — pay fairness, the office, amenities,
+    /// HR, and their own personality.
+    private func moraleCauses(_ employee: Employee) -> [(text: String, isGood: Bool)] {
+        let balance = engine.balance
+        let staff = balance.staff
+        let state = engine.state
+        var causes: [(String, Bool)] = []
+
+        let fair = Double(EmployeeSalaryGuide.fairPay(for: employee, balance: balance))
+        let ratio = fair > 0 ? Double(employee.weeklySalary) / fair : 1
+        if ratio < staff.underpaidThreshold {
+            causes.append(("Paid below the market rate", false))
+        } else if ratio > staff.wellPaidThreshold {
+            causes.append(("Paid well above the market rate", true))
+        }
+
+        let officeBonus = staff.officeMoraleBonus[state.company.officeTier.rawValue] ?? 0
+        if officeBonus > 0 {
+            causes.append(("The \(state.company.officeTier.displayName.lowercased()) is a nice place to work", true))
+        } else if officeBonus < 0 {
+            causes.append(("The \(state.company.officeTier.displayName.lowercased()) is grim", false))
+        }
+
+        let amenityBonus = Amenity.allCases
+            .filter { state.hasAmenity($0) }
+            .reduce(0.0) { $0 + balance.company.amenity($1).moraleBonus }
+        if amenityBonus > 0 {
+            causes.append(("Office perks", true))
+        }
+        if state.hasDepartment(.hr) {
+            causes.append(("People & HR looks after them", true))
+        }
+
+        let traitDelta = TraitEffects.moraleTargetDelta(employee, content: engine.content)
+        if traitDelta <= -2 {
+            causes.append(("It's who they are — see Personality", false))
+        } else if traitDelta >= 2 {
+            causes.append(("It's who they are — see Personality", true))
+        }
+        return causes.map { (text: $0.0, isGood: $0.1) }
+    }
+
+    /// How long they will hold on, in their own terms — loyalty and their
+    /// traits both buy patience.
+    private func quitWarning(_ employee: Employee) -> String {
+        let balance = engine.balance
+        let patience = balance.staff.quitStreakDays
+            + Int(employee.loyalty / balance.social.loyaltyQuitDivisor)
+            + TraitEffects.quitStreakBonus(employee, content: engine.content)
+        let left = max(0, patience - employee.lowMoraleStreakDays)
+        return left <= 0
+            ? "Miserable, and out of patience. They could resign any day."
+            : "Miserable for \(employee.lowMoraleStreakDays) day"
+                + "\(employee.lowMoraleStreakDays == 1 ? "" : "s"). "
+                + "About \(left) more before they resign."
     }
 
     @ViewBuilder
@@ -192,8 +291,10 @@ struct EmployeeManageSheet: View {
         let fair = EmployeeSalaryGuide.fairPay(for: employee, balance: engine.balance)
         let raised = Int((Double(employee.weeklySalary) * 1.1).rounded())
         let cut = max(1, Int((Double(employee.weeklySalary) * 0.9).rounded()))
+        let proposed = customSalary ?? employee.weeklySalary
+        let step = max(10, employee.weeklySalary / 20)
 
-        return Section("Salary") {
+        return Section {
             LabeledContent("Current") {
                 Text("\(employee.weeklySalary.money)/wk").monospacedDigit()
             }
@@ -211,11 +312,66 @@ struct EmployeeManageSheet: View {
                 Label("Raise to \(raised.money)/wk", systemImage: "arrow.up.circle")
             }
             Button(role: .destructive) {
-                engine.send(.adjustSalary(employeeID: employeeID, weeklySalary: cut))
+                customSalary = cut
+                confirmingCut = true
             } label: {
                 Label("Cut to \(cut.money)/wk", systemImage: "arrow.down.circle")
             }
+
+            // A named number, for matching an offer or landing exactly on
+            // the market rate.
+            Stepper(value: salaryBinding(default: employee.weeklySalary), in: 1...200_000, step: step) {
+                HStack {
+                    Text("Set to")
+                    Spacer()
+                    Text("\(proposed.money)/wk")
+                        .monospacedDigit()
+                        .foregroundStyle(proposed < employee.weeklySalary ? Theme.negativeCash : .primary)
+                }
+            }
+            .accessibilityLabel("Custom weekly salary")
+            .accessibilityValue("\(proposed.money) per week")
+
+            Button {
+                if proposed < employee.weeklySalary {
+                    confirmingCut = true
+                } else {
+                    engine.send(.adjustSalary(employeeID: employeeID, weeklySalary: proposed))
+                    customSalary = nil
+                }
+            } label: {
+                Label("Apply \(proposed.money)/wk", systemImage: "checkmark.circle")
+            }
+            .disabled(proposed == employee.weeklySalary)
+        } header: {
+            Text("Salary")
+        } footer: {
+            Text("Pay below the market rate drains morale; pay above it lifts the ceiling. Matching a rival's offer is what keeps people.")
         }
+        .confirmationDialog(
+            "Cut \(employee.name) to \((customSalary ?? cut).money)/wk?",
+            isPresented: $confirmingCut,
+            titleVisibility: .visible
+        ) {
+            Button("Cut their pay", role: .destructive) {
+                engine.send(.adjustSalary(
+                    employeeID: employeeID, weeklySalary: customSalary ?? cut
+                ))
+                customSalary = nil
+            }
+            Button("Cancel", role: .cancel) { customSalary = nil }
+        } message: {
+            Text("A pay cut hits morale hard, and underpaid people start listening to rivals.")
+        }
+    }
+
+    /// Backs the custom-salary stepper, seeding itself from the employee's
+    /// current pay the first time it is read.
+    private func salaryBinding(default current: Int) -> Binding<Int> {
+        Binding(
+            get: { customSalary ?? current },
+            set: { customSalary = $0 }
+        )
     }
 
     private func careerSection(_ employee: Employee) -> some View {
