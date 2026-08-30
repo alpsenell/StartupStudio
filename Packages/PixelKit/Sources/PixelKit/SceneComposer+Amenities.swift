@@ -129,11 +129,85 @@ extension SceneComposer {
     }
 
     /// Floor zones may not run into the tier's own front-row props.
+    ///
+    /// The loft's is wide enough for the bookshelf and beanbag baked into
+    /// its corner (`RoomBuilder.floorDressing`) — a loft is small enough
+    /// that a game room would otherwise clip them both. Campus keeps its
+    /// coffee machine, and its lobby run is anchored to the right of the
+    /// zone band rather than reserved for here.
     private static func rightReserve(for tier: OfficeTierStyle) -> Int {
-        tier == .campus ? 16 : 2 // campus keeps a coffee machine front-right
+        switch tier {
+        case .garage, .studio: 2
+        case .loft: 24
+        case .campus: 16
+        }
     }
 
     // MARK: Placement
+
+    /// Where each floor zone lands, in scene pixels.
+    ///
+    /// `amenityZones` lays the props out from these rectangles and
+    /// `OfficeWaypoints` hangs its "go and use the game room" anchors off
+    /// them, so both agree by construction.
+    static func zoneFrames(
+        for tier: OfficeTierStyle,
+        shown: [AmenityStyle],
+        size: SceneSize,
+        founderY: Int
+    ) -> [(amenity: AmenityStyle, x: Int, y: Int, width: Int, height: Int)] {
+        let zones = shown.compactMap { amenity in floorZone(for: amenity).map { (amenity, $0) } }
+        guard !zones.isEmpty else { return [] }
+
+        let startX = Layout.sideMargin + Layout.cellWidth + zoneLead
+        let endX = size.width - rightReserve(for: tier)
+        let totalWidth = zones.reduce(0) { $0 + $1.1.width }
+        let gap = min(maxZoneGap, (endX - startX - totalWidth) / (zones.count + 1))
+        let baseline = founderY + Layout.cellHeight - 2
+
+        var frames: [(AmenityStyle, Int, Int, Int, Int)] = []
+        var x = startX + gap
+        for (amenity, zone) in zones {
+            frames.append((amenity, x, baseline - zone.height, zone.width, zone.height))
+            x += zone.width + gap
+        }
+        return frames
+    }
+
+    /// The strip the floor zones can *ever* claim in a tier: the union of
+    /// `zoneFrames` over every set of amenities the player could own.
+    /// `nil` for a tier with no floor zones at all.
+    ///
+    /// Amenity zones are placements laid on top of the room bitmap, while
+    /// the tier's own floor dressing is baked *into* it, so anything the
+    /// room paints inside this rect is simply lost behind a vending machine.
+    /// `RoomBuilder.floorDressing` reads this and keeps out of it; the union
+    /// is enumerated rather than reasoned about (sixteen subsets is nothing)
+    /// so it cannot drift out of agreement with the layout when a zone's art
+    /// changes size.
+    static func floorZoneReserve(
+        for tier: OfficeTierStyle
+    ) -> (x: Int, y: Int, width: Int, height: Int)? {
+        let size = sceneSize(for: tier)
+        let founderY = founderRowY(for: tier)
+        let all = AmenityStyle.allCases
+        var minX = Int.max, minY = Int.max, maxX = Int.min, maxY = Int.min
+
+        for mask in 0..<(1 << all.count) {
+            let owned = Set(all.enumerated().compactMap { mask & (1 << $0.offset) == 0 ? nil : $0.element })
+            for frame in zoneFrames(
+                for: tier, shown: shownAmenities(for: tier, amenities: owned),
+                size: size, founderY: founderY
+            ) {
+                minX = min(minX, frame.x)
+                minY = min(minY, frame.y)
+                maxX = max(maxX, frame.x + frame.width)
+                maxY = max(maxY, frame.y + frame.height)
+            }
+        }
+        guard minX <= maxX else { return nil }
+        return (x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+    }
 
     static func amenityZones(
         for tier: OfficeTierStyle,
@@ -147,7 +221,7 @@ extension SceneComposer {
 
         func place(_ item: ZoneItem, atX x: Int, y: Int) -> PlacedSprite {
             PlacedSprite(
-                sprite: SpriteLibrary.amenityProp(item.name),
+                sprite: SpriteCache.shared("amenity.\(item.name.rawValue)") { SpriteLibrary.amenityProp(item.name) },
                 x: x + item.x, y: y + item.y,
                 kind: .amenityProp(item.name),
                 animation: item.animation, phase: item.phase
@@ -176,7 +250,7 @@ extension SceneComposer {
             for (index, item) in zone.items.enumerated() {
                 if amenity == .cafeteria, let onBreak, let seat = zone.seat, seat.coveredBy == index {
                     placements.append(PlacedSprite(
-                        sprite: SpriteLibrary.person(appearance: onBreak.appearance, isFounder: onBreak.isFounder),
+                        sprite: SpriteCache.person(appearance: onBreak.appearance, pose: .seated, isFounder: onBreak.isFounder, role: onBreak.role),
                         x: x + seat.x, y: y + seat.y,
                         kind: .person,
                         animation: .typing(slow: true),

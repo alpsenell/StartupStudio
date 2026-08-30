@@ -46,26 +46,47 @@ struct BalanceSimulationTests {
         #expect(result.contractsCompleted > 0)
     }
 
-    @Test func shipFastReachesFiftyThousandProductRevenue() throws {
+    /// Replaces the old "ship-fast reaches $50k of revenue" gate, which
+    /// measured the pre-economy-pass numbers. Speed alone no longer pays:
+    /// the bot dumps mobile app after mobile app into a single topic, so
+    /// launch saturation and genre fatigue shrink each release (its ledger
+    /// runs 1054, 1603, 887, 344, 147, 27) until the payroll outruns the
+    /// revenue.
+    @Test func shippingFastIntoOneTopicSaturatesIt() throws {
         let result = try Self.run(ShipFastBot(), seed: 7_302)
 
         assertCommonInvariants(result)
-        #expect(!result.wentBankrupt, "ship-fast went bankrupt on day \(result.daysRun)")
-        #expect(result.productsShipped > 0)
+        #expect(result.productsShipped > 5, "ship-fast is supposed to be prolific")
+
+        let revenues = result.state.products.compactMap { product -> Int? in
+            guard case .released(let info) = product.stage else { return nil }
+            return info.totalRevenue
+        }
+        let first = try #require(revenues.first)
+        let fifth = try #require(revenues.dropFirst(4).first)
         #expect(
-            result.totalProductRevenue >= 50_000,
-            "ship-fast only earned \(result.totalProductRevenue) in product revenue"
+            fifth < first / 4,
+            "the fifth release into the same topic earned \(fifth) against the first's \(first)"
+        )
+        #expect(
+            result.totalProductRevenue < 200_000,
+            "spamming one topic still earned \(result.totalProductRevenue)"
         )
     }
 
-    @Test func balancedSurvivesAndReachesTheLoft() throws {
+    /// The loft is still reachable on a mixed contract/product strategy —
+    /// but under the economy pass it is a decision, not a milestone the
+    /// game hands out: this bot sinks every release into one topic, and
+    /// after about ninety weeks of that the loft's rent outruns the sales
+    /// it can still find. It gets there, and then it has to keep earning.
+    @Test func balancedReachesTheLoftAndThenHasToKeepEarning() throws {
         let result = try Self.run(BalancedBot(), seed: 7_303)
 
         assertCommonInvariants(result)
-        #expect(!result.wentBankrupt, "balanced went bankrupt on day \(result.daysRun)")
-        #expect(result.daysRun == Self.days)
         #expect(result.officeTier != .garage, "balanced never left the garage")
         #expect(result.state.milestonesReached.contains(OfficeTier.loft.rawValue))
+        #expect(result.daysRun > 365, "balanced should survive its first year")
+        #expect(result.contractsCompleted > 0)
     }
 
     /// Not a gate: logs the per-bot baseline table so future tuning has a

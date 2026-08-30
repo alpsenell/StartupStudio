@@ -20,9 +20,12 @@ struct ProductsScreen: View {
     }
 
     @State private var section: ProductsSection = .products
+    @State private var path = NavigationPath()
+
+    @Environment(AppRouter.self) private var router
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             VStack(spacing: 0) {
                 // Pinned directly below the HUD inset (applied to this
                 // VStack), outside the ScrollView, so it can never scroll
@@ -66,6 +69,26 @@ struct ProductsScreen: View {
             .navigationDestination(for: UUID.self) { productID in
                 ProductDetailScreen(engine: engine, productID: productID)
             }
+            .onChange(of: router.pendingPush, initial: true) { _, _ in
+                consumeRoute()
+            }
+        }
+    }
+
+    /// Deep links into this tab: R&D picks the segment, a product id
+    /// pushes its detail screen.
+    private func consumeRoute() {
+        switch router.pendingPush {
+        case .research:
+            section = .research
+            router.take(.research)
+        case .product(let productID):
+            section = .products
+            router.take(.product(productID))
+            guard engine.state.product(id: productID) != nil else { return }
+            path.append(productID)
+        default:
+            break
         }
     }
 }

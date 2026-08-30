@@ -1,9 +1,17 @@
-/// The authored person pose: 14×18, seated facing the viewer, drawn as three
-/// frames — typing A (hands up), typing B (hands down), and A-with-a-blink.
+/// The authored office person: 14×18, seated facing the viewer, drawn as
+/// three frames — typing A (hands up), typing B (hands down), and A with a
+/// blink.
+///
+/// Every adult pose in the game keeps its head in rows 1–6, columns 3–10 of
+/// a 14-wide canvas. That single rule is what lets one set of hair, glasses,
+/// beard and role-accessory overlays drop onto every pose in every scene.
 ///
 /// Character key:
 ///   O outline   S/s skin + shade   H/h hair + shade   T/t shirt + shade
 ///   E eyes      P pants/lap        C chair            D/d founder hoodie
+///   N accessory dark   n lens glass   M metal   W/w paper
+///   R/r accent warm    G/g accent green   V/v blazer   Q collar
+///   Y gold             I indigo          K shoe/dark
 enum PersonArt {
     static let width = 14
     static let height = 18
@@ -99,9 +107,50 @@ enum PersonArt {
         ],
     ]
 
-    /// The founder's subtle distinguishing detail: an indigo hoodie collar
-    /// draped across the chest, with the hood hanging at the sides. Kept off
-    /// the head rows so the typing head-bob does not disturb it.
+    // MARK: - Face accessories
+
+    /// Glasses: two lenses either side of a bridge, sitting on the eye row
+    /// with the pupils left showing so a person in glasses still blinks.
+    /// Style 0 is a thin wire pair, style 1 adds a brow bar and a bottom rim
+    /// so it reads from across a campus.
+    static let glassesOverlays: [[String]] = [
+        // 0 — wire rims: pale lenses with a dark rim at each outer edge.
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "   Nn nn nN   ",
+        ],
+        // 1 — bold frames: the same lenses under a heavy brow bar.
+        [
+            "              ",
+            "              ",
+            "              ",
+            "   NNNNNNNN   ",
+            "   Nn nn nN   ",
+            "   NN    NN   ",
+        ],
+    ]
+
+    /// Beard: sideburns, jaw and chin in the hair's shade tone, so it always
+    /// matches the head it grows on.
+    static let beardOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "    h    h    ",
+        "    hhhhhh    ",
+    ]
+
+    // MARK: - Outfits
+
+    /// The founder's hoodie. The indigo comes from the palette — a founder
+    /// sprite recolors its whole shirt to the hoodie tones — and this
+    /// overlay adds what makes it a *hoodie*: the hood bunched at the neck
+    /// and two gold drawstrings down the chest.
     static let hoodieOverlay: [String] = [
         "              ",
         "              ",
@@ -109,9 +158,152 @@ enum PersonArt {
         "              ",
         "              ",
         "              ",
-        "              ",
-        "              ",
-        "   DdDDDDdD   ",
-        "   D      D   ",
+        "   dd    dd   ",
+        "  ddddddddd   ",
+        "  dd      dd  ",
+        "   d      d   ",
+        "    Y    Y    ",
+        "    Y    Y    ",
     ]
+
+    /// Outfit 0 — a plain hoodie in the wearer's own shirt color: the same
+    /// silhouette as the founder's, without the indigo.
+    static let casualHoodieOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "   tt    tt   ",
+        "  ttttttttt   ",
+        "  tt      tt  ",
+        "   t      t   ",
+    ]
+
+    /// Outfit 1 — an open-collar shirt: two collar points and a button
+    /// placket, and nothing else, so the shirt colour still reads.
+    static let shirtOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "     Q  Q     ",
+        "      QQ      ",
+        "      Q       ",
+        "      Q       ",
+    ]
+
+    /// Outfit 2 — a blazer: dark lapels and sleeves over a light shirt
+    /// front, leaving the chest in the wearer's own colour.
+    static let blazerOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "   VQ    QV   ",
+        "  VVQ    QVV  ",
+        " VVvQ    QvVV ",
+        " VVv      vVV ",
+        " VVv      vVV ",
+        " VVv      vVV ",
+    ]
+
+    /// Every body outfit, in `CharacterAppearance.outfit` order.
+    static let outfitOverlays: [[String]] = [casualHoodieOverlay, shirtOverlay, blazerOverlay]
+
+    // MARK: - Role accessories
+
+    /// One overlay per role, drawn over the finished body. Each is a single
+    /// unmistakable silhouette cue — the point is that a glance at a crowded
+    /// campus tells you who is who.
+    static func roleOverlay(_ role: RoleLook) -> [String]? {
+        switch role {
+        case .none, .founder:
+            return nil
+        case .qa:
+            // Headset: band over the crown, cups at both ears, boom mic.
+            return [
+                "     NNNN     ",
+                "    N    N    ",
+                "   NN    NN   ",
+                "   Nn    nN   ",
+                "   N      NRR ",
+            ]
+        case .designer:
+            // Beret, tilted, with a stalk.
+            return [
+                "     RRRRr    ",
+                "    RRRRRRr   ",
+                "     rrrr     ",
+            ]
+        case .marketer:
+            // Phone held to the ear, with a call blip.
+            return [
+                "              ",
+                "              ",
+                "              ",
+                "          NN  ",
+                "          Nn  ",
+                "          NN  ",
+            ]
+        case .lawyer:
+            // Necktie down the chest.
+            return [
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "      RR      ",
+                "      RR      ",
+                "      rr      ",
+                "      RR      ",
+                "      rr      ",
+            ]
+        case .hr:
+            // Lanyard: a cord around the neck and a badge on the chest.
+            return [
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "    G    G    ",
+                "     G  G     ",
+                "      GG      ",
+                "     QQQQ     ",
+                "     QNNQ     ",
+                "     QQQQ     ",
+            ]
+        case .ops:
+            // Clipboard tucked under one arm.
+            return [
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                "              ",
+                " NQQQN        ",
+                " NQQQN        ",
+                " NQQQN        ",
+                " NNNNN        ",
+            ]
+        }
+    }
 }

@@ -6,7 +6,8 @@ public enum ContentLoadError: Error, Equatable, Sendable {
 }
 
 /// The full static content catalog: product types, topics, tech tree, events,
-/// life events, and name pools.
+/// life events, name pools, and the workstream catalogs (traits, dialogue,
+/// news, reviews, goals, investors) that ship empty in the scaffold.
 ///
 /// Content, not state — game saves reference entries by stable string id and the
 /// simulation engine consumes this catalog read-only.
@@ -23,11 +24,33 @@ public struct ContentCatalog: Sendable {
     public let names: NamePools
     /// All founder life events, in stable JSON order.
     public let lifeEvents: [LifeEventDef]
+    /// Employee personality traits (`Traits.json`, WS-F). Empty until WS-F
+    /// writes them.
+    public let traits: [TraitDef]
+    /// Employee bios and spoken lines (`Dialogue.json`, WS-B). Empty until
+    /// WS-B writes them.
+    public let dialogue: DialogueCatalog
+    /// Industry-news headline templates (`News.json`, WS-B). Empty until
+    /// WS-B writes them.
+    public let news: [NewsTemplate]
+    /// Per-outlet review voices (`Reviews.json`, WS-B). `nil` only when the
+    /// file is missing from the bundle entirely.
+    public let reviews: ReviewCatalog?
+    /// Chapter goals (`Goals.json`, WS-F). Empty until WS-F writes them.
+    public let goals: [GoalDef]
+    /// Investor personas (`Investors.json`, WS-F). Empty until WS-F writes
+    /// them.
+    public let investors: [InvestorDef]
+    /// Staff moments (`StaffEvents.json`), one def per `StaffEventKind`.
+    /// Empty falls back to the engine's balance numbers.
+    public let staffEvents: [StaffEventDef]
 
     private let productTypesByID: [String: ProductTypeDef]
     private let topicsByID: [String: TopicDef]
     private let techByID: [String: TechNode]
     private let lifeEventsByID: [String: LifeEventDef]
+    private let eventsByID: [String: EventDef]
+    private let staffEventsByID: [String: StaffEventDef]
 
     public init(
         productTypes: [ProductTypeDef],
@@ -35,7 +58,14 @@ public struct ContentCatalog: Sendable {
         techTree: [TechNode],
         events: [EventDef],
         names: NamePools,
-        lifeEvents: [LifeEventDef] = []
+        lifeEvents: [LifeEventDef] = [],
+        traits: [TraitDef] = [],
+        dialogue: DialogueCatalog = .empty,
+        news: [NewsTemplate] = [],
+        reviews: ReviewCatalog? = nil,
+        goals: [GoalDef] = [],
+        investors: [InvestorDef] = [],
+        staffEvents: [StaffEventDef] = []
     ) {
         self.productTypes = productTypes
         self.topics = topics
@@ -43,6 +73,13 @@ public struct ContentCatalog: Sendable {
         self.events = events
         self.names = names
         self.lifeEvents = lifeEvents
+        self.traits = traits
+        self.dialogue = dialogue
+        self.news = news
+        self.reviews = reviews
+        self.goals = goals
+        self.investors = investors
+        self.staffEvents = staffEvents
         self.productTypesByID = Dictionary(
             productTypes.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
@@ -59,9 +96,21 @@ public struct ContentCatalog: Sendable {
             lifeEvents.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
+        self.eventsByID = Dictionary(
+            events.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        self.staffEventsByID = Dictionary(
+            staffEvents.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
     }
 
-    /// Decodes the six content JSON files from `Bundle.module`.
+    /// Decodes the bundled content JSON files from `Bundle.module`.
+    ///
+    /// The six original files are required; the six workstream catalogs
+    /// (traits, dialogue, news, reviews, goals, investors) are optional, so
+    /// a build without them still loads — they simply read as empty.
     public static func loadBundled() throws -> ContentCatalog {
         let decoder = JSONDecoder()
         return ContentCatalog(
@@ -70,7 +119,14 @@ public struct ContentCatalog: Sendable {
             techTree: try decodeResource("TechTree", using: decoder),
             events: try decodeResource("Events", using: decoder),
             names: try decodeResource("Names", using: decoder),
-            lifeEvents: try decodeResource("LifeEvents", using: decoder)
+            lifeEvents: try decodeResource("LifeEvents", using: decoder),
+            traits: try decodeResourceIfPresent("Traits", using: decoder) ?? [],
+            dialogue: try decodeResourceIfPresent("Dialogue", using: decoder) ?? .empty,
+            news: try decodeResourceIfPresent("News", using: decoder) ?? [],
+            reviews: try decodeResourceIfPresent("Reviews", using: decoder),
+            goals: try decodeResourceIfPresent("Goals", using: decoder) ?? [],
+            investors: try decodeResourceIfPresent("Investors", using: decoder) ?? [],
+            staffEvents: try decodeResourceIfPresent("StaffEvents", using: decoder) ?? []
         )
     }
 
@@ -94,12 +150,35 @@ public struct ContentCatalog: Sendable {
         lifeEventsByID[id]
     }
 
+    /// O(1) lookup of a company event by id.
+    public func event(_ id: String) -> EventDef? {
+        eventsByID[id]
+    }
+
+    /// O(1) lookup of a staff-event definition by its kind raw value.
+    public func staffEvent(_ id: String) -> StaffEventDef? {
+        staffEventsByID[id]
+    }
+
     private static func decodeResource<T: Decodable>(
         _ name: String,
         using decoder: JSONDecoder
     ) throws -> T {
         guard let url = Bundle.module.url(forResource: name, withExtension: "json") else {
             throw ContentLoadError.missingResource("\(name).json")
+        }
+        return try decoder.decode(T.self, from: Data(contentsOf: url))
+    }
+
+    /// Like `decodeResource`, but a file that isn't in the bundle reads as
+    /// `nil` instead of throwing — the loader tolerates a workstream
+    /// catalog that hasn't been written yet.
+    private static func decodeResourceIfPresent<T: Decodable>(
+        _ name: String,
+        using decoder: JSONDecoder
+    ) throws -> T? {
+        guard let url = Bundle.module.url(forResource: name, withExtension: "json") else {
+            return nil
         }
         return try decoder.decode(T.self, from: Data(contentsOf: url))
     }

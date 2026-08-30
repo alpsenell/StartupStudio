@@ -1,0 +1,275 @@
+{
+  "outlets": [
+    {
+      "id": "TechDaily",
+      "persona": "Breathless. Files three stories a day and means every superlative.",
+      "bands": {
+        "dire": [
+          "We wanted to love {name}. We could not open it twice in a row.",
+          "The most disappointing {type} we have opened this year.",
+          "A {topic} app that appears to have shipped by accident.",
+          "{name} is not ready, and everyone involved knows it.",
+          "We have written four drafts of this and they all end the same way.",
+          "The launch post is better than the product.",
+          "There is an idea in here somewhere, buried under the crash logs.",
+          "We hope the team gets another go. This was not it."
+        ],
+        "poor": [
+          "{name} has the bones of a good {type} and none of the muscle.",
+          "Ambitious, unfinished, and out too early.",
+          "The {topic} space deserves this idea done properly.",
+          "Six more months would have made this a different review.",
+          "We kept opening it hoping to be surprised.",
+          "Rough, but the rough parts are the fixable kind.",
+          "You can see what they meant. You cannot quite use it.",
+          "A promising team having a difficult launch."
+        ],
+        "mixed": [
+          "{name} does the job, and occasionally does it well.",
+          "A competent {type} in a crowded {topic} market.",
+          "Half of this is genuinely good. The other half is Tuesday.",
+          "We would recommend it to a friend with low standards and patience.",
+          "It works. That is more than we can say for most launches this month.",
+          "There is a very good app hiding inside this one.",
+          "Solid, unremarkable, and honest about what it is.",
+          "The kind of release that earns a second look next year."
+        ],
+        "good": [
+          "{name} is the {topic} app we have been waiting for someone to build.",
+          "Confident, quick, and clearly made by people who use it.",
+          "The best small-team {type} we have reviewed this quarter.",
+          "It does one thing extremely well and does not apologise for it.",
+          "We have moved our own workflow onto it, which we do not do lightly.",
+          "Polished in the places that are hard to polish.",
+          "This is what shipping with taste looks like.",
+          "A launch that earns the attention it is getting."
+        ],
+        "stellar": [
+          "{name} is the new benchmark for {topic}. Everyone else, catch up.",
+          "We have not been this excited about a {type} in years.",
+          "The rare launch that makes the category look easy.",
+          "Nothing here is accidental. Every screen has been argued about.",
+          "We reviewed it twice because we did not believe the first pass.",
+          "This is the app the platform demos should be using.",
+          "Astonishing work from a team this size.",
+          "We are going to be talking about this launch all year."
+        ]
+      }
+    },
+    {
+      "id": "AppVerdict",
+      "persona": "Grumpy. Has reviewed nine hundred of these and remembers all of them.",
+      "bands": {
+        "dire": [
+          "Another {topic} app. This one does not work.",
+          "We have seen worse. We are struggling to remember when.",
+          "{name} wasted an afternoon we were not going to get back anyway.",
+          "The uninstall was the smoothest part of the experience.",
+          "It is not that it is bad. It is that it is bad on purpose, somehow.",
+          "Somebody signed off on this.",
+          "The loading spinner is the most finished thing in the build.",
+          "We will be charitable and call it an early access."
+        ],
+        "poor": [
+          "{name} is what happens when a deadline wins an argument.",
+          "Rough edges as far as the eye can see, and the eye can see far.",
+          "It works in the way a squeaky door works.",
+          "A {type} with a good idea and no time.",
+          "We have notes. We have pages of notes.",
+          "Nothing here is unfixable, which is the frustrating part.",
+          "It does eventually do the thing. Eventually.",
+          "The team clearly cared. The schedule clearly did not."
+        ],
+        "mixed": [
+          "Fine. Perfectly, stubbornly fine.",
+          "{name} is neither the best nor the worst {topic} app on our phone.",
+          "You could do worse. You have done worse.",
+          "Half brilliant, half baffling, entirely typical.",
+          "It does the job without ever making a case for itself.",
+          "We have no strong feelings, which is itself a verdict.",
+          "Competent. We are aware that sounds like an insult.",
+          "A solid maybe from a desk that does not hand those out often."
+        ],
+        "good": [
+          "We did not expect to like {name}. We like {name}.",
+          "Someone on this team has taste and was allowed to use it.",
+          "The rare {type} that respects your time.",
+          "Quietly excellent in daily use, which is the only test that counts.",
+          "It got out of the way, and we noticed that it had.",
+          "Sensible defaults, few surprises, no nonsense.",
+          "We have kept it installed, which is our highest ordinary praise.",
+          "A good release from a team that will make a better one."
+        ],
+        "stellar": [
+          "We have been doing this a long time. {name} is a genuinely good app.",
+          "Everything works. We checked twice out of habit.",
+          "The best {topic} software we have used, and we have used all of it.",
+          "We forgot we were reviewing it, which has happened four times in ten years.",
+          "There is nothing to complain about. This is very inconvenient for us.",
+          "It is not flashy. It is correct, which is harder.",
+          "The kind of {type} that quietly ends the argument.",
+          "We would pay for this, and we get everything free."
+        ]
+      }
+    },
+    {
+      "id": "The Stack Review",
+      "persona": "Technical. Reads your changelog and benchmarks your cold start.",
+      "bands": {
+        "dire": [
+          "{name} fails under ordinary use. We did not have to try hard.",
+          "Cold start is slow, the error states are missing, and state is lost on rotate.",
+          "The data model appears to have been decided at runtime.",
+          "We could not complete the core flow in five attempts.",
+          "Instrumented, it spends most of its time waiting on itself.",
+          "The offline behaviour is to pretend the network is fine.",
+          "This is a prototype with a price tag.",
+          "We stopped testing at the point where testing became archaeology."
+        ],
+        "poor": [
+          "{name} is functional under ideal conditions and fragile outside them.",
+          "The happy path works. There is only the happy path.",
+          "Latency is inconsistent and the retry logic is optimistic.",
+          "Sync conflicts resolve by choosing violence.",
+          "Memory grows across sessions in a way we would want to explain.",
+          "A reasonable architecture with unreasonable deadlines applied to it.",
+          "The API is well shaped. The implementation is not there yet.",
+          "It needs another pass on error handling before we could recommend it."
+        ],
+        "mixed": [
+          "{name} is technically sound and interactively unremarkable.",
+          "Cold start is acceptable, sync is honest, the edge cases are not covered.",
+          "A serviceable {type}, engineered to the budget it had.",
+          "Nothing in the profiler alarms us. Nothing delights us either.",
+          "It handles failure quietly, which we appreciate more than most users will.",
+          "Reasonable trade-offs, visible everywhere, defensible individually.",
+          "The architecture will support the version we actually want.",
+          "Correct where it matters, thin where it does not yet."
+        ],
+        "good": [
+          "{name} is well built. Cold start is fast and the offline story is real.",
+          "State survives everything we did to it, and we tried.",
+          "The failure modes are designed, not discovered.",
+          "The sync layer is the best part and nobody will ever notice it.",
+          "Instrumented, it is doing exactly what it appears to be doing.",
+          "A {type} whose engineering constraints were understood before the design.",
+          "We could not make it lose data. We spent an afternoon trying.",
+          "Careful work, visible in the places users never look."
+        ],
+        "stellar": [
+          "{name} is the best-engineered {topic} product we have measured this year.",
+          "Cold start under 400ms, conflict-free sync, and honest error states.",
+          "We tried to break it for two days and filed one cosmetic bug.",
+          "The performance work here is not marketing. We measured it.",
+          "Every trade-off in this build is the right one.",
+          "It degrades gracefully in conditions most apps refuse to acknowledge.",
+          "This is what a small team with discipline produces.",
+          "We are going to reference this architecture in future reviews."
+        ]
+      }
+    },
+    {
+      "id": "ByteSized",
+      "persona": "One-liners. Never files more than a sentence and never needs to.",
+      "bands": {
+        "dire": [
+          "No.",
+          "{name}: bold of them.",
+          "Crashes faster than it launches.",
+          "A brave experiment in user patience.",
+          "Uninstalled before the tutorial ended.",
+          "Ambitious. Wrong.",
+          "This one is for the archaeologists.",
+          "We are sure the party was fun."
+        ],
+        "poor": [
+          "Nearly.",
+          "{name}: good bones, bad week.",
+          "Six months early.",
+          "It tries. It really tries.",
+          "Works on the third go.",
+          "A {topic} app with a to-do list attached.",
+          "Half a good idea.",
+          "Come back after the patch."
+        ],
+        "mixed": [
+          "Fine.",
+          "{name}: does the thing.",
+          "Beige, in a useful way.",
+          "No notes, no applause.",
+          "Perfectly adequate {type}.",
+          "It exists and it works.",
+          "A shrug, but a positive one.",
+          "We forgot we had it. It kept working."
+        ],
+        "good": [
+          "Good. Genuinely.",
+          "{name}: worth the download.",
+          "Fast, quiet, useful.",
+          "Small studio, big craft.",
+          "The best {topic} app on our home screen.",
+          "No complaints, and we look.",
+          "Buy it.",
+          "Two weeks in, still open."
+        ],
+        "stellar": [
+          "Yes.",
+          "{name}: the new bar.",
+          "Perfect, annoyingly.",
+          "We have been waiting for this.",
+          "The best {type} of the year, in week nine.",
+          "Nothing to add.",
+          "Everyone else, take notes.",
+          "Delete your competitor. Install this."
+        ]
+      }
+    }
+  ],
+  "callouts": [
+    {
+      "id": "buggy",
+      "lines": [
+        "It also crashes.",
+        "It crashes, often, in the same place.",
+        "Bring patience and a habit of saving.",
+        "The bug reports write themselves."
+      ]
+    },
+    {
+      "id": "polished",
+      "lines": [
+        "The animation work is genuinely lovely.",
+        "Every transition is buttery.",
+        "Somebody sweated the small stuff.",
+        "The details are where the money went."
+      ]
+    },
+    {
+      "id": "overpromised",
+      "lines": [
+        "The marketing was better than the build.",
+        "It was over-promised, and everyone can tell.",
+        "The teaser set a bar the release walks under.",
+        "Fewer trailers, more testing."
+      ]
+    },
+    {
+      "id": "unnoticed",
+      "lines": [
+        "Nobody has heard of it, which is the real problem.",
+        "It deserved a launch it did not get.",
+        "The hardest part now is being found.",
+        "Good software, no megaphone."
+      ]
+    },
+    {
+      "id": "crowded",
+      "lines": [
+        "The {topic} shelf is very full right now.",
+        "It arrives into a crowded {topic} market.",
+        "Timing is not on its side.",
+        "Everyone shipped a {topic} app this month."
+      ]
+    }
+  ]
+}

@@ -35,6 +35,8 @@ private struct ActiveContractCard: View {
     let engine: GameEngine
     let job: ContractJob
 
+    @Environment(AppRouter.self) private var router
+
     private var daysLeft: Int {
         job.deadlineDay - engine.state.day
     }
@@ -90,9 +92,21 @@ private struct ActiveContractCard: View {
             }
 
             if !hasWorkers {
-                Text("Assign people from the Team tab.")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.warning)
+                HStack(spacing: Theme.Spacing.md) {
+                    Text("Nobody is working on this — it makes no progress.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.warning)
+                    Spacer(minLength: Theme.Spacing.sm)
+                    Button {
+                        Haptics.tap()
+                        router.tab = .team
+                    } label: {
+                        Label("Assign", systemImage: "person.2.fill")
+                            .font(.system(.footnote, design: .rounded).weight(.semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityLabel("Assign someone to the \(job.clientName) contract")
+                }
             }
         }
         .cardStyle()
@@ -133,6 +147,12 @@ private struct ActiveContractCard: View {
 private struct ContractOfferCard: View {
     let engine: GameEngine
     let offer: ContractOffer
+
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
 
     private var expiresIn: Int {
         offer.expiresDay - engine.state.day
@@ -184,7 +204,11 @@ private struct ContractOfferCard: View {
                     .foregroundStyle(.secondary)
                 Spacer(minLength: Theme.Spacing.sm)
                 Button("Accept") {
-                    engine.send(.acceptContract(offerID: offer.id))
+                    shell.toasts.send(
+                        .acceptContract(offerID: offer.id),
+                        to: engine,
+                        rejected: "\(offer.clientName) pulled the offer"
+                    )
                 }
                 .font(.system(.footnote, design: .rounded).weight(.semibold))
                 .buttonStyle(.borderedProminent)

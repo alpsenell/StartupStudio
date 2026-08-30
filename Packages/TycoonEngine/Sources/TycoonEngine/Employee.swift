@@ -27,6 +27,10 @@ public enum Assignment: Codable, Equatable, Sendable {
     /// An accepted contract being worked (only valid while the job is
     /// active; the daily sweep resets stale contract assignments to `.idle`).
     case contract(UUID)
+    /// Keeping a released product alive: fixing the bugs players find in
+    /// the wild and holding down subscription churn. Only valid while the
+    /// product is on the market; the daily sweep clears it otherwise.
+    case support(UUID)
 }
 
 /// Seniority ladder for hired staff. Levels raise output and what the
@@ -100,10 +104,35 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
     /// What they were hired to do; shapes build output and staffs
     /// departments. The founder is always `.founder`.
     public var role: EmployeeRole
+    /// Personality tags (`TraitDef.id`s in the content catalog) that shape
+    /// output, morale, skill growth and poach resistance through
+    /// `TraitEffects`.
+    ///
+    /// Derived from `appearanceSeed` at creation — see the initializer —
+    /// so the same face always has the same personality and no RNG stream
+    /// is consumed. A save written before traits existed decodes with none
+    /// and gets the same derivation on the way in, which is why an old run
+    /// picks up traits without any migration.
+    public var traits: [String]
+    /// 0...100: how close this person is to the *founder*, as opposed to
+    /// how they feel about the job. Grown by the founder's own time
+    /// (coffee, a one-on-one, a hang-out, being mentored) and decayed by
+    /// being ignored. A strong bond is worth output, morale and staying
+    /// put when a rival calls. The founder's own is unused.
+    public var founderBond: Double
+    /// The last day the founder mentored this person (cooldown).
+    public var lastMentoredDay: Int?
 
     /// `role` defaults to the pre-roles inference (founder, else the
     /// stronger of coding and design) so callers that predate roles keep
     /// building the same employees.
+    ///
+    /// `traits` left empty is *derived* from `appearanceSeed` rather than
+    /// stored empty: every caller (hiring, an absorbed acquisition, a
+    /// decoded save) gets a person with a personality without having to
+    /// know about traits. The founder is the exception — their character
+    /// is their archetype, and giving them traits on top would quietly
+    /// move every founder-output number in the balance.
     public init(
         id: UUID,
         name: String,
@@ -120,7 +149,10 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         lastTrainedDay: Int? = nil,
         loyalty: Double = 50,
         lastSocialDay: Int? = nil,
-        role: EmployeeRole? = nil
+        role: EmployeeRole? = nil,
+        traits: [String] = [],
+        founderBond: Double = 0,
+        lastMentoredDay: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -137,10 +169,18 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         self.lastTrainedDay = lastTrainedDay
         self.loyalty = loyalty
         self.lastSocialDay = lastSocialDay
+        self.founderBond = founderBond
+        self.lastMentoredDay = lastMentoredDay
         self.role = role ?? .inferred(isFounder: isFounder, skills: skills)
+        self.traits = if !traits.isEmpty || isFounder {
+            traits
+        } else {
+            TraitEffects.derivedTraitIDs(appearanceSeed: appearanceSeed)
+        }
     }
 
-    /// Output multiplier from morale and seniority (the founder's output is
+    /// Output multiplier from morale, seniority and how close this person
+    /// is to the founder (the founder's own output is
     /// scaled by the life system instead and always reads 1 here).
     public func performanceMultiplier(balance: BalanceConfig) -> Double {
         guard !isFounder else { return 1 }
@@ -148,20 +188,26 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         let moraleFactor = min(staff.performanceMax, max(staff.performanceMin,
             1 + (morale - staff.moraleNeutral) * staff.performancePerMoralePoint
         ))
-        return moraleFactor * (1 + staff.levelOutputBonus * Double(level.rank))
+        // People do their best work for someone they'd go to the wall for.
+        // Zero-valued in a balance without the relationships block, which
+        // is exactly the pre-bond output.
+        let bondBonus = 1 + founderBond / 100 * balance.relationships.bondOutputFactor
+        return moraleFactor * (1 + staff.levelOutputBonus * Double(level.rank)) * bondBonus
     }
 }
 
 // MARK: - Codable
 
-// Hand-written decode so saves written before morale/seniority/roles
+// Hand-written decode so saves written before morale/seniority/roles/traits
 // existed keep loading: the new keys decode as optional with fresh-hire
-// defaults, and a missing role is inferred from the founder flag and skills.
+// defaults, a missing role is inferred from the founder flag and skills, and
+// missing traits are backfilled from the appearance seed by the initializer
+// (a pure derivation — the same save always decodes to the same people).
 extension Employee {
     private enum CodingKeys: String, CodingKey {
         case id, name, skills, weeklySalary, assignment, isFounder, hiredDay
         case appearanceSeed, morale, level, lowMoraleStreakDays, lastPraisedDay, lastTrainedDay
-        case loyalty, lastSocialDay, role
+        case loyalty, lastSocialDay, role, traits, founderBond, lastMentoredDay
     }
 
     public init(from decoder: any Decoder) throws {
@@ -182,7 +228,10 @@ extension Employee {
             lastTrainedDay: try container.decodeIfPresent(Int.self, forKey: .lastTrainedDay),
             loyalty: try container.decodeIfPresent(Double.self, forKey: .loyalty) ?? 50,
             lastSocialDay: try container.decodeIfPresent(Int.self, forKey: .lastSocialDay),
-            role: try container.decodeIfPresent(EmployeeRole.self, forKey: .role)
+            role: try container.decodeIfPresent(EmployeeRole.self, forKey: .role),
+            traits: try container.decodeIfPresent([String].self, forKey: .traits) ?? [],
+            founderBond: try container.decodeIfPresent(Double.self, forKey: .founderBond) ?? 0,
+            lastMentoredDay: try container.decodeIfPresent(Int.self, forKey: .lastMentoredDay)
         )
     }
 }
@@ -214,6 +263,13 @@ public struct Candidate: Codable, Equatable, Sendable, Identifiable {
         self.weeklySalary = weeklySalary
         self.appearanceSeed = appearanceSeed
         self.role = role ?? .inferred(isFounder: false, skills: skills)
+    }
+
+    /// The traits this candidate would bring, derived from the same seed
+    /// the hire will carry — so what the hiring sheet promises is exactly
+    /// what walks in the door.
+    public var traits: [String] {
+        TraitEffects.derivedTraitIDs(appearanceSeed: appearanceSeed)
     }
 }
 

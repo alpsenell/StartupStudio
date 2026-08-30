@@ -1,5 +1,6 @@
 import PixelKit
 import SwiftUI
+import TycoonContent
 import TycoonEngine
 
 /// The pixel-art office scene card at the top of HQ — the game's face.
@@ -15,6 +16,15 @@ struct OfficeCard: View {
 
     @State private var showingAmenities = false
     @State private var showingCityMap = false
+    @State private var confirmingUpgrade = false
+    /// The person a tap on the scene opened.
+    @State private var tappedEmployeeID: UUID?
+
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
 
     var body: some View {
         let state = engine.state
@@ -40,9 +50,24 @@ struct OfficeCard: View {
                 HeadcountPill(headcount: state.headcount, cap: cap)
             }
 
-            OfficeSceneView(tier: tierStyle, occupants: occupants, amenities: amenityStyles)
-                .frame(maxWidth: .infinity)
-                .accessibilityLabel(sceneAccessibilityLabel)
+            PixelPanel(contentPadding: Theme.Spacing.xs) {
+                // Equatable input + EquatableView: HQ observes `state`,
+                // which mutates 4x a second at 4x speed. Without this the
+                // whole scene recomposes on every tick even when nothing
+                // about the office changed.
+                EquatableView(
+                    content: OfficeScenePanel(
+                        input: sceneInput,
+                        sceneLabel: sceneAccessibilityLabel,
+                        onTapOccupant: { id in
+                            guard engine.state.employee(id: id) != nil else { return }
+                            Haptics.tap()
+                            tappedEmployeeID = id
+                        }
+                    )
+                )
+            }
+            .frame(maxWidth: .infinity)
 
             Divider()
             AmenitiesRow(ownedCount: ownedAmenities.count) {
@@ -64,7 +89,7 @@ struct OfficeCard: View {
                     def: engine.balance.office(next),
                     cash: state.company.cash
                 ) {
-                    engine.send(.upgradeOffice)
+                    confirmingUpgrade = true
                 }
             }
         }
@@ -72,11 +97,131 @@ struct OfficeCard: View {
         // Moving day: the scene above re-renders with the new tier; add a
         // success haptic so the moment lands.
         .sensoryFeedback(.success, trigger: state.company.officeTier)
+        .confirmationDialog(
+            "Move into the \(engine.state.company.officeTier.next?.displayName ?? "next office")?",
+            isPresented: $confirmingUpgrade,
+            titleVisibility: .visible
+        ) {
+            if let next = engine.state.company.officeTier.next {
+                Button("Pay \(engine.balance.office(next).upgradeCost.money) and move") {
+                    shell.toasts.send(
+                        .upgradeOffice,
+                        to: engine,
+                        rejected: "The move fell through - check the cash."
+                    )
+                }
+            }
+            Button("Stay put", role: .cancel) {}
+        } message: {
+            if let next = engine.state.company.officeTier.next {
+                Text(
+                    "Rent goes from \(engine.balance.office(engine.state.company.officeTier).weeklyRent.money) to \(engine.balance.office(next).weeklyRent.money) a week, every week, and the old space is gone."
+                )
+            }
+        }
+        // The move itself is now WS-C's transition inside the scene — a
+        // band of light sweeping down the new room — so the card no longer
+        // drops a panel over it. The sound stays.
+        .onChange(of: engine.state.company.officeTier) { _, _ in
+            Sounds.play(.goal)
+        }
         .sheet(isPresented: $showingAmenities) {
             AmenitiesSheet(engine: engine)
         }
         .fullScreenCover(isPresented: $showingCityMap) {
             CityMapScreen(engine: engine)
+        }
+        .sheet(item: Binding(get: { tappedEmployeeID.map(IdentifiedUUID.init) },
+                             set: { tappedEmployeeID = $0?.id })) { picked in
+            EmployeeManageSheet(engine: engine, employeeID: picked.id)
+        }
+    }
+
+    /// Everything the scene needs, as one `Hashable` value: who is in the
+    /// room and what mood they are in, who their friends are, what they
+    /// would say if tapped, the weather and whether it is the weekend, and
+    /// the celebration the last day or two earned.
+    private var sceneInput: OfficeSceneInput {
+        OfficeSceneInput(
+            tier: tierStyle,
+            occupants: occupants,
+            amenities: amenityStyles,
+            ambience: ambience,
+            celebration: celebration
+        )
+    }
+
+    /// The room's own weather and light. WS-C's four-minute clock rolls the
+    /// hours on its own; what the game supplies is where it starts, what is
+    /// falling past the window, whether it is the weekend (the room thins
+    /// out) and how the team is feeling.
+    private var ambience: OfficeAmbience {
+        let calendar = engine.state.calendar
+        let weather: Weather = switch calendar.season {
+        case .winter: .snow
+        case .autumn: .rain
+        case .spring, .summer: .clear
+        }
+        return OfficeAmbience(
+            timeOfDay: engine.state.economy.workPace == .crunch ? .dusk : .morning,
+            weather: weather,
+            isWeekend: calendar.isWeekend,
+            teamMood: Self.mood(averageMorale)
+        )
+    }
+
+    /// The most recent thing worth a cheer, if it happened in the last day
+    /// or two, with a token that only moves when a *new* one lands — so a
+    /// view rebuild never replays a celebration.
+    ///
+    /// The token is `day × 100 + the event's position within that day`,
+    /// which is monotonic and survives the event log being trimmed from the
+    /// front (an index into the log would not).
+    private var celebration: OfficeSceneInput.Celebration? {
+        var latest: (kind: SceneCelebration, day: Int, ordinal: Int)?
+        var day = -1
+        var ordinal = 0
+        for event in engine.state.eventLog {
+            let eventDay = EventDay.of(event)
+            if eventDay != day {
+                day = eventDay
+                ordinal = 0
+            }
+            guard let kind = Self.celebrationKind(event) else { continue }
+            latest = (kind, eventDay, ordinal)
+            ordinal += 1
+        }
+        guard let latest, engine.state.day - latest.day <= 1 else { return nil }
+        return OfficeSceneInput.Celebration(
+            kind: latest.kind,
+            token: latest.day * 100 + latest.ordinal
+        )
+    }
+
+    private static func celebrationKind(_ event: GameEvent) -> SceneCelebration? {
+        switch event {
+        case .reviewsIn(_, let averageScore, _): .shipped(score: averageScore)
+        case .hired(let employeeID, _): .hired(employeeID)
+        case .employeeQuit(let employeeID, _, _): .quit(employeeID)
+        case .employeePoached(let employeeID, _, _, _): .quit(employeeID)
+        case .officeUpgraded: .officeUpgraded
+        case .researchCompleted: .researchComplete
+        case .contractDelivered: .contractDelivered
+        default: nil
+        }
+    }
+
+    private var averageMorale: Double {
+        let staff = engine.state.employees.filter { !$0.isFounder }
+        guard !staff.isEmpty else { return 60 }
+        return staff.reduce(0) { $0 + $1.morale } / Double(staff.count)
+    }
+
+    private static func mood(_ morale: Double) -> MoodLevel {
+        switch morale {
+        case ..<38: .low
+        case ..<70: .okay
+        default: .great
         }
     }
 
@@ -103,10 +248,11 @@ struct OfficeCard: View {
     }
 
     /// Founder first, then by hire day, so desk placement stays stable as
-    /// people come and go. The founder is left out while away.
+    /// people come and go. An away founder keeps their desk — WS-C draws an
+    /// empty chair with a note on the monitor rather than closing the gap.
     private var occupants: [Occupant] {
-        engine.state.employees
-            .filter { !($0.isFounder && founderIsAway) }
+        let state = engine.state
+        return state.employees
             .sorted { lhs, rhs in
                 if lhs.isFounder != rhs.isFounder { return lhs.isFounder }
                 return lhs.hiredDay < rhs.hiredDay
@@ -116,9 +262,52 @@ struct OfficeCard: View {
                     id: employee.id,
                     appearance: CharacterAppearance(seed: employee.appearanceSeed),
                     status: workStatus(for: employee),
-                    isFounder: employee.isFounder
+                    isFounder: employee.isFounder,
+                    mood: Self.mood(employee.morale),
+                    friendIDs: friendIDs(of: employee.id),
+                    speech: speech(for: employee),
+                    role: roleLook(for: employee),
+                    name: employee.name,
+                    isAway: employee.isFounder && founderIsAway
                 )
             }
+    }
+
+    /// Who this person will get up and go and talk to. Only real bonds —
+    /// the director walks friends to each other's desks, and a room where
+    /// everybody is everybody's friend is a room nobody sits down in.
+    private func friendIDs(of id: UUID) -> [UUID] {
+        engine.state.friendships
+            .filter { $0.involves(id) && $0.strength >= 40 }
+            .sorted { $0.strength > $1.strength }
+            .compactMap { $0.other(than: id) }
+    }
+
+    /// The line on their name plate, out of WS-B's dialogue catalog, chosen
+    /// for their traits, their mood and what they are doing. Seeded on the
+    /// person and the day so it is stable for a day and different tomorrow.
+    private func speech(for employee: Employee) -> String? {
+        let context: DialogueContext = if engine.state.economy.workPace == .crunch {
+            .crunch
+        } else {
+            switch employee.assignment {
+            case .idle: .idle
+            case .support: .coding
+            default: .coding
+            }
+        }
+        return engine.content.dialogue.line(
+            for: employee.traits,
+            mood: Int(employee.morale),
+            context: context,
+            seed: employee.appearanceSeed &+ UInt64(engine.state.day / 7)
+        )
+    }
+
+    /// `EmployeeRole` and `RoleLook` share raw values by design; the
+    /// founder always wears the hoodie.
+    private func roleLook(for employee: Employee) -> RoleLook {
+        employee.isFounder ? .founder : (RoleLook(rawValue: employee.role.rawValue) ?? .none)
     }
 
     /// Maps a simulation assignment onto a cosmetic desk status. Department
@@ -335,4 +524,30 @@ private struct HeadcountPill: View {
             .animation(.spring(duration: 0.35), value: headcount)
             .accessibilityLabel("\(headcount) of \(cap) desks filled")
     }
+}
+
+/// The office scene inside an `EquatableView`, so it only recomposes when
+/// the scene's own input actually changes.
+private struct OfficeScenePanel: View, Equatable {
+    let input: OfficeSceneInput
+    let sceneLabel: String
+    let onTapOccupant: (UUID) -> Void
+
+    var body: some View {
+        OfficeSceneView(input: input, onTapOccupant: onTapOccupant)
+            .frame(maxWidth: .infinity)
+            .accessibilityLabel(sceneLabel)
+    }
+
+    /// The closure is deliberately excluded: it is recreated on every body
+    /// evaluation but always does the same thing, and comparing it would
+    /// defeat the whole point of the `EquatableView`.
+    nonisolated static func == (lhs: OfficeScenePanel, rhs: OfficeScenePanel) -> Bool {
+        lhs.input == rhs.input && lhs.sceneLabel == rhs.sceneLabel
+    }
+}
+
+/// `UUID` wrapper so a tapped person can drive a `sheet(item:)`.
+private struct IdentifiedUUID: Identifiable {
+    let id: UUID
 }

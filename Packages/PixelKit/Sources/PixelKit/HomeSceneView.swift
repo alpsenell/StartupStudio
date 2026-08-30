@@ -9,8 +9,16 @@ public struct HomeSceneView: View {
     private let placements: [PlacedSprite]
     private let sceneSize: (width: Int, height: Int)
 
-    public init(tier: HomeTierStyle, occupants: HomeOccupants, activity: HomeActivity, mood: MoodLevel) {
-        self.placements = HomeSceneComposer.compose(tier: tier, occupants: occupants, activity: activity, mood: mood)
+    public init(
+        tier: HomeTierStyle,
+        occupants: HomeOccupants,
+        activity: HomeActivity,
+        mood: MoodLevel,
+        ambience: HomeAmbience = .evening
+    ) {
+        self.placements = HomeSceneComposer.compose(
+            tier: tier, occupants: occupants, activity: activity, mood: mood, ambience: ambience
+        )
         self.sceneSize = HomeSceneComposer.sceneSize(for: tier)
     }
 

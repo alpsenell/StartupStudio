@@ -8,13 +8,41 @@ public struct TopicMarket: Codable, Equatable, Sendable {
     /// The delta applied by the most recent market shift (drives the UI
     /// trend arrow). 0 until the first shift.
     public var lastChange: Double
+    /// The player's slice of this topic's demand, 0.3...1.0. Owned by
+    /// `RivalSystem` (WS-F), which recomputes it weekly from the quality of
+    /// every product on the market and re-mirrors it here every day — so a
+    /// weekly market shift rebuilding this struct never loses it. 1.0 means
+    /// nobody is competing, which is what every topic reads as until a
+    /// rival ships something into it.
+    public var playerShare: Double
 
-    public init(multiplier: Double, lastChange: Double) {
+    public init(multiplier: Double, lastChange: Double, playerShare: Double = 1.0) {
         self.multiplier = multiplier
         self.lastChange = lastChange
+        self.playerShare = playerShare
     }
 
     public static let neutral = TopicMarket(multiplier: 1.0, lastChange: 0)
+}
+
+// MARK: - Codable
+
+// Hand-written so a save written before market share existed decodes with
+// an uncontested market rather than failing to load.
+
+extension TopicMarket {
+    private enum CodingKeys: String, CodingKey {
+        case multiplier, lastChange, playerShare
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            multiplier: try container.decode(Double.self, forKey: .multiplier),
+            lastChange: try container.decode(Double.self, forKey: .lastChange),
+            playerShare: try container.decodeIfPresent(Double.self, forKey: .playerShare) ?? 1.0
+        )
+    }
 }
 
 /// A boom or crash recorded by `MarketSystem` for the market screen.
@@ -64,6 +92,14 @@ public struct MarketState: Codable, Equatable, Sendable {
     /// The sales multiplier for a topic (1.0 when the topic is unknown).
     public func multiplier(for topicID: String) -> Double {
         topics[topicID]?.multiplier ?? 1.0
+    }
+
+    /// The player's slice of a topic's demand, multiplied into weekly
+    /// sales by `ProductSystem`. 1.0 — the whole market — for any topic no
+    /// rival is currently selling into, so a game with no rival products
+    /// prices exactly as it always did.
+    public func shareMultiplier(for topicID: String) -> Double {
+        topics[topicID]?.playerShare ?? 1.0
     }
 
     /// The last shift delta for a topic (0 when the topic is unknown).

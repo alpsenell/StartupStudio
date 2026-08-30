@@ -1,4 +1,4 @@
-.PHONY: gen test build icon clean
+.PHONY: gen test apptest build icon clean
 
 gen:
 	xcodegen generate
@@ -8,6 +8,15 @@ test:
 	cd Packages/TycoonContent && swift test
 	cd Packages/TycoonSave && swift test
 	cd Packages/PixelKit && swift test
+
+# The App layer's own unit tests (see the StartupStudioTests target).
+#
+# The snapshot tests write their chrome PNGs into the app's own temporary
+# directory: they run inside the simulator, and TEST_RUNNER_ settings do
+# not reach an app-hosted unit test bundle. Collect them with
+#   open "$$(xcrun simctl get_app_container booted com.alpsenel.startupstudio data)/tmp/startupstudio-previews"
+apptest: gen
+	xcodebuild -project StartupStudio.xcodeproj -scheme StartupStudio -destination "platform=iOS Simulator,name=iPhone 17" -derivedDataPath build test
 
 build: gen
 	xcodebuild -project StartupStudio.xcodeproj -scheme StartupStudio -destination "platform=iOS Simulator,name=iPhone 17" -derivedDataPath build build

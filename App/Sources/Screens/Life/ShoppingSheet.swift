@@ -10,6 +10,11 @@ struct ShoppingSheet: View {
     let engine: GameEngine
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
 
     /// Catalog rows cheapest first, ties by id for a stable order.
     private var catalog: [(id: String, item: BalanceConfig.InstantLifeBalance.ItemDef)] {
@@ -48,7 +53,11 @@ struct ShoppingSheet: View {
                             owned: life.possessions.contains(entry.id),
                             affordable: life.wallet >= entry.item.cost
                         ) {
-                            engine.send(.buyItem(itemID: entry.id))
+                            shell.toasts.send(
+                                .buyItem(itemID: entry.id),
+                                to: engine,
+                                rejected: "You can't afford that yet."
+                            )
                         }
                     }
                 } header: {

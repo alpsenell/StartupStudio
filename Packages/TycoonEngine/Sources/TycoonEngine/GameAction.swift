@@ -66,6 +66,69 @@ public enum GameAction: Codable, Equatable, Sendable {
     case teamDinner
     /// Answers the pending staff event.
     case resolveStaffEvent(choice: StaffEventChoice)
+
+    // Reserved regions — each workstream appends its new cases inside its
+    // own region and nowhere else, so six branches never touch the same
+    // line. Keep the regions in this order.
+
+    // MARK: WS-A
+
+    /// Repositions a released product on the price ladder. Budget trades
+    /// margin for reach, premium the reverse — and a premium price on a
+    /// product the press did not love drives subscribers away.
+    case setPriceTier(productID: UUID, tier: PriceTier)
+    /// Puts a released product back into a short patch cycle. On
+    /// completion it gains quality, is re-reviewed, and gets one bumper
+    /// sales week.
+    case startUpdate(productID: UUID)
+    /// Sets the pace the whole company works at.
+    case setWorkPace(WorkPace)
+
+    // MARK: WS-B
+
+    /// Answers the pending narrative choice. `eventID` must match the
+    /// choice on screen (a stale sheet can't resolve a newer beat) and
+    /// `optionIndex` is the option's index in the definition, which
+    /// `ChoiceOption.index` carries.
+    case resolveChoice(eventID: String, optionIndex: Int)
+
+    // MARK: WS-F
+
+    /// Takes the investor's money: cash in, equity out, and a board seat
+    /// if the term sheet asked for one.
+    case acceptInvestment
+    /// Turns the term sheet down and stays independent.
+    case declineInvestment
+    /// Files to go public. Gated on valuation, profitable quarters and
+    /// recurring revenue; ends the run as an IPO.
+    case fileIPO
+    /// Spends a day of founder time interviewing a candidate, revealing
+    /// the trait their CV didn't mention.
+    case interviewCandidate(candidateID: UUID)
+    /// Clears a candidate out of the pool without hiring them.
+    case passOnCandidate(candidateID: UUID)
+
+    // MARK: Founder & people
+
+    /// Spends the day getting better at one of the founder's own five
+    /// attributes. Wallet money above self-study, energy always.
+    case trainFounderSkill(skill: FounderSkill, method: TrainingMethod)
+    /// One exchange with somebody standing in the networking room.
+    case talkToContact(contactID: UUID, topic: ConversationTopic)
+    /// Puts a deal to a contact on the terms they have already named.
+    case makeNetworkingOffer(contactID: UUID, offer: NetworkingOffer)
+    /// Calls it a night and closes the room.
+    case leaveNetworkingEvent
+    /// Spends the founder's own evening on their partner.
+    case spendTimeWithPartner(PartnerActivity)
+    /// An evening out with somebody on the team, on the founder rather
+    /// than on the company.
+    case hangOutWith(employeeID: UUID)
+    /// The founder teaches somebody one of the three trainable skills.
+    case mentorEmployee(employeeID: UUID, skill: TrainableSkill)
+    /// Borrows past what the bank will lend the company on its own name,
+    /// against the founder's home. Draws the unsecured headroom first.
+    case takeSecuredLoan(amount: Int)
 }
 
 /// The skill a training course targets.

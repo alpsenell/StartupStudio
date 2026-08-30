@@ -1,8 +1,9 @@
 import SwiftUI
 import TycoonEngine
 
-/// Root of the app: the tab bar, the game-over cover, and the one-time
-/// load-failure notice.
+/// Root of the app: the tab bar, the acknowledgement layer (toasts,
+/// launch day, weekly report), the new-game flow, the game-over cover, and
+/// the one-time load-failure notice.
 ///
 /// The persistent top HUD is NOT attached here. Each tab's root screen
 /// attaches it inside its own `NavigationStack` (see `TopHUD`), so that
@@ -11,25 +12,105 @@ import TycoonEngine
 struct AppRootView: View {
     let session: GameSession
 
-    /// Tabs of the game.
-    private enum GameTab: Hashable {
-        case hq
-        case life
-        case team
-        case products
-        case business
-    }
-
-    @State private var selectedTab: GameTab = .hq
+    /// Cross-tab navigation, read by every screen. Starts on WS-F's
+    /// `GameTab.launchTab`, which is `.hq` except under the DEBUG
+    /// `-autoTab` flag a headless screenshot pass uses.
+    @State private var router = AppRouter(tab: .launchTab)
+    /// Toasts, the weekly-report loop, and the launch-day moment.
+    @State private var shell = GameShell.shared
 
     var body: some View {
         let engine = session.engine
-        TabView(selection: $selectedTab) {
-            HQScreen(engine: engine) { difficulty in
-                session.startNewGame(difficulty: difficulty)
+        tabs(engine: engine)
+            .tint(Theme.accent)
+            .environment(router)
+            .environment(shell)
+            // One observation point for the whole app: everything the
+            // world does reaches the player from here.
+            //
+            // The rebase runs first and on appear, so a resumed save never
+            // replays its backlog as toasts and a swapped-in engine starts
+            // from its own day.
+            .onChange(of: ObjectIdentifier(engine), initial: true) { _, _ in
+                shell.rebase(to: engine)
             }
-            .tabItem { Label("HQ", systemImage: "building.2") }
-            .tag(GameTab.hq)
+            .onChange(of: engine.state.eventLog.count) { _, _ in
+                shell.eventsChanged(engine: engine)
+            }
+            .onChange(of: engine.state.day) { _, _ in
+                shell.dayAdvanced(engine: engine)
+            }
+            .overlay(alignment: .top) {
+                ToastStack(center: shell.toasts)
+                    .padding(.top, Theme.Spacing.xl * 3)
+            }
+            .fullScreenCover(isPresented: onboardingPresented) {
+                NewGameFlow(
+                    content: engine.content,
+                    onStart: { profile, companyName, difficulty in
+                        session.startNewGame(
+                            profile: profile, companyName: companyName, difficulty: difficulty
+                        )
+                        shell.rebase(to: session.engine)
+                        router.tab = .hq
+                    },
+                    onCancel: session.needsOnboarding && engine.state.day > 0
+                        ? { session.cancelOnboarding() }
+                        : nil
+                )
+                .interactiveDismissDisabled()
+            }
+            .fullScreenCover(isPresented: gameOverPresented) {
+                if let info = engine.state.gameOver {
+                    // WS-F: four endings now, graded by `EndingKind.isSuccess`
+                    // rather than one named case, and both screens are thin
+                    // wrappers on the founder biography, so they take the
+                    // engine and hand back the founder to play again as.
+                    if info.kind.isSuccess {
+                        GameWonView(engine: engine, info: info) { difficulty, founder in
+                            session.startNewGame(difficulty: difficulty, founder: founder)
+                        }
+                    } else {
+                        GameOverView(engine: engine, info: info) { difficulty, founder in
+                            session.startNewGame(difficulty: difficulty, founder: founder)
+                        }
+                    }
+                }
+            }
+            // Pending rival offers surface here (not per tab) so the paused
+            // timeline always has its question on screen.
+            .sheet(item: pendingDecision) { prompt in
+                DecisionSheet(prompt: prompt, engine: engine)
+            }
+            .sheet(isPresented: launchDayPresented) {
+                if let productID = shell.launchDayProductID,
+                   let product = engine.state.product(id: productID) {
+                    LaunchDaySheet(engine: engine, product: product)
+                }
+            }
+            .sheet(isPresented: weeklyReportPresented) {
+                if let report = shell.report {
+                    WeeklyReportSheet(
+                        engine: engine,
+                        report: report,
+                        resumeSpeed: shell.resumeSpeed
+                    ) { route in
+                        router.go(route)
+                    }
+                }
+            }
+            .alert("Couldn't load your save", isPresented: loadFailurePresented) {
+                Button("OK") { session.clearLoadFailure() }
+            } message: {
+                Text(session.loadFailureMessage ?? "")
+            }
+    }
+
+    private func tabs(engine: GameEngine) -> some View {
+        TabView(selection: Binding(get: { router.tab }, set: { router.tab = $0 })) {
+            HQScreen(engine: engine) { session.requestOnboarding() }
+                .tabItem { Label("HQ", systemImage: "building.2") }
+                .tag(GameTab.hq)
 
             LifeScreen(engine: engine)
                 .tabItem { Label("Life", systemImage: "heart.fill") }
@@ -49,30 +130,18 @@ struct AppRootView: View {
                 .tabItem { Label("Business", systemImage: "briefcase.fill") }
                 .tag(GameTab.business)
         }
-        .tint(Theme.accent)
-        .fullScreenCover(isPresented: gameOverPresented) {
-            if let info = engine.state.gameOver {
-                if info.kind == .acquired {
-                    GameWonView(info: info, dateLabel: engine.state.dateLabel) { difficulty in
-                        session.startNewGame(difficulty: difficulty)
-                    }
-                } else {
-                    GameOverView(info: info, dateLabel: engine.state.dateLabel) { difficulty in
-                        session.startNewGame(difficulty: difficulty)
-                    }
-                }
+    }
+
+    /// Presented on a first launch with no save, and whenever Settings
+    /// asks for a new game. The setter only handles a cancel gesture; the
+    /// flow's own buttons clear it through the session.
+    private var onboardingPresented: Binding<Bool> {
+        Binding(
+            get: { session.needsOnboarding },
+            set: { presented in
+                if !presented { session.cancelOnboarding() }
             }
-        }
-        // Pending rival offers surface here (not per tab) so the paused
-        // timeline always has its question on screen.
-        .sheet(item: pendingDecision) { prompt in
-            DecisionSheet(prompt: prompt, engine: engine)
-        }
-        .alert("Couldn't load your save", isPresented: loadFailurePresented) {
-            Button("OK") { session.clearLoadFailure() }
-        } message: {
-            Text(session.loadFailureMessage ?? "")
-        }
+        )
     }
 
     /// Presented whenever the engine reports game over. The setter is a
@@ -80,8 +149,25 @@ struct AppRootView: View {
     /// whose state has no `gameOver`.
     private var gameOverPresented: Binding<Bool> {
         Binding(
-            get: { session.engine.state.gameOver != nil },
+            get: { session.engine.state.gameOver != nil && !session.needsOnboarding },
             set: { _ in }
+        )
+    }
+
+    /// Launch day: shown once for each product that ships.
+    private var launchDayPresented: Binding<Bool> {
+        Binding(
+            get: { shell.launchDayProductID != nil && session.engine.state.gameOver == nil },
+            set: { presented in
+                if !presented { shell.launchDayProductID = nil }
+            }
+        )
+    }
+
+    private var weeklyReportPresented: Binding<Bool> {
+        Binding(
+            get: { shell.showingWeeklyReport },
+            set: { shell.showingWeeklyReport = $0 }
         )
     }
 
@@ -92,8 +178,11 @@ struct AppRootView: View {
         Binding(
             get: {
                 guard session.engine.state.gameOver == nil else { return nil }
+                guard shell.launchDayProductID == nil, !shell.showingWeeklyReport else { return nil }
                 return DecisionPrompt.pending(
-                    in: session.engine.state, balance: session.engine.balance
+                    in: session.engine.state,
+                    content: session.engine.content,
+                    balance: session.engine.balance
                 )
             },
             set: { _ in }

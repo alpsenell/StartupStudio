@@ -11,6 +11,11 @@ public final class GameEngine {
     public private(set) var state: GameState
     public let balance: BalanceConfig
     public let content: ContentCatalog
+    /// The events that stopped the clock on the tick that auto-paused —
+    /// what the UI shows in its "why did time stop?" banner. Empty
+    /// whenever the pause did not come from an event, and cleared the
+    /// moment the player changes speed.
+    public private(set) var lastPauseEvents: [GameEvent] = []
 
     /// Persistence hook. The engine calls it with the fresh state:
     /// 1. after any tick or `send` that produced at least one event,
@@ -48,12 +53,14 @@ public final class GameEngine {
     public static func newGame(
         companyName: String,
         seed: UInt64,
-        difficulty: Difficulty = .normal
+        difficulty: Difficulty = .normal,
+        founder: FounderProfile = .default
     ) -> GameEngine {
         let (bundled, content) = loadBundledConfiguration()
         let balance = bundled.adjusted(for: difficulty)
         let state = GameState.newGame(
-            companyName: companyName, seed: seed, balance: balance, difficulty: difficulty
+            companyName: companyName, seed: seed, balance: balance,
+            difficulty: difficulty, founder: founder
         )
         return GameEngine(state: state, balance: balance, content: content)
     }
@@ -81,16 +88,28 @@ public final class GameEngine {
     }
 
     /// Applies a player action synchronously via `Reducer.apply` (which owns
-    /// appending the returned events to the event log).
-    public func send(_ action: GameAction) {
+    /// appending the returned events to the event log), and hands back what
+    /// it produced.
+    ///
+    /// The events are returned so a caller that needs to know *what
+    /// happened* — did that conversation land, did the activity actually
+    /// go ahead — can read it from the reducer rather than re-deriving it
+    /// from the state or fishing the tail of the capped event log. An
+    /// empty array means the action was refused.
+    @discardableResult
+    public func send(_ action: GameAction) -> [GameEvent] {
         let events = Reducer.apply(action, to: &state, balance: balance, content: content)
         if !events.isEmpty {
             autosave?(state)
         }
+        return events
     }
 
     public func setSpeed(_ speed: SimSpeed) {
         guard state.gameOver == nil else { return }
+        // The player answered the pause; the banner's reason goes with it.
+        lastPauseEvents = []
+        state.economy.pauseEvents = []
         state.speed = speed
         restartTickLoop()
     }
@@ -139,9 +158,11 @@ public final class GameEngine {
         tickCount += 1
         if state.gameOver != nil {
             cancelTickLoop()
-        } else if events.contains(where: \.pausesTimeline), state.speed != .paused {
-            // Notable events stop the clock so the player can react; the
-            // speed control resumes it.
+        } else if !state.economy.pauseEvents.isEmpty, state.speed != .paused {
+            // `PausePolicy` already graded the day and spent the pause
+            // budget; the speed control resumes. The reasons are kept so
+            // the UI can say why.
+            lastPauseEvents = state.economy.pauseEvents
             state.speed = .paused
             cancelTickLoop()
         }

@@ -1,0 +1,154 @@
+import SwiftUI
+import TycoonEngine
+
+/// One line of coaching, keyed to a progression goal.
+///
+/// Tips are content-free hints about the *interface* ("candidates refresh
+/// every two weeks"), never about strategy — they exist so the first hour
+/// has no dead ends. Each is shown while its goal is active and disappears
+/// for good once dismissed or once the goal completes.
+struct CoachTip: Identifiable, Equatable {
+    /// Stable id, also the `UserDefaults` dismissal key.
+    let id: String
+    /// The goal id from WS-F's `Goals.json` this tip accompanies.
+    let goalID: String
+    let message: String
+    let systemImage: String
+    /// Where the tip's button takes you, if anywhere.
+    var route: Route?
+    /// Label for that button.
+    var routeLabel: String?
+
+    /// The full tip catalog, keyed to Chapter 1's goal ids in
+    /// `Goals.json` (WS-F). `ProgressionContentTests` pins those ids, so a
+    /// rename there is caught before it silently mutes a tip.
+    static let all: [CoachTip] = [
+        CoachTip(
+            id: "tip.first_product",
+            goalID: "g1_name_a_product",
+            message: "Start a product from HQ. Pick a type you can actually build, and a topic the market likes.",
+            systemImage: "hammer.fill"
+        ),
+        CoachTip(
+            id: "tip.ship_it",
+            goalID: "g1_ship_it",
+            message: "You can ship before the polish bar is full — it just reviews worse. Check the ship sheet's estimate first.",
+            systemImage: "shippingbox.fill"
+        ),
+        CoachTip(
+            id: "tip.first_hire",
+            goalID: "g1_first_hire",
+            message: "Candidates refresh every two weeks. A hire costs their salary every week, forever.",
+            systemImage: "person.badge.plus",
+            route: .hiring,
+            routeLabel: "Hiring"
+        ),
+        CoachTip(
+            id: "tip.first_contract",
+            goalID: "g1_first_contract",
+            message: "Contracts pay cash on a deadline. They're the bridge between products — and they grade your work.",
+            systemImage: "briefcase.fill",
+            route: .contracts,
+            routeLabel: "Contracts"
+        ),
+        CoachTip(
+            id: "tip.cash_positive",
+            goalID: "g1_week_in_the_black",
+            message: "Runway is cash ÷ weekly burn. Under four weeks and the burn card turns orange.",
+            systemImage: "flame.fill"
+        ),
+        CoachTip(
+            id: "tip.first_review",
+            goalID: "g1_review_40",
+            message: "Reviews land a week after launch. Early scores are meant to sting — the skill ceiling rises with your crew.",
+            systemImage: "star.fill"
+        ),
+    ]
+}
+
+/// The dismissible hint under the HUD, showing the tip for the player's
+/// most recently activated goal.
+///
+/// Reads WS-F's active goal ids through `ProgressionReader`. A tip shows
+/// while its goal is active and never again once dismissed or once the
+/// goal is done, so the strip empties itself as the player learns.
+struct TipStrip: View {
+    let engine: GameEngine
+    /// Deep-link handler, so a tip's button can jump to the screen it
+    /// talks about.
+    var onRoute: ((Route) -> Void)?
+
+    @State private var dismissed: Set<String> = GameSettings.dismissedTips
+
+    private var tip: CoachTip? {
+        let activeGoals = ProgressionReader.activeGoalIDs(in: engine.state)
+        guard !activeGoals.isEmpty else { return nil }
+        return CoachTip.all.first {
+            activeGoals.contains($0.goalID) && !dismissed.contains($0.id)
+        }
+    }
+
+    var body: some View {
+        if let tip {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                Image(systemName: tip.systemImage)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .padding(.top, 2)
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text(tip.message)
+                        .font(.footnote)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let route = tip.route, let label = tip.routeLabel, let onRoute {
+                        Button {
+                            Haptics.tap()
+                            onRoute(route)
+                        } label: {
+                            Label(label, systemImage: "arrow.forward")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                Spacer(minLength: 0)
+                Button {
+                    Haptics.tap()
+                    dismiss(tip)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .padding(Theme.Spacing.xs)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Dismiss tip")
+            }
+            .padding(.horizontal, Theme.Spacing.lg)
+            .padding(.vertical, Theme.Spacing.sm)
+            .background(Theme.accent.opacity(0.10))
+            .overlay(alignment: .bottom) { Divider() }
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .accessibilityElement(children: .contain)
+        }
+    }
+
+    private func dismiss(_ tip: CoachTip) {
+        withAnimation(.spring(duration: 0.3)) {
+            _ = dismissed.insert(tip.id)
+        }
+        GameSettings.dismissedTips = dismissed
+    }
+}
+
+/// Reads WS-F's progression state.
+///
+/// Keeping the read in one place means the tip strip, the journal and
+/// anything else that wants goals has a single place to look.
+enum ProgressionReader {
+    /// Goal ids the player is currently working on, newest chapter first.
+    /// Empty whenever progression has no goals yet.
+    static func activeGoalIDs(in state: GameState) -> [String] {
+        state.progression.activeGoals.map(\.id)
+    }
+}

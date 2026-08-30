@@ -1,0 +1,141 @@
+[
+  {
+    "id": "nightOwl",
+    "name": "Night Owl",
+    "blurb": "Ships at 2am. Unreachable before eleven.",
+    "bio": "I do my best thinking when the office is empty.",
+    "isPositive": true,
+    "effects": {
+      "outputMult": 1.12, "moraleTargetDelta": -4.0, "bugMult": 1.15,
+      "crunchMoraleMult": 0.8
+    }
+  },
+  {
+    "id": "mentor",
+    "name": "Mentor",
+    "blurb": "Half their day is somebody else's question — and everyone learns faster for it.",
+    "bio": "Pull up a chair, I'll walk you through it.",
+    "isPositive": true,
+    "effects": { "outputMult": 0.94, "teamGrowthBonus": 0.6 }
+  },
+  {
+    "id": "perfectionist",
+    "name": "Perfectionist",
+    "blurb": "Slower, but they learn something from every pass.",
+    "bio": "It's nearly done. I just want one more look at it.",
+    "isPositive": true,
+    "effects": {
+      "outputMult": 0.88, "skillGrowthMult": 1.35,
+      "moraleTargetDelta": -2.0, "bugMult": 0.85
+    }
+  },
+  {
+    "id": "speedster",
+    "name": "Speedster",
+    "blurb": "Fast hands, shallow roots — output up, learning down.",
+    "bio": "Ship it, see what breaks, fix that.",
+    "isPositive": true,
+    "effects": {
+      "outputMult": 1.18, "skillGrowthMult": 0.75, "bugMult": 1.25
+    }
+  },
+  {
+    "id": "socialButterfly",
+    "name": "Social Butterfly",
+    "blurb": "Knows everyone, happier for it, and harder to tempt away.",
+    "bio": "Coffee? I'll get the whole floor to come.",
+    "isPositive": true,
+    "effects": {
+      "outputMult": 0.95, "moraleTargetDelta": 6.0,
+      "poachResist": 1.15, "hypeMult": 1.15
+    }
+  },
+  {
+    "id": "loner",
+    "name": "Loner",
+    "blurb": "Headphones on, output up — and no reason to stay if a rival calls.",
+    "bio": "Put the ticket in the queue and I'll get to it.",
+    "isPositive": true,
+    "effects": {
+      "outputMult": 1.08, "moraleTargetDelta": -3.0,
+      "poachResist": 0.85, "hypeMult": 0.85
+    }
+  },
+  {
+    "id": "flightRisk",
+    "name": "Flight Risk",
+    "blurb": "Always half-listening to recruiters. Loses patience fast.",
+    "bio": "I'm here for now. Ask me again in six months.",
+    "isPositive": false,
+    "effects": { "quitStreakBonus": -4, "poachResist": 0.55 }
+  },
+  {
+    "id": "loyalist",
+    "name": "Loyalist",
+    "blurb": "Will ride out a rough year, and turn a rival down flat.",
+    "bio": "I signed up for the whole thing, not the good bits.",
+    "isPositive": true,
+    "effects": { "quitStreakBonus": 10, "poachResist": 2.2 }
+  },
+  {
+    "id": "jokester",
+    "name": "Jokester",
+    "blurb": "Gets less done, but the whole room is in a better mood.",
+    "bio": "I've got a bit about the standup. Literally about the standup.",
+    "isPositive": true,
+    "effects": { "outputMult": 0.96, "moraleTargetDelta": 4.0, "teamMoraleBonus": 0.25 }
+  },
+  {
+    "id": "grumbler",
+    "name": "Grumbler",
+    "blurb": "Productive, unhappy, and contagious about it.",
+    "bio": "This is the third time we've rewritten this.",
+    "isPositive": false,
+    "effects": { "outputMult": 1.05, "moraleTargetDelta": -6.0, "teamMoraleBonus": -0.18 }
+  },
+  {
+    "id": "prodigy",
+    "name": "Prodigy",
+    "blurb": "Enormous output, learns fast, bores easily — and everyone wants them.",
+    "bio": "Give me the hard one. The other one puts me to sleep.",
+    "isPositive": true,
+    "effects": {
+      "outputMult": 1.25, "skillGrowthMult": 1.4,
+      "moraleTargetDelta": -5.0, "poachResist": 0.7
+    }
+  },
+  {
+    "id": "workhorse",
+    "name": "Workhorse",
+    "blurb": "Steady, tireless, and slow to complain.",
+    "bio": "Tell me what's on fire and I'll start there.",
+    "isPositive": true,
+    "effects": {
+      "outputMult": 1.15, "skillGrowthMult": 0.9,
+      "quitStreakBonus": 5, "bugMult": 0.85, "crunchMoraleMult": 0.7
+    }
+  },
+  {
+    "id": "fragile",
+    "name": "Fragile",
+    "blurb": "Brilliant on a good week. Bad weeks land hard.",
+    "bio": "I'm fine. It's been a lot lately, that's all.",
+    "isPositive": false,
+    "effects": {
+      "skillGrowthMult": 1.1, "moraleTargetDelta": -8.0,
+      "quitStreakBonus": -2, "crunchMoraleMult": 1.5
+    }
+  },
+  {
+    "id": "showman",
+    "name": "Showman",
+    "blurb": "Always on somebody's podcast. Lifts the room and the company's name.",
+    "bio": "I already told three conferences we're launching this quarter.",
+    "isPositive": true,
+    "effects": {
+      "outputMult": 0.92, "moraleTargetDelta": 3.0,
+      "teamMoraleBonus": 0.2, "dailyReputationBonus": 0.02,
+      "hypeMult": 1.35
+    }
+  }
+]

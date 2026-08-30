@@ -1,0 +1,246 @@
+[
+  {
+    "id": "g1_name_a_product",
+    "title": "Name your first product",
+    "detail": "Nothing exists until it has a name on it.",
+    "chapter": 1,
+    "condition": { "kind": "productsStarted", "amount": 1 },
+    "reward": { "reputation": 2.0 }
+  },
+  {
+    "id": "g1_ship_it",
+    "title": "Ship it",
+    "detail": "Finished beats perfect. Get version one out the door.",
+    "chapter": 1,
+    "condition": { "kind": "productsShipped", "amount": 1 },
+    "reward": { "reputation": 3.0, "cash": 1000 }
+  },
+  {
+    "id": "g1_review_40",
+    "title": "Score 40 or better",
+    "detail": "The press won't love your first one. Make them not hate it.",
+    "chapter": 1,
+    "condition": { "kind": "bestReviewScore", "amount": 40 },
+    "reward": { "reputation": 3.0 }
+  },
+  {
+    "id": "g1_first_hire",
+    "title": "Hire somebody",
+    "detail": "You can't be the whole company forever.",
+    "chapter": 1,
+    "condition": { "kind": "peakHeadcount", "amount": 2 },
+    "reward": { "reputation": 2.0 }
+  },
+  {
+    "id": "g1_first_contract",
+    "title": "Sign a client contract",
+    "detail": "Client work pays the rent while the product finds its feet.",
+    "chapter": 1,
+    "condition": { "kind": "contractsAccepted", "amount": 1 },
+    "reward": { "cash": 500 }
+  },
+  {
+    "id": "g1_week_in_the_black",
+    "title": "End a week in the black",
+    "detail": "One Sunday night with more money than you started with.",
+    "chapter": 1,
+    "condition": { "kind": "cashPositiveWeeks", "amount": 1 },
+    "reward": { "reputation": 2.0 }
+  },
+
+  {
+    "id": "g2_reach_the_loft",
+    "title": "Move into the loft",
+    "detail": "Three people is the garage's ceiling.",
+    "chapter": 2,
+    "condition": { "kind": "officeTierReached", "amount": 1, "text": "loft" },
+    "reward": { "reputation": 4.0 }
+  },
+  {
+    "id": "g2_team_of_three",
+    "title": "Build a team of three",
+    "detail": "You, and three people who chose to be here.",
+    "chapter": 2,
+    "condition": { "kind": "peakHeadcount", "amount": 4 },
+    "reward": { "reputation": 3.0 }
+  },
+  {
+    "id": "g2_review_60",
+    "title": "Score 60 or better",
+    "detail": "The second one should be visibly better than the first.",
+    "chapter": 2,
+    "condition": { "kind": "bestReviewScore", "amount": 60 },
+    "reward": { "reputation": 4.0, "perk": "pressContacts" }
+  },
+  {
+    "id": "g2_research_two_techs",
+    "title": "Research two technologies",
+    "detail": "Somebody has to think about next year.",
+    "chapter": 2,
+    "condition": { "kind": "techsResearched", "amount": 2 },
+    "reward": { "reputation": 3.0 }
+  },
+  {
+    "id": "g2_take_a_weekend",
+    "title": "Take a real weekend",
+    "detail": "Rest doesn't count. Go and do something.",
+    "chapter": 2,
+    "condition": { "kind": "weekendsOff", "amount": 1 },
+    "reward": { "reputation": 1.0 }
+  },
+  {
+    "id": "g2_go_on_a_date",
+    "title": "Go on a date",
+    "detail": "There is a life outside the loft. Allegedly.",
+    "chapter": 2,
+    "condition": { "kind": "relationshipReached", "amount": 1, "text": "dating" },
+    "reward": { "reputation": 1.0 }
+  },
+
+  {
+    "id": "g3_reach_the_studio",
+    "title": "Take the studio lease",
+    "detail": "Fourteen desks, a whiteboard, and a rent bill to match.",
+    "chapter": 3,
+    "condition": { "kind": "officeTierReached", "amount": 1, "text": "studio" },
+    "reward": { "reputation": 5.0 }
+  },
+  {
+    "id": "g3_form_a_department",
+    "title": "Form a department",
+    "detail": "Hire a lawyer, an HR lead or an ops manager and let them run it.",
+    "chapter": 3,
+    "condition": { "kind": "departmentsFormed", "amount": 1 },
+    "reward": { "reputation": 4.0 }
+  },
+  {
+    "id": "g3_review_75",
+    "title": "Score 75 or better",
+    "detail": "Good enough that people recommend it unprompted.",
+    "chapter": 3,
+    "condition": { "kind": "bestReviewScore", "amount": 75 },
+    "reward": { "reputation": 5.0, "perk": "marketDarling" }
+  },
+  {
+    "id": "g3_weather_three_crashes",
+    "title": "Weather three market crashes",
+    "detail": "Still trading when the third one clears.",
+    "chapter": 3,
+    "condition": { "kind": "crashesWeathered", "amount": 3 },
+    "reward": { "reputation": 3.0 }
+  },
+  {
+    "id": "g3_a_hundred_and_fifty_k_product",
+    "title": "Earn $75,000 from one product",
+    "detail": "Lifetime revenue, not a good week.",
+    "chapter": 3,
+    "condition": { "kind": "bestProductRevenue", "amount": 75000 },
+    "reward": { "cash": 5000, "reputation": 3.0 }
+  },
+  {
+    "id": "g3_move_in_together",
+    "title": "Move in together",
+    "detail": "Somebody else's coffee cups in your sink.",
+    "chapter": 3,
+    "condition": { "kind": "relationshipReached", "amount": 1, "text": "partner" },
+    "reward": { "reputation": 2.0 }
+  },
+
+  {
+    "id": "g4_raise_a_round",
+    "title": "Raise a round",
+    "detail": "Somebody else's money, and somebody else's opinions.",
+    "chapter": 4,
+    "condition": { "kind": "roundsRaised", "amount": 1 },
+    "reward": { "reputation": 5.0, "perk": "investorRolodex" }
+  },
+  {
+    "id": "g4_twenty_on_payroll",
+    "title": "Put twenty people on payroll",
+    "detail": "The point where you stop knowing what everyone did today.",
+    "chapter": 4,
+    "condition": { "kind": "peakHeadcount", "amount": 20 },
+    "reward": { "reputation": 6.0 }
+  },
+  {
+    "id": "g4_own_a_topic",
+    "title": "Own a topic",
+    "detail": "Beat every rival's share in a market you ship into.",
+    "chapter": 4,
+    "condition": { "kind": "topicsDominated", "amount": 1 },
+    "reward": { "reputation": 6.0 }
+  },
+  {
+    "id": "g4_acquire_a_rival",
+    "title": "Buy a rival outright",
+    "detail": "Their team, their market, their name off the door.",
+    "chapter": 4,
+    "condition": { "kind": "rivalsAcquired", "amount": 1 },
+    "reward": { "reputation": 8.0 }
+  },
+  {
+    "id": "g4_reach_the_campus",
+    "title": "Open the campus",
+    "detail": "Forty desks and a lobby with your name in it.",
+    "chapter": 4,
+    "condition": { "kind": "officeTierReached", "amount": 1, "text": "campus" },
+    "reward": { "reputation": 8.0 }
+  },
+  {
+    "id": "g4_three_amenities",
+    "title": "Build three amenities",
+    "detail": "The perks that make people stay when a rival calls.",
+    "chapter": 4,
+    "condition": { "kind": "amenitiesBuilt", "amount": 3 },
+    "reward": { "reputation": 4.0, "perk": "veteranCrew" }
+  },
+
+  {
+    "id": "g5_ready_to_go_public",
+    "title": "Be ready to go public",
+    "detail": "A $5M valuation, three profitable quarters, and something that bills monthly.",
+    "chapter": 5,
+    "condition": { "kind": "readyToGoPublic", "amount": 1 },
+    "reward": { "reputation": 10.0 }
+  },
+  {
+    "id": "g5_review_90",
+    "title": "Score 90 or better",
+    "detail": "The one they'll still be writing about in five years.",
+    "chapter": 5,
+    "condition": { "kind": "bestReviewScore", "amount": 90 },
+    "reward": { "reputation": 8.0 }
+  },
+  {
+    "id": "g5_millionaire",
+    "title": "Be worth a million",
+    "detail": "Your wallet plus your slice of what you built.",
+    "chapter": 5,
+    "condition": { "kind": "founderNetWorth", "amount": 1000000 },
+    "reward": { "reputation": 6.0 }
+  },
+  {
+    "id": "g5_frontier_research",
+    "title": "Reach the frontier",
+    "detail": "Research something at the top of the tech tree.",
+    "chapter": 5,
+    "condition": { "kind": "techTierResearched", "amount": 5 },
+    "reward": { "reputation": 6.0 }
+  },
+  {
+    "id": "g5_three_children",
+    "title": "Raise three children",
+    "detail": "The other thing you built.",
+    "chapter": 5,
+    "condition": { "kind": "children", "amount": 3 },
+    "reward": { "reputation": 4.0 }
+  },
+  {
+    "id": "g5_five_million_company",
+    "title": "Be worth five million",
+    "detail": "The number that makes acquirers pick up the phone.",
+    "chapter": 5,
+    "condition": { "kind": "companyValuation", "amount": 5000000 },
+    "reward": { "reputation": 6.0, "perk": "talentMagnet" }
+  }
+]

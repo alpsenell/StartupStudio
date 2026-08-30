@@ -11,19 +11,15 @@ import TycoonContent
 ///    mood penalty, clamped to 0...100;
 /// 3. thresholds — burnout, then hospital (each only while not away, so
 ///    burnout wins a same-day tie), then the breakup streak;
-/// 4. life events — every `lifeEventIntervalDays` days, one roll against
+/// 4. life events — delegated to `LifeEventSystem.roll` (WS-B owns it):
+///    every `lifeEventIntervalDays` days, one roll against
 ///    `lifeEventChance` and a weighted pick among the eligible events;
 /// 5. weekly (day % 7 == 0) — founder salary, rent and child costs, then
 ///    the planned weekend activity (skipped while away).
 ///
-/// The RNG draw order for life events is fixed for determinism:
-/// 1. the hit roll (`nextUniform()`, one word) — only on interval days with
-///    a non-empty catalog,
-/// 2. the weighted pick (`nextInt(in:)`, one word) — only on a hit with at
-///    least one eligible event,
-/// 3. applying the impact draws nothing.
-/// Every other step draws nothing. Also hosts the life action handlers used
-/// by `Reducer.apply`.
+/// The life-event draw order lives with the roll, in `LifeEventSystem`.
+/// Every other step here draws nothing. Also hosts the life action handlers
+/// used by `Reducer.apply`.
 enum LifeSystem {
     static let burnoutReason = "Burnout"
     static let hospitalReason = "Hospital"
@@ -37,33 +33,45 @@ enum LifeSystem {
         _ content: ContentCatalog
     ) -> [GameEvent] {
         var events: [GameEvent] = []
-        let config = balance.life
 
-        // 0. A new day resets the instant-activity cap.
+        // 0. A new day resets the per-day caps; a new week refills the
+        //    evening budget those caps sit under.
         state.life.instantActionsToday = 0
+        state.life.trainingsToday = 0
+        if state.day % GameState.daysPerWeek == 1 {
+            state.life.eveningsSpentThisWeek = 0
+        }
 
         // 1. Expiry.
         if let until = state.life.awayUntilDay, state.day >= until {
             state.life.awayUntilDay = nil
+            state.life.awaySinceDay = nil
             state.life.awayReason = nil
             events.append(.founderBack(day: state.day))
         }
         if let until = state.life.coldUntilDay, state.day >= until {
             state.life.coldUntilDay = nil
         }
+        if let until = state.economy.convalescingUntilDay, state.day >= until {
+            state.economy.convalescingUntilDay = nil
+        }
 
         // 2. Drift.
         applyDailyDrift(&state, balance)
 
         // 3. Thresholds.
-        events.append(contentsOf: checkThresholds(&state, config))
+        events.append(contentsOf: checkThresholds(&state, balance))
+
+        // 3b. The long tail of those thresholds: a chronic condition, a
+        //     meltdown that makes the press, loneliness, and the landlord.
+        events.append(contentsOf: applyConsequences(&state, balance))
 
         // 4. Life events.
-        events.append(contentsOf: rollLifeEvent(&state, config, content))
+        events.append(contentsOf: LifeEventSystem.roll(&state, balance, content))
 
         // 5. Weekly flows.
         if state.day % GameState.daysPerWeek == 0 {
-            events.append(contentsOf: runWeekly(&state, config))
+            events.append(contentsOf: runWeekly(&state, balance, content))
         }
 
         return events
@@ -73,8 +81,7 @@ enum LifeSystem {
 
     private static func applyDailyDrift(_ state: inout GameState, _ balance: BalanceConfig) {
         let config = balance.life
-        let schedule = state.life.isAway(day: state.day) ? WorkSchedule.chill : state.life.schedule
-        let drift = config.drift(for: schedule)
+        let drift = config.drift(for: state.effectiveSchedule)
         let childCount = Double(state.life.family.children.count)
         let child = config.childDrift
         let amenityHealth = state.ownedAmenities.reduce(0.0) {
@@ -99,36 +106,77 @@ enum LifeSystem {
             + possessionPrestige * instant.prestigeRelationshipFactor
         var mood = drift.mood + childCount * child.mood + config.home(state.life.home).moodBonus
             + possessionMood
-        if state.life.wallet < 0 {
+        // Being broke is grim; climbing out of it is not. The penalty
+        // stands while the wallet is level or still falling week on week,
+        // and lifts the moment it starts recovering — so a founder whose
+        // company has finally started paying them properly can get their
+        // head above water instead of being pinned at mood zero (and so at
+        // `minOutputFactor`) for the rest of the run.
+        if state.life.wallet < 0,
+           state.life.wallet <= state.economy.walletLastWeek ?? Int.max {
             mood -= config.debtMoodPenalty
+        }
+        // Nobody has called in two months.
+        if isLonely(state, balance.economy) {
+            mood -= balance.economy.lonelinessMoodDrift
         }
 
         state.life.meters.apply(energy: energy, health: health, mood: mood, relationships: relationships)
+
+        // A chronic condition puts a ceiling on how rested the founder can
+        // ever be.
+        if state.economy.chronicCondition {
+            state.life.meters.energy = min(
+                state.life.meters.energy, balance.economy.chronicMaxEnergy
+            )
+        }
+    }
+
+    /// Whether the founder has been alone at rock bottom long enough for it
+    /// to start costing them.
+    static func isLonely(_ state: GameState, _ economy: BalanceConfig.EconomyBalance) -> Bool {
+        guard let since = state.economy.lonelySinceDay else { return false }
+        return state.day - since >= economy.lonelinessDays
     }
 
     // MARK: - Thresholds
 
     private static func checkThresholds(
         _ state: inout GameState,
-        _ config: BalanceConfig.LifeBalance
+        _ balance: BalanceConfig
     ) -> [GameEvent] {
+        let config = balance.life
         var events: [GameEvent] = []
         let day = state.day
 
         if !state.life.isAway(day: day), state.life.meters.energy < config.burnoutEnergyThreshold {
             let until = day + config.burnoutDays
             state.life.awayUntilDay = until
+            state.life.awaySinceDay = day
             state.life.awayReason = burnoutReason
             state.life.meters.energy = LifeMeters.clamped(config.burnoutRecoveryEnergy)
+            state.economy.burnoutDays.append(day)
             events.append(.founderAway(reason: burnoutReason, untilDay: until, day: day))
         }
 
         if !state.life.isAway(day: day), state.life.meters.health < config.hospitalHealthThreshold {
             let until = day + config.hospitalDays
             state.life.awayUntilDay = until
+            state.life.awaySinceDay = day
             state.life.awayReason = hospitalReason
-            state.life.wallet -= config.hospitalBill
+            state.life.wallet -= hospitalBill(state, balance)
             state.life.meters.health = LifeMeters.clamped(config.hospitalRecoveryHealth)
+            state.economy.hospitalizationDays.append(day)
+            // Signed off. The ward, then a fortnight of being told to take
+            // it easy: `effectiveSchedule` reads `.chill` throughout and
+            // `setWorkSchedule` refuses to crunch, so a founder cannot
+            // discharge themselves straight back into the loop that put
+            // them there. `life.schedule` keeps their intent, so the run
+            // they were on resumes by itself afterwards. Without this the
+            // same crunch that caused the stay picks up the day the bed is
+            // free and health falls the same forty days to the same
+            // threshold, five to twelve times over two years.
+            state.economy.convalescingUntilDay = until + balance.economy.convalescenceDays
             events.append(.founderAway(reason: hospitalReason, untilDay: until, day: day))
         }
 
@@ -144,6 +192,10 @@ enum LifeSystem {
             state.life.family.stageSinceDay = day
             state.life.family.partnerName = nil
             state.life.family.partnerAppearanceSeed = nil
+            state.life.family.partnerContactID = nil
+            state.life.family.affection = 0
+            state.life.family.lastPartnerDay = nil
+            state.life.family.partnerCooldowns = [:]
             state.life.meters.apply(mood: -config.breakupMoodPenalty)
             state.life.lowRelationshipStreakDays = 0
             events.append(.breakup(day: day))
@@ -152,79 +204,157 @@ enum LifeSystem {
         return events
     }
 
-    // MARK: - Life events
+    // MARK: - Consequences
 
-    private static func rollLifeEvent(
+    /// What today's thresholds mean beyond the week they happen in.
+    ///
+    /// - **Chronic condition.** Two hospital stays inside a year and the
+    ///   founder is living with something: energy is capped and their
+    ///   output permanently docked until three straight restorative
+    ///   weekends clear it.
+    /// - **Meltdown.** Burning out twice in a year makes the trade press
+    ///   and costs the studio reputation.
+    /// - **Loneliness.** Rock-bottom relationships while single start a
+    ///   clock; past `lonelinessDays` the mood drifts down every day until
+    ///   the founder sees somebody.
+    /// - **Eviction.** A wallet past `evictionWalletThreshold` earns a
+    ///   warning; if nothing changes by the deadline the company either
+    ///   starts paying the founder properly or they move somewhere
+    ///   cheaper. Zero RNG throughout.
+    private static func applyConsequences(
         _ state: inout GameState,
-        _ config: BalanceConfig.LifeBalance,
-        _ content: ContentCatalog
+        _ balance: BalanceConfig
     ) -> [GameEvent] {
-        guard state.day % config.lifeEventIntervalDays == 0,
-              !content.lifeEvents.isEmpty
-        else { return [] }
+        let economy = balance.economy
+        let day = state.day
+        var events: [GameEvent] = []
 
-        // 1. The hit roll.
-        guard state.rng.nextUniform() < config.lifeEventChance else { return [] }
-
-        // 2. The weighted pick over the eligible events, cumulative weights
-        // in catalog order. Weights are >= 1 by the content contract;
-        // max(1, _) keeps a malformed catalog from trapping the reducer.
-        let eligible = content.lifeEvents.filter { isEligible($0, state: state) }
-        guard !eligible.isEmpty else { return [] }
-        let totalWeight = eligible.reduce(0) { $0 + max(1, $1.weight) }
-        var remaining = state.rng.nextInt(in: 0...(totalWeight - 1))
-        var picked = eligible[eligible.count - 1]
-        for event in eligible {
-            remaining -= max(1, event.weight)
-            if remaining < 0 {
-                picked = event
-                break
+        // Two hospital stays in a year: something is now permanent.
+        if !state.economy.chronicCondition, economy.chronicWindowDays > 0 {
+            let recent = state.economy.hospitalizationDays
+                .count { day - $0 < economy.chronicWindowDays }
+            if recent >= 2 {
+                state.economy.chronicCondition = true
+                state.economy.recoveryWeeks = 0
+                events.append(.chronicConditionDiagnosed(day: day))
             }
         }
-
-        // 3. Apply the impact.
-        return apply(picked, to: &state)
-    }
-
-    private static func isEligible(_ event: LifeEventDef, state: GameState) -> Bool {
-        if let minStage = event.minStage {
-            guard let stage = RelationshipStage(rawValue: minStage),
-                  state.life.family.stage.rank >= stage.rank
-            else { return false }
-        }
-        if event.requiresChildren, state.life.family.children.isEmpty {
-            return false
-        }
-        if let cap = event.maxRelationships, state.life.meters.relationships >= cap {
-            return false
-        }
-        return true
-    }
-
-    /// Applies one event's impact: meter deltas (clamped), the wallet
-    /// delta, a cold window, and — unless the founder is already away — an
-    /// away window (reason: the impact's `awayReason`, or the headline).
-    private static func apply(_ event: LifeEventDef, to state: inout GameState) -> [GameEvent] {
-        let impact = event.impact
-        let day = state.day
-        state.life.meters.apply(
-            energy: impact.energy, health: impact.health,
-            mood: impact.mood, relationships: impact.relationships
-        )
-        state.life.wallet += impact.wallet
-        if impact.coldDays > 0 {
-            state.life.coldUntilDay = day + impact.coldDays
+        // Two burnouts in a year: the founder's meltdown makes the news.
+        if economy.burnoutWindowDays > 0,
+           state.economy.burnoutDays.last == day,
+           state.economy.burnoutDays.count(where: { day - $0 < economy.burnoutWindowDays }) >= 2 {
+            state.company.reputation = max(
+                0, state.company.reputation - economy.burnoutReputationPenalty
+            )
+            events.append(.founderMeltdown(day: day))
         }
 
-        var events: [GameEvent] = [.lifeEvent(eventID: event.id, day: day)]
-        if impact.awayDays > 0, !state.life.isAway(day: day) {
-            let until = day + impact.awayDays
-            let reason = impact.awayReason ?? event.headline
-            state.life.awayUntilDay = until
-            state.life.awayReason = reason
-            events.append(.founderAway(reason: reason, untilDay: until, day: day))
+        // Loneliness: the clock starts at rock bottom and stops the moment
+        // there is anybody in the founder's life again.
+        if state.life.family.stage == .single,
+           state.life.meters.relationships <= economy.lonelinessRelationshipThreshold {
+            if state.economy.lonelySinceDay == nil {
+                state.economy.lonelySinceDay = day
+            }
+        } else {
+            state.economy.lonelySinceDay = nil
         }
+
+        // The landlord.
+        events.append(contentsOf: checkEviction(&state, balance))
         return events
+    }
+
+    /// The debt spiral's endgame. Under the threshold the founder gets one
+    /// warning and `evictionGraceDays` to fix it; after that the company
+    /// starts paying them a real salary if it can, and otherwise they pack.
+    private static func checkEviction(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let economy = balance.economy
+        let day = state.day
+        guard economy.evictionWalletThreshold > Int.min else { return [] }
+
+        guard state.life.wallet < economy.evictionWalletThreshold else {
+            // Back in the black: the warning is withdrawn, and once the
+            // overdraft is actually cleared the rescue salary steps back
+            // down to what it costs the founder to live. The company
+            // covers you until you are square; it does not keep paying
+            // three times the going rate for the rest of the run because
+            // of one bad quarter. A salary the *player* set is never
+            // touched — only the one this function raised.
+            state.economy.evictionWarningDay = nil
+            if let rescue = state.economy.rescueSalary,
+               state.life.wallet >= 0,
+               state.life.founderSalary == rescue {
+                state.life.founderSalary = min(
+                    rescue, max(balance.life.defaultFounderSalary, livingCosts(state, balance))
+                )
+                state.economy.rescueSalary = nil
+            }
+            return []
+        }
+        guard let warned = state.economy.evictionWarningDay else {
+            state.economy.evictionWarningDay = day
+            return [.evictionWarning(untilDay: day + economy.evictionGraceDays, day: day)]
+        }
+        // Re-checked every grace period, not once. The warning stands
+        // until the wallet is back above the threshold, so a founder
+        // stuck at the bottom is not re-served every fortnight — but the
+        // *rescue* has to be re-offered, or a company that happened to be
+        // short of cash on one particular day never bails its founder out
+        // at all, however rich it gets afterwards.
+        let elapsed = day - warned
+        guard elapsed > 0, elapsed.isMultiple(of: max(1, economy.evictionGraceDays)) else {
+            return []
+        }
+
+        // The company bails them out if it can carry the salary — and the
+        // salary is sized to *clear the hole*, not merely to cover the
+        // rent. Paying somebody £240 a week against a £30,000 overdraft is
+        // not a rescue, it is a rounding error: it would take fifteen
+        // years. This pays the weekly costs plus the overdraft amortised
+        // over `evictionRecoveryWeeks`, capped at `founderSalaryMax`.
+        let rent = balance.life.home(state.life.home).weeklyRent
+        let weeklyCosts = livingCosts(state, balance)
+        let deficit = max(0, -state.life.wallet)
+        let amortised = weeklyCosts
+            + Int((Double(deficit) / Double(max(1, economy.evictionRecoveryWeeks))).rounded())
+        let rescue = min(
+            balance.life.founderSalaryMax,
+            max(state.life.founderSalary, rent * 2, amortised)
+        )
+        // Affordable means the company could carry it for a quarter on
+        // today's balance, not merely make this week's payment.
+        if state.company.cash >= rescue * GameState.daysPerWeek * 2,
+           rescue > state.life.founderSalary {
+            state.life.founderSalary = rescue
+            state.economy.rescueSalary = rescue
+            return []
+        }
+        // Otherwise they move somewhere they can afford.
+        guard let cheaper = state.life.home.previous else { return [] }
+        state.life.home = cheaper
+        state.life.meters.apply(mood: -balance.life.breakupMoodPenalty / 2)
+        return [.homeDowngraded(tier: cheaper, day: day)]
+    }
+
+    /// What the founder's week costs them before they eat: rent and the
+    /// children.
+    static func livingCosts(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        balance.life.home(state.life.home).weeklyRent
+            + state.life.family.children.count * balance.life.childWeeklyCost
+    }
+
+    /// What a hospital stay actually costs the founder. A company with a
+    /// People & HR department carries `hospitalInsuredFraction` of it —
+    /// the department's first reason to exist that is not morale, and the
+    /// answer to "why would a studio ever staff HR?".
+    static func hospitalBill(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        let full = balance.life.hospitalBill
+        guard state.activeDepartments.contains(.hr) else { return full }
+        return Int((Double(full) * (1 - balance.economy.hospitalInsuredFraction)).rounded())
     }
 
     // MARK: - Weekly flows
@@ -235,9 +365,15 @@ enum LifeSystem {
     /// the founder is away. Costs debit the wallet even into the negative.
     private static func runWeekly(
         _ state: inout GameState,
-        _ config: BalanceConfig.LifeBalance
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
     ) -> [GameEvent] {
+        let config = balance.life
         let day = state.day
+        // Snapshot *before* this week's settlement, so the following week
+        // can ask "did the wallet go up?" and the debt mood penalty can
+        // lift while the founder is climbing out.
+        state.economy.walletLastWeek = state.life.wallet
 
         let salary = state.life.founderSalary
         if salary > 0 {
@@ -251,7 +387,31 @@ enum LifeSystem {
         state.life.wallet -= config.home(state.life.home).weeklyRent
             + state.life.family.children.count * config.childWeeklyCost
 
-        guard !state.life.isAway(day: day) else { return [] }
+        // An overdrawn personal account is not free money — but the
+        // overdraft is only extended as far as the eviction threshold.
+        // Past that nobody is lending the founder anything, so the
+        // interest stops growing with the hole instead of compounding on
+        // it. (Uncapped, a founder who is hospitalised eight times reaches
+        // −$90k on a $200-a-week salary, of which roughly $38k is interest
+        // on interest, and there is no arithmetic that gets them back.)
+        if state.life.wallet < 0 {
+            // `Int.min` is the "no eviction in this test balance" sentinel,
+            // and `abs` would trap on it — an uncapped overdraft is the
+            // right reading of a threshold that never arrives.
+            let ceiling = balance.economy.evictionWalletThreshold
+            let cap = Int(exactly: ceiling.magnitude) ?? Int.max
+            let charged = min(-state.life.wallet, cap)
+            let interest = Int(
+                (Double(charged) * balance.economy.walletInterestWeeklyRate).rounded()
+            )
+            state.life.wallet -= interest
+        }
+
+        guard !state.life.isAway(day: day) else {
+            // A weekend spent in hospital is not a weekend spent recovering.
+            state.economy.recoveryWeeks = 0
+            return []
+        }
 
         let activity = resolvedActivity(state.life)
         let def = config.activity(activity)
@@ -260,20 +420,71 @@ enum LifeSystem {
         )
         state.life.wallet -= def.cost
 
+        // A weekend actually spent with the person you are with counts as
+        // spending it with them — the Life tab's date night and the
+        // partner card's are the same evening.
+        if activity == .dateNight || activity == .familyTime,
+           state.life.family.stage != .single {
+            state.life.family.affection = min(
+                100,
+                state.life.family.affection
+                    + def.relationships * state.founderCharmFactor(balance)
+            )
+            state.life.family.lastPartnerDay = day
+        }
+
         var events: [GameEvent] = [.weekendSpent(activity: activity, day: day)]
+        events.append(contentsOf: applyWeekendRecovery(activity, &state, balance))
         switch activity {
         case .vacation:
             let until = day + config.vacationDays
             state.life.awayUntilDay = until
+            state.life.awaySinceDay = day
             state.life.awayReason = vacationReason
             state.life.plannedActivity = .rest
             events.append(.founderAway(reason: vacationReason, untilDay: until, day: day))
         case .doctor:
             state.life.coldUntilDay = nil
-        case .rest, .gym, .dateNight, .friends, .hobby, .familyTime, .spa, .networking:
+        case .networking:
+            // The evening is not just a meter change: it opens a room full
+            // of people, which stays open for a couple of days so the
+            // player can work it at their own pace.
+            events.append(contentsOf: NetworkingSystem.startEvent(
+                state: &state, balance: balance, content: content
+            ))
+            FounderSystem.practice(.conversation, multiplier: 2, state: &state, balance: balance)
+        case .rest, .gym, .dateNight, .friends, .hobby, .familyTime, .spa:
             break
         }
         return events
+    }
+
+    /// A weekend spent on the founder's own health counts toward clearing
+    /// a chronic condition; anything else breaks the streak. Seeing people
+    /// also breaks a loneliness run outright.
+    private static func applyWeekendRecovery(
+        _ activity: WeekendActivity,
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        switch activity {
+        case .friends, .networking, .dateNight, .familyTime:
+            state.economy.lonelySinceDay = nil
+        default:
+            break
+        }
+
+        guard state.economy.chronicCondition else { return [] }
+        switch activity {
+        case .gym, .spa, .doctor:
+            state.economy.recoveryWeeks += 1
+        default:
+            state.economy.recoveryWeeks = 0
+        }
+        guard state.economy.recoveryWeeks >= balance.economy.chronicCureWeeks else { return [] }
+        state.economy.chronicCondition = false
+        state.economy.recoveryWeeks = 0
+        return [.chronicConditionCleared(day: state.day)]
     }
 
     /// The activity that actually happens: a date night while single is a
@@ -293,9 +504,20 @@ enum LifeSystem {
     // MARK: - Actions
 
     /// Changes the work schedule. No event.
+    ///
+    /// Refuses `.crunch` while the founder is signed off after a hospital
+    /// stay: they are physically unable to, and a player (or a bot) that
+    /// re-issues the order every day would otherwise walk straight back
+    /// into the loop that hospitalised them.
     static func setWorkSchedule(_ schedule: WorkSchedule, state: inout GameState) -> [GameEvent] {
+        if schedule == .crunch, isConvalescing(state) { return [] }
         state.life.schedule = schedule
         return []
+    }
+
+    /// Whether the founder is still signed off after a hospital stay.
+    public static func isConvalescing(_ state: GameState) -> Bool {
+        state.economy.convalescingUntilDay.map { state.day < $0 } ?? false
     }
 
     /// Sets the weekly founder salary, clamped to 0...`founderSalaryMax`.
@@ -336,6 +558,7 @@ enum LifeSystem {
     ) -> [GameEvent] {
         let config = balance.life
         let relationships = state.life.meters.relationships
+        let affection = state.life.family.affection
         let daysAtStage = state.day - state.life.family.stageSinceDay
 
         switch state.life.family.stage {
@@ -343,15 +566,21 @@ enum LifeSystem {
             guard relationships >= config.datingMinRelationships else { return [] }
             state.life.family.partnerName = pick(content.names.partnerNames, &state.rng)
             state.life.family.partnerAppearanceSeed = state.rng.next()
+            state.life.family.partnerContactID = nil
+            state.life.family.affection = balance.relationships.startingAffection
+            state.life.family.lastPartnerDay = state.day
+            state.life.family.partnerCooldowns = [:]
             state.life.family.stage = .dating
         case .dating:
             guard relationships >= config.partnerMinRelationships,
-                  daysAtStage >= config.partnerMinDaysAtStage
+                  daysAtStage >= config.partnerMinDaysAtStage,
+                  affection >= balance.relationships.minAffection(for: .partner)
             else { return [] }
             state.life.family.stage = .partner
         case .partner:
             guard relationships >= config.marriedMinRelationships,
                   daysAtStage >= config.marriedMinDaysAtStage,
+                  affection >= balance.relationships.minAffection(for: .married),
                   state.life.wallet >= config.weddingCost
             else { return [] }
             state.life.wallet -= config.weddingCost
@@ -398,8 +627,9 @@ enum LifeSystem {
     }
 
     /// Does an instant activity right now: applies the meter deltas and
-    /// debits the wallet. Gated on the shared per-day cap, the activity's
-    /// cooldown, the wallet, and the founder being around. Zero RNG.
+    /// debits the wallet. Gated on the shared per-day cap, the week's
+    /// evening budget, the activity's cooldown, the wallet, and the founder
+    /// being around. Zero RNG.
     static func doInstantActivity(
         _ activity: InstantActivity,
         state: inout GameState,
@@ -408,6 +638,7 @@ enum LifeSystem {
         let instant = balance.instantLife
         guard let def = instant.activity(activity),
               state.life.instantActionsToday < instant.maxPerDay,
+              state.hasEveningFree(balance),
               // Free activities are always affordable, even overdrawn.
               def.cost == 0 || state.life.wallet >= def.cost,
               !state.life.isAway(day: state.day)
@@ -421,6 +652,7 @@ enum LifeSystem {
         state.life.wallet -= def.cost
         state.life.instantCooldowns[activity.rawValue] = state.day
         state.life.instantActionsToday += 1
+        state.spendEvening(balance)
         return [.instantActivityDone(activity: activity, day: state.day)]
     }
 

@@ -10,7 +10,8 @@ public enum Reducer {
 
     /// Systems run in this order every day:
     /// Life → Market → Rival → Employee → Social → Product → Contract →
-    /// Research → Marketing → City → Finance → Event.
+    /// Research → Marketing → City → Finance → Event, then each
+    /// workstream's own, then Relationship → Networking.
     /// Life runs first so today's founder condition scales today's output;
     /// Market shifts before sales post so a weekly shift prices the same
     /// day's sales; Rival runs after Market (a rival shipping dents the
@@ -33,6 +34,49 @@ public enum Reducer {
         CitySystem.run,
         FinanceSystem.run,
         EventSystem.run,
+
+        // Reserved regions — each workstream appends its new systems inside
+        // its own region and nowhere else. A system's position in this
+        // array fixes when it runs (and, for anything drawing from `rng`,
+        // the draw order), so never insert outside your region.
+
+        // MARK: WS-A
+
+        // Live ops runs last: support desks, the wild's bug discovery and
+        // landing patches all read the day the rest of the simulation just
+        // produced (notably the sales week `ProductSystem` posts).
+        LiveOpsSystem.run,
+
+        // MARK: WS-B
+
+        // Runs after everything else so it sees the finished day: a choice
+        // whose deadline passed is answered, a scheduled follow-up fires,
+        // and the industry-news drum beats. Draws only from `worldRNG`, and
+        // only when `News.json` has templates.
+        NarrativeSystem.run,
+
+        // MARK: WS-F
+
+        // Runs on the post-sweep roster: the trait effects that need the
+        // whole team (mentoring, the mood of the room, press).
+        TraitSystem.run,
+        // Then the investor cadence (offers, quarterly board reviews),
+        // which can end the run. Draws only from `investorRNG`, its own
+        // stream, so repricing the term sheets never reshuffles the world.
+        InvestorSystem.run,
+        // Progression measures last, so a goal that a system finished
+        // today completes today.
+        ProgressionSystem.run,
+
+        // MARK: Founder & people
+
+        // The founder's own life, after the company's day. Relationships
+        // sees the post-quit roster and the loyalty `SocialSystem` settled
+        // on; networking closes a room the player is done with and settles
+        // the founder's personal stakes. Both draw only from `socialRNG`,
+        // their own stream, so their position here disturbs nothing.
+        RelationshipSystem.run,
+        NetworkingSystem.run,
     ]
 
     /// Advances the state by one game day. No-op once the game is over.
@@ -50,6 +94,15 @@ public enum Reducer {
         var events: [GameEvent] = []
         for system in systems {
             events.append(contentsOf: system(&state, balance, content))
+        }
+
+        // Decide here, not in the UI shell, so a headless run sees exactly
+        // the pauses a played game would: the policy needs the day's state
+        // and spends the pause budget.
+        let pausing = PausePolicy.pausingEvents(events, state: state, balance: balance)
+        state.economy.pauseEvents = pausing
+        if pausing.contains(where: { $0.severity != .critical }) {
+            state.economy.lastNonCriticalPauseDay = state.day
         }
 
         state.logEvents(events)
@@ -163,7 +216,82 @@ public enum Reducer {
         case .teamDinner:
             events = SocialSystem.teamDinner(state: &state, balance: balance)
         case let .resolveStaffEvent(choice):
-            events = SocialSystem.resolveStaffEvent(choice: choice, state: &state, balance: balance)
+            events = SocialSystem.resolveStaffEvent(
+                choice: choice, state: &state, balance: balance, content: content
+            )
+
+        // Reserved regions — each workstream adds the handlers for the
+        // cases it appended to `GameAction` inside its own region and
+        // nowhere else. The switch stays exhaustive: no `default`.
+
+        // MARK: WS-A
+
+        case let .setPriceTier(productID, tier):
+            events = ProductSystem.setPriceTier(
+                productID: productID, tier: tier, state: &state, balance: balance
+            )
+        case let .startUpdate(productID):
+            events = ProductSystem.startUpdate(
+                productID: productID, state: &state, balance: balance, content: content
+            )
+        case let .setWorkPace(pace):
+            events = EmployeeSystem.setWorkPace(pace, state: &state)
+
+        // MARK: WS-B
+
+        case let .resolveChoice(eventID, optionIndex):
+            events = NarrativeSystem.resolveChoice(
+                eventID: eventID, optionIndex: optionIndex,
+                state: &state, balance: balance, content: content
+            )
+
+        // MARK: WS-F
+        case .acceptInvestment:
+            events = InvestorSystem.acceptOffer(state: &state, balance: balance)
+        case .declineInvestment:
+            events = InvestorSystem.declineOffer(state: &state)
+        case .fileIPO:
+            events = InvestorSystem.fileIPO(state: &state, balance: balance)
+        case let .interviewCandidate(candidateID):
+            events = HiringSystem.interview(
+                candidateID: candidateID, state: &state, balance: balance
+            )
+        case let .passOnCandidate(candidateID):
+            events = HiringSystem.pass(candidateID: candidateID, state: &state)
+
+        // MARK: Founder & people
+
+        case let .trainFounderSkill(skill, method):
+            events = FounderSystem.train(
+                skill, method: method, state: &state, balance: balance
+            )
+        case let .talkToContact(contactID, topic):
+            events = NetworkingSystem.talk(
+                contactID: contactID, topic: topic, state: &state, balance: balance
+            )
+        case let .makeNetworkingOffer(contactID, offer):
+            events = NetworkingSystem.makeOffer(
+                contactID: contactID, offer: offer,
+                state: &state, balance: balance, content: content
+            )
+        case .leaveNetworkingEvent:
+            events = NetworkingSystem.leaveEvent(state: &state, balance: balance)
+        case let .spendTimeWithPartner(activity):
+            events = RelationshipSystem.spendTimeWithPartner(
+                activity, state: &state, balance: balance
+            )
+        case let .hangOutWith(employeeID):
+            events = RelationshipSystem.hangOut(
+                employeeID: employeeID, state: &state, balance: balance
+            )
+        case let .mentorEmployee(employeeID, skill):
+            events = RelationshipSystem.mentor(
+                employeeID: employeeID, skill: skill, state: &state, balance: balance
+            )
+        case let .takeSecuredLoan(amount):
+            events = FinanceSystem.takeSecuredLoan(
+                amount: amount, state: &state, balance: balance
+            )
         }
 
         state.logEvents(events)

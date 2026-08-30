@@ -4,38 +4,161 @@
 extension SpriteLibrary {
     // MARK: - Poses
 
+    /// Every pose a person sprite can be drawn in.
+    ///
+    /// The first six are the home/office poses; the rest are the office-life
+    /// poses the director needs. All of them keep the head in rows 1-6 of a
+    /// 14-wide canvas (offset per frame where a pose bobs or slumps), which
+    /// is what lets hair, glasses, beard, outfit and role accessories drop
+    /// onto every one of them from a single set of overlays.
     public enum PersonPose: String, Sendable, Equatable, CaseIterable {
-        case seated, standing, lying, seatedCouch, holdingBaby
+        case seated, standing, lying, seatedCouch, holdingBaby, exercising
+        case walkLeft, walkRight, walkDown, cheer, slump, coffee, chat, carryBox, portrait
+        /// `slump` without leaving the chair: the office `seated` canvas
+        /// with the standing slump's head and shoulders.
+        case seatedSlump
     }
 
-    /// A person in a home pose. `seated` is the existing office sprite
-    /// (3 frames); the other poses are 2-frame (bob / breathe / rock).
-    public static func person(appearance: CharacterAppearance, pose: PersonPose, isFounder: Bool = false) -> PixelSprite {
+    /// A person in a pose. `seated` is the office sprite (3 frames: typing
+    /// A, typing B, blink); walking is a 4-frame cycle; the rest are two
+    /// frames. `role` adds the accessory that tells the job apart — the
+    /// founder always wears the indigo hoodie regardless of their outfit.
+    public static func person(
+        appearance: CharacterAppearance,
+        pose: PersonPose,
+        isFounder: Bool = false,
+        role: RoleLook = .none
+    ) -> PixelSprite {
+        SpriteCache.sprite(for: SpriteCache.Key(
+            appearance: appearance, pose: pose, isFounder: isFounder, role: role
+        )) {
+            buildPerson(appearance: appearance, pose: pose, isFounder: isFounder, role: role)
+        }
+    }
+
+    private static func buildPerson(
+        appearance: CharacterAppearance, pose: PersonPose, isFounder: Bool, role: RoleLook
+    ) -> PixelSprite {
+        // Either flag makes a founder: WS-C tags occupants with
+        // `role: .founder`, older call sites pass `isFounder: true`.
+        let look: RoleLook = isFounder ? .founder : role
+        let isFounder = isFounder || role == .founder
         switch pose {
         case .seated:
-            return person(appearance: appearance, isFounder: isFounder)
+            return composePerson(
+                frames: [PersonArt.frameA, PersonArt.frameB, PersonArt.frameABlink],
+                headOffsets: [0, 1, 0], appearance: appearance, isFounder: isFounder, role: look
+            )
         case .standing:
             return composePerson(
                 frames: [HomePersonArt.standingA, HomePersonArt.headBob(HomePersonArt.standingA)],
-                hairOffsets: [0, 1], appearance: appearance, isFounder: isFounder
+                headOffsets: [0, 1], appearance: appearance, isFounder: isFounder, role: look
             )
         case .seatedCouch:
             return composePerson(
                 frames: [HomePersonArt.seatedCouchA, HomePersonArt.headBob(HomePersonArt.seatedCouchA)],
-                hairOffsets: [0, 1], appearance: appearance, isFounder: isFounder
+                headOffsets: [0, 1], appearance: appearance, isFounder: isFounder, role: look
             )
         case .lying:
-            // Under the blanket the hoodie is hidden, so the founder flag is moot.
+            // Under the blanket the outfit and accessories are hidden, so
+            // the founder flag is moot.
             return composePerson(
                 frames: [HomePersonArt.lyingA, HomePersonArt.lyingB],
-                hairOffsets: [0, 0], appearance: appearance, isFounder: false, sleeping: true
+                headOffsets: [0, 0], appearance: appearance, isFounder: false, role: .none, sleeping: true
             )
         case .holdingBaby:
             return composePerson(
                 frames: [HomePersonArt.holdingBabyA, HomePersonArt.holdingBabyB],
-                hairOffsets: [0, 1], appearance: appearance, isFounder: isFounder
+                headOffsets: [0, 1], appearance: appearance, isFounder: isFounder, role: look
             )
+        case .exercising:
+            return exercisingPerson(appearance: appearance, isFounder: isFounder)
+
+        case .walkRight, .walkLeft:
+            return composePerson(
+                frames: HomePersonArt.walkRightFrames,
+                headOffsets: HomePersonArt.walkHeadOffsets,
+                appearance: appearance, isFounder: isFounder, role: look,
+                mirrored: pose == .walkLeft
+            )
+        case .walkDown:
+            // Toward the camera: the standing pose with alternating steps.
+            return composePerson(
+                frames: HomePersonArt.walkDownFrames,
+                headOffsets: [0, 1], appearance: appearance, isFounder: isFounder, role: look
+            )
+        case .cheer:
+            return composePerson(
+                frames: [HomePersonArt.cheerDown, HomePersonArt.cheerUp],
+                headOffsets: [0, -1], appearance: appearance, isFounder: isFounder, role: look
+            )
+        case .slump:
+            return composePerson(
+                frames: [HomePersonArt.slumpA, HomePersonArt.slumpB],
+                headOffsets: [2, 3], torsoOffsets: [1, 1],
+                appearance: appearance, isFounder: isFounder, role: look
+            )
+        case .seatedSlump:
+            // The same head and torso offsets as `.slump`: the art is the
+            // standing slump above the hip line, so every overlay lands
+            // where it does there.
+            return composePerson(
+                frames: [HomePersonArt.seatedSlumpA, HomePersonArt.seatedSlumpB],
+                headOffsets: [2, 3], torsoOffsets: [1, 1],
+                appearance: appearance, isFounder: isFounder, role: look
+            )
+        case .coffee:
+            return composePerson(
+                frames: [HomePersonArt.standingA, HomePersonArt.headBob(HomePersonArt.standingA)],
+                headOffsets: [0, 1], appearance: appearance, isFounder: isFounder, role: look,
+                props: [HomePersonArt.mugLow, HomePersonArt.mugHigh]
+            )
+        case .chat:
+            return composePerson(
+                frames: [HomePersonArt.standingA, HomePersonArt.headBob(HomePersonArt.standingA)],
+                headOffsets: [0, 1], appearance: appearance, isFounder: isFounder, role: look,
+                props: [HomePersonArt.gestureUp, HomePersonArt.gestureDown]
+            )
+        case .carryBox:
+            return composePerson(
+                frames: [HomePersonArt.standingA, HomePersonArt.headBob(HomePersonArt.standingA)],
+                headOffsets: [0, 1], appearance: appearance, isFounder: isFounder, role: look,
+                props: [HomePersonArt.boxOverlay, HomePersonArt.boxOverlayLifted]
+            )
+        case .portrait:
+            return portraitBust(appearance: appearance, isFounder: isFounder, role: look)
         }
+    }
+
+    /// A 10x10 head-and-shoulders bust cropped out of the seated frames
+    /// (open eyes / blink), for UI portraits. The crop keeps the collar rows,
+    /// so glasses, beard, hoodie and role accessory all survive into the
+    /// portrait — a lawyer's tie and a QA's headset are visible in a list
+    /// row, which is the whole point.
+    private static func portraitBust(
+        appearance: CharacterAppearance, isFounder: Bool, role: RoleLook
+    ) -> PixelSprite {
+        let full = composePerson(
+            frames: [PersonArt.frameA, PersonArt.frameABlink],
+            headOffsets: [0, 0], appearance: appearance, isFounder: isFounder, role: role
+        )
+        return crop(full, x: portraitInsetX, y: 1, width: portraitWidth, height: portraitHeight)
+    }
+
+    private static let portraitWidth = 10
+    private static let portraitHeight = 10
+    private static let portraitInsetX = 2
+
+    /// A rectangular crop of every frame of a sprite, keeping the palette.
+    private static func crop(_ sprite: PixelSprite, x: Int, y: Int, width: Int, height: Int) -> PixelSprite {
+        let frames = sprite.frames.map { frame -> [String] in
+            (y..<(y + height)).map { row -> String in
+                guard row >= 0, row < frame.count else { return String(repeating: " ", count: width) }
+                let chars = Array(frame[row])
+                return String((x..<(x + width)).map { $0 >= 0 && $0 < chars.count ? chars[$0] : " " })
+            }
+        }
+        return PixelSprite(frames: frames, palette: sprite.palette)
     }
 
     /// Dumbbell workout: arms down / arms up. Internal — the composer uses it
@@ -43,30 +166,84 @@ extension SpriteLibrary {
     static func exercisingPerson(appearance: CharacterAppearance, isFounder: Bool) -> PixelSprite {
         composePerson(
             frames: [HomePersonArt.exerciseDown, HomePersonArt.exerciseUp],
-            hairOffsets: [0, 0], appearance: appearance, isFounder: isFounder
+            headOffsets: [0, 0], appearance: appearance, isFounder: isFounder,
+            role: isFounder ? .founder : .none
         )
     }
 
-    /// Shared assembly: hair overlay (per-frame vertical offset so it rides a
-    /// head bob), optional founder hoodie, then the appearance palette.
-    private static func composePerson(
-        frames: [[String]], hairOffsets: [Int], appearance: CharacterAppearance, isFounder: Bool, sleeping: Bool = false
-    ) -> PixelSprite {
-        let hair = PersonArt.hairOverlays[appearance.hairStyle % PersonArt.hairOverlays.count]
-        let composed = frames.enumerated().map { index, frame in
-            var grid = PixelGrid.overlay(base: frame, top: hair, offsetY: hairOffsets[index])
-            if isFounder {
-                grid = PixelGrid.overlay(base: grid, top: PersonArt.hoodieOverlay)
-            }
-            return grid
+    /// Which role accessories hang off the head rather than the torso, and
+    /// so travel with a head bob or a slump.
+    private static func isHeadAccessory(_ role: RoleLook) -> Bool {
+        switch role {
+        case .qa, .designer, .marketer: true
+        case .none, .founder, .lawyer, .hr, .ops: false
         }
-        return PixelSprite(frames: composed, palette: personPalette(appearance))
     }
 
-    static func personPalette(_ appearance: CharacterAppearance) -> [Character: RGBA] {
+    /// Shared assembly. Layers, back to front: base pose, hair, beard,
+    /// outfit, glasses, role accessory, held prop. Each layer takes the
+    /// frame's own head or torso offset, so everything rides a bob together.
+    private static func composePerson(
+        frames: [[String]],
+        headOffsets: [Int],
+        torsoOffsets: [Int]? = nil,
+        appearance: CharacterAppearance,
+        isFounder: Bool,
+        role: RoleLook = .none,
+        sleeping: Bool = false,
+        mirrored: Bool = false,
+        props: [[String]] = []
+    ) -> PixelSprite {
+        let hair = PersonArt.hairOverlays[appearance.hairStyle % PersonArt.hairOverlays.count]
+        let outfit = isFounder
+            ? PersonArt.hoodieOverlay
+            : PersonArt.outfitOverlays[appearance.outfit % PersonArt.outfitOverlays.count]
+        let roleOverlay = PersonArt.roleOverlay(role)
+
+        let composed = frames.enumerated().map { index, frame -> [String] in
+            let head = headOffsets[min(index, headOffsets.count - 1)]
+            let torso = torsoOffsets.map { $0[min(index, $0.count - 1)] } ?? 0
+            var grid = PixelGrid.overlay(base: frame, top: hair, offsetY: head)
+            if appearance.hasBeard, !sleeping {
+                grid = PixelGrid.overlay(base: grid, top: PersonArt.beardOverlay, offsetY: head)
+            }
+            if !sleeping {
+                grid = PixelGrid.overlay(base: grid, top: outfit, offsetY: torso)
+                if let style = appearance.glasses {
+                    grid = PixelGrid.overlay(
+                        base: grid,
+                        top: PersonArt.glassesOverlays[style % PersonArt.glassesOverlays.count],
+                        offsetY: head
+                    )
+                }
+                if let roleOverlay {
+                    grid = PixelGrid.overlay(
+                        base: grid, top: roleOverlay,
+                        offsetY: isHeadAccessory(role) ? head : torso
+                    )
+                }
+            }
+            if index < props.count {
+                grid = PixelGrid.overlay(base: grid, top: props[index], offsetY: torso)
+            }
+            return mirrored ? grid.map { String($0.reversed()) } : grid
+        }
+        return PixelSprite(frames: composed, palette: personPalette(appearance, isFounder: isFounder))
+    }
+
+    /// Every character an authored person grid can use, resolved for one
+    /// appearance. Fixed tones come from the master palette; only skin, hair
+    /// and shirt vary per person.
+    static func personPalette(
+        _ appearance: CharacterAppearance, isFounder: Bool = false
+    ) -> [Character: RGBA] {
         let skin = Palettes.skinTones[appearance.skinTone % Palettes.skinTones.count]
         let hairColor = Palettes.hairColors[appearance.hairColor % Palettes.hairColors.count]
-        let shirt = Palettes.shirtColors[appearance.shirtColor % Palettes.shirtColors.count]
+        // The founder's whole top is the hoodie, not a shirt with a collar
+        // drawn on it — that is what makes them findable in a crowd of forty.
+        let shirt = isFounder
+            ? (base: Palettes.hoodie, shade: Palettes.hoodieShade)
+            : Palettes.shirtColors[appearance.shirtColor % Palettes.shirtColors.count]
         return [
             "O": Palettes.outline,
             "E": Palettes.eye,
@@ -78,6 +255,14 @@ extension SpriteLibrary {
             "M": HomePalette.metal,
             "W": HomePalette.babyBlanket, "w": HomePalette.babyBlanketShade,
             "B": HomePalette.blanket, "b": HomePalette.blanketShade,
+            "N": Palettes.ink[3], "n": Palettes.lens,
+            "Q": Palettes.stone[0],
+            "V": Palettes.ink[1], "v": Palettes.ink[2],
+            "R": Palettes.ember[2], "r": Palettes.ember[3],
+            "G": Palettes.moss[2], "g": Palettes.moss[3],
+            "X": Palettes.sand[1], "x": Palettes.sand[2],
+            "Y": Palettes.gold[1],
+            "I": Palettes.indigo[2],
             "S": skin.base, "s": skin.shade,
             "H": hairColor.base, "h": hairColor.shade,
             "T": shirt.base, "t": shirt.shade,
@@ -122,11 +307,36 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "K": RGBA(r: 96, g: 94, b: 110),
-            "R": RGBA(r: 214, g: 86, b: 110),
-            "B": RGBA(r: 94, g: 96, b: 206),
+            "K": Palettes.ink[1],
+            "R": Palettes.ember[2],
+            "B": Palettes.indigo[2],
         ]
         return PixelSprite(frames: [a, b], palette: palette)
+    }
+
+    /// An open laptop, 12x8, screen glowing (two frames) - the object the
+    /// founder falls asleep next to on a crunch week.
+    static func laptop() -> PixelSprite {
+        func frame(_ screen: Character) -> [String] {
+            let band = String(repeating: screen, count: 8)
+            return [
+                " OOOOOOOOOO ",
+                " O" + band + "O ",
+                " O" + band + "O ",
+                " O" + band + "O ",
+                " OOOOOOOOOO ",
+                "OMMMMMMMMMMO",
+                "OmmmmmmmmmmO",
+                "OOOOOOOOOOOO",
+            ]
+        }
+        return PixelSprite(frames: [frame("G"), frame("g")], palette: [
+            "O": Palettes.outline,
+            "G": Palettes.sky[3],
+            "g": Palettes.sky[2],
+            "M": Palettes.stone[2],
+            "m": Palettes.stone[3],
+        ])
     }
 
     /// An open paperback, 8×5.
@@ -140,9 +350,9 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "W": RGBA(r: 246, g: 240, b: 226),
-            "w": RGBA(r: 200, g: 192, b: 176),
-            "R": RGBA(r: 196, g: 87, b: 78),
+            "W": Palettes.stone[0],
+            "w": Palettes.clay[1],
+            "R": Palettes.ember[3],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -152,6 +362,8 @@ extension SpriteLibrary {
     public enum HomePropName: String, CaseIterable, Sendable {
         case bed, couch, tv, diningTable, yogaMat, dumbbells, bookshelf, armchair, crib, fridge, lamp, windowNight,
              suitcase, plantHome, fireplace, skylineWindow
+        // v2: the props that let the room tell you how life is going.
+        case stove, laundryPile, deadPlant, flowerVase, takeoutBoxes, catBed
     }
 
     public static func homeProp(_ name: HomePropName) -> PixelSprite {
@@ -171,8 +383,247 @@ extension SpriteLibrary {
         case .suitcase: suitcaseSprite()
         case .plantHome: plantHomeSprite()
         case .fireplace: fireplaceSprite()
-        case .skylineWindow: skylineWindowSprite()
+        case .skylineWindow: skyline(time: .night)
+        case .stove: stoveSprite()
+        case .laundryPile: laundryPileSprite()
+        case .deadPlant: deadPlantSprite()
+        case .flowerVase: flowerVaseSprite()
+        case .takeoutBoxes: takeoutBoxesSprite()
+        case .catBed: catBedSprite()
         }
+    }
+
+    // MARK: v2 props
+
+    /// Kitchen range with an oven window and a pan on the hob, 16×18. Two
+    /// frames: the steam curls off the pan.
+    private static func stoveSprite() -> PixelSprite {
+        func frame(_ steam: [String]) -> [String] {
+            var grid = [
+                "                ",
+                "                ",
+                "                ",
+                "OOOOOOOOOOOOOOOO",
+                "OMMMMMMMMMMMMMMO",
+                "OMKKMMMMMMKKKKMO",
+                "OOOOOOOOOOOOOOOO",
+                "OMMMMMMMMMMMMMMO",
+                "OMOOOOOOOOOOOOMO",
+                "OMOKKKKKKKKKKOMO",
+                "OMOKYYKKKKKKKOMO",
+                "OMOKYYYKKKKKKOMO",
+                "OMOKKKKKKKKKKOMO",
+                "OMOOOOOOOOOOOOMO",
+                "OMMMMMMMMMMMMMMO",
+                "OMMMMMMMMMMMMMMO",
+                "OOOOOOOOOOOOOOOO",
+                " OO          OO ",
+            ]
+            grid = PixelGrid.overlay(base: grid, top: [
+                "OOOOOOO",
+                "OSSSSSO",
+                "OOOOOOO",
+            ], offsetX: 1, offsetY: 3)
+            return PixelGrid.overlay(base: grid, top: steam, offsetX: 2, offsetY: 0)
+        }
+        let a = frame([" g g ", "  g  ", " g g "])
+        let b = frame(["  g  ", " g g ", "  g  "])
+        return PixelSprite(frames: [a, b], palette: [
+            "O": Palettes.outline,
+            "M": Palettes.stone[2],
+            "K": Palettes.ink[3],
+            "Y": Palettes.ember[2],
+            "S": Palettes.stone[3],
+            "g": Palettes.translucent(Palettes.stone[0], 130),
+        ])
+    }
+
+    /// A heap of unwashed laundry, 18×9 — the room's honest opinion of how
+    /// the week went.
+    private static func laundryPileSprite() -> PixelSprite {
+        let grid = [
+            "      OOOO        ",
+            "    OOAAAAOO      ",
+            "  OOAAAABBBAOO    ",
+            " OAAABBBBBAAAAO   ",
+            "OABBBAAAACCCAAAO  ",
+            "OAAAACCCAAAABBBAO ",
+            "OCCAAAABBBAAACCAO ",
+            " OOCCCAAAACCAAOO  ",
+            "   OOOOOOOOOOO    ",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "A": Palettes.stone[1],
+            "B": Palettes.teal[2],
+            "C": Palettes.ember[2],
+        ])
+    }
+
+    /// A plant nobody watered, 8×12: brown leaves on the floor.
+    private static func deadPlantSprite() -> PixelSprite {
+        let grid = [
+            "        ",
+            "   L    ",
+            "  Ll    ",
+            "   lL   ",
+            "    l   ",
+            "   ll   ",
+            "   OO   ",
+            " OOOOOO ",
+            " OWWWWO ",
+            " OWwwWO ",
+            "  OWWO  ",
+            " lOOOOl ",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "L": Palettes.sand[3],
+            "l": Palettes.sand[4],
+            "W": Palettes.stone[1],
+            "w": Palettes.stone[2],
+        ])
+    }
+
+    /// Cut flowers in a vase, 8×12 — the tidy, cared-for version of the
+    /// same corner.
+    private static func flowerVaseSprite() -> PixelSprite {
+        let grid = [
+            "  R  P  ",
+            " RRR PP ",
+            "  RGGP  ",
+            "   GG   ",
+            "  GGGG  ",
+            "   GG   ",
+            "   GG   ",
+            "  OOOO  ",
+            "  OWWO  ",
+            "  OWwO  ",
+            "  OWWO  ",
+            "  OOOO  ",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "R": Palettes.ember[2],
+            "P": Palettes.plum[1],
+            "G": Palettes.moss[2],
+            "W": Palettes.sky[1],
+            "w": Palettes.sky[2],
+        ])
+    }
+
+    /// Stacked takeaway cartons, 14×8: dinner on a crunch week.
+    private static func takeoutBoxesSprite() -> PixelSprite {
+        let grid = [
+            "   OOOOOO     ",
+            "   OWWRWO     ",
+            "   OWWWWO     ",
+            "OOOOOOOOOOOO  ",
+            "OWWRWWWWWWWO  ",
+            "OWWWWWWWWWWO  ",
+            "OWWWWWWWWWWO  ",
+            "OOOOOOOOOOOO  ",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "W": Palettes.stone[0],
+            "R": Palettes.ember[2],
+        ])
+    }
+
+    /// A round cat bed, 14×7.
+    private static func catBedSprite() -> PixelSprite {
+        let grid = [
+            "   OOOOOOOO   ",
+            " OOBBBBBBBBOO ",
+            "OBBbbbbbbbbBBO",
+            "OBbbbbbbbbbbBO",
+            "OBBbbbbbbbbBBO",
+            " OOBBBBBBBBOO ",
+            "   OOOOOOOO   ",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "B": Palettes.plum[2],
+            "b": Palettes.plum[3],
+        ])
+    }
+
+    // MARK: - The cat
+
+    /// What the household cat is up to.
+    public enum CatPose: String, Sendable, CaseIterable {
+        /// Curled up asleep; the tail twitches.
+        case sleeping
+        /// Padding across the floor, two frames.
+        case walking
+    }
+
+    /// The household cat, 14×8. Arrives with the house and never leaves.
+    public static func cat(_ pose: CatPose = .sleeping) -> PixelSprite {
+        let palette: [Character: RGBA] = [
+            "O": Palettes.outline,
+            "F": Palettes.sand[3],
+            "f": Palettes.sand[4],
+            "E": Palettes.moss[1],
+            "N": Palettes.plum[1],
+        ]
+        switch pose {
+        case .sleeping:
+            let a = [
+                "              ",
+                "    OOOOOO    ",
+                "  OOFFFFFFOO  ",
+                " OFFFFFFFFFFO ",
+                "OFFffffffffFFO",
+                "OFFFFFFFFFFFFO",
+                " OOFFFFFFFFOO ",
+                "   OOOOOOOO   ",
+            ]
+            var b = a
+            b[6] = " OOFFFFFFFFOOf"
+            b[7] = "   OOOOOOOO Of"
+            return PixelSprite(frames: [a, b], palette: palette)
+        case .walking:
+            let a = [
+                " OO        OO ",
+                "OEOOOOOOOOOOfO",
+                "OFFFFFFFFFFFfO",
+                "OFFffffffffFFO",
+                "OFFFFFFFFFFFFO",
+                "OOOOOOOOOOOOOO",
+                " OO      OO   ",
+                " OO      OO   ",
+            ]
+            var b = a
+            b[6] = "  OO    OO    "
+            b[7] = "  OO    OO    "
+            return PixelSprite(frames: [a, b], palette: palette)
+        }
+    }
+
+    /// A child's crayon drawing, taped up, 10×10. Goes on the fridge after a
+    /// family day.
+    public static func kidDrawing() -> PixelSprite {
+        let grid = [
+            "T        T",
+            "OWWWWWWWWO",
+            "OWWYYYWWWO",
+            "OWYYYYYWWO",
+            "OWWYYYWWWO",
+            "OWWWGWWWWO",
+            "OWGGGGGWWO",
+            "OWWWGWWWWO",
+            "OWWGWGWWWO",
+            "OOOOOOOOOO",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "W": Palettes.stone[0],
+            "Y": Palettes.gold[2],
+            "G": Palettes.moss[2],
+            "T": Palettes.translucent(Palettes.stone[0], 150),
+        ])
     }
 
     /// Side-view bed, 30×14: headboard left, pillow, mattress, wooden frame.
@@ -259,11 +710,11 @@ extension SpriteLibrary {
         }
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "B": RGBA(r: 56, g: 54, b: 68),
-            "G": RGBA(r: 88, g: 132, b: 196),
-            "g": RGBA(r: 150, g: 196, b: 240),
-            "Q": RGBA(r: 240, g: 230, b: 160),
-            "L": RGBA(r: 150, g: 190, b: 250, a: 90),
+            "B": Palettes.hairColors[0].base,
+            "G": Palettes.sky[3],
+            "g": Palettes.sky[1],
+            "Q": Palettes.gold[1],
+            "L": Palettes.translucent(Palettes.sky[1], 90),
             "F": HomePalette.woodShade,
         ]
         return PixelSprite(frames: [screen("G", halo: " "), screen("g", halo: "L")], palette: palette)
@@ -290,10 +741,10 @@ extension SpriteLibrary {
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
             "W": HomePalette.wood, "w": HomePalette.woodShade,
-            "P": RGBA(r: 240, g: 240, b: 244),
-            "g": RGBA(r: 214, g: 126, b: 70),
-            "C": RGBA(r: 236, g: 226, b: 200),
-            "Y": RGBA(r: 255, g: 214, b: 96),
+            "P": Palettes.stone[0],
+            "g": Palettes.ember[2],
+            "C": Palettes.sand[0],
+            "Y": Palettes.gold[2],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -309,8 +760,8 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "V": RGBA(r: 116, g: 96, b: 196),
-            "v": RGBA(r: 96, g: 78, b: 168),
+            "V": Palettes.indigo[2],
+            "v": Palettes.indigo[3],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -349,11 +800,11 @@ extension SpriteLibrary {
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
             "W": HomePalette.wood,
-            "R": RGBA(r: 196, g: 87, b: 78),
-            "G": RGBA(r: 62, g: 156, b: 138),
-            "B": RGBA(r: 94, g: 96, b: 206),
-            "Y": RGBA(r: 217, g: 164, b: 65),
-            "P": RGBA(r: 217, g: 140, b: 166),
+            "R": Palettes.ember[3],
+            "G": Palettes.teal[2],
+            "B": Palettes.indigo[2],
+            "Y": Palettes.gold[2],
+            "P": Palettes.plum[1],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -407,7 +858,7 @@ extension SpriteLibrary {
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
             "W": HomePalette.linen,
-            "N": RGBA(r: 60, g: 56, b: 76),
+            "N": Palettes.ink[2],
             "M": HomePalette.sheet, "m": HomePalette.sheetShade,
         ]
         return PixelSprite(frames: [grid], palette: palette)
@@ -441,10 +892,10 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "F": RGBA(r: 214, g: 218, b: 226),
-            "f": RGBA(r: 176, g: 180, b: 194),
-            "R": RGBA(r: 214, g: 86, b: 110),
-            "G": RGBA(r: 96, g: 168, b: 96),
+            "F": Palettes.stone[1],
+            "f": Palettes.stone[2],
+            "R": Palettes.ember[2],
+            "G": Palettes.moss[2],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -479,8 +930,8 @@ extension SpriteLibrary {
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
             "L": HomePalette.lampShade, "l": HomePalette.lampShadeShade,
-            "G": RGBA(r: 255, g: 200, b: 110, a: 70),
-            "g": RGBA(r: 255, g: 200, b: 110, a: 95),
+            "G": Palettes.translucent(Palettes.gold[1], 70),
+            "g": Palettes.translucent(Palettes.gold[1], 95),
         ]
         return PixelSprite(frames: [frame("G"), frame("g")], palette: palette)
     }
@@ -529,8 +980,8 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "B": RGBA(r: 168, g: 92, b: 66),
-            "Y": RGBA(r: 217, g: 164, b: 65),
+            "B": Palettes.ember[3],
+            "Y": Palettes.gold[2],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -553,10 +1004,10 @@ extension SpriteLibrary {
         ]
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "L": RGBA(r: 96, g: 168, b: 96),
-            "l": RGBA(r: 72, g: 138, b: 76),
-            "W": RGBA(r: 226, g: 222, b: 212),
-            "w": RGBA(r: 190, g: 184, b: 172),
+            "L": Palettes.moss[2],
+            "l": Palettes.moss[3],
+            "W": Palettes.clay[0],
+            "w": Palettes.clay[1],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -605,74 +1056,93 @@ extension SpriteLibrary {
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
             "W": HomePalette.wood,
-            "B": RGBA(r: 150, g: 84, b: 66), "b": RGBA(r: 126, g: 68, b: 54),
-            "K": RGBA(r: 38, g: 30, b: 36),
-            "Y": RGBA(r: 255, g: 214, b: 96),
-            "R": RGBA(r: 230, g: 120, b: 56),
-            "L": RGBA(r: 92, g: 62, b: 44),
-            "H": RGBA(r: 120, g: 116, b: 126),
+            "B": Palettes.skinTones[3].shade, "b": Palettes.skinTones[4].base,
+            "K": Palettes.hairColors[0].shade,
+            "Y": Palettes.gold[2],
+            "R": Palettes.ember[2],
+            "L": Palettes.hairColors[1].base,
+            "H": Palettes.stone[3],
         ]
         return PixelSprite(frames: [a, b], palette: palette)
     }
 
-    /// Panoramic skyline window, 172×18: four panes behind slim mullions,
-    /// a navy sky with one moon and scattered stars over a row of towers
-    /// with lit windows. Built procedurally from fixed tower/star tables so
-    /// it stays deterministic.
-    private static func skylineWindowSprite() -> PixelSprite {
+    /// Panoramic skyline window, 172×18: four panes behind slim mullions
+    /// over a row of towers. The sky, the towers and how many windows are
+    /// lit all follow the hour — a penthouse at 8am should not be looking
+    /// out at midnight. Built from fixed tables, so it stays deterministic.
+    public static func skyline(time: TimeOfDay = .night, weather: Weather = .clear) -> PixelSprite {
         let width = 172, height = 18
-        let ground = 15 // street line row; towers rise from the row above
-        // Tower widths/heights cycle through fixed tables across the pane.
+        let ground = 15
         let widths = [3, 4, 2, 5, 3, 4, 6, 2, 3, 5, 4, 3]
         let tops = [9, 6, 8, 4, 10, 7, 5, 8, 11, 6, 9, 5]
         var towers: [(x: Int, w: Int, top: Int)] = []
         var cursor = 2
-        var i = 0
+        var index = 0
         while cursor < width - 2 {
-            let w = min(widths[i % widths.count], width - 2 - cursor)
-            towers.append((cursor, w, tops[i % tops.count]))
+            let w = min(widths[index % widths.count], width - 2 - cursor)
+            towers.append((cursor, w, tops[index % tops.count]))
             cursor += w + 1
-            i += 1
+            index += 1
         }
-        let stars: [(Int, Int)] = (0..<14).map { ((($0 * 37) % 168) + 2, 2 + ($0 * 5) % 6) }
-        let moon = (x: 150, y: 3)
         let mullions = [43, 86, 129]
 
-        var rows: [String] = []
-        for y in 0..<height {
-            var chars: [Character] = []
-            for x in 0..<width {
-                if x == 0 || y == 0 || x == width - 1 || y >= height - 2 || mullions.contains(x) {
-                    chars.append("O")
-                    continue
-                }
-                if y == ground {
-                    chars.append("n")
-                    continue
-                }
-                if let tower = towers.first(where: { x >= $0.x && x < $0.x + $0.w && y >= $0.top }) {
-                    let lit = (x - tower.x).isMultiple(of: 2) && (y - tower.top) % 2 == 1 && (x * 7 + y * 3) % 5 != 0
-                    chars.append(lit ? "Y" : "n")
-                    continue
-                }
-                let mx = x - moon.x, my = y - moon.y
-                if (0...3).contains(mx) && (0...3).contains(my) && !(mx == 3 && (1...2).contains(my)) && !(mx == 0 && (my == 0 || my == 3)) {
-                    chars.append("M")
-                    continue
-                }
-                chars.append(stars.contains { $0 == (x, y) } ? "S" : "N")
-            }
-            rows.append(String(chars))
+        let sky: (top: RGBA, bottom: RGBA)
+        let towerTone: RGBA
+        switch time {
+        case .morning: sky = (Palettes.sky[2], Palettes.gold[1]); towerTone = Palettes.ink[1]
+        case .day: sky = (Palettes.sky[2], Palettes.sky[1]); towerTone = Palettes.ink[0]
+        case .dusk: sky = (Palettes.plum[3], Palettes.ember[2]); towerTone = Palettes.ink[3]
+        case .night: sky = (Palettes.indigo[4], Palettes.indigo[3]); towerTone = Palettes.ink[4]
         }
-        let palette: [Character: RGBA] = [
-            "O": Palettes.outline,
-            "N": HomePalette.nightSky,
-            "n": HomePalette.nightCity,
-            "M": HomePalette.moon,
-            "S": HomePalette.star,
-            "Y": RGBA(r: 255, g: 214, b: 120),
-        ]
-        return PixelSprite(frames: [rows], palette: palette)
+        // Almost every window is on at night, a scattering by day.
+        let litModulus = time.needsArtificialLight ? 5 : 3
+
+        var canvas = PixelCanvas(width: width, height: height)
+        canvas.fill(x: 0, y: 0, width: width, height: height, sky.top)
+        canvas.fill(x: 0, y: ground - 4, width: width, height: 4, sky.bottom)
+
+        if time == .night {
+            for star in 0..<14 {
+                canvas.set(x: ((star * 37) % 168) + 2, y: 2 + (star * 5) % 6, Palettes.gold[0])
+            }
+            // Moon.
+            canvas.fill(x: 150, y: 3, width: 3, height: 3, Palettes.stone[0])
+            canvas.set(x: 152, y: 4, sky.top)
+        } else if time == .morning {
+            canvas.fill(x: 148, y: 8, width: 5, height: 5, Palettes.gold[0])
+        }
+
+        for tower in towers {
+            canvas.fill(x: tower.x, y: tower.top, width: tower.w, height: height - tower.top, towerTone)
+            for y in stride(from: tower.top + 1, to: ground, by: 2) {
+                for x in stride(from: tower.x, to: tower.x + tower.w, by: 2)
+                where (x * 7 + y * 3) % litModulus != 0 {
+                    canvas.set(x: x, y: y, time.needsArtificialLight ? Palettes.gold[1] : Palettes.sky[1])
+                }
+            }
+        }
+        canvas.hLine(x: 0, y: ground, length: width, Palettes.shaded(towerTone, by: 0.2))
+
+        if weather == .rain {
+            for y in 1..<(height - 2) {
+                for x in 1..<(width - 1) where (x * 3 + y * 5) % 17 == 0 {
+                    canvas.set(x: x, y: y, Palettes.translucent(Palettes.sky[0], 120))
+                }
+            }
+        }
+
+        // Frame and mullions last.
+        for x in 0..<width {
+            canvas.set(x: x, y: 0, Palettes.outline)
+            canvas.set(x: x, y: height - 2, Palettes.outline)
+            canvas.set(x: x, y: height - 1, Palettes.outline)
+        }
+        for y in 0..<height {
+            canvas.set(x: 0, y: y, Palettes.outline)
+            canvas.set(x: width - 1, y: y, Palettes.outline)
+            for mullion in mullions { canvas.set(x: mullion, y: y, Palettes.outline) }
+        }
+        return canvas.sprite()
     }
 
     // MARK: - Bubbles
@@ -712,10 +1182,10 @@ extension SpriteLibrary {
         }
         let palette: [Character: RGBA] = [
             "O": Palettes.outline,
-            "W": RGBA(r: 250, g: 250, b: 252),
-            "R": RGBA(r: 224, g: 80, b: 104),
-            "G": RGBA(r: 134, g: 138, b: 156), "g": RGBA(r: 104, g: 108, b: 128),
-            "B": RGBA(r: 96, g: 150, b: 230),
+            "W": Palettes.stone[0],
+            "R": Palettes.ember[2],
+            "G": Palettes.stone[3], "g": Palettes.ink[0],
+            "B": Palettes.sky[2],
         ]
         return PixelSprite(frames: [grid], palette: palette)
     }
@@ -745,39 +1215,40 @@ extension SpriteLibrary {
             "          ",
         ]
         let palette: [Character: RGBA] = [
-            "Z": RGBA(r: 236, g: 240, b: 252),
-            "z": RGBA(r: 190, g: 200, b: 236),
+            "Z": Palettes.stone[0],
+            "z": Palettes.indigo[0],
         ]
         return PixelSprite(frames: [a, b], palette: palette)
     }
 }
 
-/// Fixed evening tones for home furniture: warm wood, cream linen, indigo
-/// couch, a mustard armchair, and the night-sky set for windows.
+/// The home scenes' named tones. Every one is a master-palette color, so
+/// the founder's evening and the founder's office are lit by the same box
+/// of crayons.
 enum HomePalette {
-    static let wood = RGBA(r: 172, g: 124, b: 82)
-    static let woodShade = RGBA(r: 138, g: 96, b: 62)
-    static let linen = RGBA(r: 238, g: 232, b: 220)
-    static let linenShade = RGBA(r: 206, g: 198, b: 184)
-    static let sheet = RGBA(r: 214, g: 206, b: 196)
-    static let sheetShade = RGBA(r: 186, g: 178, b: 168)
-    static let blanket = RGBA(r: 98, g: 108, b: 186)
-    static let blanketShade = RGBA(r: 80, g: 88, b: 158)
-    static let babyBlanket = RGBA(r: 246, g: 226, b: 214)
-    static let babyBlanketShade = RGBA(r: 214, g: 186, b: 176)
-    static let babySkin = RGBA(r: 240, g: 196, b: 151)
-    static let babySkinShade = RGBA(r: 216, g: 168, b: 124)
-    static let couch = RGBA(r: 82, g: 94, b: 170)
-    static let couchShade = RGBA(r: 66, g: 76, b: 142)
-    static let armchair = RGBA(r: 196, g: 140, b: 58)
-    static let armchairShade = RGBA(r: 166, g: 116, b: 46)
-    static let shoe = RGBA(r: 64, g: 54, b: 50)
-    static let metal = RGBA(r: 150, g: 154, b: 168)
-    static let metalShade = RGBA(r: 112, g: 116, b: 130)
-    static let lampShade = RGBA(r: 252, g: 214, b: 140)
-    static let lampShadeShade = RGBA(r: 230, g: 184, b: 110)
-    static let nightSky = RGBA(r: 26, g: 32, b: 66)
-    static let nightCity = RGBA(r: 16, g: 20, b: 42)
-    static let moon = RGBA(r: 250, g: 238, b: 180)
-    static let star = RGBA(r: 232, g: 236, b: 252)
+    static let wood = Palettes.sand[2]
+    static let woodShade = Palettes.sand[3]
+    static let linen = Palettes.stone[0]
+    static let linenShade = Palettes.stone[1]
+    static let sheet = Palettes.stone[1]
+    static let sheetShade = Palettes.stone[2]
+    static let blanket = Palettes.indigo[2]
+    static let blanketShade = Palettes.indigo[3]
+    static let babyBlanket = Palettes.plum[0]
+    static let babyBlanketShade = Palettes.plum[1]
+    static let babySkin = Palettes.skinTones[1].base
+    static let babySkinShade = Palettes.skinTones[1].shade
+    static let couch = Palettes.indigo[2]
+    static let couchShade = Palettes.indigo[3]
+    static let armchair = Palettes.gold[3]
+    static let armchairShade = Palettes.gold[4]
+    static let shoe = Palettes.ink[3]
+    static let metal = Palettes.stone[2]
+    static let metalShade = Palettes.stone[3]
+    static let lampShade = Palettes.gold[1]
+    static let lampShadeShade = Palettes.gold[2]
+    static let nightSky = Palettes.indigo[4]
+    static let nightCity = Palettes.ink[4]
+    static let moon = Palettes.stone[0]
+    static let star = Palettes.gold[0]
 }

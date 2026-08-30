@@ -36,6 +36,13 @@ public struct DevProgress: Codable, Equatable, Sendable {
     /// Marketing hype: fed by campaigns, decayed daily by `MarketingSystem`,
     /// and captured into `ReleaseInfo.hypeAtLaunch` at ship.
     public var hype: Double
+    /// Running sum of the crew's pool-weighted skill, one sample per day
+    /// anyone worked on this product. Divided by `crewSkillDays` at ship it
+    /// becomes the skill index behind the quality ceiling — a product can
+    /// only be as good as the people who built it (the `ContractJob`
+    /// `skillDaySum` / `skillDays` precedent).
+    public var crewSkillDaySum: Double
+    public var crewSkillDays: Int
 
     public init(
         designPts: Double,
@@ -43,7 +50,9 @@ public struct DevProgress: Codable, Equatable, Sendable {
         polishPts: Double,
         openBugs: Int,
         focus: PhaseFocus,
-        hype: Double
+        hype: Double,
+        crewSkillDaySum: Double = 0,
+        crewSkillDays: Int = 0
     ) {
         self.designPts = designPts
         self.codePts = codePts
@@ -51,6 +60,39 @@ public struct DevProgress: Codable, Equatable, Sendable {
         self.openBugs = openBugs
         self.focus = focus
         self.hype = hype
+        self.crewSkillDaySum = crewSkillDaySum
+        self.crewSkillDays = crewSkillDays
+    }
+
+    /// The crew's average pool-weighted skill over the build, 0...100.
+    /// A product nobody ever worked reads 0.
+    public var crewSkillIndex: Double {
+        guard crewSkillDays > 0 else { return 0 }
+        return crewSkillDaySum / Double(crewSkillDays)
+    }
+}
+
+// Hand-written decode so a product that was mid-build when the skill
+// ceiling landed keeps loading: no recorded crew skill reads as a build
+// nobody has worked yet, and the first day of work starts the average.
+extension DevProgress {
+    private enum CodingKeys: String, CodingKey {
+        case designPts, codePts, polishPts, openBugs, focus, hype
+        case crewSkillDaySum, crewSkillDays
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            designPts: try container.decode(Double.self, forKey: .designPts),
+            codePts: try container.decode(Double.self, forKey: .codePts),
+            polishPts: try container.decode(Double.self, forKey: .polishPts),
+            openBugs: try container.decode(Int.self, forKey: .openBugs),
+            focus: try container.decode(PhaseFocus.self, forKey: .focus),
+            hype: try container.decode(Double.self, forKey: .hype),
+            crewSkillDaySum: try container.decodeIfPresent(Double.self, forKey: .crewSkillDaySum) ?? 0,
+            crewSkillDays: try container.decodeIfPresent(Int.self, forKey: .crewSkillDays) ?? 0
+        )
     }
 }
 
@@ -82,6 +124,22 @@ public struct WeeklySale: Codable, Equatable, Sendable {
     }
 }
 
+/// How a released product is priced. Budget charges ×0.6 for ×1.5 the
+/// demand, premium ×1.6 for ×0.6 — and a premium price the reviews do not
+/// back up drives subscribers away twice as fast. Every product ships
+/// `.standard`.
+public enum PriceTier: String, Codable, Equatable, Sendable, CaseIterable {
+    case budget, standard, premium
+
+    public var displayName: String {
+        switch self {
+        case .budget: "Budget"
+        case .standard: "Standard"
+        case .premium: "Premium"
+        }
+    }
+}
+
 /// Everything known about a product after it shipped.
 public struct ReleaseInfo: Codable, Equatable, Sendable {
     public var launchDay: Int
@@ -93,6 +151,11 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// The development hype captured at ship; feeds the review hype bonus
     /// and the weekly sales peak multiplier.
     public var hypeAtLaunch: Double
+    /// Hype from campaigns run *after* launch. Decays daily like a
+    /// development product's does, and feeds sales rather than reviews —
+    /// the press has already filed, but people can still be told the thing
+    /// exists. `hypeAtLaunch` is frozen at ship and cannot serve this.
+    public var liveHype: Double
     /// How many weeks sales take to ramp up to the full peak, computed at
     /// ship from the team's marketing skill and launch hype. 1 = the old
     /// instant-peak behavior (also the fallback for pre-adoption saves).
@@ -102,6 +165,24 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// peak); multiplies the weekly sales peak for the product's life.
     /// 1 = untouched (also the fallback for pre-saturation saves).
     public var launchMarketScale: Double
+    /// Bugs players hit after launch: seeded at ship from whatever was
+    /// still open and discovered week by week as units sell. Each one
+    /// shaves a slice off sales until support clears it.
+    public var liveBugs: Int
+    /// Where the product sits on the price ladder: budget trades margin
+    /// for reach, premium the reverse.
+    public var priceTier: PriceTier
+    /// Paying subscribers, for subscription products; always 0 for
+    /// one-off sales.
+    public var subscribers: Int
+    /// Whether revenue comes from a recurring subscription rather than
+    /// one-time sales. Read from `ProductTypeDef.revenueModel` at ship.
+    public var isSubscription: Bool
+    /// The day the most recent patch landed, `nil` if none ever has. Buys
+    /// one bumper sales week.
+    public var lastUpdateDay: Int?
+    /// How many patches have shipped for this product.
+    public var updateCount: Int
 
     public init(
         launchDay: Int,
@@ -110,8 +191,15 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         weeklySales: [WeeklySale],
         offMarket: Bool,
         hypeAtLaunch: Double = 0,
+        liveHype: Double = 0,
         adoptionWeeks: Double = 1,
-        launchMarketScale: Double = 1
+        launchMarketScale: Double = 1,
+        liveBugs: Int = 0,
+        priceTier: PriceTier = .standard,
+        subscribers: Int = 0,
+        isSubscription: Bool = false,
+        lastUpdateDay: Int? = nil,
+        updateCount: Int = 0
     ) {
         self.launchDay = launchDay
         self.quality = quality
@@ -119,8 +207,15 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         self.weeklySales = weeklySales
         self.offMarket = offMarket
         self.hypeAtLaunch = hypeAtLaunch
+        self.liveHype = liveHype
         self.adoptionWeeks = adoptionWeeks
         self.launchMarketScale = launchMarketScale
+        self.liveBugs = liveBugs
+        self.priceTier = priceTier
+        self.subscribers = subscribers
+        self.isSubscription = isSubscription
+        self.lastUpdateDay = lastUpdateDay
+        self.updateCount = updateCount
     }
 
     /// Rounded mean review score, 0 if there are no reviews.
@@ -136,13 +231,17 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     }
 }
 
-// Hand-written decode so saves written before the adoption ramp or launch
-// saturation existed keep loading (a missing `adoptionWeeks` reads as the
-// old instant peak; a missing `launchMarketScale` as an untouched peak).
+// Hand-written decode so saves written before the adoption ramp, launch
+// saturation, or live ops existed keep loading (a missing `adoptionWeeks`
+// reads as the old instant peak; a missing `launchMarketScale` as an
+// untouched peak; missing live-ops keys as a bug-free, standard-priced,
+// one-time-sale release).
 extension ReleaseInfo {
     private enum CodingKeys: String, CodingKey {
         case launchDay, quality, reviews, weeklySales, offMarket, hypeAtLaunch, adoptionWeeks
-        case launchMarketScale
+        case liveHype
+        case launchMarketScale, liveBugs, priceTier, subscribers, isSubscription
+        case lastUpdateDay, updateCount
     }
 
     public init(from decoder: any Decoder) throws {
@@ -154,8 +253,15 @@ extension ReleaseInfo {
             weeklySales: try container.decode([WeeklySale].self, forKey: .weeklySales),
             offMarket: try container.decode(Bool.self, forKey: .offMarket),
             hypeAtLaunch: try container.decodeIfPresent(Double.self, forKey: .hypeAtLaunch) ?? 0,
+            liveHype: try container.decodeIfPresent(Double.self, forKey: .liveHype) ?? 0,
             adoptionWeeks: try container.decodeIfPresent(Double.self, forKey: .adoptionWeeks) ?? 1,
-            launchMarketScale: try container.decodeIfPresent(Double.self, forKey: .launchMarketScale) ?? 1
+            launchMarketScale: try container.decodeIfPresent(Double.self, forKey: .launchMarketScale) ?? 1,
+            liveBugs: try container.decodeIfPresent(Int.self, forKey: .liveBugs) ?? 0,
+            priceTier: try container.decodeIfPresent(PriceTier.self, forKey: .priceTier) ?? .standard,
+            subscribers: try container.decodeIfPresent(Int.self, forKey: .subscribers) ?? 0,
+            isSubscription: try container.decodeIfPresent(Bool.self, forKey: .isSubscription) ?? false,
+            lastUpdateDay: try container.decodeIfPresent(Int.self, forKey: .lastUpdateDay),
+            updateCount: try container.decodeIfPresent(Int.self, forKey: .updateCount) ?? 0
         )
     }
 }

@@ -37,6 +37,16 @@ public enum HomeActivity: String, Sendable, Equatable, Codable, CaseIterable {
     case withBaby
     /// Not home: suitcase by the door; partner and kids still shown.
     case away
+    /// A crunch week: asleep on the couch with the laptop still open, the
+    /// takeaway cartons where dinner should be.
+    case crunching
+    /// Away, and it shows: the partner eats alone at the table with the
+    /// second place setting untouched.
+    case awayPartnerAlone
+
+    /// Whether the founder themself is in the room. The two `away` variants
+    /// draw the household without them.
+    public var isFounderHome: Bool { self != .away && self != .awayPartnerAlone }
 }
 
 /// The founder's mood, shown as a bubble above their head:
@@ -52,9 +62,18 @@ public struct HomeOccupants: Sendable, Equatable {
     /// 0...3 rendered; extras are ignored.
     public var children: [CharacterAppearance]
 
-    public init(founder: CharacterAppearance, partner: CharacterAppearance? = nil, children: [CharacterAppearance] = []) {
+    /// Whether a cat lives here. Cats arrive with the house.
+    public var hasCat: Bool
+
+    public init(
+        founder: CharacterAppearance,
+        partner: CharacterAppearance? = nil,
+        children: [CharacterAppearance] = [],
+        hasCat: Bool = false
+    ) {
         self.founder = founder
         self.partner = partner
         self.children = children
+        self.hasCat = hasCat
     }
 }

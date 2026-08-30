@@ -1,0 +1,353 @@
+{
+  "bios": [
+    { "id": "night_owl_1", "traits": ["nightOwl"], "text": "Does their best work after ten and has opinions about morning standups." },
+    { "id": "night_owl_2", "traits": ["nightOwl"], "text": "Commits at 2am with better messages than most people manage at noon." },
+    { "id": "night_owl_3", "traits": ["nightOwl"], "text": "Arrives at eleven, leaves at eleven, ships either way." },
+    { "id": "mentor_1", "traits": ["mentor"], "text": "Pairs with the juniors on their own time and never mentions it." },
+    { "id": "mentor_2", "traits": ["mentor"], "text": "Explains things twice without making you feel slow." },
+    { "id": "mentor_3", "traits": ["mentor"], "text": "The person everyone quietly asks before they ask you." },
+    { "id": "perfectionist_1", "traits": ["perfectionist"], "text": "Will not ship it until the empty state looks right." },
+    { "id": "perfectionist_2", "traits": ["perfectionist"], "text": "Has strong views about spacing and is usually correct." },
+    { "id": "perfectionist_3", "traits": ["perfectionist"], "text": "Reworks the thing nobody asked them to rework, and it is better." },
+    { "id": "speedster_1", "traits": ["speedster"], "text": "First draft in an hour, second draft in twenty minutes." },
+    { "id": "speedster_2", "traits": ["speedster"], "text": "Fast, occasionally too fast, always moving." },
+    { "id": "speedster_3", "traits": ["speedster"], "text": "Would rather ship it and fix it than talk about it." },
+    { "id": "social_1", "traits": ["socialButterfly"], "text": "Knows everyone's coffee order and half the industry's gossip." },
+    { "id": "social_2", "traits": ["socialButterfly"], "text": "Turns strangers into referrals over lunch." },
+    { "id": "social_3", "traits": ["socialButterfly"], "text": "The reason the team still eats together." },
+    { "id": "loner_1", "traits": ["loner"], "text": "Headphones on by 9:05, three tickets closed by lunch." },
+    { "id": "loner_2", "traits": ["loner"], "text": "Says four things a week, and all four are useful." },
+    { "id": "loner_3", "traits": ["loner"], "text": "Prefers a written spec to a meeting, and is right about that." },
+    { "id": "flight_risk_1", "traits": ["flightRisk"], "text": "Keeps their CV current the way other people keep a diary." },
+    { "id": "flight_risk_2", "traits": ["flightRisk"], "text": "Takes every recruiter call. Says it is just for the market data." },
+    { "id": "loyalist_1", "traits": ["loyalist"], "text": "Turned down two better offers and did not tell you about either." },
+    { "id": "loyalist_2", "traits": ["loyalist"], "text": "Would stay through a bad quarter, and probably has." },
+    { "id": "jokester_1", "traits": ["jokester"], "text": "Runs the team channel's worst and best jokes, sometimes in one line." },
+    { "id": "jokester_2", "traits": ["jokester"], "text": "Names every branch something you cannot say in a demo." },
+    { "id": "grumbler_1", "traits": ["grumbler"], "text": "Complains about the build system and then quietly fixes it." },
+    { "id": "grumbler_2", "traits": ["grumbler"], "text": "Pessimistic in review, reliable in production." },
+    { "id": "prodigy_1", "traits": ["prodigy"], "text": "Learned the codebase in a week and has since improved it twice." },
+    { "id": "prodigy_2", "traits": ["prodigy"], "text": "Young, alarming, already better than the job description." },
+    { "id": "workhorse_1", "traits": ["workhorse"], "text": "Picks up the ticket nobody wants and closes it without a word." },
+    { "id": "workhorse_2", "traits": ["workhorse"], "text": "The reason the boring half of the product works." },
+    { "id": "fragile_1", "traits": ["fragile"], "text": "Brilliant on a good week and honest about the bad ones." },
+    { "id": "fragile_2", "traits": ["fragile"], "text": "Needs a clear brief and a quiet room, and then delivers." },
+    { "id": "showman_1", "traits": ["showman"], "text": "Demos like a keynote and gets away with it." },
+    { "id": "showman_2", "traits": ["showman"], "text": "Can make a settings screen sound like a moon landing." },
+    { "id": "mentor_perfect", "traits": ["mentor", "perfectionist"], "text": "Reviews your code line by line and leaves you better at your job." },
+    { "id": "night_prodigy", "traits": ["nightOwl", "prodigy"], "text": "Rewrote the parser over a weekend nobody asked them to work." },
+    { "id": "generic_1", "text": "Solid, unfussy, three years in the trade and no drama." },
+    { "id": "generic_2", "text": "Good in a small team, better once they know the codebase." },
+    { "id": "generic_3", "text": "Came recommended by someone whose judgement you trust." },
+    { "id": "generic_4", "text": "Quiet in interviews, sharp in the take-home." },
+    { "id": "generic_5", "text": "Been at two startups; knows what a bad quarter looks like." },
+    { "id": "generic_6", "text": "Asks good questions and writes them down." }
+  ],
+  "lines": [
+    {
+      "id": "coding_high", "context": "coding", "moods": ["high"],
+      "lines": [
+        "This is going to work.",
+        "One more test and it's green.",
+        "Oh, that's clean.",
+        "Nearly. Nearly.",
+        "Right — that's the hard part done."
+      ]
+    },
+    {
+      "id": "coding_okay", "context": "coding", "moods": ["okay"],
+      "lines": [
+        "Give me an hour.",
+        "It compiles. That's something.",
+        "Hm.",
+        "There's a simpler way to do this.",
+        "Third attempt. Lucky number."
+      ]
+    },
+    {
+      "id": "coding_low", "context": "coding", "moods": ["low"],
+      "lines": [
+        "Why is this like this.",
+        "Whoever wrote this owes me a coffee.",
+        "It was working an hour ago.",
+        "I'm going to rewrite the whole file.",
+        "This is the third time today."
+      ]
+    },
+    {
+      "id": "coding_perfectionist", "context": "coding", "traits": ["perfectionist"],
+      "lines": [
+        "The spacing is wrong. I can see it.",
+        "Nobody will notice this, and I'll know.",
+        "One more pass on the empty state.",
+        "It works. It isn't right yet."
+      ]
+    },
+    {
+      "id": "coding_speedster", "context": "coding", "traits": ["speedster"],
+      "lines": [
+        "Shipping it, fixing it after.",
+        "Done. What's next?",
+        "That took twenty minutes.",
+        "Draft's up, tear it apart."
+      ]
+    },
+    {
+      "id": "coding_grumbler", "context": "coding", "traits": ["grumbler"],
+      "lines": [
+        "This build system is a war crime.",
+        "I said this would happen.",
+        "Fine. I'll fix it. Again.",
+        "Somebody should document this. Not me."
+      ]
+    },
+    {
+      "id": "coding_nightowl", "context": "coding", "traits": ["nightOwl"],
+      "lines": [
+        "The good hours start at eight.",
+        "Nobody messages after nine. It's beautiful.",
+        "I'll have it by morning. Your morning.",
+        "Quiet office, fast work."
+      ]
+    },
+    {
+      "id": "shipped_high", "context": "shipped", "moods": ["high"],
+      "lines": [
+        "We actually shipped it.",
+        "That's live. That's really live.",
+        "Best launch we've done.",
+        "I'm going to look at the graphs all evening.",
+        "Someone screenshot the dashboard."
+      ]
+    },
+    {
+      "id": "shipped_okay", "context": "shipped", "moods": ["okay"],
+      "lines": [
+        "It's out. Let's see.",
+        "Now the bug reports start.",
+        "Ship it and watch it.",
+        "Fingers crossed on the servers."
+      ]
+    },
+    {
+      "id": "shipped_low", "context": "shipped", "moods": ["low"],
+      "lines": [
+        "It's out. I needed another week.",
+        "We'll patch it Thursday.",
+        "Don't read the reviews yet.",
+        "That's not the version I wanted."
+      ]
+    },
+    {
+      "id": "shipped_showman", "context": "shipped", "traits": ["showman"],
+      "lines": [
+        "Someone put this on a big screen.",
+        "I've got a demo script ready.",
+        "This is the one they'll remember.",
+        "Tell the press. Tell everyone."
+      ]
+    },
+    {
+      "id": "hired_any", "context": "hired",
+      "lines": [
+        "Where do I sit?",
+        "Send me the repo and I'll start reading.",
+        "Good to be here. Genuinely.",
+        "Who do I ask when I break something?",
+        "I've been following what you built."
+      ]
+    },
+    {
+      "id": "hired_prodigy", "context": "hired", "traits": ["prodigy"],
+      "lines": [
+        "I read the changelog on the train.",
+        "I have a list of things already.",
+        "Can I start on something hard?"
+      ]
+    },
+    {
+      "id": "hired_loner", "context": "hired", "traits": ["loner"],
+      "lines": [
+        "Is there a desk near the window?",
+        "I'll be quiet. It's not personal.",
+        "Send it in writing and I'll get to it."
+      ]
+    },
+    {
+      "id": "quit_low", "context": "quit", "moods": ["low"],
+      "lines": [
+        "I've taken something else.",
+        "It isn't about the money. Mostly.",
+        "I stopped enjoying this a while ago.",
+        "Two weeks, and I'll write everything down.",
+        "I asked for this twice. You know I did."
+      ]
+    },
+    {
+      "id": "quit_any", "context": "quit",
+      "lines": [
+        "This was a good year. It's still time.",
+        "I'll hand over properly.",
+        "Nothing dramatic. Just done.",
+        "Keep me on the list for the launch party."
+      ]
+    },
+    {
+      "id": "quit_loyalist", "context": "quit", "traits": ["loyalist"],
+      "lines": [
+        "I didn't think I'd ever say this.",
+        "I've turned down three. Not this one.",
+        "It took a lot to get me to leave."
+      ]
+    },
+    {
+      "id": "coffee_any", "context": "coffee",
+      "lines": [
+        "Third one today.",
+        "The machine is judging me.",
+        "Anyone want one while I'm up?",
+        "Five minutes and I'm back on it.",
+        "This is not coffee. It is fuel."
+      ]
+    },
+    {
+      "id": "coffee_social", "context": "coffee", "traits": ["socialButterfly"],
+      "lines": [
+        "Right — who's heard what?",
+        "You'll never guess who's hiring.",
+        "Sit down, I've got news.",
+        "Lunch? Everyone? Come on."
+      ]
+    },
+    {
+      "id": "coffee_jokester", "context": "coffee", "traits": ["jokester"],
+      "lines": [
+        "I named the branch. You'll see it in review.",
+        "I have one joke about the sprint name.",
+        "It's not a bug, it's a personality.",
+        "I've been saving this one."
+      ]
+    },
+    {
+      "id": "crunch_high", "context": "crunch", "moods": ["high"],
+      "lines": [
+        "One more week and it's out.",
+        "I'm in. Let's finish it.",
+        "This is the fun part, weirdly.",
+        "Order food, I'm not moving."
+      ]
+    },
+    {
+      "id": "crunch_okay", "context": "crunch", "moods": ["okay"],
+      "lines": [
+        "Long week.",
+        "I'll take the weekend after this one.",
+        "What's left on the list?",
+        "Two more tickets and I'm out."
+      ]
+    },
+    {
+      "id": "crunch_low", "context": "crunch", "moods": ["low"],
+      "lines": [
+        "I haven't seen my flat in daylight.",
+        "Every week is this week now.",
+        "I'm tired in a way sleep doesn't fix.",
+        "We said this was temporary in March."
+      ]
+    },
+    {
+      "id": "crunch_workhorse", "context": "crunch", "traits": ["workhorse"],
+      "lines": [
+        "I'll take the boring half.",
+        "Somebody has to do the migration.",
+        "It's fine. It's always fine.",
+        "Leave the list with me."
+      ]
+    },
+    {
+      "id": "crunch_fragile", "context": "crunch", "traits": ["fragile"],
+      "lines": [
+        "I need one clear day.",
+        "I'm not going to be much use tomorrow.",
+        "Can somebody take the on-call?"
+      ]
+    },
+    {
+      "id": "idle_any", "context": "idle",
+      "lines": [
+        "What am I on this week?",
+        "I've cleared the backlog. All of it.",
+        "Happy to pick something up.",
+        "I've been tidying the tests.",
+        "Give me something."
+      ]
+    },
+    {
+      "id": "idle_prodigy", "context": "idle", "traits": ["prodigy"],
+      "lines": [
+        "I refactored the thing nobody asked about.",
+        "I've got three ideas and no ticket.",
+        "Can I own something end to end?"
+      ]
+    },
+    {
+      "id": "idle_flightrisk", "context": "idle", "traits": ["flightRisk"],
+      "lines": [
+        "A recruiter messaged. I read it.",
+        "It's quiet. Suspiciously quiet.",
+        "Where is this going, exactly?"
+      ]
+    },
+    {
+      "id": "praised_any", "context": "praised",
+      "lines": [
+        "Thanks. That actually helps.",
+        "Noted. Back to it.",
+        "I'll take it.",
+        "Say it in front of the team next time."
+      ]
+    },
+    {
+      "id": "praised_high", "context": "praised", "moods": ["high"],
+      "lines": [
+        "Best thing anyone's said this month.",
+        "Right. Now I'm going to overdeliver.",
+        "That means more than the raise did."
+      ]
+    },
+    {
+      "id": "praised_grumbler", "context": "praised", "traits": ["grumbler"],
+      "lines": [
+        "It's about time somebody noticed.",
+        "Don't make it weird.",
+        "Fine. Yes. Thank you."
+      ]
+    },
+    {
+      "id": "huddle_any", "context": "huddle",
+      "lines": [
+        "Draw it. I don't follow.",
+        "What if we did the simple version first?",
+        "That's two weeks, not two days.",
+        "I like it. I don't trust it.",
+        "Whiteboard, five minutes."
+      ]
+    },
+    {
+      "id": "huddle_mentor", "context": "huddle", "traits": ["mentor"],
+      "lines": [
+        "Walk me through your thinking.",
+        "There's no wrong answer at this stage.",
+        "Try it and show me what breaks."
+      ]
+    },
+    {
+      "id": "huddle_perfectionist", "context": "huddle", "traits": ["perfectionist"],
+      "lines": [
+        "We'll regret shipping that shape.",
+        "One more diagram and I'm convinced.",
+        "What happens when it's empty?"
+      ]
+    }
+  ]
+}

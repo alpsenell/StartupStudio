@@ -11,11 +11,24 @@ struct ProductsListView: View {
 
     @State private var showingNewProduct = false
 
+    /// How many products the current office can build at once, and how
+    /// many are in flight. Both come from the engine.
+    private var slots: (used: Int, total: Int) {
+        (engine.state.productsInDevelopment.count, engine.state.devSlots)
+    }
+
+    private var hasFreeSlot: Bool { slots.used < slots.total }
+
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
-            if let product = engine.state.productInDevelopment,
-               case .development(let progress) = product.stage {
-                InDevelopmentCard(engine: engine, product: product, progress: progress)
+            if slots.total > 1 || slots.used > 0 {
+                DevSlotsRow(used: slots.used, total: slots.total)
+            }
+
+            ForEach(engine.state.productsInDevelopment) { product in
+                if case .development(let progress) = product.stage {
+                    InDevelopmentCard(engine: engine, product: product, progress: progress)
+                }
             }
 
             if !releasedProducts.isEmpty {
@@ -24,7 +37,7 @@ struct ProductsListView: View {
 
             if engine.state.products.isEmpty {
                 EmptyProductsCard { showingNewProduct = true }
-            } else if engine.state.productInDevelopment == nil {
+            } else if hasFreeSlot {
                 // In-content CTA: nav-bar toolbars sit underneath the
                 // opaque top HUD in this design, so actions live in
                 // the scroll content instead.
@@ -39,6 +52,12 @@ struct ProductsListView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
                 .accessibilityLabel("New product")
+            } else {
+                Text("Every development slot is busy. Ship something, or move to a bigger office for more.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Theme.Spacing.xs)
             }
         }
         .sheet(isPresented: $showingNewProduct) {
@@ -67,13 +86,20 @@ private struct InDevelopmentCard: View {
     let product: Product
     let progress: DevProgress
 
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
+    @State private var confirmingShip = false
+
     private var type: ProductTypeDef? {
         engine.content.productType(product.typeID)
     }
 
-    /// Shippable once code reaches 60% of the type's code requirement.
+    /// The engine's own ship gate, read from balance rather than mirrored.
     private var canShip: Bool {
-        progress.codePts >= 0.6 * (type?.codePts ?? 0)
+        progress.codePts >= engine.balance.shipCodeThreshold * (type?.codePts ?? 0)
     }
 
     var body: some View {
@@ -116,7 +142,7 @@ private struct InDevelopmentCard: View {
                 TriPhaseProgress(progress: progress, type: type)
 
                 Button {
-                    engine.send(.ship(productID: product.id))
+                    confirmingShip = true
                 } label: {
                     Label("Ship it", systemImage: "shippingbox.fill")
                         .font(.system(.headline, design: .rounded))
@@ -129,12 +155,58 @@ private struct InDevelopmentCard: View {
                 .accessibilityLabel("Ship \(product.name)")
 
                 if !canShip {
-                    Text("Shipping unlocks once code reaches 60% of its target.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    Text(
+                        "Shipping unlocks once code reaches \(Int((engine.balance.shipCodeThreshold * 100).rounded()))% of its target."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                 }
             }
         }
+        .confirmationDialog(
+            "Ship \(product.name)?",
+            isPresented: $confirmingShip,
+            titleVisibility: .visible
+        ) {
+            Button("Ship it") {
+                shell.toasts.send(
+                    .ship(productID: product.id),
+                    to: engine,
+                    rejected: "It is not ready to ship yet."
+                )
+            }
+            Button("Keep working", role: .cancel) {}
+        } message: {
+            Text("Development stops for good and the press reviews whatever is finished.")
+        }
+    }
+}
+
+/// "2 of 3 in development" — the office's concurrent build slots.
+private struct DevSlotsRow: View {
+    let used: Int
+    let total: Int
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: "square.stack.3d.up.fill")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Theme.accent)
+            Text("\(used) of \(total) in development")
+                .font(.system(.footnote, design: .rounded).weight(.semibold))
+                .monospacedDigit()
+            Spacer(minLength: Theme.Spacing.sm)
+            HStack(spacing: 3) {
+                ForEach(0..<max(total, 1), id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(index < used ? Theme.accent : Theme.chipBackground)
+                        .frame(width: 14, height: 6)
+                }
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.xs)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(used) of \(total) development slots in use")
     }
 }
 

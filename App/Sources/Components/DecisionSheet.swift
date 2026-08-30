@@ -1,4 +1,5 @@
 import SwiftUI
+import TycoonContent
 import TycoonEngine
 
 /// A pause-and-choose moment surfaced from pending state (a rival's poach
@@ -39,40 +40,69 @@ struct DecisionSheet: View {
     let prompt: DecisionPrompt
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: Theme.Spacing.lg) {
-                Spacer(minLength: 0)
+                // The question scrolls and the answers stay put: at the
+                // medium detent a two-sentence body plus the deadline's
+                // answer does not fit, and clipping the sentence that says
+                // what silence costs is the worst thing to lose.
+                ScrollView {
+                    VStack(spacing: Theme.Spacing.lg) {
+                        Image(systemName: prompt.systemImage)
+                            .font(.system(size: 44))
+                            .foregroundStyle(prompt.tint)
 
-                Image(systemName: prompt.systemImage)
-                    .font(.system(size: 44))
-                    .foregroundStyle(prompt.tint)
+                        VStack(spacing: Theme.Spacing.sm) {
+                            Text(prompt.title)
+                                .font(.system(.title2, design: .rounded).weight(.bold))
+                                .multilineTextAlignment(.center)
+                            // A prompt with nothing to add beyond its title
+                            // shows its title once, not twice.
+                            if !prompt.message.isEmpty {
+                                Text(prompt.message)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        .padding(.horizontal, Theme.Spacing.xl)
 
-                VStack(spacing: Theme.Spacing.sm) {
-                    Text(prompt.title)
-                        .font(.system(.title2, design: .rounded).weight(.bold))
-                        .multilineTextAlignment(.center)
-                    Text(prompt.message)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, Theme.Spacing.xl)
-
-                if !prompt.stats.isEmpty {
-                    HStack(spacing: Theme.Spacing.sm) {
-                        ForEach(Array(prompt.stats.enumerated()), id: \.offset) { _, stat in
-                            StatPill(systemImage: "circle.fill", value: "\(stat.label) \(stat.value)")
+                        if !prompt.stats.isEmpty {
+                            HStack(spacing: Theme.Spacing.sm) {
+                                ForEach(Array(prompt.stats.enumerated()), id: \.offset) { _, stat in
+                                    StatPill(
+                                        systemImage: "circle.fill",
+                                        value: "\(stat.label) \(stat.value)"
+                                    )
+                                }
+                            }
                         }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.xl)
                 }
-
-                Spacer(minLength: 0)
+                .scrollBounceBehavior(.basedOnSize)
 
                 VStack(spacing: Theme.Spacing.sm) {
                     ForEach(prompt.options) { option in
                         Button(role: option.role) {
-                            engine.send(option.action)
+                            // The answer to a paused question gets a line
+                            // of its own, so even an option the reducer
+                            // applies silently is acknowledged.
+                            shell.toasts.send(
+                                option.action,
+                                to: engine,
+                                ack: option.label,
+                                icon: prompt.systemImage,
+                                tint: prompt.tint
+                            )
                         } label: {
                             VStack(spacing: 2) {
                                 Text(option.label)
@@ -95,7 +125,11 @@ struct DecisionSheet: View {
             }
             .background(Theme.screenBackground)
         }
-        .presentationDetents([.medium])
+        // Medium by default, draggable to full height: a two-sentence
+        // body plus the deadline's answer does not fit a half sheet, and
+        // the copy scrolls inside it either way.
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
         .interactiveDismissDisabled()
     }
 }
@@ -105,7 +139,13 @@ struct DecisionSheet: View {
 extension DecisionPrompt {
     /// The prompt for whatever offer is pending, poach first. Reads pending
     /// state (not transient events) so an offer survives app relaunches.
-    static func pending(in state: GameState, balance: BalanceConfig) -> DecisionPrompt? {
+    /// WS-B's narrative choices come last, through
+    /// `NarrativeChoicePresenter` — which returns `nil` today.
+    static func pending(
+        in state: GameState,
+        content: ContentCatalog,
+        balance: BalanceConfig
+    ) -> DecisionPrompt? {
         if let poach = state.rivals.pendingPoach {
             return poachPrompt(poach, state: state)
         }
@@ -113,53 +153,187 @@ extension DecisionPrompt {
             return buyoutPrompt(buyout, state: state)
         }
         if let staffEvent = state.pendingStaffEvent {
-            return staffEventPrompt(staffEvent, state: state, balance: balance)
+            return staffEventPrompt(staffEvent, state: state, content: content, balance: balance)
         }
-        return nil
+        // WS-A: somebody handed in notice. It is a critical pause with a
+        // deadline and a real answer, so it has to reach a sheet.
+        if let resignation = state.economy.pendingResignation {
+            return resignationPrompt(resignation, state: state, balance: balance)
+        }
+        // WS-F: a term sheet pauses the clock, so the question has to be on
+        // screen whatever tab the player was on.
+        if let offer = state.investors.pendingOffer {
+            return investmentPrompt(offer, state: state, content: content)
+        }
+        return NarrativeChoicePresenter.prompt(for: state, content: content, balance: balance)
     }
 
+    /// The staff moment on screen. Wording, both answers and their
+    /// consequence lines come from `StaffEvents.json`; a kind with no
+    /// definition falls back to the generic phrasing and the balance's
+    /// support cost, which is what the two original kinds used.
     private static func staffEventPrompt(
         _ event: StaffEvent,
         state: GameState,
+        content: ContentCatalog,
         balance: BalanceConfig
     ) -> DecisionPrompt? {
         guard let employee = state.employee(id: event.employeeID) else { return nil }
         let social = balance.social
-        let (title, message, supportDetail): (String, String, String) = switch event.kind {
-        case .familyEmergency: (
-            "\(employee.name) has a family emergency",
-            "They need some time. Cover for them and pay \(social.supportCost.money), or insist the work comes first.",
-            "Costs \(social.supportCost.money) · time off · loyalty way up"
-        )
-        case .rivalOfferRumor: (
-            "\(employee.name) is being courted",
-            "Word is a rival has been buying them lunch. Show them they matter — or trust they'll stay.",
-            "Costs \(social.supportCost.money) · loyalty way up"
-        )
+        let def = content.staffEvent(event.kind.rawValue)
+
+        func fill(_ text: String) -> String {
+            text
+                .replacingOccurrences(of: "{name}", with: employee.name)
+                .replacingOccurrences(of: "{company}", with: state.company.name)
         }
+
+        let title = def.map { fill($0.title) }
+            ?? "\(employee.name) needs an answer"
+        let message = def.map { fill($0.body) }
+            ?? "They came to you with something. Back them, or hold the line."
+        let supportLabel = def?.supportive.label ?? "Be supportive"
+        let supportDetail = def?.supportive.detail
+            ?? "Costs \(social.supportCost.money) · loyalty way up"
+        let strictLabel = def?.strict.label ?? "Business first"
+        let strictDetail = def?.strict.detail ?? "Free, but loyalty takes a hit"
+
         return DecisionPrompt(
             id: "staff-\(event.employeeID.uuidString)-\(event.respondByDay)",
-            systemImage: event.kind == .familyEmergency
-                ? "heart.text.square.fill"
-                : "person.fill.questionmark",
+            systemImage: staffIcon(for: event.kind),
             tint: Theme.warning,
             title: title,
             message: message,
-            stats: [("Loyalty", "\(Int(employee.loyalty.rounded()))")],
+            stats: [
+                ("Morale", "\(Int(employee.morale.rounded()))"),
+                ("Loyalty", "\(Int(employee.loyalty.rounded()))"),
+            ],
             options: [
                 Option(
-                    label: "Be supportive",
+                    label: supportLabel,
                     detail: supportDetail,
                     action: .resolveStaffEvent(choice: .supportive)
                 ),
                 Option(
-                    label: "Business first",
-                    detail: "Free, but loyalty takes a hit",
+                    label: strictLabel,
+                    detail: strictDetail,
                     role: .destructive,
                     action: .resolveStaffEvent(choice: .strict)
                 ),
             ]
         )
+    }
+
+    /// Somebody is leaving unless the founder answers. WS-A grades a
+    /// counter as enough when it clears `counterOfferRaiseFactor` on the
+    /// salary they were on at notice, or when it is a promotion — so those
+    /// are the two answers, and the third is letting them go, which is the
+    /// only other thing that clears the notice.
+    private static func resignationPrompt(
+        _ resignation: PendingResignation,
+        state: GameState,
+        balance: BalanceConfig
+    ) -> DecisionPrompt? {
+        guard let employee = state.employee(id: resignation.employeeID) else { return nil }
+        let raise = Int(
+            (Double(resignation.salaryAtNotice) * balance.economy.counterOfferRaiseFactor)
+                .rounded(.up)
+        )
+        let daysLeft = max(0, resignation.respondByDay - state.day)
+        var options: [Option] = [
+            Option(
+                label: "Raise them to \(raise.money)/wk",
+                detail: "Up from \(resignation.salaryAtNotice.money) — enough to keep them",
+                action: .adjustSalary(employeeID: employee.id, weeklySalary: raise)
+            )
+        ]
+        if let next = employee.level.next {
+            options.append(
+                Option(
+                    label: "Promote to \(next.displayName)",
+                    detail: "A title and the raise that comes with it",
+                    action: .promote(employeeID: employee.id)
+                )
+            )
+        }
+        options.append(
+            Option(
+                label: "Let them go",
+                detail: "They clear their desk today. Their friends will notice.",
+                role: .destructive,
+                action: .fire(employeeID: employee.id)
+            )
+        )
+        return DecisionPrompt(
+            id: "resignation-\(resignation.employeeID)-\(resignation.sinceDay)",
+            systemImage: "figure.walk.departure",
+            tint: Theme.warning,
+            title: "\(resignation.name) is leaving",
+            message: "\(resignation.name) has handed in notice after "
+                + "\(state.day - employee.hiredDay) days at \(state.company.name). "
+                + "A real raise or a promotion still turns it around — "
+                + "anything less and they walk.",
+            stats: [
+                ("On", "\(resignation.salaryAtNotice.money)/wk"),
+                ("Answer by", daysLeft == 0 ? "today" : "\(daysLeft) day\(daysLeft == 1 ? "" : "s")"),
+            ],
+            options: options
+        )
+    }
+
+    /// An investor's term sheet: what they pay, what they take, and
+    /// whether they'll be in the room afterwards.
+    private static func investmentPrompt(
+        _ offer: InvestmentOffer,
+        state: GameState,
+        content: ContentCatalog
+    ) -> DecisionPrompt? {
+        let persona = content.investors.first { $0.id == offer.investorID }
+        let boardLine = offer.takesBoardSeat
+            ? "They take a board seat and will grade you on \(offer.expects.displayName.lowercased()) every quarter."
+            : "No board seat — they wire the money and leave you alone."
+        return DecisionPrompt(
+            id: "investment-\(offer.investorID)-\(offer.respondByDay)",
+            systemImage: "doc.text.fill",
+            tint: Theme.accent,
+            title: "\(offer.investorName) wants in",
+            message: (persona?.pitch.map { "\u{201C}\($0)\u{201D} " } ?? "")
+                + "\(offer.amount.money) for \(offer.equity.oneDecimal)% of \(state.company.name). "
+                + boardLine,
+            stats: [
+                ("Cheque", offer.amount.money),
+                ("Equity", "\(offer.equity.oneDecimal)%"),
+            ],
+            options: [
+                Option(
+                    label: "Take the money",
+                    detail: offer.takesBoardSeat
+                        ? "Cash in, \(offer.equity.oneDecimal)% out, a board to answer to"
+                        : "Cash in, \(offer.equity.oneDecimal)% out",
+                    action: .acceptInvestment
+                ),
+                Option(
+                    label: "Stay independent",
+                    detail: "Keep all \(state.investors.equityRemaining.oneDecimal)% of it",
+                    action: .declineInvestment
+                ),
+            ]
+        )
+    }
+
+    private static func staffIcon(for kind: StaffEventKind) -> String {
+        switch kind {
+        case .familyEmergency: "heart.text.square.fill"
+        case .rivalOfferRumor: "person.fill.questionmark"
+        case .raiseRequest, .promotionDemand: "arrow.up.forward.circle.fill"
+        case .roleSwitch: "arrow.triangle.swap"
+        case .teamConflict: "person.2.slash.fill"
+        case .burnoutWarning: "moon.zzz.fill"
+        case .sideProject: "lightbulb.fill"
+        case .parentalLeave: "figure.and.child.holdinghands"
+        case .remoteRequest: "airplane.departure"
+        case .harassmentComplaint: "exclamationmark.shield.fill"
+        }
     }
 
     private static func poachPrompt(_ offer: PoachOffer, state: GameState) -> DecisionPrompt? {

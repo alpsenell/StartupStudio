@@ -14,10 +14,15 @@ struct HomePreviewPNGTests {
     static let scale = PreviewPNGTests.scale
     let painter = PreviewPNGTests()
 
-    func renderScene(tier: HomeTierStyle, occupants: HomeOccupants, activity: HomeActivity, mood: MoodLevel, tick: Int) -> CGImage {
+    func renderScene(
+        tier: HomeTierStyle, occupants: HomeOccupants, activity: HomeActivity,
+        mood: MoodLevel, tick: Int, ambience: HomeAmbience = .evening
+    ) -> CGImage {
         let size = HomeSceneComposer.sceneSize(for: tier)
         let context = painter.makeCanvas(width: size.width * Self.scale, height: size.height * Self.scale, background: nil)
-        for placement in HomeSceneComposer.compose(tier: tier, occupants: occupants, activity: activity, mood: mood) {
+        for placement in HomeSceneComposer.compose(
+            tier: tier, occupants: occupants, activity: activity, mood: mood, ambience: ambience
+        ) {
             painter.blit(
                 placement.sprite,
                 frame: placement.frameIndex(atTick: tick),
@@ -78,18 +83,78 @@ struct HomePreviewPNGTests {
         try writePNG(image, named: "penthouse_away.png")
     }
 
-    /// Bonus coverage: the remaining activities render in every tier.
-    @Test func everyActivityRendersInEveryTier() throws {
+    /// A crunch week in the studio flat: the founder face down on the couch
+    /// with the laptop still open, takeaway cartons on the floor, the
+    /// partner in bed on their own.
+    @Test func studioCrunchWeek() throws {
+        let image = renderScene(
+            tier: .studioFlat,
+            occupants: HomeOccupants(founder: CharacterAppearance(seed: 7), partner: CharacterAppearance(seed: 21)),
+            activity: .crunching, mood: .low, tick: 3,
+            ambience: HomeAmbience(timeOfDay: .night, weather: .rain, isWeekend: false)
+        )
+        try writePNG(image, named: "studio_crunch_night.png")
+    }
+
+    /// The partner eating alone while the founder is away — the same room,
+    /// the other half of the story.
+    @Test func housePartnerEatsAlone() throws {
+        let image = renderScene(
+            tier: .house,
+            occupants: HomeOccupants(
+                founder: CharacterAppearance(seed: 7), partner: CharacterAppearance(seed: 21),
+                children: [CharacterAppearance(seed: 31)], hasCat: true
+            ),
+            activity: .awayPartnerAlone, mood: .low, tick: 2,
+            ambience: HomeAmbience(timeOfDay: .dusk)
+        )
+        try writePNG(image, named: "house_partner_alone_dusk.png")
+    }
+
+    /// The full matrix the art direction is judged on: four tiers, ten
+    /// activities, morning / dusk / night. Every placement is bounds-checked
+    /// as it is drawn, so a mis-placed prop fails here rather than being
+    /// noticed in a screenshot later.
+    @Test func everyTierActivityAndHourRenders() throws {
         let family = HomeOccupants(
             founder: CharacterAppearance(seed: 7),
             partner: CharacterAppearance(seed: 21),
-            children: [CharacterAppearance(seed: 31), CharacterAppearance(seed: 34), CharacterAppearance(seed: 35)]
+            children: [CharacterAppearance(seed: 31), CharacterAppearance(seed: 34), CharacterAppearance(seed: 35)],
+            hasCat: true
         )
+        let hours: [TimeOfDay] = [.morning, .dusk, .night]
         for tier in HomeTierStyle.allCases {
+            let size = HomeSceneComposer.sceneSize(for: tier)
             for activity in HomeActivity.allCases {
-                let image = renderScene(tier: tier, occupants: family, activity: activity, mood: .low, tick: 1)
-                try writePNG(image, named: "extra_\(tier.rawValue)_\(activity.rawValue).png")
+                for hour in hours {
+                    let ambience = HomeAmbience(timeOfDay: hour, weather: hour == .night ? .rain : .clear)
+                    let scene = HomeSceneComposer.compose(
+                        tier: tier, occupants: family, activity: activity, mood: .low, ambience: ambience
+                    )
+                    for placement in scene {
+                        #expect(placement.x >= 0 && placement.y >= 0)
+                        #expect(placement.x + placement.sprite.width <= size.width)
+                        #expect(placement.y + placement.sprite.height <= size.height)
+                    }
+                    let image = renderScene(
+                        tier: tier, occupants: family, activity: activity, mood: .low, tick: 1, ambience: ambience
+                    )
+                    try writePNG(image, named: "matrix_\(tier.rawValue)_\(activity.rawValue)_\(hour.rawValue).png")
+                }
             }
+        }
+    }
+
+    /// Mood changes the room, not just a bubble.
+    @Test func moodChangesTheRoom() throws {
+        for mood in MoodLevel.allCases {
+            let image = renderScene(
+                tier: .apartment,
+                occupants: HomeOccupants(founder: CharacterAppearance(seed: 7), hasCat: true),
+                activity: .relaxing, mood: mood, tick: 2,
+                ambience: HomeAmbience(timeOfDay: .dusk)
+            )
+            try writePNG(image, named: "mood_apartment_\(mood.rawValue).png")
         }
     }
 

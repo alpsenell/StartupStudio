@@ -40,6 +40,18 @@ public enum OfficeTier: String, Codable, Equatable, Sendable, CaseIterable {
     /// (e.g. launch events require at least `balance.launchEventMinTier`).
     var rank: Int { Self.allCases.firstIndex(of: self) ?? 0 }
 
+    /// How many products the studio can have in development at once. A
+    /// garage builds one thing; a campus runs five teams. Structural, not
+    /// a balance knob — the office you can afford *is* the constraint.
+    public var concurrentDevSlots: Int {
+        switch self {
+        case .garage: 1
+        case .loft: 2
+        case .studio: 3
+        case .campus: 5
+        }
+    }
+
     /// The tier one rung up the ladder: garage → loft → studio → campus,
     /// and `nil` at the top.
     public var next: OfficeTier? {

@@ -9,6 +9,11 @@ struct AmenitiesSheet: View {
     let engine: GameEngine
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
 
     var body: some View {
         NavigationStack {
@@ -26,13 +31,20 @@ struct AmenitiesSheet: View {
                             isOwned: engine.state.hasAmenity(amenity),
                             officeTier: engine.state.company.officeTier,
                             cash: engine.state.company.cash,
-                            opsActive: engine.state.hasDepartment(.ops)
+                            opsActive: engine.state.hasDepartment(.ops),
+                            balance: engine.balance
                         ) {
-                            engine.send(.buildAmenity(amenity))
+                            shell.toasts.send(
+                                .buildAmenity(amenity),
+                                to: engine,
+                                rejected: "The \(amenity.displayName.lowercased()) will have to wait."
+                            )
                         }
                     }
                     if engine.state.hasDepartment(.ops) {
-                        Text("Operations is keeping upkeep \(Int(opsAmenityUpkeepDiscount * 100))% lower.")
+                        Text(
+                            "Operations is keeping upkeep \(opsAmenityUpkeepDiscountPercent(balance: engine.balance))% lower."
+                        )
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity)
@@ -70,12 +82,15 @@ private struct AmenityCard: View {
     let officeTier: OfficeTier
     let cash: Int
     let opsActive: Bool
+    let balance: BalanceConfig
     let build: () -> Void
 
     private var tierLocked: Bool { officeTier.rank < minTier.rank }
     private var canAfford: Bool { cash >= upgradeCost }
     private var shortfall: Int { upgradeCost - cash }
-    private var upkeep: Int { amenityWeeklyUpkeep(weeklyCost, opsActive: opsActive) }
+    private var upkeep: Int {
+        amenityWeeklyUpkeep(weeklyCost, opsActive: opsActive, balance: balance)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
@@ -134,7 +149,7 @@ private struct AmenityCard: View {
 
     private var costLine: String {
         let upkeepText = opsActive
-            ? "\(upkeep.money)/wk upkeep (Ops −\(Int(opsAmenityUpkeepDiscount * 100))%)"
+            ? "\(upkeep.money)/wk upkeep (Ops -\(opsAmenityUpkeepDiscountPercent(balance: balance))%)"
             : "\(upkeep.money)/wk upkeep"
         return "\(upgradeCost.money) · \(upkeepText)"
     }

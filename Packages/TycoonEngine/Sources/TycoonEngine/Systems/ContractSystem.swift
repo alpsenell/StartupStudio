@@ -105,7 +105,10 @@ enum ContractSystem {
         var remaining: [ContractJob] = []
         remaining.reserveCapacity(state.activeContracts.count)
         let hasLegal = state.hasDepartment(.legal)
-        let payoutBonus = hasLegal ? balance.company.legalPayoutBonus : 1
+        // Legal reads the contract; the founder negotiated it. Both land
+        // on what the client actually pays.
+        let payoutBonus = (hasLegal ? balance.company.legalPayoutBonus : 1)
+            * state.founderDealFactor(balance)
         let penaltyFactor = hasLegal ? balance.company.legalPenaltyFactor : 1
 
         for job in state.activeContracts {

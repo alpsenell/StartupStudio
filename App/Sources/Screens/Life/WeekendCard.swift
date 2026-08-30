@@ -9,6 +9,12 @@ import TycoonEngine
 struct WeekendCard: View {
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
+
     private let columns = [
         GridItem(.flexible(), spacing: Theme.Spacing.md),
         GridItem(.flexible(), spacing: Theme.Spacing.md),
@@ -28,7 +34,12 @@ struct WeekendCard: View {
                             note: note(for: activity, life: life, day: state.day),
                             isSelected: life.plannedActivity == activity
                         ) {
-                            engine.send(.planWeekend(activity))
+                            shell.toasts.send(
+                                .planWeekend(activity),
+                                to: engine,
+                                ack: "This weekend: \(activity.displayName.lowercased())",
+                                icon: activity.systemImage
+                            )
                         }
                     }
                 }

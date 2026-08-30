@@ -23,7 +23,7 @@ enum SocialSystem {
         let config = balance.social
         var events: [GameEvent] = []
 
-        autoResolveStaffEvent(&state, config, &events)
+        autoResolveStaffEvent(&state, config, content, &events)
         driftLoyalty(&state, config)
         pruneFriendships(&state)
 
@@ -31,7 +31,7 @@ enum SocialSystem {
             events.append(contentsOf: updateBonds(&state, config))
         }
 
-        events.append(contentsOf: staffEventCheck(&state, config))
+        events.append(contentsOf: staffEventCheck(&state, config, content))
         return events
     }
 
@@ -105,6 +105,9 @@ enum SocialSystem {
             case .research: target = "research"
             case .product(let id): target = "product-\(id.uuidString)"
             case .contract(let id): target = "contract-\(id.uuidString)"
+            // Appended with `Assignment.support` (WS-A): people on the same
+            // support desk work side by side like any other crew.
+            case .support(let id): target = "support-\(id.uuidString)"
             }
             if let target {
                 groups[target, default: []].append(employee.id)
@@ -170,9 +173,17 @@ enum SocialSystem {
     /// target rotates deterministically through the sorted non-founder
     /// ids, and one `nextInt` picks the kind — a birthday applies right
     /// away, the other kinds pause for an answer.
+    ///
+    /// With staff-event content loaded, an answerable moment draws one
+    /// further word to pick a kind from the definitions this employee is
+    /// eligible for (tenure, morale, loyalty, traits, friendships,
+    /// departments). With no content — the unit-test catalogs — that draw
+    /// never happens and the kind is the old `familyEmergency` /
+    /// `rivalOfferRumor` coin flip.
     private static func staffEventCheck(
         _ state: inout GameState,
-        _ config: BalanceConfig.SocialBalance
+        _ config: BalanceConfig.SocialBalance,
+        _ content: ContentCatalog
     ) -> [GameEvent] {
         guard state.day % config.staffEventIntervalDays == 0,
               state.pendingStaffEvent == nil
@@ -201,7 +212,10 @@ enum SocialSystem {
             return [.staffBirthday(employeeID: target.id, day: state.day)]
         }
 
-        let kind: StaffEventKind = kindRoll == 1 ? .familyEmergency : .rivalOfferRumor
+        let fallback: StaffEventKind = kindRoll == 1 ? .familyEmergency : .rivalOfferRumor
+        let kind = pickKind(
+            for: target, fallback: fallback, state: &state, config: config, content: content
+        )
         let event = StaffEvent(
             employeeID: target.id,
             kind: kind,
@@ -213,27 +227,154 @@ enum SocialSystem {
         )]
     }
 
+    /// The kinds this employee could plausibly bring the founder today,
+    /// weighted. One `nextInt` word, and only when the catalog has staff
+    /// events at all.
+    private static func pickKind(
+        for target: Employee,
+        fallback: StaffEventKind,
+        state: inout GameState,
+        config: BalanceConfig.SocialBalance,
+        content: ContentCatalog
+    ) -> StaffEventKind {
+        let eligible = content.staffEvents.filter { def in
+            StaffEventKind(rawValue: def.id) != nil
+                && isEligible(def, for: target, state: state)
+        }
+        guard !eligible.isEmpty else { return fallback }
+
+        let total = eligible.reduce(0) { $0 + max(1, $1.weight) }
+        var remaining = state.worldRNG.nextInt(in: 0...(total - 1))
+        for def in eligible {
+            remaining -= max(1, def.weight)
+            if remaining < 0 { return StaffEventKind(rawValue: def.id) ?? fallback }
+        }
+        return StaffEventKind(rawValue: eligible[eligible.count - 1].id) ?? fallback
+    }
+
+    /// Evaluates a staff-event gate against one employee and the company
+    /// around them. Pure — no draws.
+    private static func isEligible(
+        _ def: StaffEventDef,
+        for employee: Employee,
+        state: GameState
+    ) -> Bool {
+        guard let gate = def.requires else { return true }
+        if !gate.anyTrait.isEmpty, !gate.anyTrait.contains(where: employee.traits.contains) {
+            return false
+        }
+        if gate.noTrait.contains(where: employee.traits.contains) { return false }
+        if let days = gate.minTenureDays, state.day - employee.hiredDay < days { return false }
+        if let value = gate.minMorale, employee.morale < value { return false }
+        if let value = gate.maxMorale, employee.morale > value { return false }
+        if let value = gate.minLoyalty, employee.loyalty < value { return false }
+        if let value = gate.maxLoyalty, employee.loyalty > value { return false }
+        if let needsFriend = gate.requiresFriend,
+           state.friendships.contains(where: { $0.involves(employee.id) }) != needsFriend {
+            return false
+        }
+        if let raw = gate.requiresDepartment {
+            guard let department = Department(rawValue: raw),
+                  state.hasDepartment(department) else { return false }
+        }
+        if let value = gate.minHeadcount, state.headcount < value { return false }
+        if let raw = gate.minTier {
+            guard let tier = OfficeTier(rawValue: raw),
+                  state.company.officeTier.rank >= tier.rank else { return false }
+        }
+        return true
+    }
+
     /// A pending staff event past its deadline resolves as `strict` (the
     /// founder never got back to them). No draws.
     private static func autoResolveStaffEvent(
         _ state: inout GameState,
         _ config: BalanceConfig.SocialBalance,
+        _ content: ContentCatalog,
         _ events: inout [GameEvent]
     ) {
         guard let pending = state.pendingStaffEvent, state.day > pending.respondByDay else { return }
         state.pendingStaffEvent = nil
-        events.append(contentsOf: applyStaffChoice(.strict, to: pending, state: &state, config: config))
+        events.append(contentsOf: applyStaffChoice(
+            .strict, to: pending, state: &state, config: config, content: content
+        ))
     }
 
+    /// Applies one answer. The numbers come from the kind's
+    /// `StaffEventDef` when the catalog has one, and from the generic
+    /// `balance.social` costs when it doesn't.
     private static func applyStaffChoice(
         _ choice: StaffEventChoice,
         to event: StaffEvent,
         state: inout GameState,
-        config: BalanceConfig.SocialBalance
+        config: BalanceConfig.SocialBalance,
+        content: ContentCatalog
     ) -> [GameEvent] {
         guard let index = state.employees.firstIndex(where: { $0.id == event.employeeID }) else {
             return []
         }
+        guard let def = content.staffEvent(event.kind.rawValue) else {
+            applyGenericStaffChoice(choice, kind: event.kind, index: index, state: &state, config: config)
+            return [.staffEventResolved(employeeID: event.employeeID, choice: choice, day: state.day)]
+        }
+
+        let outcome = choice == .supportive ? def.supportive : def.strict
+        let name = state.employees[index].name
+        if outcome.cash != 0 {
+            state.company.cash += outcome.cash
+            state.ledger.post(LedgerEntry(
+                day: state.day,
+                amount: outcome.cash,
+                category: .other,
+                label: "\(def.headline.replacingOccurrences(of: "{name}", with: name))"
+            ))
+        }
+        state.employees[index].morale = clamp(state.employees[index].morale + outcome.morale)
+        state.employees[index].loyalty = clamp(state.employees[index].loyalty + outcome.loyalty)
+        if outcome.salaryPercent != 0 {
+            let salary = Double(state.employees[index].weeklySalary)
+            state.employees[index].weeklySalary = max(
+                0, Int((salary * (1 + outcome.salaryPercent / 100)).rounded())
+            )
+        }
+        if outcome.skill != 0 {
+            state.employees[index].skills.coding = clamp(state.employees[index].skills.coding + outcome.skill)
+            state.employees[index].skills.design = clamp(state.employees[index].skills.design + outcome.skill)
+            state.employees[index].skills.marketing = clamp(
+                state.employees[index].skills.marketing + outcome.skill
+            )
+        }
+        if outcome.clearsAssignment {
+            state.employees[index].assignment = .idle
+        }
+        if outcome.moraleAll != 0 {
+            for other in state.employees.indices
+            where !state.employees[other].isFounder && other != index {
+                state.employees[other].morale = clamp(
+                    state.employees[other].morale + outcome.moraleAll
+                )
+            }
+        }
+        if outcome.reputation != 0 {
+            state.company.reputation = clamp(state.company.reputation + outcome.reputation)
+        }
+        if let flag = outcome.setFlag {
+            state.narrative.flags.insert(flag)
+        }
+
+        return [.staffEventResolved(
+            employeeID: event.employeeID, choice: choice, day: state.day
+        )]
+    }
+
+    /// The pre-content behavior, kept for kinds with no definition.
+    private static func applyGenericStaffChoice(
+        _ choice: StaffEventChoice,
+        kind: StaffEventKind,
+        index: Int,
+        state: inout GameState,
+        config: BalanceConfig.SocialBalance
+    ) {
         switch choice {
         case .supportive:
             state.company.cash -= config.supportCost
@@ -247,15 +388,16 @@ enum SocialSystem {
                 state.employees[index].morale + config.supportMorale)
             state.employees[index].loyalty = min(100,
                 state.employees[index].loyalty + config.supportLoyalty)
-            if event.kind == .familyEmergency {
+            if kind == .familyEmergency {
                 state.employees[index].assignment = .idle
             }
         case .strict:
             state.employees[index].loyalty = max(0,
                 state.employees[index].loyalty - config.strictLoyaltyPenalty)
         }
-        return [.staffEventResolved(employeeID: event.employeeID, choice: choice, day: state.day)]
     }
+
+    private static func clamp(_ value: Double) -> Double { min(100, max(0, value)) }
 
     // MARK: - Actions
 
@@ -315,11 +457,15 @@ enum SocialSystem {
         state.ledger.post(LedgerEntry(
             day: state.day, amount: -cost, category: .other, label: "Team dinner"
         ))
+        let charm = state.founderCharmFactor(balance)
         for index in state.employees.indices where !state.employees[index].isFounder {
             state.employees[index].morale = min(100,
                 state.employees[index].morale + config.dinnerMorale)
             state.employees[index].loyalty = min(100,
                 state.employees[index].loyalty + config.dinnerLoyalty)
+            state.employees[index].founderBond = min(100,
+                state.employees[index].founderBond
+                    + balance.relationships.bondPerSocialAction / 2 * charm)
         }
         state.lastTeamDinnerDay = state.day
         return [.socialActivity(kind: .teamDinner, employeeID: nil, day: state.day)]
@@ -356,6 +502,13 @@ enum SocialSystem {
         }
         state.employees[index].morale = min(100, max(0, state.employees[index].morale + morale))
         state.employees[index].loyalty = min(100, max(0, state.employees[index].loyalty + loyalty))
+        // Every one of these is the founder's own time, so every one of
+        // them is worth a little of the founder's own bond with them — and
+        // a founder who is good at talking to people gets more out of the
+        // same coffee.
+        state.employees[index].founderBond = min(100,
+            state.employees[index].founderBond
+                + balance.relationships.bondPerSocialAction * state.founderCharmFactor(balance))
         state.employees[index].lastSocialDay = state.day
         return [.socialActivity(kind: kind, employeeID: employeeID, day: state.day)]
     }
@@ -364,10 +517,13 @@ enum SocialSystem {
     static func resolveStaffEvent(
         choice: StaffEventChoice,
         state: inout GameState,
-        balance: BalanceConfig
+        balance: BalanceConfig,
+        content: ContentCatalog
     ) -> [GameEvent] {
         guard let pending = state.pendingStaffEvent else { return [] }
         state.pendingStaffEvent = nil
-        return applyStaffChoice(choice, to: pending, state: &state, config: balance.social)
+        return applyStaffChoice(
+            choice, to: pending, state: &state, config: balance.social, content: content
+        )
     }
 }

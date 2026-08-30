@@ -1,46 +1,153 @@
 # Startup Studio
 
 A Game Dev Tycoon-style software-company tycoon game for iPhone. You run a
-tiny startup: watch your cash, manage your burn rate, and ship products
-before the money runs out. Built with SwiftUI on a deterministic simulation
-engine, with a pixel-art office scene as the game's face.
+tiny startup from a garage: watch your cash, ship products before the money
+runs out, hire people who have opinions about how you treat them, and try
+to still have a life. Built with SwiftUI on a deterministic simulation
+engine, with a living pixel-art office as the game's face.
 
 ## Features
 
+A run starts with **onboarding**: name your founder, shuffle through
+twenty-four pixel looks, and pick an archetype — hacker, designer or
+hustler, each with its own starting skill spread. Name the company (or take
+a generated one), choose a difficulty, and read a four-panel look, drawn
+with the game's own pixel scenes, at what you are about to run.
+
 Five tabs over the persistent cash/date/speed HUD:
 
-- **HQ** — the animated pixel office scene (upgradeable from garage to
-  campus), office amenities (game room, cafeteria, shuttle, gym — each with
-  a build cost and weekly upkeep, lifting team morale), departments (Legal,
-  People & HR, Operations — formed by hiring the matching role, each with
-  its own company-wide perks), company overview, burn rate and runway, the
-  product in development, office upgrades, and the activity feed
-- **Life** — the founder's personal life: the pixel home scene (studio
-  flat to penthouse), energy/health/mood/relationship meters, work
-  schedule (chill/normal/crunch), founder salary and wallet, weekend plans,
-  and family — dating, moving in, marriage, and kids
-- **Team** — roster with roles (frontend, backend, designer, QA, marketer,
-  plus lawyers, HR, and ops who staff departments), skills, salaries,
-  seniority, and assignments; hiring from a rotating candidate pool;
-  swipe-to-fire; tap anyone to manage them one-on-one — praise, raises and
-  cuts, promotions and demotions, and paid training. Employees have morale
-  that drives their output; underpay them and they drift toward quitting
-- **Products** — two segments: *Products* builds products phase by phase
-  (design/code/polish), tunes the phase focus, squashes bugs, ships, and
-  watches reviews and sales roll in; *R&D* is the tech tree — bank research
-  points and unlock technologies. Sales don't spike instantly: launches
-  ramp up over an adoption curve set by the team's marketing skill and
-  launch hype
-- **Business** — client contracts with deadlines *and* quality
-  expectations (deliver with an under-skilled crew and the client docks
-  the payout), a live market board showing which topics are hot or
-  slumping (demand multiplies weekly sales, with booms and crashes),
-  marketing campaigns, bank loans with weekly interest, and the company
-  finance ledger
+- **HQ** — the animated pixel office (garage → loft → studio → campus) with
+  the team walking to the coffee machine, huddling at the flip-chart and
+  cheering a launch; the chapter card with three live goals and the perks
+  earned so far; departments (Legal, People & HR, Operations, formed by
+  hiring the matching role); amenities (game room, cafeteria, shuttle,
+  gym); the journal; burn rate and runway; office upgrades; and the
+  activity feed
+- **Life** — the founder's own life: the pixel home (studio flat →
+  penthouse), energy/health/mood/relationship meters, your own five
+  attributes and the training that raises them, work schedule and work
+  pace, founder salary and wallet, weekend plans and thirteen illustrated
+  activity vignettes, shopping, the networking floor and address book, the
+  city map (five districts to relocate to, and an office you can rent, buy
+  or sell), and family — dating, moving in, marriage and kids
+- **Team** — a searchable, sortable roster with mood faces, trait chips,
+  roles and seniority, and bulk assignment; hiring from a rotating pool
+  where each candidate shows one trait and hides the second behind an
+  interview that costs you a day; a manage sheet that says *why* somebody
+  is unhappy and how many days of patience they have left; praise, raises,
+  promotions, training and cuts
+- **Products** — *Products* builds phase by phase (design / code / polish)
+  with a tunable focus, bug hunting, and one to five concurrent builds
+  depending on the office; live ops after launch — price tiers, patch
+  cycles, live bugs the wild finds and support desks to staff; a launch-day
+  sheet that reveals the reviews one at a time. *R&D* is a twenty-node,
+  five-tier tech tree
+- **Business** — six sections behind a scrolling pill bar: client contracts
+  with deadlines *and* quality expectations, a market board of twelve
+  topics with booms and crashes, marketing campaigns, the finance ledger
+  and bank loans, rivals, and investors
 
-Plus autosave with versioned migrations, game over on bankruptcy,
-auto-pause on notable events so nothing important slips past at 4× speed,
-and a deterministic engine (same seed, same game) under it all.
+### Under the tabs
+
+- **Chapters and goals.** Thirty goals across five chapters, six each;
+  finish enough of a chapter and the next one opens. Each goal pays
+  reputation, cash, or a permanent perk — press contacts, a talent magnet,
+  an investor rolodex, veteran crew, market darling.
+- **A world with opinions.** 83 company events and 59 life events, most of
+  them a real question with consequences spelled out on the buttons and a
+  deadline that answers for you if you don't; choices schedule follow-ups
+  weeks later, so a decision has a second act. 44 industry headlines, 11
+  staff moments (a raise request, a rumour a rival is circling, a
+  complaint that has to be handled properly), and per-outlet review voices.
+- **Work pace and resignations.** Relaxed, normal or crunch, each trading
+  output against morale and bugs. An unhappy employee does not vanish: they
+  hand in notice and keep working, and a real raise or a promotion inside
+  the notice period still turns it around.
+- **One founder, one week.** Your work schedule buys output and spends
+  *evenings*: five a week on chill, three on normal, one on crunch. Every
+  personal thing you do — a course, a date, a night out with someone on the
+  team, an afternoon teaching them something, an hour at the gym — spends
+  one. Company gestures (a coffee, a gift, the team dinner) stay free,
+  because those are the company's time and money. So crunch finally costs
+  something that isn't another meter: the one evening you have goes to the
+  coach, or the partner whose affection is sliding, or the new hire a rival
+  has been taking to lunch.
+- **The two crunches can see each other.** The company has a work pace and
+  you have a work schedule, and they now sit on the same card. While the
+  team is crunching, being on chill costs the room morale and normal costs
+  half of it — you can put everyone on crunch from a deckchair, and the car
+  park will tell them. Your own mood reaches them too, but only downward: a
+  founder falling apart drags the room, and a cheerful one buys nothing.
+- **A salary the room can read.** Pay yourself more than 1.5× your team's
+  median and morale slides on a slope, and a seated board adds it to the
+  quarterly pressure. The band moves with the roster, so a garage founder
+  on a grand a week is fine and a fourteen-person studio founder on the
+  same is invisible. A salary the *company* raised to stop you being
+  evicted is exempt — the team resents a founder who helped themselves,
+  not one who had to be bailed out.
+- **The house is collateral.** The bank lends about half its ceiling on the
+  company's name; the rest needs your signature and your home behind it. A
+  studio flat secures nothing, a penthouse secures a great deal. Stay in
+  the red with guaranteed debt outstanding and they take your savings, and
+  then the house — one tier down, the same way an eviction does. The home
+  ladder is no longer a mood bonus you buy once.
+- **You are a character sheet.** Five attributes — conversation,
+  technical, market sense, leadership, finance — each with exactly one job:
+  your own build output and bug rate, the sales a release finds, the morale
+  your team settles at, what a delivered contract actually pays, and how
+  far a conversation gets. Train them with an evening's reading, an online
+  course or a private coach; the closer to 100, the less each session adds.
+  They also grow quietly from doing the thing.
+- **The networking floor.** Plan a networking weekend and you walk into a
+  room — a co-working mixer, a rooftop party, a demo day — with three to
+  five people standing in it, drawn rather than listed. You get a handful
+  of exchanges: small talk is safe, talking shop is graded on what you
+  actually know, listening is how you learn what somebody wants, and
+  pitching a stranger costs you. Warm somebody up and the deals open, in
+  both directions: hire them for salary; give away a slice of your own
+  company to get somebody who would never take the salary; buy a stake in
+  *their* startup out of your own wallet and hold it until it exits or
+  folds; take their cheque into yours; or, if you are single and the
+  evening went unusually well, stop talking about work. Contacts persist —
+  rapport fades if you never call.
+- **People, not payroll.** Every hire has a bond with *you*, separate from
+  how they feel about the job — grown by your own time and money (an
+  evening out, an afternoon teaching them something) rather than the
+  company's, decayed by being ignored, and worth output, morale and staying
+  put when a rival calls. A partner has affection, which only your own
+  time moves: it slides every day, faster once a fortnight has passed with
+  no contact, and you get exactly one warning before it ends things.
+- **The founder is a person.** Miss rent long enough and the landlord
+  evicts you into somewhere cheaper. Two hospital stays in a year and you
+  live with a chronic condition; three restorative weekends clear it. Burn
+  out twice and the trade press notices.
+- **Rivals.** Named studios shipping named products, splitting each topic's
+  demand by quality-weighted share. A copycat clones your best topic eight
+  weeks after you launch; beat somebody two weeks running in a topic you
+  both sell into and they start a price war.
+- **Traits.** Every hire arrives with two personalities derived from their
+  face — a Speedster ships more and learns slower, a Flight Risk is nearly
+  twice as easy to poach, a Mentor makes everyone else better while doing less
+  themselves, a Grumbler drags the room down.
+- **Investors, boards and endings.** Term sheets arrive once the company is
+  worth a meeting. Take one and a board grades you on one number every
+  quarter; miss it enough and they replace you. Four endings — bankruptcy,
+  acquisition, IPO, ousted — and all four land on the same founder
+  biography: the chapters and the day each opened, the best thing you
+  shipped with its best review quoted, your longest-serving employee, your
+  family, and the money.
+- **The weekly report.** An end-of-week debrief — cash in and out by
+  category, per-product sales with sparklines, morale and its direction,
+  your own meters, what happened, and what is due next week. It opens
+  itself for the first eight weeks and can be told not to, from the report
+  itself.
+- **Coaching without nagging.** A pause banner leads with the loudest
+  reason the clock stopped, six dismissable coach tips keyed to the goals
+  you actually have, a searchable journal that collapses routine weeks, and
+  chiptune sound and haptics (both synthesized in-app, both switchable).
+
+Plus autosave with versioned migrations, and a deterministic engine — same
+seed, same game — under all of it.
 
 ## Layout
 
@@ -48,7 +155,9 @@ and a deterministic engine (same seed, same game) under it all.
 - `Packages/TycoonEngine` — the simulation engine (Swift package)
 - `Packages/TycoonContent` — game content/data (Swift package)
 - `Packages/TycoonSave` — save/load with versioned migrations (Swift package)
-- `Packages/PixelKit` — the pixel-art office scene renderer (Swift package)
+- `Packages/PixelKit` — the pixel-art renderer: office, home, city and
+  activity scenes, sprites, palettes and the animation runtime (Swift
+  package)
 - `Packages/IconGen` — macOS dev tool that renders the app icon from
   PixelKit sprites (not part of the app)
 
@@ -60,12 +169,18 @@ and a deterministic engine (same seed, same game) under it all.
 ## Commands
 
 ```sh
-make gen    # generate StartupStudio.xcodeproj from project.yml
-make test   # run the TycoonEngine, TycoonContent, TycoonSave, and PixelKit package tests
-make build  # build the app for the iPhone 17 simulator
-make icon   # regenerate the app icon (AppIcon.png) from PixelKit sprites
-make clean  # remove build artifacts and the generated project
+make gen      # generate StartupStudio.xcodeproj from project.yml
+make test     # run the TycoonEngine, TycoonContent, TycoonSave and PixelKit package tests
+make apptest  # run the App target's own unit tests (StartupStudioTests)
+make build    # build the app for the iPhone 17 simulator
+make icon     # regenerate the app icon (AppIcon.png) from PixelKit sprites
+make clean    # remove build artifacts and the generated project
 ```
+
+The four package suites use Swift Testing — look for
+`✔ Test run with N tests … passed`, and ignore the XCTest
+"Executed 0 tests" line above it. `make apptest` is XCTest and reports
+`** TEST SUCCEEDED **`.
 
 ## Playing the dev build
 
@@ -79,13 +194,21 @@ xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/StartupSt
 xcrun simctl launch booted com.alpsenel.startupstudio
 ```
 
-For hands-off checks, the debug build accepts an `-autoSpeed` launch
-argument that starts the simulation running immediately (values: `x1`,
-`x2`, `x4`):
+For hands-off checks the debug build takes two launch arguments:
+`-autoSpeed` starts the simulation running immediately (`x1`, `x2`, `x4`),
+and `-autoTab` opens straight onto a tab (`hq`, `life`, `team`,
+`products`, `business`):
 
 ```sh
-xcrun simctl launch booted com.alpsenel.startupstudio -autoSpeed x4
+xcrun simctl launch booted com.alpsenel.startupstudio -autoSpeed x4 -autoTab business
+xcrun simctl io booted screenshot /tmp/shot.png
 ```
+
+Either flag marks the launch as a headless pass: onboarding is skipped so
+the app reaches the game, and the weekly report does not auto-open (it
+holds the clock until somebody presses "Next week", which is right for a
+player and a wall for a screenshot run). Both are `#if DEBUG` only —
+release builds see neither.
 
 ## Notes
 
@@ -96,3 +219,50 @@ xcrun simctl launch booted com.alpsenel.startupstudio -autoSpeed x4
 - The app icon is generated art: `make icon` re-renders
   `App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png` from the
   game's own sprites via `Packages/IconGen`.
+
+## Art notes
+
+All of the game's pixel art is generated by `Packages/PixelKit` — there are
+no image assets in the repo except the app icon, which is itself rendered
+from the same sprites.
+
+- **One palette.** `Palettes` is the master palette: eleven hue ramps of
+  five steps (`ink`, `stone`, `clay`, `sand`, `gold`, `moss`, `teal`,
+  `sky`, `indigo`, `ember`, `plum`) plus the skin, hair and shirt ramps.
+  Shirt colours *are* neighbouring steps of a master ramp, which is why a
+  crowded office reads as one wardrobe. `PaletteTests` fails the build if a
+  sprite invents a colour, and gates every room at ≥ 18% wall-vs-floor
+  luminance separation so people always read against the background.
+- **Rooms are one sprite.** `RoomBuilder` bakes walls, trim, the accent
+  stripe, the skirting shadow, three floor depth bands and all the fixed
+  dressing into a single background sprite via `PixelCanvas`, so the
+  dressing costs nothing to draw and can never drift out of the room.
+  `officeSurfaces(tier:time:)` and `homeSurfaces(tier:time:)` are the
+  hand-tuned colour schemes, one per tier per hour.
+- **People are overlays.** Every adult pose keeps its head in rows 1–6 of a
+  14-wide canvas; hair, glasses, beard, outfit and the role accessory are
+  overlays that drop onto any pose and ride its head bob.
+  `CharacterAppearance` derives everything from one seed, appending new
+  fields to the SplitMix64 stream so old seeds never change.
+- **Time of day** runs through `Ambience.swift` (`TimeOfDay`, `Weather`,
+  `Season`, `HomeAmbience`, `CityAmbience`). Windows, skylines, room
+  schemes, the lighting overlay and the city all take it.
+- **Looking at the art.** The PixelKit test suite writes PNG previews of
+  everything it draws — office and home scenes, the pose and role sheets,
+  the master palette, the thirteen activity vignettes and the city map:
+
+  ```sh
+  PIXELKIT_PREVIEW_DIR=/tmp/pixelkit make test
+  open /tmp/pixelkit
+  ```
+
+  The App target renders its own chrome the same way — the HUD, the pause
+  banner, toasts, the weekly report's bottom bar, launch day, the box-art
+  sheet and the bitmap font, each in light and dark. Those run inside the
+  simulator, where `PIXELKIT_PREVIEW_DIR` from the host does not reach
+  them, so they land in the app's own temporary directory:
+
+  ```sh
+  make apptest
+  open "$(xcrun simctl get_app_container booted com.alpsenel.startupstudio data)/tmp/startupstudio-previews"
+  ```

@@ -1,18 +1,38 @@
 {
   "startingCash": 12000,
-  "weeklyOperatingCost": 400,
-  "bankruptcyGraceDays": 14,
+  "weeklyOperatingCost": 250,
+  "bankruptcyGraceDays": 21,
   "offices": {
-    "garage": { "upgradeCost": 0, "weeklyRent": 0, "headcountCap": 3 },
-    "loft": { "upgradeCost": 15000, "weeklyRent": 150, "headcountCap": 6 },
-    "studio": { "upgradeCost": 90000, "weeklyRent": 900, "headcountCap": 14 },
-    "campus": { "upgradeCost": 750000, "weeklyRent": 6000, "headcountCap": 40 }
+    "garage": {
+      "upgradeCost": 0,
+      "weeklyRent": 0,
+      "headcountCap": 3
+    },
+    "loft": {
+      "upgradeCost": 15000,
+      "weeklyRent": 400,
+      "headcountCap": 6
+    },
+    "studio": {
+      "upgradeCost": 55000,
+      "weeklyRent": 1800,
+      "headcountCap": 14
+    },
+    "campus": {
+      "upgradeCost": 300000,
+      "weeklyRent": 12000,
+      "headcountCap": 40
+    }
   },
   "bugChanceBase": 0.3,
   "bugChanceSkillDivisor": 120.0,
   "founderCoding": 40.0,
   "shipCodeThreshold": 0.6,
-  "qualityWeights": { "design": 0.35, "code": 0.45, "polish": 0.2 },
+  "qualityWeights": {
+    "design": 0.35,
+    "code": 0.45,
+    "polish": 0.2
+  },
   "bugPenaltyCap": 0.4,
   "founderDesign": 30.0,
   "founderMarketing": 20.0,
@@ -24,29 +44,39 @@
   "candidateCountMax": 6,
   "candidateSkillBase": 35.0,
   "candidateSkillPerReputation": 0.5,
-  "candidateSkillTierBonus": { "garage": 0, "loft": 10, "studio": 20, "campus": 30 },
+  "candidateSkillTierBonus": {
+    "garage": 0,
+    "loft": 10,
+    "studio": 20,
+    "campus": 30
+  },
   "salaryBase": 180,
   "salaryPerSkillPoint": 9.0,
   "salaryJitter": 0.1,
-  "researchBasePoints": 0.5,
-  "researchCodingDivisor": 40.0,
-  "researchDesignDivisor": 80.0,
-  "techQualityMultiplierCap": 1.5,
+  "researchBasePoints": 1.0,
+  "researchCodingDivisor": 25.0,
+  "researchDesignDivisor": 50.0,
+  "techQualityMultiplierCap": 1.35,
   "reviewNoiseSigma": 6.0,
   "reviewFloor": 5,
   "reviewCeiling": 98,
-  "reviewOutlets": ["TechDaily", "AppVerdict", "The Stack Review", "ByteSized"],
+  "reviewOutlets": [
+    "TechDaily",
+    "AppVerdict",
+    "The Stack Review",
+    "ByteSized"
+  ],
   "salesBaseFactor": 0.4,
   "salesQualityFactor": 0.6,
-  "salesDecayBase": 0.72,
-  "salesDecayQualityFactor": 0.2,
-  "delistFraction": 0.01,
+  "salesDecayBase": 0.8,
+  "salesDecayQualityFactor": 0.08,
+  "delistFraction": 0.02,
   "reputationReviewNudge": 0.1,
   "marketSizeScale": 1.0,
   "saturationPerRelease": 0.75,
-  "saturationFloor": 0.3,
+  "saturationFloor": 0.15,
   "saturationWindowDays": 182,
-  "genreFatigueFactor": 0.85,
+  "genreFatigueFactor": 0.78,
   "genreFatigueWindowDays": 84,
   "marketHistoryWeeks": 26,
   "marketEventLogCap": 30,
@@ -56,7 +86,7 @@
   "contractPtsMax": 120.0,
   "contractCodeSplitMin": 0.5,
   "contractCodeSplitMax": 0.8,
-  "contractPayoutPerPoint": 90.0,
+  "contractPayoutPerPoint": 45.0,
   "contractUrgencyPremiumMin": 1.0,
   "contractUrgencyPremiumMax": 1.3,
   "contractPenaltyFraction": 0.3,
@@ -75,10 +105,10 @@
   "launchEventHype": 40.0,
   "launchEventMinTier": "studio",
   "hypeDecayRate": 0.02,
-  "reviewExpectationBase": 30.0,
-  "reviewExpectationPerYear": 3.0,
-  "reviewExpectationRepFactor": 0.15,
-  "reviewShortfallPenalty": 0.5,
+  "reviewExpectationBase": 35.0,
+  "reviewExpectationPerYear": 4.0,
+  "reviewExpectationRepFactor": 0.25,
+  "reviewShortfallPenalty": 0.6,
   "reviewHypeDivisor": 20.0,
   "hypeLaunchCarryFraction": 0.5,
   "salesHypeDivisor": 150.0,
@@ -103,22 +133,27 @@
   "staff": {
     "startingMorale": 70.0,
     "moraleAdaptRate": 0.04,
-    "baselineMorale": 60.0,
+    "baselineMorale": 55.0,
     "underpaidThreshold": 0.85,
     "underpaidTargetPenalty": 25.0,
     "wellPaidThreshold": 1.15,
     "wellPaidTargetBonus": 10.0,
     "levelPayExpectation": 0.12,
-    "officeMoraleBonus": { "garage": 0, "loft": 3, "studio": 6, "campus": 10 },
-    "quitMoraleThreshold": 20.0,
-    "quitStreakDays": 14,
+    "officeMoraleBonus": {
+      "garage": 0,
+      "loft": 3,
+      "studio": 6,
+      "campus": 10
+    },
+    "quitMoraleThreshold": 32.0,
+    "quitStreakDays": 21,
     "praiseMoraleBoost": 8.0,
     "praiseCooldownDays": 7,
     "raiseMoraleFactor": 40.0,
     "cutMoraleFactor": 80.0,
     "promotionSalaryBump": 0.15,
     "promotionMoraleBoost": 15.0,
-    "demotionSalaryCut": 0.10,
+    "demotionSalaryCut": 0.1,
     "demotionMoralePenalty": 20.0,
     "moraleNeutral": 70.0,
     "performancePerMoralePoint": 0.005,
@@ -142,34 +177,78 @@
     "poorReputationPenalty": 2.0
   },
   "loans": {
-    "baseLimit": 20000,
-    "perReputation": 600.0,
     "weeklyInterestRate": 0.01
   },
   "company": {
     "roleYields": {
-      "founder":  { "code": 1.0, "design": 1.0, "polish": 1.0 },
-      "frontend": { "code": 1.1, "design": 1.1, "polish": 0.9 },
-      "backend":  { "code": 1.4, "design": 0.5, "polish": 1.0 },
-      "designer": { "code": 0.5, "design": 1.5, "polish": 1.0 },
-      "qa":       { "code": 0.6, "design": 0.6, "polish": 1.6 },
-      "marketer": { "code": 0.3, "design": 0.3, "polish": 0.3 },
-      "lawyer":   { "code": 0.3, "design": 0.3, "polish": 0.3 },
-      "hr":       { "code": 0.3, "design": 0.3, "polish": 0.3 },
-      "ops":      { "code": 0.3, "design": 0.3, "polish": 0.3 }
+      "founder": {
+        "code": 1.0,
+        "design": 1.0,
+        "polish": 1.0
+      },
+      "frontend": {
+        "code": 1.1,
+        "design": 1.1,
+        "polish": 0.9
+      },
+      "backend": {
+        "code": 1.4,
+        "design": 0.5,
+        "polish": 1.0
+      },
+      "designer": {
+        "code": 0.5,
+        "design": 1.5,
+        "polish": 1.0
+      },
+      "qa": {
+        "code": 0.6,
+        "design": 0.6,
+        "polish": 1.6
+      },
+      "marketer": {
+        "code": 0.3,
+        "design": 0.3,
+        "polish": 0.3
+      },
+      "lawyer": {
+        "code": 0.3,
+        "design": 0.3,
+        "polish": 0.3
+      },
+      "hr": {
+        "code": 0.3,
+        "design": 0.3,
+        "polish": 0.3
+      },
+      "ops": {
+        "code": 0.3,
+        "design": 0.3,
+        "polish": 0.3
+      }
     },
     "qaBugFixMultiplier": 2.0,
     "marketerDailyHype": 0.4,
     "candidateRoleWeights": {
-      "frontend": 22, "backend": 25, "designer": 18, "qa": 12,
-      "marketer": 10, "lawyer": 5, "hr": 5, "ops": 3
+      "frontend": 22,
+      "backend": 25,
+      "designer": 18,
+      "qa": 12,
+      "marketer": 10,
+      "lawyer": 5,
+      "hr": 5,
+      "ops": 3
     },
-    "candidateRoleMinTier": { "lawyer": "loft", "hr": "loft", "ops": "studio" },
+    "candidateRoleMinTier": {
+      "lawyer": "loft",
+      "hr": "loft",
+      "ops": "studio"
+    },
     "builderPrimarySkillBonus": 15.0,
     "marketerSkillBonus": 20.0,
     "supportSalaryFactor": 0.9,
     "legalPenaltyFactor": 0.5,
-    "legalPayoutBonus": 1.10,
+    "legalPayoutBonus": 1.1,
     "legalExtraOffers": 1,
     "hrMoraleBonus": 5.0,
     "hrRefreshDaysReduction": 4,
@@ -178,17 +257,45 @@
     "opsUpkeepFactor": 0.7,
     "opsRentFactor": 0.9,
     "amenities": {
-      "gameRoom":  { "upgradeCost": 10000, "weeklyCost": 150, "minTier": "loft",   "moraleBonus": 4.0, "founderHealthBonus": 0.0, "quitStreakBonusDays": 0 },
-      "cafeteria": { "upgradeCost": 25000, "weeklyCost": 400, "minTier": "studio", "moraleBonus": 6.0, "founderHealthBonus": 0.0, "quitStreakBonusDays": 0 },
-      "shuttle":   { "upgradeCost": 15000, "weeklyCost": 300, "minTier": "studio", "moraleBonus": 4.0, "founderHealthBonus": 0.0, "quitStreakBonusDays": 7 },
-      "gym":       { "upgradeCost": 30000, "weeklyCost": 350, "minTier": "studio", "moraleBonus": 5.0, "founderHealthBonus": 0.2, "quitStreakBonusDays": 0 }
+      "gameRoom": {
+        "upgradeCost": 10000,
+        "weeklyCost": 150,
+        "minTier": "loft",
+        "moraleBonus": 4.0,
+        "founderHealthBonus": 0.0,
+        "quitStreakBonusDays": 0
+      },
+      "cafeteria": {
+        "upgradeCost": 25000,
+        "weeklyCost": 400,
+        "minTier": "studio",
+        "moraleBonus": 6.0,
+        "founderHealthBonus": 0.0,
+        "quitStreakBonusDays": 0
+      },
+      "shuttle": {
+        "upgradeCost": 15000,
+        "weeklyCost": 300,
+        "minTier": "studio",
+        "moraleBonus": 4.0,
+        "founderHealthBonus": 0.0,
+        "quitStreakBonusDays": 7
+      },
+      "gym": {
+        "upgradeCost": 30000,
+        "weeklyCost": 350,
+        "minTier": "studio",
+        "moraleBonus": 5.0,
+        "founderHealthBonus": 0.2,
+        "quitStreakBonusDays": 0
+      }
     }
   },
   "rivals": {
     "rivalCount": 4,
     "evolveIntervalDays": 7,
     "strengthDriftSigma": 2.0,
-    "shipChance": 0.10,
+    "shipChance": 0.1,
     "competitionDent": 0.08,
     "shipReputationGain": 1.5,
     "stumbleChance": 0.06,
@@ -213,6 +320,7 @@
     "matchLoyaltyBoost": 12,
     "buyoutIntervalDays": 7,
     "buyoutOffsetDays": 5,
+    "buyoutEarliestDay": 56,
     "buyoutCooldownDays": 28,
     "buyoutChance": 0.4,
     "weakCashThreshold": 5000,
@@ -230,11 +338,46 @@
   },
   "city": {
     "districts": {
-      "oldTown":  { "rentMultiplier": 1.0, "priceMultiplier": 1.0, "candidateSkillBonus": 0,  "extraContractOffers": 0, "weeklyReputationDrift": 0,     "moraleBonus": 0 },
-      "suburbs":  { "rentMultiplier": 0.7, "priceMultiplier": 0.7, "candidateSkillBonus": -5, "extraContractOffers": 0, "weeklyReputationDrift": -0.1,  "moraleBonus": -2 },
-      "midtown":  { "rentMultiplier": 1.3, "priceMultiplier": 1.4, "candidateSkillBonus": 5,  "extraContractOffers": 1, "weeklyReputationDrift": 0.1,   "moraleBonus": 2 },
-      "techPark": { "rentMultiplier": 1.6, "priceMultiplier": 1.8, "candidateSkillBonus": 12, "extraContractOffers": 1, "weeklyReputationDrift": 0.15,  "moraleBonus": 3 },
-      "downtown": { "rentMultiplier": 2.2, "priceMultiplier": 2.6, "candidateSkillBonus": 8,  "extraContractOffers": 2, "weeklyReputationDrift": 0.3,   "moraleBonus": 5 }
+      "oldTown": {
+        "rentMultiplier": 1.0,
+        "priceMultiplier": 1.0,
+        "candidateSkillBonus": 0,
+        "extraContractOffers": 0,
+        "weeklyReputationDrift": 0,
+        "moraleBonus": 0
+      },
+      "suburbs": {
+        "rentMultiplier": 0.7,
+        "priceMultiplier": 0.7,
+        "candidateSkillBonus": -5,
+        "extraContractOffers": 0,
+        "weeklyReputationDrift": -0.1,
+        "moraleBonus": -2
+      },
+      "midtown": {
+        "rentMultiplier": 1.3,
+        "priceMultiplier": 1.4,
+        "candidateSkillBonus": 5,
+        "extraContractOffers": 1,
+        "weeklyReputationDrift": 0.1,
+        "moraleBonus": 2
+      },
+      "techPark": {
+        "rentMultiplier": 1.6,
+        "priceMultiplier": 1.8,
+        "candidateSkillBonus": 12,
+        "extraContractOffers": 1,
+        "weeklyReputationDrift": 0.15,
+        "moraleBonus": 3
+      },
+      "downtown": {
+        "rentMultiplier": 2.2,
+        "priceMultiplier": 2.6,
+        "candidateSkillBonus": 8,
+        "extraContractOffers": 2,
+        "weeklyReputationDrift": 0.3,
+        "moraleBonus": 5
+      }
     },
     "buyPriceFactor": 150,
     "weeklyPropertyTaxRate": 0.002,
@@ -247,17 +390,75 @@
   "instantLife": {
     "maxPerDay": 2,
     "activities": {
-      "gymSession": { "energy": -8, "health": 6,  "mood": 3, "relationships": 0, "cost": 30, "cooldownDays": 1 },
-      "walk":       { "energy": -2, "health": 2,  "mood": 4, "relationships": 0, "cost": 0,  "cooldownDays": 1 },
-      "cinema":     { "energy": -3, "health": 0,  "mood": 8, "relationships": 2, "cost": 40, "cooldownDays": 2 },
-      "restaurant": { "energy": 2,  "health": -1, "mood": 6, "relationships": 4, "cost": 90, "cooldownDays": 2 }
+      "gymSession": {
+        "energy": -8,
+        "health": 6,
+        "mood": 3,
+        "relationships": 0,
+        "cost": 30,
+        "cooldownDays": 1
+      },
+      "walk": {
+        "energy": -2,
+        "health": 2,
+        "mood": 4,
+        "relationships": 0,
+        "cost": 0,
+        "cooldownDays": 1
+      },
+      "cinema": {
+        "energy": -3,
+        "health": 0,
+        "mood": 8,
+        "relationships": 2,
+        "cost": 40,
+        "cooldownDays": 2
+      },
+      "restaurant": {
+        "energy": 2,
+        "health": -1,
+        "mood": 6,
+        "relationships": 4,
+        "cost": 90,
+        "cooldownDays": 2
+      }
     },
     "items": {
-      "espressoMachine": { "name": "Espresso machine", "cost": 600,   "moodPop": 5,  "dailyMoodDrift": 0.1,  "prestige": 0 },
-      "gamingConsole":   { "name": "Gaming console",   "cost": 900,   "moodPop": 8,  "dailyMoodDrift": 0.15, "prestige": 0 },
-      "roadBike":        { "name": "Road bike",        "cost": 1800,  "moodPop": 6,  "dailyMoodDrift": 0.1,  "prestige": 1 },
-      "designerWatch":   { "name": "Designer watch",   "cost": 4000,  "moodPop": 6,  "dailyMoodDrift": 0.05, "prestige": 2 },
-      "sportsCar":       { "name": "Sports car",       "cost": 60000, "moodPop": 15, "dailyMoodDrift": 0.2,  "prestige": 6 }
+      "espressoMachine": {
+        "name": "Espresso machine",
+        "cost": 600,
+        "moodPop": 5,
+        "dailyMoodDrift": 0.1,
+        "prestige": 0
+      },
+      "gamingConsole": {
+        "name": "Gaming console",
+        "cost": 900,
+        "moodPop": 8,
+        "dailyMoodDrift": 0.15,
+        "prestige": 0
+      },
+      "roadBike": {
+        "name": "Road bike",
+        "cost": 1800,
+        "moodPop": 6,
+        "dailyMoodDrift": 0.1,
+        "prestige": 1
+      },
+      "designerWatch": {
+        "name": "Designer watch",
+        "cost": 4000,
+        "moodPop": 6,
+        "dailyMoodDrift": 0.05,
+        "prestige": 2
+      },
+      "sportsCar": {
+        "name": "Sports car",
+        "cost": 60000,
+        "moodPop": 15,
+        "dailyMoodDrift": 0.2,
+        "prestige": 6
+      }
     },
     "prestigeRelationshipFactor": 0.02
   },
@@ -292,24 +493,87 @@
     "staffEventResponseDays": 5
   },
   "difficulty": {
-    "easy":   { "startingCashFactor": 1.5, "operatingCostFactor": 0.8, "officeCostFactor": 0.8,  "salaryFactor": 0.9,  "revenueFactor": 1.25, "reviewExpectationBonus": -5, "bankruptcyGraceDaysDelta": 7,  "candidateSkillBonus": 10, "lifeCostFactor": 0.8 },
-    "normal": { "startingCashFactor": 1.0, "operatingCostFactor": 1.0, "officeCostFactor": 1.0,  "salaryFactor": 1.0,  "revenueFactor": 1.0,  "reviewExpectationBonus": 0,  "bankruptcyGraceDaysDelta": 0,  "candidateSkillBonus": 0,  "lifeCostFactor": 1.0 },
-    "hard":   { "startingCashFactor": 0.7, "operatingCostFactor": 1.3, "officeCostFactor": 1.25, "salaryFactor": 1.15, "revenueFactor": 0.8,  "reviewExpectationBonus": 6,  "bankruptcyGraceDaysDelta": -4, "candidateSkillBonus": -5, "lifeCostFactor": 1.2 }
+    "easy": {
+      "startingCashFactor": 1.5,
+      "operatingCostFactor": 0.8,
+      "officeCostFactor": 0.8,
+      "salaryFactor": 0.9,
+      "revenueFactor": 1.25,
+      "reviewExpectationBonus": -5,
+      "bankruptcyGraceDaysDelta": 7,
+      "candidateSkillBonus": 10,
+      "lifeCostFactor": 0.8
+    },
+    "normal": {
+      "startingCashFactor": 1.0,
+      "operatingCostFactor": 1.0,
+      "officeCostFactor": 1.0,
+      "salaryFactor": 1.0,
+      "revenueFactor": 1.0,
+      "reviewExpectationBonus": 0,
+      "bankruptcyGraceDaysDelta": 0,
+      "candidateSkillBonus": 0,
+      "lifeCostFactor": 1.0
+    },
+    "hard": {
+      "startingCashFactor": 0.55,
+      "operatingCostFactor": 1.5,
+      "officeCostFactor": 1.4,
+      "salaryFactor": 1.25,
+      "revenueFactor": 0.65,
+      "reviewExpectationBonus": 10,
+      "bankruptcyGraceDaysDelta": -10,
+      "candidateSkillBonus": -8,
+      "lifeCostFactor": 1.35
+    }
   },
   "life": {
     "startingWallet": 2000,
-    "defaultFounderSalary": 0,
+    "defaultFounderSalary": 200,
     "founderSalaryMax": 5000,
     "drift": {
-      "chill":  { "energy": 1.5,  "health": 0.3,  "mood": 0.5,  "relationships": 0.3 },
-      "normal": { "energy": -0.4, "health": -0.2, "mood": 0.0,  "relationships": -0.3 },
-      "crunch": { "energy": -2.0, "health": -0.8, "mood": -0.6, "relationships": -1.2 }
+      "chill": {
+        "energy": 1.5,
+        "health": 0.3,
+        "mood": 0.5,
+        "relationships": 0.3
+      },
+      "normal": {
+        "energy": -0.4,
+        "health": -0.2,
+        "mood": 0.0,
+        "relationships": -0.3
+      },
+      "crunch": {
+        "energy": -2.0,
+        "health": -0.5,
+        "mood": -0.6,
+        "relationships": -1.2
+      }
     },
-    "scheduleOutputFactor": { "chill": 0.8, "normal": 1.0, "crunch": 1.3 },
-    "wellbeingWeights": { "energy": 0.4, "health": 0.3, "mood": 0.3 },
+    "scheduleOutputFactor": {
+      "chill": 0.8,
+      "normal": 1.0,
+      "crunch": 1.3
+    },
+    "wellbeingWeights": {
+      "energy": 0.4,
+      "health": 0.3,
+      "mood": 0.3
+    },
     "minOutputFactor": 0.5,
-    "stageRelationshipDrain": { "single": 0.0, "dating": 0.2, "partner": 0.3, "married": 0.4 },
-    "childDrift": { "energy": -0.3, "health": 0.0, "mood": 0.2, "relationships": 0.1 },
+    "stageRelationshipDrain": {
+      "single": 0.0,
+      "dating": 0.2,
+      "partner": 0.3,
+      "married": 0.4
+    },
+    "childDrift": {
+      "energy": -0.3,
+      "health": 0.0,
+      "mood": 0.2,
+      "relationships": 0.1
+    },
     "debtMoodPenalty": 1.0,
     "burnoutEnergyThreshold": 15.0,
     "burnoutDays": 7,
@@ -317,7 +581,7 @@
     "hospitalHealthThreshold": 10.0,
     "hospitalDays": 14,
     "hospitalBill": 5000,
-    "hospitalRecoveryHealth": 40.0,
+    "hospitalRecoveryHealth": 70.0,
     "breakupThreshold": 15.0,
     "breakupStreakDays": 14,
     "breakupMoodPenalty": 25.0,
@@ -328,16 +592,76 @@
     "lowEnergyBugDivisor": 60.0,
     "childWeeklyCost": 80,
     "activities": {
-      "rest":       { "energy": 15, "health": 0,  "mood": 5,  "relationships": 0,  "cost": 0 },
-      "gym":        { "energy": -3, "health": 12, "mood": 0,  "relationships": 0,  "cost": 60 },
-      "dateNight":  { "energy": 0,  "health": 0,  "mood": 8,  "relationships": 15, "cost": 120 },
-      "friends":    { "energy": 0,  "health": 0,  "mood": 10, "relationships": 8,  "cost": 80 },
-      "hobby":      { "energy": 0,  "health": 0,  "mood": 15, "relationships": 0,  "cost": 50 },
-      "familyTime": { "energy": 0,  "health": 0,  "mood": 6,  "relationships": 12, "cost": 40 },
-      "vacation":   { "energy": 40, "health": 10, "mood": 20, "relationships": 10, "cost": 1500 },
-      "doctor":     { "energy": 0,  "health": 15, "mood": 0,  "relationships": 0,  "cost": 200 },
-      "spa":        { "energy": 20, "health": 5,  "mood": 10, "relationships": 0,  "cost": 300 },
-      "networking": { "energy": -2, "health": 0,  "mood": 4,  "relationships": 8,  "cost": 150 }
+      "rest": {
+        "energy": 15,
+        "health": 0,
+        "mood": 5,
+        "relationships": 0,
+        "cost": 0
+      },
+      "gym": {
+        "energy": -3,
+        "health": 12,
+        "mood": 0,
+        "relationships": 0,
+        "cost": 60
+      },
+      "dateNight": {
+        "energy": 0,
+        "health": 0,
+        "mood": 8,
+        "relationships": 15,
+        "cost": 120
+      },
+      "friends": {
+        "energy": 0,
+        "health": 0,
+        "mood": 10,
+        "relationships": 8,
+        "cost": 80
+      },
+      "hobby": {
+        "energy": 0,
+        "health": 0,
+        "mood": 15,
+        "relationships": 0,
+        "cost": 50
+      },
+      "familyTime": {
+        "energy": 0,
+        "health": 0,
+        "mood": 6,
+        "relationships": 12,
+        "cost": 40
+      },
+      "vacation": {
+        "energy": 40,
+        "health": 10,
+        "mood": 20,
+        "relationships": 10,
+        "cost": 1500
+      },
+      "doctor": {
+        "energy": 0,
+        "health": 15,
+        "mood": 0,
+        "relationships": 0,
+        "cost": 200
+      },
+      "spa": {
+        "energy": 20,
+        "health": 5,
+        "mood": 10,
+        "relationships": 0,
+        "cost": 300
+      },
+      "networking": {
+        "energy": -2,
+        "health": 0,
+        "mood": 4,
+        "relationships": 8,
+        "cost": 150
+      }
     },
     "vacationDays": 7,
     "datingMinRelationships": 40.0,
@@ -353,10 +677,355 @@
     "childSpacingDays": 140,
     "childMoodBonus": 20.0,
     "homes": {
-      "studioFlat": { "upgradeCost": 0,      "weeklyRent": 120,  "moodBonus": 0.0 },
-      "apartment":  { "upgradeCost": 6000,   "weeklyRent": 300,  "moodBonus": 0.0 },
-      "house":      { "upgradeCost": 40000,  "weeklyRent": 700,  "moodBonus": 0.2 },
-      "penthouse":  { "upgradeCost": 250000, "weeklyRent": 2500, "moodBonus": 0.5 }
+      "studioFlat": {
+        "upgradeCost": 0,
+        "weeklyRent": 120,
+        "moodBonus": 0.0
+      },
+      "apartment": {
+        "upgradeCost": 6000,
+        "weeklyRent": 300,
+        "moodBonus": 0.0
+      },
+      "house": {
+        "upgradeCost": 40000,
+        "weeklyRent": 700,
+        "moodBonus": 0.2
+      },
+      "penthouse": {
+        "upgradeCost": 250000,
+        "weeklyRent": 2500,
+        "moodBonus": 0.5
+      }
+    },
+    "eveningsPerWeek": {
+      "chill": 5,
+      "normal": 3,
+      "crunch": 1
     }
+  },
+  "_workstreamBlocks": "One tunables object per workstream: WS-A owns economy, WS-B narrative, WS-F progression/investors/traits. Nobody edits another workstream's object.",
+  "economy": {
+    "qualityCeilingBase": 0.35,
+    "expectationPerComplexity": 8.0,
+    "subscriberAcquisitionWeeks": 42.0,
+    "churnBase": 0.06,
+    "churnQualityFactor": 0.03,
+    "subscriptionFloorSubscribers": 8,
+    "hostingCostPerSubscriber": 0.05,
+    "brooksPenalty": 0.1,
+    "liveBugSeedFraction": 0.5,
+    "liveBugUnitsPerDiscovery": 2000.0,
+    "liveBugSalesPenalty": 0.015,
+    "liveBugPenaltyCap": 0.6,
+    "liveBugAlarmThreshold": 12,
+    "supportBugFixMultiplier": 1.5,
+    "supportChurnRelief": 0.15,
+    "priceTiers": {
+      "budget": {
+        "priceFactor": 0.6,
+        "demandFactor": 1.5,
+        "shareWeight": 1.35
+      },
+      "standard": {
+        "priceFactor": 1.0,
+        "demandFactor": 1.0,
+        "shareWeight": 1.0
+      },
+      "premium": {
+        "priceFactor": 1.6,
+        "demandFactor": 0.6,
+        "shareWeight": 0.85
+      }
+    },
+    "premiumQualityThreshold": 70.0,
+    "premiumChurnPenalty": 2.0,
+    "updatePoolFraction": 0.3,
+    "updateQualityBonus": 8.0,
+    "updateReviewWeight": 0.5,
+    "updateSalesBump": 1.5,
+    "updateBumpDays": 7,
+    "pace": {
+      "relaxed": {
+        "outputFactor": 0.85,
+        "moraleTargetDelta": 6.0,
+        "skillGrowthFactor": 1.0,
+        "bugFactor": 0.9
+      },
+      "normal": {
+        "outputFactor": 1.0,
+        "moraleTargetDelta": 0.0,
+        "skillGrowthFactor": 1.0,
+        "bugFactor": 1.0
+      },
+      "crunch": {
+        "outputFactor": 1.25,
+        "moraleTargetDelta": -18.0,
+        "skillGrowthFactor": 1.2,
+        "bugFactor": 1.3
+      }
+    },
+    "stagnationDays": 364,
+    "stagnationMoralePenalty": 10.0,
+    "overcrowdingMoralePenalty": 6.0,
+    "overdueContractMoralePenalty": 4.0,
+    "founderAwayDays": 7,
+    "founderAwayMoralePenalty": 5.0,
+    "resignationNoticeDays": 7,
+    "counterOfferRaiseFactor": 1.12,
+    "counterOfferMoraleBoost": 30.0,
+    "walletInterestWeeklyRate": 0.015,
+    "evictionWalletThreshold": -3000,
+    "evictionGraceDays": 14,
+    "evictionRecoveryWeeks": 13,
+    "convalescenceDays": 14,
+    "hospitalInsuredFraction": 0.6,
+    "chronicWindowDays": 364,
+    "chronicMaxEnergy": 80.0,
+    "chronicOutputFactor": 0.9,
+    "chronicCureWeeks": 3,
+    "lonelinessDays": 60,
+    "lonelinessMoodDrift": 0.5,
+    "lonelinessRelationshipThreshold": 1.0,
+    "burnoutWindowDays": 364,
+    "burnoutReputationPenalty": 3.0,
+    "pauseBudgetDays": 10,
+    "creditLimitBase": 20000,
+    "creditLimitRevenueFactor": 0.5,
+    "creditLimitPerReputation": 300.0,
+    "creditRevenueWeeks": 12,
+    "founderMoodMoraleFactor": 0.12,
+    "paceMismatchMoralePenalty": 6.0,
+    "founderMoodMoraleFloor": 50.0,
+    "founderPayFairRatio": 1.5,
+    "founderPayMoralePerRatioPoint": 3.0,
+    "founderPayMoraleCap": 10.0,
+    "founderPayBoardPressure": 4.0,
+    "unsecuredCreditFraction": 0.45,
+    "guaranteeHomeFactor": 0.7,
+    "guaranteeCallDays": 7,
+    "updateQualityDecay": 0.6,
+    "campaignCooldownDays": 14,
+    "campaignRepeatHypeDecay": 0.7,
+    "liveHypeSalesFactor": 1.0,
+    "premiumOverpricedSalesFactor": 0.6
+  },
+  "narrative": {
+    "companyEventIntervalDays": 7,
+    "companyEventChance": 0.3,
+    "lifeEventIntervalDays": 14,
+    "lifeEventChance": 0.35,
+    "respondByDays": 5,
+    "minDaysBetweenBeats": 4,
+    "defaultCooldownDays": 240,
+    "newsIntervalDays": 7,
+    "newsChance": 0.55
+  },
+  "progression": {
+    "archetypes": {
+      "hacker": {
+        "coding": 55.0,
+        "design": 25.0,
+        "marketing": 20.0
+      },
+      "designer": {
+        "coding": 25.0,
+        "design": 55.0,
+        "marketing": 20.0
+      },
+      "hustler": {
+        "coding": 25.0,
+        "design": 20.0,
+        "marketing": 55.0
+      }
+    },
+    "goalsToAdvanceChapter": 4,
+    "rewardReputationScale": 1.0,
+    "rewardCashScale": 1.0,
+    "pressContactsHypeBonus": 5.0,
+    "veteranCrewMoraleBonus": 4.0,
+    "talentMagnetSkillBonus": 6.0,
+    "investorRolodexWeeksEarlier": 4
+  },
+  "investors": {
+    "offerIntervalDays": 7,
+    "offerCooldownDays": 56,
+    "offerChance": 0.45,
+    "minReputation": 25.0,
+    "responseDays": 7,
+    "earliestOfferDay": 120,
+    "reviewIntervalDays": 91,
+    "pressurePerMiss": 30.0,
+    "pressurePerHit": 25.0,
+    "boardWarningPressure": 60.0,
+    "boardOustPressure": 100.0,
+    "expectedQuarterlyRevenueGrowth": 0.1,
+    "expectedQuarterlyShips": 2,
+    "expectedQuarterlyHeadcountGrowth": 1,
+    "ipoValuationFloor": 5000000,
+    "ipoProfitableQuarters": 3,
+    "ipoRequiresSubscription": true,
+    "ipoValuationMultiple": 1.4,
+    "roundValuationPremium": 2.5,
+    "patienceReferenceWeeks": 26,
+    "strategicDominanceFactor": 2.0,
+    "strategicMinReputation": 60.0,
+    "strategicPremiumMin": 1.5,
+    "strategicPremiumMax": 2.5,
+    "raisePressureRelief": 0.5
+  },
+  "traits": {
+    "teamGrowthStrength": 1.0,
+    "teamGrowthLimit": 1.2,
+    "teamMoraleLimit": 1.2,
+    "reputationBonusCap": 0.06,
+    "reputationBonusCeiling": 70.0,
+    "interviewEnergyCost": 6.0
+  },
+  "founder": {
+    "starting": {
+      "conversation": 50,
+      "technical": 50,
+      "marketKnowledge": 50,
+      "leadership": 50,
+      "finance": 50
+    },
+    "skillMidpoint": 50.0,
+    "training": {
+      "selfStudy": {
+        "cost": 0,
+        "energy": 9,
+        "mood": -2,
+        "gain": 3.5,
+        "cooldownDays": 1
+      },
+      "course": {
+        "cost": 450,
+        "energy": 5,
+        "mood": 1,
+        "gain": 7.0,
+        "cooldownDays": 3
+      },
+      "coach": {
+        "cost": 2400,
+        "energy": 3,
+        "mood": 3,
+        "gain": 14.0,
+        "cooldownDays": 7
+      }
+    },
+    "maxTrainingsPerDay": 1,
+    "practiceGain": 0.35,
+    "technicalOutputFactor": 0.4,
+    "marketSalesFactor": 0.45,
+    "financeDealFactor": 0.35,
+    "conversationFactor": 0.6,
+    "leadershipMoraleFactor": 0.12,
+    "technicalBugDivisor": 200.0
+  },
+  "networking": {
+    "contactsPerEventMin": 3,
+    "contactsPerEventMax": 5,
+    "conversationsPerEvent": 4,
+    "conversationTurnsDivisor": 35.0,
+    "eventDurationDays": 3,
+    "talkRapport": 14.0,
+    "talkRapportMiss": 5.0,
+    "talkSuccessBase": 0.55,
+    "pitchRapport": 6.0,
+    "pitchInterest": 20.0,
+    "energyPerTurn": 2.5,
+    "moodPerGoodTurn": 1.0,
+    "relationshipsPerEvent": 4.0,
+    "recruitMinRapport": 50.0,
+    "equityHireMinRapport": 70.0,
+    "investMinRapport": 45.0,
+    "angelMinRapport": 65.0,
+    "romanceMinRapport": 75.0,
+    "joinMinInterest": 45.0,
+    "equityHireEquityPerSkillPoint": 0.03,
+    "equityHireEquityMin": 1.5,
+    "equityHireEquityMax": 8.0,
+    "equityHireSalaryFactor": 0.35,
+    "equityHireMorale": 90.0,
+    "equityHireLoyalty": 85.0,
+    "investStakeBase": 4.0,
+    "investStakePerRapportPoint": 0.08,
+    "investStakeMax": 20.0,
+    "investDiscountPerRapportPoint": 0.0025,
+    "holdingWeeklyGrowth": 0.015,
+    "holdingWeeklyVolatility": 0.09,
+    "holdingExitChance": 0.006,
+    "holdingFoldChance": 0.005,
+    "holdingExitMultipleMin": 1.5,
+    "holdingExitMultipleMax": 6.0,
+    "angelCashPerEquityPoint": 9000,
+    "angelMaxEquity": 6.0,
+    "rapportDecayPerDay": 0.15,
+    "maxContacts": 40
+  },
+  "relationships": {
+    "startingAffection": 55.0,
+    "affectionDrift": -0.3,
+    "neglectDrift": -0.5,
+    "neglectDays": 14,
+    "affectionRelationshipFactor": 0.012,
+    "partnerActivities": {
+      "call": {
+        "cost": 0,
+        "affection": 4,
+        "energy": -1,
+        "mood": 2,
+        "relationships": 1,
+        "cooldownDays": 1
+      },
+      "dateNight": {
+        "cost": 140,
+        "affection": 11,
+        "energy": -3,
+        "mood": 6,
+        "relationships": 5,
+        "cooldownDays": 3
+      },
+      "gift": {
+        "cost": 450,
+        "affection": 15,
+        "energy": 0,
+        "mood": 4,
+        "relationships": 3,
+        "cooldownDays": 7
+      },
+      "weekendAway": {
+        "cost": 1400,
+        "affection": 28,
+        "energy": 12,
+        "mood": 14,
+        "relationships": 10,
+        "cooldownDays": 21
+      }
+    },
+    "stageMinAffection": {
+      "single": 0.0,
+      "dating": 0.0,
+      "partner": 55.0,
+      "married": 70.0
+    },
+    "startingBond": 10.0,
+    "bondDecayPerDay": 0.12,
+    "bondPerSocialAction": 6.0,
+    "hangOut": {
+      "cost": 70,
+      "affection": 0,
+      "energy": -4,
+      "mood": 5,
+      "relationships": 4,
+      "cooldownDays": 5
+    },
+    "mentorSkillGain": 4.5,
+    "mentorEnergyCost": 8.0,
+    "mentorCooldownDays": 7,
+    "bondOutputFactor": 0.12,
+    "bondMoraleTargetFactor": 0.06,
+    "bondLoyaltyPerDay": 0.15
   }
 }

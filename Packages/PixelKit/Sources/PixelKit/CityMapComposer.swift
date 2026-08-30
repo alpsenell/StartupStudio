@@ -56,32 +56,82 @@ public enum CityMapComposer {
 
     // MARK: - Compose
 
+    /// The map at midday in high summer, with the player still in a garage.
     public static func compose(districts: [CityDistrictInfo]) -> [PlacedSprite] {
+        compose(districts: districts, ambience: .noon)
+    }
+
+    /// The map at an hour, in a season, with the player's HQ drawn at the
+    /// size their office tier has earned.
+    public static func compose(districts: [CityDistrictInfo], ambience: CityAmbience) -> [PlacedSprite] {
+        let time = ambience.timeOfDay
         var placements: [PlacedSprite] = [
             PlacedSprite(
-                sprite: CityMapBuilder.ground(),
+                sprite: CityMapBuilder.ground(time: time, season: ambience.season),
                 x: 0, y: 0, kind: .room, animation: .still, phase: 0
             )
         ]
 
         // Buildings and landmarks, in a fixed back-to-front order per
-        // district (order of `buildingSpots` is authored top-down).
+        // district (order of `buildingSpots` is authored top-down). The
+        // player's HQ takes over the district's tallest spot; rival HQs take
+        // the next ones along.
         for info in districts {
-            for (index, spot) in buildingSpots(for: info.style).enumerated() {
+            let spots = buildingSpots(for: info.style)
+            var claimed: [Int: PlacedSprite] = [:]
+            if info.hasPlayerOffice, let index = tallestSpotIndex(in: spots) {
+                let hq = SpriteCache.shared("city.hq.\(ambience.playerTier.rawValue).\(time)") {
+                    CitySpriteLibrary.playerHQ(tier: ambience.playerTier, time: time)
+                }
+                let spot = spots[index]
+                claimed[index] = PlacedSprite(
+                    sprite: hq,
+                    x: spot.x + (spot.width - hq.width) / 2,
+                    y: spot.y + spot.height - hq.height,
+                    kind: .cityProp("playerHQ"), animation: .toggle(period: 3), phase: 0
+                )
+            }
+            for (offset, seed) in info.rivalSeeds.prefix(2).enumerated() {
+                let index = rivalSpotIndex(in: spots, avoiding: Set(claimed.keys), offset: offset)
+                guard let index else { continue }
+                let hq = SpriteCache.shared("city.rival.\(seed).\(info.style).\(time)") {
+                    CitySpriteLibrary.rivalHQ(seed: seed, district: info.style, time: time)
+                }
+                let spot = spots[index]
+                claimed[index] = PlacedSprite(
+                    sprite: hq,
+                    x: spot.x + (spot.width - hq.width) / 2,
+                    y: spot.y + spot.height - hq.height,
+                    kind: .cityProp("rivalHQ"), animation: .toggle(period: 4), phase: offset
+                )
+            }
+
+            for (index, spot) in spots.enumerated() {
+                if let claimedPlacement = claimed[index] {
+                    placements.append(claimedPlacement)
+                    continue
+                }
                 placements.append(PlacedSprite(
-                    sprite: CitySpriteLibrary.building(
-                        width: spot.width, height: spot.height, district: info.style
-                    ),
+                    sprite: SpriteCache.shared(
+                        "city.bldg.\(spot.width)x\(spot.height).\(info.style).\(time)"
+                    ) {
+                        CitySpriteLibrary.building(
+                            width: spot.width, height: spot.height, district: info.style, time: time
+                        )
+                    },
                     x: spot.x, y: spot.y,
                     kind: .cityProp("building"),
                     animation: .glow,
                     phase: index * 3
                 ))
             }
-            if let landmark = landmark(for: info.style) {
+            if let landmark = landmark(for: info.style, season: ambience.season) {
                 placements.append(landmark)
             }
         }
+
+        // Street furniture and traffic, over the roads.
+        placements += streetFurniture(time: time)
 
         // Markers over the rooftops.
         for info in districts {
@@ -117,6 +167,43 @@ public enum CityMapComposer {
             ))
         }
         return placements
+    }
+
+    /// Streetlights along the spine and two lanes of traffic running through
+    /// it, one each way.
+    private static func streetFurniture(time: TimeOfDay) -> [PlacedSprite] {
+        let (width, _) = sceneSize()
+        var placements: [PlacedSprite] = []
+        for x in stride(from: 14, to: width - 8, by: 46) {
+            placements.append(PlacedSprite(
+                sprite: CitySpriteLibrary.streetlight(time: time),
+                x: x, y: 66, kind: .cityProp("streetlight"),
+                animation: .toggle(period: 5), phase: (x / 46) % 2
+            ))
+        }
+        placements.append(PlacedSprite(
+            sprite: CitySpriteLibrary.trafficLane(width: width - 2, eastbound: true, time: time),
+            x: 1, y: 76, kind: .cityProp("traffic"), animation: .toggle(period: 1), phase: 0
+        ))
+        placements.append(PlacedSprite(
+            sprite: CitySpriteLibrary.trafficLane(width: width - 2, eastbound: false, time: time),
+            x: 1, y: 80, kind: .cityProp("traffic"), animation: .toggle(period: 1), phase: 1
+        ))
+        return placements
+    }
+
+    /// The tallest authored spot in a district — where a headquarters wants
+    /// to stand.
+    private static func tallestSpotIndex(in spots: [BuildingSpot]) -> Int? {
+        spots.indices.max { spots[$0].height < spots[$1].height }
+    }
+
+    /// The next free spot for a rival, walking the list from the far end so
+    /// rivals and the player do not end up shoulder to shoulder.
+    private static func rivalSpotIndex(
+        in spots: [BuildingSpot], avoiding taken: Set<Int>, offset: Int
+    ) -> Int? {
+        spots.indices.reversed().filter { !taken.contains($0) }.dropFirst(offset).first
     }
 
     // MARK: - Authored spots
@@ -160,16 +247,16 @@ public enum CityMapComposer {
         }
     }
 
-    private static func landmark(for district: DistrictStyle) -> PlacedSprite? {
+    private static func landmark(for district: DistrictStyle, season: Season) -> PlacedSprite? {
         switch district {
         case .suburbs:
             PlacedSprite(
-                sprite: CitySpriteLibrary.tree(), x: 12, y: 14,
+                sprite: CitySpriteLibrary.tree(season: season), x: 12, y: 14,
                 kind: .cityProp("tree"), animation: .still, phase: 0
             )
         case .midtown:
             PlacedSprite(
-                sprite: CitySpriteLibrary.tree(), x: 134, y: 54,
+                sprite: CitySpriteLibrary.tree(season: season), x: 134, y: 54,
                 kind: .cityProp("tree"), animation: .still, phase: 0
             )
         case .techPark:

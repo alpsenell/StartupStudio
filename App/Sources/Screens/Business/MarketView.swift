@@ -10,6 +10,10 @@ struct MarketView: View {
     let engine: GameEngine
 
     @State private var showingReport = false
+    /// Topic the report should open on, when a deep link named one.
+    @State private var reportTopicID: String?
+
+    @Environment(AppRouter.self) private var router
 
     /// Hottest first.
     private var snapshots: [TopicSnapshot] {
@@ -35,6 +39,8 @@ struct MarketView: View {
             })
 
             Button {
+                Haptics.tap()
+                reportTopicID = nil
                 showingReport = true
             } label: {
                 Label("Open Market Report", systemImage: "doc.text.magnifyingglass")
@@ -53,7 +59,17 @@ struct MarketView: View {
                 .padding(.horizontal, Theme.Spacing.xs)
         }
         .sheet(isPresented: $showingReport) {
-            MarketReportScreen(engine: engine)
+            MarketReportScreen(engine: engine, initialTopicID: reportTopicID)
+        }
+        // "Details" on a market boom/crash pause opens the report already
+        // scrolled to the topic that moved.
+        .onChange(of: router.pendingPush, initial: true) { _, _ in
+            if case .marketReport(let topicID)? = router.take(where: {
+                if case .marketReport = $0 { return true } else { return false }
+            }) {
+                reportTopicID = topicID
+                showingReport = true
+            }
         }
     }
 }

@@ -1,0 +1,454 @@
+import SwiftUI
+import TycoonContent
+import TycoonEngine
+
+/// The Investors segment of the Business tab: the term sheet on the table,
+/// the cap table, the board room, founder net worth, and the IPO desk.
+struct InvestorsView: View {
+    let engine: GameEngine
+
+    @State private var confirmingIPO = false
+
+    private var investors: InvestorState { engine.state.investors }
+
+    var body: some View {
+        BusinessSectionHeader(title: "Cap table", systemImage: "chart.pie.fill")
+
+        if let offer = investors.pendingOffer {
+            TermSheetCard(engine: engine, offer: offer)
+        }
+
+        netWorthCard
+
+        if investors.rounds.isEmpty {
+            EmptyStateCard(
+                message: investorHint
+            )
+        } else {
+            roundsCard
+        }
+
+        if investors.hasBoard {
+            BusinessSectionHeader(title: "The board", systemImage: "person.3.fill")
+            boardCard
+        }
+
+        BusinessSectionHeader(title: "Going public", systemImage: "bell.fill")
+        ipoCard
+    }
+
+    /// Why nobody has called yet, in the founder's terms.
+    private var investorHint: String {
+        let config = engine.balance.investors
+        if engine.state.company.reputation < config.minReputation {
+            return "Nobody has heard of you yet. Ship something people talk about "
+                + "(reputation \(Int(engine.state.company.reputation.rounded())) of "
+                + "\(Int(config.minReputation)) before anyone returns a call)."
+        }
+        if engine.state.day < config.earliestOfferDay {
+            return "Too early. Investors want to see a company survive a few months first."
+        }
+        return "You own all of it. Term sheets arrive on their own once the "
+            + "numbers are worth a meeting."
+    }
+
+    // MARK: - Net worth
+
+    private var netWorthCard: some View {
+        let balance = engine.balance
+        let netWorth = engine.state.founderNetWorth(balance: balance)
+        let valuation = engine.state.companyValuation(balance: balance)
+        let equity = investors.equityRemaining
+
+        return CardView("Your stake", systemImage: "person.crop.square.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(netWorth.money)
+                        .font(.system(.title2, design: .rounded).weight(.bold))
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.spring(duration: 0.4), value: netWorth)
+                    Text("net worth")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+
+                EquityBar(founderShare: equity)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    detailRow("You own", "\(equity.oneDecimal)%")
+                    detailRow("Company valued at", valuation.money)
+                    detailRow("In your wallet", engine.state.life.wallet.money)
+                    if investors.totalRaised > 0 {
+                        detailRow("Raised to date", investors.totalRaised.money)
+                    }
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(
+                "Founder net worth \(netWorth.money). You own \(equity.oneDecimal) percent "
+                    + "of a company valued at \(valuation.money)."
+            )
+        }
+    }
+
+    private func detailRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.caption.weight(.semibold))
+                .monospacedDigit()
+        }
+    }
+
+    // MARK: - Rounds
+
+    private var roundsCard: some View {
+        CardView("Rounds raised", systemImage: "signature") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                ForEach(investors.rounds) { round in
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text(round.investorName)
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            if round.takesBoardSeat {
+                                Text("BOARD")
+                                    .font(.caption2.weight(.bold))
+                                    .kerning(0.5)
+                                    .foregroundStyle(Theme.warning)
+                                    .padding(.horizontal, Theme.Spacing.xs + 2)
+                                    .padding(.vertical, 2)
+                                    .background(Theme.chipBackground, in: Capsule())
+                            }
+                            Spacer()
+                            Text(round.amount.money)
+                                .font(.subheadline.weight(.semibold))
+                                .monospacedDigit()
+                        }
+                        Text("\(round.equity.oneDecimal)% at a \(round.valuation.money) valuation · day \(round.day)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        }
+    }
+
+    // MARK: - Board
+
+    private var boardCard: some View {
+        let config = engine.balance.investors
+        let pressure = investors.boardPressure
+        let expectation = investors.boardExpectation
+
+        return CardView("Board pressure", systemImage: "gauge.with.needle") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                if let expectation {
+                    Text(expectation.demand)
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("They review every quarter and they watch one thing: \(expectation.displayName.lowercased()).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("Pressure")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(Int(pressure.rounded())) / 100")
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(pressureTint(pressure))
+                    }
+                    ProgressView(value: pressure, total: config.boardOustPressure)
+                        .tint(pressureTint(pressure))
+                        .animation(.spring(duration: 0.5), value: pressure)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Board pressure \(Int(pressure.rounded())) out of 100")
+
+                if pressure >= config.boardWarningPressure {
+                    Label(
+                        "They've asked for a plan. Another bad quarter and they'll bring in a CEO.",
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(Theme.negativeCash)
+                }
+
+                if !investors.reviews.isEmpty {
+                    Divider()
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        ForEach(Array(investors.reviews.suffix(4).enumerated().reversed()), id: \.offset) { _, review in
+                            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                                Image(systemName: review.met ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(review.met ? Theme.positiveCash : Theme.negativeCash)
+                                Text(review.note)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                                Text("D\(review.day)")
+                                    .font(.caption2)
+                                    .monospacedDigit()
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .accessibilityElement(children: .combine)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func pressureTint(_ pressure: Double) -> Color {
+        let config = engine.balance.investors
+        if pressure >= config.boardWarningPressure { return Theme.negativeCash }
+        if pressure >= config.boardWarningPressure / 2 { return Theme.warning }
+        return Theme.positiveCash
+    }
+
+    // MARK: - IPO
+
+    private var ipoCard: some View {
+        let balance = engine.balance
+        let blocker = engine.state.ipoBlocker(balance: balance)
+        let ready = engine.state.canFileIPO(balance: balance)
+        let proceeds = Int(
+            (Double(engine.state.companyValuation(balance: balance))
+                * balance.investors.ipoValuationMultiple
+                * investors.equityRemaining / 100).rounded()
+        )
+
+        return CardView("Initial public offering", systemImage: "building.columns.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                Text("The bell, the confetti, and the end of the run. Your stake is bought out at the offer price.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    ipoGateRow(
+                        "Valuation of \(balance.investors.ipoValuationFloor.money)",
+                        met: engine.state.companyValuation(balance: balance)
+                            >= balance.investors.ipoValuationFloor
+                    )
+                    ipoGateRow(
+                        "\(balance.investors.ipoProfitableQuarters) profitable quarters "
+                            + "(\(investors.profitableQuarters) so far)",
+                        met: investors.profitableQuarters >= balance.investors.ipoProfitableQuarters
+                    )
+                    if balance.investors.ipoRequiresSubscription {
+                        ipoGateRow("A product that bills monthly", met: engine.state.hasSubscriptionProduct)
+                    }
+                }
+
+                Button {
+                    confirmingIPO = true
+                } label: {
+                    Label(
+                        ready ? "File to go public — \(proceeds.money) to you" : "File to go public",
+                        systemImage: "bell.fill"
+                    )
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.positiveCash)
+                .disabled(!ready)
+                .accessibilityLabel(
+                    ready
+                        ? "File to go public. Ends the run with \(proceeds.money) for your stake."
+                        : "File to go public. Not available: \(blocker ?? "")"
+                )
+
+                if let blocker {
+                    Text(blocker)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .confirmationDialog(
+            "Take \(engine.state.company.name) public?",
+            isPresented: $confirmingIPO,
+            titleVisibility: .visible
+        ) {
+            Button("Ring the bell") {
+                engine.send(.fileIPO)
+            }
+            Button("Not yet", role: .cancel) {}
+        } message: {
+            Text("This ends the run. Your \(investors.equityRemaining.oneDecimal)% stake sells for \(proceeds.money).")
+        }
+    }
+
+    private func ipoGateRow(_ label: String, met: Bool) -> some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: met ? "checkmark.circle.fill" : "circle")
+                .font(.caption)
+                .foregroundStyle(met ? AnyShapeStyle(Theme.positiveCash) : AnyShapeStyle(.tertiary))
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(met ? .primary : .secondary)
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label). \(met ? "Met" : "Not met")")
+    }
+}
+
+// MARK: - Term sheet
+
+/// The offer on the table, front and centre with both answers on it. The
+/// timeline is paused while it stands, and the same choice is available in
+/// the root decision sheet — this is the version you can study.
+private struct TermSheetCard: View {
+    let engine: GameEngine
+    let offer: InvestmentOffer
+
+    var body: some View {
+        CardView("Term sheet", systemImage: "doc.text.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+                    Text(offer.investorName)
+                        .font(.system(.headline, design: .rounded))
+                    if let persona = engine.content.investors.first(where: { $0.id == offer.investorID }) {
+                        Label(persona.flavor.displayName, systemImage: persona.flavor.systemImageName)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Theme.accent)
+                            .padding(.horizontal, Theme.Spacing.sm)
+                            .padding(.vertical, 2)
+                            .background(Theme.chipBackground, in: Capsule())
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                if let pitch = engine.content.investors.first(where: { $0.id == offer.investorID })?.pitch {
+                    Text("\u{201C}\(pitch)\u{201D}")
+                        .font(.subheadline)
+                        .italic()
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: Theme.Spacing.sm) {
+                    StatPill(systemImage: "dollarsign.circle", value: offer.amount.money)
+                    StatPill(systemImage: "chart.pie", value: "\(offer.equity.oneDecimal)%")
+                    StatPill(systemImage: "calendar", value: "by D\(offer.respondByDay)")
+                }
+
+                Text(
+                    offer.takesBoardSeat
+                        ? "They take a board seat and will watch \(offer.expects.displayName.lowercased()) every quarter."
+                        : "No board seat. They wire the money and leave you alone."
+                )
+                .font(.caption)
+                .foregroundStyle(offer.takesBoardSeat ? Theme.warning : .secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+                if offer.takesBoardSeat {
+                    // Patience swings how hard every quarterly verdict
+                    // lands by more than four times, and it was nowhere on
+                    // the term sheet: two identical cheques could be very
+                    // different boards.
+                    Text(temperament(offer.patienceWeeks))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if !engine.state.investors.boardExpectations.isEmpty {
+                        Text(
+                            "You already answer to "
+                                + engine.state.investors.boardExpectations
+                                    .map { $0.displayName.lowercased() }
+                                    .formatted(.list(type: .and))
+                                + ". Taking this adds another, and only halves the pressure you're under."
+                        )
+                        .font(.caption)
+                        .foregroundStyle(Theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                HStack(spacing: Theme.Spacing.sm) {
+                    Button {
+                        engine.send(.acceptInvestment)
+                    } label: {
+                        Text("Take the money")
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+
+                    Button {
+                        engine.send(.declineInvestment)
+                    } label: {
+                        Text("Stay independent")
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+        }
+    }
+
+    /// What this investor's patience means in the boardroom, since the
+    /// number itself ("20 weeks") tells a player nothing.
+    private func temperament(_ patienceWeeks: Int) -> String {
+        switch patienceWeeks {
+        case ..<16:
+            "Impatient money: they react hard to a bad quarter, and just as hard to a good one."
+        case ..<28:
+            "Ordinary patience — a miss costs you, a recovery buys it back."
+        default:
+            "Patient money. They will sit through a rough year without reaching for the phone."
+        }
+    }
+
+}
+
+// MARK: - Equity bar
+
+/// The cap table as one bar: the founder's slice against everyone else's.
+private struct EquityBar: View {
+    let founderShare: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let founderWidth = width * min(1, max(0, founderShare / 100))
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(Theme.accent)
+                    .frame(width: founderWidth)
+                Rectangle()
+                    .fill(Theme.chipBackground)
+            }
+            .clipShape(Capsule())
+        }
+        .frame(height: 10)
+        .animation(.spring(duration: 0.5), value: founderShare)
+        .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Formatting
+
+extension Double {
+    /// "12.5" / "88" — a percentage without a pointless trailing zero.
+    var oneDecimal: String {
+        self == rounded() ? String(Int(rounded())) : String(format: "%.1f", self)
+    }
+}

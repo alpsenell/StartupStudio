@@ -15,6 +15,9 @@ public struct Company: Codable, Equatable, Sendable {
 public struct LedgerEntry: Codable, Equatable, Sendable {
     public enum Category: String, Codable, Equatable, Sendable, CaseIterable {
         case operating, rent, payroll, sales, contracts, marketing, research, other
+        /// Servers, bandwidth and support desks for everything on the
+        /// market — the cost of success (appended by WS-A).
+        case hosting
     }
 
     public var day: Int
@@ -51,6 +54,33 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
     case bankruptcy
     /// The founder sold the company to a rival — a successful exit.
     case acquired
+
+    // MARK: WS-F
+
+    /// The company went public and the founder rang the bell — the best
+    /// ending in the game.
+    case ipo
+    /// The board lost patience and replaced the founder with a hire.
+    case oustedByBoard
+
+    /// Whether the run ended somewhere the founder would call a win. The
+    /// endings screen picks its tone from this.
+    public var isSuccess: Bool {
+        switch self {
+        case .acquired, .ipo: true
+        case .bankruptcy, .oustedByBoard: false
+        }
+    }
+
+    /// The headline the founder biography leads with.
+    public var headline: String {
+        switch self {
+        case .bankruptcy: "Bankrupt"
+        case .acquired: "Acquired"
+        case .ipo: "Public"
+        case .oustedByBoard: "Replaced"
+        }
+    }
 }
 
 /// Terminal state details once the run has ended.
@@ -162,23 +192,292 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// A staff moment needs an answer by `respondByDay` (pauses).
     case staffEventOccurred(employeeID: UUID, kind: StaffEventKind, respondByDay: Int, day: Int)
     case staffEventResolved(employeeID: UUID, choice: StaffEventChoice, day: Int)
+
+    // Reserved regions — each workstream appends its new cases inside its
+    // own region and nowhere else, so six branches never touch the same
+    // line. Keep the regions in this order; never reorder existing cases
+    // (the case order is not persisted, but a stable diff is the point).
+
+    // MARK: WS-A
+
+    /// Live bugs on a released product crossed the alarm threshold: the
+    /// wild is eating its sales until someone is put on support.
+    case liveBugsSpiking(productID: UUID, liveBugs: Int, day: Int)
+    /// A patch landed: the product's quality and reviews were revised.
+    case updateShipped(productID: UUID, newScore: Int, day: Int)
+    /// The player moved a released product to a new price tier.
+    case priceChanged(productID: UUID, tier: PriceTier, day: Int)
+    /// An employee handed in their notice; a raise or promotion before
+    /// `respondByDay` still keeps them.
+    case resignationNotice(employeeID: UUID, name: String, respondByDay: Int, day: Int)
+    /// The founder's landlord has had enough of the overdrawn rent.
+    case evictionWarning(untilDay: Int, day: Int)
+    /// The founder was forced out of their home into a cheaper one.
+    case homeDowngraded(tier: HomeTier, day: Int)
+    /// Two hospital stays in a year: the founder now lives with a chronic
+    /// condition.
+    case chronicConditionDiagnosed(day: Int)
+    /// Three restorative weekends in a row cleared it.
+    case chronicConditionCleared(day: Int)
+    /// Burning out twice in a year made the trade press.
+    case founderMeltdown(day: Int)
+
+    // MARK: WS-B
+
+    /// A story beat is waiting on the founder's answer until
+    /// `respondByDay`. Pauses the timeline.
+    case narrativeChoice(eventID: String, respondByDay: Int, day: Int)
+    /// A story beat was answered — by the player, or by the deadline
+    /// (`automatic`).
+    case narrativeResolved(eventID: String, optionID: String, automatic: Bool, day: Int)
+    /// A headline from the wider industry. Flavor only: never pauses,
+    /// changes nothing.
+    case industryNews(headline: String, day: Int)
+
+    // MARK: WS-F
+
+    /// A chapter goal was finished (and its reward paid).
+    case goalCompleted(goalID: String, day: Int)
+    /// A new chapter opened.
+    case chapterReached(chapter: Int, day: Int)
+    /// An investor put a term sheet on the table; open until
+    /// `respondByDay`.
+    case investmentOffered(investorID: String, amount: Int, equity: Double, respondByDay: Int, day: Int)
+    /// The founder took the money.
+    case investmentAccepted(investorID: String, amount: Int, equity: Double, day: Int)
+    /// The founder turned it down.
+    case investmentDeclined(investorID: String, day: Int)
+    /// The offer expired unanswered.
+    case investmentWithdrawn(investorID: String, day: Int)
+    /// A quarterly board review landed.
+    case boardReviewed(met: Bool, pressure: Double, day: Int)
+    /// Board pressure crossed the warning line: they want a plan.
+    case boardDemandedPlan(pressure: Double, day: Int)
+    /// The board replaced the founder — the run ends.
+    case founderOusted(day: Int)
+    /// The company filed to go public — the run ends.
+    case wentPublic(proceeds: Int, day: Int)
+    /// A rival shipped a *named* product into a topic.
+    case rivalProductLaunched(rivalID: UUID, productName: String, topicID: String, quality: Int, day: Int)
+    /// A rival started a price war in a topic the player leads.
+    case priceWarStarted(rivalID: UUID, topicID: String, untilDay: Int, day: Int)
+    /// A rival cloned the player's best topic.
+    case rivalCopycat(rivalID: UUID, topicID: String, day: Int)
+    /// The player was interviewed a candidate and learned their second
+    /// trait.
+    case candidateInterviewed(candidateID: UUID, day: Int)
+
+    // MARK: Founder & people
+
+    /// The founder trained one of their own attributes.
+    case founderTrained(skill: FounderSkill, method: TrainingMethod, gained: Double, day: Int)
+    /// A networking weekend opened a room.
+    case networkingEventStarted(venue: NetworkingVenue, contactCount: Int, day: Int)
+    /// One exchange with somebody in the room. `landed` is whether it went
+    /// well; a miss costs rapport.
+    case networkingTalk(contactID: UUID, topic: ConversationTopic, landed: Bool, day: Int)
+    /// The founder walked out, or the room closed.
+    case networkingEventEnded(day: Int)
+    /// Somebody from the address book took a salaried job.
+    case contactRecruited(contactID: UUID, name: String, day: Int)
+    /// Somebody from the address book joined as an owner, for equity out
+    /// of the founder's own stake.
+    case contactJoinedForEquity(contactID: UUID, name: String, equity: Double, day: Int)
+    /// The founder put their own money into somebody else's startup.
+    case stakeAcquired(contactID: UUID, companyName: String, stakePercent: Double, amount: Int, day: Int)
+    /// One of those startups was bought. The proceeds land in the wallet.
+    case stakeExited(companyName: String, proceeds: Int, day: Int)
+    /// One of those startups folded.
+    case stakeLost(companyName: String, invested: Int, day: Int)
+    /// A contact put money into the founder's company.
+    case angelInvestment(contactID: UUID, name: String, amount: Int, equity: Double, day: Int)
+    /// A contact became the founder's partner.
+    case romanceStarted(contactID: UUID, name: String, day: Int)
+    /// The founder spent time with their partner.
+    case partnerTime(activity: PartnerActivity, affection: Double, day: Int)
+    /// The partner has had enough of being an afterthought — a warning
+    /// before the breakup, and the only one there is.
+    case partnerDrifting(affection: Double, day: Int)
+    /// The company is in debt with a personal guarantee outstanding: the
+    /// founder's savings and home go on `callOnDay` unless it is cleared.
+    /// The warning the flat trigger never gave.
+    case guaranteeAtRisk(amount: Int, callOnDay: Int, day: Int)
+    /// The bank called the founder's personal guarantee in: `amount` of
+    /// the company's debt was paid off with the founder's own savings, or
+    /// — with `tookHome` — by taking their home. Never silent: this is the
+    /// player's money, and it leaves without them pressing anything.
+    case guaranteeCalled(amount: Int, tookHome: Bool, day: Int)
+    /// The founder spent their own evening with somebody on the team.
+    case hungOutWith(employeeID: UUID, day: Int)
+    /// The founder taught somebody something.
+    case employeeMentored(employeeID: UUID, skill: TrainableSkill, day: Int)
 }
 
 extension GameEvent {
-    /// Whether this event is notable enough to auto-pause the timeline so
-    /// the player can react. Checked by the engine after every tick.
+    /// Whether this event is loud enough to stop the clock at all —
+    /// `.notable` or `.critical`. This is the *static* grade; whether a
+    /// given occurrence actually pauses also depends on the state and the
+    /// pause budget, which is `PausePolicy`'s job.
     public var pausesTimeline: Bool {
-        switch self {
-        case .bankruptcyWarning, .gameOver, .reviewsIn, .contractFailed,
-             .contractDelivered, .randomEvent, .lifeEvent, .founderAway,
-             .breakup, .childBorn, .marketBoom, .marketCrash, .employeeQuit,
-             .poachAttempt, .buyoutOffered, .companySold, .rivalAcquired,
-             .employeePoached, .officeRelocated, .staffEventOccurred:
-            true
-        default:
-            false
+        // Derived from `severity` in place: WS-A grades every case, and the
+        // grade is the single source of truth for whether the clock can stop.
+        switch severity {
+        case .quiet, .info: false
+        case .notable, .critical: true
         }
     }
+
+    /// How loudly an event should interrupt the player.
+    ///
+    /// `.critical` always stops the clock: money running out, an offer with
+    /// a deadline, somebody leaving, the founder in hospital. `.notable`
+    /// stops it too, but within the pause budget — one non-critical
+    /// interruption every `economy.pauseBudgetDays`. `.info` and `.quiet`
+    /// never stop it; they are there for the feed and the log.
+    public var severity: EventSeverity {
+        switch self {
+
+        // MARK: WS-A
+
+        // Money, deadlines, and people walking out the door: always stop.
+        case .bankruptcyWarning, .gameOver, .companySold, .rivalAcquired,
+             .poachAttempt, .buyoutOffered, .staffEventOccurred,
+             .resignationNotice, .employeeQuit, .employeePoached, .breakup:
+            .critical
+        // The founder's own body only interrupts when it is serious.
+        case .founderAway(let reason, _, _):
+            reason == "Burnout" || reason == "Hospital" ? .critical : .notable
+        // Worth looking up for, once the budget allows.
+        case .reviewsIn, .updateShipped, .contractFailed, .productOffMarket,
+             .liveBugsSpiking, .childBorn, .relationshipChanged, .officeUpgraded,
+             .officeRelocated, .homeUpgraded, .homeDowngraded, .researchCompleted,
+             .marketBoom, .marketCrash,
+             .evictionWarning, .chronicConditionDiagnosed, .chronicConditionCleared,
+             .founderMeltdown:
+            .notable
+        // A story beat that asked the player nothing. It happened, its
+        // effects are applied, the feed and the journal have it — but
+        // there is no answer to give, so the clock does not stop for it.
+        //
+        // These graded `.notable` when the scaffold's ten one-line events
+        // were the only events in the game. WS-B's catalog then made every
+        // beat that *does* want an answer a `.narrativeChoice`, which is
+        // critical and always pauses; what is left in these two cases is
+        // by definition the news you cannot act on. Together they were
+        // nineteen of a solo run's forty-four annual stops.
+        case .randomEvent, .lifeEvent:
+            .info
+        // Background texture: the feed shows it, the clock keeps running.
+        case .weekendSpent, .instantActivityDone, .socialActivity, .staffBirthday,
+             .friendshipFormed, .candidatesRefreshed, .contractOffersRefreshed:
+            .quiet
+
+        // MARK: WS-B
+
+        case .narrativeChoice:
+            .critical
+        case .narrativeResolved:
+            .info
+        case .industryNews:
+            .quiet
+
+        // MARK: WS-F
+
+        case .founderOusted, .wentPublic, .investmentOffered:
+            .critical
+        case .boardDemandedPlan, .chapterReached, .priceWarStarted:
+            .notable
+        case .goalCompleted, .investmentAccepted, .rivalProductLaunched, .rivalCopycat:
+            .info
+        case .investmentDeclined, .investmentWithdrawn, .boardReviewed, .candidateInterviewed:
+            .quiet
+
+        // MARK: Founder & people
+
+        // The founder's own money coming back — or not — is worth stopping
+        // for, and a partner who is drifting is the last warning before a
+        // breakup that ends the same way a bankruptcy does: suddenly, and
+        // with the player saying they never saw it.
+        // The founder's own money leaving without them pressing anything,
+        // and the notice that it is about to.
+        case .guaranteeCalled, .guaranteeAtRisk:
+            .critical
+        case .stakeExited, .stakeLost, .partnerDrifting:
+            .notable
+        case .networkingEventStarted, .contactRecruited, .contactJoinedForEquity,
+             .stakeAcquired, .angelInvestment, .romanceStarted:
+            .info
+        case .founderTrained, .networkingTalk, .networkingEventEnded, .partnerTime,
+             .hungOutWith, .employeeMentored:
+            .quiet
+
+        default:
+            .info
+        }
+    }
+}
+
+/// Decides which of a tick's events actually stop the clock.
+///
+/// Grading alone is not enough: a market boom in a topic the studio has
+/// nothing in is somebody else's news, and a run of `.notable` events in
+/// one week would put the player back where they started — one pause every
+/// four days at 4× speed, with no idea why. So on top of the severity:
+///
+/// - `.critical` always pauses;
+/// - `.marketBoom` / `.marketCrash` only pause for a topic the studio has
+///   something on the market in;
+/// - everything else `.notable` pauses at most once every
+///   `economy.pauseBudgetDays`, and is otherwise left as a feed line.
+public enum PausePolicy {
+    /// The events from this tick that should stop the clock, in order.
+    public static func pausingEvents(
+        _ events: [GameEvent],
+        state: GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        var pausing: [GameEvent] = []
+        var budgetSpent = false
+        let budgetDays = balance.economy.pauseBudgetDays
+        let sinceLast = state.economy.lastNonCriticalPauseDay.map { state.day - $0 }
+
+        for event in events {
+            switch event.severity {
+            case .quiet, .info:
+                continue
+            case .critical:
+                pausing.append(event)
+            case .notable:
+                guard isRelevant(event, to: state) else { continue }
+                guard budgetDays <= 0 || (!budgetSpent && (sinceLast ?? Int.max) >= budgetDays)
+                else { continue }
+                budgetSpent = true
+                pausing.append(event)
+            }
+        }
+        return pausing
+    }
+
+    /// Whether a notable event is about this studio at all.
+    private static func isRelevant(_ event: GameEvent, to state: GameState) -> Bool {
+        switch event {
+        case .marketBoom(let topicID, _), .marketCrash(let topicID, _):
+            state.products.contains { product in
+                guard case .released(let info) = product.stage else { return false }
+                return product.topicID == topicID && !info.offMarket
+            }
+        default:
+            true
+        }
+    }
+}
+
+/// How loudly an event interrupts the player, from background noise to a
+/// full stop. WS-A's pause policy grades every `GameEvent` with one of
+/// these and budgets non-critical pauses; WS-E picks banner and haptic
+/// strength from it.
+public enum EventSeverity: String, Codable, Equatable, Sendable, CaseIterable {
+    case quiet, info, notable, critical
 }
 
 /// The complete, serializable simulation state. A pure value: the reducer is
@@ -187,7 +486,7 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Days per game year (52 weeks of 7 days).
     static let daysPerYear = 364
     /// Days per game week.
-    static let daysPerWeek = 7
+    public static let daysPerWeek = 7
     /// The maximum number of `eventLog` entries retained (mirrors
     /// `FinancialLedger.maxEntries`).
     static let maxEventLogEntries = 500
@@ -202,6 +501,30 @@ public struct GameState: Codable, Equatable, Sendable {
     /// shift the long-established `rng` stream that the original systems
     /// (and their determinism tests) document word by word.
     public var worldRNG: SeededRNG
+    /// A third stream, for the investor and board layer alone.
+    ///
+    /// Same reasoning as `worldRNG`, one level down. Whether a term sheet
+    /// is on the table on a given day depends on `Investors.json`'s
+    /// valuation floors, so every time those floors are retuned the number
+    /// of draws taken before day N changes — and if the investors drew
+    /// from `worldRNG` that would reshuffle rivals, the city, the social
+    /// round and every life event for every seed. It did: halving the
+    /// floors in this pass moved `NeglectfulBot`'s worst wallet from
+    /// −$7,610 to −$8,647 without a single number in the founder's life
+    /// changing, purely by shifting the stream underneath it. Pricing the
+    /// board is now orthogonal to the rest of the world by construction.
+    public var investorRNG: SeededRNG = SeededRNG(seed: 0x1D0B_E5EE_D1D0_B5EE)
+    /// A fourth stream, for the people the founder meets: who is standing
+    /// in the networking room, whether a chat lands, and how the founder's
+    /// personal stakes in other studios move.
+    ///
+    /// The same argument as `investorRNG`, and it matters more here: the
+    /// venue is rolled the moment a networking weekend resolves, which is
+    /// mid-`LifeSystem`, in the middle of the original `rng` stream. Drawn
+    /// from there, every founder who ever plans a Friday night would
+    /// reshuffle their own life events, contract offers and candidate
+    /// pools for the rest of the run.
+    public var socialRNG: SeededRNG = SeededRNG(seed: 0x50C1_A150_C1A1_50C1)
     /// Ticks since founding; starts at 0.
     public var day: Int
     public var speed: SimSpeed
@@ -242,6 +565,19 @@ public struct GameState: Codable, Equatable, Sendable {
     /// emit formed/dissolved events on transitions. `activeDepartments` is
     /// the live truth.
     public var knownDepartments: Set<Department>
+    /// Economy, live-ops and pacing state (WS-A). Empty in the scaffold.
+    public var economy: EconomyState
+    /// Narrative engine state — pending choice, flags, cooldowns (WS-B).
+    /// Empty in the scaffold.
+    public var narrative: NarrativeState
+    /// Chapters, goals and perks (WS-F). Empty in the scaffold.
+    public var progression: ProgressionState
+    /// Rounds raised, equity and board pressure (WS-F). Empty in the
+    /// scaffold.
+    public var investors: InvestorState
+    /// The address book, the room the founder is standing in, and the
+    /// stakes they hold in other people's startups.
+    public var networking: NetworkingState = .empty
     public var gameOver: GameOverInfo?
 
     /// Starts a fresh company. `balance` is used as given — pass the
@@ -251,22 +587,35 @@ public struct GameState: Codable, Equatable, Sendable {
         companyName: String,
         seed: UInt64,
         balance: BalanceConfig,
-        difficulty: Difficulty = .normal
+        difficulty: Difficulty = .normal,
+        founder: FounderProfile = .default
     ) -> GameState {
         var rng = SeededRNG(seed: seed)
-        let founder = Employee(
-            id: UUID(from: &rng),
-            name: "Founder",
-            skills: SkillSet(
-                coding: balance.founderCoding,
-                design: balance.founderDesign,
-                marketing: balance.founderMarketing
+        // The id and the appearance word are drawn in this order, always —
+        // a profile that pins the appearance still burns the draw, so the
+        // stream walks the same path whatever the new-game flow chose.
+        let founderID = UUID(from: &rng)
+        let drawnAppearanceSeed = rng.next()
+        let founderEmployee = Employee(
+            id: founderID,
+            name: founder.displayName,
+            // The chosen archetype's spread from the progression balance.
+            // The default founder — and any archetype the balance does not
+            // list — falls back to the flat founder skills, which is
+            // exactly the pre-archetype founder.
+            skills: founder.startingSkills(
+                balance: balance,
+                fallback: SkillSet(
+                    coding: balance.founderCoding,
+                    design: balance.founderDesign,
+                    marketing: balance.founderMarketing
+                )
             ),
             weeklySalary: 0,
             assignment: .idle,
             isFounder: true,
             hiredDay: 0,
-            appearanceSeed: rng.next(),
+            appearanceSeed: founder.appearanceSeed ?? drawnAppearanceSeed,
             role: .founder
         )
         return GameState(
@@ -276,6 +625,11 @@ public struct GameState: Codable, Equatable, Sendable {
             // Derived from the seed (not drawn from `rng`) so the original
             // stream's draw count at newGame is unchanged.
             worldRNG: SeededRNG(seed: seed &* 0x9E37_79B9_7F4A_7C15 &+ 1),
+            // Likewise derived, with a different odd multiplier so the two
+            // world streams never run in lockstep.
+            investorRNG: SeededRNG(seed: seed &* 0xD1B5_4A32_D192_ED03 &+ 2),
+            // A third derived stream, a third odd multiplier.
+            socialRNG: SeededRNG(seed: seed &* 0xA24B_AED4_963E_E407 &+ 3),
             day: 0,
             speed: .paused,
             company: Company(
@@ -287,7 +641,7 @@ public struct GameState: Codable, Equatable, Sendable {
             ),
             ledger: FinancialLedger(entries: []),
             products: [],
-            employees: [founder],
+            employees: [founderEmployee],
             candidatePool: [],
             research: .initial,
             contractOffers: [],
@@ -305,6 +659,11 @@ public struct GameState: Codable, Equatable, Sendable {
             loanBalance: 0,
             amenities: [],
             knownDepartments: [],
+            economy: .initial,
+            narrative: .initial,
+            progression: .initial(founder: founder),
+            investors: .initial,
+            networking: .empty,
             gameOver: nil
         )
     }
@@ -362,6 +721,35 @@ public struct GameState: Codable, Equatable, Sendable {
             return false
         }
     }
+
+    /// Every product currently in development. The office tier sets how
+    /// many there may be; `productInDevelopment` stays as the
+    /// first-of-these shorthand for the UI.
+    public var productsInDevelopment: [Product] {
+        products.filter { product in
+            if case .development = product.stage { return true }
+            return false
+        }
+    }
+
+    /// How many products may be in development at once: garage 1, loft 2,
+    /// studio 3, campus 5.
+    public var devSlots: Int { company.officeTier.concurrentDevSlots }
+
+    /// Whether there is room to start another product right now.
+    /// Builds under way right now: products in development *and* patches
+    /// in flight.
+    ///
+    /// A patch is a build — it draws on the same pools, occupies the same
+    /// people, and ships the same way — so it takes a slot like one. It
+    /// did not, which made patching free: no slot, no cash, no cooldown,
+    /// and twelve of them took any product to the review ceiling however
+    /// it had shipped.
+    public var buildsInFlight: Int {
+        productsInDevelopment.count + economy.updates.count
+    }
+
+    public var hasFreeDevSlot: Bool { buildsInFlight < devSlots }
 
     /// Looks up a product by id.
     public func product(id: UUID) -> Product? {
@@ -427,7 +815,9 @@ public struct GameState: Codable, Equatable, Sendable {
 // identical states. The set, `life`, `market`, `loanBalance`, and
 // `difficulty` keys also decode as optional so saves written before the
 // fields existed keep loading (a missing life starts fresh with an empty
-// wallet; a missing difficulty is Normal).
+// wallet; a missing difficulty is Normal). The four workstream sub-states
+// (`economy`, `narrative`, `progression`, `investors`) follow the same
+// rule: absent keys decode as `.initial`, so `saveFormatVersion` stays 1.
 
 extension GameState {
     private enum CodingKeys: String, CodingKey {
@@ -435,7 +825,10 @@ extension GameState {
         case candidatePool, research, contractOffers, activeContracts, campaigns
         case eventLog, milestonesReached, life, market, loanBalance, gameOver
         case amenities, knownDepartments, difficulty
-        case worldRNG, rivals, city, friendships, pendingStaffEvent, lastTeamDinnerDay
+        case worldRNG, investorRNG, rivals, city, friendships, pendingStaffEvent
+        case lastTeamDinnerDay
+        case economy, narrative, progression, investors
+        case socialRNG, networking
     }
 
     public init(from decoder: any Decoder) throws {
@@ -449,6 +842,14 @@ extension GameState {
             // constant is.
             worldRNG: try container.decodeIfPresent(SeededRNG.self, forKey: .worldRNG)
                 ?? SeededRNG(seed: 0xC0FF_EE00_C0FF_EE00),
+            // Same rule for saves written before the investors had their
+            // own stream: a constant is stable across round-trips, which
+            // is all determinism asks of it.
+            investorRNG: try container.decodeIfPresent(SeededRNG.self, forKey: .investorRNG)
+                ?? SeededRNG(seed: 0x1D0B_E5EE_D1D0_B5EE),
+            // And again for the people stream.
+            socialRNG: try container.decodeIfPresent(SeededRNG.self, forKey: .socialRNG)
+                ?? SeededRNG(seed: 0x50C1_A150_C1A1_50C1),
             day: try container.decode(Int.self, forKey: .day),
             speed: try container.decode(SimSpeed.self, forKey: .speed),
             company: try container.decode(Company.self, forKey: .company),
@@ -477,6 +878,13 @@ extension GameState {
             knownDepartments: Set(
                 try container.decodeIfPresent([Department].self, forKey: .knownDepartments) ?? []
             ),
+            economy: try container.decodeIfPresent(EconomyState.self, forKey: .economy) ?? .initial,
+            narrative: try container.decodeIfPresent(NarrativeState.self, forKey: .narrative) ?? .initial,
+            progression: try container.decodeIfPresent(ProgressionState.self, forKey: .progression)
+                ?? .initial,
+            investors: try container.decodeIfPresent(InvestorState.self, forKey: .investors) ?? .initial,
+            networking: try container.decodeIfPresent(NetworkingState.self, forKey: .networking)
+                ?? .empty,
             gameOver: try container.decodeIfPresent(GameOverInfo.self, forKey: .gameOver)
         )
     }
@@ -487,6 +895,8 @@ extension GameState {
         try container.encode(difficulty, forKey: .difficulty)
         try container.encode(rng, forKey: .rng)
         try container.encode(worldRNG, forKey: .worldRNG)
+        try container.encode(investorRNG, forKey: .investorRNG)
+        try container.encode(socialRNG, forKey: .socialRNG)
         try container.encode(day, forKey: .day)
         try container.encode(speed, forKey: .speed)
         try container.encode(company, forKey: .company)
@@ -517,6 +927,11 @@ extension GameState {
         try container.encode(
             knownDepartments.sorted { $0.rawValue < $1.rawValue }, forKey: .knownDepartments
         )
+        try container.encode(economy, forKey: .economy)
+        try container.encode(narrative, forKey: .narrative)
+        try container.encode(progression, forKey: .progression)
+        try container.encode(investors, forKey: .investors)
+        try container.encode(networking, forKey: .networking)
         try container.encodeIfPresent(gameOver, forKey: .gameOver)
     }
 }

@@ -45,6 +45,8 @@ struct ResearchView: View {
 private struct LabSummaryCard: View {
     let engine: GameEngine
 
+    @Environment(AppRouter.self) private var router
+
     private var research: ResearchState { engine.state.research }
 
     private var bankedRP: Int { Int(research.banked.rounded()) }
@@ -71,9 +73,21 @@ private struct LabSummaryCard: View {
                 }
 
                 if researcherCount == 0 {
-                    Text("Assign someone to Research from the Team tab.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.warning)
+                    HStack(spacing: Theme.Spacing.md) {
+                        Text("Nobody is researching — the lab banks no points.")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.warning)
+                        Spacer(minLength: Theme.Spacing.sm)
+                        Button {
+                            Haptics.tap()
+                            router.tab = .team
+                        } label: {
+                            Label("Assign", systemImage: "person.2.fill")
+                                .font(.system(.footnote, design: .rounded).weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Assign someone to research")
+                    }
                 }
 
                 if let activeNode {
@@ -161,7 +175,24 @@ private struct TechNodeRow: View {
     let node: TechNode
     let onSelect: (TechNode) -> Void
 
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
+    /// Drives the one-shot flip when this node's research lands.
+    @State private var flip: Double = 0
+
     private var research: ResearchState { engine.state.research }
+
+    /// True on the tick this node's `.researchCompleted` arrives, so the
+    /// card can turn over once and settle as "owned".
+    private var justCompleted: Bool {
+        guard case .researchCompleted(let nodeID, let day) = engine.state.eventLog.last else {
+            return false
+        }
+        return nodeID == node.id && day == engine.state.day
+    }
 
     private var status: TechNodeStatus {
         techNodeStatus(node, research: research)
@@ -181,8 +212,21 @@ private struct TechNodeRow: View {
             }
         }
         .contentShape(Rectangle())
+        .rotation3DEffect(.degrees(flip), axis: (x: 1, y: 0, z: 0))
         .onTapGesture { onSelect(node) }
         .accessibilityAction(named: "Show details") { onSelect(node) }
+        // A finished tech turns over once: the one moment in the tree
+        // that is worth watching.
+        .onChange(of: justCompleted) { _, completed in
+            guard completed else { return }
+            Sounds.play(.goal)
+            Haptics.success()
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.6)) { flip = 360 }
+            Task {
+                try? await Task.sleep(for: .milliseconds(700))
+                flip = 0
+            }
+        }
     }
 
     /// Trailing "there's more" affordance on every row.
@@ -251,7 +295,12 @@ private struct TechNodeRow: View {
                 // No confirmation needed: cancelling refunds progress to
                 // the banked pool.
                 Button("Cancel") {
-                    engine.send(.cancelResearch)
+                    shell.toasts.send(
+                        .cancelResearch,
+                        to: engine,
+                        ack: "Shelved \(node.name) — the points go back in the bank",
+                        icon: "flask"
+                    )
                 }
                 .font(.system(.footnote, design: .rounded).weight(.semibold))
                 .buttonStyle(.bordered)
@@ -299,7 +348,11 @@ private struct TechNodeRow: View {
                 }
                 Spacer(minLength: Theme.Spacing.sm)
                 Button(isSwitch ? "Switch" : "Research") {
-                    engine.send(.startResearch(nodeID: node.id))
+                    shell.toasts.send(
+                        .startResearch(nodeID: node.id),
+                        to: engine,
+                        rejected: "\(node.name) can't be started yet."
+                    )
                 }
                 .font(.system(.footnote, design: .rounded).weight(.semibold))
                 .buttonStyle(.borderedProminent)

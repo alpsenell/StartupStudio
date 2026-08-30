@@ -142,6 +142,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
         /// Keyed by `HomeTier` raw value.
         public var homes: [String: HomeDef]
+        /// Evenings the founder has in a week, keyed by `WorkSchedule` raw
+        /// value — the Life tab's scarce resource, spent by training, a
+        /// partner activity, a hang-out, mentoring or an instant activity.
+        ///
+        /// An empty map means no budget at all, which is the pre-budget
+        /// behaviour: every action back on its own independent cooldown.
+        /// A balance file without the key therefore plays exactly as it
+        /// did, and so does every test written before this existed.
+        public var eveningsPerWeek: [String: Int]
 
         public init(
             startingWallet: Int,
@@ -184,7 +193,10 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             maxChildren: Int,
             childSpacingDays: Int,
             childMoodBonus: Double,
-            homes: [String: HomeDef]
+            homes: [String: HomeDef],
+            // Last, with a default, so every caller written before the
+            // evening budget existed still compiles — and gets no budget.
+            eveningsPerWeek: [String: Int] = [:]
         ) {
             self.startingWallet = startingWallet
             self.defaultFounderSalary = defaultFounderSalary
@@ -227,6 +239,7 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             self.childSpacingDays = childSpacingDays
             self.childMoodBonus = childMoodBonus
             self.homes = homes
+            self.eveningsPerWeek = eveningsPerWeek
         }
 
         public func drift(for schedule: WorkSchedule) -> MeterDrift {
@@ -259,6 +272,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
                 preconditionFailure("BalanceConfig.life is missing a home definition for tier '\(tier.rawValue)'")
             }
             return def
+        }
+
+        /// Evenings this schedule leaves the founder, or `nil` when the
+        /// balance has no budget — the caller then applies only the
+        /// per-day caps, as it did before the budget existed.
+        public func evenings(for schedule: WorkSchedule) -> Int? {
+            eveningsPerWeek[schedule.rawValue]
         }
     }
 
@@ -488,23 +508,24 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     }
 
     /// Tuning for company loans.
+    ///
+    /// The ceiling itself is *not* here: it is
+    /// `economy.creditLimitBase / creditLimitRevenueFactor /
+    /// creditLimitPerReputation`, split into an unsecured share and a share
+    /// the founder's home secures. This block used to carry a second,
+    /// unused `baseLimit + reputation × perReputation` that only the
+    /// Business tab read, so the screen and the bank quietly disagreed
+    /// about what could be borrowed; both now go through
+    /// `GameState.creditLimit(balance:)`.
     public struct LoanBalance: Codable, Equatable, Sendable {
-        /// Borrowing limit: `baseLimit + reputation × perReputation`, minus
-        /// what's already outstanding.
-        public var baseLimit: Int
-        public var perReputation: Double
         /// Interest charged weekly on the outstanding balance.
         public var weeklyInterestRate: Double
 
-        public init(baseLimit: Int, perReputation: Double, weeklyInterestRate: Double) {
-            self.baseLimit = baseLimit
-            self.perReputation = perReputation
+        public init(weeklyInterestRate: Double) {
             self.weeklyInterestRate = weeklyInterestRate
         }
 
-        public static let standard = LoanBalance(
-            baseLimit: 20_000, perReputation: 600, weeklyInterestRate: 0.01
-        )
+        public static let standard = LoanBalance(weeklyInterestRate: 0.01)
     }
 
     /// Tuning for company depth: how employee roles route build output,
@@ -751,6 +772,14 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         /// only while the company looks weak.
         public var buyoutIntervalDays: Int
         public var buyoutOffsetDays: Int
+        /// No buyout offer before this day.
+        ///
+        /// Reputation starts at 10 and `weakRepThreshold` is 20, so without
+        /// this a brand-new garage looks "weak" from day one and gets a
+        /// distress offer inside its first month — a critical pause, with a
+        /// deadline, before the player has shipped anything. Optional so an
+        /// older Balance.json still decodes; `nil` means the old behaviour.
+        public var buyoutEarliestDay: Int?
         public var buyoutCooldownDays: Int
         public var buyoutChance: Double
         public var weakCashThreshold: Int
@@ -803,6 +832,7 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             matchLoyaltyBoost: Double,
             buyoutIntervalDays: Int,
             buyoutOffsetDays: Int,
+            buyoutEarliestDay: Int? = nil,
             buyoutCooldownDays: Int,
             buyoutChance: Double,
             weakCashThreshold: Int,
@@ -846,6 +876,7 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             self.matchLoyaltyBoost = matchLoyaltyBoost
             self.buyoutIntervalDays = buyoutIntervalDays
             self.buyoutOffsetDays = buyoutOffsetDays
+            self.buyoutEarliestDay = buyoutEarliestDay
             self.buyoutCooldownDays = buyoutCooldownDays
             self.buyoutChance = buyoutChance
             self.weakCashThreshold = weakCashThreshold
@@ -1546,6 +1577,30 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     /// key reads as `DifficultyBalance.identity`.
     public var difficulty: [String: DifficultyBalance]
 
+    // MARK: - Workstream blocks
+
+    // One block per workstream, each defined in its own
+    // `BalanceConfig+X.swift` and tuned in its own `Balance.json` object,
+    // so six branches never edit the same balance line. An absent block
+    // decodes as `.default`.
+
+    /// Economy, live ops and pacing (WS-A).
+    public var economy: EconomyBalance
+    /// Narrative cadences and choice deadlines (WS-B).
+    public var narrative: NarrativeBalance
+    /// Chapters, goals and archetypes (WS-F).
+    public var progression: ProgressionBalance
+    /// Rounds, board pressure and the IPO gate (WS-F).
+    public var investors: InvestorBalance
+    /// Employee trait strengths (WS-F).
+    public var traits: TraitBalance
+    /// The founder's own attributes and what training them costs.
+    public var founder: FounderBalance
+    /// The networking floor: who is in the room and what a deal costs.
+    public var networking: NetworkingBalance
+    /// A partner who needs tending, and a team that can become friends.
+    public var relationships: RelationshipBalance
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,
@@ -1638,7 +1693,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         genreFatigueWindowDays: Int = 84,
         marketHistoryWeeks: Int = 26,
         marketEventLogCap: Int = 30,
-        difficulty: [String: DifficultyBalance] = DifficultyBalance.standardTable
+        difficulty: [String: DifficultyBalance] = DifficultyBalance.standardTable,
+        economy: EconomyBalance = .default,
+        narrative: NarrativeBalance = .default,
+        progression: ProgressionBalance = .default,
+        investors: InvestorBalance = .default,
+        traits: TraitBalance = .default,
+        founder: FounderBalance = .default,
+        networking: NetworkingBalance = .default,
+        relationships: RelationshipBalance = .default
     ) {
         self.startingCash = startingCash
         self.weeklyOperatingCost = weeklyOperatingCost
@@ -1732,6 +1795,14 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         self.marketHistoryWeeks = marketHistoryWeeks
         self.marketEventLogCap = marketEventLogCap
         self.difficulty = difficulty
+        self.economy = economy
+        self.narrative = narrative
+        self.progression = progression
+        self.investors = investors
+        self.traits = traits
+        self.founder = founder
+        self.networking = networking
+        self.relationships = relationships
     }
 
     public func office(_ tier: OfficeTier) -> OfficeDef {
@@ -1806,6 +1877,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             )
         }
         return copy
+    }
+
+    /// The weekly pay an employee considers fair: the candidate-market
+    /// rate for their skills, raised by `staff.levelPayExpectation` per
+    /// seniority level. Pay below `staff.underpaidThreshold` of it drags
+    /// morale toward the door; above `staff.wellPaidThreshold` lifts it.
+    public func fairWeeklyPay(for employee: Employee) -> Double {
+        (Double(salaryBase) + salaryPerSkillPoint * employee.skills.total)
+            * (1 + staff.levelPayExpectation * Double(employee.level.rank))
     }
 
     /// Decodes the bundled `Balance.json` via `Bundle.module`.

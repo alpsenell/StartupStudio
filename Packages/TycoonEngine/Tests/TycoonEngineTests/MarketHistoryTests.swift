@@ -124,8 +124,16 @@ struct MarketHistoryTests {
         // appended it to the history, breaking `history.last == multiplier`.
         var balance = try BalanceConfig.loadBundled()
         balance.rivals.rivalCount = 0
+        // Same reason, for WS-B's story beats: a `market` effect moves a
+        // topic's multiplier after the weekly shift already logged it.
+        balance.narrative.companyEventChance = 0
+        balance.narrative.lifeEventChance = 0
         let content = TestContent.bundled
         var state = GameState.newGame(companyName: "Acme", seed: 5, balance: balance)
+        // A studio that ships nothing for thirty weeks now runs out of
+        // money long before then, and a game-over state stops ticking —
+        // this test is about the market log, so bankroll it.
+        state.company.cash = 10_000_000
         for _ in 0..<(7 * 30) {
             Reducer.tick(&state, balance: balance, content: content)
         }
