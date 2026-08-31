@@ -578,6 +578,10 @@ public struct GameState: Codable, Equatable, Sendable {
     /// The address book, the room the founder is standing in, and the
     /// stakes they hold in other people's startups.
     public var networking: NetworkingState = .empty
+    /// What the studio's shipped products left behind, one per product
+    /// type: filled pools to start the next build from, and the debt that
+    /// comes with them. Empty until something ships.
+    public var codebases: [Codebase] = []
     public var gameOver: GameOverInfo?
 
     /// Starts a fresh company. `balance` is used as given — pass the
@@ -829,6 +833,7 @@ extension GameState {
         case lastTeamDinnerDay
         case economy, narrative, progression, investors
         case socialRNG, networking
+        case codebases
     }
 
     public init(from decoder: any Decoder) throws {
@@ -885,6 +890,9 @@ extension GameState {
             investors: try container.decodeIfPresent(InvestorState.self, forKey: .investors) ?? .initial,
             networking: try container.decodeIfPresent(NetworkingState.self, forKey: .networking)
                 ?? .empty,
+            // A save written before codebases existed has none, so every
+            // product in it is greenfield and behaves exactly as it did.
+            codebases: try container.decodeIfPresent([Codebase].self, forKey: .codebases) ?? [],
             gameOver: try container.decodeIfPresent(GameOverInfo.self, forKey: .gameOver)
         )
     }
@@ -932,6 +940,7 @@ extension GameState {
         try container.encode(progression, forKey: .progression)
         try container.encode(investors, forKey: .investors)
         try container.encode(networking, forKey: .networking)
+        try container.encode(codebases, forKey: .codebases)
         try container.encodeIfPresent(gameOver, forKey: .gameOver)
     }
 }

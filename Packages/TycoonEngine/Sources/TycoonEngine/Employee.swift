@@ -31,6 +31,12 @@ public enum Assignment: Codable, Equatable, Sendable {
     /// the wild and holding down subscription churn. Only valid while the
     /// product is on the market; the daily sweep clears it otherwise.
     case support(UUID)
+    /// Paying down a `Codebase`'s technical debt. Produces no design, no
+    /// code, no polish, no hype, no research and no revenue — the only
+    /// thing it moves is a number that makes everything built on that
+    /// codebase better. The payload is the `Codebase.id`; the daily sweep
+    /// clears the assignment if that codebase is gone.
+    case refactor(String)
 }
 
 /// Seniority ladder for hired staff. Levels raise output and what the

@@ -128,6 +128,11 @@ public enum Reducer {
                 typeID: typeID, topicID: topicID, name: name, focus: focus,
                 state: &state, content: content
             )
+        case let .startProductOnCodebase(typeID, topicID, name, focus, codebaseID):
+            events = ProductSystem.startProduct(
+                typeID: typeID, topicID: topicID, name: name, focus: focus,
+                codebaseID: codebaseID, state: &state, content: content
+            )
         case let .setPhaseFocus(productID, focus):
             events = ProductSystem.setPhaseFocus(productID: productID, focus: focus, state: &state)
         case let .ship(productID):

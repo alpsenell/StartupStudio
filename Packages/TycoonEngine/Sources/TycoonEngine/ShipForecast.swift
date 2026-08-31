@@ -7,7 +7,7 @@ import TycoonContent
 /// and until now the screen showed three completion bars and nothing else —
 /// so "100% on all three" could mean a quality of 58 and the player had no
 /// way to know. Two of the three terms that decide the number are invisible
-/// in the UI and always have been:
+/// in the UI and always have been, and a third arrived with the codebase:
 ///
 /// - **The crew ceiling.** A product can only be as good as the people who
 ///   built it. A crew of beginners tops out at `qualityCeilingBase` — 0.35
@@ -16,8 +16,12 @@ import TycoonContent
 ///   a "finished" product reviews badly, and it was nowhere on screen.
 /// - **Topic fit.** A type-topic pairing the content catalog dislikes
 ///   multiplies the whole thing by as little as 0.8.
+/// - **The codebase.** A build started on an existing codebase inherits its
+///   technical debt, and debt is a quality you cannot polish past however
+///   good the crew is. Greenfield builds read exactly 1 here, which is why
+///   this term was invisible until there was something to inherit.
 ///
-/// A third, `launchMarketScale`, is not a quality term but decides how much
+/// A fourth, `launchMarketScale`, is not a quality term but decides how much
 /// of the market is left to sell to: two launches of the same type inside a
 /// quarter cut the peak to about 0.61, and that number appears nowhere at
 /// all.
@@ -26,9 +30,22 @@ import TycoonContent
 public struct ShipForecast: Equatable, Sendable {
     /// Quality if shipped today, 0...100.
     public var quality: Double
-    /// The quality this crew could reach if every pool were full and the
-    /// bugs were gone: the ceiling the team itself imposes.
+    /// The quality this product could reach if every pool were full and the
+    /// bugs were gone: every ceiling term multiplied together.
     public var crewCeiling: Double
+    /// The crew's own share of that ceiling — what this team's skill
+    /// allows, before topic fit, tech and the codebase.
+    public var skillCeiling: Double
+    /// What the inherited codebase's debt allows, 1 for a greenfield
+    /// build. The term that lets the sheet say *the codebase caps this at
+    /// 61*, which is the whole reason a studio ever refactors.
+    public var codebaseCeiling: Double
+    /// The debt of the codebase this product is being built on, 0 when
+    /// there isn't one.
+    public var codebaseDebt: Double
+    /// The name of the codebase this product is being built on, `nil` for
+    /// a greenfield build.
+    public var codebaseName: String?
     /// `fitByType` for this pairing, 1 when the catalog is neutral.
     public var topicFit: Double
     /// What open bugs are costing right now, as a multiplier.
@@ -43,8 +60,17 @@ public struct ShipForecast: Equatable, Sendable {
     /// in the player's words — or `nil` when it is as good as it will get.
     public var limitingFactor: String? {
         if quality >= crewCeiling * 100 - 1 {
+            let cap = Int((crewCeiling * 100).rounded())
+            // At the ceiling, and there are two of them. Name whichever is
+            // actually holding the number down — telling a studio to hire
+            // better people when the problem is the foundations they
+            // insisted on reusing is the one piece of advice that would
+            // cost them a second bad product.
+            if codebaseCeiling < 0.99, codebaseCeiling < skillCeiling {
+                return "The codebase caps this at \(cap). Refactoring is the only way past it."
+            }
             return crewCeiling < 0.95
-                ? "Your crew caps this at \(Int((crewCeiling * 100).rounded())). Better people, not more time."
+                ? "Your crew caps this at \(cap). Better people, not more time."
                 : nil
         }
         if bugFactor < 0.95 {
@@ -84,12 +110,20 @@ extension GameState {
         let ceiling = ProductSystem.qualityCeiling(
             skillIndex: dev.crewSkillIndex, balance: balance
         )
+        let codebase = self.codebase(id: product.codebaseID)
+        let codebaseDebt = codebase?.debt ?? 0
+        let codebaseCeiling = balance.codebase.debtCeiling(codebaseDebt)
 
         return ShipForecast(
             quality: min(100, max(0,
                 100 * completion * topicFit * bugFactor * techMultiplier * ceiling
+                    * codebaseCeiling
             )),
-            crewCeiling: min(1, topicFit * techMultiplier * ceiling),
+            crewCeiling: min(1, topicFit * techMultiplier * ceiling * codebaseCeiling),
+            skillCeiling: ceiling,
+            codebaseCeiling: codebaseCeiling,
+            codebaseDebt: codebaseDebt,
+            codebaseName: codebase?.name,
             topicFit: topicFit,
             bugFactor: bugFactor,
             marketScale: ProductSystem.launchMarketScale(

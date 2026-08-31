@@ -1039,5 +1039,17 @@
     "bondOutputFactor": 0.12,
     "bondMoraleTargetFactor": 0.06,
     "bondLoyaltyPerDay": 0.15
+  },
+  "codebase": {
+    "carryFraction": 0.35,
+    "debtCeilingPenaltyPerPoint": 0.004,
+    "ceilingFloor": 0.55,
+    "debtBugRatePerPoint": 0.010,
+    "debtCap": 100.0,
+    "crunchDebtPerDay": 0.15,
+    "shipBugDebt": 0.5,
+    "patchDebt": 2.0,
+    "refactorBasePoints": 0.35,
+    "refactorCodingDivisor": 200.0
   }
 }

@@ -108,6 +108,21 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// Clears a candidate out of the pool without hiring them.
     case passOnCandidate(candidateID: UUID)
 
+    // MARK: The codebase
+
+    /// Starts a new product on the codebase a previous product left
+    /// behind: part of the pools already filled, and its technical debt
+    /// inherited along with them.
+    ///
+    /// A separate case rather than an extra parameter on `startProduct`
+    /// (Swift enum payloads take no defaults) — and separate is the better
+    /// shape anyway: greenfield stays the action it always was, byte for
+    /// byte, and the one screen that offers the trade is the only caller
+    /// that has to know the trade exists.
+    case startProductOnCodebase(
+        typeID: String, topicID: String, name: String, focus: PhaseFocus, codebaseID: String
+    )
+
     // MARK: Founder & people
 
     /// Spends the day getting better at one of the founder's own five

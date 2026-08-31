@@ -170,6 +170,11 @@ enum LiveOpsSystem {
             let newScore = info.averageReviewScore
             let stillSelling = !info.offMarket
             state.products[index].stage = .released(info)
+            // Patches are cheap and they are not free: each one leaves a
+            // little more in the codebase than it took out.
+            CodebaseSystem.accruePatchDebt(
+                productID: update.productID, state: &state, balance: balance
+            )
             if stillSelling {
                 for employeeIndex in state.employees.indices
                 where state.employees[employeeIndex].assignment == .product(update.productID) {

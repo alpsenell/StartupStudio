@@ -674,7 +674,8 @@ private func gameDateLabel(forDay day: Int) -> String {
 /// The screen used to show three completion bars and nothing else, so "100%
 /// on all three" could mean a quality of 58 with no way to tell — the two
 /// terms that put it there (the crew's ceiling and topic fit) were computed
-/// at launch and never shown. Ship-or-keep-working is the real decision on
+/// at launch and never shown — and a third, the inherited codebase's debt,
+/// arrived with a fourth page on the new-product sheet. Ship-or-keep-working is the real decision on
 /// this screen; this is the information it needs.
 private struct ShipForecastCard: View {
     let forecast: ShipForecast
@@ -692,10 +693,17 @@ private struct ShipForecastCard: View {
                         Text("projected quality")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text("your crew tops out at \(Int((forecast.crewCeiling * 100).rounded()))")
-                            .font(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(.tertiary)
+                        // Whose ceiling it is. Saying "your crew" when the
+                        // foundations are the problem sends the player to
+                        // the hiring desk to fix something hiring cannot.
+                        Text(
+                            forecast.codebaseCeiling < forecast.skillCeiling
+                                ? "the codebase tops this out at \(Int((forecast.crewCeiling * 100).rounded()))"
+                                : "your crew tops out at \(Int((forecast.crewCeiling * 100).rounded()))"
+                        )
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.tertiary)
                     }
                     Spacer(minLength: 0)
                 }
@@ -709,6 +717,19 @@ private struct ShipForecastCard: View {
                                 ? Theme.warning : .secondary
                         )
                         .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let name = forecast.codebaseName, forecast.codebaseDebt >= 1 {
+                    // The debt is on the sheet whether or not it is the
+                    // binding constraint yet, because by the time it binds
+                    // the only fix left is weeks of refactoring.
+                    Label(
+                        "Built on \(name), carrying \(Int(forecast.codebaseDebt.rounded())) debt — a ×\(forecast.codebaseCeiling.formatted(.number.precision(.fractionLength(2)))) ceiling you cannot polish past.",
+                        systemImage: "shippingbox.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(Theme.warning)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if forecast.marketScale < 0.99 {

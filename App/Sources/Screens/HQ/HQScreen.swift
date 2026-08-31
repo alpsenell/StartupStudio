@@ -30,7 +30,16 @@ struct HQScreen: View {
                     GoalsCard(engine: engine)
                     DepartmentsCard(engine: engine)
                     CompanyCard(company: engine.state.company, difficulty: engine.state.difficulty)
-                    BurnRateCard(weeklyBurn: engine.weeklyBurn, cash: engine.state.company.cash)
+                    BurnRateCard(
+                        weeklyBurn: engine.weeklyBurn,
+                        cash: engine.state.company.cash,
+                        codebases: engine.state.codebases,
+                        accruingDebt: engine.state.productsInDevelopment.reduce(0.0) {
+                            guard case .development(let dev) = $1.stage else { return $0 }
+                            return $0 + dev.debtAccrued
+                        },
+                        balance: engine.balance
+                    )
                     ProductStatusCard(engine: engine) { showingNewProduct = true }
                     JournalCard(engine: engine)
                     // In-content settings entry point: nav-bar toolbars are
@@ -170,6 +179,14 @@ private struct CompanyCard: View {
 private struct BurnRateCard: View {
     let weeklyBurn: Int
     let cash: Int
+    /// The studio's codebases, for the second kind of debt this card
+    /// reports. Empty until something ships, and the line is hidden then.
+    let codebases: [Codebase]
+    /// The mess the builds currently in flight have made and not yet
+    /// handed over. It lands on a codebase at ship — which is the point,
+    /// and the reason it is worth watching before then.
+    let accruingDebt: Double
+    let balance: BalanceConfig
 
     var body: some View {
         CardView("Burn rate", systemImage: "flame.fill") {
@@ -187,8 +204,72 @@ private struct BurnRateCard: View {
                         .font(.footnote)
                         .foregroundStyle(Theme.negativeCash)
                 }
+                // The other debt. It is on the burn card and not on a
+                // screen of its own because it is the same kind of number
+                // as the runway: something that is quietly getting worse
+                // while you are looking at the products.
+                let worst = codebases.max(by: { $0.debt < $1.debt })
+                if (worst?.debt ?? 0) >= 1 || accruingDebt >= 1 {
+                    Divider()
+                    codebaseDebtLine(worst)
+                }
             }
         }
+    }
+
+    @ViewBuilder
+    private func codebaseDebtLine(_ codebase: Codebase?) -> some View {
+        let debt = codebase?.debt ?? 0
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "shippingbox.fill")
+                    .foregroundStyle(debtTint(debt))
+                Text("Technical debt")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                if accruingDebt >= 1 {
+                    // What this crunch is costing, before it costs it.
+                    Text("+\(Int(accruingDebt.rounded()))")
+                        .font(.footnote.monospacedDigit())
+                        .foregroundStyle(Theme.warning)
+                }
+                Text("\(Int(debt.rounded()))")
+                    .font(.system(.headline, design: .rounded).monospacedDigit())
+                    .foregroundStyle(debtTint(debt))
+            }
+            Text(explanation(codebase))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Technical debt \(Int(debt.rounded()))"
+                + (accruingDebt >= 1 ? ", \(Int(accruingDebt.rounded())) more in the build" : "")
+        )
+    }
+
+    private func explanation(_ codebase: Codebase?) -> String {
+        guard let codebase, codebase.debt >= 1 else {
+            return "The build in flight is cutting corners. It lands on the "
+                + "codebase you leave behind, not on this product."
+        }
+        let ceiling = balance.codebase.debtCeiling(codebase.debt)
+        let base = "\(codebase.name) caps anything built on it at "
+            + "\(Int((ceiling * 100).rounded()))%. Refactoring is the only way down."
+        return accruingDebt >= 1
+            ? base + " The build in flight will add \(Int(accruingDebt.rounded())) more at launch."
+            : base
+    }
+
+    /// Debt reads neutral, then warning, then the colour cash uses when
+    /// the company is underwater — because by then it is the same problem.
+    private func debtTint(_ debt: Double) -> Color {
+        let ceiling = balance.codebase.debtCeiling(debt)
+        if ceiling <= 0.80 { return Theme.negativeCash }
+        if ceiling <= 0.92 { return Theme.warning }
+        return .secondary
     }
 
     private var runwayValue: String {

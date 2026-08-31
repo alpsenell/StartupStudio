@@ -276,23 +276,34 @@ enum ProductSystem {
         topicID: String,
         name: String,
         focus: PhaseFocus,
+        codebaseID: String? = nil,
         state: inout GameState,
         content: ContentCatalog
     ) -> [GameEvent] {
         guard state.hasFreeDevSlot,
-              content.productType(typeID) != nil,
+              let type = content.productType(typeID),
               state.isProductTypeUnlocked(typeID, content: content),
               content.topic(topicID) != nil
         else { return [] }
 
+        // The head start. A codebase of a different type is not one you can
+        // build on, and an unknown id is simply greenfield — both fall
+        // through to the zeroed pools the game has always started with.
+        let codebase = state.codebase(id: codebaseID).flatMap { $0.id == typeID ? $0 : nil }
         let id = UUID(from: &state.rng)
         let progress = DevProgress(
-            designPts: 0, codePts: 0, polishPts: 0,
+            // Clamped to the type's own pools: a shrunken content table
+            // must never hand the player a product that is finished on
+            // day one.
+            designPts: min(type.designPts, codebase?.designPts ?? 0),
+            codePts: min(type.codePts, codebase?.codePts ?? 0),
+            polishPts: min(type.polishPts, codebase?.polishPts ?? 0),
             openBugs: 0, focus: focus.normalized, hype: 0
         )
         state.products.append(Product(
             id: id, name: name, typeID: typeID, topicID: topicID,
-            stage: .development(progress)
+            stage: .development(progress),
+            codebaseID: codebase?.id
         ))
         for index in state.employees.indices where state.employees[index].assignment == .idle {
             state.employees[index].assignment = .product(id)
@@ -352,8 +363,14 @@ enum ProductSystem {
         // (already capped) sharpens a good team rather than rescuing a bad
         // one — it multiplies *under* the ceiling.
         let ceiling = qualityCeiling(skillIndex: dev.crewSkillIndex, balance: balance)
+        // And the ceiling the *codebase* imposes: a quality you cannot
+        // polish past, however good the crew is, because the foundations
+        // are what they are. Exactly 1 for a greenfield build.
+        let codebaseCeiling = balance.codebase.debtCeiling(
+            state.inheritedDebt(for: state.products[index])
+        )
         let quality = min(100, max(0,
-            100 * completion * topicFit * bugFactor * techMultiplier * ceiling
+            100 * completion * topicFit * bugFactor * techMultiplier * ceiling * codebaseCeiling
         ))
 
         // Full review model: the press expects more from an older, more
@@ -432,6 +449,14 @@ enum ProductSystem {
             state.company.reputation
                 + (Double(averageScore) - state.company.reputation) * balance.reputationReviewNudge
         ))
+        // What this product leaves behind for the next one: the carried
+        // share of its pools, and the debt of the build plus the bugs that
+        // went out with it. Recorded before the stage flips so the
+        // in-development progress is still readable.
+        CodebaseSystem.recordShip(
+            product: state.products[index], dev: dev, type: type,
+            state: &state, balance: balance
+        )
         state.products[index].stage = .released(info)
 
         // The category ledger: a launch is the biggest single thing the

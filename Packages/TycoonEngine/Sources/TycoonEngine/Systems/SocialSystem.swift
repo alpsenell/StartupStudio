@@ -108,6 +108,8 @@ enum SocialSystem {
             // Appended with `Assignment.support` (WS-A): people on the same
             // support desk work side by side like any other crew.
             case .support(let id): target = "support-\(id.uuidString)"
+            // And again for the people rewriting the same codebase.
+            case .refactor(let id): target = "refactor-\(id)"
             }
             if let target {
                 groups[target, default: []].append(employee.id)

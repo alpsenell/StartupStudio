@@ -4,11 +4,12 @@ import TycoonEngine
 
 /// The three pages of the new-product flow.
 private enum NewProductStep: Int, CaseIterable, Comparable {
-    case type, topic, details
+    case type, foundation, topic, details
 
     var title: String {
         switch self {
         case .type: "Type"
+        case .foundation: "Base"
         case .topic: "Topic"
         case .details: "Details"
         }
@@ -19,9 +20,16 @@ private enum NewProductStep: Int, CaseIterable, Comparable {
     }
 }
 
-/// Three-step sheet for starting a new product:
-/// 1. pick a type, 2. pick a topic, 3. name it and set the starting focus.
-/// Ends with `.startProduct` sent to the engine.
+/// Four-step sheet for starting a new product:
+/// 1. pick a type, 2. greenfield or an existing codebase, 3. pick a topic,
+/// 4. name it and set the starting focus.
+///
+/// Step 2 is skipped outright until the studio has shipped something of
+/// the chosen type — a first-time player never sees a page offering them a
+/// choice with one option — so the flow is three steps for the whole of
+/// the first product and four from the second on.
+///
+/// Ends with `.startProduct` (greenfield) or `.startProductOnCodebase`.
 struct NewProductFlow: View {
     let engine: GameEngine
 
@@ -34,6 +42,9 @@ struct NewProductFlow: View {
 
     @State private var step: NewProductStep = .type
     @State private var selectedTypeID: String?
+    /// The codebase to build on, `nil` for greenfield — which is the
+    /// default, and stays the default if the player never opens step 2.
+    @State private var selectedCodebaseID: String?
     @State private var selectedTopicID: String?
     @State private var name = ""
     @State private var focus: PhaseFocus = .balanced
@@ -43,7 +54,7 @@ struct NewProductFlow: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                StepIndicator(current: step)
+                StepIndicator(current: step, steps: visibleSteps)
                     .padding(.horizontal, Theme.Spacing.lg)
                     .padding(.vertical, Theme.Spacing.md)
 
@@ -71,6 +82,12 @@ struct NewProductFlow: View {
         switch step {
         case .type:
             TypeStep(engine: engine, selectedTypeID: $selectedTypeID)
+        case .foundation:
+            FoundationStep(
+                engine: engine,
+                codebases: availableCodebases,
+                selectedCodebaseID: $selectedCodebaseID
+            )
         case .topic:
             TopicStep(
                 engine: engine,
@@ -88,7 +105,7 @@ struct NewProductFlow: View {
 
     private var bottomBar: some View {
         HStack(spacing: Theme.Spacing.md) {
-            if let previous = NewProductStep(rawValue: step.rawValue - 1) {
+            if let previous = step(-1) {
                 Button {
                     withAnimation(Theme.Motion.entrance) {
                         step = previous
@@ -137,9 +154,31 @@ struct NewProductFlow: View {
     private var canAdvance: Bool {
         switch step {
         case .type: selectedTypeID != nil
+        // Greenfield is a real answer, so this page is never blocking.
+        case .foundation: true
         case .topic: selectedTopicID != nil
         case .details: false
         }
+    }
+
+    /// What the chosen type could be built on. Empty until the studio has
+    /// shipped one, which is what hides step 2 for the first product.
+    private var availableCodebases: [Codebase] {
+        guard let typeID = selectedTypeID else { return [] }
+        return engine.state.availableCodebases(typeID: typeID)
+    }
+
+    /// The steps this run of the sheet actually shows.
+    private var visibleSteps: [NewProductStep] {
+        NewProductStep.allCases.filter { $0 != .foundation || !availableCodebases.isEmpty }
+    }
+
+    /// The step `offset` places from `step` among the visible ones.
+    private func step(_ offset: Int) -> NewProductStep? {
+        let steps = visibleSteps
+        guard let index = steps.firstIndex(of: step) else { return nil }
+        let next = index + offset
+        return steps.indices.contains(next) ? steps[next] : nil
     }
 
     private var trimmedName: String {
@@ -151,7 +190,13 @@ struct NewProductFlow: View {
     }
 
     private func advance() {
-        guard let next = NewProductStep(rawValue: step.rawValue + 1) else { return }
+        guard let next = step(1) else { return }
+        // Leaving the type page invalidates any codebase chosen for a
+        // different type — the engine would ignore it, and a sheet that
+        // shows a head start it will not deliver is worse than no sheet.
+        if step == .type, !availableCodebases.contains(where: { $0.id == selectedCodebaseID }) {
+            selectedCodebaseID = nil
+        }
         if next == .details, !nameEdited {
             name = suggestion
         }
@@ -162,11 +207,15 @@ struct NewProductFlow: View {
 
     private func start() {
         guard let typeID = selectedTypeID, let topicID = selectedTopicID, canStart else { return }
-        shell.toasts.send(
-            .startProduct(typeID: typeID, topicID: topicID, name: trimmedName, focus: focus),
-            to: engine,
-            rejected: "Every development slot is busy."
-        )
+        let action: GameAction = if let codebaseID = selectedCodebaseID {
+            .startProductOnCodebase(
+                typeID: typeID, topicID: topicID, name: trimmedName,
+                focus: focus, codebaseID: codebaseID
+            )
+        } else {
+            .startProduct(typeID: typeID, topicID: topicID, name: trimmedName, focus: focus)
+        }
+        shell.toasts.send(action, to: engine, rejected: "Every development slot is busy.")
         dismiss()
     }
 
@@ -206,10 +255,13 @@ struct NewProductFlow: View {
 
 private struct StepIndicator: View {
     let current: NewProductStep
+    /// The pages this run of the sheet shows — the foundation page is
+    /// absent until the studio has a codebase of the chosen type.
+    let steps: [NewProductStep]
 
     var body: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            ForEach(NewProductStep.allCases, id: \.rawValue) { step in
+            ForEach(steps, id: \.rawValue) { step in
                 VStack(spacing: Theme.Spacing.xs) {
                     Capsule()
                         .fill(step <= current ? Theme.accent : Theme.chipBackground)
@@ -223,7 +275,9 @@ private struct StepIndicator: View {
         }
         .animation(Theme.Motion.entrance, value: current)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Step \(current.rawValue + 1) of 3: \(current.title)")
+        .accessibilityLabel(
+            "Step \((steps.firstIndex(of: current) ?? 0) + 1) of \(steps.count): \(current.title)"
+        )
     }
 }
 
@@ -359,7 +413,174 @@ private struct EffortDots: View {
     }
 }
 
-// MARK: - Step 2: topic
+// MARK: - Step 2: greenfield or the codebase you already have
+
+/// The trade, with both numbers on it and nothing else.
+///
+/// This game is scrupulous about showing its maths — `ShipForecast` exists
+/// to stop the ship sheet quoting a number the launch will not produce —
+/// and this is the one screen where a player commits to a quality ceiling
+/// months before they see it. So the card states exactly two things: the
+/// points already in the bank, and what the debt costs (a ceiling
+/// multiplier and a bug-rate multiplier). Both are read from
+/// `BalanceConfig.codebase` rather than restated, so they cannot drift
+/// from the arithmetic `ProductSystem.ship` performs.
+private struct FoundationStep: View {
+    let engine: GameEngine
+    let codebases: [Codebase]
+    @Binding var selectedCodebaseID: String?
+
+    var body: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            FoundationCard(
+                title: "Start fresh",
+                systemImage: "sparkles",
+                blurb: "Empty pools, and nothing anyone has to live with.",
+                isSelected: selectedCodebaseID == nil,
+                select: { selectedCodebaseID = nil }
+            ) {
+                FoundationTerms(
+                    headStart: "No head start",
+                    ceiling: "No ceiling penalty",
+                    bugs: "Standard bug rate",
+                    tint: .secondary
+                )
+            }
+
+            ForEach(codebases) { codebase in
+                let config = engine.balance.codebase
+                let debt = codebase.debt
+                let ceiling = config.debtCeiling(debt)
+                FoundationCard(
+                    title: "Build on \(codebase.name)",
+                    systemImage: "shippingbox.fill",
+                    blurb: codebase.productsShipped == 1
+                        ? "The codebase one shipped product left behind."
+                        : "The codebase \(codebase.productsShipped) shipped products left behind.",
+                    isSelected: selectedCodebaseID == codebase.id,
+                    select: { selectedCodebaseID = codebase.id }
+                ) {
+                    FoundationTerms(
+                        headStart: headStartLabel(codebase),
+                        ceiling: debt > 0
+                            ? "Quality ceiling ×\(ceiling.twoPlaces) — \(Int(debt.rounded())) debt"
+                            : "No ceiling penalty — no debt yet",
+                        bugs: debt > 0
+                            ? "Bug rate ×\(config.bugRateMultiplier(debt).twoPlaces)"
+                            : "Standard bug rate",
+                        tint: debt > 0 ? Theme.warning : Theme.positiveCash
+                    )
+                }
+            }
+
+            Text("Refactoring is the only way to pay debt back down. It produces nothing else.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// The head start as the share of each pool it fills — the number the
+    /// player can compare against the build they just finished.
+    private func headStartLabel(_ codebase: Codebase) -> String {
+        guard let type = engine.content.productType(codebase.id),
+              type.designPts > 0, type.codePts > 0, type.polishPts > 0
+        else { return "A head start on every pool" }
+        let share = (codebase.designPts / type.designPts
+            + codebase.codePts / type.codePts
+            + codebase.polishPts / type.polishPts) / 3
+        return "Starts \(Int((share * 100).rounded()))% built — \(Int(codebase.codePts.rounded())) code points in the bank"
+    }
+}
+
+private struct FoundationCard<Terms: View>: View {
+    let title: String
+    let systemImage: String
+    let blurb: String
+    let isSelected: Bool
+    let select: () -> Void
+    @ViewBuilder let terms: Terms
+
+    var body: some View {
+        Button(action: select) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: systemImage)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 38, height: 38)
+                        .background(
+                            Theme.chipBackground,
+                            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        )
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(.system(.headline, design: .rounded))
+                            .foregroundStyle(.primary)
+                        Text(blurb)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(Theme.accent)
+                    }
+                }
+                terms
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Theme.Spacing.lg)
+            .background(Theme.cardBackground, in: RoundedRectangle(
+                cornerRadius: Theme.cornerRadius, style: .continuous
+            ))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                    .strokeBorder(isSelected ? Theme.accent : .clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+    }
+}
+
+/// Exactly three lines, always in the same order: what you get, what the
+/// ceiling costs, what the bugs cost.
+private struct FoundationTerms: View {
+    let headStart: String
+    let ceiling: String
+    let bugs: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            row("arrow.forward.circle.fill", headStart, Theme.positiveCash)
+            row("gauge.with.dots.needle.33percent", ceiling, tint)
+            row("ladybug.fill", bugs, tint)
+        }
+        .font(.footnote.monospacedDigit())
+    }
+
+    private func row(_ icon: String, _ text: String, _ color: Color) -> some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: icon)
+                .foregroundStyle(color)
+                .frame(width: 16)
+            Text(text)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+private extension Double {
+    /// `0.82` — the form every multiplier in this sheet is quoted in.
+    var twoPlaces: String {
+        formatted(.number.precision(.fractionLength(2)))
+    }
+}
+
+// MARK: - Step 3: topic
 
 /// Where a build is aimed. Until "Hold the Category" this step graded only
 /// the static `topic.fitByType` and never once read `state.market` — so the
@@ -559,7 +780,7 @@ private struct TopicCell: View {
     }
 }
 
-// MARK: - Step 3: name + focus
+// MARK: - Step 4: name + focus
 
 private struct DetailsStep: View {
     @Binding var name: String

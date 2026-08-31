@@ -390,8 +390,8 @@ struct MoodFace: View {
 // MARK: - Assignment menu
 
 /// Compact chip menu that reassigns an employee: Idle, anything in
-/// development, Research, a live product's support desk, or any active
-/// contract.
+/// development, Research, a live product's support desk, a codebase to
+/// refactor, or any active contract.
 private struct AssignmentMenu: View {
     let engine: GameEngine
     let employee: Employee
@@ -416,6 +416,22 @@ private struct AssignmentMenu: View {
                                 ? "\(entry.product.name) — \(entry.bugs) bug\(entry.bugs == 1 ? "" : "s")"
                                 : entry.product.name,
                             systemImage: "lifepreserver.fill"
+                        )
+                    }
+                }
+            }
+            if !engine.state.codebases.isEmpty {
+                Section("Refactor") {
+                    ForEach(engine.state.codebases) { codebase in
+                        assignmentButton(
+                            .refactor(codebase.id),
+                            // The debt is the whole reason to pick this,
+                            // exactly as the bug count is on a support
+                            // desk above.
+                            label: codebase.debt >= 1
+                                ? "\(codebase.name) — \(Int(codebase.debt.rounded())) debt"
+                                : codebase.name,
+                            systemImage: "wrench.and.screwdriver.fill"
                         )
                     }
                 }
@@ -488,6 +504,9 @@ private struct AssignmentMenu: View {
         case .support(let productID):
             // Defensive: the product should always resolve while assigned.
             engine.state.product(id: productID).map { "Support: \($0.name)" } ?? "Support"
+        case .refactor(let codebaseID):
+            // Defensive: the codebase should always resolve while assigned.
+            engine.state.codebase(id: codebaseID).map { "Refactor: \($0.name)" } ?? "Refactor"
         @unknown default:
             "Assigned"
         }

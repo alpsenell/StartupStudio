@@ -6,7 +6,8 @@ import TycoonContent
 /// idle, pours the assigned employees' output into the in-development
 /// product (bug resolution stays in `ProductSystem.applyDailyProgress`) and
 /// into their active contracts (settlement stays in `ContractSystem`),
-/// generates research points from the employees assigned to research, grows
+/// generates research points from the employees assigned to research and
+/// pays down technical debt from the ones assigned to refactoring, grows
 /// the skills that fed a pool, tracks department transitions, and refreshes
 /// the candidate pool on its cadence. The founder's output (product,
 /// contract, and research) is scaled by `GameState.founderOutputMultiplier`;
@@ -24,6 +25,7 @@ enum EmployeeSystem {
         produceDailyOutput(&state, balance, content)
         produceContractOutput(&state, balance, content)
         produceResearchPoints(&state, balance)
+        CodebaseSystem.runRefactoring(&state, balance)
 
         var events = updateMoraleAndQuits(&state, balance, content)
         events.append(contentsOf: trackDepartments(&state))
@@ -342,8 +344,14 @@ enum EmployeeSystem {
     /// Resets assignments pointing at gone targets back to `.idle`:
     /// products that are released (unless a patch cycle is running on them)
     /// or nonexistent, contracts that completed, failed, or never existed,
-    /// and support desks whose product has left the market. Research
-    /// assignments are left alone.
+    /// support desks whose product has left the market, and refactor desks
+    /// on a codebase that does not exist. Research assignments are left
+    /// alone.
+    ///
+    /// A codebase is never deleted once it exists, so in practice the
+    /// refactor sweep only fires on a hand-built or hand-edited state —
+    /// but leaving somebody permanently assigned to nothing is exactly the
+    /// bug this sweep exists to prevent.
     private static func sweepStaleAssignments(_ state: inout GameState) {
         for index in state.employees.indices {
             switch state.employees[index].assignment {
@@ -360,6 +368,9 @@ enum EmployeeSystem {
             case .support(let productID):
                 if case .released(let info)? = state.product(id: productID)?.stage,
                    !info.offMarket { continue }
+                state.employees[index].assignment = .idle
+            case .refactor(let codebaseID):
+                if state.codebase(id: codebaseID) != nil { continue }
                 state.employees[index].assignment = .idle
             case .idle, .research:
                 continue
@@ -420,6 +431,12 @@ enum EmployeeSystem {
         let crewBugFactor = TraitEffects.crewBugFactor(
             crew.producers.map { state.employees[$0] }, content: content
         )
+        // Bugs you did not write: a debt-laden codebase breaks in places
+        // nobody on this team has ever read. Exactly 1 on a greenfield
+        // build, which is every build the pacing bots ever start.
+        let codebaseBugFactor = balance.codebase.bugRateMultiplier(
+            state.inheritedDebt(for: state.products[productIndex])
+        )
 
         ProductSystem.applyDailyProgress(
             design: crew.design * output,
@@ -430,7 +447,7 @@ enum EmployeeSystem {
                 : crew.codingSum / Double(crew.producers.count),
             bugChanceMultiplier: (crew.founderWorked
                 ? state.founderBugChanceMultiplier(balance: balance)
-                : 1) * pace.bugFactor * crewBugFactor,
+                : 1) * pace.bugFactor * crewBugFactor * codebaseBugFactor,
             bugFixMultiplier: crew.bugFixMultiplier(balance: balance),
             productIndex: productIndex, state: &state, balance: balance
         )
@@ -446,6 +463,13 @@ enum EmployeeSystem {
             )
             progress.crewSkillDays += 1
             state.products[productIndex].stage = .development(progress)
+        }
+        // A crunch week takes shortcuts, and the shortcuts stay in the
+        // code. Charged only when somebody actually worked today.
+        if !crew.producers.isEmpty {
+            CodebaseSystem.accrueDailyDebt(
+                productIndex: productIndex, state: &state, balance: balance
+            )
         }
         growProducers(crew.producers, focus: focus, pace: pace, &state, balance, content)
     }

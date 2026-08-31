@@ -1719,6 +1719,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     public var networking: NetworkingBalance
     /// A partner who needs tending, and a team that can become friends.
     public var relationships: RelationshipBalance
+    /// What a shipped product leaves behind: the head start, the debt, and
+    /// what refactoring buys back.
+    ///
+    /// Declared with an inline default rather than as an `init` parameter,
+    /// which is what makes the `"codebase"` key genuinely optional in the
+    /// synthesized decode (every other block above is required by
+    /// `Balance.json` whatever its `init` default says). Construct a
+    /// custom one by assigning to the property.
+    public var codebase: CodebaseBalance = .default
 
     public init(
         startingCash: Int,

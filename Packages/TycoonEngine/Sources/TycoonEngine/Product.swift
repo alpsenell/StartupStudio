@@ -43,6 +43,19 @@ public struct DevProgress: Codable, Equatable, Sendable {
     /// `skillDaySum` / `skillDays` precedent).
     public var crewSkillDaySum: Double
     public var crewSkillDays: Int
+    /// The technical debt *this build has created so far* — crunch days,
+    /// mostly — waiting to be handed to the codebase it leaves behind at
+    /// ship.
+    ///
+    /// It is deliberately inert until then. The debt that shapes this
+    /// product's ceiling and bug rate is its codebase's live debt
+    /// (`GameState.inheritedDebt(for:)`), which is exactly 0 for a
+    /// greenfield build; the mess made today lands on the *next* product.
+    /// That is both the truthful reading of technical debt and the
+    /// property that keeps a greenfield build bit-identical to the shipped
+    /// balance no matter what `crunchDebtPerDay` is set to — see
+    /// `CodebaseSystem`.
+    public var debtAccrued: Double
 
     public init(
         designPts: Double,
@@ -52,7 +65,8 @@ public struct DevProgress: Codable, Equatable, Sendable {
         focus: PhaseFocus,
         hype: Double,
         crewSkillDaySum: Double = 0,
-        crewSkillDays: Int = 0
+        crewSkillDays: Int = 0,
+        debtAccrued: Double = 0
     ) {
         self.designPts = designPts
         self.codePts = codePts
@@ -62,6 +76,7 @@ public struct DevProgress: Codable, Equatable, Sendable {
         self.hype = hype
         self.crewSkillDaySum = crewSkillDaySum
         self.crewSkillDays = crewSkillDays
+        self.debtAccrued = debtAccrued
     }
 
     /// The crew's average pool-weighted skill over the build, 0...100.
@@ -79,6 +94,7 @@ extension DevProgress {
     private enum CodingKeys: String, CodingKey {
         case designPts, codePts, polishPts, openBugs, focus, hype
         case crewSkillDaySum, crewSkillDays
+        case debtAccrued
     }
 
     public init(from decoder: any Decoder) throws {
@@ -91,7 +107,8 @@ extension DevProgress {
             focus: try container.decode(PhaseFocus.self, forKey: .focus),
             hype: try container.decode(Double.self, forKey: .hype),
             crewSkillDaySum: try container.decodeIfPresent(Double.self, forKey: .crewSkillDaySum) ?? 0,
-            crewSkillDays: try container.decodeIfPresent(Int.self, forKey: .crewSkillDays) ?? 0
+            crewSkillDays: try container.decodeIfPresent(Int.self, forKey: .crewSkillDays) ?? 0,
+            debtAccrued: try container.decodeIfPresent(Double.self, forKey: .debtAccrued) ?? 0
         )
     }
 }
@@ -281,13 +298,47 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
     /// `TopicDef.id` in the content catalog.
     public var topicID: String
     public var stage: ProductStage
+    /// The `Codebase.id` this product was started on, `nil` for a
+    /// greenfield build. Also `nil` for every product started before
+    /// codebases existed, which is why an old save reads as greenfield
+    /// and behaves exactly as it did.
+    public var codebaseID: String?
 
-    public init(id: UUID, name: String, typeID: String, topicID: String, stage: ProductStage) {
+    public init(
+        id: UUID,
+        name: String,
+        typeID: String,
+        topicID: String,
+        stage: ProductStage,
+        codebaseID: String? = nil
+    ) {
         self.id = id
         self.name = name
         self.typeID = typeID
         self.topicID = topicID
         self.stage = stage
+        self.codebaseID = codebaseID
+    }
+}
+
+// Hand-written decode so an in-flight product from a save written before
+// codebases existed keeps loading — with no codebase, which is greenfield,
+// which is what it was.
+extension Product {
+    private enum CodingKeys: String, CodingKey {
+        case id, name, typeID, topicID, stage, codebaseID
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(UUID.self, forKey: .id),
+            name: try container.decode(String.self, forKey: .name),
+            typeID: try container.decode(String.self, forKey: .typeID),
+            topicID: try container.decode(String.self, forKey: .topicID),
+            stage: try container.decode(ProductStage.self, forKey: .stage),
+            codebaseID: try container.decodeIfPresent(String.self, forKey: .codebaseID)
+        )
     }
 }
 
