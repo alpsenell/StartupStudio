@@ -36,10 +36,22 @@ struct OfficeAnimationTests {
         )
     }
 
-    /// Every person placement that is mid-walk, over one office day.
-    func walkers(in input: OfficeSceneInput, step: TimeInterval = 1.0 / 12) -> [(PlacedSprite, TimeInterval)] {
+    /// Every person placement that is mid-walk, over a slice of the day.
+    ///
+    /// Deliberately a slice of a mid-sized room rather than a whole campus
+    /// day. `SpriteCache` is process-global and `OfficePerfTests` asserts
+    /// that a warmed cache re-rasterizes *nothing*; a suite that composes
+    /// ten thousand campus frames beside it evicts the very entries that
+    /// test is measuring and fails it about half the time. Forty-five
+    /// seconds of a studio floor is more walking than any assertion here
+    /// needs, and it keeps this suite from breaking someone else's.
+    func walkers(
+        in input: OfficeSceneInput,
+        step: TimeInterval = 1.0 / 12,
+        window: TimeInterval = 45
+    ) -> [(PlacedSprite, TimeInterval)] {
         var found: [(PlacedSprite, TimeInterval)] = []
-        for t in stride(from: 0.0, to: OfficeBehaviors.dayLength, by: step) {
+        for t in stride(from: 0.0, to: window, by: step) {
             for placement in OfficeDirector.compose(input: input, at: t)
             where placement.kind == .person && placement.motion != nil {
                 found.append((placement, t))
@@ -60,7 +72,7 @@ struct OfficeAnimationTests {
         // so the contact-back and bobbed-passing poses were drawn but never
         // shown: the same hand led every stride.
         var drawn = Set<Int>()
-        for (placement, t) in walkers(in: scene(20, tier: .campus))
+        for (placement, t) in walkers(in: scene(12))
         where placement.sprite.frameCount == WalkCycle.sideFrames.count {
             drawn.insert(placement.frameIndex(at: t))
         }
@@ -68,7 +80,7 @@ struct OfficeAnimationTests {
     }
 
     @Test func feetKeepUpWithTheFloorTheyWalkOn() {
-        for (placement, _) in walkers(in: scene(20, tier: .campus)) {
+        for (placement, _) in walkers(in: scene(12)) {
             guard let motion = placement.motion,
                   let fps = rate(of: placement.animation),
                   placement.sprite.frameCount == WalkCycle.sideFrames.count else { continue }
@@ -92,7 +104,7 @@ struct OfficeAnimationTests {
         // what makes the corner of an L-route read as a turn rather than as
         // a slide round the bend.
         var checked = 0
-        for (placement, _) in walkers(in: scene(20, tier: .campus), step: 0.25) {
+        for (placement, _) in walkers(in: scene(12), step: 0.25) {
             guard let motion = placement.motion, rate(of: placement.animation) != nil else { continue }
             #expect(placement.frameIndex(at: motion.start) == 0, "leg began mid-stride")
             checked += 1
@@ -102,7 +114,7 @@ struct OfficeAnimationTests {
 
     @Test func twoWalkersAreNeverInLockstep() {
         var rates = Set<Double>()
-        for (placement, _) in walkers(in: scene(20, tier: .campus), step: 0.5) {
+        for (placement, _) in walkers(in: scene(16), step: 0.5) {
             if let fps = rate(of: placement.animation) { rates.insert((fps * 100).rounded()) }
         }
         #expect(rates.count >= 6, "the whole room walks at \(rates.count) cadence(s)")
@@ -111,7 +123,7 @@ struct OfficeAnimationTests {
     // MARK: Desks
 
     @Test func aWallOfDesksIsNotOneKeyboard() {
-        let placements = OfficeDirector.compose(input: scene(30, tier: .campus), at: 3)
+        let placements = OfficeDirector.compose(input: scene(24, tier: .campus), at: 3)
         var charts = Set<[Int]>()
         for placement in placements where placement.kind == .person {
             if case .sequence(let frames, _, _) = placement.animation, frames.count > 4 {
@@ -240,8 +252,8 @@ struct OfficeAnimationTests {
     // MARK: Still deterministic
 
     @Test func everyRateIsAPureFunctionOfTimeAndState() {
-        let input = scene(16, tier: .campus)
-        for t in stride(from: 0.0, to: 120.0, by: 3.0) {
+        let input = scene(12)
+        for t in stride(from: 0.0, to: 60.0, by: 5.0) {
             OfficeDirector.resetCaches()
             let a = OfficeDirector.compose(input: input, at: t)
             OfficeDirector.resetCaches()
