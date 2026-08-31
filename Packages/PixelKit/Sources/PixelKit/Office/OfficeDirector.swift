@@ -173,6 +173,7 @@ public enum OfficeDirector {
         let celebration = activeCelebration(input: input, timing: timing, at: t)
         let dayT = dayTime(at: t)
         let actors = plans(for: input, at: t)
+        let tempo = OfficeTempo.reading(for: input)
         let seatedIDs = Dictionary(uniqueKeysWithValues: actors.map { ($0.seatIndex, $0.id) })
 
         var scene: [PlacedSprite] = []
@@ -277,13 +278,20 @@ public enum OfficeDirector {
             let sprite = personSprite(for: occupant, state: state)
             let origin = spriteOrigin(state: state, sprite: sprite, plan: plan, input: input)
             let baseline = origin.y + sprite.height
+            let rhythm = ActorRhythm(id: plan.id)
 
             scene.append(PlacedSprite(
                 sprite: sprite,
                 x: origin.x, y: origin.y,
                 kind: .person,
-                animation: animation(for: state, occupant: occupant, sprite: sprite),
-                phase: state.pose == .desk ? (plan.seatIndex * 3) % 7 : plan.seatIndex % 2,
+                animation: animation(for: state, occupant: occupant, rhythm: rhythm, tempo: tempo),
+                // A walk always starts its cycle on a contact pose, so every
+                // corner of an L-route lands on a planted foot: that plant
+                // *is* the turnaround. A cheer starts on its crouch for the
+                // same reason — and because a room that jumps in unison is
+                // the whole point of a launch. Everything else desyncs from
+                // its neighbours on the walker's own seeded phase.
+                phase: state.pose == .walk || state.pose == .cheer ? 0 : rhythm.idlePhase,
                 start: state.animationStart,
                 motion: state.motion.map { offset($0, dx: -Double(sprite.width) / 2, dy: -Double(sprite.height)) },
                 zIndex: baseline,
@@ -299,7 +307,7 @@ public enum OfficeDirector {
                     x: origin.x + (sprite.width - box.width) / 2,
                     y: origin.y + 9,
                     kind: .prop,
-                    animation: .still, phase: 0,
+                    animation: boxBob(state: state, rhythm: rhythm, tempo: tempo), phase: 0,
                     start: state.animationStart,
                     motion: state.motion.map {
                         offset($0, dx: -Double(box.width) / 2, dy: -Double(sprite.height) + 9)
@@ -379,8 +387,13 @@ public enum OfficeDirector {
         let leg = segment.track.leg(at: dayT)
 
         var pose = state.pose
+        // The room's cheer is anchored to the celebration rather than to
+        // whatever each person's plan was doing, so a launch crouches and
+        // jumps as one — the unison is the point of a launch.
+        var animationStart = leg.start
         if let celebration, celebration.kind.isCheerable, t - celebration.start < OfficeFX.cheerDuration {
             pose = .cheer
+            animationStart = celebration.start
         }
 
         return DrawState(
@@ -390,7 +403,7 @@ public enum OfficeDirector {
             bubble: bubble(for: occupant, state: state, timing: timing, plan: plan, t: t, celebration: celebration),
             bubbleStart: TimeInterval(AnimationClock.secondBucket(at: t)),
             motion: segment.track.isMoving(at: dayT) ? leg : nil,
-            animationStart: leg.start,
+            animationStart: animationStart,
             opacity: 1,
             hidden: false,
             waypointID: state.waypointID,
@@ -430,22 +443,74 @@ public enum OfficeDirector {
         )
     }
 
+    /// The celebration jump, as a timing chart rather than a frame rate.
+    ///
+    /// Fourteen steps at twelve frames a second — a shade over a second a
+    /// cycle — across the four authored cheer frames: planted (0), leaving
+    /// the floor (1), crouched (2), apex (3).
+    ///
+    /// Spacing is where the weight lives. Two steps of crouch to anticipate,
+    /// one to push off, one on the way up, three held at the apex (the eye
+    /// rests at the top of a jump, not at the bottom — this is the slow-in
+    /// that makes it feel like a jump rather than a bounce), one on the way
+    /// down, a landing, a single-step recoil into the crouch, then four to
+    /// stand back up. Played at an even rate the same four frames read as a
+    /// sprite being jiggled.
+    static let cheerChart = [2, 2, 0, 1, 3, 3, 3, 1, 0, 2, 0, 0, 0, 0]
+
     private static func animation(
-        for state: DrawState, occupant: Occupant, sprite: PixelSprite
+        for state: DrawState, occupant: Occupant, rhythm: ActorRhythm, tempo: OfficeTempo
     ) -> SpriteAnimation {
         switch state.pose {
         case .desk:
-            return .typing(slow: occupant.status == .idle)
+            // Idle hands are slower hands, whatever the room around them is
+            // doing. The chart itself carries this person's own blink and
+            // their own held beat, so a wall of desks is no longer one
+            // keyboard being played by twenty-five identical hands.
+            let rate = occupant.status == .idle
+                ? tempo.typingStepsPerSecond * 0.55
+                : tempo.typingStepsPerSecond
+            return .sequence(frames: rhythm.typingChart, fps: rate, loop: true)
         case .walk:
-            // Two-frame step cycle; 6 fps is one stride per 12 px at 24 px/s.
-            return .sequence(frames: [0, 1], fps: 6, loop: true)
+            guard let leg = state.motion else { return .toggle(period: 4) }
+            let cadence = WalkCycle.cadence(
+                for: leg, facing: state.facing,
+                strideScale: rhythm.strideScale, tempoScale: tempo.walkScale
+            )
+            return .sequence(frames: cadence.frames, fps: cadence.fps, loop: true)
         case .cheer:
-            return .sequence(frames: [0, 1], fps: 4, loop: true)
+            return .sequence(frames: cheerChart, fps: 12, loop: true)
         case .chat, .coffee:
-            return .toggle(period: 3)
-        case .slump, .seatedSlump, .stand, .carryBox:
-            return .toggle(period: 5)
+            return .toggle(period: rhythm.idlePeriod(base: 3 + tempo.breathBias))
+        case .slump, .seatedSlump:
+            // A defeated breath is a long one, and it does not speed up
+            // because the rest of the floor is sprinting.
+            return .toggle(period: rhythm.idlePeriod(base: 6))
+        case .stand, .carryBox:
+            return .toggle(period: rhythm.idlePeriod(base: 5 + tempo.breathBias))
         }
+    }
+
+    /// The bob of a box being carried out of the building.
+    ///
+    /// One lift per step, taken from the leg the carrier is actually walking
+    /// rather than from a fixed rate, so the load moves with the gait; a box
+    /// standing still does not bounce.
+    private static func boxBob(
+        state: DrawState, rhythm: ActorRhythm, tempo: OfficeTempo
+    ) -> SpriteAnimation {
+        guard let leg = state.motion else { return .still }
+        let step = WalkCycle.sideCycleLength / 2 * max(0.5, rhythm.strideScale)
+        let rate = WalkCycle.fps(
+            speed: WalkCycle.groundSpeed(of: leg), frames: 2, cycleLength: step
+        )
+        // Clamped like the walk itself: past the renderer's own 12 fps a
+        // faster bob only aliases.
+        return .sequence(
+            frames: [0, 1],
+            fps: min(WalkCycle.maximumFPS, rate * tempo.walkScale),
+            loop: true
+        )
     }
 
     private static func offset(_ motion: Motion, dx: Double, dy: Double) -> Motion {

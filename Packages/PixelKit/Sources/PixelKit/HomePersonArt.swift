@@ -218,12 +218,39 @@ enum HomePersonArt {
             for (index, row) in replacement.enumerated() { out[16 + index] = row }
             return out
         }
-        func hand(_ rows: [String], forward: Bool?) -> [String] {
+        func set(_ rows: inout [String], _ y: Int, _ x: Int, _ ch: Character) {
+            var chars = Array(rows[y])
+            guard chars.indices.contains(x) else { return }
+            chars[x] = ch
+            rows[y] = String(chars)
+        }
+        /// The swinging arm, drawn *outside* the torso silhouette.
+        ///
+        /// The original cue was a single skin-coloured pixel swapped from
+        /// one side of the chest to the other — true to the pose, invisible
+        /// at any distance. An arm that breaks the outline is the thing
+        /// that tells a profile walk from a person being slid sideways, and
+        /// it is the only counter-rotation this scale has room for: the arm
+        /// leads while the opposite foot does.
+        func swing(_ rows: [String], forward: Bool?) -> [String] {
             var out = rows
             switch forward {
-            case .some(true): out[12] = "  OTttttttSO  "
-            case .some(false): out[12] = "  OSttttttTO  "
-            case nil: out[12] = "  OTttttttTO  "
+            case .some(true):
+                out[12] = "  OTttttttSO  "
+                for y in 11...12 {
+                    set(&out, y, 12, "S")
+                    set(&out, y, 13, "O")
+                }
+            case .some(false):
+                out[12] = "  OSttttttTO  "
+                for y in 11...12 {
+                    set(&out, y, 1, "S")
+                    set(&out, y, 0, "O")
+                }
+            case nil:
+                // Passing: the arms are at the sides, halfway through their
+                // swing, so neither one breaks the outline.
+                out[12] = "  OTttttttTO  "
             }
             return out
         }
@@ -231,10 +258,34 @@ enum HomePersonArt {
         func lifted(_ rows: [String]) -> [String] {
             Array(rows.dropFirst()) + [String(repeating: " ", count: rows[0].count)]
         }
-        let contactForward = hand(legs(sideBase, strideLegs), forward: true)
-        let passing = lifted(hand(legs(sideBase, passingLegs), forward: nil))
-        let contactBack = hand(legs(sideBase, strideLegs), forward: false)
-        let passingBob = lifted(headBob(hand(legs(sideBase, passingLegs), forward: nil)))
+        /// Plants the support foot back on the floor after the bounce.
+        ///
+        /// The passing pose is the top of the body's arc, so the hips do
+        /// rise a pixel — but the leg the weight is on is *on the ground*,
+        /// by definition. Lifting the whole sprite takes both feet off the
+        /// floor for a sixth of a second, which is the difference between a
+        /// walk and a hover, and it is the frame where the eye checks. The
+        /// two passing frames plant opposite feet, so the cycle also stops
+        /// being two copies of the same drawing.
+        func planted(_ rows: [String], left: Bool) -> [String] {
+            var out = rows
+            if left {
+                out[19] = "   OPPOOKKKO  "
+                out[20] = "  OKKKOOOOOO  "
+                out[21] = "  OOOOO       "
+            } else {
+                out[19] = "  OKKKOOPPO   "
+                out[20] = "  OOOOOOKKKO  "
+                out[21] = "       OOOOO  "
+            }
+            return out
+        }
+        let contactForward = swing(legs(sideBase, strideLegs), forward: true)
+        let passing = planted(lifted(swing(legs(sideBase, passingLegs), forward: nil)), left: true)
+        let contactBack = swing(legs(sideBase, strideLegs), forward: false)
+        let passingBob = planted(
+            lifted(headBob(swing(legs(sideBase, passingLegs), forward: nil))), left: false
+        )
         return [contactForward, passing, contactBack, passingBob]
     }()
 
@@ -278,6 +329,45 @@ enum HomePersonArt {
         rows[19] = "              "
         rows[20] = "              "
         rows[21] = "              "
+        return rows
+    }()
+
+    /// The anticipation half of the cheer: knees bent, whole body pressed a
+    /// pixel *down* into the floor before it leaves it.
+    ///
+    /// Nothing in animation sells a jump like the frame before it. Without
+    /// this the office celebration was a two-frame on/off — arms up, body
+    /// up, arms up, body up — which reads as a sprite being nudged rather
+    /// than a person pushing off the ground.
+    static let cheerCrouch: [String] = {
+        var rows = [String(repeating: " ", count: 14)] + cheerDown.dropLast()
+        // The body came down a pixel; the legs absorb it rather than the
+        // feet sinking through the floor, so the shins lose a row and the
+        // soles stay exactly where they were.
+        rows[19] = "   OPPOOPPO   "
+        rows[20] = "  OKKKOOKKKO  "
+        rows[21] = "  OOOOOOOOOO  "
+        return rows
+    }()
+
+    /// The top of the jump: three pixels off the floor with the knees fully
+    /// tucked.
+    ///
+    /// `cheerUp` alone gives a single pixel of air, which at this scale is
+    /// indistinguishable from a head bob. A jump needs somewhere to *hang* —
+    /// the apex is where the eye rests — and the arc only reads if the
+    /// highest frame is meaningfully higher than the ones either side of it.
+    static let cheerApex: [String] = {
+        // The torso stays exactly where `cheerUp` puts it — the canvas has
+        // one row of headroom and no more, so a jump cannot buy height by
+        // lifting the body. It buys it the way a real one does: the knees
+        // come up. Five rows of daylight under the soles against the
+        // planted pose, where `cheerUp` has three.
+        var rows = cheerUp
+        rows[14] = "   OPPOOPPO   "
+        rows[15] = "  OKKKOOKKKO  "
+        rows[16] = "  OOOOOOOOOO  "
+        for y in 17...21 { rows[y] = String(repeating: " ", count: 14) }
         return rows
     }()
 

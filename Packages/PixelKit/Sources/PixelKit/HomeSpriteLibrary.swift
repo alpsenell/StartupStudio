@@ -88,9 +88,19 @@ extension SpriteLibrary {
                 headOffsets: [0, 1], appearance: appearance, isFounder: isFounder, role: look
             )
         case .cheer:
+            // Four frames, in the order the director's timing chart wants
+            // them indexed: planted (0), leaving the floor (1), the crouch
+            // that anticipates the jump (2), and the apex (3). The torso
+            // offsets follow the body, so the hoodie drawstrings, the
+            // necktie and the lanyard travel with the chest instead of
+            // hanging in the air behind it.
             return composePerson(
-                frames: [HomePersonArt.cheerDown, HomePersonArt.cheerUp],
-                headOffsets: [0, -1], appearance: appearance, isFounder: isFounder, role: look
+                frames: [
+                    HomePersonArt.cheerDown, HomePersonArt.cheerUp,
+                    HomePersonArt.cheerCrouch, HomePersonArt.cheerApex,
+                ],
+                headOffsets: [0, -1, 1, -1], torsoOffsets: [0, -1, 1, -1],
+                appearance: appearance, isFounder: isFounder, role: look
             )
         case .slump:
             return composePerson(

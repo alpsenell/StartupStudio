@@ -109,7 +109,7 @@ enum OfficeFXSprites {
 
     /// A cardboard moving box, 10×8, carried in front of a leaver.
     static func cardboardBox() -> PixelSprite {
-        let grid = [
+        let box = [
             "OOOOOOOOOO",
             "OBBBBBBBBO",
             "OBbbbbbbBO",
@@ -119,8 +119,15 @@ enum OfficeFXSprites {
             "OBBBBBBBBO",
             "OOOOOOOOOO",
         ]
+        // 10×9 with a blank row, so the box can ride a pixel high on every
+        // other step. A carried load is the clearest bit of secondary motion
+        // there is: it lags the body that is carrying it, and a box that
+        // tracks a walker perfectly reads as glued on.
+        let blank = String(repeating: " ", count: 10)
+        let low = box + [blank]
+        let high = [blank] + box
         return PixelSprite(
-            frames: [grid],
+            frames: [low, high],
             palette: [
                 "O": outline,
                 "B": RGBA(r: 198, g: 158, b: 106),

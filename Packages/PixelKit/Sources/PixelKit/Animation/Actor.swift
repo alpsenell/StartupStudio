@@ -144,12 +144,10 @@ public struct ActorPlan: Sendable, Equatable, Hashable {
         let position = leg.position(at: t)
         let moving = segment.track.isMoving(at: t)
         let pose: ActorPose = segment.pose == .walk && !moving ? .stand : segment.pose
-        let facing: Facing
-        if moving, abs(leg.to.x - leg.from.x) > 0.5 {
-            facing = leg.to.x < leg.from.x ? .left : .right
-        } else {
-            facing = .forward
-        }
+        // `Track.heading` rather than the raw leg: a four-pixel sidestep out
+        // of a desk row keeps the journey's facing instead of spinning the
+        // sprite round for a second on its way past.
+        let facing = moving ? segment.track.heading(at: t) : .forward
         return ActorState(
             position: position,
             pose: pose,

@@ -69,6 +69,47 @@ public struct Track: Sendable, Equatable, Hashable {
         t > start && t < end
     }
 
+    /// A leg too short to be worth turning around for.
+    ///
+    /// An L-route out of a desk row starts with a sidestep into the nearest
+    /// clear lane, which can be four pixels in the opposite direction to
+    /// the whole rest of the journey. Played literally that is a walker who
+    /// faces right for one second, forward for one, then left for five — a
+    /// twitch, not a turn.
+    static let turnThreshold: Double = 8
+
+    /// The heading of the longest horizontal leg in the journey, if there
+    /// is one. This is the direction the walk is *about*, as opposed to the
+    /// direction any one leg happens to point.
+    var dominantHeading: Facing? {
+        var best: (distance: Double, facing: Facing)?
+        for leg in legs {
+            let dx = leg.to.x - leg.from.x
+            guard abs(dx) > abs(leg.to.y - leg.from.y), abs(dx) > 0.5 else { continue }
+            if best == nil || abs(dx) > best!.distance {
+                best = (abs(dx), dx < 0 ? .left : .right)
+            }
+        }
+        return best?.facing
+    }
+
+    /// Which way the traveller faces at `t`.
+    ///
+    /// Sideways legs face the way they are going and everything else faces
+    /// the viewer — except that a sidestep shorter than `turnThreshold`
+    /// borrows the journey's dominant heading instead of flipping the
+    /// sprite for one second and flipping it straight back.
+    public func heading(at t: TimeInterval) -> Facing {
+        guard isMoving(at: t) else { return .forward }
+        let leg = leg(at: t)
+        let dx = leg.to.x - leg.from.x
+        guard abs(dx) > 0.5, abs(dx) > abs(leg.to.y - leg.from.y) else { return .forward }
+        if leg.from.distance(to: leg.to) < Self.turnThreshold, let dominant = dominantHeading {
+            return dominant
+        }
+        return dx < 0 ? .left : .right
+    }
+
     /// An L-shaped route between two points by way of a corridor line and,
     /// optionally, a set of vertical lanes.
     ///
