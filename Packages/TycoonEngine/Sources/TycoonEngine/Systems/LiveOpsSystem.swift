@@ -183,6 +183,10 @@ enum LiveOpsSystem {
                     + (Double(newScore) - state.company.reputation)
                         * balance.reputationReviewNudge * weight
             ))
+            // Patch cadence is the cheapest way to keep a category warm.
+            StandingSystem.recordPatch(
+                topicID: state.products[index].topicID, &state, balance
+            )
             events.append(.updateShipped(
                 productID: update.productID, newScore: newScore, day: state.day
             ))

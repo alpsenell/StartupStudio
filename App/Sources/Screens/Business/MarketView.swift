@@ -34,6 +34,7 @@ struct MarketView: View {
             }
 
             HotColdCard(snapshots: snapshots)
+            CategoryHoldCard(engine: engine)
             SparklineGridCard(snapshots: engine.content.topics.map {
                 TopicSnapshot(topic: $0, market: engine.state.market)
             })
@@ -71,6 +72,79 @@ struct MarketView: View {
                 showingReport = true
             }
         }
+    }
+}
+
+// MARK: - Categories
+
+/// The pulse-level read on "Hold the Category": the three topics the studio
+/// has the most name in, and — where it holds one — the forward read that
+/// standing bought. The full twelve are in the report.
+private struct CategoryHoldCard: View {
+    let engine: GameEngine
+
+    private var categories: [CategorySnapshot] {
+        MarketAnalysis.categories(
+            state: engine.state, content: engine.content, balance: engine.balance
+        )
+    }
+
+    var body: some View {
+        let categories = self.categories
+        let ranked = Array(categories.prefix(3).filter { $0.standing > 0 })
+        CardView("Your categories", systemImage: "flag.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                if ranked.isEmpty {
+                    Text("You have no standing in any market yet. Ship into a topic — and keep "
+                        + "something selling there — and this is where it shows up.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    ForEach(ranked) { category in
+                        CategoryHoldRow(
+                            category: category,
+                            driftSigma: engine.balance.market.driftSigma
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct CategoryHoldRow: View {
+    let category: CategorySnapshot
+    let driftSigma: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: category.topic.iconSystemName)
+                    .font(.caption)
+                    .foregroundStyle(category.tint)
+                    .frame(width: 18)
+                Text(category.topic.name)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .lineLimit(1)
+                StandingBar(fraction: category.standingFraction, tint: category.tint)
+                    .frame(maxWidth: 70)
+                Spacer(minLength: Theme.Spacing.xs)
+                Text(category.standingLabel)
+                    .font(.subheadline)
+                    .monospacedDigit()
+                    .foregroundStyle(category.tint)
+            }
+            if let read = category.forwardRead(driftSigma: driftSigma) {
+                Text(read)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 18 + Theme.Spacing.sm)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(category.accessibilitySummary)
     }
 }
 

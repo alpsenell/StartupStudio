@@ -434,6 +434,15 @@ enum ProductSystem {
         ))
         state.products[index].stage = .released(info)
 
+        // The category ledger: a launch is the biggest single thing the
+        // studio can do for its name in a topic, and the press decides how
+        // much of it counts.
+        StandingSystem.recordLaunch(
+            topicID: state.products[index].topicID,
+            averageReviewScore: averageScore,
+            &state, balance
+        )
+
         return [
             .shipped(productID: productID, day: state.day),
             .reviewsIn(productID: productID, averageScore: averageScore, day: state.day),

@@ -32,6 +32,22 @@ enum MarketAnalysis {
         snapshots(content: content, market: market).sorted { $0.multiplier > $1.multiplier }
     }
 
+    /// One category per catalog topic — the studio's standing in it, what
+    /// it has on the market there, who else is selling into it, and the
+    /// forward read where the studio has earned one. Ordered the way the
+    /// player thinks about it: the categories they hold first, then the
+    /// hottest of the rest.
+    static func categories(
+        state: GameState, content: ContentCatalog, balance: BalanceConfig
+    ) -> [CategorySnapshot] {
+        content.topics
+            .map { CategorySnapshot(topic: $0, state: state, balance: balance) }
+            .sorted { left, right in
+                if left.standing != right.standing { return left.standing > right.standing }
+                return left.market.multiplier > right.market.multiplier
+            }
+    }
+
     /// The day a released product's sales row was posted: the first weekly
     /// tick strictly after launch, then every week. Mirrors
     /// `ProductSystem.postWeeklySales` (ticks advance the day before the
@@ -297,6 +313,116 @@ struct TopicEventMarker: Identifiable {
     let value: Double
     let kind: MarketEvent.Kind
     var id: String { "\(week)-\(kind.rawValue)" }
+}
+
+// MARK: - Category snapshot
+
+/// One topic read as a *category* rather than as a demand number: what the
+/// studio's name is worth there, what it has on the market, who it is up
+/// against, and — only where the studio holds the category — where the
+/// multiplier is likely to be a few weeks out.
+struct CategorySnapshot: Identifiable {
+    let topic: TopicDef
+    /// The demand read every other market view already uses.
+    let market: TopicSnapshot
+    /// 0...`standing.maxStanding`.
+    let standing: Double
+    let maxStanding: Double
+    /// The threshold that buys the forward read.
+    let threshold: Double
+    /// nil below the threshold: the read is the thing standing buys.
+    let forecast: MarketForecast?
+    /// The studio's products still selling here.
+    let liveProducts: [Product]
+    /// Rival studios with something on the market here, best first.
+    let competitors: [(name: String, quality: Double)]
+
+    var id: String { topic.id }
+
+    init(topic: TopicDef, state: GameState, balance: BalanceConfig) {
+        self.topic = topic
+        market = TopicSnapshot(topic: topic, market: state.market)
+        standing = state.market.standing(for: topic.id)
+        maxStanding = balance.market.standing.maxStanding
+        threshold = balance.market.standing.forecastThreshold
+        forecast = state.market.forecast(for: topic.id, market: balance.market)
+        liveProducts = state.products.filter { product in
+            guard case .released(let info) = product.stage else { return false }
+            return product.topicID == topic.id && !info.offMarket
+        }
+        competitors = state.rivals.competitors(in: topic.id, on: state.day)
+            .map { (name: $0.rival.name, quality: $0.product.quality) }
+            .sorted { $0.quality > $1.quality }
+    }
+
+    /// Whether the studio holds this category well enough to read it.
+    var holdsCategory: Bool { standing >= threshold }
+
+    /// Standing as a 0...1 bar fill.
+    var standingFraction: Double {
+        guard maxStanding > 0 else { return 0 }
+        return min(1, max(0, standing / maxStanding))
+    }
+
+    var standingLabel: String { "\(Int(standing.rounded()))" }
+
+    /// The rung the studio is on, named against the balance's threshold so
+    /// the copy moves if the tuning does.
+    var tier: String {
+        if standing <= 0 { return "No presence" }
+        if standing < threshold / 2 { return "Newcomer" }
+        if standing < threshold { return "Known" }
+        if standing < (threshold + maxStanding) / 2 { return "Established" }
+        return "Household name"
+    }
+
+    var tint: Color {
+        if standing <= 0 { return .secondary }
+        if standing < threshold { return Theme.accent }
+        return Theme.positiveCash
+    }
+
+    /// "You and 2 rivals" — who is actually in this category.
+    var fieldLabel: String {
+        let mine = liveProducts.count
+        let theirs = competitors.count
+        switch (mine, theirs) {
+        case (0, 0): return "Nobody is selling here"
+        case (0, _): return theirs == 1
+            ? "\(competitors[0].name) has this to itself"
+            : "\(theirs) rivals, none of them you"
+        case (_, 0): return mine == 1 ? "Yours alone" : "\(mine) of yours, no rivals"
+        default:
+            let yours = mine == 1 ? "1 of yours" : "\(mine) of yours"
+            return theirs == 1
+                ? "\(yours) against \(competitors[0].name)"
+                : "\(yours) against \(theirs) rivals"
+        }
+    }
+
+    /// The one line the forward read is for. Nil where the studio has not
+    /// earned it — the absence is the mechanic, so the view says so
+    /// instead of hiding the row.
+    func forwardRead(driftSigma: Double) -> String? {
+        guard let forecast else { return nil }
+        let weeks = forecast.weeksAhead
+        let band = "\(MarketFormat.multiplier(forecast.low))–\(MarketFormat.multiplier(forecast.high))"
+        let lean = switch forecast.lean(threshold: driftSigma / 2) {
+        case .warming: "with room to climb"
+        case .cooling: "with more room to fall than to climb"
+        case .steady: "either way"
+        }
+        let jump = Int((forecast.jumpChance * 100).rounded())
+        return "\(weeks) weeks out: \(band) \(lean). "
+            + "\(jump)% chance a boom or crash lands in that window."
+    }
+
+    var accessibilitySummary: String {
+        var parts = ["\(topic.name), standing \(standingLabel) of \(Int(maxStanding)), \(tier.lowercased())"]
+        parts.append("demand \(market.multiplierLabel)")
+        parts.append(fieldLabel.lowercased())
+        return parts.joined(separator: ", ")
+    }
 }
 
 // MARK: - Bands and directions

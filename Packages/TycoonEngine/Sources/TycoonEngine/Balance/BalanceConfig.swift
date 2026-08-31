@@ -282,6 +282,70 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         }
     }
 
+    /// Tuning for the studio's standing in a topic — the "Hold the
+    /// Category" ledger kept by `StandingSystem`, read by the market report
+    /// and by the new-product flow's topic step.
+    ///
+    /// Standing is rent, not a trophy: everything the studio does in a
+    /// category pays into it, and every week with nothing on the market
+    /// there takes some back. It buys exactly one thing — sight of the
+    /// topic's forward book at `forecastThreshold` — so none of these
+    /// numbers reaches the economy.
+    public struct StandingBalance: Codable, Equatable, Sendable {
+        /// Upper clamp; the lower clamp is always 0.
+        public var maxStanding: Double
+        /// Paid when a product ships into the topic.
+        public var shipGain: Double
+        /// Paid per launch-review point above `reviewNeutralScore`, and
+        /// charged per point below it — a panned launch does less for your
+        /// name in a category than a well-received one.
+        public var reviewGainPerPoint: Double
+        public var reviewNeutralScore: Double
+        /// Paid when a patch lands on a product in the topic.
+        public var patchGain: Double
+        /// Paid when a campaign starts on a product in the topic.
+        public var campaignGain: Double
+        /// Paid every shift the studio has something on the market there.
+        public var presenceWeeklyGain: Double
+        /// Charged every shift it does not.
+        public var decayWeeklyLoss: Double
+        /// Standing at or above this reads the topic's forward book.
+        public var forecastThreshold: Double
+
+        public init(
+            maxStanding: Double, shipGain: Double,
+            reviewGainPerPoint: Double, reviewNeutralScore: Double,
+            patchGain: Double, campaignGain: Double,
+            presenceWeeklyGain: Double, decayWeeklyLoss: Double,
+            forecastThreshold: Double
+        ) {
+            self.maxStanding = maxStanding
+            self.shipGain = shipGain
+            self.reviewGainPerPoint = reviewGainPerPoint
+            self.reviewNeutralScore = reviewNeutralScore
+            self.patchGain = patchGain
+            self.campaignGain = campaignGain
+            self.presenceWeeklyGain = presenceWeeklyGain
+            self.decayWeeklyLoss = decayWeeklyLoss
+            self.forecastThreshold = forecastThreshold
+        }
+
+        public static let standard = StandingBalance(
+            maxStanding: 100, shipGain: 12,
+            reviewGainPerPoint: 0.4, reviewNeutralScore: 60,
+            patchGain: 4, campaignGain: 3,
+            presenceWeeklyGain: 0.5, decayWeeklyLoss: 1.5,
+            forecastThreshold: 50
+        )
+
+        /// The standing a launch is worth: the flat ship fee plus what the
+        /// press made of it. A disaster can be worth less than nothing;
+        /// the caller clamps to `0...maxStanding`.
+        public func launchGain(averageReviewScore: Int) -> Double {
+            shipGain + reviewGainPerPoint * (Double(averageReviewScore) - reviewNeutralScore)
+        }
+    }
+
     /// Tuning for the per-topic market simulation (`MarketSystem`).
     public struct MarketBalance: Codable, Equatable, Sendable {
         /// Multipliers take a random-walk step every this many days.
@@ -297,12 +361,20 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         /// Chance per shift that a topic crashes, and the drop it applies.
         public var crashChance: Double
         public var crashJump: Double
+        /// How many shifts ahead `MarketForecast` projects a topic for a
+        /// studio that holds the category. Read-only: nothing in the sim
+        /// consults it, so it costs the walk nothing.
+        public var forecastHorizonWeeks: Int
+        /// The standing ledger.
+        public var standing: StandingBalance
 
         public init(
             shiftIntervalDays: Int, driftSigma: Double,
             multiplierMin: Double, multiplierMax: Double,
             boomChance: Double, boomJump: Double,
-            crashChance: Double, crashJump: Double
+            crashChance: Double, crashJump: Double,
+            forecastHorizonWeeks: Int = MarketBalance.defaultForecastHorizonWeeks,
+            standing: StandingBalance = .standard
         ) {
             self.shiftIntervalDays = shiftIntervalDays
             self.driftSigma = driftSigma
@@ -312,7 +384,54 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             self.boomJump = boomJump
             self.crashChance = crashChance
             self.crashJump = crashJump
+            self.forecastHorizonWeeks = forecastHorizonWeeks
+            self.standing = standing
         }
+
+        /// Decoded leniently for the two fields "Hold the Category" added,
+        /// so a `Balance.json` written before them still loads.
+        private enum CodingKeys: String, CodingKey {
+            case shiftIntervalDays, driftSigma, multiplierMin, multiplierMax
+            case boomChance, boomJump, crashChance, crashJump
+            case forecastHorizonWeeks, standing
+        }
+
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.init(
+                shiftIntervalDays: try container.decode(Int.self, forKey: .shiftIntervalDays),
+                driftSigma: try container.decode(Double.self, forKey: .driftSigma),
+                multiplierMin: try container.decode(Double.self, forKey: .multiplierMin),
+                multiplierMax: try container.decode(Double.self, forKey: .multiplierMax),
+                boomChance: try container.decode(Double.self, forKey: .boomChance),
+                boomJump: try container.decode(Double.self, forKey: .boomJump),
+                crashChance: try container.decode(Double.self, forKey: .crashChance),
+                crashJump: try container.decode(Double.self, forKey: .crashJump),
+                forecastHorizonWeeks: try container.decodeIfPresent(
+                    Int.self, forKey: .forecastHorizonWeeks
+                ) ?? MarketBalance.defaultForecastHorizonWeeks,
+                standing: try container.decodeIfPresent(
+                    StandingBalance.self, forKey: .standing
+                ) ?? .standard
+            )
+        }
+
+        /// The shipped projection depth, and the default the memberwise
+        /// initializer and the lenient decoder agree on.
+        ///
+        /// Three weeks, and it is free because `MarketForecast` reads the
+        /// walk rather than pre-rolling it. The pre-rolled version was
+        /// built first and measured: committing a boom two or three shifts
+        /// early consumes the RNG stream word for word as before, but it
+        /// *reshuffles* which run meets which week, and the pacing table
+        /// notices. At horizons 0/1/2/4 the gates held and at 3 the
+        /// bankruptcy rate in `growthOnProductRevenueIsACoinFlip` read 67%
+        /// against a 55% baseline — no trend across the sweep, so a
+        /// reshuffle rather than a dose, but a red gate either way, and
+        /// picking the horizon that happened to land green would have been
+        /// tuning to noise. A projection moves nothing, so the horizon is
+        /// free to be the number the design asked for.
+        public static let defaultForecastHorizonWeeks = 3
 
         public static let standard = MarketBalance(
             shiftIntervalDays: 7, driftSigma: 0.06,

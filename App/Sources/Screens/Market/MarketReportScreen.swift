@@ -21,6 +21,7 @@ struct MarketReportScreen: View {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
                     MarketPositionCard(engine: engine)
+                    CategoryStripCard(engine: engine)
                     TopicDemandTable(engine: engine)
                     ProductTypeMarketsCard(engine: engine)
                     MarketEventsCard(engine: engine)

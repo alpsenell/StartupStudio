@@ -73,7 +73,7 @@ struct NewProductFlow: View {
             TypeStep(engine: engine, selectedTypeID: $selectedTypeID)
         case .topic:
             TopicStep(
-                topics: engine.content.topics,
+                engine: engine,
                 selectedTypeID: selectedTypeID,
                 selectedTopicID: $selectedTopicID
             )
@@ -361,8 +361,16 @@ private struct EffortDots: View {
 
 // MARK: - Step 2: topic
 
+/// Where a build is aimed. Until "Hold the Category" this step graded only
+/// the static `topic.fitByType` and never once read `state.market` — so the
+/// screen where the market should decide something was the one screen that
+/// could not see it. Now each cell carries the live demand multiplier and
+/// the studio's standing, and the selected topic gets the full read
+/// underneath: what the market is doing, what your name is worth there,
+/// and — in a category you hold — where demand is likely to be by the time
+/// this thing ships.
 private struct TopicStep: View {
-    let topics: [TopicDef]
+    let engine: GameEngine
     let selectedTypeID: String?
     @Binding var selectedTopicID: String?
 
@@ -372,15 +380,37 @@ private struct TopicStep: View {
         GridItem(.flexible(), spacing: Theme.Spacing.md),
     ]
 
+    private var categories: [CategorySnapshot] {
+        engine.content.topics.map {
+            CategorySnapshot(topic: $0, state: engine.state, balance: engine.balance)
+        }
+    }
+
     var body: some View {
-        LazyVGrid(columns: columns, spacing: Theme.Spacing.md) {
-            ForEach(topics) { topic in
-                TopicCell(
-                    topic: topic,
-                    fit: fit(for: topic),
-                    isSelected: selectedTopicID == topic.id,
-                    select: { selectedTopicID = topic.id }
+        let categories = self.categories
+        VStack(spacing: Theme.Spacing.lg) {
+            LazyVGrid(columns: columns, spacing: Theme.Spacing.md) {
+                ForEach(categories) { category in
+                    TopicCell(
+                        category: category,
+                        fit: fit(for: category.topic),
+                        isSelected: selectedTopicID == category.id,
+                        select: { selectedTopicID = category.id }
+                    )
+                }
+            }
+
+            if let selected = categories.first(where: { $0.id == selectedTopicID }) {
+                TopicMarketRead(
+                    category: selected,
+                    driftSigma: engine.balance.market.driftSigma
                 )
+            } else {
+                Text("Demand shifts every week and your standing follows what you ship. "
+                    + "Pick a topic to see both.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -394,6 +424,55 @@ private struct TopicStep: View {
         if multiplier > 1.0 { return .great }
         if multiplier < 1.0 { return .poor }
         return nil
+    }
+}
+
+/// The live read under the grid, for the topic in hand.
+private struct TopicMarketRead: View {
+    let category: CategorySnapshot
+    let driftSigma: Double
+
+    var body: some View {
+        CardView(category.topic.name, systemImage: category.topic.iconSystemName) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text(category.market.read)
+                    .font(.footnote)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: Theme.Spacing.sm) {
+                    Text("Your standing")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    StandingBar(fraction: category.standingFraction, tint: category.tint)
+                        .frame(maxWidth: 90)
+                    Text("\(category.standingLabel) · \(category.tier)")
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(category.tint)
+                }
+
+                Text(category.fieldLabel)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if let read = category.forwardRead(driftSigma: driftSigma) {
+                    HStack(alignment: .top, spacing: Theme.Spacing.xs) {
+                        Image(systemName: "binoculars.fill")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.positiveCash)
+                        Text(read)
+                            .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Text("Hold this category — keep something selling here — and you get to "
+                        + "read its demand weeks ahead before you commit a build to it.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 }
 
@@ -416,10 +495,12 @@ private struct TopicCell: View {
         }
     }
 
-    let topic: TopicDef
+    let category: CategorySnapshot
     let fit: Fit?
     let isSelected: Bool
     let select: () -> Void
+
+    private var topic: TopicDef { category.topic }
 
     var body: some View {
         Button(action: select) {
@@ -433,6 +514,20 @@ private struct TopicCell: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
+                // The live market, on the screen that decides what to aim a
+                // build at: demand now, and the trend under it.
+                HStack(spacing: 2) {
+                    Image(systemName: category.market.direction.systemImage)
+                        .font(.system(size: 8).weight(.bold))
+                    Text(category.market.multiplierLabel)
+                        .font(.caption2)
+                        .monospacedDigit()
+                }
+                .foregroundStyle(category.market.band.figureTint)
+                StandingBar(fraction: category.standingFraction, tint: category.tint)
+                    .frame(height: 3)
+                    .padding(.horizontal, Theme.Spacing.sm)
+                    .opacity(category.standing > 0 ? 1 : 0)
                 Text(fit?.text ?? " ")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(fit?.tint ?? .clear)
@@ -454,11 +549,13 @@ private struct TopicCell: View {
     }
 
     private var accessibilityText: String {
-        if let fit {
-            "\(topic.name), \(fit.text.lowercased())"
-        } else {
-            topic.name
+        var parts = [topic.name]
+        if let fit { parts.append(fit.text.lowercased()) }
+        parts.append("demand \(category.market.multiplierLabel)")
+        if category.standing > 0 {
+            parts.append("your standing \(category.standingLabel)")
         }
+        return parts.joined(separator: ", ")
     }
 }
 

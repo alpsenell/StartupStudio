@@ -122,7 +122,19 @@
     "boomChance": 0.05,
     "boomJump": 0.4,
     "crashChance": 0.05,
-    "crashJump": 0.4
+    "crashJump": 0.4,
+    "forecastHorizonWeeks": 3,
+    "standing": {
+      "maxStanding": 100.0,
+      "shipGain": 12.0,
+      "reviewGainPerPoint": 0.4,
+      "reviewNeutralScore": 60.0,
+      "patchGain": 4.0,
+      "campaignGain": 3.0,
+      "presenceWeeklyGain": 0.5,
+      "decayWeeklyLoss": 1.5,
+      "forecastThreshold": 50.0
+    }
   },
   "adoption": {
     "rampWeeksMax": 8.0,

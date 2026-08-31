@@ -4,7 +4,8 @@ import TycoonEngine
 
 /// One topic in depth, pushed inside the report's own stack: the 26-week
 /// demand chart with boom/crash markers, a plain-language read, your
-/// products in this market, and the topic's fit per product type.
+/// standing in the category and the forward read it buys, your products in
+/// this market, and the topic's fit per product type.
 struct TopicDetailView: View {
     let engine: GameEngine
     let topicID: String
@@ -13,11 +14,23 @@ struct TopicDetailView: View {
         engine.content.topic(topicID).map { TopicSnapshot(topic: $0, market: engine.state.market) }
     }
 
+    private var category: CategorySnapshot? {
+        engine.content.topic(topicID).map {
+            CategorySnapshot(topic: $0, state: engine.state, balance: engine.balance)
+        }
+    }
+
     var body: some View {
         ScrollView {
             if let snapshot {
                 VStack(spacing: Theme.Spacing.lg) {
                     DemandChartCard(engine: engine, snapshot: snapshot)
+                    if let category {
+                        CategoryStandingCard(
+                            category: category,
+                            driftSigma: engine.balance.market.driftSigma
+                        )
+                    }
                     ProductsInTopicCard(engine: engine, snapshot: snapshot)
                     TopicFitCard(engine: engine, snapshot: snapshot)
                 }
@@ -34,6 +47,56 @@ struct TopicDetailView: View {
         .background(Theme.screenBackground)
         .navigationTitle(snapshot?.topic.name ?? "Market")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Standing
+
+/// What the studio's name is worth in this category, what it would take to
+/// hold it, and the forward read it buys once it does.
+private struct CategoryStandingCard: View {
+    let category: CategorySnapshot
+    let driftSigma: Double
+
+    var body: some View {
+        CardView("Your standing here", systemImage: "flag.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+                    Text(category.standingLabel)
+                        .font(.system(.title2, design: .rounded).weight(.bold))
+                        .monospacedDigit()
+                        .foregroundStyle(category.tint)
+                        .contentTransition(.numericText())
+                    Text("of \(Int(category.maxStanding)) · \(category.tier)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                StandingBar(fraction: category.standingFraction, tint: category.tint, height: 6)
+
+                Text(category.fieldLabel)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                if let read = category.forwardRead(driftSigma: driftSigma) {
+                    HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                        Image(systemName: "binoculars.fill")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Theme.positiveCash)
+                        Text(read)
+                            .font(.footnote)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Text("Reach \(Int(category.threshold.rounded())) standing here and you can "
+                        + "read this market weeks ahead. Standing comes from shipping into it, "
+                        + "how the launch reviewed, patches and campaigns — and it slips every "
+                        + "week you have nothing on the market here.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 }
 

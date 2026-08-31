@@ -197,6 +197,11 @@ enum MarketingSystem {
             id: id, kindID: kind.rawValue, productID: productID,
             endDay: endDay, startedOnRelease: onRelease
         ))
+        // Money spent talking about a product is money spent on the
+        // studio's name in that category.
+        StandingSystem.recordCampaign(
+            topicID: state.products[productIndex].topicID, &state, balance
+        )
         return [.campaignStarted(campaignID: id, day: state.day)]
     }
 }

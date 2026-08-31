@@ -8,6 +8,11 @@ import TycoonContent
 /// is silent. Every shift also appends the post-shift multiplier to
 /// `MarketState.history` (both logs are capped by the balance).
 ///
+/// The same weekly beat keeps the standing ledger — a topic the studio has
+/// something on the market in earns a little, a topic it has walked away
+/// from loses a little. That runs after the walk and draws nothing; see
+/// `StandingSystem`.
+///
 /// The RNG draw order is fixed for determinism: topics are visited in
 /// catalog order, and each topic draws exactly three words — the drift
 /// gaussian, the boom roll, and the crash roll. Off-interval days draw
@@ -51,6 +56,7 @@ enum MarketSystem {
             }
         }
         trim(&state.market.recentEvents, to: balance.marketEventLogCap)
+        StandingSystem.applyWeeklyDrift(&state, balance, content)
         return events
     }
 
