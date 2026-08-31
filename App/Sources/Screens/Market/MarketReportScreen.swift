@@ -119,8 +119,7 @@ private struct TopicDemandRow: View {
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text(snapshot.multiplierLabel)
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.subheadline))
                     .foregroundStyle(snapshot.band.figureTint)
                     .contentTransition(.numericText())
                 trendLabel
@@ -144,8 +143,7 @@ private struct TopicDemandRow: View {
                 Image(systemName: shift.systemImage)
                     .font(.caption2.weight(.bold))
                 Text("\(MarketFormat.signedDelta(snapshot.lastChange)) last wk")
-                    .font(.caption2)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption2, weight: .regular))
             }
             .foregroundStyle(shift.tint)
         } else {
@@ -161,14 +159,12 @@ private struct TopicDemandRow: View {
                 Image(systemName: snapshot.direction.systemImage)
                     .font(.caption2.weight(.bold))
                 Text(snapshot.trendLabel)
-                    .font(.caption2)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption2, weight: .regular))
             }
             .foregroundStyle(snapshot.direction.tint)
         } else {
             Text("4wk —")
                 .font(.caption2)
-                .monospacedDigit()
                 .foregroundStyle(.tertiary)
         }
     }
@@ -229,8 +225,7 @@ private struct MarketPositionCard: View {
                             .lineLimit(1)
                         Spacer(minLength: Theme.Spacing.sm)
                         Text(best.revenue.money)
-                            .font(.subheadline)
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.subheadline, weight: .regular))
                             .foregroundStyle(.secondary)
                         Text(position.bestSellerIsLifetime ? "lifetime" : "4 wks")
                             .font(.caption2)
@@ -248,6 +243,7 @@ private struct MarketPositionCard: View {
 
                 Text(MarketAnalysis.marketRead(snapshots: snapshots, position: position))
                     .font(.footnote)
+                    .monospacedDigit()
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -260,8 +256,7 @@ private struct MarketPositionCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value.money)
-                .font(.system(.headline, design: .rounded))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.headline))
                 .contentTransition(.numericText())
         }
         .accessibilityElement(children: .combine)
@@ -274,8 +269,7 @@ private struct MarketPositionCard: View {
                 Image(systemName: direction.systemImage)
                     .font(.caption2.weight(.bold))
                 Text(MarketFormat.signedPercent(change))
-                    .font(.system(.subheadline, design: .rounded).weight(.bold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.subheadline, weight: .bold))
             }
             .foregroundStyle(direction.tint)
             .padding(.horizontal, Theme.Spacing.sm)
@@ -306,9 +300,7 @@ private struct MarketEventsCard: View {
         CardView("Market events", systemImage: "bolt.fill") {
             if events.isEmpty {
                 Text("No booms or crashes yet. Most weeks drift quietly; the big moves make the news here.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, Theme.Spacing.sm)
+                    .emptySectionText()
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(events.enumerated()), id: \.offset) { index, event in
@@ -349,8 +341,7 @@ private struct MarketEventRow: View {
                 Text("\(topicName) \(event.kind.title.lowercased())")
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
                 Text(MarketFormat.dateLabel(forDay: event.day))
-                    .font(.caption)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption, weight: .regular))
                     .foregroundStyle(.secondary)
             }
             .padding(.bottom, isLast ? 0 : Theme.Spacing.md)

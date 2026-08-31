@@ -36,6 +36,7 @@ struct WeekendRecapCard: View {
                         Spacer(minLength: Theme.Spacing.sm)
                         Text(GameCalendar(day: last.day).longLabel)
                             .font(.caption)
+                            .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
 
@@ -112,8 +113,7 @@ private struct MeterChange: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Text((delta > 0 ? "+" : "") + delta.formatted(.number.precision(.fractionLength(0))))
-                    .font(.system(.footnote, design: .rounded).weight(.bold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.footnote, weight: .bold))
                     .foregroundStyle(delta > 0 ? Theme.positiveCash : Theme.negativeCash)
                 Text(label)
                     .font(.caption2)
@@ -158,8 +158,7 @@ struct PossessionsCard: View {
                             Spacer(minLength: Theme.Spacing.sm)
                             if item.def.dailyMoodDrift > 0 {
                                 Text("+\(item.def.dailyMoodDrift.formatted(.number.precision(.fractionLength(0...1)))) mood/day")
-                                    .font(.caption)
-                                    .monospacedDigit()
+                                    .font(Theme.Typography.number(.caption, weight: .regular))
                                     .foregroundStyle(.secondary)
                             }
                         }

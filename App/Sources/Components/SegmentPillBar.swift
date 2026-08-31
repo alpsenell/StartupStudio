@@ -40,7 +40,7 @@ struct SegmentPillBar<Segment: Hashable & Identifiable>: View {
             // A deep link can land on a segment that is off-screen; bring it
             // into view rather than leaving the bar looking unchanged.
             .onChange(of: selection, initial: true) { _, new in
-                withAnimation(.easeOut(duration: 0.2)) {
+                withAnimation(Theme.Motion.entrance) {
                     proxy.scrollTo(new.id, anchor: .center)
                 }
             }
@@ -52,7 +52,7 @@ struct SegmentPillBar<Segment: Hashable & Identifiable>: View {
         return Button {
             guard !isOn else { return }
             Haptics.tap()
-            withAnimation(.spring(duration: 0.25)) { selection = segment }
+            withAnimation(Theme.Motion.selection) { selection = segment }
         } label: {
             Label(title(segment), systemImage: systemImage(segment))
                 .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -60,10 +60,14 @@ struct SegmentPillBar<Segment: Hashable & Identifiable>: View {
                 .fixedSize(horizontal: true, vertical: false)
                 .padding(.horizontal, Theme.Spacing.md)
                 .padding(.vertical, Theme.Spacing.sm - 1)
+                // The Business tab's primary navigation: a 34pt pill is
+                // under the 44pt minimum, so the hit area is grown past
+                // the drawn capsule rather than the capsule fattened.
+                .frame(minHeight: 30)
                 .background(isOn ? Theme.accent : Theme.chipBackground, in: Capsule())
-                .foregroundStyle(isOn ? Color.white : Color.secondary)
+                .foregroundStyle(isOn ? Theme.ink(on: Theme.accent) : Color.secondary)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .accessibilityLabel(title(segment))
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }

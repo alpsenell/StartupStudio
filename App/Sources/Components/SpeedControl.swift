@@ -22,7 +22,7 @@ struct SpeedControl: View {
             PixelPanelBorder(thickness: 2, corner: 2)
                 .fill(Theme.pixelInk.opacity(0.35))
         }
-        .animation(.spring(duration: 0.25), value: engine.state.speed)
+        .animation(Theme.Motion.selection, value: engine.state.speed)
         .accessibilityLabel("Simulation speed")
     }
 
@@ -34,19 +34,27 @@ struct SpeedControl: View {
             Sounds.play(.tap)
             engine.setSpeed(speed)
         } label: {
+            // The painted chip stays 26x22 — it has to sit in a HUD bar
+            // beside the bitmap cash and date — but the *hit* area is
+            // grown around it, downward only. A 44pt target is not
+            // available in a persistent bar, and the width is spoken for:
+            // four segments each 6pt wider pushed the "4X" off the end of
+            // the bar. The height is free, so the target takes it — half
+            // again the tappable area, and the bar lays out unchanged.
             segmentLabel(for: speed, isSelected: isSelected)
                 .frame(minWidth: 26, minHeight: 22)
                 .background(isSelected ? Theme.pixelAccent : Color.clear)
+                .frame(minHeight: 34)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .accessibilityLabel(speed.label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     @ViewBuilder
     private func segmentLabel(for speed: SimSpeed, isSelected: Bool) -> some View {
-        let ink: Color = isSelected ? .white : .secondary
+        let ink: Color = isSelected ? Theme.ink(on: Theme.pixelAccent) : .secondary
         switch speed {
         case .paused:
             // Two bars: the pixel pause glyph.

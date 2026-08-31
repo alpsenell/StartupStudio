@@ -57,18 +57,17 @@ private struct MeterRow: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(rounded)")
-                    .font(.system(.caption, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption))
                     .foregroundStyle(tint)
                     .contentTransition(.numericText())
-                    .animation(.spring(duration: 0.35), value: rounded)
+                    .animation(Theme.Motion.valueChange, value: rounded)
             }
             Gauge(value: min(max(value / 100, 0), 1)) {
                 EmptyView()
             }
             .gaugeStyle(.accessoryLinearCapacity)
             .tint(tint)
-            .animation(.spring(duration: 0.35), value: value)
+            .animation(Theme.Motion.valueChange, value: value)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(label) \(rounded) of 100")
@@ -94,11 +93,10 @@ private struct OutputLine: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(text)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.subheadline))
                 .foregroundStyle(tint)
                 .contentTransition(.numericText())
-                .animation(.spring(duration: 0.35), value: multiplier)
+                .animation(Theme.Motion.valueChange, value: multiplier)
             Text(isAway ? "Away from the office — no output today." : "Schedule × wellbeing × health.")
                 .font(.caption)
                 .foregroundStyle(.secondary)

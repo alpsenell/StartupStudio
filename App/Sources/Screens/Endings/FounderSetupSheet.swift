@@ -105,7 +105,7 @@ struct FounderSetupSheet: View {
                         .padding(.vertical, Theme.Spacing.xs)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressableRow)
                     .accessibilityLabel("\(option.displayName). \(option.blurb)")
                     .accessibilityAddTraits(option == archetype ? [.isSelected] : [])
                 }

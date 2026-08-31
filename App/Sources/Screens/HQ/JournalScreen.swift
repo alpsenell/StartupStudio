@@ -119,16 +119,18 @@ private struct FilterChip: View {
     var body: some View {
         Button {
             Haptics.tap()
-            withAnimation(.spring(duration: 0.25)) { action() }
+            withAnimation(Theme.Motion.selection) { action() }
         } label: {
             Label(title, systemImage: systemImage)
                 .font(.system(.caption, design: .rounded).weight(.semibold))
                 .padding(.horizontal, Theme.Spacing.md)
                 .padding(.vertical, Theme.Spacing.sm - 2)
+                .frame(minHeight: 28)
                 .background(isOn ? Theme.accent : Theme.chipBackground, in: Capsule())
-                .foregroundStyle(isOn ? Color.white : Color.secondary)
+                .foregroundStyle(isOn ? Theme.ink(on: Theme.accent) : Color.secondary)
+                .contentShape(Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 }

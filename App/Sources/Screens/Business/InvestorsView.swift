@@ -21,8 +21,14 @@ struct InvestorsView: View {
         netWorthCard
 
         if investors.rounds.isEmpty {
+            // `investorHint` is already the specific reason nobody has
+            // called, so it goes on the hint line and the headline stays
+            // the plain fact.
             EmptyStateCard(
-                message: investorHint
+                message: "You haven't raised.",
+                systemImage: "chart.pie",
+                hint: investorHint,
+                tint: Theme.accent
             )
         } else {
             roundsCard
@@ -64,10 +70,9 @@ struct InvestorsView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(netWorth.money)
-                        .font(.system(.title2, design: .rounded).weight(.bold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.title2, weight: .bold))
                         .contentTransition(.numericText())
-                        .animation(.spring(duration: 0.4), value: netWorth)
+                        .animation(Theme.Motion.valueChange, value: netWorth)
                     Text("net worth")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -100,8 +105,7 @@ struct InvestorsView: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
-                .font(.caption.weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.caption))
         }
     }
 
@@ -126,11 +130,11 @@ struct InvestorsView: View {
                             }
                             Spacer()
                             Text(round.amount.money)
-                                .font(.subheadline.weight(.semibold))
-                                .monospacedDigit()
+                                .font(Theme.Typography.number(.subheadline))
                         }
                         Text("\(round.equity.oneDecimal)% at a \(round.valuation.money) valuation · day \(round.day)")
                             .font(.caption)
+                            .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .combine)
@@ -164,13 +168,12 @@ struct InvestorsView: View {
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text("\(Int(pressure.rounded())) / 100")
-                            .font(.caption.weight(.semibold))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.caption))
                             .foregroundStyle(pressureTint(pressure))
                     }
                     ProgressView(value: pressure, total: config.boardOustPressure)
                         .tint(pressureTint(pressure))
-                        .animation(.spring(duration: 0.5), value: pressure)
+                        .animation(Theme.Motion.valueChange, value: pressure)
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Board pressure \(Int(pressure.rounded())) out of 100")
@@ -439,7 +442,7 @@ private struct EquityBar: View {
             .clipShape(Capsule())
         }
         .frame(height: 10)
-        .animation(.spring(duration: 0.5), value: founderShare)
+        .animation(Theme.Motion.valueChange, value: founderShare)
         .accessibilityHidden(true)
     }
 }

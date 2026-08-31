@@ -190,15 +190,14 @@ private struct MeterLine: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(Int(value.rounded()))")
-                    .font(.system(.caption, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption))
                     .foregroundStyle(tint)
                     .contentTransition(.numericText())
             }
             Gauge(value: min(max(value / 100, 0), 1)) { EmptyView() }
                 .gaugeStyle(.accessoryLinearCapacity)
                 .tint(tint)
-                .animation(.spring(duration: 0.35), value: value)
+                .animation(Theme.Motion.valueChange, value: value)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(label) \(Int(value.rounded())) of 100")
@@ -218,7 +217,7 @@ private struct TranscriptLine: View {
             .padding(Theme.Spacing.md)
             .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .transition(.opacity)
-            .animation(.easeInOut(duration: 0.2), value: text)
+            .animation(Theme.Motion.valueChange, value: text)
     }
 }
 
@@ -253,7 +252,7 @@ private struct TopicRow: View {
             .padding(Theme.Spacing.md)
             .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .disabled(!enabled)
     }
 }
@@ -293,7 +292,7 @@ private struct OfferRow: View {
             .padding(Theme.Spacing.md)
             .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .disabled(blocker != nil)
         .accessibilityLabel("\(offer.displayName). \(terms). \(blocker ?? "")")
     }
@@ -335,8 +334,7 @@ private struct DossierRow: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
-                .font(.system(.caption, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.caption))
         }
     }
 }

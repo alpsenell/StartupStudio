@@ -133,7 +133,7 @@ final class ToastCenter {
 
     private func push(_ toast: Toast, silent: Bool = false) {
         nextID += 1
-        withAnimation(.spring(duration: 0.32)) {
+        withAnimation(Theme.Motion.weighted) {
             toasts.append(toast)
             if toasts.count > Self.maxVisible {
                 toasts.removeFirst(toasts.count - Self.maxVisible)
@@ -151,7 +151,7 @@ final class ToastCenter {
     }
 
     private func dismiss(_ id: Int) {
-        withAnimation(.easeOut(duration: 0.25)) {
+        withAnimation(Theme.Motion.exit) {
             toasts.removeAll { $0.id == id }
         }
     }
@@ -216,9 +216,11 @@ struct ToastStack: View {
             ForEach(center.toasts) { toast in
                 ToastView(toast: toast)
                     .transition(
-                        .asymmetric(
-                            insertion: .move(edge: .top).combined(with: .opacity),
-                            removal: .opacity
+                        Theme.Motion.transition(
+                            .asymmetric(
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .opacity
+                            )
                         )
                     )
             }
@@ -250,7 +252,7 @@ private struct ToastView: View {
         .overlay(
             Capsule().strokeBorder(toast.tint.opacity(0.35), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.12), radius: 8, y: 3)
+        .shadow(color: Theme.shadow, radius: 8, y: 3)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(toast.message)
     }

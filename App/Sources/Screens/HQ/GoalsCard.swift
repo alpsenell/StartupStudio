@@ -24,8 +24,7 @@ struct GoalsCard: View {
 
                     if progression.activeGoals.isEmpty {
                         Text("Every goal in this chapter is done. Nice.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .emptySectionText()
                     } else {
                         VStack(spacing: Theme.Spacing.md) {
                             ForEach(progression.activeGoals) { goal in
@@ -58,14 +57,12 @@ struct GoalsCard: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(chapterProgressText)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.subheadline))
                 .contentTransition(.numericText())
-                .animation(.spring(duration: 0.4), value: chapterDone)
+                .animation(Theme.Motion.emphatic, value: chapterDone)
             Spacer()
             Text("\(progression.completedGoalIDs.count) done")
-                .font(.caption)
-                .monospacedDigit()
+                .font(Theme.Typography.number(.caption, weight: .regular))
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
@@ -141,7 +138,7 @@ private struct GoalRow: View {
             }
             ProgressView(value: goal.fraction)
                 .tint(goal.fraction >= 1 ? Theme.positiveCash : Theme.accent)
-                .animation(.spring(duration: 0.5), value: goal.fraction)
+                .animation(Theme.Motion.valueChange, value: goal.fraction)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(goal.title). \(goal.detail)")

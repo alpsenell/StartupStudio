@@ -102,8 +102,7 @@ private struct ContactRow: View {
                 Spacer(minLength: 0)
                 if contact.isOpen {
                     Text("\(Int(contact.rapport.rounded()))")
-                        .font(.system(.caption, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption))
                         .foregroundStyle(Theme.accent)
                 }
                 Image(systemName: "chevron.right")
@@ -114,7 +113,7 @@ private struct ContactRow: View {
             .padding(Theme.Spacing.sm)
             .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .accessibilityLabel("\(contact.name), \(subtitle)")
     }
 
@@ -140,18 +139,15 @@ private struct PortfolioCard: View {
                             Text(holding.companyName)
                                 .font(.system(.subheadline, design: .rounded).weight(.semibold))
                             Text("\(holding.stakePercent.formatted(.number.precision(.fractionLength(1))))% · paid \(holding.invested.money)")
-                                .font(.caption2)
-                                .monospacedDigit()
+                                .font(Theme.Typography.number(.caption2, weight: .regular))
                                 .foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 0)
                         VStack(alignment: .trailing, spacing: 2) {
                             Text(holding.currentValue.money)
-                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                                .monospacedDigit()
+                                .font(Theme.Typography.number(.subheadline))
                             Text(deltaLabel(holding))
-                                .font(.caption2.weight(.semibold))
-                                .monospacedDigit()
+                                .font(Theme.Typography.number(.caption2))
                                 .foregroundStyle(
                                     holding.currentValue >= holding.invested
                                         ? Theme.positiveCash : Theme.negativeCash
@@ -191,8 +187,7 @@ private struct CapTableCard: View {
                         }
                         Spacer(minLength: 0)
                         Text("\(grant.percent.formatted(.number.precision(.fractionLength(1))))%")
-                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.subheadline))
                     }
                 }
                 Divider()
@@ -202,8 +197,7 @@ private struct CapTableCard: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text("\(founderEquity.formatted(.number.precision(.fractionLength(1))))%")
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.subheadline))
                 }
             }
         }

@@ -38,6 +38,7 @@ struct DistrictDetailPanel: View {
 
             Text(perkSummary(def))
                 .font(.caption)
+                .monospacedDigit()
                 .foregroundStyle(.secondary)
 
             if !rivalsHere.isEmpty {
@@ -65,7 +66,7 @@ struct DistrictDetailPanel: View {
         }
         .padding(Theme.Spacing.md)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
-        .animation(.spring(duration: 0.3), value: district)
+        .animation(Theme.Motion.entrance, value: district)
         .confirmationDialog(
             confirmationTitle,
             isPresented: Binding(
@@ -230,6 +231,7 @@ struct DistrictDetailPanel: View {
             if state.city.ownership.isOwned {
                 Text("Moving sells your current office for \(state.city.propertyValue.money) first.")
                     .font(.caption2)
+                    .monospacedDigit()
                     .foregroundStyle(.tertiary)
             }
         }

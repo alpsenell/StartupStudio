@@ -33,9 +33,10 @@ struct FocusEditor: View {
             )
             Text("Where the team spends its time, split \(split[0])/\(split[1])/\(split[2]).")
                 .font(.caption)
+                .monospacedDigit()
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText())
-                .animation(.spring(duration: 0.25), value: split)
+                .animation(Theme.Motion.selection, value: split)
         }
     }
 
@@ -54,12 +55,11 @@ struct FocusEditor: View {
                 .accessibilityLabel("\(label) focus")
                 .accessibilityValue("\(percent) percent")
             Text("\(percent)%")
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.subheadline))
                 .foregroundStyle(tint)
                 .frame(width: 44, alignment: .trailing)
                 .contentTransition(.numericText())
-                .animation(.spring(duration: 0.25), value: percent)
+                .animation(Theme.Motion.valueChange, value: percent)
         }
     }
 

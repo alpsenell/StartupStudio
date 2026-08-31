@@ -28,13 +28,17 @@ struct CashDeltaLabel: View {
         .opacity(opacity)
         .allowsHitTesting(false)
         .onAppear {
-            withAnimation(.easeOut(duration: 0.22)) {
+            // Under reduced motion the label still appears and still fades
+            // — a cash change the player can't see is worse than one that
+            // doesn't rise — it just holds still while it does it.
+            let holdStill = Theme.Motion.isReduced
+            withAnimation(.easeOut(duration: Theme.Motion.quick + 0.04)) {
                 opacity = 1
-                offset = -2
+                offset = holdStill ? 0 : -2
             }
             withAnimation(.easeIn(duration: 0.5).delay(0.7)) {
                 opacity = 0
-                offset = -18
+                offset = holdStill ? 0 : -18
             }
         }
         .accessibilityHidden(true)

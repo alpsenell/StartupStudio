@@ -107,6 +107,8 @@ struct TipStrip: View {
                         } label: {
                             Label(label, systemImage: "arrow.forward")
                                 .font(.caption.weight(.semibold))
+                                .padding(.vertical, Theme.Spacing.sm)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.borderless)
                     }
@@ -119,22 +121,23 @@ struct TipStrip: View {
                     Image(systemName: "xmark")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.secondary)
-                        .padding(Theme.Spacing.xs)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressableRow)
                 .accessibilityLabel("Dismiss tip")
             }
             .padding(.horizontal, Theme.Spacing.lg)
             .padding(.vertical, Theme.Spacing.sm)
             .background(Theme.accent.opacity(0.10))
             .overlay(alignment: .bottom) { Divider() }
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(Theme.Motion.transition(.move(edge: .top).combined(with: .opacity)))
             .accessibilityElement(children: .contain)
         }
     }
 
     private func dismiss(_ tip: CoachTip) {
-        withAnimation(.spring(duration: 0.3)) {
+        withAnimation(Theme.Motion.entrance) {
             _ = dismissed.insert(tip.id)
         }
         GameSettings.dismissedTips = dismissed

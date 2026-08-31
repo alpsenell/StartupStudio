@@ -59,8 +59,7 @@ struct TopicDemandChart: View {
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 .annotation(position: .top, alignment: .leading, spacing: 2) {
                     Text("×1.00 baseline")
-                        .font(.caption2)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption2, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
 
@@ -116,8 +115,7 @@ struct TopicDemandChart: View {
                 AxisValueLabel {
                     if let multiplier = value.as(Double.self) {
                         Text(MarketFormat.multiplier(multiplier))
-                            .font(.caption2)
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.caption2, weight: .regular))
                     }
                 }
             }
@@ -128,8 +126,7 @@ struct TopicDemandChart: View {
                 AxisValueLabel {
                     if let week = value.as(Double.self) {
                         Text("\(Int(week))")
-                            .font(.caption2)
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.caption2, weight: .regular))
                     }
                 }
             }

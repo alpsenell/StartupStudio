@@ -151,6 +151,7 @@ struct ProductDetailScreen: View {
                     "Shipping unlocks once code reaches \(Int((threshold * 100).rounded()))% of its target."
                 )
                 .font(.footnote)
+                .monospacedDigit()
                 .foregroundStyle(.secondary)
             }
         }
@@ -285,6 +286,7 @@ private struct LiveOpsCard: View {
 
             Text(LiveOps.priceCaption(for: info.priceTier, balance: engine.balance))
                 .font(.caption)
+                .monospacedDigit()
                 .foregroundStyle(.secondary)
         }
     }
@@ -377,6 +379,7 @@ private struct LiveOpsCard: View {
                     + "half the live bugs · a bumper sales week · uses a build slot")
                 .font(.caption2)
                 .monospacedDigit()
+                .monospacedDigit()
                 .foregroundStyle(noSlot ? Theme.warning : .secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -444,8 +447,7 @@ private struct DetailStat: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.title3))
                 .foregroundStyle(tint)
         }
         .accessibilityElement(children: .combine)
@@ -567,9 +569,7 @@ private struct SalesCard: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 if info.weeklySales.isEmpty {
                     Text("No sales recorded yet — the first week is still ticking.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.vertical, Theme.Spacing.sm)
+                        .emptySectionText()
                 } else {
                     chart
                 }
@@ -614,10 +614,9 @@ private struct SalesCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.title3))
                 .contentTransition(.numericText())
-                .animation(.spring(duration: 0.35), value: value)
+                .animation(Theme.Motion.valueChange, value: value)
         }
         .accessibilityElement(children: .combine)
     }
@@ -632,9 +631,7 @@ private struct ReviewsCard: View {
         CardView("Reviews", systemImage: "star.fill") {
             if reviews.isEmpty {
                 Text("The press hasn't weighed in yet.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, Theme.Spacing.sm)
+                    .emptySectionText()
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(reviews.enumerated()), id: \.offset) { index, review in
@@ -687,11 +684,10 @@ private struct ShipForecastCard: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
                     Text("\(Int(forecast.quality.rounded()))")
-                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.largeTitle, weight: .bold))
                         .foregroundStyle(Theme.scoreTint(Int(forecast.quality.rounded())))
                         .contentTransition(.numericText())
-                        .animation(.spring(duration: 0.35), value: forecast.quality)
+                        .animation(Theme.Motion.valueChange, value: forecast.quality)
                     VStack(alignment: .leading, spacing: 0) {
                         Text("projected quality")
                             .font(.caption)
@@ -707,6 +703,7 @@ private struct ShipForecastCard: View {
                 if let limiting = forecast.limitingFactor {
                     Text(limiting)
                         .font(.footnote)
+                        .monospacedDigit()
                         .foregroundStyle(
                             forecast.quality >= forecast.crewCeiling * 100 - 1
                                 ? Theme.warning : .secondary

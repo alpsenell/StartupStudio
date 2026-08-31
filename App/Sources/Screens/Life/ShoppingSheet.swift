@@ -103,8 +103,7 @@ private struct ShopRow: View {
                     .labelStyle(.titleAndIcon)
             } else {
                 Button(item.cost.money, action: buy)
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.subheadline))
                     .buttonStyle(.borderedProminent)
                     .buttonBorderShape(.capsule)
                     .tint(Theme.accent)

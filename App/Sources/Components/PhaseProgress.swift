@@ -26,15 +26,14 @@ struct PhaseProgressBar: View {
                 Spacer()
                 if !compact {
                     Text(pointsText)
-                        .font(.system(.caption, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption))
                         .foregroundStyle(.secondary)
                         .contentTransition(.numericText())
                 }
             }
             track
         }
-        .animation(.spring(duration: 0.35), value: fraction)
+        .animation(Theme.Motion.valueChange, value: fraction)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(label) \(pointsText)")
     }

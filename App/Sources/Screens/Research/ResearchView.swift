@@ -110,11 +110,10 @@ private struct LabSummaryCard: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(progress) / \(cost) RP")
-                    .font(.caption)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption, weight: .regular))
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
-                    .animation(.spring(duration: 0.35), value: progress)
+                    .animation(Theme.Motion.valueChange, value: progress)
             }
             Gauge(value: fraction) {
                 EmptyView()
@@ -221,7 +220,7 @@ private struct TechNodeRow: View {
             guard completed else { return }
             Sounds.play(.goal)
             Haptics.success()
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.6)) { flip = 360 }
+            withAnimation(Theme.Motion.emphatic) { flip = 360 }
             Task {
                 try? await Task.sleep(for: .milliseconds(700))
                 flip = 0
@@ -250,6 +249,7 @@ private struct TechNodeRow: View {
             Spacer(minLength: Theme.Spacing.sm)
             Text(effectSummary)
                 .font(.caption)
+                .monospacedDigit()
                 .foregroundStyle(.tertiary)
                 .lineLimit(1)
             infoIcon
@@ -286,11 +286,10 @@ private struct TechNodeRow: View {
 
             HStack {
                 Text("\(progress) / \(cost) RP")
-                    .font(.caption)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption, weight: .regular))
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
-                    .animation(.spring(duration: 0.35), value: progress)
+                    .animation(Theme.Motion.valueChange, value: progress)
                 Spacer()
                 // No confirmation needed: cancelling refunds progress to
                 // the banked pool.
@@ -445,12 +444,12 @@ private struct TechNodeInfoSheet: View {
                 Section("Cost") {
                     LabeledContent("Research") {
                         Text("\(Int(node.researchCost.rounded())) RP")
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.body, weight: .regular))
                     }
                     if node.cashCost > 0 {
                         LabeledContent("Cash") {
                             Text(node.cashCost.money)
-                                .monospacedDigit()
+                                .font(Theme.Typography.number(.body, weight: .regular))
                                 .foregroundStyle(
                                     engine.state.company.cash >= node.cashCost
                                         ? Color.secondary
@@ -513,7 +512,7 @@ private struct TechNodeInfoSheet: View {
                 : 0
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text("\(progress) / \(cost) RP")
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.body, weight: .regular))
                     .foregroundStyle(.secondary)
                 Gauge(value: fraction) {
                     EmptyView()
@@ -533,6 +532,7 @@ private struct TechNodeInfoSheet: View {
             }
             if node.cashCost > 0, engine.state.company.cash < node.cashCost {
                 Text("Needs \(node.cashCost.money) cash to start.")
+                    .monospacedDigit()
                     .foregroundStyle(Theme.negativeCash)
             }
         case .locked:
@@ -575,6 +575,7 @@ private struct EffectChip: View {
     var body: some View {
         Text(text)
             .font(.caption2.weight(.semibold))
+            .monospacedDigit()
             .foregroundStyle(Theme.accent)
             .padding(.horizontal, Theme.Spacing.xs + 2)
             .padding(.vertical, 2)

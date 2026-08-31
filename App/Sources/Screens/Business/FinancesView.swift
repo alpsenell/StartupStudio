@@ -106,8 +106,7 @@ private struct LoanCard: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text(outstanding.money)
-                            .font(.system(.headline, design: .rounded))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.headline))
                             .foregroundStyle(outstanding > 0 ? Theme.negativeCash : .primary)
                     }
                     Spacer()
@@ -116,14 +115,14 @@ private struct LoanCard: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text(creditLimit.money)
-                            .font(.system(.headline, design: .rounded))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.headline))
                     }
                 }
 
                 if outstanding > 0 {
                     Text("Interest \(weeklyInterest.money)/wk until repaid.")
                         .font(.caption)
+                        .monospacedDigit()
                         .foregroundStyle(Theme.warning)
                 } else {
                     Text("Revenue and reputation raise the limit. Interest posts weekly.")
@@ -140,8 +139,7 @@ private struct LoanCard: View {
                 HStack(spacing: Theme.Spacing.md) {
                     Stepper(value: clampedAmount, in: Self.step...max(Self.step, headroom), step: Self.step) {
                         Text(amount.money)
-                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.subheadline))
                     }
                     .accessibilityLabel("Loan amount")
                     .accessibilityValue(amount.money)
@@ -193,6 +191,7 @@ private struct LoanCard: View {
 
                 Text(headroomCaption)
                     .font(.caption)
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
         }
@@ -280,9 +279,7 @@ private struct CashflowCard: View {
                     legend
                 } else {
                     Text("No transactions yet — the books are still blank.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.vertical, Theme.Spacing.sm)
+                        .emptySectionText()
                 }
             }
         }
@@ -362,9 +359,7 @@ private struct RecentLedgerCard: View {
         CardView("Recent transactions", systemImage: "list.bullet") {
             if recent.isEmpty {
                 Text("Nothing posted yet.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, Theme.Spacing.sm)
+                    .emptySectionText()
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(recent.enumerated()), id: \.offset) { index, entry in
@@ -402,8 +397,7 @@ private struct LedgerRow: View {
             Spacer(minLength: Theme.Spacing.sm)
 
             Text(entry.amount.money)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.subheadline))
                 .foregroundStyle(entry.amount >= 0 ? Theme.positiveCash : Theme.negativeCash)
         }
         .padding(.vertical, Theme.Spacing.sm)
@@ -524,8 +518,7 @@ private struct CategoryBreakdownCard: View {
         CardView("Last week by category", systemImage: "chart.pie.fill") {
             if totals.isEmpty {
                 Text("Nothing posted last week.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .emptySectionText()
             } else {
                 VStack(spacing: Theme.Spacing.sm) {
                     ForEach(totals, id: \.category) { row in
@@ -539,14 +532,12 @@ private struct CategoryBreakdownCard: View {
                             Spacer(minLength: Theme.Spacing.sm)
                             if row.income > 0 {
                                 Text("+\(row.income.money)")
-                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
-                                    .monospacedDigit()
+                                    .font(Theme.Typography.number(.footnote))
                                     .foregroundStyle(Theme.positiveCash)
                             }
                             if row.expense > 0 {
                                 Text("-\(row.expense.money)")
-                                    .font(.system(.footnote, design: .rounded).weight(.semibold))
-                                    .monospacedDigit()
+                                    .font(Theme.Typography.number(.footnote))
                                     .foregroundStyle(Theme.negativeCash)
                             }
                         }
@@ -569,8 +560,7 @@ private struct FinanceStat: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.title3))
                 .foregroundStyle(tint)
         }
         .accessibilityElement(children: .combine)

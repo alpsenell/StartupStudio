@@ -80,6 +80,7 @@ struct LaunchDaySheet: View {
                 if let release {
                     Text("Shipped on \(GameCalendar(day: release.launchDay).longLabel)")
                         .font(.caption)
+                        .monospacedDigit()
                         .foregroundStyle(Theme.pixelInk.opacity(0.6))
                 }
             }
@@ -112,7 +113,7 @@ struct LaunchDaySheet: View {
             ForEach(Array(release.reviews.enumerated()), id: \.offset) { index, review in
                 if index < revealed {
                     ReviewCardView(review: review)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
                 }
             }
 
@@ -143,7 +144,7 @@ struct LaunchDaySheet: View {
         .onAppear {
             Sounds.play(.review)
             Haptics.success()
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.55)) {
+            withAnimation(Theme.Motion.emphatic) {
                 stampScale = 1
                 stampOpacity = 1
             }
@@ -214,7 +215,7 @@ struct LaunchDaySheet: View {
         Task {
             for index in release.reviews.indices {
                 try? await Task.sleep(for: .milliseconds(index == 0 ? 400 : 900))
-                withAnimation(.spring(duration: 0.35)) { revealed = index + 1 }
+                withAnimation(Theme.Motion.emphatic) { revealed = index + 1 }
                 Sounds.play(.tap)
                 Haptics.tap()
             }
@@ -233,8 +234,7 @@ private struct LaunchStat: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.title3))
                 .foregroundStyle(tint)
         }
         .accessibilityElement(children: .combine)

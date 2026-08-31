@@ -109,7 +109,7 @@ struct FounderBiographyView: View {
                 ForEach(state.progression.chapterLog, id: \.chapter) { entry in
                     HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
                         Text("\(entry.chapter)")
-                            .font(.system(.caption, design: .rounded).weight(.bold))
+                            .font(Theme.Typography.number(.caption, weight: .bold))
                             .frame(width: 18)
                             .foregroundStyle(Theme.accent)
                         VStack(alignment: .leading, spacing: 1) {
@@ -197,6 +197,7 @@ struct FounderBiographyView: View {
                 }
                 Text("\(shippedCount) product\(shippedCount == 1 ? "" : "s") shipped in all.")
                     .font(.caption)
+                    .monospacedDigit()
                     .foregroundStyle(.tertiary)
             }
         }
@@ -319,8 +320,7 @@ struct FounderBiographyView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(netWorth.money)
-                        .font(.system(.title2, design: .rounded).weight(.bold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.title2, weight: .bold))
                         .foregroundStyle(netWorth >= 0 ? Theme.positiveCash : Theme.negativeCash)
                     Text("final net worth")
                         .font(.caption)
@@ -351,8 +351,7 @@ struct FounderBiographyView: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
-                .font(.caption.weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.caption))
         }
     }
 

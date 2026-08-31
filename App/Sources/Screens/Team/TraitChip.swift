@@ -28,7 +28,7 @@ struct TraitChip: View {
             .padding(.vertical, 3)
             .background(Theme.chipBackground, in: Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .disabled(isHidden)
         .popover(isPresented: $showingBlurb) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {

@@ -138,11 +138,10 @@ private struct HypeCard: View {
                         .font(.system(.headline, design: .rounded))
                     Spacer(minLength: Theme.Spacing.sm)
                     Text("\(hypeValue)")
-                            .font(.system(.title2, design: .rounded).weight(.bold))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.title2, weight: .bold))
                             .foregroundStyle(Theme.accent)
                         .contentTransition(.numericText())
-                        .animation(.spring(duration: 0.35), value: hypeValue)
+                        .animation(Theme.Motion.valueChange, value: hypeValue)
                 }
 
                 Gauge(value: normalizedHype) {
@@ -323,8 +322,7 @@ private struct CampaignKindCard: View {
                 switch availability {
                 case .running(let endDay):
                     Text("Running · ends day \(endDay)")
-                        .font(.system(.footnote, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.footnote))
                         .foregroundStyle(Theme.positiveCash)
                         .accessibilityLabel("\(kind.name) is running, ends day \(endDay)")
 

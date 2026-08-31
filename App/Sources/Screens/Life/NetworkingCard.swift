@@ -92,11 +92,11 @@ private struct OpenRoomRow: View {
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
                         .foregroundStyle(.primary)
                     Text("\(event.contactIDs.count) people · \(event.conversationsLeft) conversation\(event.conversationsLeft == 1 ? "" : "s") left")
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                     Text("Closes in \(max(0, event.expiresOnDay - day)) day\(max(0, event.expiresOnDay - day) == 1 ? "" : "s")")
                         .font(.caption2)
+                        .monospacedDigit()
                         .foregroundStyle(Theme.warning)
                 }
                 Spacer(minLength: 0)
@@ -111,7 +111,7 @@ private struct OpenRoomRow: View {
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
     }
 }
 
@@ -127,8 +127,7 @@ private struct SummaryTile: View {
                 .textCase(.uppercase)
                 .foregroundStyle(.tertiary)
             Text(value)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.subheadline))
                 .foregroundStyle(.primary)
             Text(caption)
                 .font(.caption2)

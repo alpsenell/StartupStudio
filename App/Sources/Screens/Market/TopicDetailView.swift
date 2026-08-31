@@ -85,8 +85,7 @@ private struct DemandChartCard: View {
                 .foregroundStyle(snapshot.band.tint)
 
             Text(snapshot.multiplierLabel)
-                .font(.system(.title2, design: .rounded).weight(.bold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.title2, weight: .bold))
                 .foregroundStyle(snapshot.band.figureTint)
                 .contentTransition(.numericText())
 
@@ -105,8 +104,7 @@ private struct DemandChartCard: View {
                     Image(systemName: snapshot.direction.systemImage)
                         .font(.caption.weight(.bold))
                     Text(snapshot.trendLabel)
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.subheadline))
                 }
                 .foregroundStyle(snapshot.direction.tint)
                 Text("4-week trend")
@@ -172,9 +170,7 @@ private struct ProductsInTopicCard: View {
         CardView("Your products in \(snapshot.topic.name)", systemImage: "shippingbox.fill") {
             if entries.isEmpty {
                 Text("Nothing of yours targets this market yet.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, Theme.Spacing.sm)
+                    .emptySectionText()
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
@@ -220,8 +216,7 @@ private struct ProductsInTopicCard: View {
             VStack(alignment: .trailing, spacing: 2) {
                 if let latest {
                     Text(latest.money)
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.subheadline))
                         .foregroundStyle(entry.info?.offMarket == true ? .secondary : Theme.positiveCash)
                     Text("last wk")
                         .font(.caption2)
@@ -301,8 +296,7 @@ private struct TopicFitCard: View {
                 .background(tint.opacity(0.15), in: Capsule())
 
             Text(MarketFormat.multiplier(fit))
-                .font(.caption)
-                .monospacedDigit()
+                .font(Theme.Typography.number(.caption, weight: .regular))
                 .foregroundStyle(.secondary)
                 .frame(width: 44, alignment: .trailing)
         }

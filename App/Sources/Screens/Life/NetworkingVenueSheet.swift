@@ -158,7 +158,7 @@ struct NetworkingFloorView: View {
                     Button { tap(contact) } label: {
                         GuestFigure(contact: contact)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                     .position(spot)
                 }
 
@@ -253,10 +253,10 @@ private struct ExchangeBar: View {
         HStack(spacing: Theme.Spacing.md) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(left) conversation\(left == 1 ? "" : "s") left")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.subheadline))
                 Text("The room closes in \(closesIn) day\(closesIn == 1 ? "" : "s")")
                     .font(.caption2)
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)

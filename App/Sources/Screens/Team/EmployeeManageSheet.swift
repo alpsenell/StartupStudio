@@ -68,8 +68,7 @@ struct EmployeeManageSheet: View {
                         LevelBadge(level: employee.level)
                     }
                     Text("\(employee.weeklySalary.money)/wk · hired day \(employee.hiredDay)")
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 0)
@@ -120,14 +119,14 @@ struct EmployeeManageSheet: View {
                         .font(.subheadline)
                     Spacer()
                     Text("\(Int(employee.morale.rounded()))/100")
-                        .font(.subheadline.weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.subheadline))
                         .foregroundStyle(lifeMeterTint(employee.morale))
                 }
                 ProgressView(value: employee.morale, total: 100)
                     .tint(lifeMeterTint(employee.morale))
                 Text(String(format: "Output ×%.2f from morale and seniority.", performance))
                     .font(.caption)
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
                 ForEach(Array(moraleCauses(employee).enumerated()), id: \.offset) { _, cause in
                     Label(cause.text, systemImage: cause.isGood ? "arrow.up" : "arrow.down")
@@ -138,6 +137,7 @@ struct EmployeeManageSheet: View {
                 if employee.morale < staff.quitMoraleThreshold {
                     Text(quitWarning(employee))
                         .font(.caption)
+                        .monospacedDigit()
                         .foregroundStyle(Theme.negativeCash)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -231,8 +231,7 @@ struct EmployeeManageSheet: View {
                         .font(.subheadline)
                     Spacer()
                     Text("\(Int(employee.loyalty.rounded()))/100")
-                        .font(.subheadline.weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.subheadline))
                         .foregroundStyle(lifeMeterTint(employee.loyalty))
                 }
                 ProgressView(value: employee.loyalty, total: 100)
@@ -313,8 +312,7 @@ struct EmployeeManageSheet: View {
                         .font(.subheadline)
                     Spacer()
                     Text("\(Int(employee.founderBond.rounded()))/100")
-                        .font(.subheadline.weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.subheadline))
                         .foregroundStyle(lifeMeterTint(employee.founderBond))
                 }
                 ProgressView(value: employee.founderBond, total: 100)
@@ -380,10 +378,12 @@ struct EmployeeManageSheet: View {
 
         return Section {
             LabeledContent("Current") {
-                Text("\(employee.weeklySalary.money)/wk").monospacedDigit()
+                Text("\(employee.weeklySalary.money)/wk")
+                    .font(Theme.Typography.number(.body, weight: .regular))
             }
             LabeledContent("Market rate") {
-                Text("\(fair.money)/wk").monospacedDigit()
+                Text("\(fair.money)/wk")
+                    .font(Theme.Typography.number(.body, weight: .regular))
             }
             if Double(employee.weeklySalary) < Double(fair) * engine.balance.staff.underpaidThreshold {
                 Text("Underpaid — morale is draining.")
@@ -409,7 +409,7 @@ struct EmployeeManageSheet: View {
                     Text("Set to")
                     Spacer()
                     Text("\(proposed.money)/wk")
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.body, weight: .regular))
                         .foregroundStyle(proposed < employee.weeklySalary ? Theme.negativeCash : .primary)
                 }
             }
@@ -506,6 +506,7 @@ struct EmployeeManageSheet: View {
                 Text("Just finished a course — try again in a couple of weeks.")
             } else {
                 Text("Costs \(staff.trainingCost.money), boosts the skill by \(Int(staff.trainingSkillBoost)).")
+                    .monospacedDigit()
             }
         }
     }

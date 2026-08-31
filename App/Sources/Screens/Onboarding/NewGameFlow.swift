@@ -102,7 +102,7 @@ struct NewGameFlow: View {
                     Capsule()
                         .fill(candidate <= step ? Theme.pixelAccent : Theme.chipBackground)
                         .frame(height: 4)
-                        .animation(.spring(duration: 0.3), value: step)
+                        .animation(Theme.Motion.entrance, value: step)
                 }
             }
             .padding(.horizontal, Theme.Spacing.lg)
@@ -160,7 +160,7 @@ struct NewGameFlow: View {
 
                         PixelPortrait(seed: appearanceSeed, isFounder: true, size: 96)
                             .id(appearanceSeed)
-                            .transition(.scale.combined(with: .opacity))
+                            .transition(Theme.Motion.transition(.scale.combined(with: .opacity)))
 
                         Button {
                             appearanceIndex = (appearanceIndex + 1) % Self.appearanceSeeds.count
@@ -169,10 +169,11 @@ struct NewGameFlow: View {
                         }
                         .accessibilityLabel("Next look")
                     }
-                    .animation(.spring(duration: 0.25), value: appearanceIndex)
+                    .animation(Theme.Motion.selection, value: appearanceIndex)
 
                     Text("Look \(appearanceIndex + 1) of \(Self.appearanceSeeds.count)")
                         .font(.caption)
+                        .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
@@ -185,7 +186,7 @@ struct NewGameFlow: View {
                             archetype: candidate,
                             isSelected: candidate == archetype
                         ) {
-                            withAnimation(.spring(duration: 0.25)) { archetype = candidate }
+                            withAnimation(Theme.Motion.selection) { archetype = candidate }
                         }
                     }
                 }
@@ -244,7 +245,7 @@ struct NewGameFlow: View {
             VStack(spacing: Theme.Spacing.sm) {
                 ForEach(Difficulty.allCases, id: \.self) { candidate in
                     DifficultyRow(difficulty: candidate, isSelected: candidate == difficulty) {
-                        withAnimation(.spring(duration: 0.25)) { difficulty = candidate }
+                        withAnimation(Theme.Motion.selection) { difficulty = candidate }
                     }
                 }
             }
@@ -279,7 +280,7 @@ struct NewGameFlow: View {
         HStack(spacing: Theme.Spacing.md) {
             if let previous = OnboardingStep(rawValue: step.rawValue - 1) {
                 Button {
-                    withAnimation(.spring(duration: 0.3)) { step = previous }
+                    withAnimation(Theme.Motion.entrance) { step = previous }
                 } label: {
                     Label("Back", systemImage: "chevron.left")
                         .frame(maxWidth: .infinity)
@@ -311,7 +312,7 @@ struct NewGameFlow: View {
         Haptics.tap()
         Sounds.play(.tap)
         guard step == .intro else {
-            withAnimation(.spring(duration: 0.3)) {
+            withAnimation(Theme.Motion.entrance) {
                 step = OnboardingStep(rawValue: step.rawValue + 1) ?? .intro
             }
             return
@@ -402,7 +403,7 @@ private struct ArchetypeRow: View {
             )
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
@@ -445,8 +446,7 @@ private struct SkillChip: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             Text("\(value)")
-                .font(.system(.caption2, design: .rounded).weight(.bold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.caption2, weight: .bold))
                 .foregroundStyle(tint)
         }
         .padding(.horizontal, Theme.Spacing.sm)
@@ -488,7 +488,7 @@ private struct DifficultyRow: View {
             )
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressable)
         .cardStyle()
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)

@@ -28,8 +28,8 @@ struct TopHUD: View {
             PauseBanner(engine: engine) { route in router.go(route) }
             TipStrip(engine: engine) { route in router.go(route) }
         }
-        .animation(.spring(duration: 0.3), value: engine.state.speed)
-        .animation(.spring(duration: 0.3), value: shell.pendingReportWeek)
+        .animation(Theme.Motion.entrance, value: engine.state.speed)
+        .animation(Theme.Motion.entrance, value: shell.pendingReportWeek)
     }
 
     private var bar: some View {
@@ -107,6 +107,7 @@ private struct WeeklyReportChip: View {
                         .font(.footnote.weight(.bold))
                     Text("Week \(week) report")
                         .font(.system(.footnote, design: .rounded).weight(.semibold))
+                        .monospacedDigit()
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
                         .font(.caption2.weight(.bold))
@@ -116,11 +117,11 @@ private struct WeeklyReportChip: View {
                 .padding(.vertical, Theme.Spacing.sm)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressableRow)
             .foregroundStyle(Theme.accent)
             .background(Theme.accent.opacity(0.10))
             .overlay(alignment: .bottom) { Divider() }
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(Theme.Motion.transition(.move(edge: .top).combined(with: .opacity)))
             .accessibilityHint("Opens the weekly report")
         }
     }

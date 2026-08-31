@@ -108,8 +108,7 @@ private struct AmenityCard: View {
                     Text(amenity.displayName)
                         .font(.system(.headline, design: .rounded))
                     Text(costLine)
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
 

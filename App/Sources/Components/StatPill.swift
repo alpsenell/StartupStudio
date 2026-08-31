@@ -13,8 +13,7 @@ struct StatPill: View {
             Image(systemName: systemImage)
                 .font(.caption.weight(.semibold))
             Text(value)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.subheadline))
                 .lineLimit(1)
                 .contentTransition(.numericText())
         }
@@ -22,7 +21,7 @@ struct StatPill: View {
         .padding(.horizontal, Theme.Spacing.sm + 2)
         .padding(.vertical, Theme.Spacing.xs + 1)
         .background(Theme.chipBackground, in: Capsule())
-        .animation(.spring(duration: 0.35), value: value)
+        .animation(Theme.Motion.valueChange, value: value)
         .accessibilityElement(children: .combine)
     }
 }

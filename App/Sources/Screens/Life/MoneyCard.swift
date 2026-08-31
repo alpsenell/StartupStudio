@@ -49,11 +49,10 @@ struct MoneyCard: View {
                             .font(.system(.subheadline, design: .rounded).weight(.medium))
                         Spacer()
                         Text("\(life.founderSalary.money)/wk")
-                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.subheadline))
                             .foregroundStyle(Theme.accent)
                             .contentTransition(.numericText())
-                            .animation(.spring(duration: 0.25), value: life.founderSalary)
+                            .animation(Theme.Motion.valueChange, value: life.founderSalary)
                     }
                 }
                 .accessibilityLabel("Founder salary")
@@ -142,11 +141,10 @@ private struct WalletBlock: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.title3))
                 .foregroundStyle(tint)
                 .contentTransition(.numericText())
-                .animation(.spring(duration: 0.35), value: value)
+                .animation(Theme.Motion.valueChange, value: value)
         }
         .accessibilityElement(children: .combine)
     }
@@ -174,14 +172,14 @@ private struct WalletDebtWarning: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.footnote.weight(.bold))
                 Text("Overdrawn by \(abs(wallet).money)")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.subheadline))
                 Spacer(minLength: 0)
             }
             .foregroundStyle(Theme.negativeCash)
 
             Text(detail)
                 .font(.footnote)
+                .monospacedDigit()
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -241,6 +239,7 @@ private struct PayBandNote: View {
                         .foregroundStyle(Theme.warning)
                     Text(detail)
                         .font(.caption2)
+                        .monospacedDigit()
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

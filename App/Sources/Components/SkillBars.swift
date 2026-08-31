@@ -38,9 +38,9 @@ private struct SkillBar: View {
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 2)
                 Text("\(Int(value.rounded()))")
-                    .font(.system(.caption2, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption2))
                     .foregroundStyle(tint)
+                    .contentTransition(.numericText())
             }
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
@@ -53,6 +53,9 @@ private struct SkillBar: View {
             .frame(height: 4)
         }
         .frame(maxWidth: .infinity)
+        // Training and on-the-job growth both move this weekly; the digit
+        // and the fill are one change, so they animate as one.
+        .animation(Theme.Motion.valueChange, value: value)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(label) skill \(Int(value.rounded())) of 100")
     }

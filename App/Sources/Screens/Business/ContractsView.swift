@@ -10,7 +10,12 @@ struct ContractsView: View {
         VStack(spacing: Theme.Spacing.lg) {
             BusinessSectionHeader(title: "Active", systemImage: "briefcase.fill")
             if engine.state.activeContracts.isEmpty {
-                EmptyStateCard(message: "No active contracts — accept an offer to get to work.")
+                EmptyStateCard(
+                    message: "No active contracts.",
+                    systemImage: "briefcase",
+                    hint: "Accept an offer below to put the team on paid work.",
+                    tint: Theme.accent
+                )
             } else {
                 ForEach(engine.state.activeContracts) { job in
                     ActiveContractCard(engine: engine, job: job)
@@ -19,7 +24,12 @@ struct ContractsView: View {
 
             BusinessSectionHeader(title: "Offers", systemImage: "envelope.fill")
             if engine.state.contractOffers.isEmpty {
-                EmptyStateCard(message: "No offers right now — new clients call every week.")
+                EmptyStateCard(
+                    message: "No offers right now.",
+                    systemImage: "envelope",
+                    hint: "New clients call every week — reputation brings better ones.",
+                    tint: Theme.accent
+                )
             } else {
                 ForEach(engine.state.contractOffers) { offer in
                     ContractOfferCard(engine: engine, offer: offer)
@@ -85,6 +95,7 @@ private struct ActiveContractCard: View {
 
             Text("Miss the deadline and pay \(job.penalty.money).")
                 .font(.caption)
+                .monospacedDigit()
                 .foregroundStyle(.secondary)
 
             if job.requiredSkill > 0 {
@@ -125,18 +136,22 @@ private struct ActiveContractCard: View {
         if job.skillDays == 0 {
             Text("Client expects skill ~\(Int(job.requiredSkill.rounded())). Nobody has worked on it yet.")
                 .font(.footnote)
+                .monospacedDigit()
                 .foregroundStyle(.secondary)
         } else if projected >= quality.greatThreshold {
             Text("Crew skill \(Int(job.averageCrewSkill.rounded())) vs. expected \(Int(job.requiredSkill.rounded())) — on track for full pay.")
                 .font(.footnote)
+                .monospacedDigit()
                 .foregroundStyle(Theme.positiveCash)
         } else if projected >= quality.okayThreshold {
             Text("Crew skill \(Int(job.averageCrewSkill.rounded())) vs. expected \(Int(job.requiredSkill.rounded())) — the client will have notes.")
                 .font(.footnote)
+                .monospacedDigit()
                 .foregroundStyle(Theme.warning)
         } else {
             Text("Crew skill \(Int(job.averageCrewSkill.rounded())) is far below the expected \(Int(job.requiredSkill.rounded())) — the client will reject the quality.")
                 .font(.footnote)
+                .monospacedDigit()
                 .foregroundStyle(Theme.negativeCash)
         }
     }
@@ -173,8 +188,7 @@ private struct ContractOfferCard: View {
                     Text(offer.clientName)
                         .font(.system(.headline, design: .rounded))
                     Text(requirementSummary)
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: Theme.Spacing.sm)
@@ -192,8 +206,7 @@ private struct ContractOfferCard: View {
                 )
                 .accessibilityLabel("Pays \(offer.payout.money)")
                 Text("Penalty \(offer.penalty.money)")
-                    .font(.caption)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption, weight: .regular))
                     .foregroundStyle(Theme.negativeCash)
                 Spacer(minLength: 0)
             }
@@ -201,6 +214,7 @@ private struct ContractOfferCard: View {
             HStack(spacing: Theme.Spacing.md) {
                 Text("Due in \(offer.deadlineDays) days once accepted")
                     .font(.footnote)
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
                 Spacer(minLength: Theme.Spacing.sm)
                 Button("Accept") {
@@ -233,24 +247,10 @@ private struct DeadlineChip: View {
 
     var body: some View {
         Text(text)
-            .font(.caption2.weight(.semibold))
-            .monospacedDigit()
+            .font(Theme.Typography.number(.caption2))
             .foregroundStyle(tint)
             .padding(.horizontal, Theme.Spacing.xs + 2)
             .padding(.vertical, 2)
             .background(Theme.chipBackground, in: Capsule())
-    }
-}
-
-/// Quiet full-width card used when a section has nothing to show.
-struct EmptyStateCard: View {
-    let message: String
-
-    var body: some View {
-        Text(message)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .cardStyle()
     }
 }

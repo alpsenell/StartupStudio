@@ -24,7 +24,7 @@ struct DifficultyPickerSheet: View {
                                 isCurrent: difficulty == current
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressableRow)
                         .accessibilityLabel("\(difficulty.displayName). \(difficulty.blurb)")
                         .accessibilityHint("Starts a new game")
                     }

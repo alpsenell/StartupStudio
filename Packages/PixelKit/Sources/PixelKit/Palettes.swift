@@ -220,6 +220,39 @@ enum Palettes {
         (0.299 * Double(color.r) + 0.587 * Double(color.g) + 0.114 * Double(color.b)) / 255
     }
 
+    /// Where a master color sits: which hue ramp, and how far down it.
+    /// `nil` for the character ramps (skin, hair, shirts), which are not
+    /// part of a five-step hue ladder.
+    private static let ladder: [UInt32: (ramp: Int, step: Int)] = {
+        var map: [UInt32: (ramp: Int, step: Int)] = [:]
+        for (rampIndex, ramp) in ramps.enumerated() {
+            for (step, color) in ramp.all.enumerated() {
+                map[rgbKey(color), default: (rampIndex, step)] = (rampIndex, step)
+            }
+        }
+        return map
+    }()
+
+    /// The same color moved `steps` along its own hue ramp — positive is
+    /// deeper, negative is lighter — clamped at both ends of the ramp.
+    ///
+    /// This is how surface shading has to be done here. `blended` snaps to
+    /// the nearest master color, which for a small amount usually rounds
+    /// straight back to where it started, so a 20% darkening simply does
+    /// not appear. A ramp step always lands somewhere else, and always
+    /// somewhere the palette already contains — which is what lets a
+    /// lighting pass dither between two adjacent steps instead of inventing
+    /// a tone between them.
+    ///
+    /// Returns the color unchanged if it isn't on a hue ramp (a person's
+    /// skin or shirt), so a lighting pass never recolors somebody.
+    static func stepped(_ color: RGBA, by steps: Int) -> RGBA {
+        guard steps != 0, let at = ladder[rgbKey(color)] else { return color }
+        var moved = ramps[at.ramp][at.step + steps]
+        moved.a = color.a
+        return moved
+    }
+
     /// A master color darkened toward `ink[4]` by `amount` (0…1), snapped
     /// back onto the nearest master color so depth shading never leaves the
     /// palette. Used for floor depth bands and night tints.

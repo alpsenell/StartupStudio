@@ -139,8 +139,7 @@ private struct CompanyCard: View {
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text(company.reputation.formatted(.number.precision(.fractionLength(0...1))))
-                            .font(.system(.caption, design: .rounded).weight(.semibold))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.caption))
                     }
                     Gauge(value: normalizedReputation) {
                         EmptyView()
@@ -216,11 +215,10 @@ private struct StatBlock: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.title3))
                 .foregroundStyle(tint)
                 .contentTransition(.numericText())
-                .animation(.spring(duration: 0.35), value: value)
+                .animation(Theme.Motion.valueChange, value: value)
         }
         .accessibilityElement(children: .combine)
     }
@@ -294,7 +292,7 @@ private struct StartProductCTACard: View {
             .padding(.vertical, Theme.Spacing.sm)
             .cardStyle()
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .accessibilityLabel(title)
     }
 }

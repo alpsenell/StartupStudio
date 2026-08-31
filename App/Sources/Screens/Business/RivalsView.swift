@@ -40,7 +40,10 @@ struct RivalsView: View {
 
         if rivals.isEmpty {
             EmptyStateCard(
-                message: "The scene is quiet. Competitors will show up soon."
+                message: "The scene is quiet.",
+                systemImage: "flag.2.crossed",
+                hint: "Rival studios show up as the market grows.",
+                tint: Theme.warning
             )
         } else {
             ForEach(rivals) { rival in
@@ -91,8 +94,7 @@ private struct TopicBattleCard: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("\(Int((share * 100).rounded()))% of the market")
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.subheadline))
                         .contentTransition(.numericText())
                         .foregroundStyle(shareTint)
                     Spacer()
@@ -160,8 +162,7 @@ private struct TopicBattleCard: View {
             }
             Spacer(minLength: Theme.Spacing.sm)
             Text("\(score)")
-                .font(.caption.weight(.bold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.caption, weight: .bold))
                 .foregroundStyle(Theme.scoreTint(score))
         }
         .accessibilityElement(children: .combine)
@@ -186,7 +187,7 @@ private struct ShareBar: View {
             .clipShape(Capsule())
         }
         .frame(height: 10)
-        .animation(.spring(duration: 0.5), value: share)
+        .animation(Theme.Motion.valueChange, value: share)
     }
 }
 
@@ -218,10 +219,10 @@ private struct RivalCard: View {
                     PixelPortrait(seed: rival.appearanceSeed)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("~\(rival.headcount) people")
-                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.subheadline))
                         Text("Valued around \(rival.valuation(balance: engine.balance).money)")
                             .font(.caption)
+                            .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 0)
@@ -305,8 +306,7 @@ private struct RivalCard: View {
                     .foregroundStyle(.tertiary)
             }
             Text("\(Int(product.quality.rounded()))")
-                .font(.caption.weight(.bold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.caption, weight: .bold))
                 .foregroundStyle(Theme.scoreTint(Int(product.quality.rounded())))
         }
         .accessibilityElement(children: .combine)
@@ -328,8 +328,7 @@ private struct RivalCard: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(Int(value.rounded()))")
-                    .font(.caption)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption, weight: .regular))
                     .foregroundStyle(.secondary)
             }
             ProgressView(value: value, total: 100)
@@ -378,6 +377,7 @@ private struct RivalCard: View {
             if let blocker = acquisitionBlocker {
                 Text(blocker)
                     .font(.caption)
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
         }

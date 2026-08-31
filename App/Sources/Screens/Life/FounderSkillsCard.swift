@@ -28,8 +28,9 @@ struct FounderSkillsCard: View {
                             value: skills[skill],
                             effect: effectChip(for: skill, state: state)
                         )
+                        .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressableRow)
                 }
                 Text(state.life.trainingsToday > 0
                     ? "You've done your studying for today."
@@ -87,22 +88,20 @@ private struct SkillRow: View {
                 Spacer(minLength: Theme.Spacing.sm)
                 if let effect {
                     Text(effect)
-                        .font(.caption2.weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption2))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 Text("\(rounded)")
-                    .font(.system(.caption, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption))
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
-                    .animation(.spring(duration: 0.35), value: rounded)
+                    .animation(Theme.Motion.valueChange, value: rounded)
             }
             Gauge(value: min(max(value / 100, 0), 1)) { EmptyView() }
                 .gaugeStyle(.accessoryLinearCapacity)
                 .tint(Theme.accent)
-                .animation(.spring(duration: 0.35), value: value)
+                .animation(Theme.Motion.valueChange, value: value)
             Text(skill.effectSummary)
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
@@ -149,8 +148,7 @@ private struct TrainingSheet: View {
                                     .foregroundStyle(.tertiary)
                                 Spacer()
                                 Text("\(Int(state.life.skills[skill].rounded())) / 100")
-                                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                                    .monospacedDigit()
+                                    .font(Theme.Typography.number(.subheadline))
                             }
                             Text("The closer you get to 100, the less each session adds.")
                                 .font(.caption2)
@@ -227,8 +225,7 @@ private struct MethodRow: View {
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
                         .foregroundStyle(.primary)
                     Text("+\(gain.formatted(.number.precision(.fractionLength(1)))) · −\(Int(def.energy)) energy")
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                     if let blocker {
                         Text(blocker)
@@ -238,15 +235,14 @@ private struct MethodRow: View {
                 }
                 Spacer(minLength: 0)
                 Text(def.cost > 0 ? def.cost.money : "Free")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.subheadline))
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Theme.Spacing.md)
             .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .disabled(blocker != nil)
     }
 }

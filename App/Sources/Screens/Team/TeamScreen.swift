@@ -42,9 +42,8 @@ struct TeamScreen: View {
                                 .foregroundStyle(Theme.accent)
                             Spacer()
                             Text("\(engine.state.candidatePool.count) candidate\(engine.state.candidatePool.count == 1 ? "" : "s")")
-                                .font(.subheadline)
+                                .font(Theme.Typography.number(.subheadline, weight: .regular))
                                 .foregroundStyle(.secondary)
-                                .monospacedDigit()
                             Image(systemName: "chevron.right")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.tertiary)
@@ -209,8 +208,7 @@ struct TeamScreen: View {
                         .foregroundStyle(Theme.accent)
                     Spacer()
                     Text("\(hired.count) staff")
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -294,7 +292,7 @@ struct TeamScreen: View {
             Text("\(totalPayroll.money)/wk")
                 .monospacedDigit()
                 .contentTransition(.numericText())
-                .animation(.spring(duration: 0.35), value: totalPayroll)
+                .animation(Theme.Motion.valueChange, value: totalPayroll)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Total payroll \(totalPayroll.money) per week")
@@ -326,8 +324,7 @@ private struct EmployeeRow: View {
                     }
                     HStack(spacing: Theme.Spacing.xs + 2) {
                         Text("\(employee.weeklySalary.money)/wk")
-                            .font(.caption)
-                            .monospacedDigit()
+                            .font(Theme.Typography.number(.caption, weight: .regular))
                             .foregroundStyle(.secondary)
                         if !employee.isFounder {
                             MoodFace(morale: employee.morale)

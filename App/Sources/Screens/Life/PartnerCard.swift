@@ -40,6 +40,7 @@ struct PartnerCard: View {
                             AffectionMeter(affection: family.affection)
                             Text(status(family: family, day: state.day))
                                 .font(.caption)
+                                .monospacedDigit()
                                 .foregroundStyle(
                                     family.affection < 35 ? Theme.warning : .secondary
                                 )
@@ -111,7 +112,7 @@ private struct AffectionMeter: View {
     private var tint: Color {
         if affection < 25 { return Theme.negativeCash }
         if affection < 50 { return Theme.warning }
-        return Color(uiColor: .systemPink)
+        return Theme.romance
     }
 
     var body: some View {
@@ -122,16 +123,15 @@ private struct AffectionMeter: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(Int(affection.rounded()))")
-                    .font(.system(.caption, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption))
                     .foregroundStyle(tint)
                     .contentTransition(.numericText())
-                    .animation(.spring(duration: 0.35), value: affection)
+                    .animation(Theme.Motion.valueChange, value: affection)
             }
             Gauge(value: min(max(affection / 100, 0), 1)) { EmptyView() }
                 .gaugeStyle(.accessoryLinearCapacity)
                 .tint(tint)
-                .animation(.spring(duration: 0.35), value: affection)
+                .animation(Theme.Motion.valueChange, value: affection)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Affection \(Int(affection.rounded())) of 100")
@@ -153,7 +153,7 @@ private struct PartnerActivityCell: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: activity.systemImage)
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(blocker == nil ? Color(uiColor: .systemPink) : .secondary)
+                        .foregroundStyle(blocker == nil ? Theme.romance : .secondary)
                         .frame(width: 22)
                     Text(activity.displayName)
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -163,12 +163,10 @@ private struct PartnerActivityCell: View {
                     Spacer(minLength: 0)
                 }
                 Text(cost > 0 ? cost.money : "Free")
-                    .font(.caption.weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption))
                     .foregroundStyle(.secondary)
                 Text("+\(Int(affection)) affection")
-                    .font(.caption2)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption2, weight: .regular))
                     .foregroundStyle(.secondary)
                 if let blocker {
                     Text(blocker)
@@ -181,7 +179,7 @@ private struct PartnerActivityCell: View {
             .padding(Theme.Spacing.md)
             .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .disabled(blocker != nil)
         .accessibilityLabel("\(activity.displayName). \(blocker ?? "")")
     }

@@ -146,8 +146,7 @@ private struct CandidateCard: View {
                         RoleBadge(role: candidate.role, prominent: true)
                     }
                     Text("\(candidate.weeklySalary.money)/wk")
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .combine)

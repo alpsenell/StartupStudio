@@ -97,8 +97,7 @@ private struct ActivityCell: View {
                     }
                 }
                 Text(cost > 0 ? cost.money : "Free")
-                    .font(.caption.weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption))
                     .foregroundStyle(.secondary)
                 Text(activity.effectSummary)
                     .font(.caption2)
@@ -124,7 +123,7 @@ private struct ActivityCell: View {
                     .strokeBorder(isSelected ? Theme.accent : .clear, lineWidth: 2)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }

@@ -223,8 +223,7 @@ private struct HomeUpgradeRow: View {
                     Text("Next: \(next.displayName)")
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
                     Text(summary)
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: Theme.Spacing.sm)

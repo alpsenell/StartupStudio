@@ -136,7 +136,7 @@ private struct InDevelopmentCard: View {
                             .foregroundStyle(.tertiary)
                     }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressableRow)
                 .accessibilityHint("Opens details and the focus editor")
 
                 TriPhaseProgress(progress: progress, type: type)
@@ -159,6 +159,7 @@ private struct InDevelopmentCard: View {
                         "Shipping unlocks once code reaches \(Int((engine.balance.shipCodeThreshold * 100).rounded()))% of its target."
                     )
                     .font(.footnote)
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
                 }
             }
@@ -193,8 +194,7 @@ private struct DevSlotsRow: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(Theme.accent)
             Text("\(used) of \(total) in development")
-                .font(.system(.footnote, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.footnote))
             Spacer(minLength: Theme.Spacing.sm)
             HStack(spacing: 3) {
                 ForEach(0..<max(total, 1), id: \.self) { index in
@@ -259,11 +259,10 @@ private struct ReleasedProductRow: View {
                     .foregroundStyle(.primary)
                 HStack(spacing: Theme.Spacing.sm) {
                     Text(info.totalRevenue.money)
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                         .contentTransition(.numericText())
-                        .animation(.spring(duration: 0.35), value: info.totalRevenue)
+                        .animation(Theme.Motion.valueChange, value: info.totalRevenue)
                     if info.offMarket {
                         OffMarketTag()
                     }
@@ -317,7 +316,7 @@ private struct EmptyProductsCard: View {
             .padding(.vertical, Theme.Spacing.sm)
             .cardStyle()
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .accessibilityLabel("Start your first product")
     }
 }

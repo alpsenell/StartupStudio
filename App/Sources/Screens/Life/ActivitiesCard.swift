@@ -181,8 +181,7 @@ private struct InstantActivityCell: View {
                 }
                 if let cost {
                     Text(cost > 0 ? cost.money : "Free")
-                        .font(.caption.weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Text(summary)
@@ -205,7 +204,7 @@ private struct InstantActivityCell: View {
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .disabled(blocker != nil)
         .accessibilityLabel("\(title). \(summary). \(blocker ?? "")")
     }

@@ -208,6 +208,8 @@ enum RoomBuilder {
         let surfaces = officeSurfaces(tier: tier, time: time)
         var canvas = PixelCanvas(width: width, height: height)
         paintShell(&canvas, tier: tier, surfaces: surfaces, wallHeight: wallHeight)
+        shadeCeiling(&canvas)
+        castWindowLight(&canvas, tier: tier, wallHeight: wallHeight, time: time)
         dressOffice(
             &canvas, tier: tier, surfaces: surfaces, wallHeight: wallHeight,
             time: time, amenityRects: amenityRects
@@ -336,7 +338,9 @@ enum RoomBuilder {
                     continue
                 }
                 if y < wallHeight {
-                    canvas.set(x: x, y: y, wallColor(x: x, y: y, trimY: trimY, wallHeight: wallHeight, s: s))
+                    canvas.set(x: x, y: y, wallColor(
+                        tier: tier, x: x, y: y, trimY: trimY, wallHeight: wallHeight, s: s
+                    ))
                 } else {
                     canvas.set(x: x, y: y, floorColor(
                         tier: tier, x: x, y: y, wallHeight: wallHeight, height: height, s: s
@@ -358,17 +362,47 @@ enum RoomBuilder {
     }
 
     private static func wallColor(
-        x: Int, y: Int, trimY: Int, wallHeight: Int, s: Surfaces
+        tier: OfficeTierStyle, x: Int, y: Int, trimY: Int, wallHeight: Int, s: Surfaces
     ) -> RGBA {
         // Baseboard: two rows at the bottom of the wall.
         if y >= wallHeight - 2 { return s.baseboard.color }
         // Trim: a line with the tier's accent stripe riding just under it.
         if y == trimY { return s.trim.color }
         if y == trimY + 1 { return s.accent }
-        // Wall texture: one faint vertical seam per plaster panel. Anything
-        // busier turns into visual noise behind the people, which is the
-        // opposite of what a background is for.
-        return x % 24 == 5 ? s.wallTexture.color : s.wall.color
+        // Below the trim is where heads, speech bubbles and the back desk
+        // row live, so it stays calm: one faint seam per panel, as it
+        // always has. Anything busier there is noise behind the people,
+        // which is the opposite of what a background is for.
+        guard y < trimY else { return x % 24 == 5 ? s.wallTexture.color : s.wall.color }
+        // Above the trim nothing ever stands, so the wall can be made of
+        // something. Each tier gets its own masonry, drawn only in the
+        // texture tone — one ramp step, never a second colour.
+        return material(tier: tier, x: x, y: y) ? s.wallTexture.color : s.wall.color
+    }
+
+    /// Whether the upper wall's material puts a joint at (x, y): the seams
+    /// that make a garage concrete and a loft brick.
+    ///
+    /// Deterministic modular arithmetic, like every other pattern in this
+    /// file — a room has to draw the same way every frame.
+    private static func material(tier: OfficeTierStyle, x: Int, y: Int) -> Bool {
+        switch tier {
+        case .garage:
+            // Breeze block: tall courses, joints staggered half a block.
+            let course = y / 7
+            return y % 7 == 0 || (x + course * 8) % 16 == 0
+        case .loft:
+            // Exposed brick, the one thing every loft conversion keeps.
+            let course = y / 4
+            return y % 4 == 0 || (x + course * 5) % 10 == 0
+        case .studio:
+            // Plaster: no masonry, just a sparse dither that catches the
+            // light and keeps a big flat wall from banding.
+            return (x * 7 + y * 13) % 23 == 0
+        case .campus:
+            // Big prefinished panels with a recessed joint.
+            return x % 20 == 0 || y % 14 == 0
+        }
     }
 
     private static func floorColor(
@@ -407,6 +441,22 @@ enum RoomBuilder {
     /// back desk row, so anything hung here can never be covered.
     private static func wallBand(wallHeight: Int) -> (top: Int, bottom: Int) {
         (top: 2, bottom: max(4, wallHeight - 18))
+    }
+
+    /// Where each tier's windows sit along the wall.
+    ///
+    /// Shared rather than inlined in the dressing because the light pass
+    /// needs the same numbers: a window that has moved and a pool of
+    /// daylight that hasn't is the most obvious mistake this room can make.
+    static func windowXs(tier: OfficeTierStyle, width: Int) -> [Int] {
+        let window = SpriteLibrary.window(style: .office, time: .day)
+        switch tier {
+        // The garage has one small high window and no second wall to spare.
+        case .garage: return [10]
+        case .loft: return [12, width - 12 - window.width]
+        case .studio: return [6, width - 6 - window.width]
+        case .campus: return (0..<3).map { 22 + $0 * ((width - 44) / 3) }
+        }
     }
 
     /// Per-tier wall dressing and floor clutter, baked into the room.
@@ -451,12 +501,13 @@ enum RoomBuilder {
         let window = SpriteLibrary.window(style: .office, time: time)
         let backFloor = wallHeight + 2
 
+        for x in windowXs(tier: tier, width: width) { hang(window, x: x) }
+
         switch tier {
         case .garage:
             // A cord and a bare bulb, a small high window, a band poster,
             // the pegboard, and the founder's own clutter in the corners the
             // desk grid never reaches.
-            hang(window, x: 10)
             hang(SpriteLibrary.prop(.poster), x: 30)
             hang(SpriteLibrary.prop(.pegboard), x: 50)
             let bulbX = width / 2 + 16
@@ -468,24 +519,130 @@ enum RoomBuilder {
             }
 
         case .loft:
-            hang(window, x: 12)
-            hang(window, x: width - 12 - window.width)
             // The bike goes on the wall, the way it does in every real loft.
             hang(SpriteLibrary.prop(.bike), x: 28)
             hang(SpriteLibrary.prop(.wallClock), x: 56)
             hang(SpriteLibrary.prop(.poster), x: 68)
 
         case .studio:
-            hang(window, x: 6)
-            hang(window, x: width - 6 - window.width)
             hang(SpriteLibrary.prop(.framedReviews), x: width / 2 - 34)
             hang(SpriteLibrary.prop(.wallClock), x: width / 2 + 22)
 
         case .campus:
-            for index in 0..<3 {
-                hang(window, x: 22 + index * ((width - 44) / 3))
-            }
             hang(SpriteLibrary.prop(.ledSign), x: width / 2 - 11, bottomInset: 3)
+        }
+    }
+
+    // MARK: Light
+
+    /// A 4x4 ordered (Bayer) dither. Lighting here is done in whole ramp
+    /// steps — the palette has no tones between them — so a smooth falloff
+    /// has to be made out of the *density* of stepped pixels rather than
+    /// out of intermediate colours. This is the same trick the floor depth
+    /// bands use, one resolution finer.
+    private static let bayer4: [[Int]] = [
+        [0, 8, 2, 10],
+        [12, 4, 14, 6],
+        [3, 11, 1, 9],
+        [15, 7, 13, 5],
+    ]
+
+    /// Whether (x, y) is lit/shaded at coverage `amount` (0…1).
+    private static func dithered(x: Int, y: Int, amount: Double) -> Bool {
+        guard amount > 0 else { return false }
+        guard amount < 1 else { return true }
+        let threshold = Double(bayer4[y & 3][x & 3]) / 16
+        return amount > threshold
+    }
+
+    /// How much of a room's floor its own daylight reaches, by hour.
+    /// Night is deliberately zero: a lit pool under a dark window is the
+    /// one lighting mistake a player notices without being able to name.
+    private static func daylightStrength(_ time: TimeOfDay) -> Double {
+        switch time {
+        case .morning: 0.85
+        case .day: 1.0
+        case .dusk: 0.5
+        case .night: 0
+        }
+    }
+
+    /// Spills a pool of daylight from each window onto the floor.
+    ///
+    /// The room had windows and a lit wall but a floor that did not know
+    /// about either, so every tier read as a flat sheet with a picture of a
+    /// window on it. The pool widens as it comes toward the camera (the
+    /// light is behind and above), is brightest at the wall, and dissolves
+    /// through the Bayer dither at both its sides and its leading edge —
+    /// so it ends by thinning out rather than by stopping on a line.
+    ///
+    /// Runs on the bare shell, before the dressing and after the corner
+    /// shade: props then stand in the light and drop their contact shadows
+    /// over it rather than being washed by it, and a window that sits in a
+    /// corner lights that corner instead of losing to it.
+    private static func castWindowLight(
+        _ canvas: inout PixelCanvas, tier: OfficeTierStyle, wallHeight: Int, time: TimeOfDay
+    ) {
+        let strength = daylightStrength(time)
+        guard strength > 0 else { return }
+        let width = canvas.width
+        let height = canvas.height
+        let depth = max(1, height - wallHeight)
+        let paneWidth = SpriteLibrary.window(style: .office, time: .day).width
+
+        for windowX in windowXs(tier: tier, width: width) {
+            let centre = Double(windowX) + Double(paneWidth) / 2
+            for row in 0..<depth {
+                let y = wallHeight + row
+                guard y > wallHeight + 1, y < height - 1 else { continue }
+                // Reach: the pool dies out two thirds of the way forward.
+                let travel = Double(row) / Double(depth)
+                guard travel < 0.66 else { continue }
+                let fade = 1 - travel / 0.66
+                // Half-width grows with distance from the wall: light from
+                // a window behind the desks spreads as it comes forward.
+                let half = Double(paneWidth) / 2 + travel * Double(paneWidth) * 0.8
+                for x in max(1, Int(centre - half))..<min(width - 1, Int(centre + half) + 1) {
+                    let across = abs(Double(x) - centre) / half
+                    guard across <= 1 else { continue }
+                    // Solid through the middle, thinning at both edges.
+                    let edge = min(1, (1 - across) / 0.34)
+                    let coverage = strength * fade * edge
+                    guard dithered(x: x, y: y, amount: coverage),
+                          let under = canvas.color(x: x, y: y) else { continue }
+                    // One step up the floor's own ramp. At dusk the low sun
+                    // does not brighten a room so much as warm it, so the
+                    // pool is half as dense and no lighter per pixel.
+                    canvas.set(x: x, y: y, Palettes.stepped(under, by: -1))
+                }
+            }
+        }
+    }
+
+    /// Darkens the room toward its corners and under its ceiling.
+    ///
+    /// Lays a contact shade under the ceiling the scene never shows.
+    ///
+    /// This started as full corner shading — darkening the room's left and
+    /// right sides too — and that was wrong twice over. The projection is
+    /// flat: the side walls face the camera like the back wall does, so
+    /// nothing there turns away from the light and there is no shade to
+    /// draw. And on the two tiers whose windows sit near the edges, the
+    /// side shade and the daylight pool landed on the same thirty pixels
+    /// and read as noise rather than as either one. What is left is the one
+    /// corner that is really there — wall meeting ceiling — which is also
+    /// the cue the room was actually missing; the wall/floor corner has had
+    /// its skirting shadow all along.
+    private static func shadeCeiling(_ canvas: inout PixelCanvas) {
+        let rows = 4
+        for y in 1..<rows {
+            // Densest against the ceiling line, thinning downward.
+            let coverage = 0.7 * (1 - Double(y) / Double(rows))
+            for x in 1..<(canvas.width - 1) {
+                guard dithered(x: x, y: y, amount: coverage),
+                      let under = canvas.color(x: x, y: y) else { continue }
+                canvas.set(x: x, y: y, Palettes.stepped(under, by: 1))
+            }
         }
     }
 }

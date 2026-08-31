@@ -43,6 +43,7 @@ struct PauseBanner: View {
                     if reasons.count > 1 {
                         Text("+\(reasons.count - 1) more this day")
                             .font(.caption2)
+                            .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -50,12 +51,17 @@ struct PauseBanner: View {
                 Spacer(minLength: Theme.Spacing.sm)
 
                 if let route = route(for: headline), let onRoute {
-                    Button("Details") {
+                    Button {
                         Haptics.tap()
                         Sounds.play(.tap)
                         onRoute(route)
+                    } label: {
+                        Text("Details")
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, Theme.Spacing.sm)
+                            .frame(minHeight: 34)
+                            .contentShape(Rectangle())
                     }
-                    .font(.caption.weight(.semibold))
                     .buttonStyle(.borderless)
                 }
 
@@ -67,8 +73,8 @@ struct PauseBanner: View {
                     Label("Resume", systemImage: "play.fill")
                         .labelStyle(.iconOnly)
                         .font(.footnote.weight(.bold))
-                        .padding(.horizontal, Theme.Spacing.sm)
-                        .padding(.vertical, Theme.Spacing.xs)
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.vertical, Theme.Spacing.sm)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
@@ -78,7 +84,7 @@ struct PauseBanner: View {
             .padding(.vertical, Theme.Spacing.sm)
             .background(line.tint.opacity(0.12))
             .overlay(alignment: .bottom) { Divider() }
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(Theme.Motion.transition(.move(edge: .top).combined(with: .opacity)))
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Time is paused: \(line.message)")
         }

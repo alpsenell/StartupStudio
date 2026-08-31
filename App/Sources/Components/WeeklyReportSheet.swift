@@ -71,6 +71,7 @@ struct WeeklyReportSheet: View {
                 )
                 Text("\(report.calendar.longLabel) · \(report.calendar.season.displayName)")
                     .font(.footnote)
+                    .monospacedDigit()
                     .foregroundStyle(Theme.pixelInk.opacity(0.7))
                 HStack(spacing: Theme.Spacing.sm) {
                     PixelText(
@@ -129,11 +130,11 @@ struct WeeklyReportSheet: View {
                                     .foregroundStyle(.primary)
                                 if sales.isSubscription {
                                     Text("\(sales.subscribers.formatted()) subscribers")
-                                        .font(.caption)
+                                        .font(Theme.Typography.number(.caption, weight: .regular))
                                         .foregroundStyle(.secondary)
                                 } else {
                                     Text("\(sales.units.formatted()) sold")
-                                        .font(.caption)
+                                        .font(Theme.Typography.number(.caption, weight: .regular))
                                         .foregroundStyle(.secondary)
                                 }
                                 if sales.liveBugs > 0 {
@@ -147,13 +148,12 @@ struct WeeklyReportSheet: View {
                             Sparkline(values: sales.history, tint: Theme.accent)
                                 .frame(width: 64, height: 24)
                             Text(sales.revenue.money)
-                                .font(.system(.subheadline, design: .rounded).weight(.bold))
-                                .monospacedDigit()
+                                .font(Theme.Typography.number(.subheadline, weight: .bold))
                                 .foregroundStyle(Theme.positiveCash)
                         }
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressable)
                     .accessibilityLabel(
                         "\(sales.name), \(sales.revenue.money) this week"
                     )
@@ -193,8 +193,7 @@ struct WeeklyReportSheet: View {
                                 .font(.footnote)
                             Spacer(minLength: 0)
                             Text(person.morale.formatted(.number.precision(.fractionLength(0))))
-                                .font(.system(.footnote, design: .rounded).weight(.semibold))
-                                .monospacedDigit()
+                                .font(Theme.Typography.number(.footnote))
                                 .foregroundStyle(Theme.negativeCash)
                         }
                         .accessibilityElement(children: .combine)
@@ -247,6 +246,7 @@ struct WeeklyReportSheet: View {
                 if report.events.count > 8 {
                     Text("+\(report.events.count - 8) more in the journal")
                         .font(.caption)
+                        .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
             }
@@ -362,8 +362,11 @@ struct WeeklyReportBottomBar: View {
             )
             .font(.footnote)
             .foregroundStyle(.secondary)
+            .padding(.vertical, Theme.Spacing.sm)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .accessibilityHint(
             opensAutomatically
                 ? "Stops the weekly report opening on its own. The week chip in the HUD still opens it."
@@ -385,8 +388,7 @@ private struct ReportStat: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.title3))
                 .foregroundStyle(tint)
         }
         .accessibilityElement(children: .combine)
@@ -413,8 +415,7 @@ private struct BreakdownRows: View {
                         .font(.footnote)
                     Spacer(minLength: 0)
                     Text(total.amount.money)
-                        .font(.system(.footnote, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.footnote))
                         .foregroundStyle(tint)
                 }
                 .accessibilityElement(children: .combine)
@@ -432,15 +433,13 @@ private struct MeterDelta: View {
     var body: some View {
         VStack(spacing: 2) {
             Text(value.formatted(.number.precision(.fractionLength(0))))
-                .font(.system(.headline, design: .rounded).weight(.bold))
-                .monospacedDigit()
+                .font(Theme.Typography.number(.headline, weight: .bold))
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             if abs(delta) >= 0.5 {
                 Text((delta > 0 ? "+" : "") + delta.formatted(.number.precision(.fractionLength(0))))
-                    .font(.caption2.weight(.semibold))
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption2))
                     .foregroundStyle(delta > 0 ? Theme.positiveCash : Theme.negativeCash)
             } else {
                 Text("—")

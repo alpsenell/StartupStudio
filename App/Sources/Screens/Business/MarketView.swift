@@ -182,8 +182,7 @@ private struct HotColdCard: View {
                             .foregroundStyle(snapshot.direction.tint)
                     }
                     Text(snapshot.multiplierLabel)
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption))
                         .foregroundStyle(snapshot.band.figureTint)
                 }
                 .accessibilityElement(children: .ignore)
@@ -245,8 +244,7 @@ private struct SparklineTile: View {
                 .frame(height: 28)
             HStack(spacing: 2) {
                 Text(snapshot.multiplierLabel)
-                    .font(.caption2)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption2))
                     .foregroundStyle(snapshot.band.figureTint)
                     .contentTransition(.numericText())
                 if snapshot.hasTrend {

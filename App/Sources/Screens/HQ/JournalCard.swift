@@ -129,9 +129,7 @@ struct JournalCard: View {
         CardView("Journal", systemImage: "book.closed.fill") {
             if rows.isEmpty {
                 Text("All quiet. Time to build something.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, Theme.Spacing.sm)
+                    .emptySectionText()
             } else {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     ForEach(groupedByWeek(rows), id: \.week) { group in

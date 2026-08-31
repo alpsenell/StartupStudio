@@ -398,7 +398,7 @@ private struct AmenitiesRow: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .accessibilityLabel("Amenities, \(summary.lowercased())")
         .accessibilityHint("Opens the amenities sheet")
     }
@@ -435,7 +435,7 @@ private struct CityMapRow: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .accessibilityLabel("City map, office in \(summary.lowercased())")
         .accessibilityHint("Opens the city map")
     }
@@ -477,8 +477,7 @@ private struct UpgradeRow: View {
                     Text("Next: \(next.displayName)")
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
                     Text("\(def.upgradeCost.money) · \(def.headcountCap) desks · \(def.weeklyRent.money)/wk rent")
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: Theme.Spacing.sm)
@@ -514,14 +513,13 @@ private struct HeadcountPill: View {
 
     var body: some View {
         Text("\(headcount)/\(cap) desks")
-            .font(.system(.caption, design: .rounded).weight(.semibold))
-            .monospacedDigit()
+            .font(Theme.Typography.number(.caption))
             .foregroundStyle(headcount >= cap ? Theme.warning : .secondary)
             .padding(.horizontal, Theme.Spacing.sm)
             .padding(.vertical, 2)
             .background(Theme.chipBackground, in: Capsule())
             .contentTransition(.numericText())
-            .animation(.spring(duration: 0.35), value: headcount)
+            .animation(Theme.Motion.valueChange, value: headcount)
             .accessibilityLabel("\(headcount) of \(cap) desks filled")
     }
 }

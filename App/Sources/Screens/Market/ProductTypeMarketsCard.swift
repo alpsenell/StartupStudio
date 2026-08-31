@@ -99,8 +99,7 @@ private struct ProductTypeMarketRow: View {
                         }
                     }
                     Text("\(MarketFormat.units(type.marketSize)) units/wk · \(MarketFormat.price(type.unitPrice)) each")
-                        .font(.caption)
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
 
@@ -108,8 +107,7 @@ private struct ProductTypeMarketRow: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(revenue.money)
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
+                        .font(Theme.Typography.number(.subheadline))
                         .foregroundStyle(revenue > 0 ? Theme.positiveCash : .secondary)
                         .contentTransition(.numericText())
                     Text("your revenue")
@@ -123,11 +121,9 @@ private struct ProductTypeMarketRow: View {
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Text(peakRangeLabel)
-                    .font(.caption)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption, weight: .regular))
                 Text("(\(peakRevenueLabel))")
-                    .font(.caption)
-                    .monospacedDigit()
+                    .font(Theme.Typography.number(.caption, weight: .regular))
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
             }

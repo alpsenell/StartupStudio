@@ -90,7 +90,7 @@ struct NewProductFlow: View {
         HStack(spacing: Theme.Spacing.md) {
             if let previous = NewProductStep(rawValue: step.rawValue - 1) {
                 Button {
-                    withAnimation(.spring(duration: 0.3)) {
+                    withAnimation(Theme.Motion.entrance) {
                         step = previous
                     }
                 } label: {
@@ -155,7 +155,7 @@ struct NewProductFlow: View {
         if next == .details, !nameEdited {
             name = suggestion
         }
-        withAnimation(.spring(duration: 0.3)) {
+        withAnimation(Theme.Motion.entrance) {
             step = next
         }
     }
@@ -221,7 +221,7 @@ private struct StepIndicator: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .animation(.spring(duration: 0.3), value: current)
+        .animation(Theme.Motion.entrance, value: current)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Step \(current.rawValue + 1) of 3: \(current.title)")
     }
@@ -311,7 +311,7 @@ private struct TypeCard: View {
             )
             .opacity(isUnlocked ? 1 : 0.45)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .disabled(!isUnlocked)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -448,7 +448,7 @@ private struct TopicCell: View {
                     .strokeBorder(isSelected ? Theme.accent : .clear, lineWidth: 2)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableRow)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
