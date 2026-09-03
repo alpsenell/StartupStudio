@@ -33,6 +33,8 @@ struct ProductDetailScreen: View {
                         case .released(let info):
                             releasedContent(product: product, info: info)
                         }
+                        // U6: the same product from the outside.
+                        StorefrontLinkButton(productID: productID)
                     }
                     .padding(Theme.Spacing.lg)
                 }

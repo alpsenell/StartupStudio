@@ -79,9 +79,18 @@ struct ProductsScreen: View {
             .navigationDestination(for: UUID.self) { productID in
                 ProductDetailScreen(engine: engine, productID: productID)
             }
+            // U6: the same product from the outside. A distinct value type
+            // rather than a second `UUID` destination, which would be
+            // ambiguous with the detail screen's.
+            .navigationDestination(for: StorefrontLink.self) { link in
+                StorefrontScreen(engine: engine, productID: link.productID)
+            }
             .onChange(of: router.pendingPush, initial: true) { _, _ in
                 consumeRoute()
             }
+            // U6: `-autoRoute storefront` lands a headless screenshot pass
+            // on the store page, which otherwise needs a tap to reach.
+            .storefrontAutoRoute(engine: engine, router: router)
             .sheet(item: $newProductRequest) { request in
                 NewProductFlow(engine: engine, initialTopicID: request.topicID)
             }
@@ -100,6 +109,12 @@ struct ProductsScreen: View {
             router.take(.product(productID))
             guard engine.state.product(id: productID) != nil else { return }
             path.append(productID)
+        // U6: the storefront, deep-linkable by product id.
+        case .storefront(let productID):
+            section = .products
+            router.take(.storefront(productID: productID))
+            guard engine.state.product(id: productID) != nil else { return }
+            path.append(StorefrontLink(productID: productID))
         case .newProduct(let topicID):
             section = .products
             router.take(.newProduct(topicID: topicID))
