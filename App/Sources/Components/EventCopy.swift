@@ -62,7 +62,7 @@ struct EventCopy {
             .market
         case .rivalFounded, .rivalShipped, .rivalFolded, .poachAttempt, .poachDefeated,
              .employeePoached, .buyoutOffered, .buyoutWithdrawn, .companySold, .rivalAcquired,
-             .rivalProductLaunched, .priceWarStarted, .rivalCopycat:
+             .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .sponsoredContractDelivered:
             .rivals
         // WS-A's founder consequences are life, not company: the landlord,
         // the diagnosis and the meltdown all happen to the person.
@@ -186,6 +186,13 @@ struct EventCopy {
                         : "Client rejected the quality: only +\(payout.money) paid",
                 day,
                 Theme.scoreTint(quality)
+            )
+        case .sponsoredContractDelivered(let rivalID, let topicID, let quality, let day):
+            (
+                "flag.fill",
+                "\(rivalName(rivalID)) shipped the \(topicName(topicID)) app you built for them at \(quality) — the press knows whose work it was",
+                day,
+                Theme.warning
             )
         case .loanTaken(let amount, let day):
             ("banknote.fill", "Took a \(amount.money) loan", day, Theme.warning)
@@ -457,7 +464,7 @@ struct EventCopy {
         // line; leave the others here.
         case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
              .incumbentRetreated, .roundBoughtBack, .earnOutReviewed,
-             .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,
+             .staffPolicySet, .staffPolicyApplied,
              .staffPolicyReversed, .familyDateMissed, .alumnusJoinedBook, .stayedIndependent:
             fallbackEntry(for: event)
 

@@ -72,6 +72,22 @@ enum StandingSystem {
         award(config.campaignGain, in: topicID, &state, config)
     }
 
+    /// A white-label job delivered to a rival in the topic: the trade
+    /// press knows whose app that was. Called by
+    /// `ContractSystem.settleContracts` on a sponsored delivery — the
+    /// first source on the ledger that only takes. It takes only from a
+    /// category the studio holds: no entry is ever created just to sit at
+    /// zero, so a topic nobody has entered stays exactly as absent as
+    /// `applyWeeklyDrift` leaves it.
+    static func recordSponsoredDelivery(
+        topicID: String,
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) {
+        guard state.market.standing[topicID] != nil else { return }
+        award(-balance.sponsoredContracts.standingLoss, in: topicID, &state, balance.market.standing)
+    }
+
     /// Topics the studio currently has something selling in.
     static func liveTopicIDs(_ state: GameState) -> Set<String> {
         var ids: Set<String> = []

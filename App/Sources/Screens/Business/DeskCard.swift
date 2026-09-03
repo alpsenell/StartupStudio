@@ -32,13 +32,17 @@ enum Desk {
         var items: [DeskItem] = []
         let day = state.day
 
-        // Contracts, with the delivery grade the contract card computes.
+        // Contracts, with the delivery grade the contract card computes —
+        // and, for a rival-sponsored job, what the sponsor will ship.
         for job in state.activeContracts {
             let days = job.deadlineDay - day
             let grade = ContractOutlook.grade(
                 hasWork: job.skillDays > 0,
                 projectedQuality: job.projectedQuality,
-                balance: balance
+                balance: balance,
+                sponsoredTopic: job.isSponsored
+                    ? job.topicID.map { content.topic($0)?.name ?? $0 }
+                    : nil
             )
             items.append(
                 DeskItem(
@@ -46,7 +50,7 @@ enum Desk {
                     systemImage: "briefcase.fill",
                     text: days < 0
                         ? "\(job.clientName) is overdue — \(grade.label)"
-                        : "\(job.clientName) · \(grade.label)",
+                        : "\(job.clientName) · \(grade.promise ?? grade.label)",
                     daysLeft: max(0, days),
                     tint: days <= 3 ? Theme.negativeCash : grade.tint,
                     route: .contracts,

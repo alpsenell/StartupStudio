@@ -20,7 +20,7 @@ enum ContractSystem {
             events.append(.contractOffersRefreshed(day: state.day))
         }
 
-        events.append(contentsOf: settleContracts(&state, balance))
+        events.append(contentsOf: settleContracts(&state, balance, content))
         return events
     }
 
@@ -32,7 +32,9 @@ enum ContractSystem {
     /// urgency premium, deadline slack, required skill. The point-roll
     /// range scales with the studio's age:
     /// `1 + contractYearScale * (year - 1)`; the required-skill roll rises
-    /// `skillYearBump` per year, capped at `skillCap`.
+    /// `skillYearBump` per year, capped at `skillCap`. Once the sheet is
+    /// rolled, `sponsorOneOffer` may hand one offer to a rival — from
+    /// `worldRNG`, after every `rng` draw above.
     private static func refreshOffers(
         _ state: inout GameState,
         _ balance: BalanceConfig,
@@ -82,12 +84,93 @@ enum ContractSystem {
                 requiredSkill: requiredSkill
             ))
         }
+        sponsorOneOffer(&offers, &state, balance)
         state.contractOffers = offers
     }
 
     private static func pick(_ pool: [String], _ rng: inout SeededRNG) -> String {
         guard !pool.isEmpty else { return "" }
         return pool[rng.nextInt(in: 0...(pool.count - 1))]
+    }
+
+    // MARK: - The sponsored offer
+
+    /// "Build It For Them": once the sheet is rolled, a rival may sponsor
+    /// one offer on it. The offer keeps its id and its point pools and
+    /// becomes a white-label job for that rival — its name as the client,
+    /// a topic it ships into on delivery, `payoutFactor` times the pay,
+    /// the skill a studio of its strength expects, and a longer deadline.
+    ///
+    /// Every draw here comes from `worldRNG`, never `rng`, so the
+    /// per-offer draw groups above stay byte-identical whether or not a
+    /// rival calls — the trick `RivalSystem` uses. And nothing draws
+    /// unless a rival exists and the day is past `earliestDay`, so a
+    /// world with no rivals (the pacing suite) never touches the stream.
+    /// World draw order on a roll: the sponsor chance; then, on a hit,
+    /// the rival pick, the slot pick, the topic-choice uniform and — when
+    /// the sponsor's own focus is chosen — the focus-topic pick.
+    ///
+    /// The topic is the sharp part: with `playerTopicChance`, when the
+    /// player holds standing anywhere, the sponsor asks for the player's
+    /// best category — the offer names a topic you hold. Otherwise it is
+    /// one of the rival's own focus topics.
+    private static func sponsorOneOffer(
+        _ offers: inout [ContractOffer],
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) {
+        let config = balance.sponsoredContracts
+        guard !state.rivals.rivals.isEmpty,
+              !offers.isEmpty,
+              state.day >= config.earliestDay,
+              config.sponsorChance > 0
+        else { return }
+        guard state.worldRNG.nextUniform() < config.sponsorChance else { return }
+
+        let rival = state.rivals.rivals[
+            state.worldRNG.nextInt(in: 0...(state.rivals.rivals.count - 1))
+        ]
+        let slot = state.worldRNG.nextInt(in: 0...(offers.count - 1))
+        let topicRoll = state.worldRNG.nextUniform()
+
+        let topicID: String?
+        if let held = bestStandingTopicID(state), topicRoll < config.playerTopicChance {
+            topicID = held
+        } else if !rival.focusTopicIDs.isEmpty {
+            topicID = rival.focusTopicIDs[
+                state.worldRNG.nextInt(in: 0...(rival.focusTopicIDs.count - 1))
+            ]
+        } else {
+            topicID = bestStandingTopicID(state)
+        }
+        // A rival with no focus and a player with no standing: nothing to
+        // build. The draws above still happened; the sheet stays plain.
+        guard let topicID else { return }
+
+        var offer = offers[slot]
+        offer.clientName = rival.name
+        offer.topicID = topicID
+        offer.sponsorRivalID = rival.id
+        offer.payout = Int((Double(offer.payout) * config.payoutFactor).rounded())
+        offer.penalty = Int((balance.contractPenaltyFraction * Double(offer.payout)).rounded())
+        offer.requiredSkill = min(
+            balance.contractQuality.skillCap,
+            config.requiredSkill(forStrength: rival.strength)
+        )
+        offer.deadlineDays = Int((Double(offer.deadlineDays) * config.deadlineFactor).rounded(.up))
+        offers[slot] = offer
+    }
+
+    /// The topic the player holds highest, `nil` when they hold nothing.
+    /// Ties break on topic id so the choice replays.
+    private static func bestStandingTopicID(_ state: GameState) -> String? {
+        state.market.standing
+            .filter { $0.value > 0 }
+            .max { lhs, rhs in
+                if lhs.value != rhs.value { return lhs.value < rhs.value }
+                return lhs.key > rhs.key
+            }?
+            .key
     }
 
     // MARK: - Daily settlement
@@ -97,9 +180,14 @@ enum ContractSystem {
     /// by `legalPayoutBonus` and scales every missed-deadline penalty by
     /// `legalPenaltyFactor`. Settled jobs leave `activeContracts`; the
     /// daily employee sweep then returns their workers to idle.
+    ///
+    /// A delivered *sponsored* job is also handed to its rival — see
+    /// `shipSponsoredDelivery` — after the pay and the grade have landed
+    /// exactly as they would for any client.
     private static func settleContracts(
         _ state: inout GameState,
-        _ balance: BalanceConfig
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
     ) -> [GameEvent] {
         var events: [GameEvent] = []
         var remaining: [ContractJob] = []
@@ -141,6 +229,11 @@ enum ContractSystem {
                 events.append(.contractDelivered(
                     contractID: job.id, quality: quality, payout: paid, day: state.day
                 ))
+                if job.isSponsored {
+                    events.append(contentsOf: shipSponsoredDelivery(
+                        job, quality: quality, &state, balance, content
+                    ))
+                }
             } else if state.day > job.deadlineDay {
                 let penalty = Int((Double(job.penalty) * penaltyFactor).rounded())
                 state.company.cash -= penalty
@@ -158,6 +251,76 @@ enum ContractSystem {
 
         state.activeContracts = remaining
         return events
+    }
+
+    /// What a sponsored delivery does beyond the pay: the rival ships
+    /// what you built. Its product lands on the sponsor's shelf at
+    /// `productQuality(forProjected:)` — a little under the grade you
+    /// delivered, clamped like any rival launch — the topic joins the
+    /// sponsor's focus, it gains `rivalStrengthGain`, and the player's
+    /// standing in the topic takes `standingLoss`. A poor delivery has
+    /// already cost half the pay and a little reputation; what it hands
+    /// the rival is correspondingly weak. Sandbagging is a choice, with
+    /// a price on both sides.
+    ///
+    /// Draws one product id from `worldRNG` — only ever on a delivery to
+    /// a rival, so a world without rivals never reaches this. A sponsor
+    /// that folded or was bought before delivery has nobody to ship it:
+    /// the job pays like any other and nothing else happens.
+    private static func shipSponsoredDelivery(
+        _ job: ContractJob,
+        quality projectedQuality: Int,
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let rivalID = job.sponsorRivalID,
+              let topicID = job.topicID,
+              let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return [] }
+        let config = balance.sponsoredContracts
+        let rival = state.rivals.rivals[index]
+        let quality = config.productQuality(forProjected: projectedQuality)
+
+        // The same shape `RivalSystem.launchProduct` gives its own
+        // launches: the readable units stand-in, the catalog's first
+        // type. The name is the sponsor's brand on your category — no
+        // draw, so the only word the world stream spends is the id.
+        let product = RivalProduct(
+            id: UUID(from: &state.worldRNG),
+            name: sponsoredProductName(rival: rival, topicID: topicID, content),
+            topicID: topicID,
+            typeID: content.productTypes.first?.id ?? "mobile_app",
+            quality: quality,
+            launchDay: state.day,
+            weeklyUnits: Int((rival.strength * 40 * (0.5 + quality / 200)).rounded())
+        )
+        RivalSystem.appendProduct(product, to: index, in: &state)
+        state.rivals.rivals[index].lastShippedDay = state.day
+        state.rivals.rivals[index].strength = min(100, max(1, rival.strength + config.rivalStrengthGain))
+        if !rival.focusTopicIDs.contains(topicID) {
+            state.rivals.rivals[index].focusTopicIDs.append(topicID)
+        }
+        StandingSystem.recordSponsoredDelivery(topicID: topicID, &state, balance)
+
+        return [.sponsoredContractDelivered(
+            rivalID: rivalID,
+            topicID: topicID,
+            quality: Int(quality.rounded()),
+            day: state.day
+        )]
+    }
+
+    /// "Northwind Fitness": the first word of the sponsor's name on the
+    /// topic it now sells into.
+    private static func sponsoredProductName(
+        rival: Rival,
+        topicID: String,
+        _ content: ContentCatalog
+    ) -> String {
+        let brand = rival.name.split(separator: " ").first.map(String.init) ?? rival.name
+        let topic = content.topic(topicID)?.name ?? topicID.capitalized
+        return "\(brand) \(topic)"
     }
 
     // MARK: - Actions
@@ -182,7 +345,9 @@ enum ContractSystem {
             payout: offer.payout,
             penalty: offer.penalty,
             acceptedDay: state.day,
-            requiredSkill: offer.requiredSkill
+            requiredSkill: offer.requiredSkill,
+            topicID: offer.topicID,
+            sponsorRivalID: offer.sponsorRivalID
         ))
         return [.contractAccepted(contractID: offer.id, day: state.day)]
     }

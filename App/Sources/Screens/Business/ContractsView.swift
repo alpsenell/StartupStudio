@@ -56,11 +56,28 @@ private struct ActiveContractCard: View {
         engine.state.employees.contains { $0.assignment == .contract(job.id) }
     }
 
+    /// The rival behind a sponsored job, if it is still in the world.
+    private var sponsor: Rival? {
+        job.sponsorRivalID.flatMap { engine.state.rivals.rival(id: $0) }
+    }
+
+    private var topicName: String? {
+        job.topicID.map { engine.content.topic($0)?.name ?? $0 }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-                Text(job.clientName)
-                    .font(.system(.headline, design: .rounded))
+                if let sponsor {
+                    PixelPortrait(seed: sponsor.appearanceSeed)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(job.clientName)
+                        .font(.system(.headline, design: .rounded))
+                    if job.isSponsored, let topicName {
+                        SponsorBadge(topic: topicName)
+                    }
+                }
                 Spacer(minLength: Theme.Spacing.sm)
                 DeadlineChip(
                     text: "\(daysLeft) day\(daysLeft == 1 ? "" : "s") left",
@@ -100,6 +117,22 @@ private struct ActiveContractCard: View {
 
             if job.requiredSkill > 0 {
                 qualityLine
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if job.isSponsored, let topicName {
+                Text(ContractOutlook.sponsorProgressLine(
+                    client: job.clientName,
+                    topic: topicName,
+                    hasWork: job.skillDays > 0,
+                    projectedQuality: job.projectedQuality,
+                    balance: engine.balance,
+                    sponsorPresent: sponsor != nil
+                ))
+                .font(.footnote)
+                .monospacedDigit()
+                .foregroundStyle(Theme.warning)
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             if !hasWorkers {
@@ -165,6 +198,15 @@ private struct ContractOfferCard: View {
         offer.expiresDay - engine.state.day
     }
 
+    /// The rival behind a sponsored offer, if it is still in the world.
+    private var sponsor: Rival? {
+        offer.sponsorRivalID.flatMap { engine.state.rivals.rival(id: $0) }
+    }
+
+    private var topicName: String? {
+        offer.topicID.map { engine.content.topic($0)?.name ?? $0 }
+    }
+
     private var requirementSummary: String {
         var summary = "Code \(Int(offer.requiredCodePts.rounded())) · Design \(Int(offer.requiredDesignPts.rounded())) pts"
         if offer.requiredSkill > 0 {
@@ -173,12 +215,30 @@ private struct ContractOfferCard: View {
         return summary
     }
 
+    /// What a sponsored offer says about itself: who ships it, into what,
+    /// and where the player stands there today.
+    private var sponsorLine: String? {
+        guard offer.isSponsored, let topicName, let topicID = offer.topicID else { return nil }
+        return ContractOutlook.sponsorLine(
+            client: offer.clientName,
+            topic: topicName,
+            standing: engine.state.market.standing(for: topicID),
+            sponsorPresent: sponsor != nil
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                if let sponsor {
+                    PixelPortrait(seed: sponsor.appearanceSeed)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(offer.clientName)
                         .font(.system(.headline, design: .rounded))
+                    if offer.isSponsored, let topicName {
+                        SponsorBadge(topic: topicName)
+                    }
                     Text(requirementSummary)
                         .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
@@ -188,6 +248,21 @@ private struct ContractOfferCard: View {
                     text: "Expires in \(expiresIn) day\(expiresIn == 1 ? "" : "s")",
                     tint: .secondary
                 )
+            }
+
+            if let sponsorLine {
+                HStack(alignment: .top, spacing: Theme.Spacing.xs) {
+                    Image(systemName: "flag.fill")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.warning)
+                        .padding(.top, 2)
+                    Text(sponsorLine)
+                        .font(.footnote)
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .accessibilityElement(children: .combine)
             }
 
             HStack(spacing: Theme.Spacing.sm) {
@@ -225,12 +300,33 @@ private struct ContractOfferCard: View {
         .cardStyle()
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
-            "Offer from \(offer.clientName), pays \(offer.payout.money), due in \(offer.deadlineDays) days once accepted, expires in \(expiresIn) day\(expiresIn == 1 ? "" : "s")"
+            "\(offer.isSponsored ? "Sponsored offer" : "Offer") from \(offer.clientName), pays \(offer.payout.money), due in \(offer.deadlineDays) days once accepted, expires in \(expiresIn) day\(expiresIn == 1 ? "" : "s")"
+                + (sponsorLine.map { ". \($0)" } ?? "")
         )
     }
 }
 
 // MARK: - Bits
+
+/// The white-label mark on a rival-sponsored offer or job: the topic the
+/// sponsor ships into, in the rivals' colour.
+private struct SponsorBadge: View {
+    let topic: String
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "flag.fill")
+                .font(.system(size: 9, weight: .bold))
+            Text("\(topic) · white-label")
+                .font(.system(.caption2, design: .rounded).weight(.semibold))
+        }
+        .foregroundStyle(Theme.warning)
+        .padding(.horizontal, Theme.Spacing.xs + 2)
+        .padding(.vertical, 2)
+        .background(Theme.warning.opacity(0.14), in: Capsule())
+        .accessibilityLabel("Sponsored by a rival, \(topic) white-label")
+    }
+}
 
 /// Small countdown capsule ("3 days left", "Expires in 5 days").
 private struct DeadlineChip: View {

@@ -270,7 +270,7 @@ enum RivalSystem {
 
     /// Appends a launch to a rival's shelf, dropping the oldest beyond the
     /// cap so a long run can't grow the save without bound.
-    private static func appendProduct(_ product: RivalProduct, to index: Int, in state: inout GameState) {
+    static func appendProduct(_ product: RivalProduct, to index: Int, in state: inout GameState) {
         state.rivals.rivals[index].products.append(product)
         let overflow = state.rivals.rivals[index].products.count - RivalDepthTuning.maxProductsPerRival
         if overflow > 0 {
