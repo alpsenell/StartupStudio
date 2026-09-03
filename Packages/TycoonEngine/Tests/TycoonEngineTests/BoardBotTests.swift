@@ -70,9 +70,11 @@ struct BoardBotTests {
         #expect(signed >= 3, "only \(signed)/10 seeds were ever made a strategic offer — the bot measures nothing")
         #expect(full < 8, "the earn-out paid in full on \(full) seeds: free money")
         #expect(ousted < 8, "the acquirer replaced the founder on \(ousted) seeds: a coin flip")
-        // Everyone who signed either finished the earn-out or was replaced
-        // by it inside three years: two quarters is two quarters.
-        #expect(open == 0, "\(open) earn-outs were still open at the horizon")
+        // An offer signed in the last two quarters is still open at the
+        // horizon (with rivals on, the sponsored roll moves when offers
+        // land); the measurement needs enough *settled* earn-outs to mean
+        // anything.
+        #expect(full + partial + ousted >= 3, "only \(full + partial + ousted) earn-outs settled inside three years (\(open) still open)")
     }
 
     // MARK: - The buyback

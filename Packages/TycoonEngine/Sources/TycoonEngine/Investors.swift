@@ -476,7 +476,9 @@ extension InvestorState {
         try container.encode(lastQuarterHeadcount, forKey: .lastQuarterHeadcount)
         try container.encodeIfPresent(ipoDay, forKey: .ipoDay)
         try container.encodeIfPresent(earnOut, forKey: .earnOut)
-        try container.encode(boughtOut, forKey: .boughtOut)
+        // Encoded only when non-empty, so a save with no buyback is the
+        // same bytes it was before buybacks existed.
+        if !boughtOut.isEmpty { try container.encode(boughtOut, forKey: .boughtOut) }
     }
 }
 
