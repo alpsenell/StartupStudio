@@ -1052,6 +1052,17 @@
     "refactorBasePoints": 0.35,
     "refactorCodingDivisor": 200.0
   },
-  "sponsoredContracts": {},
+  "sponsoredContracts": {
+    "sponsorChance": 0.25,
+    "earliestDay": 56,
+    "playerTopicChance": 0.5,
+    "payoutFactor": 1.8,
+    "skillPerStrength": 0.8,
+    "skillBase": 20.0,
+    "deadlineFactor": 1.5,
+    "productQualityFactor": 0.9,
+    "rivalStrengthGain": 6.0,
+    "standingLoss": 5.0
+  },
   "origins": {}
 }

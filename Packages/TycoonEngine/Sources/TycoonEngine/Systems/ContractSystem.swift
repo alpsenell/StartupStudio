@@ -32,7 +32,9 @@ enum ContractSystem {
     /// urgency premium, deadline slack, required skill. The point-roll
     /// range scales with the studio's age:
     /// `1 + contractYearScale * (year - 1)`; the required-skill roll rises
-    /// `skillYearBump` per year, capped at `skillCap`.
+    /// `skillYearBump` per year, capped at `skillCap`. Once the sheet is
+    /// rolled, `sponsorOneOffer` may hand one offer to a rival — from
+    /// `worldRNG`, after every `rng` draw above.
     private static func refreshOffers(
         _ state: inout GameState,
         _ balance: BalanceConfig,
@@ -82,12 +84,93 @@ enum ContractSystem {
                 requiredSkill: requiredSkill
             ))
         }
+        sponsorOneOffer(&offers, &state, balance)
         state.contractOffers = offers
     }
 
     private static func pick(_ pool: [String], _ rng: inout SeededRNG) -> String {
         guard !pool.isEmpty else { return "" }
         return pool[rng.nextInt(in: 0...(pool.count - 1))]
+    }
+
+    // MARK: - The sponsored offer
+
+    /// "Build It For Them": once the sheet is rolled, a rival may sponsor
+    /// one offer on it. The offer keeps its id and its point pools and
+    /// becomes a white-label job for that rival — its name as the client,
+    /// a topic it ships into on delivery, `payoutFactor` times the pay,
+    /// the skill a studio of its strength expects, and a longer deadline.
+    ///
+    /// Every draw here comes from `worldRNG`, never `rng`, so the
+    /// per-offer draw groups above stay byte-identical whether or not a
+    /// rival calls — the trick `RivalSystem` uses. And nothing draws
+    /// unless a rival exists and the day is past `earliestDay`, so a
+    /// world with no rivals (the pacing suite) never touches the stream.
+    /// World draw order on a roll: the sponsor chance; then, on a hit,
+    /// the rival pick, the slot pick, the topic-choice uniform and — when
+    /// the sponsor's own focus is chosen — the focus-topic pick.
+    ///
+    /// The topic is the sharp part: with `playerTopicChance`, when the
+    /// player holds standing anywhere, the sponsor asks for the player's
+    /// best category — the offer names a topic you hold. Otherwise it is
+    /// one of the rival's own focus topics.
+    private static func sponsorOneOffer(
+        _ offers: inout [ContractOffer],
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) {
+        let config = balance.sponsoredContracts
+        guard !state.rivals.rivals.isEmpty,
+              !offers.isEmpty,
+              state.day >= config.earliestDay,
+              config.sponsorChance > 0
+        else { return }
+        guard state.worldRNG.nextUniform() < config.sponsorChance else { return }
+
+        let rival = state.rivals.rivals[
+            state.worldRNG.nextInt(in: 0...(state.rivals.rivals.count - 1))
+        ]
+        let slot = state.worldRNG.nextInt(in: 0...(offers.count - 1))
+        let topicRoll = state.worldRNG.nextUniform()
+
+        let topicID: String?
+        if let held = bestStandingTopicID(state), topicRoll < config.playerTopicChance {
+            topicID = held
+        } else if !rival.focusTopicIDs.isEmpty {
+            topicID = rival.focusTopicIDs[
+                state.worldRNG.nextInt(in: 0...(rival.focusTopicIDs.count - 1))
+            ]
+        } else {
+            topicID = bestStandingTopicID(state)
+        }
+        // A rival with no focus and a player with no standing: nothing to
+        // build. The draws above still happened; the sheet stays plain.
+        guard let topicID else { return }
+
+        var offer = offers[slot]
+        offer.clientName = rival.name
+        offer.topicID = topicID
+        offer.sponsorRivalID = rival.id
+        offer.payout = Int((Double(offer.payout) * config.payoutFactor).rounded())
+        offer.penalty = Int((balance.contractPenaltyFraction * Double(offer.payout)).rounded())
+        offer.requiredSkill = min(
+            balance.contractQuality.skillCap,
+            config.requiredSkill(forStrength: rival.strength)
+        )
+        offer.deadlineDays = Int((Double(offer.deadlineDays) * config.deadlineFactor).rounded(.up))
+        offers[slot] = offer
+    }
+
+    /// The topic the player holds highest, `nil` when they hold nothing.
+    /// Ties break on topic id so the choice replays.
+    private static func bestStandingTopicID(_ state: GameState) -> String? {
+        state.market.standing
+            .filter { $0.value > 0 }
+            .max { lhs, rhs in
+                if lhs.value != rhs.value { return lhs.value < rhs.value }
+                return lhs.key > rhs.key
+            }?
+            .key
     }
 
     // MARK: - Daily settlement
