@@ -24,6 +24,9 @@ struct ProductsScreen: View {
     /// Set by the `.newProduct` deep link; presents the flow with the
     /// requested topic (if any) already selected.
     @State private var newProductRequest: NewProductRequest?
+    /// Set by the `.warRoom` deep link (U1); presents the launch week room
+    /// for the build the route implies.
+    @State private var warRoom: WarRoomRequest?
 
     @Environment(AppRouter.self) private var router
 
@@ -85,12 +88,21 @@ struct ProductsScreen: View {
             .sheet(item: $newProductRequest) { request in
                 NewProductFlow(engine: engine, initialTopicID: request.topicID)
             }
+            .fullScreenCover(item: $warRoom) { request in
+                WarRoomScreen(engine: request.engine, productID: request.productID)
+            }
         }
     }
 
     /// Deep links into this tab: R&D picks the segment, a product id
     /// pushes its detail screen, and `.newProduct` opens the flow.
     private func consumeRoute() {
+        #if DEBUG
+        // `-autoRoute warRoom`: a headless pass lands in the room.
+        if warRoom == nil, let request = WarRoomRequest.debugLaunch() {
+            warRoom = request
+        }
+        #endif
         switch router.pendingPush {
         case .research:
             section = .research
@@ -104,6 +116,10 @@ struct ProductsScreen: View {
             section = .products
             router.take(.newProduct(topicID: topicID))
             newProductRequest = NewProductRequest(topicID: topicID)
+        case .warRoom:
+            section = .products
+            router.take(.warRoom)
+            warRoom = WarRoomRequest.offered(by: engine)
         default:
             break
         }

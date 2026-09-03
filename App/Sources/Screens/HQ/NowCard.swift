@@ -34,6 +34,9 @@ struct NowCard: View {
                             Divider()
                         }
                     }
+                    // Launch week (U1): the war room, once a build is inside
+                    // seven days of its ETA or shipped today. Empty otherwise.
+                    WarRoomOfferRow(engine: engine)
                     if let goal {
                         goalRow(goal)
                     } else if dayZero {

@@ -178,6 +178,9 @@ private struct InDevelopmentCard: View {
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                 }
+
+                // Launch week (U1): offered from seven days out, never forced.
+                WarRoomEntryButton(engine: engine, product: product)
             }
         }
         .confirmationDialog(

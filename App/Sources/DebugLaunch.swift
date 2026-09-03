@@ -10,10 +10,27 @@ import TycoonEngine
 /// about. `-autoTab team` (hq | life | team | products | business) opens
 /// the app on that tab; `-autoOrigin cofounded` (garage | cofounded |
 /// spinOut | mortgaged) founds the generated game that way, since the
-/// Stakes page cannot be tapped either.
+/// Stakes page cannot be tapped either; `-autoRoute warRoom` opens a
+/// surface the tab's root would otherwise only open on a tap (the tab
+/// root that owns the surface reads `launchRoute` and presents it).
 ///
 /// Release builds ignore the argument entirely.
 enum DebugLaunch {
+    /// The surface a headless pass asked to land on: the lower-cased word
+    /// after `-autoRoute` in debug builds, `nil` otherwise. Each tab root
+    /// recognises its own names (`warroom`, `launchday` on Products).
+    static var launchRoute: String? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-autoRoute"),
+              arguments.indices.contains(flag + 1)
+        else { return nil }
+        return arguments[flag + 1].lowercased()
+        #else
+        return nil
+        #endif
+    }
+
     /// The origin a headless pass founds its generated game with:
     /// `-autoOrigin <name>` in debug builds, `nil` (a garage) otherwise.
     static var launchOrigin: FoundingOrigin? {
