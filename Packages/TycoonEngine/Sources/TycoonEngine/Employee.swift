@@ -128,6 +128,13 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
     public var founderBond: Double
     /// The last day the founder mentored this person (cooldown).
     public var lastMentoredDay: Int?
+    /// Signed the incorporation papers beside the founder (WS-H, the
+    /// co-founded origin). Owns a slice of the company that
+    /// `InvestorState.equityRemaining` already accounts for, works for
+    /// equity until the office can pay them, and can be fired like anyone
+    /// else — the slice stays gone. Saves from before origins decode
+    /// `false`.
+    public var isCofounder: Bool
 
     /// `role` defaults to the pre-roles inference (founder, else the
     /// stronger of coding and design) so callers that predate roles keep
@@ -158,7 +165,8 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         role: EmployeeRole? = nil,
         traits: [String] = [],
         founderBond: Double = 0,
-        lastMentoredDay: Int? = nil
+        lastMentoredDay: Int? = nil,
+        isCofounder: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -177,6 +185,7 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         self.lastSocialDay = lastSocialDay
         self.founderBond = founderBond
         self.lastMentoredDay = lastMentoredDay
+        self.isCofounder = isCofounder
         self.role = role ?? .inferred(isFounder: isFounder, skills: skills)
         self.traits = if !traits.isEmpty || isFounder {
             traits
@@ -214,6 +223,7 @@ extension Employee {
         case id, name, skills, weeklySalary, assignment, isFounder, hiredDay
         case appearanceSeed, morale, level, lowMoraleStreakDays, lastPraisedDay, lastTrainedDay
         case loyalty, lastSocialDay, role, traits, founderBond, lastMentoredDay
+        case isCofounder
     }
 
     public init(from decoder: any Decoder) throws {
@@ -237,8 +247,39 @@ extension Employee {
             role: try container.decodeIfPresent(EmployeeRole.self, forKey: .role),
             traits: try container.decodeIfPresent([String].self, forKey: .traits) ?? [],
             founderBond: try container.decodeIfPresent(Double.self, forKey: .founderBond) ?? 0,
-            lastMentoredDay: try container.decodeIfPresent(Int.self, forKey: .lastMentoredDay)
+            lastMentoredDay: try container.decodeIfPresent(Int.self, forKey: .lastMentoredDay),
+            isCofounder: try container.decodeIfPresent(Bool.self, forKey: .isCofounder) ?? false
         )
+    }
+
+    // Hand-written encode so `isCofounder` is only written when it is
+    // true: a roster with no co-founder encodes byte-for-byte as it did
+    // before origins existed, which is what lets a garage save be compared
+    // against one written by the scaffold.
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(skills, forKey: .skills)
+        try container.encode(weeklySalary, forKey: .weeklySalary)
+        try container.encode(assignment, forKey: .assignment)
+        try container.encode(isFounder, forKey: .isFounder)
+        try container.encode(hiredDay, forKey: .hiredDay)
+        try container.encode(appearanceSeed, forKey: .appearanceSeed)
+        try container.encode(morale, forKey: .morale)
+        try container.encode(level, forKey: .level)
+        try container.encode(lowMoraleStreakDays, forKey: .lowMoraleStreakDays)
+        try container.encodeIfPresent(lastPraisedDay, forKey: .lastPraisedDay)
+        try container.encodeIfPresent(lastTrainedDay, forKey: .lastTrainedDay)
+        try container.encode(loyalty, forKey: .loyalty)
+        try container.encodeIfPresent(lastSocialDay, forKey: .lastSocialDay)
+        try container.encode(role, forKey: .role)
+        try container.encode(traits, forKey: .traits)
+        try container.encode(founderBond, forKey: .founderBond)
+        try container.encodeIfPresent(lastMentoredDay, forKey: .lastMentoredDay)
+        if isCofounder {
+            try container.encode(true, forKey: .isCofounder)
+        }
     }
 }
 

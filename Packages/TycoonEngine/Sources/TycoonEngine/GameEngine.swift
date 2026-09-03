@@ -61,7 +61,7 @@ public final class GameEngine {
         let balance = bundled.adjusted(for: difficulty)
         let state = GameState.newGame(
             companyName: companyName, seed: seed, balance: balance,
-            difficulty: difficulty, founder: founder, origin: origin
+            difficulty: difficulty, founder: founder, origin: origin, content: content
         )
         return GameEngine(state: state, balance: balance, content: content)
     }
