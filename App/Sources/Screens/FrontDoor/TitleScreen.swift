@@ -414,12 +414,12 @@ private struct SlotRow: View {
         )
     }
 
-    /// "Current · Last played an hour ago", or just when it was played.
+    /// "Current · Played an hour ago", or just when it was played.
     private var footnote: String? {
         var parts: [String] = []
         if isCurrent { parts.append("Current") }
         if let lastPlayed = row.lastPlayed {
-            parts.append("Last played \(Self.relative.localizedString(for: lastPlayed, relativeTo: Date()))")
+            parts.append("Played \(Self.relative.localizedString(for: lastPlayed, relativeTo: Date()))")
         }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
