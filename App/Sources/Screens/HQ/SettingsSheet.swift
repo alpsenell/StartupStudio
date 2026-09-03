@@ -30,6 +30,23 @@ struct SettingsSheet: View {
                     LabeledContent("Founder") {
                         Text(engine.state.employees.first(where: \.isFounder)?.name ?? "—")
                     }
+                    // The company card left HQ (the dashboard leads with
+                    // what to do next); its two facts live here.
+                    LabeledContent("Office") {
+                        Text(engine.state.company.officeTier.displayName)
+                    }
+                    LabeledContent("Reputation") {
+                        HStack(spacing: Theme.Spacing.sm) {
+                            Gauge(value: min(max(engine.state.company.reputation / 100, 0), 1)) {
+                                EmptyView()
+                            }
+                            .gaugeStyle(.accessoryLinearCapacity)
+                            .tint(Theme.accent)
+                            .frame(width: 80)
+                            Text(engine.state.company.reputation.formatted(.number.precision(.fractionLength(0...1))))
+                                .font(Theme.Typography.number(.caption))
+                        }
+                    }
                 }
 
                 Section {

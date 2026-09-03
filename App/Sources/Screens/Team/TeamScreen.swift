@@ -53,6 +53,9 @@ struct TeamScreen: View {
 
                     teamDinnerRow
                     bulkAssignRow
+                    // Departments form by hiring the matching role, so the
+                    // card lives where the hiring happens (it led HQ before).
+                    DepartmentsCard(engine: engine)
                 }
 
                 Section {

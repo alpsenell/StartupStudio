@@ -28,13 +28,17 @@ enum Route: Hashable {
     /// seam: the first coach tip, HQ's Now card and the topic detail all
     /// route here.
     case newProduct(topicID: String?)
+    /// The two Business sections that had no deep link: a goal about
+    /// raising a round or buying a rival needs somewhere to send you.
+    case investors
+    case rivals
 
     /// The tab this destination lives in.
     var tab: GameTab {
         switch self {
         case .hiring: .team
         case .research, .product, .newProduct: .products
-        case .contracts, .marketReport, .market, .finances, .marketing: .business
+        case .contracts, .marketReport, .market, .finances, .marketing, .investors, .rivals: .business
         case .life: .life
         }
     }

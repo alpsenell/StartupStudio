@@ -358,7 +358,7 @@ private struct TypeCard: View {
                     if isUnlocked {
                         statLabel(String(format: "$%.2f/unit", type.unitPrice), systemImage: "tag")
                         statLabel(
-                            "\(Int(type.marketSize).formatted(.number.notation(.compactName))) market",
+                            "\(Int(type.marketSize).formatted(.number.notation(.compactName).locale(Theme.gameLocale))) market",
                             systemImage: "chart.bar"
                         )
                     } else {
@@ -394,7 +394,7 @@ private struct TypeCard: View {
 }
 
 /// Relative effort for one phase as 1–5 filled dots.
-private struct EffortDots: View {
+struct EffortDots: View {
     let label: String
     let points: Double
     let tint: Color

@@ -37,6 +37,10 @@ struct ProductsListView: View {
 
             if engine.state.products.isEmpty {
                 EmptyProductsCard { showingNewProduct = true }
+                // Day 0 used to be one card and a blank screen. The
+                // catalog shows what a product is before the player
+                // starts one.
+                TypeCatalogPreview(engine: engine)
             } else if hasFreeSlot {
                 // In-content CTA: nav-bar toolbars sit underneath the
                 // opaque top HUD in this design, so actions live in
@@ -318,5 +322,101 @@ private struct EmptyProductsCard: View {
         }
         .buttonStyle(.pressableRow)
         .accessibilityLabel("Start your first product")
+    }
+}
+
+// MARK: - Day-0 catalog
+
+/// The product types, read-only, under the empty state: name, blurb,
+/// effort, price and market, with the locked ones dimmed and a line about
+/// what R&D unlocks. Iteration 4 seam: `ceiling` is WS-F's slot for the
+/// crew-ceiling badge ("~58 with this crew") once the pre-start forecast
+/// exists; until then the cards carry no number.
+struct TypeCatalogPreview: View {
+    let engine: GameEngine
+    /// The crew ceiling per type id, when a forecast is available.
+    var ceiling: (String) -> Int? = { _ in nil }
+
+    private var types: [ProductTypeDef] { engine.content.productTypes }
+
+    private var lockedCount: Int {
+        types.count { !engine.state.isProductTypeUnlocked($0.id, content: engine.content) }
+    }
+
+    var body: some View {
+        CardView("What you could build", systemImage: "square.grid.2x2.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                ForEach(types) { type in
+                    let unlocked = engine.state.isProductTypeUnlocked(type.id, content: engine.content)
+                    TypePreviewRow(type: type, isUnlocked: unlocked, ceiling: ceiling(type.id))
+                    if type.id != types.last?.id {
+                        Divider()
+                    }
+                }
+                if lockedCount > 0 {
+                    Label(
+                        "Research unlocks \(lockedCount) more type\(lockedCount == 1 ? "" : "s").",
+                        systemImage: "flask.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+}
+
+private struct TypePreviewRow: View {
+    let type: ProductTypeDef
+    let isUnlocked: Bool
+    let ceiling: Int?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+                Image(systemName: isUnlocked ? type.iconSystemName : "lock.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(isUnlocked ? Theme.accent : Color.secondary)
+                    .frame(width: 18)
+                Text(type.name)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                Spacer(minLength: Theme.Spacing.xs)
+                if let ceiling {
+                    Text("~\(ceiling) with this crew")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(Theme.scoreTint(ceiling))
+                } else if !isUnlocked {
+                    Text("Research to unlock")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Text(type.blurb)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: Theme.Spacing.md) {
+                EffortDots(label: "Design", points: type.designPts, tint: Theme.designPhase)
+                EffortDots(label: "Code", points: type.codePts, tint: Theme.codePhase)
+                EffortDots(label: "Polish", points: type.polishPts, tint: Theme.polishPhase)
+            }
+            if isUnlocked {
+                HStack(spacing: Theme.Spacing.md) {
+                    Label(String(format: "$%.2f/unit", type.unitPrice), systemImage: "tag")
+                    Label(
+                        "\(Int(type.marketSize).formatted(.number.notation(.compactName).locale(Theme.gameLocale))) market",
+                        systemImage: "person.3.fill"
+                    )
+                }
+                .font(.caption2)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+            }
+        }
+        .opacity(isUnlocked ? 1 : 0.55)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            isUnlocked ? "\(type.name). \(type.blurb)" : "\(type.name), locked. Research to unlock."
+        )
     }
 }

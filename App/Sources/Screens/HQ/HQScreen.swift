@@ -24,12 +24,10 @@ struct HQScreen: View {
                             graceDays: engine.balance.bankruptcyGraceDays
                         )
                     }
-                    // The office is the game's face — it leads the dashboard.
+                    // What is happening and what to do next leads; the
+                    // office, the game's face, comes straight after it.
+                    NowCard(engine: engine) { showingNewProduct = true }
                     OfficeCard(engine: engine)
-                    // Reserved slot: renders nothing until WS-F fills it in.
-                    GoalsCard(engine: engine)
-                    DepartmentsCard(engine: engine)
-                    CompanyCard(company: engine.state.company, difficulty: engine.state.difficulty)
                     BurnRateCard(
                         weeklyBurn: engine.weeklyBurn,
                         cash: engine.state.company.cash,
@@ -40,7 +38,10 @@ struct HQScreen: View {
                         },
                         balance: engine.balance
                     )
-                    ProductStatusCard(engine: engine) { showingNewProduct = true }
+                    // The chapter card stays: it is the only place the
+                    // other goals, the perks and the next chapter's teaser
+                    // live. It sits below the money now, not above it.
+                    GoalsCard(engine: engine)
                     JournalCard(engine: engine)
                     // In-content settings entry point: nav-bar toolbars are
                     // hidden on tab roots (the HUD takes that slot).
@@ -120,57 +121,6 @@ private struct DebtBanner: View {
             in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
         )
         .accessibilityElement(children: .combine)
-    }
-}
-
-// MARK: - Company card
-
-private struct CompanyCard: View {
-    let company: Company
-    let difficulty: Difficulty
-
-    var body: some View {
-        CardView("Company", systemImage: "building.2.fill") {
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                Text(company.name)
-                    .font(.system(.title2, design: .rounded).weight(.bold))
-
-                HStack(spacing: Theme.Spacing.sm) {
-                    StatPill(systemImage: officeIcon, value: company.officeTier.displayName)
-                    StatPill(systemImage: difficulty.systemImage, value: difficulty.displayName, tint: .secondary)
-                        .accessibilityLabel("Difficulty \(difficulty.displayName)")
-                }
-
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    HStack {
-                        Text("Reputation")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(company.reputation.formatted(.number.precision(.fractionLength(0...1))))
-                            .font(Theme.Typography.number(.caption))
-                    }
-                    Gauge(value: normalizedReputation) {
-                        EmptyView()
-                    }
-                    .gaugeStyle(.accessoryLinearCapacity)
-                    .tint(Theme.accent)
-                }
-            }
-        }
-    }
-
-    private var normalizedReputation: Double {
-        min(max(company.reputation / 100.0, 0), 1)
-    }
-
-    private var officeIcon: String {
-        switch company.officeTier {
-        case .garage: "door.garage.closed"
-        case .loft: "house.fill"
-        case .studio: "building.fill"
-        case .campus: "building.2.fill"
-        }
     }
 }
 
@@ -302,78 +252,5 @@ private struct StatBlock: View {
                 .animation(Theme.Motion.valueChange, value: value)
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-// MARK: - Product status
-
-/// Live product card: the product in development with compact progress,
-/// or the call-to-action that opens the new-product flow.
-private struct ProductStatusCard: View {
-    let engine: GameEngine
-    let startNewProduct: () -> Void
-
-    var body: some View {
-        if let product = engine.state.productInDevelopment,
-           case .development(let progress) = product.stage {
-            let type = engine.content.productType(product.typeID)
-            CardView("In development", systemImage: "hammer.fill") {
-                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                    HStack(spacing: Theme.Spacing.sm) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(product.name)
-                                .font(.system(.headline, design: .rounded))
-                            if let type {
-                                Label(type.name, systemImage: type.iconSystemName)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                        StatPill(
-                            systemImage: "ladybug.fill",
-                            value: "\(progress.openBugs) bug\(progress.openBugs == 1 ? "" : "s")",
-                            tint: progress.openBugs > 0 ? Theme.warning : .secondary
-                        )
-                    }
-                    TriPhaseProgress(progress: progress, type: type, compact: true)
-                }
-            }
-        } else {
-            StartProductCTACard(
-                isFirstProduct: engine.state.products.isEmpty,
-                action: startNewProduct
-            )
-        }
-    }
-}
-
-private struct StartProductCTACard: View {
-    let isFirstProduct: Bool
-    let action: () -> Void
-
-    private var title: String {
-        isFirstProduct ? "Start your first product" : "Start a new product"
-    }
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "hammer.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(Theme.accent)
-                Text(title)
-                    .font(.system(.headline, design: .rounded))
-                    .foregroundStyle(.primary)
-                Text("Pick a type, pick a topic, and get building.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Theme.Spacing.sm)
-            .cardStyle()
-        }
-        .buttonStyle(.pressableRow)
-        .accessibilityLabel(title)
     }
 }

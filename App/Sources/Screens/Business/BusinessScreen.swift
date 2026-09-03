@@ -113,6 +113,12 @@ struct BusinessScreen: View {
         case .finances:
             section = .finances
             router.take(.finances)
+        case .investors:
+            section = .investors
+            router.take(.investors)
+        case .rivals:
+            section = .rivals
+            router.take(.rivals)
         case .marketReport:
             section = .market
         default:
