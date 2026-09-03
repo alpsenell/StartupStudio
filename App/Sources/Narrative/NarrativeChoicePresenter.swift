@@ -43,6 +43,7 @@ enum NarrativeChoicePresenter {
                     label: option.label,
                     detail: option.detail,
                     cashDelta: cashDelta(for: option, in: choices),
+                    disabledReason: option.disabledReason,
                     action: .resolveChoice(eventID: pending.id, optionIndex: option.index)
                 )
             },

@@ -53,6 +53,11 @@ final class FounderLifeSnapshotTests: XCTestCase {
         state.life.family.partnerAppearanceSeed = 0xB0B
         state.life.family.affection = 42
         state.life.family.lastPartnerDay = 0
+        // The anniversary a year into the stage, as the calendar keeps it
+        // (WS-E): the partner card shows it coming.
+        state.narrative.scheduled = [
+            ScheduledNarrativeEvent(day: 365, eventID: "partner_anniversary", source: .life)
+        ]
         prepare(&state, seed.balance, seed.content)
         return GameEngine(state: state, balance: seed.balance, content: seed.content)
     }
@@ -108,8 +113,36 @@ final class FounderLifeSnapshotTests: XCTestCase {
 
     func testRendersThePartnerCard() {
         let engine = scene()
+        XCTAssertEqual(
+            engine.state.nextPartnerDate(content: engine.content)?.label,
+            "Your anniversary with Sam"
+        )
         snapshot("partner_card") {
             PartnerCard(engine: engine)
+                .environment(GameShell())
+                .padding(Theme.Spacing.lg)
+        }
+    }
+
+    /// The family card with a child whose birthday is nine days out — the
+    /// line the diary adds under the people (WS-E).
+    func testRendersTheFamilyCardWithTheNextDate() {
+        let engine = scene { state, _, _ in
+            let sam = Child(id: UUID(), name: "Sam", bornDay: 0, appearanceSeed: 0xC1D)
+            state.life.family.stage = .married
+            state.life.family.partnerName = "Priya Nair"
+            state.life.family.children = [sam]
+            state.narrative.scheduled.append(
+                ScheduledNarrativeEvent(
+                    day: 49, eventID: "kid_birthday", source: .life, childID: sam.id
+                )
+            )
+        }
+        let next = engine.state.nextFamilyDate(content: engine.content)
+        XCTAssertEqual(next?.label, "Sam's birthday")
+        XCTAssertEqual(next.map { $0.day - engine.state.day }, 9)
+        snapshot("family_card") {
+            FamilyCard(engine: engine)
                 .environment(GameShell())
                 .padding(Theme.Spacing.lg)
         }

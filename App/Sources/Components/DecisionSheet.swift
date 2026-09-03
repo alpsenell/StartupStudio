@@ -18,18 +18,25 @@ struct DecisionPrompt: Identifiable {
         /// The sheet turns it into "−$2,300 → $9,250 · runway 8 wk", which
         /// is the arithmetic a new founder cannot do with the HUD hidden.
         let cashDelta: Int?
+        /// Why the option is shown but cannot be taken — "No evenings left
+        /// this week" (WS-E). The sheet draws it greyed with the reason
+        /// under it: an answer the founder *could* have given is worth
+        /// more on the sheet than off it. `nil` for an open option.
+        let disabledReason: String?
 
         init(
             label: String,
             detail: String? = nil,
             role: ButtonRole? = nil,
             cashDelta: Int? = nil,
+            disabledReason: String? = nil,
             action: GameAction
         ) {
             self.label = label
             self.detail = detail
             self.role = role
             self.cashDelta = cashDelta
+            self.disabledReason = disabledReason
             self.action = action
         }
     }
@@ -191,14 +198,29 @@ struct DecisionSheetContent: View {
     private var answers: some View {
         VStack(spacing: Theme.Spacing.sm) {
             ForEach(prompt.options) { option in
-                Button {
-                    choose(option)
-                } label: {
-                    optionLabel(option)
+                VStack(spacing: Theme.Spacing.xs) {
+                    Button {
+                        choose(option)
+                    } label: {
+                        optionLabel(option)
+                    }
+                    .buttonStyle(
+                        PixelButtonStyle(fill: option.role == .destructive ? Theme.negativeCash : Theme.pixelAccent)
+                    )
+                    // A greyed option stays on the sheet: the founder
+                    // sees the evening they no longer have.
+                    .disabled(option.disabledReason != nil)
+                    .opacity(option.disabledReason == nil ? 1 : 0.4)
+                    .accessibilityHint(option.disabledReason ?? "")
+
+                    if let reason = option.disabledReason {
+                        Text(reason)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.warning)
+                            .multilineTextAlignment(.center)
+                            .accessibilityHidden(true)
+                    }
                 }
-                .buttonStyle(
-                    PixelButtonStyle(fill: option.role == .destructive ? Theme.negativeCash : Theme.pixelAccent)
-                )
             }
 
             if let postpone {

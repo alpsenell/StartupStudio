@@ -238,7 +238,7 @@ extension GameState {
     /// The family's upcoming dates, soonest first — the "next: Sam's
     /// birthday · 9 days" line. Empty for a founder with nobody to miss.
     public func familyDates(content: ContentCatalog) -> [FamilyDate] {
-        narrative.scheduled.compactMap { entry in
+        narrative.scheduled.compactMap { entry -> FamilyDate? in
             guard entry.source == .life,
                   let def = content.lifeEvent(entry.eventID), let label = def.diaryLabel
             else { return nil }
@@ -249,6 +249,7 @@ extension GameState {
                 childID: entry.childID
             )
         }
+        .sorted { ($0.day, $0.eventID) < ($1.day, $1.eventID) }
     }
 
     /// The partner's next date — the anniversary, or a promise.
@@ -259,5 +260,14 @@ extension GameState {
     /// The soonest date for anybody in the family.
     public func nextFamilyDate(content: ContentCatalog) -> FamilyDate? {
         familyDates(content: content).first
+    }
+
+    /// The diary line for a dated beat, filled from live state — for copy
+    /// about a date that has already fired and left the diary, such as
+    /// "You missed Sam's birthday". `nil` for a beat that is not dated.
+    public func diaryLabel(for eventID: String, content: ContentCatalog) -> String? {
+        content.lifeEvent(eventID)?.diaryLabel.map {
+            FamilyCalendar.fill($0, state: self, childID: nil)
+        }
     }
 }
