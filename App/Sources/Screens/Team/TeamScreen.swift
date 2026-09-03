@@ -21,6 +21,16 @@ struct TeamScreen: View {
         var id: String { rawValue }
     }
 
+    /// The two ways to look at the same people: a list you can sort and
+    /// search, or the shape they make.
+    private enum TeamView: String, CaseIterable, Identifiable {
+        case roster = "Roster"
+        case chart = "Org chart"
+
+        var id: String { rawValue }
+    }
+
+    @State private var teamView: TeamView = .roster
     @State private var showingHiring = false
     @State private var employeeToFire: Employee?
     @State private var employeeToManage: Employee?
@@ -30,98 +40,51 @@ struct TeamScreen: View {
     /// roster opens on it.
     @State private var choseDefaultSort = false
 
+    @Environment(AppRouter.self) private var router
+
     var body: some View {
         NavigationStack {
-            List {
-                // In-content hiring entry point: nav-bar toolbars sit
-                // underneath the opaque top HUD in this design, so actions
-                // live in the list instead.
-                Section {
-                    Button {
-                        showingHiring = true
-                    } label: {
-                        HStack {
-                            Label("Hiring", systemImage: "person.badge.plus")
-                                .font(.system(.headline, design: .rounded))
-                                .foregroundStyle(Theme.accent)
-                            Spacer()
-                            Text(hiringCaption)
-                                .font(Theme.Typography.number(.subheadline, weight: .regular))
-                                .foregroundStyle(.secondary)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.tertiary)
-                        }
-                    }
-                    .accessibilityLabel("Open hiring")
-
-                    teamDinnerRow
-                    bulkAssignRow
-                    // Departments form by hiring the matching role, so the
-                    // card lives where the hiring happens (it led HQ before).
-                    DepartmentsCard(engine: engine)
-                    // The rules the founder's answers became. Only once
-                    // there is one: a rule can only be made by somebody
-                    // asking, never from a card.
-                    if !engine.state.staffMemory.policies.isEmpty {
-                        PoliciesCard(engine: engine)
+            // Roster or chart, switched by a picker pinned under the HUD:
+            // this tab hides the navigation bar (an opaque HUD sits over
+            // it), so a "toolbar" toggle lives in the content, the same way
+            // hiring and the team dinner do.
+            VStack(spacing: 0) {
+                Picker("How to look at the team", selection: $teamView) {
+                    ForEach(TeamView.allCases) { view in
+                        Text(view.rawValue).tag(view)
                     }
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, Theme.Spacing.lg)
+                .padding(.top, Theme.Spacing.md)
+                .padding(.bottom, Theme.Spacing.sm)
+                .background(Theme.screenBackground)
+                .accessibilityLabel("Roster or org chart")
 
-                Section {
-                    if roster.isEmpty {
-                        Text(
-                            search.isEmpty
-                                ? "Nobody on payroll yet."
-                                : "Nobody matches \u{201C}\(search)\u{201D}."
-                        )
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                switch teamView {
+                case .roster:
+                    rosterList
+                case .chart:
+                    OrgChartView(engine: engine) { employee in
+                        Haptics.tap()
+                        employeeToManage = employee
                     }
-                    ForEach(roster) { employee in
-                        EmployeeRow(engine: engine, employee: employee)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                // The founder's levers live on the Life tab.
-                                if !employee.isFounder {
-                                    employeeToManage = employee
-                                }
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                // The founder can't be fired — the engine
-                                // would ignore it, so don't offer it.
-                                if !employee.isFounder {
-                                    Button(role: .destructive) {
-                                        employeeToFire = employee
-                                    } label: {
-                                        Label("Fire", systemImage: "person.badge.minus")
-                                    }
-                                    .accessibilityLabel("Fire \(employee.name)")
-                                }
-                            }
-                    }
-                } header: {
-                    rosterHeader
-                } footer: {
-                    payrollFooter
                 }
             }
-            .searchable(text: $search, prompt: "Search the team")
-            .onAppear {
-                guard !choseDefaultSort else { return }
-                choseDefaultSort = true
-                if !EmployeeStatus.roster(in: engine.state, balance: engine.balance, content: engine.content).isEmpty {
-                    sortOrder = .attention
-                }
-            }
-            // The HUD inset lives on the stack's root content (not on the
-            // NavigationStack) so the list scrolls below it and any pushed
-            // destination shows the navigation bar instead.
+            // The HUD inset lives on the stack's root content (this VStack),
+            // not on the NavigationStack, so the picker lands directly below
+            // the HUD and any pushed destination shows the navigation bar.
             .withTopHUD(engine: engine)
+            .background(Theme.screenBackground)
             .sensoryFeedback(.success, trigger: engine.state.lastTeamDinnerDay)
             .navigationTitle("Team")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
+            .onChange(of: router.pendingPush, initial: true) { _, _ in
+                if router.take(.orgChart) {
+                    teamView = .chart
+                }
+            }
             .sheet(isPresented: $showingHiring) {
                 HiringSheet(engine: engine)
             }
@@ -140,6 +103,92 @@ struct TeamScreen: View {
                 Button("Cancel", role: .cancel) {}
             } message: { _ in
                 Text("No severance in the garage era.")
+            }
+        }
+    }
+
+    /// The list: hiring and the whole-team moves at the top, then everybody.
+    private var rosterList: some View {
+        List {
+            // In-content hiring entry point: nav-bar toolbars sit
+            // underneath the opaque top HUD in this design, so actions
+            // live in the list instead.
+            Section {
+                Button {
+                    showingHiring = true
+                } label: {
+                    HStack {
+                        Label("Hiring", systemImage: "person.badge.plus")
+                            .font(.system(.headline, design: .rounded))
+                            .foregroundStyle(Theme.accent)
+                        Spacer()
+                        Text(hiringCaption)
+                            .font(Theme.Typography.number(.subheadline, weight: .regular))
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .accessibilityLabel("Open hiring")
+
+                teamDinnerRow
+                bulkAssignRow
+                // Departments form by hiring the matching role, so the
+                // card lives where the hiring happens (it led HQ before).
+                DepartmentsCard(engine: engine)
+                // The rules the founder's answers became. Only once
+                // there is one: a rule can only be made by somebody
+                // asking, never from a card.
+                if !engine.state.staffMemory.policies.isEmpty {
+                    PoliciesCard(engine: engine)
+                }
+            }
+
+            Section {
+                if roster.isEmpty {
+                    Text(
+                        search.isEmpty
+                            ? "Nobody on payroll yet."
+                            : "Nobody matches \u{201C}\(search)\u{201D}."
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                }
+                ForEach(roster) { employee in
+                    EmployeeRow(engine: engine, employee: employee)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            // The founder's levers live on the Life tab.
+                            if !employee.isFounder {
+                                employeeToManage = employee
+                            }
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            // The founder can't be fired — the engine
+                            // would ignore it, so don't offer it.
+                            if !employee.isFounder {
+                                Button(role: .destructive) {
+                                    employeeToFire = employee
+                                } label: {
+                                    Label("Fire", systemImage: "person.badge.minus")
+                                }
+                                .accessibilityLabel("Fire \(employee.name)")
+                            }
+                        }
+                }
+            } header: {
+                rosterHeader
+            } footer: {
+                payrollFooter
+            }
+        }
+        .searchable(text: $search, prompt: "Search the team")
+        .onAppear {
+            guard !choseDefaultSort else { return }
+            choseDefaultSort = true
+            if !EmployeeStatus.roster(in: engine.state, balance: engine.balance, content: engine.content).isEmpty {
+                sortOrder = .attention
             }
         }
     }
