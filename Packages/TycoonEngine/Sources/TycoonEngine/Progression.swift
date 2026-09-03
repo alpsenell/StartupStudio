@@ -315,6 +315,29 @@ extension ProgressionStats {
             liveProductsWeeks: try container.decodeIfPresent(Int.self, forKey: .liveProductsWeeks) ?? 0
         )
     }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(peakHeadcount, forKey: .peakHeadcount)
+        try container.encode(departmentsEverFormed, forKey: .departmentsEverFormed)
+        try container.encode(contractsAccepted, forKey: .contractsAccepted)
+        try container.encode(contractsSettled, forKey: .contractsSettled)
+        try container.encode(cashPositiveWeeks, forKey: .cashPositiveWeeks)
+        try container.encode(weekendsOff, forKey: .weekendsOff)
+        try container.encode(crashesWeathered, forKey: .crashesWeathered)
+        try container.encode(campaignsRun, forKey: .campaignsRun)
+        try container.encode(rivalsAcquired, forKey: .rivalsAcquired)
+        try container.encode(roundsRaised, forKey: .roundsRaised)
+        try container.encode(bestReviewScore, forKey: .bestReviewScore)
+        try container.encode(bestProductRevenue, forKey: .bestProductRevenue)
+        try container.encode(topicsDominated, forKey: .topicsDominated)
+        try container.encode(openContracts, forKey: .openContracts)
+        // Iteration 5's counter is written only once it has counted, so a
+        // save from before it existed keeps its bytes.
+        if liveProductsWeeks != 0 {
+            try container.encode(liveProductsWeeks, forKey: .liveProductsWeeks)
+        }
+    }
 }
 
 /// One chapter the run has reached, and the day it happened. The founder
