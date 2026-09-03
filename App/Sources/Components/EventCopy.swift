@@ -62,7 +62,9 @@ struct EventCopy {
             .market
         case .rivalFounded, .rivalShipped, .rivalFolded, .poachAttempt, .poachDefeated,
              .employeePoached, .buyoutOffered, .buyoutWithdrawn, .companySold, .rivalAcquired,
-             .rivalProductLaunched, .priceWarStarted, .rivalCopycat:
+             .rivalProductLaunched, .priceWarStarted, .rivalCopycat,
+             // WS-A: the category fight and the incumbent.
+             .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived, .incumbentRetreated:
             .rivals
         // WS-A's founder consequences are life, not company: the landlord,
         // the diagnosis and the meltdown all happen to the person.
@@ -452,11 +454,38 @@ struct EventCopy {
 
         // MARK: Iteration 5
 
+        // WS-A — the category fight and the incumbent.
+        case .categoryChallenged(let rivalID, let topicID, let productName, let quality, let respondByDay, let day):
+            (
+                "flag.2.crossed.fill",
+                "\(rivalName(rivalID)) launched \(productName) into \(topicName(topicID)) — "
+                    + "a \(quality). Six weeks to hold it (day \(respondByDay)).",
+                day,
+                Theme.warning
+            )
+        case .categoryHeld(let rivalID, let topicID, let day):
+            (
+                "checkmark.shield.fill",
+                "You held \(topicName(topicID)) — \(rivalName(rivalID)) lost ground, your standing there grew",
+                day,
+                Theme.positiveCash
+            )
+        case .categoryLost(let rivalID, let topicID, let day):
+            (
+                "xmark.shield.fill",
+                "\(rivalName(rivalID)) took \(topicName(topicID)) — your standing there fell, and they're staying",
+                day,
+                Theme.negativeCash
+            )
+        case .incumbentArrived(_, let name, let day):
+            ("building.columns.fill", "\(name) arrived in your best markets, with money to lose", day, Theme.warning)
+        case .incumbentRetreated(_, let name, let day):
+            ("flag.checkered", "\(name) gave up your categories", day, Theme.positiveCash)
+
         // Scaffold: every lane's events read out of `EventPresenter` until
         // the lane writes its copy. Move your cases above and give them a
         // line; leave the others here.
-        case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
-             .incumbentRetreated, .roundBoughtBack, .earnOutReviewed,
+        case .roundBoughtBack, .earnOutReviewed,
              .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,
              .staffPolicyReversed, .familyDateMissed, .alumnusJoinedBook, .stayedIndependent:
             fallbackEntry(for: event)

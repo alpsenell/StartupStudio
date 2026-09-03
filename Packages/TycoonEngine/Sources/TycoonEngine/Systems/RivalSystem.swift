@@ -21,11 +21,16 @@ import TycoonContent
 /// rival: one gaussian, one uniform event roll, one topic pick and — when
 /// it launches — one product id, two name words and one quality jitter) →
 /// fold replacements (founding draws each) → copycat pass (a clone's id,
-/// two name words and a quality jitter per copying rival) → share and
-/// price-war passes (no draws) → poach check (one uniform, plus one premium uniform
-/// on a hit) → buyout check (one uniform, plus one fraction-or-premium
-/// uniform on a hit). Founding draws two id words, the name pick, strength,
+/// two name words and a quality jitter per copying rival) → incumbent
+/// founding, the week it happens (two id words, name, reputation,
+/// appearance seed, then its opener's id, two words and a jitter) →
+/// challenge, share, price-war, bleed, settlement and retreat passes (no
+/// draws) → poach check (one uniform, plus one premium uniform on a hit)
+/// → buyout check (one uniform, plus one fraction-or-premium uniform on
+/// a hit). Founding draws two id words, the name pick, strength,
 /// reputation, the topic pick, the appearance seed and the personality.
+/// An acquisition draws the absorbed hires' words and one word per
+/// synthesised review on the absorbed shelf.
 enum RivalSystem {
     /// Strength a rival gains by successfully hiring away an employee.
     private static let poachedStrengthGain: Double = 5
