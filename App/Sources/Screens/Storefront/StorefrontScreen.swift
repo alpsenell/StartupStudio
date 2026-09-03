@@ -31,7 +31,7 @@ struct StorefrontScreen: View {
         Group {
             if let product = engine.state.product(id: productID) {
                 ScrollView {
-                    content(product: product)
+                    StorefrontPage(engine: engine, product: product) { changingPrice = true }
                         .padding(Theme.Spacing.lg)
                 }
             } else {
@@ -59,34 +59,54 @@ struct StorefrontScreen: View {
         }
     }
 
-    /// The page. Released and in-development share the hero and the
-    /// screenshots; everything below them differs.
-    @ViewBuilder
-    private func content(product: Product) -> some View {
+    private func type(for product: Product) -> ProductTypeDef? {
+        engine.content.productType(product.typeID)
+    }
+
+    private func topic(for product: Product) -> TopicDef? {
+        engine.content.topic(product.topicID)
+    }
+}
+
+// MARK: - The page
+
+/// Everything on the store page, without the scroll view around it.
+///
+/// Split out from `StorefrontScreen` because that is how this app is
+/// snapshotted: `ImageRenderer` renders a `ScrollView` as a blank PNG, so
+/// the tests render the content and the screen supplies the scrolling.
+struct StorefrontPage: View {
+    let engine: GameEngine
+    let product: Product
+    /// Tapping the buy button. The screen presents the price sheet; a
+    /// snapshot passes an empty closure.
+    var changePrice: () -> Void = {}
+
+    var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
             switch product.stage {
             case .released(let info):
                 StorefrontHero(
                     product: product,
                     developer: engine.state.company.name,
-                    type: type(for: product),
-                    topic: topic(for: product),
+                    type: type,
+                    topic: topic,
                     rating: .released(info)
                 )
-                priceButton(product: product, info: info)
+                priceButton(info: info)
                 StorefrontShotsCard(product: product)
-                StorefrontWeekCard(info: info, type: type(for: product))
+                StorefrontWeekCard(info: info, type: type)
                 WhatsNewCard(product: product, info: info)
                 StorefrontReviewsCard(info: info)
             case .development(let progress):
                 StorefrontHero(
                     product: product,
                     developer: engine.state.company.name,
-                    type: type(for: product),
-                    topic: topic(for: product),
+                    type: type,
+                    topic: topic,
                     rating: .comingSoon
                 )
-                ComingSoonCard(progress: progress, type: type(for: product))
+                ComingSoonCard(progress: progress, type: type)
                 StorefrontShotsCard(product: product)
             }
         }
@@ -96,13 +116,11 @@ struct StorefrontScreen: View {
     /// unit price scaled by the tier the player set — and opens the price
     /// change that already exists, rather than restating it here.
     @ViewBuilder
-    private func priceButton(product: Product, info: ReleaseInfo) -> some View {
+    private func priceButton(info: ReleaseInfo) -> some View {
         let priceable = LiveOps.isAvailable && !info.offMarket
-        Button {
-            changingPrice = true
-        } label: {
+        Button(action: changePrice) {
             HStack(spacing: Theme.Spacing.sm) {
-                Text(priceLabel(info: info, type: type(for: product)))
+                Text(priceLabel(info: info))
                     .font(Theme.Typography.number(.headline))
                 if priceable {
                     Image(systemName: "chevron.up.chevron.down")
@@ -117,25 +135,19 @@ struct StorefrontScreen: View {
         .controlSize(.large)
         .disabled(!priceable)
         .accessibilityLabel(
-            priceable
-                ? "\(priceLabel(info: info, type: type(for: product))). Change the price."
-                : "Off the market"
+            priceable ? "\(priceLabel(info: info)). Change the price." : "Off the market"
         )
-        .overlay(alignment: .bottom) {
-            if info.offMarket {
-                Text("Off the market")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .offset(y: 20)
-            }
+        if info.offMarket {
+            Text("Nobody can buy this any more.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
-        .padding(.bottom, info.offMarket ? Theme.Spacing.lg : 0)
     }
 
     /// "$14 · Premium", or "$9 / mo · Standard" for a subscription. The
     /// price is the type's list price times the tier's factor, which is
     /// the same arithmetic the economy charges.
-    private func priceLabel(info: ReleaseInfo, type: ProductTypeDef?) -> String {
+    private func priceLabel(info: ReleaseInfo) -> String {
         guard let type else { return info.priceTier.displayName }
         let factor = engine.balance.economy.priceTier(info.priceTier).priceFactor
         let price = Int((type.unitPrice * factor).rounded())
@@ -143,13 +155,8 @@ struct StorefrontScreen: View {
         return "\(money) · \(info.priceTier.displayName)"
     }
 
-    private func type(for product: Product) -> ProductTypeDef? {
-        engine.content.productType(product.typeID)
-    }
-
-    private func topic(for product: Product) -> TopicDef? {
-        engine.content.topic(product.topicID)
-    }
+    private var type: ProductTypeDef? { engine.content.productType(product.typeID) }
+    private var topic: TopicDef? { engine.content.topic(product.topicID) }
 }
 
 // MARK: - Getting here
