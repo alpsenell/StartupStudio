@@ -338,6 +338,16 @@ struct FounderBiographyView: View {
                     Spacer()
                 }
                 VStack(alignment: .leading, spacing: 2) {
+                    // WS-B: an earn-out is a sale in three numbers.
+                    if let earnOut = state.investors.earnOut {
+                        Text(
+                            "Sold for \(earnOut.price.money) · \(earnOut.paid.money) paid · "
+                                + "\(earnOut.outstanding.money) forfeited"
+                        )
+                        .font(.caption.weight(.semibold))
+                        .monospacedDigit()
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
                     row("Company at the end", state.companyValuation(balance: balance).money)
                     row("You still owned", "\(state.investors.equityRemaining.oneDecimal)%")
                     if state.investors.totalRaised > 0 {

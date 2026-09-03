@@ -68,6 +68,28 @@ extension BalanceConfig {
         public var strategicPremiumMin: Double
         public var strategicPremiumMax: Double
 
+        // MARK: Iteration 5 (WS-B) — exit terms
+
+        // None of these reach a pacing bot: no bot in either suite
+        // answers a buyout, so every knob below is gated on an action the
+        // suites never take.
+
+        /// The share of a strategic price paid the day an earn-out signs.
+        public var earnOutUpfrontShare: Double
+        /// The share of the price each met earn-out review pays.
+        public var earnOutReviewShare: Double
+        /// How many quarterly reviews the earn-out rides on.
+        public var earnOutReviews: Int
+        /// The acquirer's patience on the board — the harshest band the
+        /// review grades.
+        public var earnOutPatienceWeeks: Int
+        /// Morale every employee loses the day the company is sold out
+        /// from under them.
+        public var earnOutMoraleCost: Double
+        /// Missed earn-out reviews before the acquirer brings in their own
+        /// CEO (the ordinary ousting, keeping what was paid).
+        public var earnOutMissesToOust: Int
+
         public init(
             offerIntervalDays: Int = 7,
             offerCooldownDays: Int = 56,
@@ -93,7 +115,13 @@ extension BalanceConfig {
             strategicDominanceFactor: Double = 2,
             strategicMinReputation: Double = 60,
             strategicPremiumMin: Double = 1.5,
-            strategicPremiumMax: Double = 2.5
+            strategicPremiumMax: Double = 2.5,
+            earnOutUpfrontShare: Double = 0.6,
+            earnOutReviewShare: Double = 0.2,
+            earnOutReviews: Int = 2,
+            earnOutPatienceWeeks: Int = 12,
+            earnOutMoraleCost: Double = 8,
+            earnOutMissesToOust: Int = 2
         ) {
             self.offerIntervalDays = offerIntervalDays
             self.offerCooldownDays = offerCooldownDays
@@ -120,6 +148,12 @@ extension BalanceConfig {
             self.strategicMinReputation = strategicMinReputation
             self.strategicPremiumMin = strategicPremiumMin
             self.strategicPremiumMax = strategicPremiumMax
+            self.earnOutUpfrontShare = earnOutUpfrontShare
+            self.earnOutReviewShare = earnOutReviewShare
+            self.earnOutReviews = earnOutReviews
+            self.earnOutPatienceWeeks = earnOutPatienceWeeks
+            self.earnOutMoraleCost = earnOutMoraleCost
+            self.earnOutMissesToOust = earnOutMissesToOust
         }
 
         public static let `default` = InvestorBalance()
@@ -143,6 +177,8 @@ extension BalanceConfig.InvestorBalance {
         case ipoValuationMultiple, roundValuationPremium, patienceReferenceWeeks
         case strategicDominanceFactor, strategicMinReputation
         case strategicPremiumMin, strategicPremiumMax
+        case earnOutUpfrontShare, earnOutReviewShare, earnOutReviews
+        case earnOutPatienceWeeks, earnOutMoraleCost, earnOutMissesToOust
     }
 
     public init(from decoder: any Decoder) throws {
@@ -209,7 +245,19 @@ extension BalanceConfig.InvestorBalance {
             strategicPremiumMin: try container.decodeIfPresent(Double.self, forKey: .strategicPremiumMin)
                 ?? fallback.strategicPremiumMin,
             strategicPremiumMax: try container.decodeIfPresent(Double.self, forKey: .strategicPremiumMax)
-                ?? fallback.strategicPremiumMax
+                ?? fallback.strategicPremiumMax,
+            earnOutUpfrontShare: try container.decodeIfPresent(Double.self, forKey: .earnOutUpfrontShare)
+                ?? fallback.earnOutUpfrontShare,
+            earnOutReviewShare: try container.decodeIfPresent(Double.self, forKey: .earnOutReviewShare)
+                ?? fallback.earnOutReviewShare,
+            earnOutReviews: try container.decodeIfPresent(Int.self, forKey: .earnOutReviews)
+                ?? fallback.earnOutReviews,
+            earnOutPatienceWeeks: try container.decodeIfPresent(Int.self, forKey: .earnOutPatienceWeeks)
+                ?? fallback.earnOutPatienceWeeks,
+            earnOutMoraleCost: try container.decodeIfPresent(Double.self, forKey: .earnOutMoraleCost)
+                ?? fallback.earnOutMoraleCost,
+            earnOutMissesToOust: try container.decodeIfPresent(Int.self, forKey: .earnOutMissesToOust)
+                ?? fallback.earnOutMissesToOust
         )
     }
 }

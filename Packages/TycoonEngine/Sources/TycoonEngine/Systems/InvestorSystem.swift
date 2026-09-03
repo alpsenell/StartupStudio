@@ -69,6 +69,10 @@ enum InvestorSystem {
               state.day.isMultiple(of: max(1, config.offerIntervalDays)),
               state.investors.pendingOffer == nil,
               state.investors.ipoDay == nil,
+              // Nobody writes a term sheet for a company that is being
+              // bought. (The guard sits before the draw, so it only ever
+              // changes the stream when an earn-out is actually running.)
+              state.investors.earnOut == nil,
               state.company.reputation >= config.minReputation,
               state.investors.lastOfferDay.map({ state.day - $0 >= config.offerCooldownDays }) ?? true
         else { return [] }
@@ -146,10 +150,7 @@ enum InvestorSystem {
         guard state.day > 0, state.day.isMultiple(of: interval) else { return [] }
 
         let revenue = quarterRevenue(state, interval: interval)
-        let shipped = state.products.count { product in
-            guard case .released(let info) = product.stage else { return false }
-            return state.day - info.launchDay < interval
-        }
+        let shipped = shippedThisQuarter(state, interval: interval)
         // A quarter is profitable when the account grew across it.
         let profitable = state.company.cash > state.investors.lastQuarterCash
         if profitable {
@@ -184,7 +185,10 @@ enum InvestorSystem {
             // *and* quicker to be won back, which is what makes the
             // pressure meter a thing the player can play against rather
             // than a countdown.
-            let patience = state.investors.rounds.last { $0.takesBoardSeat }?.patienceWeeks
+            // The newest seat sets the temperature of the room, and an
+            // acquirer on an earn-out is the newest seat there is.
+            let patience = state.investors.earnOut?.patienceWeeks
+                ?? state.investors.rounds.last { $0.takesBoardSeat }?.patienceWeeks
             let harshness = min(2.5, max(0.5, config.patienceReferenceWeeks / Double(max(1, patience ?? 26))))
             let step = -config.pressurePerHit * metShare
                 + config.pressurePerMiss * (1 - metShare)
@@ -224,6 +228,12 @@ enum InvestorSystem {
             if crossedWarning, pressure < config.boardOustPressure {
                 events.append(.boardDemandedPlan(pressure: pressure, day: state.day))
             }
+            // The acquirer's review settles before the room's vote, so a
+            // review that closes the sale closes it.
+            if let earnOut = state.investors.earnOut {
+                let earnOutMet = zip(watching, results).first { $0.0 == earnOut.expectation }?.1 ?? false
+                events.append(contentsOf: settleEarnOut(met: earnOutMet, state: &state, balance: balance))
+            }
             if pressure >= config.boardOustPressure {
                 events.append(contentsOf: oustFounder(&state))
             }
@@ -243,6 +253,35 @@ enum InvestorSystem {
             .filter { $0.day > state.day - interval && $0.amount > 0 }
             .filter { $0.category == .sales || $0.category == .contracts }
             .reduce(0) { $0 + $1.amount }
+    }
+
+    /// Products that reached the market inside the last quarter.
+    private static func shippedThisQuarter(_ state: GameState, interval: Int) -> Int {
+        state.products.count { product in
+            guard case .released(let info) = product.stage else { return false }
+            return state.day - info.launchDay < interval
+        }
+    }
+
+    /// The first expectation, in the board's own order, the company would
+    /// miss if it were reviewed today — what an acquirer holds it to on an
+    /// earn-out. `nil` when it would pass all four. Read before the
+    /// acquirer's money lands, so the cheque cannot be the profitable
+    /// quarter.
+    static func currentlyMissedExpectation(
+        _ state: GameState,
+        balance: BalanceConfig
+    ) -> BoardExpectation? {
+        let interval = max(1, balance.investors.reviewIntervalDays)
+        let revenue = quarterRevenue(state, interval: interval)
+        let shipped = shippedThisQuarter(state, interval: interval)
+        let profitable = state.company.cash > state.investors.lastQuarterCash
+        return BoardExpectation.allCases.first { expectation in
+            !meets(
+                expectation, revenue: revenue, shipped: shipped,
+                profitable: profitable, state: state, balance: balance
+            )
+        }
     }
 
     /// Whether the quarter met the one number the board is watching.
@@ -320,15 +359,71 @@ enum InvestorSystem {
 
     /// The board replaces the founder. The run ends — not a bankruptcy, but
     /// not a win either.
-    private static func oustFounder(_ state: inout GameState) -> [GameEvent] {
+    private static func oustFounder(_ state: inout GameState, reason: String? = nil) -> [GameEvent] {
         guard state.gameOver == nil else { return [] }
         let name = state.progression.founder.displayName
         state.gameOver = GameOverInfo(
             day: state.day,
-            reason: "The board voted to replace \(name) with an outside CEO.",
+            reason: reason ?? "The board voted to replace \(name) with an outside CEO.",
             kind: .oustedByBoard
         )
         return [.founderOusted(day: state.day), .gameOver(day: state.day)]
+    }
+
+    // MARK: - Earn-out
+
+    /// One earn-out review, graded by the review that just ran. A met
+    /// review pays its tranche (the last one pays whatever is left, so two
+    /// met reviews come to the price exactly); a miss pays nothing; the
+    /// balance's number of misses is the acquirer bringing in their own
+    /// CEO, keeping what was paid; and the last review closes the sale as
+    /// `.acquired` for the total. No draws.
+    private static func settleEarnOut(
+        met: Bool,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard var earnOut = state.investors.earnOut, earnOut.remainingReviews > 0,
+              state.gameOver == nil
+        else { return [] }
+        let config = balance.investors
+        earnOut.remainingReviews -= 1
+        var paid = 0
+        if met {
+            let tranche = Int((Double(earnOut.price) * config.earnOutReviewShare).rounded())
+            let last = earnOut.remainingReviews == 0 && earnOut.missedReviews == 0
+            paid = min(earnOut.outstanding, last ? earnOut.outstanding : tranche)
+            state.company.cash += paid
+            state.ledger.post(LedgerEntry(
+                day: state.day, amount: paid, category: .other,
+                label: "\(earnOut.buyerName) earn-out"
+            ))
+            earnOut.paid += paid
+        } else {
+            earnOut.missedReviews += 1
+        }
+        state.investors.earnOut = earnOut
+        var events: [GameEvent] = [.earnOutReviewed(
+            met: met, paid: paid, remainingReviews: earnOut.remainingReviews, day: state.day
+        )]
+
+        let founder = state.progression.founder.displayName
+        if earnOut.missedReviews >= config.earnOutMissesToOust {
+            events.append(contentsOf: oustFounder(
+                &state,
+                reason: "\(earnOut.buyerName) lost patience and replaced \(founder) with their own CEO. "
+                    + "The earn-out paid \(earnOut.paid.dollars) of \(earnOut.price.dollars)."
+            ))
+        } else if earnOut.remainingReviews == 0 {
+            let reason = earnOut.paid >= earnOut.price
+                ? "Acquired by \(earnOut.buyerName) for \(earnOut.price.dollars), every dollar of the earn-out paid."
+                : "Acquired by \(earnOut.buyerName) for \(earnOut.paid.dollars) — "
+                    + "\(earnOut.outstanding.dollars) of the \(earnOut.price.dollars) earn-out forfeited."
+            state.gameOver = GameOverInfo(day: state.day, reason: reason, kind: .acquired)
+            events.append(.companySold(rivalID: earnOut.buyerRivalID, amount: earnOut.paid, day: state.day))
+            events.append(.gameOver(day: state.day))
+        }
+        return events
     }
 
     // MARK: - Actions
@@ -384,6 +479,56 @@ enum InvestorSystem {
         }
         return [.investmentAccepted(
             investorID: offer.investorID, amount: offer.amount, equity: offer.equity, day: state.day
+        )]
+    }
+
+    /// Takes a strategic buyout as an earn-out: `earnOutUpfrontShare` of
+    /// the price today, the rest over the next `earnOutReviews` quarterly
+    /// reviews with the acquirer seated as the board. Their number is the
+    /// first one the company would miss this morning (else profitability),
+    /// read before the cheque lands; their patience is the shortest the
+    /// review grades; and the team, who have just been sold, take it
+    /// badly. Ignored with nothing pending, on a distress bid, or with an
+    /// earn-out already running. No draws.
+    static func acceptBuyoutEarnOut(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        guard let offer = state.rivals.pendingBuyout,
+              state.rivals.lastBuyoutWasStrategic,
+              state.investors.earnOut == nil,
+              state.gameOver == nil
+        else { return [] }
+        let config = balance.investors
+        state.rivals.pendingBuyout = nil
+        let buyerName = state.rivals.rival(id: offer.rivalID)?.name ?? "a rival"
+
+        // Decided on the company as it stands, before their money lands.
+        let expectation = state.earnOutExpectation(balance: balance)
+        let upfront = Int((Double(offer.amount) * config.earnOutUpfrontShare).rounded())
+        state.company.cash += upfront
+        state.ledger.post(LedgerEntry(
+            day: state.day, amount: upfront, category: .other,
+            label: "\(buyerName) earn-out, up front"
+        ))
+        for index in state.employees.indices where !state.employees[index].isFounder {
+            state.employees[index].morale = min(
+                100, max(0, state.employees[index].morale - config.earnOutMoraleCost)
+            )
+        }
+        state.investors.earnOut = EarnOut(
+            buyerName: buyerName,
+            buyerRivalID: offer.rivalID,
+            price: offer.amount,
+            paid: upfront,
+            expectation: expectation,
+            remainingReviews: config.earnOutReviews,
+            patienceWeeks: config.earnOutPatienceWeeks
+        )
+        // A fresh seat starts its clock from today's numbers, the same way
+        // a new board-seat round does — and the cheque that just landed is
+        // not a profitable quarter.
+        state.investors.lastQuarterCash = state.company.cash
+        state.investors.lastQuarterHeadcount = state.headcount
+        return [.earnOutSigned(
+            rivalID: offer.rivalID, upfront: upfront, price: offer.amount, day: state.day
         )]
     }
 

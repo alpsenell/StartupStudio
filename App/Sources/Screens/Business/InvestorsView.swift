@@ -34,7 +34,8 @@ struct InvestorsView: View {
             roundsCard
         }
 
-        if investors.hasBoard {
+        // An acquirer on an earn-out sits in the room like any seated round.
+        if investors.hasBoard || investors.earnOut != nil {
             BusinessSectionHeader(title: "The board", systemImage: "person.3.fill")
             boardCard
         }
@@ -152,6 +153,10 @@ struct InvestorsView: View {
 
         return CardView("Board pressure", systemImage: "gauge.with.needle") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                if let earnOut = investors.earnOut {
+                    earnOutRow(earnOut)
+                    Divider()
+                }
                 if let expectation {
                     Text(expectation.demand)
                         .font(.subheadline)
@@ -211,6 +216,31 @@ struct InvestorsView: View {
                 }
             }
         }
+    }
+
+    /// The acquirer's seat: what has been paid, what each review is worth,
+    /// and how many are left to sit through.
+    private func earnOutRow(_ earnOut: EarnOut) -> some View {
+        let left = earnOut.remainingReviews
+        let tranche = Int((Double(earnOut.price) * engine.balance.investors.earnOutReviewShare).rounded())
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Earn-out · \(left) review\(left == 1 ? "" : "s") left")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                Spacer()
+                Text("\(earnOut.paid.money) of \(earnOut.price.money)")
+                    .font(Theme.Typography.number(.subheadline))
+            }
+            Text(
+                "\(earnOut.buyerName) holds the seat. Each review that meets "
+                    + "\(earnOut.expectation.displayName.lowercased()) pays \(tranche.money); "
+                    + "\(engine.balance.investors.earnOutMissesToOust) misses and they bring in their own CEO."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func pressureTint(_ pressure: Double) -> Color {

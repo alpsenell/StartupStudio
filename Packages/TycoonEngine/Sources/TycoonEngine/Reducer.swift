@@ -311,7 +311,7 @@ public enum Reducer {
         case .buyBackRound:
             events = []
         case .acceptBuyoutEarnOut:
-            events = []
+            events = InvestorSystem.acceptBuyoutEarnOut(state: &state, balance: balance)
 
         // MARK: WS-D (policy)
         case .reverseStaffPolicy:
