@@ -130,14 +130,20 @@ enum SimRunner {
 
     /// Ticks `days` game days, polling the bot after every tick and applying
     /// its actions in order. Ends early on game over.
+    ///
+    /// `origin` defaults to the garage — every pacing and investor gate runs
+    /// there — and is only set by the origin table (`OriginBotTests`).
     static func run(
         days: Int,
         seed: UInt64,
         bot: any BotPolicy,
         balance: BalanceConfig,
-        content: ContentCatalog
+        content: ContentCatalog,
+        origin: FoundingOrigin = .garage
     ) -> Result {
-        var state = GameState.newGame(companyName: bot.name, seed: seed, balance: balance)
+        var state = GameState.newGame(
+            companyName: bot.name, seed: seed, balance: balance, origin: origin, content: content
+        )
         var result = Result(
             botName: bot.name,
             state: state,

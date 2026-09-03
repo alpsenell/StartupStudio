@@ -1,4 +1,5 @@
 import Foundation
+import TycoonEngine
 
 /// Debug-only launch hooks for headless QA, alongside `GameSession`'s
 /// existing `-autoSpeed`.
@@ -7,10 +8,28 @@ import Foundation
 /// line but not *tapped* without accessibility permissions, so every
 /// workstream's screenshot pass needs a way to land on the screen it is
 /// about. `-autoTab team` (hq | life | team | products | business) opens
-/// the app on that tab.
+/// the app on that tab; `-autoOrigin cofounded` (garage | cofounded |
+/// spinOut | mortgaged) founds the generated game that way, since the
+/// Stakes page cannot be tapped either.
 ///
 /// Release builds ignore the argument entirely.
 enum DebugLaunch {
+    /// The origin a headless pass founds its generated game with:
+    /// `-autoOrigin <name>` in debug builds, `nil` (a garage) otherwise.
+    static var launchOrigin: FoundingOrigin? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-autoOrigin"),
+              arguments.indices.contains(flag + 1)
+        else { return nil }
+        return FoundingOrigin.allCases.first {
+            $0.rawValue.lowercased() == arguments[flag + 1].lowercased()
+        }
+        #else
+        return nil
+        #endif
+    }
+
     /// Whether this launch is a headless QA pass — `-autoSpeed` or
     /// `-autoTab` on the command line.
     ///

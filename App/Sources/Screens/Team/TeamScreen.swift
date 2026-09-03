@@ -383,7 +383,10 @@ private struct EmployeeRow: View {
             }
 
             if !employee.traits.isEmpty {
-                TraitChipRow(traits: employee.traits, content: engine.content)
+                TraitChipRow(
+                    traits: employee.traits, content: engine.content,
+                    revealedCount: TraitChipRow.revealedCount(for: employee, day: engine.state.day)
+                )
             }
 
             SkillBars(skills: employee.skills)

@@ -1,4 +1,5 @@
 import Foundation
+import TycoonContent
 
 /// The player's company.
 public struct Company: Codable, Equatable, Sendable {
@@ -667,18 +668,29 @@ public struct GameState: Codable, Equatable, Sendable {
     /// type: filled pools to start the next build from, and the debt that
     /// comes with them. Empty until something ships.
     public var codebases: [Codebase] = []
+    /// Topics under a non-compete (WS-H, the spin-out origin): topic id →
+    /// the first day a product may be started there. `startProduct`
+    /// refuses a locked topic; the flow greys it with the date. Empty for
+    /// every other origin and for every save from before origins.
+    public var lockedTopics: [String: Int] = [:]
     public var gameOver: GameOverInfo?
 
     /// Starts a fresh company. `balance` is used as given — pass the
     /// difficulty-adjusted balance (`GameEngine.newGame` does); `difficulty`
     /// is only recorded so a resume can re-derive that adjustment.
+    ///
+    /// `content` is read by the non-garage origins alone (a co-founder's
+    /// name, a spin-out's client and locked topic come from the catalog's
+    /// pools); a garage never looks at it, so callers that predate origins
+    /// pass nothing and get exactly the game they always got.
     public static func newGame(
         companyName: String,
         seed: UInt64,
         balance: BalanceConfig,
         difficulty: Difficulty = .normal,
         founder: FounderProfile = .default,
-        origin: FoundingOrigin = .garage
+        origin: FoundingOrigin = .garage,
+        content: ContentCatalog? = nil
     ) -> GameState {
         var rng = SeededRNG(seed: seed)
         // The id and the appearance word are drawn in this order, always —
@@ -758,8 +770,11 @@ public struct GameState: Codable, Equatable, Sendable {
             gameOver: nil
         )
         state.origin = origin
-        // WS-H applies the origin's deltas here, after every draw above,
-        // so `.garage` stays byte-identical and no origin moves the streams.
+        // The origin's deltas land here, after every draw above, so
+        // `.garage` stays byte-identical and no origin moves the streams:
+        // `applyOrigin` derives what it needs from the seed and never
+        // touches `rng`, `worldRNG`, `investorRNG` or `socialRNG`.
+        state.applyOrigin(origin, seed: seed, founder: founder, balance: balance, content: content)
         return state
     }
 
@@ -885,6 +900,11 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Compact date label, e.g. "W3 · Y1".
     public var dateLabel: String { "W\(weekOfYear) · Y\(year)" }
 
+    /// The same label for any day — what a deadline or an unlock reads as.
+    public static func dateLabel(forDay day: Int) -> String {
+        "W\((day % daysPerYear) / daysPerWeek + 1) · Y\(day / daysPerYear + 1)"
+    }
+
     /// What the company is worth to an acquirer: cash on hand, a revenue
     /// multiple over each on-market product's recent sales, and a premium
     /// per reputation point. Deterministic — no RNG.
@@ -921,7 +941,7 @@ extension GameState {
         case eventLog, milestonesReached, life, market, loanBalance, gameOver
         case amenities, knownDepartments, difficulty
         case seed
-        case origin
+        case origin, lockedTopics
         case worldRNG, investorRNG, rivals, city, friendships, pendingStaffEvent
         case lastTeamDinnerDay
         case economy, narrative, progression, investors
@@ -990,6 +1010,19 @@ extension GameState {
         )
         seed = try container.decodeIfPresent(UInt64.self, forKey: .seed) ?? 0
         origin = try container.decodeIfPresent(FoundingOrigin.self, forKey: .origin) ?? .garage
+        lockedTopics = Dictionary(
+            (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
+                .map { ($0.topicID, $0.unlockDay) },
+            uniquingKeysWith: { first, _ in first }
+        )
+    }
+
+    /// One locked topic on the wire. A dictionary would encode in hash
+    /// order; a sorted array of entries is byte-identical for identical
+    /// states, the same argument as `LifeState.instantCooldowns`.
+    private struct TopicLockEntry: Codable {
+        var topicID: String
+        var unlockDay: Int
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -997,6 +1030,16 @@ extension GameState {
         try container.encode(schemaVersion, forKey: .schemaVersion)
         try container.encode(seed, forKey: .seed)
         try container.encode(origin, forKey: .origin)
+        // Written only when something is locked, so a save with no
+        // non-compete encodes byte-for-byte as the scaffold wrote it.
+        if !lockedTopics.isEmpty {
+            try container.encode(
+                lockedTopics.keys.sorted().map {
+                    TopicLockEntry(topicID: $0, unlockDay: lockedTopics[$0] ?? 0)
+                },
+                forKey: .lockedTopics
+            )
+        }
         try container.encode(difficulty, forKey: .difficulty)
         try container.encode(rng, forKey: .rng)
         try container.encode(worldRNG, forKey: .worldRNG)

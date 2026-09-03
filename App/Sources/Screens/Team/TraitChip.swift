@@ -85,6 +85,17 @@ struct TraitChipRow: View {
     /// hiring sheet before an interview.
     var revealedCount: Int?
 
+    /// How long a co-founder takes to show their second trait: nobody
+    /// interviewed them, so it comes out the way it does with anyone you
+    /// share a garage with — after a quarter.
+    static let cofounderRevealDays = 91
+
+    /// The reveal for somebody on payroll: everyone was interviewed or has
+    /// been around, except a co-founder in their first quarter (WS-H).
+    static func revealedCount(for employee: Employee, day: Int) -> Int? {
+        employee.isCofounder && day - employee.hiredDay < cofounderRevealDays ? 1 : nil
+    }
+
     var body: some View {
         let defs = traits.compactMap { id in content.traits.first { $0.id == id } }
         if !defs.isEmpty {

@@ -283,7 +283,9 @@ enum ProductSystem {
         guard state.hasFreeDevSlot,
               let type = content.productType(typeID),
               state.isProductTypeUnlocked(typeID, content: content),
-              content.topic(topicID) != nil
+              content.topic(topicID) != nil,
+              // A spin-out's non-compete (WS-H): refused until the day.
+              !state.isTopicLocked(topicID)
         else { return [] }
 
         // The head start. A codebase of a different type is not one you can

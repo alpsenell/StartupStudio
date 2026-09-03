@@ -138,7 +138,10 @@ enum EmployeeSystem {
         for index in state.employees.indices where !state.employees[index].isFounder {
             let employee = state.employees[index]
             let fairPay = fairWeeklyPay(for: employee, balance: balance)
-            let ratio = fairPay > 0 ? Double(employee.weeklySalary) / fairPay : 1
+            // A co-founder working for equity (WS-H) reads as fairly paid
+            // until the office reaches the tier they were promised.
+            let ratio = state.cofounderWorksForEquity(employee, balance: balance) ? 1
+                : (fairPay > 0 ? Double(employee.weeklySalary) / fairPay : 1)
             // Exactly zero when the trait factor is 1, so a trait-less
             // roster keeps the target it had to the last bit.
             let crunchAdjustment = paceMoralePenalty

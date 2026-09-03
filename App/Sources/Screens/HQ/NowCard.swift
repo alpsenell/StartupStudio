@@ -44,6 +44,34 @@ struct NowCard: View {
         }
     }
 
+    /// What the origin put on the desk before the first product (WS-H):
+    /// the person, the client and the topic, or the bank. Nothing for a
+    /// garage.
+    private var originLine: String? {
+        let state = engine.state
+        switch state.origin {
+        case .garage:
+            return nil
+        case .cofounded:
+            guard let cofounder = state.cofounder else { return nil }
+            let stake = Int(engine.balance.origins.cofounderEquity.rounded())
+            let tier = engine.balance.origins.cofounderPaidFrom.displayName.lowercased()
+            return "\(cofounder.name) is at the other desk. They own \(stake)% and draw no salary until the \(tier)."
+        case .spinOut:
+            var parts: [String] = []
+            if let job = state.activeContracts.first {
+                parts.append("\(job.clientName) is waiting on the build you brought with you — due \(GameState.dateLabel(forDay: job.deadlineDay)).")
+            }
+            if let (topicID, unlockDay) = state.lockedTopics.first {
+                let topic = engine.content.topic(topicID)?.name ?? topicID
+                parts.append("\(topic) is off limits until \(GameState.dateLabel(forDay: unlockDay)).")
+            }
+            return parts.isEmpty ? nil : parts.joined(separator: " ")
+        case .mortgaged:
+            return "The bank's \(engine.balance.origins.mortgagedLoan.money) is in the account, and the flat is behind it. Interest posts every week."
+        }
+    }
+
     /// Day 0, before the goals exist: the first product, one tap away.
     private var dayZeroRow: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -53,6 +81,12 @@ struct NowCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            if let originLine {
+                Label(originLine, systemImage: engine.state.origin.systemImageName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Button {
                 Haptics.tap()
                 Sounds.play(.tap)

@@ -32,7 +32,7 @@ struct NewGameFlow: View {
     let content: ContentCatalog
     /// Called with everything the flow collected; the session builds the
     /// engine from it.
-    let onStart: (FounderProfile, String, Difficulty) -> Void
+    let onStart: (FounderProfile, String, Difficulty, FoundingOrigin) -> Void
     /// Shown only when there is a game to go back to (Settings entry).
     var onCancel: (() -> Void)?
 
@@ -43,6 +43,7 @@ struct NewGameFlow: View {
     @State private var companyNameEdited = false
     @State private var archetype: FounderArchetype = .hacker
     @State private var difficulty: Difficulty = .normal
+    @State private var origin: FoundingOrigin = .garage
     @State private var appearanceIndex = 0
     @State private var nameShuffle = 0
     @State private var introPage = 0
@@ -234,23 +235,10 @@ struct NewGameFlow: View {
         .padding(.top, Theme.Spacing.lg)
     }
 
-    // MARK: - Step 3: difficulty
+    // MARK: - Step 3: the stakes
 
     private var difficultyStep: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-            StepHeadline(
-                title: "How hard should this be?",
-                detail: "Difficulty scales starting cash, costs, and how forgiving the market is."
-            )
-            VStack(spacing: Theme.Spacing.sm) {
-                ForEach(Difficulty.allCases, id: \.self) { candidate in
-                    DifficultyRow(difficulty: candidate, isSelected: candidate == difficulty) {
-                        withAnimation(Theme.Motion.selection) { difficulty = candidate }
-                    }
-                }
-            }
-        }
-        .padding(.top, Theme.Spacing.lg)
+        StakesStepContent(origin: $origin, difficulty: $difficulty)
     }
 
     // MARK: - Step 4: the illustrated intro
@@ -324,7 +312,39 @@ struct NewGameFlow: View {
             archetype: archetype,
             appearanceSeed: appearanceSeed
         )
-        onStart(profile, resolvedCompanyName, difficulty)
+        onStart(profile, resolvedCompanyName, difficulty, origin)
+    }
+}
+
+/// The Stakes page: how the company starts (WS-H's four origins), then
+/// how hard the market is. Internal so the snapshot suite can render the
+/// page without driving the flow to it.
+struct StakesStepContent: View {
+    @Binding var origin: FoundingOrigin
+    @Binding var difficulty: Difficulty
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
+            StepHeadline(
+                title: "How does it start?",
+                detail: "Four ways to found it. Each one costs something the others don't."
+            )
+            OriginPicker(origin: $origin)
+
+            StepHeadline(
+                title: "How hard should this be?",
+                detail: "Difficulty scales starting cash, costs, and how forgiving the market is."
+            )
+            .padding(.top, Theme.Spacing.sm)
+            VStack(spacing: Theme.Spacing.sm) {
+                ForEach(Difficulty.allCases, id: \.self) { candidate in
+                    DifficultyRow(difficulty: candidate, isSelected: candidate == difficulty) {
+                        withAnimation(Theme.Motion.selection) { difficulty = candidate }
+                    }
+                }
+            }
+        }
+        .padding(.top, Theme.Spacing.lg)
     }
 }
 
@@ -598,5 +618,5 @@ private struct IntroPanelView: View {
     NewGameFlow(content: (try? ContentCatalog.loadBundled()) ?? .init(
         productTypes: [], topics: [], techTree: [], events: [],
         names: NamePools(firstNames: [], lastNames: [], clientCompanies: [])
-    )) { _, _, _ in }
+    )) { _, _, _, _ in }
 }
