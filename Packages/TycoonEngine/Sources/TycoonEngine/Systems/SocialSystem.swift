@@ -622,6 +622,46 @@ enum SocialSystem {
         return [.socialActivity(kind: kind, employeeID: employeeID, day: state.day)]
     }
 
+    /// Takes a rule back, publicly (WS-D). A generous rule's flag flips to
+    /// its strict inverse, every hired employee loses
+    /// `policyReversalMoralePenalty` morale, and the people it answered
+    /// for lose `policyReversalLoyaltyPenalty` loyalty on top. A strict
+    /// rule answered for nobody's benefit, so dropping it costs nothing
+    /// and raises no flag — nobody gets a policy for free. Either way the
+    /// next person who asks gets the sheet again. Ignored for a flag that
+    /// is not a rule.
+    static func reverseStaffPolicy(
+        flag: String,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let slot = state.staffMemory.policies.firstIndex(where: { $0.flag == flag }) else {
+            return []
+        }
+        let policy = state.staffMemory.policies.remove(at: slot)
+        state.narrative.flags.remove(policy.flag)
+        guard policy.choice == .supportive else {
+            return [.staffPolicyReversed(flag: flag, day: state.day)]
+        }
+        if let inverse = content.staffEvent(policy.kind.rawValue)?.policy?.strictFlag {
+            state.narrative.flags.insert(inverse)
+        }
+        let staff = balance.staff
+        let beneficiaries = Set(policy.beneficiaries)
+        for index in state.employees.indices where !state.employees[index].isFounder {
+            state.employees[index].morale = clamp(
+                state.employees[index].morale - staff.policyReversalMoralePenalty
+            )
+            if beneficiaries.contains(state.employees[index].id) {
+                state.employees[index].loyalty = clamp(
+                    state.employees[index].loyalty - staff.policyReversalLoyaltyPenalty
+                )
+            }
+        }
+        return [.staffPolicyReversed(flag: flag, day: state.day)]
+    }
+
     /// Answers the pending staff event. Ignored with nothing pending.
     static func resolveStaffEvent(
         choice: StaffEventChoice,

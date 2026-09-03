@@ -486,7 +486,8 @@ extension DecisionPrompt {
         )
     }
 
-    private static func staffIcon(for kind: StaffEventKind) -> String {
+    /// The symbol for a staff kind, shared with the policies card.
+    static func staffIcon(for kind: StaffEventKind) -> String {
         switch kind {
         case .familyEmergency: "heart.text.square.fill"
         case .rivalOfferRumor: "person.fill.questionmark"

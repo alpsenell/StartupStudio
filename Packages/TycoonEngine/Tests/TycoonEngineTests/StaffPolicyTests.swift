@@ -170,6 +170,78 @@ struct StaffPolicyTests {
         #expect(applied >= 3, "the rule answered \(applied) times in 200 days")
     }
 
+    // MARK: - Reversal
+
+    @Test("reversing a generous rule costs everyone morale, the beneficiaries loyalty, flips the flag, and the sheet comes back")
+    func reversalIsPublic() throws {
+        let balance = Self.balance()
+        let content = Self.catalog([Self.parentalLeave])
+        var state = Self.stateWithTeam(balance)
+
+        Self.tickUntilPending(&state, balance: balance, content: content)
+        let first = try #require(state.pendingStaffEvent).employeeID
+        Reducer.apply(.resolveStaffEvent(choice: .supportive), to: &state, balance: balance, content: content)
+        var second: UUID?
+        let start = state.day
+        while second == nil, state.day - start < 120 {
+            for event in Reducer.tick(&state, balance: balance, content: content) {
+                if case .staffPolicyApplied(_, let employeeID, _) = event, employeeID != first {
+                    second = employeeID
+                }
+            }
+        }
+        let beneficiary = try #require(second)
+        let bystander = try #require(
+            state.employees.first { !$0.isFounder && $0.id != first && $0.id != beneficiary }
+        )
+        let before = Dictionary(uniqueKeysWithValues: state.employees.map { ($0.id, ($0.morale, $0.loyalty)) })
+
+        Reducer.apply(.reverseStaffPolicy(flag: "good_leave_policy"), to: &state, balance: balance, content: content)
+
+        let penalty = balance.staff.policyReversalMoralePenalty
+        let loyaltyPenalty = balance.staff.policyReversalLoyaltyPenalty
+        for employee in state.employees where !employee.isFounder {
+            let was = try #require(before[employee.id])
+            #expect(employee.morale == max(0, was.0 - penalty), "\(employee.name) heard about it")
+            let benefited = employee.id == first || employee.id == beneficiary
+            #expect(employee.loyalty == max(0, was.1 - (benefited ? loyaltyPenalty : 0)))
+        }
+        #expect(state.employee(id: bystander.id)?.loyalty == before[bystander.id]?.1)
+        #expect(state.staffMemory.policies.isEmpty)
+        #expect(!state.narrative.flags.contains("good_leave_policy"))
+        #expect(state.narrative.flags.contains("leave_statutory"))
+        #expect(state.eventLog.contains {
+            if case .staffPolicyReversed(let flag, _) = $0 { return flag == "good_leave_policy" }
+            return false
+        })
+
+        // The next person who asks gets the sheet again.
+        Self.tickUntilPending(&state, balance: balance, content: content, limit: 120)
+        #expect(state.pendingStaffEvent?.kind == .parentalLeave)
+    }
+
+    @Test("dropping a strict rule costs nothing and hands nobody a policy")
+    func reversingAStrictRuleIsFree() throws {
+        let balance = Self.balance()
+        let content = Self.catalog([Self.parentalLeave])
+        var state = Self.stateWithTeam(balance)
+        Self.tickUntilPending(&state, balance: balance, content: content)
+        Reducer.apply(.resolveStaffEvent(choice: .strictAsPolicy), to: &state, balance: balance, content: content)
+        let moraleBefore = state.employees.map(\.morale)
+        let loyaltyBefore = state.employees.map(\.loyalty)
+
+        Reducer.apply(.reverseStaffPolicy(flag: "leave_statutory"), to: &state, balance: balance, content: content)
+        #expect(state.employees.map(\.morale) == moraleBefore)
+        #expect(state.employees.map(\.loyalty) == loyaltyBefore)
+        #expect(state.staffMemory.policies.isEmpty)
+        #expect(state.narrative.flags.isEmpty)
+
+        // A flag that is not a rule is ignored.
+        let untouched = state
+        Reducer.apply(.reverseStaffPolicy(flag: "cofounder_settled"), to: &state, balance: balance, content: content)
+        #expect(state == untouched)
+    }
+
     // MARK: - What never sets a rule
 
     @Test("the deadline's strict answer sets no rule and is remembered as silence")
