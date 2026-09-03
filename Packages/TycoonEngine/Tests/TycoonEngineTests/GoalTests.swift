@@ -14,12 +14,29 @@ struct GoalTests {
         try BalanceConfig.loadBundled()
     }
 
-    /// The catalog is the shape the card and the chapter gate assume.
-    @Test func catalogIsFiveChaptersOfSix() throws {
+    /// The catalog is the shape the card and the chapter gate assume:
+    /// five chapters, six goals on *each ladder* — chapters 1–2 carry one
+    /// set both ladders share, chapters 3–5 split into a funded and an
+    /// independent six (a goal both ask for is listed once, untracked).
+    @Test func catalogIsFiveChaptersOfSixPerLadder() throws {
         let content = Self.content
         #expect(content.chapters.count == ProgressionState.chapterCount)
         for chapter in content.chapters {
-            #expect(chapter.goals.count == 6, "chapter \(chapter.chapter) has \(chapter.goals.count)")
+            for track in GoalTrack.allCases {
+                let goals = content.goals(inChapter: chapter.chapter, track: track)
+                #expect(
+                    goals.count == 6,
+                    "chapter \(chapter.chapter) has \(goals.count) goals on the \(track.rawValue) ladder"
+                )
+            }
+            if chapter.chapter < ProgressionState.firstSplitChapter {
+                #expect(chapter.goals.allSatisfy { $0.track == nil }, "chapter \(chapter.chapter) is split")
+            } else {
+                #expect(
+                    chapter.goals.contains { $0.track == GoalTrack.independent.rawValue },
+                    "chapter \(chapter.chapter) has no independent goals"
+                )
+            }
             #expect(!chapter.title.isEmpty)
             #expect(!chapter.teaser.isEmpty)
         }
@@ -29,6 +46,28 @@ struct GoalTests {
             #expect(!goal.title.isEmpty)
             #expect(goal.detail?.isEmpty == false, "\(goal.id) has no detail line")
             #expect(goal.condition.amount > 0)
+            if let track = goal.track {
+                #expect(GoalTrack(rawValue: track) != nil, "\(goal.id) is on unknown ladder \(track)")
+            }
+        }
+    }
+
+    /// The neutrality argument for the pacing table, pinned: in every
+    /// split chapter the independent ladder pays out exactly what the
+    /// funded one does — the same reputation, cash and perks as a
+    /// multiset — so a founder on either ladder who finishes a chapter
+    /// has been paid the same, and no slot is a better deal.
+    @Test func eachLadderPaysTheSamePerChapter() throws {
+        func rewards(_ goals: [GoalDef]) -> [String] {
+            goals.map { goal in
+                let reward = goal.reward
+                return "\(reward?.reputation ?? 0)/\(reward?.cash ?? 0)/\(reward?.perk ?? "-")"
+            }.sorted()
+        }
+        for chapter in ProgressionState.firstSplitChapter...ProgressionState.chapterCount {
+            let funded = rewards(Self.content.goals(inChapter: chapter, track: .funded))
+            let independent = rewards(Self.content.goals(inChapter: chapter, track: .independent))
+            #expect(funded == independent, "chapter \(chapter) pays differently: \(funded) vs \(independent)")
         }
     }
 

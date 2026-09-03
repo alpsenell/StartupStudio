@@ -63,6 +63,13 @@ enum ProgressionSystem {
             if !state.life.isAway(day: state.day), state.life.plannedActivity != .rest {
                 stats.weekendsOff += 1
             }
+            // Two things on sale at once — the independent ladder's "a
+            // company, not a product" week.
+            let onMarket = state.products.count { product in
+                guard case .released(let info) = product.stage else { return false }
+                return !info.offMarket
+            }
+            if onMarket >= 2 { stats.liveProductsWeeks += 1 }
         }
 
         stats.crashesWeathered += state.market.recentEvents.count {
@@ -94,9 +101,14 @@ enum ProgressionSystem {
         _ content: ContentCatalog
     ) -> [GameEvent] {
         var events: [GameEvent] = []
+        let track = state.goalTrack
         // Catalog order, so two goals finishing on the same day always
-        // complete in the same order.
-        for goal in content.goals where goal.chapter <= state.progression.chapter {
+        // complete in the same order. Only the active ladder is measured:
+        // a goal on the other one neither progresses nor pays, so a
+        // founder who signs in chapter 4 opens the funded goals from
+        // chapter 3 on that day and never silently earned them earlier.
+        for goal in content.goals
+        where goal.chapter <= state.progression.chapter && goal.isOn(track) {
             let measured = measure(goal.condition, state: state, balance: balance, content: content)
             state.progression.goalProgress[goal.id] = measured.value
             guard !state.progression.completedGoalIDs.contains(goal.id),
@@ -151,7 +163,10 @@ enum ProgressionSystem {
         guard let highest = chapters.max() else { return events }
 
         while state.progression.chapter < highest {
-            let current = content.goals(inChapter: state.progression.chapter)
+            // Four of the *active ladder's* six. A goal done on the other
+            // ladder before a switch still counts if it is shared; one
+            // that is not stays in the log and opens nothing.
+            let current = content.goals(inChapter: state.progression.chapter, track: state.goalTrack)
             let done = current.count { state.progression.completedGoalIDs.contains($0.id) }
             let needed = min(current.count, max(1, balance.progression.goalsToAdvanceChapter))
             guard done >= needed else { break }
@@ -169,13 +184,14 @@ enum ProgressionSystem {
     /// ones from the current chapter first (that is the thing to do next),
     /// then any left behind in earlier chapters, so nothing is ever
     /// silently abandoned.
-    private static func refreshActiveGoals(_ state: inout GameState, _ content: ContentCatalog) {
+    static func refreshActiveGoals(_ state: inout GameState, _ content: ContentCatalog) {
         state.progression.chapterTitle = ChapterDef.title(for: state.progression.chapter)
 
         let completed = state.progression.completedGoalIDs
         let currentChapter = state.progression.chapter
+        let track = state.goalTrack
         let open = content.goals
-            .filter { $0.chapter <= currentChapter && !completed.contains($0.id) }
+            .filter { $0.chapter <= currentChapter && !completed.contains($0.id) && $0.isOn(track) }
             .sorted { lhs, rhs in
                 // Current chapter first; catalog order within a chapter is
                 // already stable, so only the chapter key needs a rule.
@@ -271,7 +287,52 @@ enum ProgressionSystem {
             return (Double(state.companyValuation(balance: balance)), target)
         case .readyToGoPublic:
             return (state.canFileIPO(balance: balance) ? 1 : 0, 1)
+
+        // MARK: Iteration 5 — the independent ladder (WS-G)
+
+        case .profitableQuarters:
+            return (Double(state.investors.profitableQuarters), target)
+        case .liveProductsWeeks:
+            return (Double(stats.liveProductsWeeks), target)
+        case .officeOwned:
+            if case .owned = state.city.ownership { return (1, 1) }
+            return (0, 1)
+        case .tenuredStaff:
+            let tenured = state.employees.count {
+                !$0.isFounder && state.day - $0.hiredDay >= GameState.daysPerYear
+            }
+            return (Double(tenured), target)
+        case .readyToStayIndependent:
+            return (state.canStayIndependent(balance: balance) ? 1 : 0, 1)
+        case .yearsTrading:
+            // To a tenth of a year, so the bar moves every five weeks
+            // rather than once a year.
+            let years = (Double(state.day) / Double(GameState.daysPerYear) * 10).rounded(.down) / 10
+            return (years, target)
         }
+    }
+
+    // MARK: - The two ladders
+
+    /// A term sheet was answered. Turning one down while owning all of
+    /// the company is the declaration that opens the independent ladder;
+    /// signing one closes it. Either way the card shows the right goals
+    /// the moment the sheet is gone rather than a day later.
+    ///
+    /// Only ever called from the two reducer cases, so the pacing bots —
+    /// which let every offer expire — never reach it: neutral by
+    /// construction.
+    static func termSheetAnswered(
+        declined: Bool,
+        state: inout GameState,
+        content: ContentCatalog
+    ) {
+        if declined, state.investors.equityRemaining >= 100,
+           state.progression.independentSinceDay == nil {
+            state.progression.independentSinceDay = state.day
+        }
+        guard !content.goals.isEmpty else { return }
+        refreshActiveGoals(&state, content)
     }
 
     /// Office tiers are a ladder, and `milestonesReached` records every rung

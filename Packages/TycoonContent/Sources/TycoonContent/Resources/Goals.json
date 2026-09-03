@@ -103,7 +103,8 @@
     "detail": "Fourteen desks, a whiteboard, and a rent bill to match.",
     "chapter": 3,
     "condition": { "kind": "officeTierReached", "amount": 1, "text": "studio" },
-    "reward": { "reputation": 5.0 }
+    "reward": { "reputation": 5.0 },
+    "track": "funded"
   },
   {
     "id": "g3_form_a_department",
@@ -111,7 +112,8 @@
     "detail": "Hire a lawyer, an HR lead or an ops manager and let them run it.",
     "chapter": 3,
     "condition": { "kind": "departmentsFormed", "amount": 1 },
-    "reward": { "reputation": 4.0 }
+    "reward": { "reputation": 4.0 },
+    "track": "funded"
   },
   {
     "id": "g3_review_75",
@@ -127,7 +129,8 @@
     "detail": "Still trading when the third one clears.",
     "chapter": 3,
     "condition": { "kind": "crashesWeathered", "amount": 3 },
-    "reward": { "reputation": 3.0 }
+    "reward": { "reputation": 3.0 },
+    "track": "funded"
   },
   {
     "id": "g3_a_hundred_and_fifty_k_product",
@@ -135,7 +138,8 @@
     "detail": "Lifetime revenue, not a good week.",
     "chapter": 3,
     "condition": { "kind": "bestProductRevenue", "amount": 75000 },
-    "reward": { "cash": 5000, "reputation": 3.0 }
+    "reward": { "cash": 5000, "reputation": 3.0 },
+    "track": "funded"
   },
   {
     "id": "g3_move_in_together",
@@ -145,6 +149,42 @@
     "condition": { "kind": "relationshipReached", "amount": 1, "text": "partner" },
     "reward": { "reputation": 2.0 }
   },
+  {
+    "id": "g3i_six_tenured",
+    "title": "Keep six people a year",
+    "detail": "Six people who have each been with you twelve months. Hiring is easy; this isn't.",
+    "chapter": 3,
+    "condition": { "kind": "tenuredStaff", "amount": 6 },
+    "reward": { "reputation": 5.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g3i_four_profitable_quarters",
+    "title": "Four profitable quarters in a row",
+    "detail": "More in the account at the end of each quarter than the start. Four times, no gaps.",
+    "chapter": 3,
+    "condition": { "kind": "profitableQuarters", "amount": 4 },
+    "reward": { "reputation": 4.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g3i_own_a_topic",
+    "title": "Own a topic",
+    "detail": "Beat every rival's share in a market you ship into.",
+    "chapter": 3,
+    "condition": { "kind": "topicsDominated", "amount": 1 },
+    "reward": { "reputation": 3.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g3i_buy_the_office",
+    "title": "Buy your office",
+    "detail": "Stop paying rent. The deeds, with your name on them.",
+    "chapter": 3,
+    "condition": { "kind": "officeOwned", "amount": 1 },
+    "reward": { "cash": 5000, "reputation": 3.0 },
+    "track": "independent"
+  },
 
   {
     "id": "g4_raise_a_round",
@@ -152,7 +192,8 @@
     "detail": "Somebody else's money, and somebody else's opinions.",
     "chapter": 4,
     "condition": { "kind": "roundsRaised", "amount": 1 },
-    "reward": { "reputation": 5.0, "perk": "investorRolodex" }
+    "reward": { "reputation": 5.0, "perk": "investorRolodex" },
+    "track": "funded"
   },
   {
     "id": "g4_twenty_on_payroll",
@@ -160,7 +201,8 @@
     "detail": "The point where you stop knowing what everyone did today.",
     "chapter": 4,
     "condition": { "kind": "peakHeadcount", "amount": 20 },
-    "reward": { "reputation": 6.0 }
+    "reward": { "reputation": 6.0 },
+    "track": "funded"
   },
   {
     "id": "g4_own_a_topic",
@@ -168,7 +210,8 @@
     "detail": "Beat every rival's share in a market you ship into.",
     "chapter": 4,
     "condition": { "kind": "topicsDominated", "amount": 1 },
-    "reward": { "reputation": 6.0 }
+    "reward": { "reputation": 6.0 },
+    "track": "funded"
   },
   {
     "id": "g4_acquire_a_rival",
@@ -176,7 +219,8 @@
     "detail": "Their team, their market, their name off the door.",
     "chapter": 4,
     "condition": { "kind": "rivalsAcquired", "amount": 1 },
-    "reward": { "reputation": 8.0 }
+    "reward": { "reputation": 8.0 },
+    "track": "funded"
   },
   {
     "id": "g4_reach_the_campus",
@@ -184,7 +228,8 @@
     "detail": "Forty desks and a lobby with your name in it.",
     "chapter": 4,
     "condition": { "kind": "officeTierReached", "amount": 1, "text": "campus" },
-    "reward": { "reputation": 8.0 }
+    "reward": { "reputation": 8.0 },
+    "track": "funded"
   },
   {
     "id": "g4_three_amenities",
@@ -192,7 +237,62 @@
     "detail": "The perks that make people stay when a rival calls.",
     "chapter": 4,
     "condition": { "kind": "amenitiesBuilt", "amount": 3 },
-    "reward": { "reputation": 4.0, "perk": "veteranCrew" }
+    "reward": { "reputation": 4.0, "perk": "veteranCrew" },
+    "track": "funded"
+  },
+  {
+    "id": "g4i_two_products_live",
+    "title": "Keep two products live for 26 weeks",
+    "detail": "Half a year with two things on sale at once. A company, not a product.",
+    "chapter": 4,
+    "condition": { "kind": "liveProductsWeeks", "amount": 26 },
+    "reward": { "reputation": 6.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g4i_eight_profitable_quarters",
+    "title": "Eight profitable quarters in a row",
+    "detail": "Two straight years in the black. The number Still yours asks for.",
+    "chapter": 4,
+    "condition": { "kind": "profitableQuarters", "amount": 8 },
+    "reward": { "reputation": 8.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g4i_review_85",
+    "title": "Score 85 or better",
+    "detail": "The one the investors start calling about. Let them.",
+    "chapter": 4,
+    "condition": { "kind": "bestReviewScore", "amount": 85 },
+    "reward": { "reputation": 5.0, "perk": "investorRolodex" },
+    "track": "independent"
+  },
+  {
+    "id": "g4i_quarter_million",
+    "title": "Bank $250,000",
+    "detail": "Cash on hand, and none of it anybody else's.",
+    "chapter": 4,
+    "condition": { "kind": "cashOnHand", "amount": 250000 },
+    "reward": { "reputation": 8.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g4i_form_a_department",
+    "title": "Form a department",
+    "detail": "Hire a lawyer, an HR lead or an ops manager and let them run it.",
+    "chapter": 4,
+    "condition": { "kind": "departmentsFormed", "amount": 1 },
+    "reward": { "reputation": 4.0, "perk": "veteranCrew" },
+    "track": "independent"
+  },
+  {
+    "id": "g4i_marry",
+    "title": "Get married",
+    "detail": "Somebody who was there for all of it.",
+    "chapter": 4,
+    "condition": { "kind": "relationshipReached", "amount": 1, "text": "married" },
+    "reward": { "reputation": 6.0 },
+    "track": "independent"
   },
 
   {
@@ -201,7 +301,8 @@
     "detail": "A $5M valuation, three profitable quarters, and something that bills monthly.",
     "chapter": 5,
     "condition": { "kind": "readyToGoPublic", "amount": 1 },
-    "reward": { "reputation": 10.0 }
+    "reward": { "reputation": 10.0 },
+    "track": "funded"
   },
   {
     "id": "g5_review_90",
@@ -241,6 +342,25 @@
     "detail": "The number that makes acquirers pick up the phone.",
     "chapter": 5,
     "condition": { "kind": "companyValuation", "amount": 5000000 },
-    "reward": { "reputation": 6.0, "perk": "talentMagnet" }
+    "reward": { "reputation": 6.0, "perk": "talentMagnet" },
+    "track": "funded"
+  },
+  {
+    "id": "g5i_ready_to_stay_independent",
+    "title": "Be ready to call it built",
+    "detail": "Eight profitable quarters in a row, a name people know, and every share still yours.",
+    "chapter": 5,
+    "condition": { "kind": "readyToStayIndependent", "amount": 1 },
+    "reward": { "reputation": 10.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g5i_five_years_in",
+    "title": "Five years in",
+    "detail": "Most companies never get here. Yours did, on its own money.",
+    "chapter": 5,
+    "condition": { "kind": "yearsTrading", "amount": 5 },
+    "reward": { "reputation": 6.0, "perk": "talentMagnet" },
+    "track": "independent"
   }
 ]

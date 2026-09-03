@@ -511,12 +511,20 @@ struct EventCopy {
         // WS-E — the date in the diary.
         case .familyDateMissed(let eventID, let day):
             ("heart.slash.fill", missedDateMessage(eventID), day, Theme.warning)
+        // WS-G — the independent ladder's ending.
+        case .stayedIndependent(let day):
+            (
+                "flag.checkered",
+                "\(state.company.name) is built, and still yours — every share of it",
+                day,
+                Theme.positiveCash
+            )
 
         // Scaffold: every lane's events read out of `EventPresenter` until
         // the lane writes its copy. Move your cases above and give them a
         // line; leave the others here.
         case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
-             .incumbentRetreated, .stayedIndependent:
+             .incumbentRetreated:
             fallbackEntry(for: event)
 
         // MARK: WS-D — the answer becomes the policy

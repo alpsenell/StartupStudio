@@ -535,6 +535,43 @@ extension GameState {
         }
         return nil
     }
+
+    // MARK: Iteration 5 — Still yours (WS-G)
+
+    /// Whether the founder could call the company built today and keep
+    /// it: every share still theirs, a long run of profitable quarters, a
+    /// name people know, and enough years in to mean it. Mirrors
+    /// `canFileIPO`; the independent ladder's ending.
+    public func canStayIndependent(balance: BalanceConfig) -> Bool {
+        guard gameOver == nil else { return false }
+        let config = balance.investors
+        return investors.equityRemaining >= 100
+            && investors.profitableQuarters >= config.independentProfitableQuarters
+            && company.reputation >= config.independentMinReputation
+            && day >= config.independentMinDay
+    }
+
+    /// Why the founder can't declare yet, in one line, or `nil` when they
+    /// can. Cap table first: a sold share is the one gate no quarter fixes.
+    public func independenceBlocker(balance: BalanceConfig) -> String? {
+        let config = balance.investors
+        if investors.equityRemaining < 100 {
+            return "Somebody else owns \(Int((100 - investors.equityRemaining).rounded()))% of it. This ending needs all of it."
+        }
+        if day < config.independentMinDay {
+            let years = max(1, config.independentMinDay / Self.daysPerYear)
+            return "Too soon. Nobody calls a company built before it has \(years) years behind it."
+        }
+        if investors.profitableQuarters < config.independentProfitableQuarters {
+            let short = config.independentProfitableQuarters - investors.profitableQuarters
+            return "\(short) more profitable quarter\(short == 1 ? "" : "s") in a row."
+        }
+        if company.reputation < config.independentMinReputation {
+            let short = Int((config.independentMinReputation - company.reputation).rounded(.up))
+            return "Reputation \(short) short of \(Int(config.independentMinReputation)) — people have to know the name."
+        }
+        return nil
+    }
 }
 
 // MARK: - Buy back the board

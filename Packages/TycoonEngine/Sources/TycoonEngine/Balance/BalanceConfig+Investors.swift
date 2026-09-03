@@ -93,6 +93,17 @@ extension BalanceConfig {
         /// valuation — the same forward premium they paid, charged back.
         /// The pressure surcharge on top is `1 + boardPressure / 100`.
         public var buybackPremium: Double
+        // MARK: Iteration 5 — Still yours (WS-G)
+
+        // Gates, not multipliers: nothing reads them until the founder
+        // asks whether they can declare, and no pacing bot ever does.
+
+        /// Consecutive profitable quarters the *Still yours* ending needs.
+        public var independentProfitableQuarters: Int
+        /// Reputation the *Still yours* ending needs.
+        public var independentMinReputation: Double
+        /// The earliest day the founder can call the company built.
+        public var independentMinDay: Int
 
         public init(
             offerIntervalDays: Int = 7,
@@ -126,7 +137,10 @@ extension BalanceConfig {
             earnOutPatienceWeeks: Int = 12,
             earnOutMoraleCost: Double = 8,
             earnOutMissesToOust: Int = 2,
-            buybackPremium: Double = 2.5
+            buybackPremium: Double = 2.5,
+            independentProfitableQuarters: Int = 8,
+            independentMinReputation: Double = 70,
+            independentMinDay: Int = 728
         ) {
             self.offerIntervalDays = offerIntervalDays
             self.offerCooldownDays = offerCooldownDays
@@ -160,6 +174,9 @@ extension BalanceConfig {
             self.earnOutMoraleCost = earnOutMoraleCost
             self.earnOutMissesToOust = earnOutMissesToOust
             self.buybackPremium = buybackPremium
+            self.independentProfitableQuarters = independentProfitableQuarters
+            self.independentMinReputation = independentMinReputation
+            self.independentMinDay = independentMinDay
         }
 
         public static let `default` = InvestorBalance()
@@ -186,6 +203,7 @@ extension BalanceConfig.InvestorBalance {
         case earnOutUpfrontShare, earnOutReviewShare, earnOutReviews
         case earnOutPatienceWeeks, earnOutMoraleCost, earnOutMissesToOust
         case buybackPremium
+        case independentProfitableQuarters, independentMinReputation, independentMinDay
     }
 
     public init(from decoder: any Decoder) throws {
@@ -266,7 +284,15 @@ extension BalanceConfig.InvestorBalance {
             earnOutMissesToOust: try container.decodeIfPresent(Int.self, forKey: .earnOutMissesToOust)
                 ?? fallback.earnOutMissesToOust,
             buybackPremium: try container.decodeIfPresent(Double.self, forKey: .buybackPremium)
-                ?? fallback.buybackPremium
+                ?? fallback.buybackPremium,
+            independentProfitableQuarters: try container.decodeIfPresent(
+                Int.self, forKey: .independentProfitableQuarters
+            ) ?? fallback.independentProfitableQuarters,
+            independentMinReputation: try container.decodeIfPresent(
+                Double.self, forKey: .independentMinReputation
+            ) ?? fallback.independentMinReputation,
+            independentMinDay: try container.decodeIfPresent(Int.self, forKey: .independentMinDay)
+                ?? fallback.independentMinDay
         )
     }
 }

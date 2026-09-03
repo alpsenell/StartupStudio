@@ -25,6 +25,9 @@ struct OfficeCard: View {
     /// updates this property for presented content before the
     /// environment is installed and the non-optional form traps there.
     private var shell: GameShell { injectedShell ?? .shared }
+    /// Optional for the same reason: a snapshot of the card alone has no
+    /// router, and the only thing it is for is the `.city` deep link.
+    @Environment(AppRouter.self) private var router: AppRouter?
 
     var body: some View {
         let state = engine.state
@@ -124,6 +127,12 @@ struct OfficeCard: View {
         // drops a panel over it. The sound stays.
         .onChange(of: engine.state.company.officeTier) { _, _ in
             Sounds.play(.goal)
+        }
+        // "Buy your office" on the Now card lands here.
+        .onChange(of: router?.pendingPush, initial: true) { _, _ in
+            if router?.take(.city) == true {
+                showingCityMap = true
+            }
         }
         .sheet(isPresented: $showingAmenities) {
             AmenitiesSheet(engine: engine)

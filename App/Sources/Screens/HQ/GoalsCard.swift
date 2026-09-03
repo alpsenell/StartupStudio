@@ -49,36 +49,74 @@ struct GoalsCard: View {
         }
     }
 
-    /// "CHAPTER 2 · LOFT" in the card header.
+    /// "CHAPTER 2 · LOFT" in the card header — and from the chapter where
+    /// the ladders split, which one: "CHAPTER 3 · STUDIO · INDEPENDENT".
     private var chapterLabel: String {
-        "Chapter \(progression.chapter) · \(progression.chapterTitle)"
+        let base = "Chapter \(progression.chapter) · \(progression.chapterTitle)"
+        guard let track = trackLabel else { return base }
+        return base + " · " + track
+    }
+
+    /// The ladder's name once the founder has picked one, from the first
+    /// chapter where it matters. Before then the question is still open
+    /// and the header says nothing about it.
+    private var trackLabel: String? {
+        guard progression.chapter >= ProgressionState.firstSplitChapter else { return nil }
+        return engine.state.declaredGoalTrack?.displayName
+    }
+
+    /// The question, while it is still open: from chapter 3 the goals
+    /// depend on how the founder answers the next term sheet.
+    private var undeclaredHint: String? {
+        guard progression.chapter >= ProgressionState.firstSplitChapter,
+              engine.state.declaredGoalTrack == nil
+        else { return nil }
+        return "Turn down a term sheet and this becomes the independent ladder. Sign one and it's the funded one, for good."
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(chapterProgressText)
-                .font(Theme.Typography.number(.subheadline))
-                .contentTransition(.numericText())
-                .animation(Theme.Motion.emphatic, value: chapterDone)
-            Spacer()
-            Text("\(progression.completedGoalIDs.count) done")
-                .font(Theme.Typography.number(.caption, weight: .regular))
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(chapterProgressText)
+                    .font(Theme.Typography.number(.subheadline))
+                    .contentTransition(.numericText())
+                    .animation(Theme.Motion.emphatic, value: chapterDone)
+                Spacer()
+                Text("\(progression.completedGoalIDs.count) done")
+                    .font(Theme.Typography.number(.caption, weight: .regular))
+                    .foregroundStyle(.secondary)
+            }
+            if let undeclaredHint {
+                Text(undeclaredHint)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "Chapter \(progression.chapter), \(progression.chapterTitle). "
-                + "\(chapterDone) of \(chapterTotal) goals in this chapter finished, "
-                + "\(progression.completedGoalIDs.count) in the whole run."
-        )
+        .accessibilityLabel(headerAccessibilityLabel)
+    }
+
+    private var headerAccessibilityLabel: String {
+        var label = "Chapter \(progression.chapter), \(progression.chapterTitle)"
+        if let trackLabel {
+            label += ", \(trackLabel.lowercased()) ladder"
+        }
+        label += ". \(chapterDone) of \(chapterTotal) goals in this chapter finished, "
+        label += "\(progression.completedGoalIDs.count) in the whole run."
+        if let undeclaredHint {
+            label += " \(undeclaredHint)"
+        }
+        return label
     }
 
     private var chapterProgressText: String {
         chapterTotal > 0 ? "\(chapterDone) of \(chapterTotal) this chapter" : ""
     }
 
+    /// The chapter's goals on the ladder the run is on — six either way.
     private var chapterGoals: [GoalDef] {
-        engine.content.goals(inChapter: progression.chapter)
+        engine.content.goals(inChapter: progression.chapter, track: engine.state.goalTrack)
     }
 
     private var chapterDone: Int {
@@ -87,11 +125,12 @@ struct GoalsCard: View {
 
     private var chapterTotal: Int { chapterGoals.count }
 
-    /// Only teased while there is a next chapter to reach.
+    /// Only teased while there is a next chapter to reach, in the voice of
+    /// the ladder the founder has chosen.
     private var nextChapterTeaser: String? {
         let next = progression.chapter + 1
         guard engine.content.goals(inChapter: next).isEmpty == false else { return nil }
-        let teaser = ChapterDef.teaser(for: next)
+        let teaser = ChapterDef.teaser(for: next, track: engine.state.declaredGoalTrack)
         return teaser.isEmpty ? nil : teaser
     }
 

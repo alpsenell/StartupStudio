@@ -65,6 +65,25 @@ public struct GoalDef: Codable, Equatable, Sendable, Identifiable {
             case companyValuation
             /// Everything an IPO needs is in place (1 when ready).
             case readyToGoPublic
+
+            // MARK: Iteration 5 — the independent ladder (WS-G)
+
+            /// Consecutive quarters the company finished in profit, as the
+            /// board room already counts them.
+            case profitableQuarters
+            /// Weeks that ended with at least two products on the market at
+            /// once.
+            case liveProductsWeeks
+            /// The company owns its office outright (1 when it does).
+            case officeOwned
+            /// People, founder excluded, who have each been with the
+            /// company for a year.
+            case tenuredStaff
+            /// Everything the *Still yours* ending needs is in place (1 when
+            /// ready).
+            case readyToStayIndependent
+            /// Years the company has been trading, to one decimal.
+            case yearsTrading
         }
 
         public var kind: Kind
@@ -108,6 +127,11 @@ public struct GoalDef: Codable, Equatable, Sendable, Identifiable {
     public var chapter: Int
     public var condition: Condition
     public var reward: Reward?
+    /// Which ladder the goal is on (`GoalTrack` raw value), or `nil` for
+    /// both. Chapters 1–2 carry no track; from chapter 3 the catalog
+    /// splits into a funded ladder and an independent one, and a goal
+    /// both ladders share (score 75, three children) stays `nil`.
+    public var track: String?
 
     public init(
         id: String,
@@ -115,7 +139,8 @@ public struct GoalDef: Codable, Equatable, Sendable, Identifiable {
         detail: String? = nil,
         chapter: Int,
         condition: Condition = Condition(kind: .productsShipped),
-        reward: Reward? = nil
+        reward: Reward? = nil,
+        track: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -123,6 +148,31 @@ public struct GoalDef: Codable, Equatable, Sendable, Identifiable {
         self.chapter = chapter
         self.condition = condition
         self.reward = reward
+        self.track = track
+    }
+
+    /// Whether the goal is on `track` — a goal with no track is on every
+    /// one.
+    public func isOn(_ track: GoalTrack) -> Bool {
+        self.track == nil || self.track == track.rawValue
+    }
+}
+
+/// The two ladders the late chapters split into (WS-G, iteration 5).
+///
+/// The funded ladder is today's catalog: a round, a campus, an
+/// acquisition, the bell. The independent ladder asks for a company that
+/// lasts instead of one that grows, and ends in *Still yours*. Which one
+/// is active is the engine's call (`GameState.goalTrack`), not content's.
+public enum GoalTrack: String, Codable, Equatable, Sendable, CaseIterable {
+    case funded
+    case independent
+
+    public var displayName: String {
+        switch self {
+        case .funded: "Funded"
+        case .independent: "Independent"
+        }
     }
 }
 
@@ -154,7 +204,7 @@ public struct ChapterDef: Codable, Equatable, Sendable, Identifiable {
 
 extension GoalDef {
     private enum CodingKeys: String, CodingKey {
-        case id, title, detail, chapter, condition, reward
+        case id, title, detail, chapter, condition, reward, track
     }
 
     public init(from decoder: any Decoder) throws {
@@ -165,7 +215,10 @@ extension GoalDef {
             detail: try container.decodeIfPresent(String.self, forKey: .detail),
             chapter: try container.decodeIfPresent(Int.self, forKey: .chapter) ?? 1,
             condition: try container.decode(Condition.self, forKey: .condition),
-            reward: try container.decodeIfPresent(Reward.self, forKey: .reward)
+            reward: try container.decodeIfPresent(Reward.self, forKey: .reward),
+            // Absent means both ladders, so a catalog written before the
+            // split reads exactly as it did.
+            track: try container.decodeIfPresent(String.self, forKey: .track)
         )
     }
 }
@@ -209,12 +262,37 @@ extension ChapterDef {
     public static func teaser(for chapter: Int) -> String {
         titles[chapter]?.teaser ?? ""
     }
+
+    /// The independent ladder's own teasers for the chapters that split.
+    /// The funded ladder keeps `titles`; a chapter with no entry here
+    /// reads the same on both.
+    public static let independentTeasers: [Int: String] = [
+        3: "Fourteen people who stay, four quarters in the black, and an office with your name on the deeds.",
+        4: "Nobody else's money. Two things on sale at once, and a company that runs without you on a Tuesday.",
+        5: "Still yours. The part where you find out what all of it was for.",
+    ]
+
+    /// The teaser for a chapter on a ladder, shown while it is still
+    /// locked. `nil` — no ladder declared yet — reads the funded copy,
+    /// which is what every chapter said before the split.
+    public static func teaser(for chapter: Int, track: GoalTrack?) -> String {
+        if track == .independent, let teaser = independentTeasers[chapter] {
+            return teaser
+        }
+        return teaser(for: chapter)
+    }
 }
 
 extension ContentCatalog {
-    /// The goals of one chapter, in catalog order.
+    /// The goals of one chapter, in catalog order — every ladder's.
     public func goals(inChapter chapter: Int) -> [GoalDef] {
         goals.filter { $0.chapter == chapter }
+    }
+
+    /// The goals of one chapter on one ladder, in catalog order: the
+    /// ladder's own plus the ones both ladders share.
+    public func goals(inChapter chapter: Int, track: GoalTrack) -> [GoalDef] {
+        goals.filter { $0.chapter == chapter && $0.isOn(track) }
     }
 
     /// Every chapter the goal catalog defines, lowest first, each with its

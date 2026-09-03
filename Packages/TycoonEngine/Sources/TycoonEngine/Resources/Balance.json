@@ -896,7 +896,10 @@
     "earnOutPatienceWeeks": 12,
     "earnOutMoraleCost": 8.0,
     "earnOutMissesToOust": 2,
-    "buybackPremium": 2.5
+    "buybackPremium": 2.5,
+    "independentProfitableQuarters": 8,
+    "independentMinReputation": 70.0,
+    "independentMinDay": 728
   },
   "traits": {
     "teamGrowthStrength": 1.0,
