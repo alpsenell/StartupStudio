@@ -620,6 +620,28 @@ enum EmployeeSystem {
         }
     }
 
+    /// One day of code points the crew currently assigned to `productID`
+    /// would add, at today's tech, crowding and pace multipliers — exactly
+    /// the `crew.code * output` that `buildProduct` hands to
+    /// `applyDailyProgress`, read out of an unmutated state and drawing no
+    /// random numbers. `GameState.shipETA` turns it into a day.
+    static func dailyCodeOutput(
+        productID: UUID,
+        focus: PhaseFocus,
+        state: GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> Double {
+        let crew = gatherCrewOutput(
+            productID: productID, focus: focus, state: state, balance: balance, content: content
+        )
+        let pace = balance.economy.pace(state.economy.workPace)
+        return crew.code
+            * state.devSpeedTechMultiplier(content: content)
+            * crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            * pace.outputFactor
+    }
+
     /// Brooks's law as one number: `n` people working the same job each
     /// produce `1 / (1 + brooksPenalty × (n − 1))` of a solo day. A penalty
     /// of 0 (the neutral test economy) restores the old straight sum.
