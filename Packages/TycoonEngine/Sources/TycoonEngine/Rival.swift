@@ -557,13 +557,19 @@ extension RivalsState {
             forKey: .playerShare
         )
         try container.encode(lastBuyoutWasStrategic, forKey: .lastBuyoutWasStrategic)
-        try container.encode(challenges, forKey: .challenges)
+        // Both written only once a challenge has happened, so a save from
+        // before the category fight keeps its bytes.
+        if !challenges.isEmpty {
+            try container.encode(challenges, forKey: .challenges)
+        }
         // Sorted for the same reason as the share table: identical states
         // must encode to identical bytes whatever the dictionary's order.
-        try container.encode(
-            lastChallengeDay.keys.sorted().map { DayEntry(topicID: $0, day: lastChallengeDay[$0] ?? 0) },
-            forKey: .lastChallengeDay
-        )
+        if !lastChallengeDay.isEmpty {
+            try container.encode(
+                lastChallengeDay.keys.sorted().map { DayEntry(topicID: $0, day: lastChallengeDay[$0] ?? 0) },
+                forKey: .lastChallengeDay
+            )
+        }
         try container.encodeIfPresent(incumbentFoundedDay, forKey: .incumbentFoundedDay)
         try container.encodeIfPresent(incumbentHeldSinceDay, forKey: .incumbentHeldSinceDay)
     }
