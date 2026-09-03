@@ -63,7 +63,7 @@ struct IncumbentTests {
     @Test func crossingTheValuationFloorBringsAGiantIntoYourBestLiveMarkets() throws {
         let balance = try Self.balance()
         let depth = balance.rivals.depth
-        let (state, events) = Self.company(cash: 800_000, balance: balance)
+        let (state, events) = Self.company(cash: 1_100_000, balance: balance)
         #expect(state.companyValuation(balance: balance) >= depth.incumbentValuationFloor)
 
         let rivalID = try #require(Self.arrival(in: events), "no incumbent arrived")
@@ -72,7 +72,7 @@ struct IncumbentTests {
         #expect(incumbent.isIncumbent)
         #expect(incumbent.personality == .deepPockets)
         #expect(!incumbent.name.isEmpty)
-        // 0.6 × 800k / 4000 = 120, clamped to the band's top.
+        // 0.6 × 1.1M / 4000 = 165, clamped to the band's top.
         #expect(incumbent.strength == depth.incumbentStrengthMax)
         #expect(incumbent.reputation >= depth.incumbentReputationMin)
         #expect(incumbent.reputation <= depth.incumbentReputationMax)
@@ -98,14 +98,26 @@ struct IncumbentTests {
         #expect(incumbent.valuation(balance: balance) >= 400_000)
     }
 
-    @Test func owningTwoTopicsOutrightBringsItToo() throws {
-        let balance = try Self.balance()
+    /// The second trigger — owned topics — ships off: two owned topics is
+    /// not a size (see `DepthBalance`). Switched on, it brings the giant
+    /// to a poor but dominant studio.
+    @Test func owningTopicsOutrightBringsItOnlyWhereThatTriggerIsOn() throws {
+        let shipped = try Self.balance()
+        #expect(shipped.rivals.depth.incumbentDominatedTopics == 0)
         // Poor but dominant: the share table from last week says two
         // contested topics are owned.
-        let (state, events) = Self.company(
-            cash: 20_000, balance: balance, share: ["fitness": 0.8, "music": 0.7]
+        let (quiet, quietEvents) = Self.company(
+            cash: 20_000, balance: shipped, share: ["fitness": 0.8, "music": 0.7]
         )
-        #expect(state.companyValuation(balance: balance) < balance.rivals.depth.incumbentValuationFloor)
+        #expect(quiet.companyValuation(balance: shipped) < shipped.rivals.depth.incumbentValuationFloor)
+        #expect(Self.arrival(in: quietEvents) == nil)
+        #expect(quiet.rivals.incumbent == nil)
+
+        var designed = shipped
+        designed.rivals.depth.incumbentDominatedTopics = 2
+        let (state, events) = Self.company(
+            cash: 20_000, balance: designed, share: ["fitness": 0.8, "music": 0.7]
+        )
         #expect(Self.arrival(in: events) != nil)
         #expect(state.rivals.incumbent != nil)
     }
@@ -121,7 +133,7 @@ struct IncumbentTests {
 
     @Test func theFlagIsTheWholeOfIt() throws {
         let off = try Self.balance(enabled: false)
-        let (state, events) = Self.company(cash: 800_000, balance: off)
+        let (state, events) = Self.company(cash: 1_100_000, balance: off)
         #expect(Self.arrival(in: events) == nil)
         #expect(state.rivals.incumbent == nil)
         #expect(state.rivals.challenges.isEmpty)
@@ -133,8 +145,8 @@ struct IncumbentTests {
     @Test func noIncumbentEverJoinsAnEmptyField() throws {
         let on = try Self.balance(rivals: 0, enabled: true)
         let off = try Self.balance(rivals: 0, enabled: false)
-        let (withFlag, eventsOn) = Self.company(cash: 1_000_000, balance: on)
-        let (withoutFlag, _) = Self.company(cash: 1_000_000, balance: off)
+        let (withFlag, eventsOn) = Self.company(cash: 1_200_000, balance: on)
+        let (withoutFlag, _) = Self.company(cash: 1_200_000, balance: off)
         #expect(Self.arrival(in: eventsOn) == nil)
         #expect(withFlag.rivals.rivals.isEmpty)
         // The fixture's product ids are fresh each time, so compare the
@@ -148,7 +160,7 @@ struct IncumbentTests {
 
     @Test func onePerRun() throws {
         let balance = try Self.balance()
-        var (state, events) = Self.company(cash: 800_000, balance: balance)
+        var (state, events) = Self.company(cash: 1_100_000, balance: balance)
         let first = try #require(Self.arrival(in: events))
         // Gone — bought, say — and the company still worth having.
         state.rivals.rivals.removeAll { $0.id == first }
@@ -164,7 +176,7 @@ struct IncumbentTests {
     @Test func aCompanyWithNothingLiveIsNotWorthFighting() throws {
         let balance = try Self.balance()
         var state = GameState.newGame(companyName: "Acme", seed: 52, balance: balance)
-        state.company.cash = 900_000
+        state.company.cash = 1_200_000
         var events: [GameEvent] = []
         for _ in 0..<balance.rivals.evolveIntervalDays {
             events.append(contentsOf: Reducer.tick(&state, balance: balance, content: Self.content))

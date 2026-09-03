@@ -743,7 +743,8 @@ enum RivalSystem {
 
     /// Once the company is worth having — valuation past
     /// `incumbentValuationFloor`, or `incumbentDominatedTopics` topics
-    /// owned outright — and no incumbent has ever been founded, a giant is
+    /// owned outright where that trigger is on — and no incumbent has
+    /// ever been founded, a giant is
     /// founded into the player's two best markets: deep pockets (it never
     /// folds), strength `incumbentStrengthFactor × valuation /
     /// valuationPerStrength` clamped to its band, reputation rolled in
@@ -772,9 +773,11 @@ enum RivalSystem {
               state.rivals.incumbent == nil
         else { return [] }
         let valuation = state.companyValuation(balance: balance)
-        guard valuation >= depth.incumbentValuationFloor
-            || state.rivals.dominatedTopicCount >= depth.incumbentDominatedTopics
-        else { return [] }
+        // The second trigger is off at 0: see `DepthBalance` for why two
+        // owned topics is not a size.
+        let dominates = depth.incumbentDominatedTopics > 0
+            && state.rivals.dominatedTopicCount >= depth.incumbentDominatedTopics
+        guard valuation >= depth.incumbentValuationFloor || dominates else { return [] }
 
         // Its markets: the two the player holds highest and is live in.
         // "Highest standing" alone can name a category whose products are
@@ -1249,6 +1252,7 @@ enum RivalSystem {
         balance: BalanceConfig,
         content: ContentCatalog
     ) {
+        guard balance.rivals.depth.acquisitionAbsorbsShelf else { return }
         let day = state.day
         let shelf = StandingSystem.liveTopicIDs(state).sorted().compactMap { topicID -> RivalProduct? in
             guard let theirs = rival.bestProduct(in: topicID, on: day),
