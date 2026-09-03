@@ -49,11 +49,13 @@ Five tabs over the persistent cash/date/speed HUD:
 
 ### Under the tabs
 
-- **Chapters and goals.** Thirty goals across five chapters, six each;
-  finish enough of a chapter and the next one opens. Each goal pays
+- **Chapters and goals.** Forty-two goals across five chapters, six live
+  at a time; finish enough of a chapter and the next one opens. From
+  chapter 3 there are two ladders — *funded* and *independent* — and the
+  cap table picks yours. Each goal pays
   reputation, cash, or a permanent perk — press contacts, a talent magnet,
   an investor rolodex, veteran crew, market darling.
-- **A world with opinions.** 83 company events and 59 life events, most of
+- **A world with opinions.** 83 company events and 70 life events, most of
   them a real question with consequences spelled out on the buttons and a
   deadline that answers for you if you don't; choices schedule follow-ups
   weeks later, so a decision has a second act. 44 industry headlines, 11
@@ -131,9 +133,9 @@ Five tabs over the persistent cash/date/speed HUD:
   themselves, a Grumbler drags the room down.
 - **Investors, boards and endings.** Term sheets arrive once the company is
   worth a meeting. Take one and a board grades you on one number every
-  quarter; miss it enough and they replace you. Four endings — bankruptcy,
-  acquisition, IPO, ousted — and all four land on the same founder
-  biography: the chapters and the day each opened, the best thing you
+  quarter; miss it enough and they replace you. Six endings — bankruptcy,
+  sold up, acquisition, IPO, ousted, and *Still yours* — and all six land
+  on the same founder biography: the chapters and the day each opened, the best thing you
   shipped with its best review quoted, your longest-serving employee, your
   family, and the money.
 - **The weekly report.** An end-of-week debrief — cash in and out by
@@ -178,6 +180,47 @@ Five tabs over the persistent cash/date/speed HUD:
   and stops opening itself once you have opened it twice yourself, a
   searchable journal that collapses routine weeks, and chiptune sound and
   haptics (both synthesized in-app, both switchable).
+
+### The world answers back
+
+Iteration 5 gave the game a memory and a temper: a player's move has an
+answer in the world, and an answer has a memory.
+
+- **The category fight.** Standing in a topic holds your share there. A
+  rival launching into a category you hold stops the clock: six weeks to
+  cut the price, patch, campaign, or let it go — and a real consequence
+  either way. Out-sell a rival for long enough and it bleeds, then folds.
+- **The incumbent.** Once the company is worth having, a deep-pocketed
+  giant founds into your two best markets and opens with a challenge. Hold
+  both for half a year and it retreats; buy it and its shelf is yours.
+  Buying any rival now absorbs the product that was beating you.
+- **Exit terms.** A distress bid is *Sold up*, not a win. A strategic
+  offer is cash today, or an earn-out: 60% now and the rest over two
+  quarterly reviews with the acquirer seated as the least patient board in
+  the game.
+- **Buy back the board.** Pay a seated round out — cheapest when you are
+  small and broke, dearest the moment you can afford it — and its ask
+  leaves the room.
+- **Rival-sponsored contracts.** A rival pays 1.8× for a white-label job
+  and, on delivery, ships what you built into the category it names —
+  possibly the one you hold. Sandbagging is allowed and costs pay,
+  reputation and standing.
+- **The answer becomes the policy.** A supportive answer to a staff moment
+  becomes the rule for the next person, who no longer asks; reverse it and
+  everyone hears. Ten second acts ride the flags the first answers set.
+- **The date in the diary.** Anniversaries and birthdays land on real
+  days and claim the week's evenings; on crunch that is one. Miss one and
+  they notice — and bring it up next year.
+- **The boomerang.** People who leave — quit, fired, poached — go into the
+  address book with the bond they had, keep getting better elsewhere, and
+  can be hired back senior. Fire a friend and you burn the contact.
+- **Two ladders and a fifth ending.** Stay at 100% and the late chapters
+  ask for a company that lasts; eight profitable quarters in a row and the
+  founder can declare it built — *Still yours*.
+- **Origins.** Four ways to found the company on the Stakes page: alone in
+  a garage; co-founded, with a partner who owns 30% forever; a spin-out
+  with a client, a deadline and a year's non-compete; or mortgaged, a year
+  of runway borrowed against the flat you live in.
 
 Plus autosave with versioned migrations, and a deterministic engine — same
 seed, same game — under all of it.
