@@ -105,6 +105,15 @@ struct ContentVarietyTests {
             }
         }
 
+        // WS-E: the calendar schedules the anniversary and the birthday
+        // itself, and a dated beat's missed twin fires in its place.
+        lifeTargets.formUnion([FamilyCalendar.anniversaryEventID, FamilyCalendar.birthdayEventID])
+        for event in content.lifeEvents {
+            guard let twin = event.missedVariantID else { continue }
+            #expect(lifeIDs.contains(twin), "\(event.id) -> unknown missed variant \(twin)")
+            lifeTargets.insert(twin)
+        }
+
         for event in content.events where event.followUpOnly {
             #expect(companyTargets.contains(event.id), "\(event.id) can never fire")
         }
@@ -173,6 +182,10 @@ struct ContentVarietyTests {
             #expect(abs(amount) <= 20, "\(id): skill \(amount)")
         case .research(let amount):
             #expect(abs(amount) <= 200, "\(id): research \(amount)")
+        case .affection(let amount), .bond(let amount, _):
+            #expect(abs(amount) <= 40, "\(id): \(amount)")
+        case .evening:
+            break
         }
     }
 

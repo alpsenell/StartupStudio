@@ -98,6 +98,7 @@ final class EventCopyTests: XCTestCase {
             .staffEventOccurred(employeeID: id, kind: .rivalOfferRumor, respondByDay: 70, day: 64),
             .staffEventResolved(employeeID: id, choice: .supportive, day: 65),
             .sponsoredContractDelivered(rivalID: id, topicID: "fitness", quality: 71, day: 66),
+            .familyDateMissed(eventID: "kid_birthday", day: 66),
         ]
     }
 
@@ -180,6 +181,32 @@ final class EventCopyTests: XCTestCase {
         XCTAssertFalse(missed.message.contains("to go"), "the last review has nothing to go")
         XCTAssertEqual(copy.category(of: .earnOutReviewed(met: true, paid: 1, remainingReviews: 1, day: 1)), .company)
         XCTAssertNotEqual(met.message, "Something happened")
+    /// A missed date reads as the date it was, from the diary's own line
+    /// and the people in the founder's life (WS-E).
+    func testAMissedDateNamesTheDateFromTheDiary() {
+        var state = GameState.newGame(
+            companyName: "Fixture Softworks", seed: 7, balance: Self.balance, difficulty: .normal
+        )
+        state.day = 400
+        state.life.family.stage = .married
+        state.life.family.partnerName = "Sam Ortega"
+        state.life.family.children = [Child(id: UUID(), name: "Noor", bornDay: 30, appearanceSeed: 1)]
+        let copy = EventCopy(state: state, content: Self.content, balance: Self.balance)
+
+        XCTAssertEqual(
+            copy.line(for: .familyDateMissed(eventID: "kid_birthday", day: 400)).message,
+            "You missed Noor's birthday. They noticed."
+        )
+        XCTAssertEqual(
+            copy.line(for: .familyDateMissed(eventID: "partner_anniversary", day: 400)).message,
+            "You missed your anniversary with Sam. They noticed."
+        )
+        XCTAssertEqual(copy.category(of: .familyDateMissed(eventID: "kid_birthday", day: 400)), .life)
+        // A date whose definition the catalog no longer knows still reads.
+        XCTAssertEqual(
+            copy.line(for: .familyDateMissed(eventID: "gone", day: 1)).message,
+            "You missed a date you had promised. They noticed."
+        )
     }
 
     func testCategoriesRouteEventsToTheRightJournalFilter() {

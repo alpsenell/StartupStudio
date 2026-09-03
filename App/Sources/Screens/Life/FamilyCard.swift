@@ -51,6 +51,12 @@ struct FamilyCard: View {
                     )
                 }
 
+                // The date in the diary (WS-E): the next thing the family
+                // is going to ask an evening for.
+                if let next = state.nextFamilyDate(content: engine.content) {
+                    DiaryLine(label: next.label, daysLeft: next.day - state.day)
+                }
+
                 if let step = advanceStep(life: life, day: state.day) {
                     Divider()
                     GatedAction(title: step.title, reason: step.reason) {
@@ -231,6 +237,42 @@ private struct BreakupWarning: View {
             in: RoundedRectangle(cornerRadius: 10, style: .continuous)
         )
         .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - The diary
+
+/// "Next: Sam's birthday · 9 days". One line, because the date is not a
+/// button: it comes to the founder on the week, and the Life tab's job is
+/// to let them see it coming while the evenings are still theirs.
+private struct DiaryLine: View {
+    let label: String
+    let daysLeft: Int
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: "calendar.badge.clock")
+                .font(.subheadline)
+                .foregroundStyle(Theme.romance)
+            Text("Next: \(label) · \(diaryCountdown(daysLeft))")
+                .font(.footnote)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Next family date: \(label), \(diaryCountdown(daysLeft))")
+    }
+}
+
+/// "9 days", "1 day", or "this week" once the date has arrived and is
+/// waiting for its evening.
+func diaryCountdown(_ daysLeft: Int) -> String {
+    switch daysLeft {
+    case ..<1: "this week"
+    case 1: "1 day"
+    default: "\(daysLeft) days"
     }
 }
 

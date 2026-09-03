@@ -181,6 +181,40 @@ final class DecisionSheetSnapshotTests: XCTestCase {
         )
     }
 
+    /// A dated family beat on a week whose evenings are spent: the first
+    /// option the sheet has ever drawn greyed, with the reason under it
+    /// (WS-E).
+    private var diary: DecisionPrompt {
+        DecisionPrompt(
+            id: "narrative-diary-preview",
+            systemImage: "house.fill",
+            tint: Theme.designPhase,
+            title: "Sam's birthday is on Saturday.",
+            message: "They asked whether you'd be there, in the way kids ask when they already know the answer. The party is at four. The week is launch week, or it might as well be.\n\nPut it off for 5 days and it goes down as \"Send a present with a card you didn't write\".",
+            stats: [("Answer within", "5 days")],
+            options: [
+                .init(
+                    label: "Take the afternoon for the party",
+                    detail: "An evening · relationships +12 · mood +10 · −$120",
+                    disabledReason: "No evenings left this week",
+                    action: .resolveChoice(eventID: "kid_birthday", optionIndex: 0)
+                ),
+                .init(
+                    label: "Send a present with a card you didn't write",
+                    detail: "Relationships −10 · mood −8 · affection −20 · −$150",
+                    action: .resolveChoice(eventID: "kid_birthday", optionIndex: 1)
+                ),
+            ],
+            kicker: "FAMILY",
+            isDeferrable: true
+        )
+    }
+
+    func testRendersAFamilyDateWithTheGreyedOption() {
+        let engine = engine()
+        snapshot("decision_diary", height: 700) { sheet(diary, engine: engine) }
+    }
+
     func testRendersABuyoutWithTheRivalsFace() {
         let engine = engine()
         snapshot("decision_buyout") { sheet(buyout, engine: engine) }

@@ -46,6 +46,18 @@ struct PartnerCard: View {
                                     family.affection < 35 ? Theme.warning : .secondary
                                 )
                                 .fixedSize(horizontal: false, vertical: true)
+                            // The date in the diary (WS-E): the anniversary,
+                            // or a promise with a date in it.
+                            if let next = state.nextPartnerDate(content: engine.content) {
+                                Label(
+                                    "\(next.label) · \(diaryCountdown(next.day - state.day))",
+                                    systemImage: "calendar.badge.clock"
+                                )
+                                .font(.caption)
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.romance)
+                                .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                     }
 

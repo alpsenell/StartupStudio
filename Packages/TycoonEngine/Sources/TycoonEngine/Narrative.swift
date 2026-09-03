@@ -22,13 +22,26 @@ public struct ChoiceOption: Codable, Equatable, Sendable, Identifiable {
     /// `GameAction.resolveChoice` carries — options the player can't take
     /// are filtered out, so positions do not line up.
     public var index: Int
+    /// Why the option is shown greyed rather than hidden (WS-E), e.g.
+    /// "No evenings left this week". `nil` for an option the player can
+    /// take. Snapshotted with the rest of the option: the week the beat
+    /// asked about is the week that counts. Decodes `nil`, so a save from
+    /// before it existed reads every option as open.
+    public var disabledReason: String?
 
-    public init(id: String, label: String, detail: String? = nil, index: Int) {
+    public init(
+        id: String, label: String, detail: String? = nil, index: Int,
+        disabledReason: String? = nil
+    ) {
         self.id = id
         self.label = label
         self.detail = detail
         self.index = index
+        self.disabledReason = disabledReason
     }
+
+    /// Whether the player may take this option.
+    public var isEnabled: Bool { disabledReason == nil }
 }
 
 /// A story beat waiting on the founder's answer.
@@ -53,6 +66,9 @@ public struct PendingChoice: Codable, Equatable, Sendable {
     public var category: String
     /// The day the choice arrived.
     public var raisedDay: Int
+    /// The child a family beat is about (WS-E), carried so a follow-up
+    /// the answer schedules is about the same child. Decodes `nil`.
+    public var childID: UUID?
 
     public init(
         id: String,
@@ -63,7 +79,8 @@ public struct PendingChoice: Codable, Equatable, Sendable {
         respondByDay: Int,
         autoOptionIndex: Int,
         category: String,
-        raisedDay: Int
+        raisedDay: Int,
+        childID: UUID? = nil
     ) {
         self.id = id
         self.source = source
@@ -74,6 +91,7 @@ public struct PendingChoice: Codable, Equatable, Sendable {
         self.autoOptionIndex = autoOptionIndex
         self.category = category
         self.raisedDay = raisedDay
+        self.childID = childID
     }
 }
 
@@ -86,12 +104,19 @@ public struct ScheduledNarrativeEvent: Codable, Equatable, Sendable {
     /// The person a `.staff` follow-up is about (WS-D). Optional, so
     /// saves from before it existed decode as before.
     public var employeeID: UUID?
+    /// The child a `.life` family date is about (WS-E): a birthday, or
+    /// the second act of one. Optional, same rule.
+    public var childID: UUID?
 
-    public init(day: Int, eventID: String, source: NarrativeSource, employeeID: UUID? = nil) {
+    public init(
+        day: Int, eventID: String, source: NarrativeSource,
+        employeeID: UUID? = nil, childID: UUID? = nil
+    ) {
         self.day = day
         self.eventID = eventID
         self.source = source
         self.employeeID = employeeID
+        self.childID = childID
     }
 }
 

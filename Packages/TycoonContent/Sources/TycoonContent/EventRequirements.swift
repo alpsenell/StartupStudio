@@ -64,6 +64,12 @@ public struct EventRequirements: Codable, Equatable, Sendable {
     public var maxMood: Double?
     /// Work schedule raw value the founder must be on ("crunch" etc.).
     public var schedule: String?
+    /// Evenings the founder must still have this week (WS-E). On an
+    /// *option* this gate greys rather than hides: the sheet shows the
+    /// option with "No evenings left this week" under it, which is the
+    /// point — on crunch that is one evening, and it may already be
+    /// spent. Always met by a balance with no evening budget.
+    public var minEveningsLeft: Int?
 
     // MARK: Story
 
@@ -101,6 +107,7 @@ public struct EventRequirements: Codable, Equatable, Sendable {
         maxEnergy: Double? = nil,
         maxMood: Double? = nil,
         schedule: String? = nil,
+        minEveningsLeft: Int? = nil,
         flagsAll: [String] = [],
         flagsNone: [String] = []
     ) {
@@ -132,6 +139,7 @@ public struct EventRequirements: Codable, Equatable, Sendable {
         self.maxEnergy = maxEnergy
         self.maxMood = maxMood
         self.schedule = schedule
+        self.minEveningsLeft = minEveningsLeft
         self.flagsAll = flagsAll
         self.flagsNone = flagsNone
     }
@@ -142,7 +150,7 @@ public struct EventRequirements: Codable, Equatable, Sendable {
         case topicID, hasLoan, requiresDepartment, hasFriendship
         case minStage, maxStage, requiresChildren, minChildren, minHome
         case minWallet, maxWallet, maxRelationships, minRelationships
-        case maxEnergy, maxMood, schedule, flagsAll, flagsNone
+        case maxEnergy, maxMood, schedule, minEveningsLeft, flagsAll, flagsNone
     }
 
     public init(from decoder: any Decoder) throws {
@@ -176,6 +184,7 @@ public struct EventRequirements: Codable, Equatable, Sendable {
             maxEnergy: try container.decodeIfPresent(Double.self, forKey: .maxEnergy),
             maxMood: try container.decodeIfPresent(Double.self, forKey: .maxMood),
             schedule: try container.decodeIfPresent(String.self, forKey: .schedule),
+            minEveningsLeft: try container.decodeIfPresent(Int.self, forKey: .minEveningsLeft),
             flagsAll: try container.decodeIfPresent([String].self, forKey: .flagsAll) ?? [],
             flagsNone: try container.decodeIfPresent([String].self, forKey: .flagsNone) ?? []
         )
@@ -211,6 +220,7 @@ public struct EventRequirements: Codable, Equatable, Sendable {
         try container.encodeIfPresent(maxEnergy, forKey: .maxEnergy)
         try container.encodeIfPresent(maxMood, forKey: .maxMood)
         try container.encodeIfPresent(schedule, forKey: .schedule)
+        try container.encodeIfPresent(minEveningsLeft, forKey: .minEveningsLeft)
         if !flagsAll.isEmpty { try container.encode(flagsAll, forKey: .flagsAll) }
         if !flagsNone.isEmpty { try container.encode(flagsNone, forKey: .flagsNone) }
     }

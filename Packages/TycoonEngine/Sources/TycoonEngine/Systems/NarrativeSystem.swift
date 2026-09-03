@@ -86,7 +86,7 @@ enum NarrativeSystem {
     ) -> [GameEvent] {
         markFired(def.id, once: def.once, cooldownDays: def.cooldownDays, state: &state, balance: balance)
 
-        let options = availableOptions(def.choices, state: state)
+        let options = availableOptions(def.choices, state: state, balance: balance)
         if !options.isEmpty {
             let respondBy = state.day + max(1, def.respondByDays)
             state.narrative.pendingChoice = PendingChoice(
@@ -96,7 +96,7 @@ enum NarrativeSystem {
                 body: def.body ?? def.headline,
                 options: options,
                 respondByDay: respondBy,
-                autoOptionIndex: def.autoChoiceIndex ?? (options.last?.index ?? 0),
+                autoOptionIndex: autoIndex(def.autoChoiceIndex, among: options),
                 category: def.category.rawValue,
                 raisedDay: state.day
             )
@@ -124,6 +124,16 @@ enum NarrativeSystem {
         let chance = narrative.lifeEventChance ?? balance.life.lifeEventChance
         guard interval > 0, state.day % interval == 0, !content.lifeEvents.isEmpty else { return [] }
 
+        // WS-E: a dated family beat takes the slot. It was scheduled, not
+        // rolled, so nothing is drawn — the hit roll below is the roll it
+        // replaces, and no extra pause is added. Only a run with a partner
+        // or a child ever has one; a single, childless founder's stream is
+        // exactly what it was.
+        if canFireBeat(state, balance),
+           let due = FamilyCalendar.dueDatedBeat(state, balance: balance, content: content) {
+            return fireDated(at: due.index, def: due.def, state: &state, balance: balance, content: content)
+        }
+
         // 1. The hit roll — one word, exactly as before.
         guard state.rng.nextUniform() < chance else { return [] }
 
@@ -138,27 +148,60 @@ enum NarrativeSystem {
         return fireLife(picked, state: &state, balance: balance)
     }
 
+    /// Fires the diary entry at `index` in the life roll's slot: the def
+    /// itself, or its "you missed the last one too" twin while the miss
+    /// is on the books, then the calendar's own bookkeeping (next year's).
+    private static func fireDated(
+        at index: Int,
+        def: LifeEventDef,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        let entry = state.narrative.scheduled.remove(at: index)
+        let events = fireLife(
+            FamilyCalendar.variant(of: def, state: state, content: content),
+            state: &state, balance: balance, childID: entry.childID
+        )
+        FamilyCalendar.fired(entry, &state, balance: balance, content: content)
+        return events
+    }
+
     /// Applies a life def: raises its choice sheet, or lands its impact.
+    /// `childID` names the child a family beat is about; `{partner}`,
+    /// `{child}` and `{company}` in the copy are filled here, into the
+    /// snapshot, so the sheet reads the same after a relaunch.
     static func fireLife(
         _ def: LifeEventDef,
         state: inout GameState,
-        balance: BalanceConfig
+        balance: BalanceConfig,
+        childID: UUID? = nil
     ) -> [GameEvent] {
         markFired(def.id, once: def.once, cooldownDays: def.cooldownDays, state: &state, balance: balance)
 
-        let options = availableOptions(def.choices, state: state)
+        let filled = state
+        func fill(_ text: String) -> String {
+            FamilyCalendar.fill(text, state: filled, childID: childID)
+        }
+        let options = availableOptions(def.choices, state: state, balance: balance).map { option in
+            var option = option
+            option.label = fill(option.label)
+            option.detail = option.detail.map(fill)
+            return option
+        }
         if !options.isEmpty {
             let respondBy = state.day + max(1, def.respondByDays)
             state.narrative.pendingChoice = PendingChoice(
                 id: def.id,
                 source: .life,
-                title: def.headline,
-                body: def.body ?? def.headline,
+                title: fill(def.headline),
+                body: fill(def.body ?? def.headline),
                 options: options,
                 respondByDay: respondBy,
-                autoOptionIndex: def.autoChoiceIndex ?? (options.last?.index ?? 0),
+                autoOptionIndex: autoIndex(def.autoChoiceIndex, among: options),
                 category: def.category.rawValue,
-                raisedDay: state.day
+                raisedDay: state.day,
+                childID: childID
             )
             return [.narrativeChoice(eventID: def.id, respondByDay: respondBy, day: state.day)]
         }
@@ -184,7 +227,9 @@ enum NarrativeSystem {
     // MARK: - Answering
 
     /// The player's answer. Ignored when nothing is pending, when the id
-    /// doesn't match what's on screen, or when the index isn't offered.
+    /// doesn't match what's on screen, when the index isn't offered, or
+    /// when the option is offered greyed (WS-E) — the sheet never sends
+    /// those, and the engine holds the line if something else does.
     static func resolveChoice(
         eventID: String,
         optionIndex: Int,
@@ -193,7 +238,7 @@ enum NarrativeSystem {
         content: ContentCatalog
     ) -> [GameEvent] {
         guard let pending = state.narrative.pendingChoice, pending.id == eventID,
-              pending.options.contains(where: { $0.index == optionIndex })
+              pending.options.contains(where: { $0.index == optionIndex && $0.isEnabled })
         else { return [] }
         return resolve(pending, optionIndex: optionIndex, automatic: false,
                        state: &state, balance: balance, content: content)
@@ -208,11 +253,19 @@ enum NarrativeSystem {
         guard let pending = state.narrative.pendingChoice, state.day > pending.respondByDay else {
             return []
         }
-        let index = pending.options.contains(where: { $0.index == pending.autoOptionIndex })
-            ? pending.autoOptionIndex
-            : (pending.options.last?.index ?? 0)
+        let index = autoIndex(pending.autoOptionIndex, among: pending.options)
         return resolve(pending, optionIndex: index, automatic: true,
                        state: &state, balance: balance, content: content)
+    }
+
+    /// The option the deadline picks: the definition's choice when it is
+    /// offered and open, else the last open option — a greyed option is
+    /// never the silent answer, whatever the definition says.
+    private static func autoIndex(_ preferred: Int?, among options: [ChoiceOption]) -> Int {
+        if let preferred, options.contains(where: { $0.index == preferred && $0.isEnabled }) {
+            return preferred
+        }
+        return options.last(where: \.isEnabled)?.index ?? options.last?.index ?? 0
     }
 
     private static func resolve(
@@ -268,10 +321,30 @@ enum NarrativeSystem {
         for flag in choice.setFlags { state.narrative.flags.insert(flag) }
         for flag in choice.clearFlags { state.narrative.flags.remove(flag) }
         if let followUp = choice.followUpEventID {
-            schedule(
-                followUp, source: pending.source,
-                day: state.day + max(1, choice.followUpDelayDays), state: &state
-            )
+            let day = state.day + max(1, choice.followUpDelayDays)
+            if pending.source == .life, content.lifeEvent(followUp)?.isDated == true {
+                // WS-E: a promise with a date in it goes in the diary,
+                // spaced the way the diary is spaced.
+                FamilyCalendar.schedule(
+                    followUp, day: day, childID: pending.childID,
+                    state: &state, balance: balance, content: content
+                )
+            } else {
+                schedule(
+                    followUp, source: pending.source, day: day,
+                    childID: pending.childID, state: &state
+                )
+            }
+        }
+        // WS-E: the polite miss on a dated beat is a missed date, whether
+        // the founder chose it or the deadline did. The flag is the
+        // engine's promise, whatever the content wrote.
+        if pending.source == .life,
+           let def = content.lifeEvent(pending.id), def.isDated,
+           optionIndex == pending.autoOptionIndex
+            || choice.setFlags.contains(FamilyCalendar.missedFlag) {
+            state.narrative.flags.insert(FamilyCalendar.missedFlag)
+            events.append(.familyDateMissed(eventID: pending.id, day: state.day))
         }
         events.append(.narrativeResolved(
             eventID: pending.id, optionID: choice.id, automatic: automatic, day: state.day
@@ -281,14 +354,15 @@ enum NarrativeSystem {
 
     // MARK: - Follow-ups
 
-    private static func schedule(
+    static func schedule(
         _ eventID: String,
         source: NarrativeSource,
         day: Int,
+        childID: UUID? = nil,
         state: inout GameState
     ) {
         state.narrative.scheduled.append(
-            ScheduledNarrativeEvent(day: day, eventID: eventID, source: source)
+            ScheduledNarrativeEvent(day: day, eventID: eventID, source: source, childID: childID)
         )
         state.narrative.scheduled.sort {
             ($0.day, $0.eventID, $0.source.rawValue) < ($1.day, $1.eventID, $1.source.rawValue)
@@ -296,14 +370,19 @@ enum NarrativeSystem {
     }
 
     /// Fires the first due follow-up (at most one a day, and never on top
-    /// of a pending choice — the rest wait their turn).
+    /// of a pending choice — the rest wait their turn). A dated family
+    /// beat still inside its window is left for the life roll's slot
+    /// (WS-E); past the window it fires here like any other follow-up.
     private static func fireScheduled(
         _ state: inout GameState,
         _ balance: BalanceConfig,
         _ content: ContentCatalog
     ) -> [GameEvent] {
         guard state.narrative.pendingChoice == nil,
-              let index = state.narrative.scheduled.firstIndex(where: { $0.day <= state.day })
+              let index = state.narrative.scheduled.firstIndex(where: {
+                  $0.day <= state.day
+                      && !FamilyCalendar.isWaitingForSlot($0, state: state, balance: balance, content: content)
+              })
         else { return [] }
         let due = state.narrative.scheduled.remove(at: index)
         switch due.source {
@@ -312,7 +391,16 @@ enum NarrativeSystem {
             return fireCompany(def, state: &state, balance: balance)
         case .life:
             guard let def = content.lifeEvent(due.eventID) else { return [] }
-            return fireLife(def, state: &state, balance: balance)
+            // WS-E: a life second act checks its gate on the day — a beat
+            // about a partner who has since left, or a miss since made up
+            // for, is dropped rather than told.
+            guard gateMet(def, state: state) else { return [] }
+            let events = fireLife(
+                FamilyCalendar.variant(of: def, state: state, content: content),
+                state: &state, balance: balance, childID: due.childID
+            )
+            FamilyCalendar.fired(due, &state, balance: balance, content: content)
+            return events
         case .staff:
             // WS-D: a staff second act becomes the pending staff moment for
             // `due.employeeID` (or lands at once), through the social
@@ -431,6 +519,13 @@ enum NarrativeSystem {
     private static func isEligible(_ def: LifeEventDef, state: GameState) -> Bool {
         // The version-1 gates first, so a legacy catalog behaves exactly as
         // it did.
+        guard versionOneGatesMet(def, state: state) else { return false }
+        return isEligible(
+            def.id, def.requires, def.once, def.cooldownDays, def.followUpOnly, state: state
+        )
+    }
+
+    private static func versionOneGatesMet(_ def: LifeEventDef, state: GameState) -> Bool {
         if let minStage = def.minStage {
             guard let stage = RelationshipStage(rawValue: minStage),
                   state.life.family.stage.rank >= stage.rank
@@ -438,9 +533,15 @@ enum NarrativeSystem {
         }
         if def.requiresChildren, state.life.family.children.isEmpty { return false }
         if let cap = def.maxRelationships, state.life.meters.relationships >= cap { return false }
-        return isEligible(
-            def.id, def.requires, def.once, def.cooldownDays, def.followUpOnly, state: state
-        )
+        return true
+    }
+
+    /// The whole gate — the version-1 fields and `requires` — without the
+    /// once / cooldown / follow-up bookkeeping: what a scheduled life
+    /// follow-up checks on the day it is due (WS-E).
+    static func gateMet(_ def: LifeEventDef, state: GameState) -> Bool {
+        versionOneGatesMet(def, state: state)
+            && (def.requires.map { meets($0, state: state) } ?? true)
     }
 
     private static func isEligible(
@@ -530,9 +631,15 @@ enum NarrativeSystem {
 
     /// Options whose own `requires` gate reads true, carrying their
     /// definition index so `resolveChoice` addresses the right one.
+    ///
+    /// `minEveningsLeft` is the one gate that greys instead of hiding
+    /// (WS-E): an option the founder *could* have taken, had the week not
+    /// already been spent, stays on the sheet with the reason under it.
+    /// Everything else in `requires` hides the option as before.
     private static func availableOptions(
         _ choices: [EventChoice],
-        state: GameState
+        state: GameState,
+        balance: BalanceConfig
     ) -> [ChoiceOption] {
         choices.enumerated().compactMap { index, choice in
             if let gate = choice.requires, !meets(gate, state: state) { return nil }
@@ -540,9 +647,24 @@ enum NarrativeSystem {
                 id: choice.id,
                 label: choice.label,
                 detail: choice.detail ?? defaultDetail(for: choice),
-                index: index
+                index: index,
+                disabledReason: eveningBlocker(for: choice, state: state, balance: balance)
             )
         }
+    }
+
+    /// Why an option that asks for an evening cannot have one, or `nil`.
+    /// A balance with no evening budget never blocks.
+    private static func eveningBlocker(
+        for choice: EventChoice,
+        state: GameState,
+        balance: BalanceConfig
+    ) -> String? {
+        guard let needed = choice.requires?.minEveningsLeft, needed > 0,
+              let left = state.eveningsLeftThisWeek(balance)
+        else { return nil }
+        if state.life.isAway(day: state.day) { return "You're away" }
+        return left >= needed ? nil : "No evenings left this week"
     }
 
     /// A consequence line assembled from the effects when the writer
@@ -647,6 +769,23 @@ enum NarrativeSystem {
                 }
             case .research(let amount):
                 state.research.banked = max(0, state.research.banked + amount)
+
+            // MARK: WS-E — the date in the diary
+
+            case .affection(let amount):
+                // A silent no-op while single: the number is not simulated.
+                guard state.life.family.stage != .single else { continue }
+                state.life.family.affection = clamp(state.life.family.affection + amount)
+                // Showing up counts as showing up — the neglect clock
+                // restarts the way a date night restarts it.
+                if amount > 0 { state.life.family.lastPartnerDay = state.day }
+            case .evening:
+                state.spendEvening(balance)
+            case .bond(let amount, let pick):
+                for index in indices(for: pick, state: &state) {
+                    state.employees[index].founderBond =
+                        clamp(state.employees[index].founderBond + amount)
+                }
             }
         }
         return events

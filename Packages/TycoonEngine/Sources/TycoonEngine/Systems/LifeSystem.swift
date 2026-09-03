@@ -60,7 +60,7 @@ enum LifeSystem {
         applyDailyDrift(&state, balance)
 
         // 3. Thresholds.
-        events.append(contentsOf: checkThresholds(&state, balance))
+        events.append(contentsOf: checkThresholds(&state, balance, content))
 
         // 3b. The long tail of those thresholds: a chronic condition, a
         //     meltdown that makes the press, loneliness, and the landlord.
@@ -143,7 +143,8 @@ enum LifeSystem {
 
     private static func checkThresholds(
         _ state: inout GameState,
-        _ balance: BalanceConfig
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
     ) -> [GameEvent] {
         let config = balance.life
         var events: [GameEvent] = []
@@ -198,6 +199,8 @@ enum LifeSystem {
             state.life.family.partnerCooldowns = [:]
             state.life.meters.apply(mood: -config.breakupMoodPenalty)
             state.life.lowRelationshipStreakDays = 0
+            // WS-E: their dates leave the diary with them.
+            FamilyCalendar.partnerLeft(&state, content: content)
             events.append(.breakup(day: day))
         }
 
@@ -590,6 +593,8 @@ enum LifeSystem {
         }
 
         state.life.family.stageSinceDay = state.day
+        // WS-E: a year from today is an anniversary.
+        FamilyCalendar.stageChanged(&state, balance: balance, content: content)
         return [.relationshipChanged(stage: state.life.family.stage, day: state.day)]
     }
 
@@ -618,11 +623,12 @@ enum LifeSystem {
         let seed = state.rng.next()
 
         state.life.wallet -= config.childStartCost
-        state.life.family.children.append(Child(
-            id: id, name: name, bornDay: state.day, appearanceSeed: seed
-        ))
+        let child = Child(id: id, name: name, bornDay: state.day, appearanceSeed: seed)
+        state.life.family.children.append(child)
         state.life.family.lastChildDay = state.day
         state.life.meters.apply(mood: config.childMoodBonus)
+        // WS-E: their first birthday goes in the diary.
+        FamilyCalendar.childBorn(child, &state, balance: balance, content: content)
         return [.childBorn(name: name, day: state.day)]
     }
 

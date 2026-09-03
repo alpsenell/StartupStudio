@@ -295,6 +295,37 @@ extension BalanceConfig {
     /// The people the founder is close to: a partner who notices being
     /// ignored, and a team that can become friends.
     public struct RelationshipBalance: Codable, Equatable, Sendable {
+        /// The family calendar (WS-E, iteration 5): how a dated beat waits
+        /// for the life roll's slot, and how the dates are spaced. Every
+        /// knob is neutral by construction — no date is ever scheduled
+        /// for a single, childless founder, which is every pacing bot.
+        public struct DiaryBalance: Codable, Equatable, Sendable {
+            /// Days a dated beat waits for a life-roll interval day before
+            /// it gives up and fires like any other follow-up (a pause).
+            public var windowDays: Int
+            /// One dated obligation per person per this many days.
+            public var spacingDays: Int
+            /// No partner date inside the first days of a stage — a fresh
+            /// relationship is not handed an obligation.
+            public var stageGraceDays: Int
+            /// A year, for anniversaries and birthdays.
+            public var yearDays: Int
+
+            public init(
+                windowDays: Int = 10,
+                spacingDays: Int = 60,
+                stageGraceDays: Int = 90,
+                yearDays: Int = 365
+            ) {
+                self.windowDays = windowDays
+                self.spacingDays = spacingDays
+                self.stageGraceDays = stageGraceDays
+                self.yearDays = yearDays
+            }
+
+            public static let `default` = DiaryBalance()
+        }
+
         /// One thing the founder can do with their partner.
         public struct PartnerActivityDef: Codable, Equatable, Sendable {
             public var cost: Int
@@ -357,6 +388,8 @@ extension BalanceConfig {
         public var bondOutputFactor: Double
         public var bondMoraleTargetFactor: Double
         public var bondLoyaltyPerDay: Double
+        /// The family calendar (WS-E). Decodes `.default` when absent.
+        public var diary: DiaryBalance
 
         public init(
             startingAffection: Double = 55,
@@ -377,7 +410,8 @@ extension BalanceConfig {
             mentorCooldownDays: Int = 7,
             bondOutputFactor: Double = 0,
             bondMoraleTargetFactor: Double = 0,
-            bondLoyaltyPerDay: Double = 0
+            bondLoyaltyPerDay: Double = 0,
+            diary: DiaryBalance = .default
         ) {
             self.startingAffection = startingAffection
             self.affectionDrift = affectionDrift
@@ -396,6 +430,7 @@ extension BalanceConfig {
             self.bondOutputFactor = bondOutputFactor
             self.bondMoraleTargetFactor = bondMoraleTargetFactor
             self.bondLoyaltyPerDay = bondLoyaltyPerDay
+            self.diary = diary
         }
 
         public func partnerActivity(_ activity: PartnerActivity) -> PartnerActivityDef? {
@@ -440,6 +475,15 @@ extension KeyedDecodingContainer {
         _ type: BalanceConfig.RelationshipBalance.Type,
         forKey key: Key
     ) throws -> BalanceConfig.RelationshipBalance {
+        try decodeIfPresent(type, forKey: key) ?? .default
+    }
+
+    // WS-E: a `relationships` object written before the family calendar
+    // existed reads the shipped calendar.
+    func decode(
+        _ type: BalanceConfig.RelationshipBalance.DiaryBalance.Type,
+        forKey key: Key
+    ) throws -> BalanceConfig.RelationshipBalance.DiaryBalance {
         try decodeIfPresent(type, forKey: key) ?? .default
     }
 }
