@@ -323,3 +323,49 @@ badge against `EmployeeStatus`.
 `Theme.gameLocale` through `Int.money` and every `.formatted` site,
 `MoneyText`, the `PixelText` glyph roll, `MoneySheet` off the cash counter.
 Then a finisher for warnings, dead code, and the README.
+
+---
+
+## Status (3 Sep 2026)
+
+All seven workstreams and wave 2 shipped on `iteration-4`, commits
+`0f09cdd` (A) → `3591f80` (D) → `25731e7` (B) → `999328e` (C) → `f10321a` (E)
+→ `a87d09e` (F) → `608ca0e` (G) → `01bdc52` (money). The seven teammates
+were launched but every subagent, on Fable and then on Opus, was refused by
+the API with "529 Overloaded" on its first turn (14 of 15 turns), so the
+integrator built every workstream in the main session in merge order and
+committed each with its own message. Test totals at the end: engine 695,
+content 47, save 10, PixelKit 279, app 90; `make build` clean.
+
+Deviations from the briefs, each deliberate:
+
+- **The office and home scenes are not cropped** on HQ and Life. In the
+  garage the founder sits in the lower floor band the doc proposed
+  trimming; the Now card and Your-week card above the scenes put the next
+  action above the fold without cutting anyone out.
+- **The rail's event line keeps the message in the system face.** A full
+  sentence in the 5×7 bitmap font does not fit a phone width; the rail's
+  ink bar, icon and tint are the chrome. The cash figure does roll in
+  pixel.
+- **Days-to-full per pool** on the focus editor was not built; the engine
+  has no per-day output estimate short of running the tick, and a number
+  that promised what crunch or a resignation would change was worse than
+  none. "Match the work" and the starting split are in.
+- **`MoneyText` was not introduced.** Every formatting site now passes the
+  game locale (a source-scanning test guards it) and money already goes
+  through `Theme.Typography.number` or the pixel face; a 231-site rename
+  bought nothing more.
+- **The lamp flicker for a short runway** was dropped: a flickering wash
+  needed a new translucent colour and the palette test gates colours. The
+  envelope pile carries the signal.
+- **The crew ceiling is one line above a type list**, not a badge per row:
+  it is the people, not the type, so it is the same number six times.
+- **Chapter card stays on HQ** below the burn card; it is the only place
+  the other goals, the perks and the next chapter's teaser live.
+- The weekly report's "Do this next" does not consult the ship forecast
+  (the report is built without the content catalog); it uses the goal's
+  own detail for a build in flight.
+
+Not verified on device (no tapping): sheets and flows are covered by
+snapshot tests and code reading; the office with two or more people was
+seen only in PixelKit's preview PNGs (`pressure_*`, `home_signal_*`).

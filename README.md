@@ -141,10 +141,43 @@ Five tabs over the persistent cash/date/speed HUD:
   your own meters, what happened, and what is due next week. It opens
   itself for the first eight weeks and can be told not to, from the report
   itself.
-- **Coaching without nagging.** A pause banner leads with the loudest
-  reason the clock stopped, six dismissable coach tips keyed to the goals
-  you actually have, a searchable journal that collapses routine weeks, and
-  chiptune sound and haptics (both synthesized in-app, both switchable).
+- **One top band.** Under the HUD sits a single notice rail: the reason
+  the clock stopped, a story question you put off and its real countdown,
+  the unread weekly report, the newest thing that happened, or a coach
+  tip — one line at a time, by priority, with a "+N" that opens the
+  journal and a swipe to cycle. The HUD carries runway under the date, a
+  dot on the speed control when something needs you, and a cash figure
+  that rolls; tapping it opens the money sheet (company, bank, you).
+- **Every tab lands on the next thing.** HQ opens on a Now card — the
+  build in flight and the goal you are closest to, with its action as a
+  button — then the office. Life opens on your week: evenings as pips,
+  your schedule and the team's pace side by side, the weekend plan, and
+  what a day of you is worth. Business opens on the desk: every contract,
+  term sheet, campaign, boom, crash, price war, loan and board with a
+  clock on it, most urgent first, and a grid of six sections with badges.
+  Products on day 0 shows the catalog and what today's crew could review
+  as; Team says what each person needs this week and badges the tab.
+- **Decisions with the numbers, in the game's hand.** Every option with a
+  cash effect shows the company afterwards ("−$2,300 → $9,250 · runway 8
+  wk"); story questions can be put off with "Let me think" and go to the
+  rail with their deadline; the sheet is drawn on pixel paper with the
+  asker's portrait and a bitmap kicker.
+- **The office reads the game.** Crunch pins the room to night with a
+  pizza box on the founder's desk; a short runway lands an envelope pile;
+  debt puts the note on the coffee machine; a buggy build spawns bug
+  bubbles over the coders; somebody about to leave has a flattened box
+  under their desk; a buyout on the table stands a courier at the door.
+  The home reads the meters the same way. Reduce Motion seats everyone.
+- **The maths, before and after.** The new-product flow says what today's
+  crew could review as before you commit, launch day says why the score
+  was what it was with the fix one tap away, and the focus editor offers
+  "Match the work". A failed ending gets a post-mortem — three facts with
+  numbers — and every ending offers the same year again on the same seed.
+- **Coaching without nagging.** Six dismissable coach tips keyed to the
+  goals you actually have, a weekly report that leads with "Do this next"
+  and stops opening itself once you have opened it twice yourself, a
+  searchable journal that collapses routine weeks, and chiptune sound and
+  haptics (both synthesized in-app, both switchable).
 
 Plus autosave with versioned migrations, and a deterministic engine — same
 seed, same game — under all of it.
@@ -256,8 +289,8 @@ from the same sprites.
   open /tmp/pixelkit
   ```
 
-  The App target renders its own chrome the same way — the HUD, the pause
-  banner, toasts, the weekly report's bottom bar, launch day, the box-art
+  The App target renders its own chrome the same way — the HUD, the notice
+  rail, the decision sheet, the weekly report's bottom bar, launch day, the box-art
   sheet and the bitmap font, each in light and dark. Those run inside the
   simulator, where `PIXELKIT_PREVIEW_DIR` from the host does not reach
   them, so they land in the app's own temporary directory:

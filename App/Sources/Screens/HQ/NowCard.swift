@@ -21,7 +21,11 @@ struct NowCard: View {
 
     var body: some View {
         let build = engine.state.productInDevelopment
-        if goal != nil || build != nil {
+        // Before the first tick there are no goals yet (progression opens
+        // them on day one), so a brand-new game still leads with the one
+        // thing to do.
+        let dayZero = goal == nil && build == nil && engine.state.products.isEmpty
+        if goal != nil || build != nil || dayZero {
             CardView("Now", systemImage: "arrow.right.circle.fill") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     if let product = build, case .development(let progress) = product.stage {
@@ -32,10 +36,38 @@ struct NowCard: View {
                     }
                     if let goal {
                         goalRow(goal)
+                    } else if dayZero {
+                        dayZeroRow
                     }
                 }
             }
         }
+    }
+
+    /// Day 0, before the goals exist: the first product, one tap away.
+    private var dayZeroRow: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text("Start your first product")
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+            Text("Pick a type, pick a topic, and get building. Press play when you are ready.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                Haptics.tap()
+                Sounds.play(.tap)
+                startNewProduct()
+            } label: {
+                Label("Start a product", systemImage: "hammer.fill")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.xs)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.accent)
+            .padding(.top, Theme.Spacing.xs)
+        }
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: - The build in flight
