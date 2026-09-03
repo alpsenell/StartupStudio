@@ -65,37 +65,6 @@ final class SnapshotTests: XCTestCase {
         }
     }
 
-    func testRendersThePauseBanner() {
-        let engine = engine()
-        // A paused clock with a reason: the banner reads the loudest one.
-        snapshot("pause_banner", width: 393) {
-            VStack(spacing: 0) {
-                PauseBannerPreview(
-                    icon: "star.fill",
-                    message: "Reviews are in for Overcast: 58",
-                    tint: Theme.warning
-                )
-                PauseBannerPreview(
-                    icon: "exclamationmark.triangle.fill",
-                    message: "Bankruptcy warning — cash has run dry",
-                    tint: Theme.negativeCash
-                )
-            }
-        }
-        _ = engine
-    }
-
-    func testRendersToasts() {
-        let center = ToastCenter()
-        center.show("Priya joins as Backend Dev", icon: "person.badge.plus", tint: Theme.positiveCash)
-        center.show("Signed Pigeon Logistics · due W12", icon: "briefcase.fill")
-        center.show("Overcast left the market", icon: "archivebox.fill", tint: .secondary)
-        snapshot("toasts") {
-            ToastStack(center: center)
-                .padding(.vertical, Theme.Spacing.lg)
-        }
-    }
-
     func testRendersTheWeeklyReport() {
         let engine = engine()
         snapshot("weekly_report_headline") {
@@ -192,38 +161,5 @@ final class SnapshotTests: XCTestCase {
             }
             .padding(Theme.Spacing.lg)
         }
-    }
-}
-
-/// A standalone copy of the pause banner's layout for snapshotting, so the
-/// image doesn't depend on driving a live engine into a paused tick.
-private struct PauseBannerPreview: View {
-    let icon: String
-    let message: String
-    let tint: Color
-
-    var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            Image(systemName: icon)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(tint)
-                .frame(width: 22)
-            Text(message)
-                .font(.system(.footnote, design: .rounded).weight(.semibold))
-            Spacer(minLength: Theme.Spacing.sm)
-            Text("Details")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.accent)
-            Label("Resume", systemImage: "play.fill")
-                .labelStyle(.iconOnly)
-                .font(.footnote.weight(.bold))
-                .padding(.horizontal, Theme.Spacing.sm)
-                .padding(.vertical, Theme.Spacing.xs)
-                .background(Theme.accent, in: Capsule())
-                .foregroundStyle(.white)
-        }
-        .padding(.horizontal, Theme.Spacing.lg)
-        .padding(.vertical, Theme.Spacing.sm)
-        .background(tint.opacity(0.12))
     }
 }

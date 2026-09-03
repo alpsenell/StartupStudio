@@ -26,8 +26,10 @@ struct CoachTip: Identifiable, Equatable {
         CoachTip(
             id: "tip.first_product",
             goalID: "g1_name_a_product",
-            message: "Start a product from HQ. Pick a type you can actually build, and a topic the market likes.",
-            systemImage: "hammer.fill"
+            message: "Start a product. Pick a type you can actually build, and a topic the market likes.",
+            systemImage: "hammer.fill",
+            route: .newProduct(topicID: nil),
+            routeLabel: "Start"
         ),
         CoachTip(
             id: "tip.ship_it",
@@ -64,84 +66,6 @@ struct CoachTip: Identifiable, Equatable {
             systemImage: "star.fill"
         ),
     ]
-}
-
-/// The dismissible hint under the HUD, showing the tip for the player's
-/// most recently activated goal.
-///
-/// Reads WS-F's active goal ids through `ProgressionReader`. A tip shows
-/// while its goal is active and never again once dismissed or once the
-/// goal is done, so the strip empties itself as the player learns.
-struct TipStrip: View {
-    let engine: GameEngine
-    /// Deep-link handler, so a tip's button can jump to the screen it
-    /// talks about.
-    var onRoute: ((Route) -> Void)?
-
-    @State private var dismissed: Set<String> = GameSettings.dismissedTips
-
-    private var tip: CoachTip? {
-        let activeGoals = ProgressionReader.activeGoalIDs(in: engine.state)
-        guard !activeGoals.isEmpty else { return nil }
-        return CoachTip.all.first {
-            activeGoals.contains($0.goalID) && !dismissed.contains($0.id)
-        }
-    }
-
-    var body: some View {
-        if let tip {
-            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-                Image(systemName: tip.systemImage)
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
-                    .padding(.top, 2)
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text(tip.message)
-                        .font(.footnote)
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let route = tip.route, let label = tip.routeLabel, let onRoute {
-                        Button {
-                            Haptics.tap()
-                            onRoute(route)
-                        } label: {
-                            Label(label, systemImage: "arrow.forward")
-                                .font(.caption.weight(.semibold))
-                                .padding(.vertical, Theme.Spacing.sm)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                }
-                Spacer(minLength: 0)
-                Button {
-                    Haptics.tap()
-                    dismiss(tip)
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.pressableRow)
-                .accessibilityLabel("Dismiss tip")
-            }
-            .padding(.horizontal, Theme.Spacing.lg)
-            .padding(.vertical, Theme.Spacing.sm)
-            .background(Theme.accent.opacity(0.10))
-            .overlay(alignment: .bottom) { Divider() }
-            .transition(Theme.Motion.transition(.move(edge: .top).combined(with: .opacity)))
-            .accessibilityElement(children: .contain)
-        }
-    }
-
-    private func dismiss(_ tip: CoachTip) {
-        withAnimation(Theme.Motion.entrance) {
-            _ = dismissed.insert(tip.id)
-        }
-        GameSettings.dismissedTips = dismissed
-    }
 }
 
 /// Reads WS-F's progression state.

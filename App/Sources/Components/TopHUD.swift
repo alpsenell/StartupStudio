@@ -1,9 +1,9 @@
 import SwiftUI
 import TycoonEngine
 
-/// Persistent heads-up display: cash (left), the calendar date (center),
-/// speed control (right) — all in the game's bitmap face — with the
-/// weekly-report chip, the pause banner and the coach tip stacked under it.
+/// Persistent heads-up display: cash (left, with the delta that just moved
+/// it underneath), the date and the runway (centre), the speed control
+/// (right) — all in the game's bitmap face — with the notice rail under it.
 ///
 /// Attached by each tab's root screen via `withTopHUD(engine:)` — inside
 /// the tab's `NavigationStack`, on the stack's root content view — so the
@@ -19,14 +19,16 @@ struct TopHUD: View {
     private var shell: GameShell { injectedShell ?? .shared }
     @Environment(AppRouter.self) private var router
 
+    /// The sign colour the cash pill flashes when money moves, so the
+    /// direction reads even when the delta's digits are not.
+    @State private var cashFlash: Color?
+
     private var calendar: GameCalendar { engine.state.gameCalendar }
 
     var body: some View {
         VStack(spacing: 0) {
             bar
-            WeeklyReportChip(engine: engine)
-            PauseBanner(engine: engine) { route in router.go(route) }
-            TipStrip(engine: engine) { route in router.go(route) }
+            NoticeRail(engine: engine) { route in router.go(route) }
         }
         .animation(Theme.Motion.entrance, value: engine.state.speed)
         .animation(Theme.Motion.entrance, value: shell.pendingReportWeek)
@@ -35,34 +37,56 @@ struct TopHUD: View {
     private var bar: some View {
         // One row rather than a centred overlay: at scale 2 the bitmap
         // date is wide enough to collide with the speed buttons if it is
-        // free to sit dead centre.
-        HStack(spacing: Theme.Spacing.sm) {
-            cashCounter
-            Spacer(minLength: Theme.Spacing.xs)
-            dateLabel
-            Spacer(minLength: Theme.Spacing.xs)
-            SpeedControl(engine: engine)
+        // free to sit dead centre. The cash and the speed control keep
+        // their width; the date is the flexible one and falls back to its
+        // compact form when the row is tight.
+        // No spacers: the date column itself is the flexible member, so
+        // `ViewThatFits` is offered everything the cash and the speed
+        // control leave, not a third of it.
+        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+            VStack(alignment: .leading, spacing: 2) {
+                cashCounter
+                CashDeltaSlot(engine: engine) { delta in flash(delta) }
+            }
+            .layoutPriority(1)
+
+            VStack(alignment: .center, spacing: 3) {
+                dateLabel
+                runwayLabel
+            }
+            .padding(.top, 4)
+            .frame(maxWidth: .infinity)
+
+            SpeedControl(engine: engine, attention: needsAttention)
+                .layoutPriority(1)
         }
         .padding(.horizontal, Theme.Spacing.lg)
         .padding(.vertical, Theme.Spacing.sm)
         .background(.bar)
         .overlay(alignment: .bottom) { Divider() }
-        .overlay(alignment: .topLeading) {
-            CashDeltaOverlay(engine: engine)
-                .padding(.leading, Theme.Spacing.lg)
-                .padding(.top, 30)
-        }
     }
 
-    /// "Mar W2 · Y1", with a weekend badge on Saturday and Sunday.
+    /// Something is waiting on the player: the clock stopped for a reason,
+    /// a report is unread, or a deferred question is counting down.
+    private var needsAttention: Bool {
+        !engine.lastPauseEvents.isEmpty
+            || shell.pendingReportWeek != nil
+            || shell.deferredChoiceID != nil
+    }
+
+    // MARK: - Date and runway
+
+    /// "Mar W2 · Y1" with a weekend badge, or "W2 · Y1" when the row is
+    /// too tight for the month — the badge folds into the compact form.
     private var dateLabel: some View {
-        HStack(spacing: Theme.Spacing.xs) {
-            PixelText(text: calendar.hudLabel, scale: 2, color: .secondary)
-            if calendar.isWeekend {
-                Image(systemName: "sun.horizon.fill")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.warning)
-                    .accessibilityLabel("Weekend")
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: Theme.Spacing.xs) {
+                PixelText(text: calendar.hudLabel, scale: 2, color: .secondary)
+                weekendBadge
+            }
+            HStack(spacing: Theme.Spacing.xs) {
+                PixelText(text: calendar.compactHUDLabel, scale: 2, color: .secondary)
+                weekendBadge
             }
         }
         .accessibilityElement(children: .combine)
@@ -70,6 +94,41 @@ struct TopHUD: View {
             "\(calendar.longLabel), week \(calendar.weekOfYear)\(calendar.isWeekend ? ", weekend" : "")"
         )
     }
+
+    @ViewBuilder
+    private var weekendBadge: some View {
+        if calendar.isWeekend {
+            Image(systemName: "sun.horizon.fill")
+                .font(.caption2)
+                .foregroundStyle(Theme.warning)
+                .accessibilityLabel("Weekend")
+        }
+    }
+
+    /// Runway is the number the game tells the player to watch, so it
+    /// lives under the date rather than five cards down on HQ. Same
+    /// thresholds as the burn card: orange under four weeks, red in debt.
+    private var runwayLabel: some View {
+        let cash = engine.state.company.cash
+        let burn = engine.weeklyBurn
+        let text: String
+        let tint: Color
+        if cash < 0 {
+            text = "IN THE RED"
+            tint = Theme.negativeCash
+        } else if burn <= 0 {
+            text = "NO BURN"
+            tint = Theme.positiveCash
+        } else {
+            let weeks = cash / burn
+            text = "RUNWAY \(weeks) WK"
+            tint = weeks <= 4 ? Theme.warning : .secondary
+        }
+        return PixelText(text: text, scale: 1, color: tint)
+            .accessibilityLabel(cash < 0 ? "In the red" : "Runway \(text.dropFirst(7))")
+    }
+
+    // MARK: - Cash
 
     private var cashCounter: some View {
         let cash = engine.state.company.cash
@@ -81,48 +140,17 @@ struct TopHUD: View {
         )
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, Theme.Spacing.xs)
-        .background(Theme.chipBackground, in: Capsule())
+        .background(cashFlash ?? Theme.chipBackground, in: Capsule())
         .accessibilityLabel("Cash \(cash.money)")
     }
-}
 
-/// The "Week 12 report" chip: non-blocking, appears at each week's end and
-/// stays until the player reads it.
-private struct WeeklyReportChip: View {
-    let engine: GameEngine
-
-    @Environment(GameShell.self) private var injectedShell: GameShell?
-    /// See `GameShell.shared`: read optionally, because SwiftUI
-    /// updates this property for presented content before the
-    /// environment is installed and the non-optional form traps there.
-    private var shell: GameShell { injectedShell ?? .shared }
-
-    var body: some View {
-        if let week = shell.pendingReportWeek {
-            Button {
-                shell.openWeeklyReport(engine: engine)
-            } label: {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.footnote.weight(.bold))
-                    Text("Week \(week) report")
-                        .font(.system(.footnote, design: .rounded).weight(.semibold))
-                        .monospacedDigit()
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.vertical, Theme.Spacing.sm)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.pressableRow)
-            .foregroundStyle(Theme.accent)
-            .background(Theme.accent.opacity(0.10))
-            .overlay(alignment: .bottom) { Divider() }
-            .transition(Theme.Motion.transition(.move(edge: .top).combined(with: .opacity)))
-            .accessibilityHint("Opens the weekly report")
+    private func flash(_ delta: Int) {
+        let tint = (delta >= 0 ? Theme.positiveCash : Theme.negativeCash).opacity(0.28)
+        withAnimation(.easeOut(duration: Theme.Motion.quick)) {
+            cashFlash = tint
+        }
+        withAnimation(.easeIn(duration: Theme.Motion.value).delay(0.45)) {
+            cashFlash = nil
         }
     }
 }

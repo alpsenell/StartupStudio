@@ -109,7 +109,11 @@ final class ToastCenter {
         let fresh = Array(log.suffix(log.count - lastAnnouncedEventCount))
         lastAnnouncedEventCount = log.count
         onFreshEvents?(fresh)
-        announce(fresh, copy: copy)
+        // An event that stopped the clock is the notice rail's pause
+        // reason already; announcing it again would say the same thing
+        // twice in the same 60pt.
+        let pausing = state.economy.pauseEvents
+        announce(fresh.filter { !pausing.contains($0) }, copy: copy)
         return fresh
     }
 
@@ -120,11 +124,14 @@ final class ToastCenter {
     }
 
     /// Events that get a full sheet or a banner of their own; a toast on
-    /// top of those is noise.
+    /// top of those is noise. `.rivalShipped` is the topic-level twin of
+    /// `.rivalProductLaunched`, which names the product and its score —
+    /// one launch, one line.
     private func shouldToast(_ event: GameEvent) -> Bool {
         switch event {
         case .shipped, .reviewsIn, .gameOver, .companySold,
-             .poachAttempt, .buyoutOffered, .staffEventOccurred:
+             .poachAttempt, .buyoutOffered, .staffEventOccurred,
+             .rivalShipped:
             false
         default:
             event.severity != .quiet
@@ -204,68 +211,5 @@ extension ToastCenter {
             show(ack, icon: icon, tint: tint)
         }
         return produced
-    }
-}
-
-/// The stack of toasts, laid over the top of the app under the HUD.
-struct ToastStack: View {
-    let center: ToastCenter
-
-    var body: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            ForEach(center.toasts) { toast in
-                ToastView(toast: toast)
-                    .transition(
-                        Theme.Motion.transition(
-                            .asymmetric(
-                                insertion: .move(edge: .top).combined(with: .opacity),
-                                removal: .opacity
-                            )
-                        )
-                    )
-            }
-        }
-        .padding(.horizontal, Theme.Spacing.lg)
-        .frame(maxWidth: .infinity, alignment: .center)
-        .allowsHitTesting(false)
-        .accessibilityElement(children: .contain)
-    }
-}
-
-private struct ToastView: View {
-    let toast: Toast
-
-    var body: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            Image(systemName: toast.icon)
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(toast.tint)
-            Text(toast.message)
-                .font(.system(.footnote, design: .rounded).weight(.medium))
-                .foregroundStyle(.primary)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-        }
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, Theme.Spacing.sm)
-        .background(.regularMaterial, in: Capsule())
-        .overlay(
-            Capsule().strokeBorder(toast.tint.opacity(0.35), lineWidth: 1)
-        )
-        .shadow(color: Theme.shadow, radius: 8, y: 3)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(toast.message)
-    }
-}
-
-#Preview {
-    let center = ToastCenter()
-    return ZStack(alignment: .top) {
-        Theme.screenBackground.ignoresSafeArea()
-        ToastStack(center: center)
-    }
-    .onAppear {
-        center.show("Priya joins as Backend Dev", icon: "person.badge.plus", tint: Theme.positiveCash)
-        center.show("Signed Pigeon Logistics · due W12", icon: "briefcase.fill")
     }
 }

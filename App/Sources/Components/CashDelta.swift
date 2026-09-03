@@ -1,15 +1,19 @@
 import SwiftUI
 import TycoonEngine
 
-/// One floating "+$1,240" / "−$900" label that rises and fades out of the
-/// HUD when money moves.
+/// One "+$1,240" / "−$900" label that rises and fades when money moves.
 struct CashDeltaLabel: View {
     /// Signed dollars. Positive floats green, negative floats red.
     let amount: Int
     /// What moved the money ("Sales", "Payroll"), from the ledger tail.
     let reason: String?
+    /// Pixel scale of the figure. The HUD's slot uses 1 so the label sits
+    /// under the cash pill instead of across it.
+    var scale: CGFloat = 2
+    /// How far the label rises before it fades, in points.
+    var rise: CGFloat = 18
 
-    @State private var offset: CGFloat = 6
+    @State private var offset: CGFloat = 4
     @State private var opacity: Double = 0
 
     private var tint: Color { amount >= 0 ? Theme.positiveCash : Theme.negativeCash }
@@ -17,11 +21,12 @@ struct CashDeltaLabel: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            PixelText(text: text, scale: 2, color: tint, shadow: true)
+            PixelText(text: text, scale: scale, color: tint, shadow: scale >= 2)
             if let reason {
                 Text(reason)
                     .font(.system(.caption2, design: .rounded).weight(.semibold))
                     .foregroundStyle(tint.opacity(0.8))
+                    .lineLimit(1)
             }
         }
         .offset(y: offset)
@@ -34,45 +39,64 @@ struct CashDeltaLabel: View {
             let holdStill = Theme.Motion.isReduced
             withAnimation(.easeOut(duration: Theme.Motion.quick + 0.04)) {
                 opacity = 1
-                offset = holdStill ? 0 : -2
+                offset = holdStill ? 0 : -1
             }
             withAnimation(.easeIn(duration: 0.5).delay(0.7)) {
                 opacity = 0
-                offset = holdStill ? 0 : -18
+                offset = holdStill ? 0 : -rise
             }
         }
         .accessibilityHidden(true)
     }
 }
 
-/// Watches the company's cash and floats a `CashDeltaLabel` under the HUD
-/// every time it moves, labelled from the newest ledger entry.
+/// The reserved slot under the HUD's cash pill where the delta shows.
+///
+/// It used to float over the pill, covering the figure it was explaining
+/// for the half second it mattered. The slot has its own height, so the
+/// label never lands on the cash; it also reports each delta to the HUD,
+/// which flashes the pill's fill in the sign colour.
 ///
 /// Deltas smaller than `threshold` are swallowed so the daily trickle of
 /// $3 operating costs doesn't produce a permanent drip of labels.
-struct CashDeltaOverlay: View {
+struct CashDeltaSlot: View {
     let engine: GameEngine
     /// Smallest absolute change worth showing.
     var threshold: Int = 25
+    /// Called with every delta the slot shows.
+    var onDelta: ((Int) -> Void)?
 
-    /// A pending float: the amount plus a token so two identical deltas in
-    /// a row still animate separately.
+    /// The pending float: the amount plus a token so two identical deltas
+    /// in a row still animate separately.
     private struct Floater: Identifiable, Equatable {
         let id: Int
         let amount: Int
         let reason: String?
     }
 
+    /// The slot's height: one scale-1 pixel line with room to rise.
+    static let height: CGFloat = 14
+
     @State private var lastCash: Int?
-    @State private var floaters: [Floater] = []
+    @State private var floater: Floater?
     @State private var nextToken = 0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(floaters) { floater in
-                CashDeltaLabel(amount: floater.amount, reason: floater.reason)
+        // The slot claims height, not width: a greedy clear fill here
+        // would push the date into its compact form on every phone. The
+        // label is sized to its text and may overhang to the right, under
+        // the bar's empty middle, which is fine for the second it lives.
+        Color.clear
+            .frame(width: 1, height: Self.height)
+            // An overlay, not a sibling: the label takes no part in the
+            // bar's layout, so a long reason cannot widen the cash column.
+            .overlay(alignment: .leading) {
+                if let floater {
+                    CashDeltaLabel(amount: floater.amount, reason: floater.reason, scale: 1, rise: 5)
+                        .fixedSize()
+                        .id(floater.id)
+                }
             }
-        }
         .onChange(of: engine.state.company.cash, initial: true) { _, cash in
             defer { lastCash = cash }
             guard let previous = lastCash else { return }
@@ -86,16 +110,14 @@ struct CashDeltaOverlay: View {
         let reason = engine.state.ledger.entries.last.map { entry -> String in
             entry.label.count <= 18 ? entry.label : entry.category.displayName
         }
-        let floater = Floater(id: nextToken, amount: delta, reason: reason)
+        let next = Floater(id: nextToken, amount: delta, reason: reason)
         nextToken += 1
-        floaters.append(floater)
-        // Keep at most three on screen; each removes itself after its own
-        // rise-and-fade finishes.
-        if floaters.count > 3 { floaters.removeFirst() }
-        let id = floater.id
+        floater = next
+        onDelta?(delta)
+        let id = next.id
         Task {
             try? await Task.sleep(for: .milliseconds(1400))
-            floaters.removeAll { $0.id == id }
+            if floater?.id == id { floater = nil }
         }
     }
 }

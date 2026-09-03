@@ -12,6 +12,9 @@ import TycoonEngine
 extension GameCalendar {
     /// The HUD label: "Mar W2 · Y1".
     var hudLabel: String { "\(shortMonthName) W\(weekOfYear) · Y\(year)" }
+    /// The HUD's fallback when the bar is too tight for the month:
+    /// "W14 · Y1". The week and the year are what the player steers by.
+    var compactHUDLabel: String { "W\(weekOfYear) · Y\(year)" }
 
     /// The long form used in sheets: "Mar 12, Year 1".
     var longLabel: String { "\(shortMonthName) \(dayOfMonth), Year \(year)" }

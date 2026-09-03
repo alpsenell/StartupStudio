@@ -9,6 +9,10 @@ import TycoonEngine
 /// touches most.
 struct SpeedControl: View {
     let engine: GameEngine
+    /// Something is waiting on the player (the clock stopped for a reason,
+    /// a report is unread, a deferred question is counting down): a dot on
+    /// the control's corner says so from every tab.
+    var attention = false
 
     var body: some View {
         HStack(spacing: 2) {
@@ -22,7 +26,19 @@ struct SpeedControl: View {
             PixelPanelBorder(thickness: 2, corner: 2)
                 .fill(Theme.pixelInk.opacity(0.35))
         }
+        .overlay(alignment: .topTrailing) {
+            if attention {
+                Circle()
+                    .fill(Theme.warning)
+                    .frame(width: 8, height: 8)
+                    .overlay(Circle().strokeBorder(Theme.pixelPaper, lineWidth: 1.5))
+                    .offset(x: 3, y: -3)
+                    .transition(Theme.Motion.transition(.scale.combined(with: .opacity)))
+                    .accessibilityLabel("Something needs you")
+            }
+        }
         .animation(Theme.Motion.selection, value: engine.state.speed)
+        .animation(Theme.Motion.selection, value: attention)
         .accessibilityLabel("Simulation speed")
     }
 

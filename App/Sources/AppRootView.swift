@@ -40,10 +40,10 @@ struct AppRootView: View {
             .onChange(of: engine.state.day) { _, _ in
                 shell.dayAdvanced(engine: engine)
             }
-            .overlay(alignment: .top) {
-                ToastStack(center: shell.toasts)
-                    .padding(.top, Theme.Spacing.xl * 3)
-            }
+            // Toasts are no longer overlaid here: the notice rail under
+            // each tab's HUD shows the newest one as its transient line,
+            // so an acknowledgement can never land across the pause
+            // reason or the report chip.
             .fullScreenCover(isPresented: onboardingPresented) {
                 NewGameFlow(
                     content: engine.content,
