@@ -245,7 +245,9 @@ private struct ShareBar: View {
 
 // MARK: - Rival card
 
-private struct RivalCard: View {
+/// One rival studio. Internal rather than private so the snapshot suite
+/// can draw the incumbent's card.
+struct RivalCard: View {
     let engine: GameEngine
     let rival: Rival
 
@@ -285,6 +287,10 @@ private struct RivalCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if rival.isIncumbent {
+                    incumbentSection
+                }
 
                 if isBeatingPlayer {
                     Text(rival.personality.taunt)
@@ -329,6 +335,69 @@ private struct RivalCard: View {
         } message: {
             Text("Part of their team joins you; \(rival.name) leaves the market for good.")
         }
+    }
+
+    // MARK: The incumbent
+
+    /// The giant in the player's best markets: which two, how much of
+    /// each the player holds today, and the retreat clock — running only
+    /// while both are held.
+    private var incumbentSection: some View {
+        let state = engine.state
+        let depth = engine.balance.rivals.depth
+        let holdShare = depth.challengeHoldShare
+        let topics = rival.focusTopicIDs
+        let heldAll = !topics.isEmpty && topics.allSatisfy { (state.rivals.playerShare[$0] ?? 0) >= holdShare }
+        let weeksHeld = state.rivals.incumbentHeldSinceDay.map { (state.day - $0) / 7 } ?? 0
+        let weeksLeft = max(0, depth.incumbentRetreatWeeks - weeksHeld)
+        return VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Label("THE INCUMBENT", systemImage: "building.columns.fill")
+                .font(.caption2.weight(.bold))
+                .kerning(0.5)
+                .foregroundStyle(Theme.warning)
+            Text(
+                "Founded into your best markets, with money to lose. Hold "
+                    + "\(Int((holdShare * 100).rounded()))% of both for \(depth.incumbentRetreatWeeks) weeks "
+                    + "and they leave — worth +\(Int(depth.incumbentRetreatReputationGain)) reputation and "
+                    + "+\(Int(depth.incumbentRetreatStandingGain)) standing in each."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            ForEach(topics, id: \.self) { topicID in
+                let share = state.rivals.playerShare[topicID]
+                let holding = (share ?? 0) >= holdShare
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: holding ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.caption2)
+                        .foregroundStyle(holding ? Theme.positiveCash : Theme.negativeCash)
+                        .frame(width: 14)
+                    Text(topicName(topicID))
+                        .font(.system(.subheadline, design: .rounded))
+                    Spacer(minLength: Theme.Spacing.xs)
+                    Text(share.map { "\(Int(($0 * 100).rounded()))%" } ?? "nothing live")
+                        .font(Theme.Typography.number(.caption, weight: .bold))
+                        .foregroundStyle(holding ? Theme.positiveCash : Theme.negativeCash)
+                }
+                .accessibilityElement(children: .combine)
+            }
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "clock.fill")
+                    .font(.caption2)
+                    .foregroundStyle(heldAll ? Theme.positiveCash : .secondary)
+                    .frame(width: 14)
+                Text(
+                    heldAll
+                        ? (weeksLeft == 0 ? "They retreat this week." : "Holding both — they retreat in \(weeksLeft) wk.")
+                        : "The retreat clock is stopped until you hold both."
+                )
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(heldAll ? Theme.positiveCash : .secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(Theme.Spacing.sm)
+        .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private var personalityBadge: some View {

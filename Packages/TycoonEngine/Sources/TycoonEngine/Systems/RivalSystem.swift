@@ -56,11 +56,19 @@ enum RivalSystem {
             launches.append(contentsOf: evolve(&state, balance, content))
             launches.append(contentsOf: copycatCheck(&state, balance, content))
             events.append(contentsOf: launches)
+            // The giant, when the company is first worth having: it
+            // opens its own challenge, so its launch is not in `launches`.
+            events.append(contentsOf: incumbentCheck(&state, balance, content))
             events.append(contentsOf: challengeCheck(&state, launches: launches, balance))
             recomputeShare(&state, balance)
             events.append(contentsOf: priceWarCheck(&state, balance))
             bleedStrength(&state, balance)
             events.append(contentsOf: settleChallenges(&state, balance))
+            let retreat = incumbentRetreatCheck(&state, balance)
+            events.append(contentsOf: retreat)
+            // The giant's products leave the shelf with it; the week's
+            // share should say so now rather than next week.
+            if !retreat.isEmpty { recomputeShare(&state, balance) }
         }
         // Re-applied every day, not just on evolution days: `MarketSystem`
         // rebuilds each `TopicMarket` on its weekly shift, and this system
@@ -84,14 +92,7 @@ enum RivalSystem {
         _ content: ContentCatalog
     ) -> Rival {
         let id = UUID(from: &state.worldRNG)
-        // Software studios, not bakeries: WS-B's `rivalStudios` pool once
-        // it exists, the built-in one until then. The client-company pool
-        // that used to name every rival is deliberately not in the mix —
-        // it is where "Moonbeam Dairy" came from.
-        let namePool = content.names.rivalStudios.isEmpty
-            ? fallbackStudioNames
-            : content.names.rivalStudios
-        let name = pick(namePool, &state.worldRNG) ?? "Nimbus Labs"
+        let name = studioName(&state, content)
         let strength = config.foundingStrengthMin
             + state.worldRNG.nextUniform() * (config.foundingStrengthMax - config.foundingStrengthMin)
         let reputation = config.foundingReputationMin
@@ -116,6 +117,18 @@ enum RivalSystem {
             appearanceSeed: appearanceSeed,
             personality: personality
         )
+    }
+
+    /// One name pick. Software studios, not bakeries: WS-B's
+    /// `rivalStudios` pool once it exists, the built-in one until then.
+    /// The client-company pool that used to name every rival is
+    /// deliberately not in the mix — it is where "Moonbeam Dairy" came
+    /// from.
+    private static func studioName(_ state: inout GameState, _ content: ContentCatalog) -> String {
+        let namePool = content.names.rivalStudios.isEmpty
+            ? fallbackStudioNames
+            : content.names.rivalStudios
+        return pick(namePool, &state.worldRNG) ?? "Nimbus Labs"
     }
 
     /// Studio names used until WS-B fills `names.rivalStudios`. Software
@@ -719,6 +732,152 @@ enum RivalSystem {
             state.rivals.challenges[index].answeredDay = state.day
         }
         return events
+    }
+
+    // MARK: - The incumbent
+
+    /// Once the company is worth having — valuation past
+    /// `incumbentValuationFloor`, or `incumbentDominatedTopics` topics
+    /// owned outright — and no incumbent has ever been founded, a giant is
+    /// founded into the player's two best markets: deep pockets (it never
+    /// folds), strength `incumbentStrengthFactor × valuation /
+    /// valuationPerStrength` clamped to its band, reputation rolled in
+    /// its band, focus = the two topics where the player has the highest
+    /// standing *and* something live. It ships into the higher at once
+    /// and opens a challenge there, whatever the standing or the score:
+    /// this one is the fight the late game was missing. Worth ~$600k at
+    /// strength 95, it is also the buyer the strategic buyout was written
+    /// for, and it can be bought.
+    ///
+    /// Draws, in order: two id words, the name pick, the reputation roll,
+    /// the appearance seed, then the opener's id, two name words and a
+    /// quality jitter — and only when it founds, so a world that never
+    /// crosses the line never draws. Once per run, and never at
+    /// `rivalCount = 0`, where there is no field for it to join.
+    private static func incumbentCheck(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        let config = balance.rivals
+        let depth = config.depth
+        guard depth.incumbentEnabled,
+              config.rivalCount > 0,
+              state.rivals.incumbentFoundedDay == nil,
+              state.rivals.incumbent == nil
+        else { return [] }
+        let valuation = state.companyValuation(balance: balance)
+        guard valuation >= depth.incumbentValuationFloor
+            || state.rivals.dominatedTopicCount >= depth.incumbentDominatedTopics
+        else { return [] }
+
+        // Its markets: the two the player holds highest and is live in.
+        // "Highest standing" alone can name a category whose products are
+        // long off the market; the live filter is what makes it a fight.
+        let focus = Array(
+            StandingSystem.liveTopicIDs(state)
+                .sorted { lhs, rhs in
+                    let left = state.market.standing(for: lhs)
+                    let right = state.market.standing(for: rhs)
+                    if left != right { return left > right }
+                    return lhs < rhs
+                }
+                .prefix(2)
+        )
+        guard let opening = focus.first else { return [] }
+
+        let id = UUID(from: &state.worldRNG)
+        let name = studioName(&state, content)
+        let strength = clamp(
+            depth.incumbentStrengthFactor * Double(valuation) / config.valuationPerStrength,
+            min: depth.incumbentStrengthMin, max: depth.incumbentStrengthMax
+        )
+        let reputation = depth.incumbentReputationMin
+            + state.worldRNG.nextUniform() * (depth.incumbentReputationMax - depth.incumbentReputationMin)
+        let appearanceSeed = state.worldRNG.next()
+        var rival = Rival(
+            id: id,
+            name: name,
+            strength: strength,
+            reputation: reputation,
+            focusTopicIDs: focus,
+            foundedDay: state.day,
+            appearanceSeed: appearanceSeed,
+            personality: .deepPockets,
+            isIncumbent: true
+        )
+        let opener = launchProduct(for: rival, in: opening, &state, balance, content)
+        rival.products = [opener]
+        rival.lastShippedDay = state.day
+        state.rivals.rivals.append(rival)
+        state.rivals.incumbentFoundedDay = state.day
+        state.rivals.incumbentHeldSinceDay = nil
+
+        var events: [GameEvent] = [
+            .incumbentArrived(rivalID: id, name: name, day: state.day),
+            .rivalProductLaunched(
+                rivalID: id,
+                productName: opener.name,
+                topicID: opening,
+                quality: Int(opener.quality.rounded()),
+                day: state.day
+            ),
+        ]
+        if state.rivals.challenge(in: opening) == nil {
+            events.append(openChallenge(
+                rivalID: id, topicID: opening, productName: opener.name,
+                quality: opener.quality, &state, depth
+            ))
+        }
+        return events
+    }
+
+    /// The incumbent can be beaten: hold `challengeHoldShare` in every
+    /// topic on its list for `incumbentRetreatWeeks` running and it gives
+    /// them up — drops the topics and its products in them, stops being
+    /// the incumbent (an ordinary, large, buyable rival stays on the
+    /// board), and pays the player `incumbentRetreatReputationGain` and
+    /// `incumbentRetreatStandingGain` in each. The clock starts on the
+    /// first weekly pass the player holds every topic and resets the
+    /// first week they do not. A topic the player has nothing live in is
+    /// not held. Deterministic, no draws.
+    private static func incumbentRetreatCheck(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let depth = balance.rivals.depth
+        guard let index = state.rivals.rivals.firstIndex(where: \.isIncumbent) else {
+            state.rivals.incumbentHeldSinceDay = nil
+            return []
+        }
+        let topics = state.rivals.rivals[index].focusTopicIDs
+        let holding = !topics.isEmpty && topics.allSatisfy {
+            (state.rivals.playerShare[$0] ?? 0) >= depth.challengeHoldShare
+        }
+        guard holding else {
+            state.rivals.incumbentHeldSinceDay = nil
+            return []
+        }
+        let since = state.rivals.incumbentHeldSinceDay ?? state.day
+        state.rivals.incumbentHeldSinceDay = since
+        guard state.day - since >= depth.incumbentRetreatWeeks * GameState.daysPerWeek else { return [] }
+
+        let rival = state.rivals.rivals[index]
+        state.rivals.rivals[index].focusTopicIDs = []
+        state.rivals.rivals[index].products.removeAll { topics.contains($0.topicID) }
+        state.rivals.rivals[index].isIncumbent = false
+        // A war over a market it just gave up ends with it.
+        state.rivals.rivals[index].priceWarUntilDay = nil
+        state.rivals.rivals[index].priceWarTopicID = nil
+        state.rivals.rivals[index].weeksBeaten = 0
+        state.rivals.incumbentHeldSinceDay = nil
+        state.company.reputation = clamp(
+            state.company.reputation + depth.incumbentRetreatReputationGain, min: 0, max: 100
+        )
+        for topicID in topics {
+            StandingSystem.adjust(depth.incumbentRetreatStandingGain, in: topicID, &state, balance)
+        }
+        return [.incumbentRetreated(rivalID: rival.id, name: rival.name, day: state.day)]
     }
 
     // MARK: - Poaching
