@@ -36,6 +36,9 @@ public enum EmployeePick: String, Codable, Equatable, Sendable, CaseIterable {
 ///     { "type": "cold",           "days": 4 }
 ///     { "type": "flag",           "flag": "journalist_friendly" }
 ///     { "type": "skill",          "skill": "coding", "amount": 4, "pick": "everyone" }
+///     { "type": "affection",      "amount": -20 }
+///     { "type": "evening" }
+///     { "type": "bond",           "amount": 8, "pick": "lowestMorale" }
 ///
 /// Unknown `"type"` values fail decoding with a `DecodingError` — a typo in
 /// a catalog is a build-time-ish failure, not a silent no-op.
@@ -73,6 +76,20 @@ public enum EventEffect: Codable, Equatable, Sendable {
     case skill(skill: SkillName, amount: Double, pick: EmployeePick)
     /// Banked research points.
     case research(amount: Double)
+
+    // MARK: Iteration 5 — the date in the diary (WS-E)
+
+    /// The partner's affection for the founder, clamped to 0...100. A
+    /// silent no-op while the founder is single. A positive amount also
+    /// counts as having seen them: it is the number a missed anniversary
+    /// takes and a kept promise gives back.
+    case affection(amount: Double)
+    /// Books one of the week's evenings — the Life tab's scarce resource.
+    /// Pair it with `EventRequirements.minEveningsLeft` on the option so
+    /// the sheet can grey the option out when the week is spent.
+    case evening
+    /// The founder's personal bond with one picked employee (or everyone).
+    case bond(amount: Double, pick: EmployeePick)
 
     /// Which skill a `skill` effect moves.
     public enum SkillName: String, Codable, Equatable, Sendable, CaseIterable {
@@ -140,6 +157,12 @@ public enum EventEffect: Codable, Equatable, Sendable {
             )
         case "research":
             self = .research(amount: try amount())
+        case "affection":
+            self = .affection(amount: try amount())
+        case "evening":
+            self = .evening
+        case "bond":
+            self = .bond(amount: try amount(), pick: try pick())
         default:
             throw DecodingError.dataCorruptedError(
                 forKey: .type, in: container,
@@ -206,6 +229,15 @@ public enum EventEffect: Codable, Equatable, Sendable {
         case .research(let amount):
             try container.encode("research", forKey: .type)
             try container.encode(amount, forKey: .amount)
+        case .affection(let amount):
+            try container.encode("affection", forKey: .type)
+            try container.encode(amount, forKey: .amount)
+        case .evening:
+            try container.encode("evening", forKey: .type)
+        case .bond(let amount, let pick):
+            try container.encode("bond", forKey: .type)
+            try container.encode(amount, forKey: .amount)
+            try container.encode(pick, forKey: .pick)
         }
     }
 }
@@ -217,7 +249,8 @@ extension EventEffect {
     /// existed.
     public var drawsRandomly: Bool {
         switch self {
-        case .morale(_, let pick), .loyalty(_, let pick), .skill(_, _, let pick):
+        case .morale(_, let pick), .loyalty(_, let pick), .skill(_, _, let pick),
+             .bond(_, let pick):
             pick == .random
         default:
             false
@@ -257,6 +290,12 @@ extension EventEffect {
             "\(skill.rawValue.capitalized) \(signed(amount))"
         case .research(let amount):
             "Research \(signed(amount))"
+        case .affection(let amount):
+            "Affection \(signed(amount))"
+        case .evening:
+            "An evening"
+        case .bond(let amount, _):
+            "Bond \(signed(amount))"
         }
     }
 

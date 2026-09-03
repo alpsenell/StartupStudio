@@ -173,6 +173,10 @@ struct ContentVarietyTests {
             #expect(abs(amount) <= 20, "\(id): skill \(amount)")
         case .research(let amount):
             #expect(abs(amount) <= 200, "\(id): research \(amount)")
+        case .affection(let amount), .bond(let amount, _):
+            #expect(abs(amount) <= 40, "\(id): \(amount)")
+        case .evening:
+            break
         }
     }
 

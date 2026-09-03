@@ -132,9 +132,59 @@ struct EventDefV2Tests {
             .clearFlag("sued"),
             .skill(skill: .coding, amount: 4, pick: .everyone),
             .research(amount: 20),
+            .affection(amount: -20),
+            .evening,
+            .bond(amount: 8, pick: .lowestMorale),
         ]
         let round = try decoder.decode([EventEffect].self, from: encoder.encode(effects))
         #expect(round == effects)
+    }
+
+    @Test("the diary's fields decode terse and round-trip, and a plain def is not dated")
+    func diaryFieldsRoundTrip() throws {
+        let effects: [EventEffect] = try decode("""
+        [{ "type": "affection", "amount": 15 }, { "type": "evening" }, { "type": "bond", "amount": 6 }]
+        """)
+        #expect(effects == [.affection(amount: 15), .evening, .bond(amount: 6, pick: .random)])
+        #expect(EventEffect.affection(amount: -20).summary == "Affection −20")
+        #expect(EventEffect.evening.summary == "An evening")
+        #expect(EventEffect.bond(amount: 6, pick: .everyone).summary == "Bond +6")
+
+        let def: LifeEventDef = try decode("""
+        {
+          "id": "kid_birthday",
+          "headline": "{child}'s birthday is on Saturday.",
+          "body": "They asked whether you'd be there.",
+          "weight": 1,
+          "requiresChildren": true,
+          "followUpOnly": true,
+          "category": "family",
+          "autoChoiceIndex": 1,
+          "diaryLabel": "{child}'s birthday",
+          "missedVariantID": "kid_birthday_again",
+          "impact": {},
+          "choices": [
+            { "id": "party", "label": "Go", "effects": [{ "type": "evening" }],
+              "requires": { "minEveningsLeft": 1 } },
+            { "id": "miss", "label": "Send a present", "effects": [{ "type": "affection", "amount": -20 }] }
+          ]
+        }
+        """)
+        #expect(def.isDated)
+        #expect(def.diaryLabel == "{child}'s birthday")
+        #expect(def.missedVariantID == "kid_birthday_again")
+        #expect(def.choices[0].requires?.minEveningsLeft == 1)
+        #expect(def.choices[1].requires == nil)
+        let round = try decoder.decode(LifeEventDef.self, from: encoder.encode(def))
+        #expect(round == def)
+
+        let plain: LifeEventDef = try decode("""
+        { "id": "x", "headline": "y", "weight": 1, "impact": {} }
+        """)
+        #expect(!plain.isDated)
+        #expect(plain.missedVariantID == nil)
+        let requirements: EventRequirements = try decode("{}")
+        #expect(requirements.minEveningsLeft == nil)
     }
 
     @Test("only random picks cost an RNG draw")

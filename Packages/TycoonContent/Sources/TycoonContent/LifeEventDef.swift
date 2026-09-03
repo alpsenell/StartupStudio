@@ -127,6 +127,23 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
     /// Follow-up halves of a storyline are never drawn directly.
     public var followUpOnly: Bool
 
+    // MARK: Iteration 5 — the date in the diary (WS-E)
+
+    /// The line the family calendar shows for this beat, e.g.
+    /// "{child}'s birthday" or "Your anniversary with {partner}". A beat
+    /// with one is *dated*: it is scheduled rather than rolled, takes the
+    /// life roll's slot on the next interval day inside the balance's
+    /// window, and its `autoChoiceIndex` option is the polite miss the
+    /// deadline answers with. `{partner}`, `{child}` and `{company}` are
+    /// filled by the engine when it fires.
+    public var diaryLabel: String?
+    /// A def that fires in this one's place while the founder has a
+    /// missed date on the books ("You missed the last one too").
+    public var missedVariantID: String?
+
+    /// Whether this beat has a date on it — see `diaryLabel`.
+    public var isDated: Bool { diaryLabel != nil }
+
     public init(
         id: String,
         headline: String,
@@ -144,7 +161,9 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
         category: EventCategory = .personal,
         respondByDays: Int = 5,
         autoChoiceIndex: Int? = nil,
-        followUpOnly: Bool = false
+        followUpOnly: Bool = false,
+        diaryLabel: String? = nil,
+        missedVariantID: String? = nil
     ) {
         self.id = id
         self.headline = headline
@@ -163,6 +182,8 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
         self.respondByDays = respondByDays
         self.autoChoiceIndex = autoChoiceIndex
         self.followUpOnly = followUpOnly
+        self.diaryLabel = diaryLabel
+        self.missedVariantID = missedVariantID
     }
 
     /// Every effect the event applies on its own: the founder-meter impact
@@ -175,6 +196,7 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
         case id, headline, weight, minStage, requiresChildren, maxRelationships, impact
         case body, effects, requires, choices, cooldownDays, once, category
         case respondByDays, autoChoiceIndex, followUpOnly
+        case diaryLabel, missedVariantID
     }
 
     public init(from decoder: any Decoder) throws {
@@ -196,7 +218,9 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
             category: try container.decodeIfPresent(EventCategory.self, forKey: .category) ?? .personal,
             respondByDays: try container.decodeIfPresent(Int.self, forKey: .respondByDays) ?? 5,
             autoChoiceIndex: try container.decodeIfPresent(Int.self, forKey: .autoChoiceIndex),
-            followUpOnly: try container.decodeIfPresent(Bool.self, forKey: .followUpOnly) ?? false
+            followUpOnly: try container.decodeIfPresent(Bool.self, forKey: .followUpOnly) ?? false,
+            diaryLabel: try container.decodeIfPresent(String.self, forKey: .diaryLabel),
+            missedVariantID: try container.decodeIfPresent(String.self, forKey: .missedVariantID)
         )
     }
 
@@ -219,5 +243,7 @@ public struct LifeEventDef: Codable, Equatable, Sendable, Identifiable {
         try container.encode(respondByDays, forKey: .respondByDays)
         try container.encodeIfPresent(autoChoiceIndex, forKey: .autoChoiceIndex)
         if followUpOnly { try container.encode(followUpOnly, forKey: .followUpOnly) }
+        try container.encodeIfPresent(diaryLabel, forKey: .diaryLabel)
+        try container.encodeIfPresent(missedVariantID, forKey: .missedVariantID)
     }
 }

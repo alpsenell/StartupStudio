@@ -86,7 +86,7 @@ enum NarrativeSystem {
     ) -> [GameEvent] {
         markFired(def.id, once: def.once, cooldownDays: def.cooldownDays, state: &state, balance: balance)
 
-        let options = availableOptions(def.choices, state: state)
+        let options = availableOptions(def.choices, state: state, balance: balance)
         if !options.isEmpty {
             let respondBy = state.day + max(1, def.respondByDays)
             state.narrative.pendingChoice = PendingChoice(
@@ -96,7 +96,7 @@ enum NarrativeSystem {
                 body: def.body ?? def.headline,
                 options: options,
                 respondByDay: respondBy,
-                autoOptionIndex: def.autoChoiceIndex ?? (options.last?.index ?? 0),
+                autoOptionIndex: autoIndex(def.autoChoiceIndex, among: options),
                 category: def.category.rawValue,
                 raisedDay: state.day
             )
@@ -146,7 +146,7 @@ enum NarrativeSystem {
     ) -> [GameEvent] {
         markFired(def.id, once: def.once, cooldownDays: def.cooldownDays, state: &state, balance: balance)
 
-        let options = availableOptions(def.choices, state: state)
+        let options = availableOptions(def.choices, state: state, balance: balance)
         if !options.isEmpty {
             let respondBy = state.day + max(1, def.respondByDays)
             state.narrative.pendingChoice = PendingChoice(
@@ -156,7 +156,7 @@ enum NarrativeSystem {
                 body: def.body ?? def.headline,
                 options: options,
                 respondByDay: respondBy,
-                autoOptionIndex: def.autoChoiceIndex ?? (options.last?.index ?? 0),
+                autoOptionIndex: autoIndex(def.autoChoiceIndex, among: options),
                 category: def.category.rawValue,
                 raisedDay: state.day
             )
@@ -184,7 +184,9 @@ enum NarrativeSystem {
     // MARK: - Answering
 
     /// The player's answer. Ignored when nothing is pending, when the id
-    /// doesn't match what's on screen, or when the index isn't offered.
+    /// doesn't match what's on screen, when the index isn't offered, or
+    /// when the option is offered greyed (WS-E) — the sheet never sends
+    /// those, and the engine holds the line if something else does.
     static func resolveChoice(
         eventID: String,
         optionIndex: Int,
@@ -193,7 +195,7 @@ enum NarrativeSystem {
         content: ContentCatalog
     ) -> [GameEvent] {
         guard let pending = state.narrative.pendingChoice, pending.id == eventID,
-              pending.options.contains(where: { $0.index == optionIndex })
+              pending.options.contains(where: { $0.index == optionIndex && $0.isEnabled })
         else { return [] }
         return resolve(pending, optionIndex: optionIndex, automatic: false,
                        state: &state, balance: balance, content: content)
@@ -208,11 +210,19 @@ enum NarrativeSystem {
         guard let pending = state.narrative.pendingChoice, state.day > pending.respondByDay else {
             return []
         }
-        let index = pending.options.contains(where: { $0.index == pending.autoOptionIndex })
-            ? pending.autoOptionIndex
-            : (pending.options.last?.index ?? 0)
+        let index = autoIndex(pending.autoOptionIndex, among: pending.options)
         return resolve(pending, optionIndex: index, automatic: true,
                        state: &state, balance: balance, content: content)
+    }
+
+    /// The option the deadline picks: the definition's choice when it is
+    /// offered and open, else the last open option — a greyed option is
+    /// never the silent answer, whatever the definition says.
+    private static func autoIndex(_ preferred: Int?, among options: [ChoiceOption]) -> Int {
+        if let preferred, options.contains(where: { $0.index == preferred && $0.isEnabled }) {
+            return preferred
+        }
+        return options.last(where: \.isEnabled)?.index ?? options.last?.index ?? 0
     }
 
     private static func resolve(
@@ -529,9 +539,15 @@ enum NarrativeSystem {
 
     /// Options whose own `requires` gate reads true, carrying their
     /// definition index so `resolveChoice` addresses the right one.
+    ///
+    /// `minEveningsLeft` is the one gate that greys instead of hiding
+    /// (WS-E): an option the founder *could* have taken, had the week not
+    /// already been spent, stays on the sheet with the reason under it.
+    /// Everything else in `requires` hides the option as before.
     private static func availableOptions(
         _ choices: [EventChoice],
-        state: GameState
+        state: GameState,
+        balance: BalanceConfig
     ) -> [ChoiceOption] {
         choices.enumerated().compactMap { index, choice in
             if let gate = choice.requires, !meets(gate, state: state) { return nil }
@@ -539,9 +555,24 @@ enum NarrativeSystem {
                 id: choice.id,
                 label: choice.label,
                 detail: choice.detail ?? defaultDetail(for: choice),
-                index: index
+                index: index,
+                disabledReason: eveningBlocker(for: choice, state: state, balance: balance)
             )
         }
+    }
+
+    /// Why an option that asks for an evening cannot have one, or `nil`.
+    /// A balance with no evening budget never blocks.
+    private static func eveningBlocker(
+        for choice: EventChoice,
+        state: GameState,
+        balance: BalanceConfig
+    ) -> String? {
+        guard let needed = choice.requires?.minEveningsLeft, needed > 0,
+              let left = state.eveningsLeftThisWeek(balance)
+        else { return nil }
+        if state.life.isAway(day: state.day) { return "You're away" }
+        return left >= needed ? nil : "No evenings left this week"
     }
 
     /// A consequence line assembled from the effects when the writer
@@ -646,6 +677,23 @@ enum NarrativeSystem {
                 }
             case .research(let amount):
                 state.research.banked = max(0, state.research.banked + amount)
+
+            // MARK: WS-E — the date in the diary
+
+            case .affection(let amount):
+                // A silent no-op while single: the number is not simulated.
+                guard state.life.family.stage != .single else { continue }
+                state.life.family.affection = clamp(state.life.family.affection + amount)
+                // Showing up counts as showing up — the neglect clock
+                // restarts the way a date night restarts it.
+                if amount > 0 { state.life.family.lastPartnerDay = state.day }
+            case .evening:
+                state.spendEvening(balance)
+            case .bond(let amount, let pick):
+                for index in indices(for: pick, state: &state) {
+                    state.employees[index].founderBond =
+                        clamp(state.employees[index].founderBond + amount)
+                }
             }
         }
         return events

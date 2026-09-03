@@ -22,13 +22,26 @@ public struct ChoiceOption: Codable, Equatable, Sendable, Identifiable {
     /// `GameAction.resolveChoice` carries — options the player can't take
     /// are filtered out, so positions do not line up.
     public var index: Int
+    /// Why the option is shown greyed rather than hidden (WS-E), e.g.
+    /// "No evenings left this week". `nil` for an option the player can
+    /// take. Snapshotted with the rest of the option: the week the beat
+    /// asked about is the week that counts. Decodes `nil`, so a save from
+    /// before it existed reads every option as open.
+    public var disabledReason: String?
 
-    public init(id: String, label: String, detail: String? = nil, index: Int) {
+    public init(
+        id: String, label: String, detail: String? = nil, index: Int,
+        disabledReason: String? = nil
+    ) {
         self.id = id
         self.label = label
         self.detail = detail
         self.index = index
+        self.disabledReason = disabledReason
     }
+
+    /// Whether the player may take this option.
+    public var isEnabled: Bool { disabledReason == nil }
 }
 
 /// A story beat waiting on the founder's answer.
