@@ -54,6 +54,9 @@ struct WeeklyReport: Equatable {
     let weeklyBurn: Int
     /// Contracts due within the next 14 days, soonest first.
     let deadlines: [Deadline]
+    /// The one thing to do next week, derived from the top active goal
+    /// and its state, with the screen it lives on.
+    let nextAction: NextAction?
     /// Campaigns that end within the next 7 days.
     let campaignsEnding: Int
 
@@ -87,6 +90,45 @@ struct WeeklyReport: Equatable {
         let clientName: String
         let dueDay: Int
         let daysLeft: Int
+    }
+
+    struct NextAction: Equatable {
+        let text: String
+        let route: Route
+    }
+
+    /// "Do this next: start a product — you have $12,000 and no income."
+    /// Keyed on the goal ids the way the coach tips and HQ's Now card are,
+    /// so it never coaches toward a goal that will not tick.
+    static func nextAction(for state: GameState, balance: BalanceConfig) -> NextAction? {
+        guard let goal = state.progression.activeGoals.first,
+              let action = NowAction.action(for: goal.id, state: state)
+        else { return nil }
+        let cash = state.company.cash
+        let lastWeekSales = state.ledger.entries
+            .filter { $0.category == .sales && $0.day >= state.day - 7 }
+            .reduce(0) { $0 + $1.amount }
+        let detail: String
+        switch action.route {
+        case .newProduct:
+            detail = lastWeekSales > 0
+                ? "you have \(cash.money) and \(lastWeekSales.money) a week coming in"
+                : "you have \(cash.money) and no income"
+        case .product:
+            detail = goal.detail.isEmpty ? "the build is on the Products tab" : goal.detail
+        case .hiring:
+            let cap = balance.office(state.company.officeTier).headcountCap
+            let free = max(0, cap - state.headcount)
+            let refresh = max(1, balance.candidateRefreshDays)
+            let days = refresh - (state.day % refresh)
+            detail = "\(free) empty desk\(free == 1 ? "" : "s"), "
+                + (state.candidatePool.isEmpty ? "candidates in \(days) day\(days == 1 ? "" : "s")" : "\(state.candidatePool.count) candidates waiting")
+        case .contracts:
+            detail = state.contractOffers.isEmpty ? "clients call every week" : "\(state.contractOffers.count) offer\(state.contractOffers.count == 1 ? "" : "s") on the desk"
+        default:
+            detail = goal.detail
+        }
+        return NextAction(text: "\(action.label.lowercased()) — \(detail)", route: action.route)
     }
 
     struct MeterSnapshot: Equatable {
@@ -209,6 +251,7 @@ struct WeeklyReport: Equatable {
             .sorted { $0.daysLeft < $1.daysLeft }
 
         campaignsEnding = state.campaigns.filter { $0.endDay - state.day <= 7 }.count
+        nextAction = Self.nextAction(for: state, balance: balance)
     }
 
     private static func totals(

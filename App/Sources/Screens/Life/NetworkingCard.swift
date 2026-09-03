@@ -35,7 +35,7 @@ struct NetworkingCard: View {
                     SummaryTile(
                         title: "Contacts",
                         value: "\(networking.contacts.count(where: \.isOpen))",
-                        caption: "people who'd take your call"
+                        caption: contactsCaption(networking)
                     )
                     SummaryTile(
                         title: "Portfolio",
@@ -66,6 +66,16 @@ struct NetworkingCard: View {
 
     /// Gain or loss against what the founder actually paid, so the tile is
     /// a position rather than a number with no reference.
+    /// "3 warm · 2 fading": who would still take the call, and who is about
+    /// to stop.
+    private func contactsCaption(_ networking: NetworkingState) -> String {
+        let open = networking.contacts.filter(\.isOpen)
+        guard !open.isEmpty else { return "people who'd take your call" }
+        let fading = open.count { ContactWarmth.isFading($0, day: engine.state.day) }
+        let warm = open.count - fading
+        return fading == 0 ? "\(warm) warm" : "\(warm) warm · \(fading) fading"
+    }
+
     private func portfolioCaption(_ networking: NetworkingState) -> String {
         guard !networking.holdings.isEmpty else { return "no stakes yet" }
         let delta = networking.portfolioValue - networking.portfolioInvested

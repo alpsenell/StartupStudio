@@ -101,9 +101,17 @@ private struct ContactRow: View {
                 }
                 Spacer(minLength: 0)
                 if contact.isOpen {
-                    Text("\(Int(contact.rapport.rounded()))")
-                        .font(Theme.Typography.number(.caption))
-                        .foregroundStyle(Theme.accent)
+                    // Rapport, with the trend the number hides: a contact
+                    // not called in a fortnight is on the way out.
+                    let fading = ContactWarmth.isFading(contact, day: day)
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text("\(Int(contact.rapport.rounded()))")
+                            .font(Theme.Typography.number(.caption))
+                            .foregroundStyle(fading ? Theme.warning : Theme.accent)
+                        Text(fading ? "Fading — call this week" : "Warm")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(fading ? Theme.warning : Theme.positiveCash)
+                    }
                 }
                 Image(systemName: "chevron.right")
                     .font(.caption2.weight(.semibold))
@@ -216,5 +224,13 @@ private extension ContactOutcome {
         case .romance: "You're together"
         case .lost: "Out of touch"
         }
+    }
+}
+
+/// Whether a contact is going cold: no contact for a fortnight, or the
+/// rapport already down where the next slide closes the door.
+enum ContactWarmth {
+    static func isFading(_ contact: Contact, day: Int) -> Bool {
+        contact.isOpen && (day - contact.lastMetDay >= 14 || contact.rapport < 25)
     }
 }

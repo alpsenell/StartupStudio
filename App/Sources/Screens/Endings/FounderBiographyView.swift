@@ -13,10 +13,15 @@ struct FounderBiographyView: View {
     let engine: GameEngine
     let info: GameOverInfo
     let onNewGame: (Difficulty, FounderProfile) -> Void
+    /// The same year again: same seed, same founder, same company. The
+    /// engine is deterministic, so the same events and candidates come
+    /// round and the player can play them differently.
+    var onReplay: (() -> Void)?
 
     @State private var startingOver = false
 
     private var state: GameState { engine.state }
+    private var balance: BalanceConfig { engine.balance }
     private var founder: FounderProfile { state.progression.founder }
 
     var body: some View {
@@ -26,6 +31,9 @@ struct FounderBiographyView: View {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
                     banner
+                    if !info.kind.isSuccess {
+                        postMortemCard
+                    }
                     chaptersCard
                     if let product = bestProduct { productCard(product) }
                     if let longest = longestServing { peopleCard(longest) }
@@ -358,19 +366,54 @@ struct FounderBiographyView: View {
     // MARK: - Again
 
     private var playAgainButton: some View {
-        Button {
-            startingOver = true
-        } label: {
-            Label("Start a new company", systemImage: "arrow.counterclockwise")
-                .font(.system(.headline, design: .rounded))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Theme.Spacing.sm)
+        VStack(spacing: Theme.Spacing.sm) {
+            if let onReplay, state.seed != 0 {
+                Button {
+                    Haptics.commit()
+                    onReplay()
+                } label: {
+                    Label(
+                        info.kind.isSuccess ? "Run it back" : "Try that year again",
+                        systemImage: "arrow.uturn.backward"
+                    )
+                    .font(.system(.headline, design: .rounded))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.sm)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
+                .accessibilityLabel("Play the same year again with the same founder and company")
+                Text("Same seed, same events, same candidates — with what you know now.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            Button {
+                startingOver = true
+            } label: {
+                Label("Start a new company", systemImage: "arrow.counterclockwise")
+                    .font(.system(.headline, design: .rounded))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.sm)
+            }
+            .buttonStyle(.bordered)
+            .tint(Theme.accent)
+            .accessibilityLabel("Start a new company with a new founder")
         }
-        .buttonStyle(.borderedProminent)
-        .tint(Theme.accent)
-        .accessibilityLabel("Start a new company with a new founder")
         .padding(.top, Theme.Spacing.sm)
         .padding(.bottom, Theme.Spacing.xl)
+    }
+
+    // MARK: - What went wrong
+
+    /// Three facts with numbers, from the ledger and the roster, on a
+    /// failed ending. Never a scold: the reader can see what to try.
+    @ViewBuilder
+    private var postMortemCard: some View {
+        let lines = PostMortem.lines(for: state, balance: balance, weeklyBurn: engine.weeklyBurn)
+        if !lines.isEmpty {
+            PostMortemCard(lines: lines)
+        }
     }
 
     private func topicName(_ id: String) -> String {

@@ -48,6 +48,8 @@ struct ContactSheet: View {
         if let contact = state.networking.contact(contactID) {
             VStack(spacing: Theme.Spacing.lg) {
                 ContactHeader(contact: contact)
+                // Everything below spends an evening; the balance is here.
+                EveningPips(engine: engine)
                 if let lastLine {
                     TranscriptLine(text: lastLine)
                 }

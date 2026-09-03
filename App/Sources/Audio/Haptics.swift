@@ -91,6 +91,14 @@ enum GameSettings {
         set { UserDefaults.standard.set(newValue, forKey: weeklyReportKey) }
     }
 
+    /// How many times the player has opened the weekly report from the
+    /// rail themselves. After two, the report stops opening itself: they
+    /// have learned the loop.
+    static var weeklyReportManualOpens: Int {
+        get { UserDefaults.standard.integer(forKey: "settings.weeklyReportManualOpens") }
+        set { UserDefaults.standard.set(newValue, forKey: "settings.weeklyReportManualOpens") }
+    }
+
     /// Set once the player has been through `NewGameFlow`, so a fresh
     /// install opens onboarding and a resumed save does not.
     static var hasCompletedOnboarding: Bool {

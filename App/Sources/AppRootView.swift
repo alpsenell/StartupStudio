@@ -77,13 +77,21 @@ struct AppRootView: View {
                     // wrappers on the founder biography, so they take the
                     // engine and hand back the founder to play again as.
                     if info.kind.isSuccess {
-                        GameWonView(engine: engine, info: info) { difficulty, founder in
-                            session.startNewGame(difficulty: difficulty, founder: founder)
-                        }
+                        GameWonView(
+                            engine: engine, info: info,
+                            onNewGame: { difficulty, founder in
+                                session.startNewGame(difficulty: difficulty, founder: founder)
+                            },
+                            onReplay: { session.replayCurrentGame() }
+                        )
                     } else {
-                        GameOverView(engine: engine, info: info) { difficulty, founder in
-                            session.startNewGame(difficulty: difficulty, founder: founder)
-                        }
+                        GameOverView(
+                            engine: engine, info: info,
+                            onNewGame: { difficulty, founder in
+                                session.startNewGame(difficulty: difficulty, founder: founder)
+                            },
+                            onReplay: { session.replayCurrentGame() }
+                        )
                     }
                 }
             }
@@ -128,6 +136,7 @@ struct AppRootView: View {
 
             TeamScreen(engine: engine)
                 .tabItem { Label("Team", systemImage: "person.2.fill") }
+                .badge(EmployeeStatus.attentionCount(in: engine.state, balance: engine.balance, content: engine.content))
                 .tag(GameTab.team)
 
             // Products and R&D share one tab (segmented inside) to keep the

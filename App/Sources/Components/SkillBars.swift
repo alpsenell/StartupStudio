@@ -7,12 +7,16 @@ import TycoonEngine
 /// marketing (matching PixelKit's megaphone bubble).
 struct SkillBars: View {
     let skills: SkillSet
+    /// A second set to compare against — the roster's best on each skill —
+    /// drawn as a tick on the track, so a candidate reads as "better than
+    /// anyone we have" at a glance.
+    var reference: SkillSet?
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            SkillBar(label: "Coding", value: skills.coding, tint: Theme.codePhase)
-            SkillBar(label: "Design", value: skills.design, tint: Theme.designPhase)
-            SkillBar(label: "Marketing", value: skills.marketing, tint: Theme.warning)
+            SkillBar(label: "Coding", value: skills.coding, tint: Theme.codePhase, reference: reference?.coding)
+            SkillBar(label: "Design", value: skills.design, tint: Theme.designPhase, reference: reference?.design)
+            SkillBar(label: "Marketing", value: skills.marketing, tint: Theme.warning, reference: reference?.marketing)
         }
     }
 }
@@ -23,9 +27,14 @@ private struct SkillBar: View {
     let label: String
     let value: Double
     let tint: Color
+    var reference: Double?
 
     private var fraction: Double {
         min(max(value / 100, 0), 1)
+    }
+
+    private var referenceFraction: Double? {
+        reference.map { min(max($0 / 100, 0), 1) }
     }
 
     var body: some View {
@@ -48,6 +57,13 @@ private struct SkillBar: View {
                     Capsule()
                         .fill(tint)
                         .frame(width: max(proxy.size.width * fraction, fraction > 0 ? 4 : 0))
+                    if let referenceFraction {
+                        Rectangle()
+                            .fill(Theme.pixelInk)
+                            .frame(width: 2, height: 8)
+                            .offset(x: max(0, proxy.size.width * referenceFraction - 1), y: -2)
+                            .accessibilityHidden(true)
+                    }
                 }
             }
             .frame(height: 4)
@@ -57,6 +73,9 @@ private struct SkillBar: View {
         // and the fill are one change, so they animate as one.
         .animation(Theme.Motion.valueChange, value: value)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(label) skill \(Int(value.rounded())) of 100")
+        .accessibilityLabel(
+            "\(label) skill \(Int(value.rounded())) of 100"
+                + (reference.map { ", your best is \(Int($0.rounded()))" } ?? "")
+        )
     }
 }

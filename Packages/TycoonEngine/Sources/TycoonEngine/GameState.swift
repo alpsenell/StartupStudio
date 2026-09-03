@@ -495,6 +495,10 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Chosen once at `newGame`; the engine rescales the balance with it.
     /// Saves written before difficulty existed decode as `.normal`.
     public var difficulty: Difficulty
+    /// The seed this game was started from. Kept so an ending can offer
+    /// the same year again — same events, same candidates — with the
+    /// knowledge of how it went. Saves from before it was recorded read 0.
+    public var seed: UInt64 = 0
     public var rng: SeededRNG
     /// A second RNG stream feeding the "world" systems added after launch
     /// (rivals, city, social). Kept separate so those systems' draws never
@@ -625,6 +629,7 @@ public struct GameState: Codable, Equatable, Sendable {
         return GameState(
             schemaVersion: 1,
             difficulty: difficulty,
+            seed: seed,
             rng: rng,
             // Derived from the seed (not drawn from `rng`) so the original
             // stream's draw count at newGame is unchanged.
@@ -829,6 +834,7 @@ extension GameState {
         case candidatePool, research, contractOffers, activeContracts, campaigns
         case eventLog, milestonesReached, life, market, loanBalance, gameOver
         case amenities, knownDepartments, difficulty
+        case seed
         case worldRNG, investorRNG, rivals, city, friendships, pendingStaffEvent
         case lastTeamDinnerDay
         case economy, narrative, progression, investors
@@ -895,11 +901,13 @@ extension GameState {
             codebases: try container.decodeIfPresent([Codebase].self, forKey: .codebases) ?? [],
             gameOver: try container.decodeIfPresent(GameOverInfo.self, forKey: .gameOver)
         )
+        seed = try container.decodeIfPresent(UInt64.self, forKey: .seed) ?? 0
     }
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(schemaVersion, forKey: .schemaVersion)
+        try container.encode(seed, forKey: .seed)
         try container.encode(difficulty, forKey: .difficulty)
         try container.encode(rng, forKey: .rng)
         try container.encode(worldRNG, forKey: .worldRNG)

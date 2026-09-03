@@ -10,8 +10,9 @@ struct GameWonView: View {
     let engine: GameEngine
     let info: GameOverInfo
     let onNewGame: (Difficulty, FounderProfile) -> Void
+    var onReplay: (() -> Void)?
 
     var body: some View {
-        FounderBiographyView(engine: engine, info: info, onNewGame: onNewGame)
+        FounderBiographyView(engine: engine, info: info, onNewGame: onNewGame, onReplay: onReplay)
     }
 }

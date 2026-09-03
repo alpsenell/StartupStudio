@@ -86,6 +86,24 @@ final class GameSession {
         needsOnboarding = false
     }
 
+    /// The same year again: a fresh engine on the run's own seed, founder,
+    /// company and difficulty, so the same events and candidates come
+    /// round. The engine is deterministic — same seed, same game — and the
+    /// player is the only thing that changes.
+    func replayCurrentGame() {
+        let ended = engine.state
+        replaceEngine {
+            GameEngine.newGame(
+                companyName: ended.company.name,
+                seed: ended.seed,
+                difficulty: ended.difficulty,
+                founder: ended.progression.founder
+            )
+        }
+        GameSettings.hasCompletedOnboarding = true
+        needsOnboarding = false
+    }
+
     /// Re-opens the new-game flow (Settings → "Start a new game…"). The
     /// running game keeps ticking underneath until the flow finishes.
     func requestOnboarding() {

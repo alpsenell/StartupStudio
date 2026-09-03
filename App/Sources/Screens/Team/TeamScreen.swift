@@ -12,6 +12,7 @@ struct TeamScreen: View {
     /// How the roster is ordered. Founder-first is the default, matching
     /// desk order in the office scene.
     private enum SortOrder: String, CaseIterable, Identifiable {
+        case attention = "Needs attention"
         case tenure = "Tenure"
         case role = "Role"
         case morale = "Morale"
@@ -25,6 +26,9 @@ struct TeamScreen: View {
     @State private var employeeToManage: Employee?
     @State private var search = ""
     @State private var sortOrder: SortOrder = .tenure
+    /// Picked once on appear: when anybody has something to say, the
+    /// roster opens on it.
+    @State private var choseDefaultSort = false
 
     var body: some View {
         NavigationStack {
@@ -41,7 +45,7 @@ struct TeamScreen: View {
                                 .font(.system(.headline, design: .rounded))
                                 .foregroundStyle(Theme.accent)
                             Spacer()
-                            Text("\(engine.state.candidatePool.count) candidate\(engine.state.candidatePool.count == 1 ? "" : "s")")
+                            Text(hiringCaption)
                                 .font(Theme.Typography.number(.subheadline, weight: .regular))
                                 .foregroundStyle(.secondary)
                             Image(systemName: "chevron.right")
@@ -97,6 +101,13 @@ struct TeamScreen: View {
                 }
             }
             .searchable(text: $search, prompt: "Search the team")
+            .onAppear {
+                guard !choseDefaultSort else { return }
+                choseDefaultSort = true
+                if !EmployeeStatus.roster(in: engine.state, balance: engine.balance, content: engine.content).isEmpty {
+                    sortOrder = .attention
+                }
+            }
             // The HUD inset lives on the stack's root content (not on the
             // NavigationStack) so the list scrolls below it and any pushed
             // destination shows the navigation bar instead.
@@ -127,6 +138,15 @@ struct TeamScreen: View {
         }
     }
 
+    /// "3 candidates", or when the pool is empty, when the next batch lands.
+    private var hiringCaption: String {
+        let count = engine.state.candidatePool.count
+        guard count == 0 else { return "\(count) candidate\(count == 1 ? "" : "s")" }
+        let refresh = max(1, engine.balance.candidateRefreshDays)
+        let days = refresh - (engine.state.day % refresh)
+        return days == refresh ? "New batch today" : "Next batch in \(days) day\(days == 1 ? "" : "s")"
+    }
+
     // MARK: - Roster
 
     /// Everyone matching the search, in the chosen order. The founder
@@ -136,6 +156,16 @@ struct TeamScreen: View {
         return matching.sorted { lhs, rhs in
             if lhs.isFounder != rhs.isFounder { return lhs.isFounder }
             switch sortOrder {
+            case .attention:
+                let l = EmployeeStatus.of(lhs, in: engine.state, balance: engine.balance, content: engine.content)
+                let r = EmployeeStatus.of(rhs, in: engine.state, balance: engine.balance, content: engine.content)
+                switch (l, r) {
+                case let (l?, r?) where l.kind != r.kind: return l.kind < r.kind
+                case (.some, .none): return true
+                case (.none, .some): return false
+                default: break
+                }
+                if lhs.hiredDay != rhs.hiredDay { return lhs.hiredDay < rhs.hiredDay }
             case .tenure:
                 if lhs.hiredDay != rhs.hiredDay { return lhs.hiredDay < rhs.hiredDay }
             case .role:
@@ -332,6 +362,17 @@ private struct EmployeeRow: View {
                         if !employee.isFounder {
                             MoodFace(morale: employee.morale)
                         }
+                    }
+                    // The week's one fact, where the fix is.
+                    if let status = EmployeeStatus.of(employee, in: engine.state, balance: engine.balance, content: engine.content) {
+                        Label(status.text, systemImage: status.systemImage)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(status.tint)
+                            .lineLimit(1)
+                    } else if employee.isFounder, employee.assignment == .idle {
+                        Text("Idle · joins the next product")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .accessibilityElement(children: .combine)

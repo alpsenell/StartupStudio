@@ -258,6 +258,34 @@ struct WeeklyReportSheet: View {
     private var outlookCard: some View {
         CardView("Next week", systemImage: "calendar.badge.clock") {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                if let next = report.nextAction {
+                    // The one line a first-week player needs, as a button
+                    // to the screen it happens on.
+                    Button {
+                        Haptics.tap()
+                        onRoute?(next.route)
+                        dismiss()
+                    } label: {
+                        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(Theme.accent)
+                                .frame(width: 20)
+                            Text("Do this next: \(next.text)")
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                .foregroundStyle(.primary)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.pressableRow)
+                    Divider()
+                }
                 OutlookRow(
                     icon: "flame.fill",
                     text: runwayText,

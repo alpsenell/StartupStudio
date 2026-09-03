@@ -116,17 +116,23 @@ final class GameShell {
         // A headless QA pass has nobody to press "Next week", and the
         // report holds the clock until somebody does — three minutes of
         // wall time got nine game days before this. Players are unaffected.
+        // ...and only until the player has opened the report from the rail
+        // twice on their own, which is the point at which they have
+        // learned the loop and the interruption stops earning its place.
         let autoOpen = GameSettings.weeklyReportAuto && !DebugLaunch.isHeadlessPass
             && week <= Self.autoOpenWeeks
+            && GameSettings.weeklyReportManualOpens < 2
             && engine.state.speed != .paused
             && engine.lastPauseEvents.isEmpty
         if autoOpen {
-            openWeeklyReport(engine: engine)
+            openWeeklyReport(engine: engine, byHand: false)
         }
     }
 
     /// Builds and presents the weekly report, pausing the clock behind it.
-    func openWeeklyReport(engine: GameEngine) {
+    /// `byHand` is the rail's tap; the auto-open passes `false`.
+    func openWeeklyReport(engine: GameEngine, byHand: Bool = true) {
+        if byHand { GameSettings.weeklyReportManualOpens += 1 }
         let built = WeeklyReport(
             state: engine.state,
             balance: engine.balance,

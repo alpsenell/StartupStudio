@@ -77,10 +77,16 @@ struct HiringSheet: View {
     }
 
     private var emptyState: some View {
-        ContentUnavailableView(
+        let refresh = max(1, engine.balance.candidateRefreshDays)
+        let days = refresh - (engine.state.day % refresh)
+        return ContentUnavailableView(
             "No candidates right now",
             systemImage: "person.2.slash",
-            description: Text("A new batch shows up every two weeks.")
+            description: Text(
+                days == refresh
+                    ? "A new batch arrives today."
+                    : "The next batch arrives in \(days) day\(days == 1 ? "" : "s")."
+            )
         )
         .padding(.top, Theme.Spacing.xl)
     }
@@ -109,6 +115,16 @@ private struct CandidateCard: View {
     let atCap: Bool
     /// Whether the founder has spent a day with this person.
     let interviewed: Bool
+
+    /// The roster's best on each skill, for the tick on the bars.
+    private var rosterBest: SkillSet {
+        let people = engine.state.employees
+        return SkillSet(
+            coding: people.map(\.skills.coding).max() ?? 0,
+            design: people.map(\.skills.design).max() ?? 0,
+            marketing: people.map(\.skills.marketing).max() ?? 0
+        )
+    }
     /// Why an interview can't happen right now, if it can't.
     let interviewBlocker: String?
     /// Whether the candidate's department (if their role has one) is
@@ -162,7 +178,7 @@ private struct CandidateCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            SkillBars(skills: candidate.skills)
+            SkillBars(skills: candidate.skills, reference: rosterBest)
 
             // The CV admits to one trait. The other takes a day of your
             // time to find out.
