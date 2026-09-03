@@ -63,16 +63,43 @@ final class DecisionSheetSnapshotTests: XCTestCase {
         .environment(AppRouter())
     }
 
+    /// The distress bid: the sheet says what it is and what accepting ends
+    /// as, because it used to call a fire sale a successful exit.
     private var buyout: DecisionPrompt {
         DecisionPrompt(
             id: "buyout-preview",
+            systemImage: "tag.fill",
+            tint: Theme.warning,
+            title: "Waypoint Nine wants to buy you out",
+            message: "A distress bid. $26,966 buys the name, the desks and whatever is on the shelf. Selling ends the run — sold up, not a win.",
+            stats: [("Offer", "$26,966"), ("Kind", "distress")],
+            options: [
+                .init(label: "Sell up for $26,966", detail: "Ends the run as Sold up", role: .destructive, action: .acceptBuyout),
+                .init(label: "Decline", detail: "Keep building", action: .declineBuyout),
+            ],
+            kicker: "DISTRESS BID",
+            portraitSeed: 0xBEEF
+        )
+    }
+
+    /// The strategic approach: three answers, the earn-out with the money
+    /// on the button and the after-state line under it.
+    private var strategicBuyout: DecisionPrompt {
+        DecisionPrompt(
+            id: "buyout-strategic-preview",
             systemImage: "envelope.badge.fill",
             tint: Theme.accent,
-            title: "Waypoint Nine wants to buy you out",
-            message: "They're offering $26,966 for Rooftop. Accepting ends the run as a successful exit.",
-            stats: [("Offer", "$26,966")],
+            title: "Meridian Works wants to buy you out",
+            message: "A strategic approach: they want what you built, and $1,240,000 is a premium on what Rooftop is worth today. Cash today ends the run as an acquisition; an earn-out pays part now and the rest if you hit their number.",
+            stats: [("Offer", "$1,240,000"), ("Kind", "strategic")],
             options: [
-                .init(label: "Sell the company", detail: "Exit with $26,966", action: .acceptBuyout),
+                .init(label: "Sell for $1,240,000", detail: "Cash today · ends the run as Acquired", action: .acceptBuyout),
+                .init(
+                    label: "Earn-out — $744,000 now",
+                    detail: "Up to $496,000 more over 2 quarterly reviews if you hit profitability with Meridian Works on the board · team morale −8",
+                    cashDelta: 744_000,
+                    action: .acceptBuyoutEarnOut
+                ),
                 .init(label: "Decline", detail: "Keep building", action: .declineBuyout),
             ],
             kicker: "BUYOUT OFFER",
@@ -157,6 +184,11 @@ final class DecisionSheetSnapshotTests: XCTestCase {
     func testRendersABuyoutWithTheRivalsFace() {
         let engine = engine()
         snapshot("decision_buyout") { sheet(buyout, engine: engine) }
+    }
+
+    func testRendersAStrategicBuyoutWithThreeAnswers() {
+        let engine = engine()
+        snapshot("decision_buyout_strategic", height: 640) { sheet(strategicBuyout, engine: engine) }
     }
 
     func testRendersAStoryBeatWithTheAfterStateAndLetMeThink() {

@@ -305,3 +305,64 @@ extension InvestorBot {
         InvestorBot(name: "coasts", growsAfterFunding: false)
     }
 }
+
+// MARK: - Iteration 5 (WS-B)
+
+/// The founder who takes the first strategic offer as an earn-out and
+/// then plays to the acquirer's number — which `InvestorBot` already does
+/// once they are seated, because `boardExpectation` is the newest seat's.
+/// Distress bids are declined. This is the tell for the earn-out: if it
+/// collects the full price on nearly every seed the number is free money;
+/// if it is ousted or forfeits on nearly every seed the twelve-week board
+/// is a coin flip. Never in either pinned suite.
+struct AcquirerBot: BotPolicy {
+    var name = "acquirer"
+    var base = InvestorBot()
+
+    func actions(
+        for state: GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameAction] {
+        var actions: [GameAction] = []
+        if state.rivals.pendingBuyout != nil {
+            actions.append(state.rivals.lastBuyoutWasStrategic ? .acceptBuyoutEarnOut : .declineBuyout)
+        }
+        return actions + base.actions(for: state, balance: balance, content: content)
+    }
+}
+
+/// The founder who buys the board out the moment they can afford it and
+/// still keep `runwayWeeks` of payroll in the bank. Seated rounds only:
+/// this is about the vote, not the cap table. The tell for the buyback:
+/// how often it happens with the room past the warning line, what it
+/// costs as a share of the cash on hand, and whether the founder who
+/// bought the vote away is better or worse off than the one who did not.
+/// Never in either pinned suite.
+struct BuybackBot: BotPolicy {
+    var name = "buyback"
+    var base = InvestorBot()
+    var runwayWeeks = 8
+    /// Only buy the vote away once the room is at least this hot. Zero
+    /// is the founder who ends the meeting the moment they can pay for
+    /// it; sixty is the one who waits for the formal warning.
+    var minPressure = 0.0
+
+    func actions(
+        for state: GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameAction] {
+        var actions: [GameAction] = []
+        let payroll = state.employees.reduce(0) { $0 + $1.weeklySalary }
+        if state.investors.boardPressure >= minPressure,
+           let round = state.investors.rounds.first(where: { round in
+            round.takesBoardSeat
+                && state.company.cash - state.buybackPrice(for: round, balance: balance)
+                    >= payroll * runwayWeeks
+        }) {
+            actions.append(.buyBackRound(investorID: round.investorID))
+        }
+        return actions + base.actions(for: state, balance: balance, content: content)
+    }
+}

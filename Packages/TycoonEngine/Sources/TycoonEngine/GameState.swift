@@ -349,6 +349,9 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case roundBoughtBack(investorID: String, amount: Int, day: Int)
     /// An earn-out review settled: `paid` this quarter, `remainingReviews` to go.
     case earnOutReviewed(met: Bool, paid: Int, remainingReviews: Int, day: Int)
+    /// A strategic buyout was signed as an earn-out: `upfront` landed
+    /// today against a `price` the next reviews decide.
+    case earnOutSigned(rivalID: UUID, upfront: Int, price: Int, day: Int)
 
     // WS-C — rival-sponsored contracts.
     /// A white-label job was delivered and the sponsoring rival shipped it.
@@ -482,6 +485,10 @@ extension GameEvent {
         case .categoryHeld, .categoryLost, .incumbentArrived, .incumbentRetreated,
              .roundBoughtBack, .earnOutReviewed, .familyDateMissed:
             .notable
+        // Signing the earn-out is the player's own act; the sheet just
+        // closed on it.
+        case .earnOutSigned:
+            .info
         // A policy answering for somebody is the pause that did *not*
         // happen; the ledger and the feed carry it.
         case .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,

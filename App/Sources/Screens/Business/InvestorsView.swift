@@ -8,6 +8,14 @@ struct InvestorsView: View {
     let engine: GameEngine
 
     @State private var confirmingIPO = false
+    /// The round the founder is about to buy back, while the confirm is up.
+    @State private var buyingBack: RaisedRound?
+
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI updates
+    /// this property for presented content before the environment is
+    /// installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
 
     private var investors: InvestorState { engine.state.investors }
 
@@ -34,7 +42,8 @@ struct InvestorsView: View {
             roundsCard
         }
 
-        if investors.hasBoard {
+        // An acquirer on an earn-out sits in the room like any seated round.
+        if investors.hasBoard || investors.earnOut != nil {
             BusinessSectionHeader(title: "The board", systemImage: "person.3.fill")
             boardCard
         }
@@ -136,11 +145,69 @@ struct InvestorsView: View {
                             .font(.caption)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
+                        buybackButton(round)
                     }
-                    .accessibilityElement(children: .combine)
+                    .accessibilityElement(children: .contain)
                 }
             }
         }
+        // The confirm carries the money line the decision sheet draws, so
+        // a buyback reads like every other spend of the company's cash.
+        .confirmationDialog(
+            "Buy out \(buyingBack?.investorName ?? "the round")?",
+            isPresented: Binding(
+                get: { buyingBack != nil },
+                set: { if !$0 { buyingBack = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: buyingBack
+        ) { round in
+            let price = engine.state.buybackPrice(for: round, balance: engine.balance)
+            Button("Pay \(price.money) and take back \(round.equity.oneDecimal)%") {
+                shell.toasts.send(
+                    .buyBackRound(investorID: round.investorID),
+                    to: engine,
+                    rejected: "The buyout fell through — check the cash."
+                )
+            }
+            Button("Keep them", role: .cancel) {}
+        } message: { round in
+            let price = engine.state.buybackPrice(for: round, balance: engine.balance)
+            Text(
+                DecisionPrompt.afterState(
+                    delta: -price, cash: engine.state.company.cash, burn: engine.weeklyBurn
+                )
+                + (round.takesBoardSeat
+                    ? " · their ask on \(round.expects.displayName.lowercased()) leaves the room"
+                    : "")
+            )
+        }
+    }
+
+    /// WS-B: "Buy them out — $X". Priced on today's valuation at the
+    /// premium they bought in at, plus the room's temperature — so it is
+    /// cheapest when small and broke and dearest the moment it is
+    /// affordable. Greyed, with the price still showing, when the cash is
+    /// not there.
+    private func buybackButton(_ round: RaisedRound) -> some View {
+        let price = engine.state.buybackPrice(for: round, balance: engine.balance)
+        let affordable = engine.state.company.cash >= price
+        return Button {
+            buyingBack = round
+        } label: {
+            Label("Buy them out — \(price.money)", systemImage: "arrow.uturn.backward.circle")
+                .font(.system(.caption, design: .rounded).weight(.semibold))
+                .monospacedDigit()
+        }
+        .buttonStyle(.bordered)
+        .tint(Theme.accent)
+        .disabled(!affordable)
+        .padding(.top, Theme.Spacing.xs)
+        .accessibilityLabel(
+            affordable
+                ? "Buy out \(round.investorName) for \(price.money)"
+                : "Buy out \(round.investorName) for \(price.money). Not enough cash."
+        )
     }
 
     // MARK: - Board
@@ -152,6 +219,10 @@ struct InvestorsView: View {
 
         return CardView("Board pressure", systemImage: "gauge.with.needle") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                if let earnOut = investors.earnOut {
+                    earnOutRow(earnOut)
+                    Divider()
+                }
                 if let expectation {
                     Text(expectation.demand)
                         .font(.subheadline)
@@ -211,6 +282,31 @@ struct InvestorsView: View {
                 }
             }
         }
+    }
+
+    /// The acquirer's seat: what has been paid, what each review is worth,
+    /// and how many are left to sit through.
+    private func earnOutRow(_ earnOut: EarnOut) -> some View {
+        let left = earnOut.remainingReviews
+        let tranche = Int((Double(earnOut.price) * engine.balance.investors.earnOutReviewShare).rounded())
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Earn-out · \(left) review\(left == 1 ? "" : "s") left")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                Spacer()
+                Text("\(earnOut.paid.money) of \(earnOut.price.money)")
+                    .font(Theme.Typography.number(.subheadline))
+            }
+            Text(
+                "\(earnOut.buyerName) holds the seat. Each review that meets "
+                    + "\(earnOut.expectation.displayName.lowercased()) pays \(tranche.money); "
+                    + "\(engine.balance.investors.earnOutMissesToOust) misses and they bring in their own CEO."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func pressureTint(_ pressure: Double) -> Color {

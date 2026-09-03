@@ -100,6 +100,12 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
     /// The persona's patience, carried onto the cap table so the quarterly
     /// review can scale its verdict by it.
     public var patienceWeeks: Int
+    /// The day the founder bought this round back out of the cap table
+    /// (WS-B). `nil` on the rounds still seated; saves from before the
+    /// buyback existed decode `nil`.
+    public var boughtOutDay: Int?
+    /// What buying it back cost.
+    public var buybackPrice: Int?
 
     /// Stable across a save: one investor closes at most one round.
     public var id: String { investorID }
@@ -113,7 +119,9 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
         day: Int,
         takesBoardSeat: Bool,
         expects: BoardExpectation,
-        patienceWeeks: Int = 26
+        patienceWeeks: Int = 26,
+        boughtOutDay: Int? = nil,
+        buybackPrice: Int? = nil
     ) {
         self.investorID = investorID
         self.investorName = investorName
@@ -124,6 +132,8 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
         self.takesBoardSeat = takesBoardSeat
         self.expects = expects
         self.patienceWeeks = patienceWeeks
+        self.boughtOutDay = boughtOutDay
+        self.buybackPrice = buybackPrice
     }
 }
 
@@ -133,6 +143,7 @@ extension RaisedRound {
     private enum CodingKeys: String, CodingKey {
         case investorID, investorName, amount, equity, valuation, day
         case takesBoardSeat, expects, patienceWeeks
+        case boughtOutDay, buybackPrice
     }
 
     public init(from decoder: any Decoder) throws {
@@ -146,7 +157,9 @@ extension RaisedRound {
             day: try container.decode(Int.self, forKey: .day),
             takesBoardSeat: try container.decode(Bool.self, forKey: .takesBoardSeat),
             expects: try container.decode(BoardExpectation.self, forKey: .expects),
-            patienceWeeks: try container.decodeIfPresent(Int.self, forKey: .patienceWeeks) ?? 26
+            patienceWeeks: try container.decodeIfPresent(Int.self, forKey: .patienceWeeks) ?? 26,
+            boughtOutDay: try container.decodeIfPresent(Int.self, forKey: .boughtOutDay),
+            buybackPrice: try container.decodeIfPresent(Int.self, forKey: .buybackPrice)
         )
     }
 }
@@ -171,6 +184,56 @@ extension InvestmentOffer {
             respondByDay: try container.decode(Int.self, forKey: .respondByDay)
         )
     }
+}
+
+/// A strategic buyout taken as an earn-out (iteration 5, WS-B): part of
+/// the price today, the rest over the next quarterly reviews with the
+/// acquirer in the boardroom holding the company to one number.
+///
+/// It is graded by `InvestorSystem.quarterlyReview` exactly like a seated
+/// round's expectation — it *is* one, appended to `boardExpectations` —
+/// and settled there: a met review pays a tranche, a miss pays nothing,
+/// `missedReviews` reaching the balance's limit is the ordinary ousting
+/// keeping what was paid, and the last review closes the sale as
+/// `.acquired` for `paid`. No draws anywhere: the expectation is
+/// arithmetic on the company the day it signs.
+public struct EarnOut: Codable, Equatable, Sendable {
+    public var buyerName: String
+    public var buyerRivalID: UUID
+    /// The full price agreed.
+    public var price: Int
+    /// What has actually landed in the account so far.
+    public var paid: Int
+    /// The number the acquirer holds the company to.
+    public var expectation: BoardExpectation
+    public var remainingReviews: Int
+    /// The acquirer's patience: short, so every verdict lands hard.
+    public var patienceWeeks: Int
+    /// Reviews missed so far.
+    public var missedReviews: Int
+
+    public init(
+        buyerName: String,
+        buyerRivalID: UUID,
+        price: Int,
+        paid: Int,
+        expectation: BoardExpectation,
+        remainingReviews: Int,
+        patienceWeeks: Int,
+        missedReviews: Int = 0
+    ) {
+        self.buyerName = buyerName
+        self.buyerRivalID = buyerRivalID
+        self.price = price
+        self.paid = paid
+        self.expectation = expectation
+        self.remainingReviews = remainingReviews
+        self.patienceWeeks = patienceWeeks
+        self.missedReviews = missedReviews
+    }
+
+    /// What is still on the table.
+    public var outstanding: Int { max(0, price - paid) }
 }
 
 /// One quarterly board review, kept so the board room can show a history
@@ -236,6 +299,13 @@ public struct InvestorState: Codable, Equatable, Sendable {
     /// Set the day the player files to go public, so the ending screen can
     /// say when.
     public var ipoDay: Int?
+    /// A strategic buyout being paid out over the next reviews, with the
+    /// acquirer in the room. Saves from before it existed decode `nil`.
+    public var earnOut: EarnOut?
+    /// Rounds the founder bought back out of the cap table, oldest first
+    /// (WS-B). Their equity is home and their ask is out of the room;
+    /// they stay here for the biography. Decodes empty.
+    public var boughtOut: [RaisedRound]
 
     /// How many reviews the board room keeps.
     static let maxReviews = 24
@@ -255,7 +325,9 @@ public struct InvestorState: Codable, Equatable, Sendable {
         peakQuarterRevenue: Int = 0,
         lastQuarterShipped: Int = 0,
         lastQuarterHeadcount: Int = 0,
-        ipoDay: Int? = nil
+        ipoDay: Int? = nil,
+        earnOut: EarnOut? = nil,
+        boughtOut: [RaisedRound] = []
     ) {
         self.equityRemaining = equityRemaining
         self.rounds = rounds
@@ -272,6 +344,8 @@ public struct InvestorState: Codable, Equatable, Sendable {
         self.lastQuarterShipped = lastQuarterShipped
         self.lastQuarterHeadcount = lastQuarterHeadcount
         self.ipoDay = ipoDay
+        self.earnOut = earnOut
+        self.boughtOut = boughtOut
     }
 
     /// A fresh company: the founder owns all of it and nobody is watching.
@@ -293,12 +367,13 @@ public struct InvestorState: Codable, Equatable, Sendable {
     }
 
     /// What the board is watching, if anyone is: the expectation of the
-    /// most recent round that took a seat.
+    /// most recent seat — an acquirer on an earn-out is the newest seat
+    /// there is, otherwise the most recent round that took one.
     ///
     /// Kept for the screens and the copy, which speak about "the board" in
     /// the singular. The *review* grades `boardExpectations`.
     public var boardExpectation: BoardExpectation? {
-        rounds.last { $0.takesBoardSeat }?.expects
+        earnOut?.expectation ?? rounds.last { $0.takesBoardSeat }?.expects
     }
 
     /// Everything the boardroom is watching: one entry per distinct ask
@@ -309,11 +384,19 @@ public struct InvestorState: Codable, Equatable, Sendable {
     /// seated investor keeps watching their own number, so raising again
     /// is "take the money and answer to two people" rather than an escape
     /// hatch.
+    ///
+    /// Derived, never stored: a round bought out of the cap table takes
+    /// its ask out of the room by construction, and an acquirer on an
+    /// earn-out sits at the end of the table as one more seat.
     public var boardExpectations: [BoardExpectation] {
         var seen: Set<BoardExpectation> = []
-        return rounds.filter(\.takesBoardSeat).compactMap { round in
+        var watched = rounds.filter(\.takesBoardSeat).compactMap { round in
             seen.insert(round.expects).inserted ? round.expects : nil
         }
+        if let earnOut, seen.insert(earnOut.expectation).inserted {
+            watched.append(earnOut.expectation)
+        }
+        return watched
     }
 
     /// The most recent quarterly review.
@@ -342,6 +425,7 @@ extension InvestorState {
         case lastQuarterCash, lastQuarterRevenue, peakQuarterRevenue
         case lastQuarterShipped, lastQuarterHeadcount
         case ipoDay
+        case earnOut, boughtOut
     }
 
     public init(from decoder: any Decoder) throws {
@@ -368,7 +452,9 @@ extension InvestorState {
             lastQuarterHeadcount: try container.decodeIfPresent(
                 Int.self, forKey: .lastQuarterHeadcount
             ) ?? 0,
-            ipoDay: try container.decodeIfPresent(Int.self, forKey: .ipoDay)
+            ipoDay: try container.decodeIfPresent(Int.self, forKey: .ipoDay),
+            earnOut: try container.decodeIfPresent(EarnOut.self, forKey: .earnOut),
+            boughtOut: try container.decodeIfPresent([RaisedRound].self, forKey: .boughtOut) ?? []
         )
     }
 
@@ -389,6 +475,8 @@ extension InvestorState {
         try container.encode(lastQuarterShipped, forKey: .lastQuarterShipped)
         try container.encode(lastQuarterHeadcount, forKey: .lastQuarterHeadcount)
         try container.encodeIfPresent(ipoDay, forKey: .ipoDay)
+        try container.encodeIfPresent(earnOut, forKey: .earnOut)
+        try container.encode(boughtOut, forKey: .boughtOut)
     }
 }
 
@@ -416,7 +504,8 @@ extension GameState {
     /// Whether the company could file to go public today: a big enough
     /// valuation, a run of profitable quarters, and recurring revenue.
     public func canFileIPO(balance: BalanceConfig) -> Bool {
-        guard gameOver == nil, investors.ipoDay == nil else { return false }
+        // A company being paid for over an earn-out is already sold.
+        guard gameOver == nil, investors.ipoDay == nil, investors.earnOut == nil else { return false }
         let config = balance.investors
         return companyValuation(balance: balance) >= config.ipoValuationFloor
             && investors.profitableQuarters >= config.ipoProfitableQuarters
@@ -426,6 +515,9 @@ extension GameState {
     /// Why the company can't file yet, in one line, or `nil` when it can.
     public func ipoBlocker(balance: BalanceConfig) -> String? {
         guard investors.ipoDay == nil else { return "You've already filed." }
+        if let earnOut = investors.earnOut {
+            return "\(earnOut.buyerName) is buying the company. The bell is theirs to ring."
+        }
         let config = balance.investors
         let valuation = companyValuation(balance: balance)
         if valuation < config.ipoValuationFloor {
@@ -440,5 +532,52 @@ extension GameState {
             return "Nothing on the market bills monthly. They want recurring revenue."
         }
         return nil
+    }
+}
+
+// MARK: - Buy back the board
+
+extension GameState {
+    /// What it costs to buy a round back today: their slice of the
+    /// company at today's valuation, at the same premium they bought in
+    /// at, plus a surcharge for the temperature of the room — an investor
+    /// who can smell a vote charges for the privilege. Cheapest when the
+    /// company is small and broke, dearest the moment it can afford it.
+    public func buybackPrice(for round: RaisedRound, balance: BalanceConfig) -> Int {
+        let slice = round.equity / 100 * Double(companyValuation(balance: balance))
+        let premium = balance.investors.buybackPremium
+        let surcharge = 1 + investors.boardPressure / 100
+        return max(0, Int((slice * premium * surcharge).rounded()))
+    }
+}
+
+// MARK: - Exit terms
+
+extension GameState {
+    /// The number an acquirer holds the company to on an earn-out: the
+    /// first expectation, in the board's own order, that the company would
+    /// miss if it were reviewed this morning — or profitability when it
+    /// would pass all four. Arithmetic on state, no draws, so the sheet
+    /// can name it before the player signs.
+    public func earnOutExpectation(balance: BalanceConfig) -> BoardExpectation {
+        InvestorSystem.currentlyMissedExpectation(self, balance: balance) ?? .profitability
+    }
+}
+
+// MARK: - Dollars in prose
+
+extension Int {
+    /// "$20,460" — for the one-line reasons an ending writes, which the
+    /// biography prints verbatim. The App has its own `money` formatter;
+    /// this one exists so an engine-authored sentence reads the same.
+    var dollars: String {
+        let sign = self < 0 ? "-" : ""
+        let digits = String(magnitude)
+        var grouped = ""
+        for (offset, character) in digits.reversed().enumerated() {
+            if offset != 0, offset.isMultiple(of: 3) { grouped.append(",") }
+            grouped.append(character)
+        }
+        return sign + "$" + String(grouped.reversed())
     }
 }

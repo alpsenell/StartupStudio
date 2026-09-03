@@ -250,9 +250,17 @@ struct DecisionSheetContent: View {
     /// "−$2,300 → $9,250 · runway 8 wk": what the company looks like after
     /// this option, from the same numbers the HUD shows.
     private func afterState(_ delta: Int) -> String {
-        let cash = engine.state.company.cash
+        DecisionPrompt.afterState(delta: delta, cash: engine.state.company.cash, burn: engine.weeklyBurn)
+    }
+}
+
+extension DecisionPrompt {
+    /// The money line under an answer — "−$2,300 → $9,250 · runway 8 wk"
+    /// — from the same numbers the HUD shows. Shared with every confirm
+    /// that spends the company's cash, so the arithmetic reads the same
+    /// on a sheet and in a dialog.
+    static func afterState(delta: Int, cash: Int, burn: Int) -> String {
         let after = cash + delta
-        let burn = engine.weeklyBurn
         let signed = delta >= 0 ? "+" + delta.money : delta.money
         let runway: String = if after < 0 {
             "in the red"
@@ -280,7 +288,7 @@ extension DecisionPrompt {
             return poachPrompt(poach, state: state)
         }
         if let buyout = state.rivals.pendingBuyout {
-            return buyoutPrompt(buyout, state: state)
+            return buyoutPrompt(buyout, state: state, balance: balance)
         }
         if let staffEvent = state.pendingStaffEvent {
             return staffEventPrompt(staffEvent, state: state, content: content, balance: balance)
@@ -506,29 +514,72 @@ extension DecisionPrompt {
         )
     }
 
-    private static func buyoutPrompt(_ offer: BuyoutOffer, state: GameState) -> DecisionPrompt? {
+    /// A rival's offer for the company. The sheet says plainly which of
+    /// the two kinds it is, because they end very differently: a strategic
+    /// approach is a premium for something worth having and ends as
+    /// *Acquired*; a distress bid is somebody picking up the name and the
+    /// desks and ends as *Sold up*, post-mortem and all.
+    ///
+    /// A strategic offer has a third answer: the earn-out — part of the
+    /// price today, the rest over two quarterly reviews with the acquirer
+    /// on the board. The button carries the money and the after-state
+    /// line, and the detail names the number they will watch, because
+    /// that is the whole bet.
+    private static func buyoutPrompt(
+        _ offer: BuyoutOffer,
+        state: GameState,
+        balance: BalanceConfig
+    ) -> DecisionPrompt? {
         let rival = state.rivals.rival(id: offer.rivalID)
         let rivalName = rival?.name ?? "A rival"
+        let strategic = state.rivals.lastBuyoutWasStrategic
+        let message = strategic
+            ? "A strategic approach: they want what you built, and \(offer.amount.money) is a premium "
+                + "on what \(state.company.name) is worth today. Cash today ends the run as an "
+                + "acquisition; an earn-out pays part now and the rest if you hit their number."
+            : "A distress bid. \(offer.amount.money) buys the name, the desks and whatever is on the "
+                + "shelf. Selling ends the run — sold up, not a win."
+
+        var options: [Option] = [
+            Option(
+                label: strategic ? "Sell for \(offer.amount.money)" : "Sell up for \(offer.amount.money)",
+                detail: strategic ? "Cash today · ends the run as Acquired" : "Ends the run as Sold up",
+                role: strategic ? nil : .destructive,
+                action: .acceptBuyout
+            ),
+        ]
+        if strategic {
+            let config = balance.investors
+            let upfront = Int((Double(offer.amount) * config.earnOutUpfrontShare).rounded())
+            let rest = offer.amount - upfront
+            let expectation = state.earnOutExpectation(balance: balance)
+            options.append(Option(
+                label: "Earn-out — \(upfront.money) now",
+                detail: "Up to \(rest.money) more over \(config.earnOutReviews) quarterly reviews if you hit "
+                    + "\(expectation.displayName.lowercased()) with \(rivalName) on the board · "
+                    + "team morale −\(Int(config.earnOutMoraleCost))",
+                cashDelta: upfront,
+                action: .acceptBuyoutEarnOut
+            ))
+        }
+        options.append(Option(
+            label: "Decline",
+            detail: "Keep building",
+            action: .declineBuyout
+        ))
+
         return DecisionPrompt(
             id: "buyout-\(offer.rivalID.uuidString)-\(offer.respondByDay)",
-            systemImage: "envelope.badge.fill",
-            tint: Theme.accent,
+            systemImage: strategic ? "envelope.badge.fill" : "tag.fill",
+            tint: strategic ? Theme.accent : Theme.warning,
             title: "\(rivalName) wants to buy you out",
-            message: "They're offering \(offer.amount.money) for \(state.company.name). Accepting ends the run as a successful exit.",
-            stats: [("Offer", offer.amount.money)],
-            options: [
-                Option(
-                    label: "Sell the company",
-                    detail: "Exit with \(offer.amount.money)",
-                    action: .acceptBuyout
-                ),
-                Option(
-                    label: "Decline",
-                    detail: "Keep building",
-                    action: .declineBuyout
-                ),
+            message: message,
+            stats: [
+                ("Offer", offer.amount.money),
+                ("Kind", strategic ? "strategic" : "distress"),
             ],
-            kicker: "BUYOUT OFFER",
+            options: options,
+            kicker: strategic ? "BUYOUT OFFER" : "DISTRESS BID",
             portraitSeed: rival?.appearanceSeed
         )
     }

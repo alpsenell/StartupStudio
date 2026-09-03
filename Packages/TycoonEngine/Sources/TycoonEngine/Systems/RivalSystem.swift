@@ -691,12 +691,21 @@ enum RivalSystem {
         return poachSucceeds(offer, &state, balance)
     }
 
-    /// Sells the company: the sale posts to the ledger and the run ends as
-    /// a successful exit. Ignored with nothing pending.
+    /// Sells the company for cash today. The sale posts to the ledger and
+    /// the run ends — as which ending depends on which kind of approach
+    /// this was.
+    ///
+    /// A *strategic* offer (`lastBuyoutWasStrategic`) is somebody paying a
+    /// premium for what was built: `.acquired`, a win. A *distress* bid is
+    /// a rival picking up the name and the desks from a company that is
+    /// broke or unknown: `.soldUp`, which is not. Both used to land on the
+    /// same crowned screen, so a fire sale on day 56 with nothing shipped
+    /// read as the best ending in the game. Ignored with nothing pending.
     static func acceptBuyout(state: inout GameState) -> [GameEvent] {
         guard let offer = state.rivals.pendingBuyout else { return [] }
         state.rivals.pendingBuyout = nil
         let buyerName = state.rivals.rival(id: offer.rivalID)?.name ?? "a rival"
+        let strategic = state.rivals.lastBuyoutWasStrategic
 
         state.company.cash += offer.amount
         state.ledger.post(LedgerEntry(
@@ -707,8 +716,10 @@ enum RivalSystem {
         ))
         state.gameOver = GameOverInfo(
             day: state.day,
-            reason: "Acquired by \(buyerName) for $\(offer.amount).",
-            kind: .acquired
+            reason: strategic
+                ? "Acquired by \(buyerName) for \(offer.amount.dollars)."
+                : "\(buyerName) bought the name and the desks for \(offer.amount.dollars).",
+            kind: strategic ? .acquired : .soldUp
         )
         return [
             .companySold(rivalID: offer.rivalID, amount: offer.amount, day: state.day),

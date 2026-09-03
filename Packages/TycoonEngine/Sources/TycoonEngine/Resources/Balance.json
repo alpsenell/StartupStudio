@@ -884,7 +884,14 @@
     "strategicMinReputation": 60.0,
     "strategicPremiumMin": 1.5,
     "strategicPremiumMax": 2.5,
-    "raisePressureRelief": 0.5
+    "raisePressureRelief": 0.5,
+    "earnOutUpfrontShare": 0.6,
+    "earnOutReviewShare": 0.2,
+    "earnOutReviews": 2,
+    "earnOutPatienceWeeks": 12,
+    "earnOutMoraleCost": 8.0,
+    "earnOutMissesToOust": 2,
+    "buybackPremium": 2.5
   },
   "traits": {
     "teamGrowthStrength": 1.0,
