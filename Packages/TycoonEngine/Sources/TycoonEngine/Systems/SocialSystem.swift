@@ -621,6 +621,10 @@ enum SocialSystem {
             .employeeQuit(employeeID: employee.id, name: employee.name, day: state.day)
         ]
         events.append(contentsOf: friendDeparted(employee.id, state: &state, balance: balance))
+        // A walk-out leaves the same way a quit does: into the address book.
+        events.append(contentsOf: NetworkingSystem.departed(
+            employee, reason: .quit, state: &state, balance: balance
+        ))
         return events
     }
 
