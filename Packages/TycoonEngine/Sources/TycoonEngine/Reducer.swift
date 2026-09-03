@@ -297,6 +297,29 @@ public enum Reducer {
             events = FinanceSystem.takeSecuredLoan(
                 amount: amount, state: &state, balance: balance
             )
+
+        // MARK: Iteration 5
+
+        // Scaffold stubs: each lane replaces its own `break` with its
+        // system call and nothing else in this region.
+
+        // MARK: WS-A (category fight)
+        case .concedeCategory:
+            events = []
+
+        // MARK: WS-B (board)
+        case .buyBackRound:
+            events = []
+        case .acceptBuyoutEarnOut:
+            events = []
+
+        // MARK: WS-D (policy)
+        case .reverseStaffPolicy:
+            events = []
+
+        // MARK: WS-G (ladders)
+        case .declareIndependence:
+            events = []
         }
 
         state.logEvents(events)

@@ -1051,5 +1051,7 @@
     "patchDebt": 2.0,
     "refactorBasePoints": 0.35,
     "refactorCodingDivisor": 200.0
-  }
+  },
+  "sponsoredContracts": {},
+  "origins": {}
 }

@@ -63,12 +63,21 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
     /// The board lost patience and replaced the founder with a hire.
     case oustedByBoard
 
+    // MARK: Iteration 5
+
+    /// A distress buyout: somebody bought the name and the desks. Not a
+    /// win — the post-mortem shows (WS-B, exit terms).
+    case soldUp
+    /// The founder kept every share and built something that lasts —
+    /// the independent ladder's ending, "Still yours" (WS-G).
+    case independent
+
     /// Whether the run ended somewhere the founder would call a win. The
     /// endings screen picks its tone from this.
     public var isSuccess: Bool {
         switch self {
-        case .acquired, .ipo: true
-        case .bankruptcy, .oustedByBoard: false
+        case .acquired, .ipo, .independent: true
+        case .bankruptcy, .oustedByBoard, .soldUp: false
         }
     }
 
@@ -79,6 +88,8 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
         case .acquired: "Acquired"
         case .ipo: "Public"
         case .oustedByBoard: "Replaced"
+        case .soldUp: "Sold up"
+        case .independent: "Still yours"
         }
     }
 }
@@ -311,6 +322,56 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case hungOutWith(employeeID: UUID, day: Int)
     /// The founder taught somebody something.
     case employeeMentored(employeeID: UUID, skill: TrainableSkill, day: Int)
+
+    // MARK: Iteration 5
+
+    // Appended by the scaffold so eight lanes never edit the same line.
+    // Each lane emits its own; the copy lives in `EventCopy` / `EventPresenter`.
+
+    // WS-A — the category fight and the incumbent.
+    /// A rival launched into a category the player holds; the clock stops
+    /// for six weeks' worth of decision.
+    case categoryChallenged(
+        rivalID: UUID, topicID: String, productName: String, quality: Int, respondByDay: Int, day: Int
+    )
+    /// The challenge settled in the player's favour.
+    case categoryHeld(rivalID: UUID, topicID: String, day: Int)
+    /// The challenge settled against the player.
+    case categoryLost(rivalID: UUID, topicID: String, day: Int)
+    /// A deep-pockets rival founded into the player's best categories.
+    case incumbentArrived(rivalID: UUID, name: String, day: Int)
+    /// The incumbent gave up the player's categories.
+    case incumbentRetreated(rivalID: UUID, name: String, day: Int)
+
+    // WS-B — buy back the board, and exit terms.
+    /// A seated round was bought out and its ask left the room.
+    case roundBoughtBack(investorID: String, amount: Int, day: Int)
+    /// An earn-out review settled: `paid` this quarter, `remainingReviews` to go.
+    case earnOutReviewed(met: Bool, paid: Int, remainingReviews: Int, day: Int)
+
+    // WS-C — rival-sponsored contracts.
+    /// A white-label job was delivered and the sponsoring rival shipped it.
+    case sponsoredContractDelivered(rivalID: UUID, topicID: String, quality: Int, day: Int)
+
+    // WS-D — the answer becomes the policy.
+    /// A supportive answer became the rule.
+    case staffPolicySet(flag: String, employeeID: UUID, day: Int)
+    /// The rule answered for somebody, no sheet.
+    case staffPolicyApplied(flag: String, employeeID: UUID, day: Int)
+    /// The rule was reversed, publicly.
+    case staffPolicyReversed(flag: String, day: Int)
+
+    // WS-E — the date in the diary.
+    /// A dated family beat went unanswered.
+    case familyDateMissed(eventID: String, day: Int)
+
+    // WS-F — the boomerang.
+    /// Somebody who left the company went into the address book.
+    case alumnusJoinedBook(contactID: UUID, name: String, day: Int)
+
+    // WS-G — two ladders.
+    /// The founder declared the company built, still owning all of it.
+    case stayedIndependent(day: Int)
 }
 
 extension GameEvent {
@@ -411,6 +472,23 @@ extension GameEvent {
              .hungOutWith, .employeeMentored:
             .quiet
 
+        // MARK: Iteration 5
+
+        // A challenge with a deadline and the end of a run always stop.
+        case .categoryChallenged, .stayedIndependent:
+            .critical
+        // Settlements and arrivals: worth looking up for.
+        case .categoryHeld, .categoryLost, .incumbentArrived, .incumbentRetreated,
+             .roundBoughtBack, .earnOutReviewed, .familyDateMissed:
+            .notable
+        // A policy answering for somebody is the pause that did *not*
+        // happen; the ledger and the feed carry it.
+        case .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,
+             .staffPolicyReversed:
+            .info
+        case .alumnusJoinedBook:
+            .quiet
+
         default:
             .info
         }
@@ -499,6 +577,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// the same year again — same events, same candidates — with the
     /// knowledge of how it went. Saves from before it was recorded read 0.
     public var seed: UInt64 = 0
+    /// How the company was founded (WS-H). Saves from before origins
+    /// existed decode as `.garage`, which is byte-identical to today.
+    public var origin: FoundingOrigin = .garage
     public var rng: SeededRNG
     /// A second RNG stream feeding the "world" systems added after launch
     /// (rivals, city, social). Kept separate so those systems' draws never
@@ -596,7 +677,8 @@ public struct GameState: Codable, Equatable, Sendable {
         seed: UInt64,
         balance: BalanceConfig,
         difficulty: Difficulty = .normal,
-        founder: FounderProfile = .default
+        founder: FounderProfile = .default,
+        origin: FoundingOrigin = .garage
     ) -> GameState {
         var rng = SeededRNG(seed: seed)
         // The id and the appearance word are drawn in this order, always —
@@ -626,7 +708,7 @@ public struct GameState: Codable, Equatable, Sendable {
             appearanceSeed: founder.appearanceSeed ?? drawnAppearanceSeed,
             role: .founder
         )
-        return GameState(
+        var state = GameState(
             schemaVersion: 1,
             difficulty: difficulty,
             seed: seed,
@@ -675,6 +757,10 @@ public struct GameState: Codable, Equatable, Sendable {
             networking: .empty,
             gameOver: nil
         )
+        state.origin = origin
+        // WS-H applies the origin's deltas here, after every draw above,
+        // so `.garage` stays byte-identical and no origin moves the streams.
+        return state
     }
 
     /// Departments staffed right now: any employee whose role staffs one.
@@ -835,6 +921,7 @@ extension GameState {
         case eventLog, milestonesReached, life, market, loanBalance, gameOver
         case amenities, knownDepartments, difficulty
         case seed
+        case origin
         case worldRNG, investorRNG, rivals, city, friendships, pendingStaffEvent
         case lastTeamDinnerDay
         case economy, narrative, progression, investors
@@ -902,12 +989,14 @@ extension GameState {
             gameOver: try container.decodeIfPresent(GameOverInfo.self, forKey: .gameOver)
         )
         seed = try container.decodeIfPresent(UInt64.self, forKey: .seed) ?? 0
+        origin = try container.decodeIfPresent(FoundingOrigin.self, forKey: .origin) ?? .garage
     }
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(schemaVersion, forKey: .schemaVersion)
         try container.encode(seed, forKey: .seed)
+        try container.encode(origin, forKey: .origin)
         try container.encode(difficulty, forKey: .difficulty)
         try container.encode(rng, forKey: .rng)
         try container.encode(worldRNG, forKey: .worldRNG)

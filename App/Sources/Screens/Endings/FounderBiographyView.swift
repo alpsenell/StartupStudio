@@ -102,6 +102,8 @@ struct FounderBiographyView: View {
         case .acquired: "crown.fill"
         case .ipo: "bell.fill"
         case .oustedByBoard: "person.crop.circle.badge.xmark"
+        case .soldUp: "tag.fill"
+        case .independent: "flag.checkered"
         }
     }
 

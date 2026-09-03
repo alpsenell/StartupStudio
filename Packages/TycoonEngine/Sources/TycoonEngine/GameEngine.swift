@@ -54,13 +54,14 @@ public final class GameEngine {
         companyName: String,
         seed: UInt64,
         difficulty: Difficulty = .normal,
-        founder: FounderProfile = .default
+        founder: FounderProfile = .default,
+        origin: FoundingOrigin = .garage
     ) -> GameEngine {
         let (bundled, content) = loadBundledConfiguration()
         let balance = bundled.adjusted(for: difficulty)
         let state = GameState.newGame(
             companyName: companyName, seed: seed, balance: balance,
-            difficulty: difficulty, founder: founder
+            difficulty: difficulty, founder: founder, origin: origin
         )
         return GameEngine(state: state, balance: balance, content: content)
     }

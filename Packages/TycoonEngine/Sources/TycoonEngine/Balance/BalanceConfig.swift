@@ -1729,6 +1729,17 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     /// custom one by assigning to the property.
     public var codebase: CodebaseBalance = .default
 
+    // MARK: Iteration 5 blocks
+
+    // Same rule as `codebase`: an inline default keeps the key optional.
+    // Lanes whose knobs belong to an existing block (rivals, investors,
+    // staff, narrative, relationships) add them there instead.
+
+    /// Rival-sponsored white-label contracts (WS-C).
+    public var sponsoredContracts: SponsoredContractBalance = .default
+    /// The four founding origins' day-0 deltas (WS-H).
+    public var origins: OriginBalance = .default
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

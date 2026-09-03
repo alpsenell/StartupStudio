@@ -6,6 +6,8 @@ public enum NarrativeSource: String, Codable, Equatable, Sendable, CaseIterable 
     case company
     /// `LifeEvents.json`: something that happened to the founder.
     case life
+    /// `StaffEvents.json`: a scheduled second act of a staff moment (WS-D).
+    case staff
 }
 
 /// One answer offered by a pending choice, snapshotted out of the catalog
@@ -81,11 +83,15 @@ public struct ScheduledNarrativeEvent: Codable, Equatable, Sendable {
     public var day: Int
     public var eventID: String
     public var source: NarrativeSource
+    /// The person a `.staff` follow-up is about (WS-D). Optional, so
+    /// saves from before it existed decode as before.
+    public var employeeID: UUID?
 
-    public init(day: Int, eventID: String, source: NarrativeSource) {
+    public init(day: Int, eventID: String, source: NarrativeSource, employeeID: UUID? = nil) {
         self.day = day
         self.eventID = eventID
         self.source = source
+        self.employeeID = employeeID
     }
 }
 

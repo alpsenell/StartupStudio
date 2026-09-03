@@ -450,6 +450,17 @@ struct EventCopy {
              .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .candidateInterviewed:
             fallbackEntry(for: event)
 
+        // MARK: Iteration 5
+
+        // Scaffold: every lane's events read out of `EventPresenter` until
+        // the lane writes its copy. Move your cases above and give them a
+        // line; leave the others here.
+        case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
+             .incumbentRetreated, .roundBoughtBack, .earnOutReviewed,
+             .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,
+             .staffPolicyReversed, .familyDateMissed, .alumnusJoinedBook, .stayedIndependent:
+            fallbackEntry(for: event)
+
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a
         // warning naming the new case) when a workstream appends one.

@@ -239,6 +239,12 @@ enum NarrativeSystem {
             choice = def.flatMap { optionIndex < $0.choices.count ? $0.choices[optionIndex] : nil }
             unconditional = def?.unconditionalEffects ?? []
             headline = def?.headline ?? pending.title
+        case .staff:
+            // WS-D: a staff second act is answered through
+            // `resolveStaffEvent`, not here. Scaffold: nothing to resolve.
+            choice = nil
+            unconditional = []
+            headline = pending.title
         }
         guard let choice else {
             // The definition vanished under an old save: close the beat
@@ -307,6 +313,10 @@ enum NarrativeSystem {
         case .life:
             guard let def = content.lifeEvent(due.eventID) else { return [] }
             return fireLife(def, state: &state, balance: balance)
+        case .staff:
+            // WS-D fires the scheduled staff follow-up as a pending staff
+            // event for `due.employeeID`. Scaffold: dropped.
+            return []
         }
     }
 

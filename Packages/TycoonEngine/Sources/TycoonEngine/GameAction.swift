@@ -144,6 +144,25 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// Borrows past what the bank will lend the company on its own name,
     /// against the founder's home. Draws the unsecured headroom first.
     case takeSecuredLoan(amount: Int)
+
+    // MARK: Iteration 5
+
+    // Appended by the scaffold; each lane implements its own handler in
+    // its own `Reducer.apply` region.
+
+    /// WS-A: lets a challenged category go without answering. The
+    /// answers that defend it are actions the game already has.
+    case concedeCategory
+    /// WS-B: pays a seated round out of the cap table and its ask off the board.
+    case buyBackRound(investorID: String)
+    /// WS-B: takes a strategic buyout as 60% now and the rest over two
+    /// quarterly reviews with the acquirer seated as the board.
+    case acceptBuyoutEarnOut
+    /// WS-D: reverses a staff policy, publicly.
+    case reverseStaffPolicy(flag: String)
+    /// WS-G: declares the company built, still owning all of it. Gated the
+    /// way `fileIPO` is; ends the run as `.independent`.
+    case declareIndependence
 }
 
 /// The skill a training course targets.
