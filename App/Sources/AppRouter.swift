@@ -23,12 +23,17 @@ enum Route: Hashable {
     case finances
     case marketing
     case life
+    /// Opens the new-product flow, optionally with a topic already chosen
+    /// (a market screen saying "start a product in Dating"). Iteration 4
+    /// seam: the first coach tip, HQ's Now card and the topic detail all
+    /// route here.
+    case newProduct(topicID: String?)
 
     /// The tab this destination lives in.
     var tab: GameTab {
         switch self {
         case .hiring: .team
-        case .research, .product: .products
+        case .research, .product, .newProduct: .products
         case .contracts, .marketReport, .market, .finances, .marketing: .business
         case .life: .life
         }

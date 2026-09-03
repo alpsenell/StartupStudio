@@ -21,8 +21,18 @@ struct ProductsScreen: View {
 
     @State private var section: ProductsSection = .products
     @State private var path = NavigationPath()
+    /// Set by the `.newProduct` deep link; presents the flow with the
+    /// requested topic (if any) already selected.
+    @State private var newProductRequest: NewProductRequest?
 
     @Environment(AppRouter.self) private var router
+
+    /// Identity for the deep-linked new-product sheet, so a second link
+    /// with a different topic re-presents it.
+    private struct NewProductRequest: Identifiable {
+        let id = UUID()
+        let topicID: String?
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -72,11 +82,14 @@ struct ProductsScreen: View {
             .onChange(of: router.pendingPush, initial: true) { _, _ in
                 consumeRoute()
             }
+            .sheet(item: $newProductRequest) { request in
+                NewProductFlow(engine: engine, initialTopicID: request.topicID)
+            }
         }
     }
 
     /// Deep links into this tab: R&D picks the segment, a product id
-    /// pushes its detail screen.
+    /// pushes its detail screen, and `.newProduct` opens the flow.
     private func consumeRoute() {
         switch router.pendingPush {
         case .research:
@@ -87,6 +100,10 @@ struct ProductsScreen: View {
             router.take(.product(productID))
             guard engine.state.product(id: productID) != nil else { return }
             path.append(productID)
+        case .newProduct(let topicID):
+            section = .products
+            router.take(.newProduct(topicID: topicID))
+            newProductRequest = NewProductRequest(topicID: topicID)
         default:
             break
         }

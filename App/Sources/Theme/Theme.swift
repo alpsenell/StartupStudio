@@ -11,6 +11,13 @@ enum Theme {
     /// light and dark variants.
     static let accent = Color("AccentColor")
 
+    /// The locale every in-game figure is formatted with. Money is the
+    /// game's currency, not the player's, and `Int.money` hard-codes its
+    /// separators; anything that goes through `.formatted(...)` should pass
+    /// this so "$5,100" and "×0.93" agree on what a comma means. Iteration 4
+    /// seam — adopted site by site.
+    static let gameLocale = Locale(identifier: "en_US_POSIX")
+
     /// Positive cash flow / healthy values.
     static let positiveCash = Color(uiColor: .systemGreen)
 

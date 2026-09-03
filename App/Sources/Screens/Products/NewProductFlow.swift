@@ -51,6 +51,14 @@ struct NewProductFlow: View {
     /// Once the user types their own name, stop regenerating suggestions.
     @State private var nameEdited = false
 
+    /// - Parameter initialTopicID: a topic to arrive with already selected,
+    ///   for deep links from the market screens (`Route.newProduct`). The
+    ///   flow still opens on the type step; the topic step shows it chosen.
+    init(engine: GameEngine, initialTopicID: String? = nil) {
+        self.engine = engine
+        _selectedTopicID = State(initialValue: initialTopicID)
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {

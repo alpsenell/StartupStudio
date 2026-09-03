@@ -28,6 +28,19 @@ final class GameShell {
     /// A product that just shipped and hasn't had its launch-day moment.
     var launchDayProductID: UUID?
 
+    /// Iteration 4 seam. The `DecisionPrompt.id` of a narrative choice the
+    /// player deferred with "Let me think": while set, the root does not
+    /// re-present that sheet and the clock is allowed to run; the notice
+    /// rail shows the choice with its real countdown, and tapping it calls
+    /// `recallDeferredChoice()` to bring the sheet back. WS-D sets it,
+    /// WS-A reads it. Cleared on every engine swap.
+    var deferredChoiceID: String?
+
+    /// Brings a deferred decision sheet back.
+    func recallDeferredChoice() {
+        deferredChoiceID = nil
+    }
+
     /// Last report's figures, for this report's deltas.
     @ObservationIgnored private var previousMorale: Double?
     @ObservationIgnored private var previousMeters: WeeklyReport.MeterSnapshot?
@@ -140,6 +153,7 @@ final class GameShell {
         lastOfferedWeek = engine.state.day / 7
         pendingReportWeek = nil
         launchDayProductID = nil
+        deferredChoiceID = nil
         previousMorale = nil
         previousMeters = nil
     }
