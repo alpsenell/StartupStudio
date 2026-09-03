@@ -222,6 +222,9 @@ enum EmployeeSystem {
             events.append(contentsOf: SocialSystem.friendDeparted(
                 employee.id, state: &state, balance: balance
             ))
+            events.append(contentsOf: NetworkingSystem.departed(
+                employee, reason: .quit, state: &state, balance: balance
+            ))
         }
         return events
     }
@@ -1033,7 +1036,7 @@ enum EmployeeSystem {
               !state.employees[index].isFounder
         else { return [] }
 
-        state.employees.remove(at: index)
+        let employee = state.employees.remove(at: index)
         state.economy.lastRecognitionDay[employeeID] = nil
         if state.economy.pendingResignation?.employeeID == employeeID {
             state.economy.pendingResignation = nil
@@ -1041,6 +1044,9 @@ enum EmployeeSystem {
         var events: [GameEvent] = [.fired(employeeID: employeeID, day: state.day)]
         events.append(contentsOf: SocialSystem.friendDeparted(
             employeeID, state: &state, balance: balance
+        ))
+        events.append(contentsOf: NetworkingSystem.departed(
+            employee, reason: .fired, state: &state, balance: balance
         ))
         return events
     }

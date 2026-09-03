@@ -35,6 +35,7 @@ enum NetworkingSystem {
         }
 
         decayRapport(&state, balance)
+        driftAlumni(&state)
 
         if state.day % GameState.daysPerWeek == 0 {
             events.append(contentsOf: settleHoldings(&state, balance))
@@ -145,15 +146,29 @@ enum NetworkingSystem {
 
         // Familiar faces first: the best-known open contacts, at most one
         // fewer than the room holds so there is always somebody new.
+        let warmestFirst: (Contact, Contact) -> Bool = {
+            $0.rapport == $1.rapport ? $0.id.uuidString < $1.id.uuidString : $0.rapport > $1.rapport
+        }
         let returning = state.networking.contacts
             .filter(\.isOpen)
-            .sorted {
-                $0.rapport == $1.rapport ? $0.id.uuidString < $1.id.uuidString : $0.rapport > $1.rapport
-            }
+            .sorted(by: warmestFirst)
             .prefix(max(0, min(2, headcount - 1)))
             .map(\.id)
 
         var roster = Array(returning)
+        // Somebody who used to work here takes a stranger's slot, so the
+        // founder does run into them again: one per room, best-known
+        // first, and never the last stranger — the point of going out is
+        // still to meet somebody new. Only an alum the rapport sort did
+        // not already seat, so a room with no alumni draws exactly as it
+        // always did.
+        if headcount - roster.count >= 2,
+           let alum = state.networking.contacts
+               .filter({ $0.isOpen && $0.isAlumnus && !roster.contains($0.id) })
+               .sorted(by: warmestFirst)
+               .first {
+            roster.append(alum.id)
+        }
         let favored = venue.favoredArchetypes
         for slot in 0..<(headcount - roster.count) {
             let contact = rollContact(
@@ -185,15 +200,20 @@ enum NetworkingSystem {
 
     /// The address book is a book, not a filing cabinet: once it is over
     /// `maxContacts` the oldest closed entries go first, and only then the
-    /// coldest open ones.
-    private static func trimContacts(_ state: inout GameState, _ balance: BalanceConfig) {
+    /// coldest open ones. Anybody standing in the room, or named in
+    /// `protecting`, is kept whatever their number.
+    static func trimContacts(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        protecting: Set<UUID> = []
+    ) {
         let cap = balance.networking.maxContacts
         guard cap > 0, state.networking.contacts.count > cap else { return }
-        let inRoom = Set(state.networking.pendingEvent?.contactIDs ?? [])
+        let kept = Set(state.networking.pendingEvent?.contactIDs ?? []).union(protecting)
         var contacts = state.networking.contacts
         while contacts.count > cap {
-            let victim = contacts.firstIndex { !$0.isOpen && !inRoom.contains($0.id) }
-                ?? contacts.indices.min {
+            let victim = contacts.firstIndex { !$0.isOpen && !kept.contains($0.id) }
+                ?? contacts.indices.filter { !kept.contains(contacts[$0].id) }.min {
                     (contacts[$0].rapport, contacts[$0].metDay) < (contacts[$1].rapport, contacts[$1].metDay)
                 }
             guard let victim else { break }

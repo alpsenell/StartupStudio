@@ -126,7 +126,9 @@ extension NetworkingSystem {
 
     /// Puts a contact on payroll. They arrive with the bond the evening
     /// earned — somebody the founder talked into this is not a stranger on
-    /// their first day.
+    /// their first day. Somebody who used to work here comes back with the
+    /// whole of it, and the job they had: the rapport on an alum *is* the
+    /// bond they left with, not an evening's acquaintance.
     private static func joinTeam(
         _ contact: Contact,
         salary: Int,
@@ -151,8 +153,8 @@ extension NetworkingSystem {
             morale: morale,
             level: .forSkillTotal(contact.skills.total),
             loyalty: loyalty,
-            role: contact.archetype.employeeRole,
-            founderBond: contact.rapport / 2
+            role: contact.leftRole ?? contact.archetype.employeeRole,
+            founderBond: contact.isAlumnus ? contact.rapport : contact.rapport / 2
         ))
     }
 
@@ -201,7 +203,7 @@ extension NetworkingSystem {
             }
             return nil
         case .backThem:
-            guard contact.archetype.hasCompany, contact.companyValuation > 0 else {
+            guard contact.runsACompany else {
                 return "They don't have a company"
             }
             if let reason = needsRapport(config.investMinRapport) { return reason }

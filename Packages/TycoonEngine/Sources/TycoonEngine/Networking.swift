@@ -86,9 +86,45 @@ public enum ContactArchetype: String, Codable, Equatable, Sendable, CaseIterable
     }
 }
 
+/// Why somebody stopped being on payroll. Carried on the contact they
+/// become, because the address book should be able to say it, and because
+/// the three exits price the person differently: a poach sets their ask
+/// at the rival's number, the other two at fair pay and a little.
+public enum DepartureReason: String, Codable, Equatable, Sendable {
+    case quit, poached, fired
+
+    public var displayName: String {
+        switch self {
+        case .quit: "Quit"
+        case .poached: "Poached"
+        case .fired: "Let go"
+        }
+    }
+}
+
+extension EmployeeRole {
+    /// The archetype an employee reads as once they are a contact again —
+    /// the inverse of `ContactArchetype.employeeRole`. Every builder is an
+    /// engineer or a designer; the support roles are operators. The
+    /// founder never becomes a contact.
+    public var contactArchetype: ContactArchetype {
+        switch self {
+        case .frontend, .backend, .qa: .engineer
+        case .designer: .designer
+        case .marketer: .marketer
+        case .lawyer, .hr, .ops: .ops
+        case .founder: .founder
+        }
+    }
+}
+
 /// A person the founder has met. Contacts live in the address book across
 /// events: rapport, what they know about the company, and any deal that
 /// came of it all persist.
+///
+/// Somebody who used to work here is a contact too (`leftDay`): they keep
+/// the id and the face they had on payroll, so the person the founder runs
+/// into at a demo day is recognisably the person who quit in March.
 public struct Contact: Codable, Equatable, Sendable, Identifiable {
     public let id: UUID
     public var name: String
@@ -116,6 +152,12 @@ public struct Contact: Codable, Equatable, Sendable, Identifiable {
     /// closed: they stay in the book as history and never appear in a
     /// room again.
     public var outcome: ContactOutcome?
+    /// Set on somebody who used to work here: the day they left, why, and
+    /// what they did. Nil on everybody the founder met at a party, and nil
+    /// out of any save written before alumni existed.
+    public var leftDay: Int?
+    public var leftReason: DepartureReason?
+    public var leftRole: EmployeeRole?
 
     public init(
         id: UUID,
@@ -131,7 +173,10 @@ public struct Contact: Codable, Equatable, Sendable, Identifiable {
         metDay: Int,
         lastMetDay: Int,
         isRevealed: Bool = false,
-        outcome: ContactOutcome? = nil
+        outcome: ContactOutcome? = nil,
+        leftDay: Int? = nil,
+        leftReason: DepartureReason? = nil,
+        leftRole: EmployeeRole? = nil
     ) {
         self.id = id
         self.name = name
@@ -147,10 +192,23 @@ public struct Contact: Codable, Equatable, Sendable, Identifiable {
         self.lastMetDay = lastMetDay
         self.isRevealed = isRevealed
         self.outcome = outcome
+        self.leftDay = leftDay
+        self.leftReason = leftReason
+        self.leftRole = leftRole
     }
 
     /// Whether they are still someone the founder could do something with.
     public var isOpen: Bool { outcome == nil }
+
+    /// Whether this person used to be on payroll.
+    public var isAlumnus: Bool { leftDay != nil }
+
+    /// Whether there is a company here the founder could buy into: the
+    /// archetypes that always run one, and an alum who went and founded
+    /// something after leaving.
+    public var runsACompany: Bool {
+        companyValuation > 0 && (archetype.hasCompany || companyName != nil)
+    }
 }
 
 // MARK: - What a contact is asking for
@@ -175,7 +233,7 @@ extension Contact {
 
     /// The slice of *their* company they will sell the founder.
     public func stakeOnOffer(_ config: BalanceConfig.NetworkingBalance) -> Double {
-        guard archetype.hasCompany, companyValuation > 0 else { return 0 }
+        guard runsACompany else { return 0 }
         return min(
             config.investStakeMax,
             config.investStakeBase + rapport * config.investStakePerRapportPoint

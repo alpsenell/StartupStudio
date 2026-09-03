@@ -242,11 +242,15 @@ struct HireFireAssignTests {
         ).isEmpty)
         #expect(state.employees.count == 2)
 
-        // A regular employee is removed with an event.
+        // A regular employee is removed with an event — and goes into the
+        // address book, in that order.
         let events = Reducer.apply(
             .fire(employeeID: worker.id), to: &state, balance: balance, content: content
         )
-        #expect(events == [.fired(employeeID: worker.id, day: 9)])
+        #expect(events == [
+            .fired(employeeID: worker.id, day: 9),
+            .alumnusJoinedBook(contactID: worker.id, name: "Worker", day: 9),
+        ])
         #expect(state.employees.count == 1)
         #expect(state.employee(id: worker.id) == nil)
         #expect(state.eventLog.contains(.fired(employeeID: worker.id, day: 9)))
