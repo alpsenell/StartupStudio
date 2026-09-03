@@ -32,6 +32,9 @@ enum Route: Hashable {
     /// raising a round or buying a rival needs somewhere to send you.
     case investors
     case rivals
+    /// The city map, which the office card on HQ opens: a goal about
+    /// buying the office needs somewhere to send you (WS-G).
+    case city
 
     /// The tab this destination lives in.
     var tab: GameTab {
@@ -40,6 +43,7 @@ enum Route: Hashable {
         case .research, .product, .newProduct: .products
         case .contracts, .marketReport, .market, .finances, .marketing, .investors, .rivals: .business
         case .life: .life
+        case .city: .hq
         }
     }
 }

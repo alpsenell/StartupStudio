@@ -173,27 +173,34 @@ enum NowAction {
         switch goalID {
         case "g1_name_a_product", "g3_a_hundred_and_fifty_k_product":
             return Action(label: "Start a product", systemImage: "hammer.fill", route: .newProduct(topicID: nil))
-        case "g1_ship_it", "g1_review_40", "g2_review_60", "g3_review_75", "g5_review_90":
+        case "g1_ship_it", "g1_review_40", "g2_review_60", "g3_review_75", "g5_review_90",
+             "g4i_review_85", "g4i_two_products_live":
             if let product = state.productInDevelopment {
                 return Action(label: "Open the build", systemImage: "hammer.fill", route: .product(product.id))
             }
             return Action(label: "Start a product", systemImage: "hammer.fill", route: .newProduct(topicID: nil))
-        case "g1_first_hire", "g2_team_of_three", "g3_form_a_department", "g4_twenty_on_payroll":
+        case "g1_first_hire", "g2_team_of_three", "g3_form_a_department", "g4_twenty_on_payroll",
+             "g3i_six_tenured", "g4i_form_a_department":
             return Action(label: "Hire someone", systemImage: "person.badge.plus", route: .hiring)
         case "g1_first_contract":
             return Action(label: "Find a contract", systemImage: "briefcase.fill", route: .contracts)
-        case "g1_week_in_the_black", "g5_millionaire", "g5_five_million_company":
+        case "g1_week_in_the_black", "g5_millionaire", "g5_five_million_company",
+             "g3i_four_profitable_quarters", "g4i_eight_profitable_quarters", "g4i_quarter_million":
             return Action(label: "See the money", systemImage: "banknote.fill", route: .finances)
         case "g2_research_two_techs", "g5_frontier_research":
             return Action(label: "Open R&D", systemImage: "flask.fill", route: .research)
-        case "g2_take_a_weekend", "g2_go_on_a_date", "g3_move_in_together", "g5_three_children":
+        case "g2_take_a_weekend", "g2_go_on_a_date", "g3_move_in_together", "g5_three_children",
+             "g4i_marry":
             return Action(label: "Go to Life", systemImage: "heart.fill", route: .life)
-        case "g3_weather_three_crashes", "g4_own_a_topic":
+        case "g3_weather_three_crashes", "g4_own_a_topic", "g3i_own_a_topic":
             return Action(label: "Read the market", systemImage: "chart.xyaxis.line", route: .market)
-        case "g4_raise_a_round", "g5_ready_to_go_public":
+        case "g4_raise_a_round", "g5_ready_to_go_public", "g5i_ready_to_stay_independent":
             return Action(label: "See investors", systemImage: "chart.pie.fill", route: .investors)
         case "g4_acquire_a_rival":
             return Action(label: "See rivals", systemImage: "flag.2.crossed.fill", route: .rivals)
+        case "g3i_buy_the_office":
+            return Action(label: "Open the city map", systemImage: "map.fill", route: .city)
+        // "Five years in" is time passing; there is nothing to tap for it.
         default:
             return nil
         }

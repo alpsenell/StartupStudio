@@ -427,6 +427,11 @@ extension DecisionPrompt {
         let boardLine = offer.takesBoardSeat
             ? "They take a board seat and will grade you on \(offer.expects.displayName.lowercased()) every quarter."
             : "No board seat — they wire the money and leave you alone."
+        // WS-G: signing is the one-way declaration. Said once, on the
+        // button, while there is still something to give up.
+        let oneWay = state.investors.equityRemaining >= 100
+            ? " You stop being independent — the Still yours ending closes."
+            : ""
         return DecisionPrompt(
             id: "investment-\(offer.investorID)-\(offer.respondByDay)",
             systemImage: "doc.text.fill",
@@ -442,9 +447,9 @@ extension DecisionPrompt {
             options: [
                 Option(
                     label: "Take the money",
-                    detail: offer.takesBoardSeat
-                        ? "Cash in, \(offer.equity.oneDecimal)% out, a board to answer to"
-                        : "Cash in, \(offer.equity.oneDecimal)% out",
+                    detail: (offer.takesBoardSeat
+                        ? "Cash in, \(offer.equity.oneDecimal)% out, a board to answer to."
+                        : "Cash in, \(offer.equity.oneDecimal)% out.") + oneWay,
                     cashDelta: offer.amount,
                     action: .acceptInvestment
                 ),

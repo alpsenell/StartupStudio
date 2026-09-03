@@ -41,6 +41,10 @@ struct InvestorsView: View {
 
         BusinessSectionHeader(title: "Going public", systemImage: "bell.fill")
         ipoCard
+
+        // WS-G: the other ending, with the same gate rows.
+        BusinessSectionHeader(title: "Still yours", systemImage: "flag.checkered")
+        IndependenceCard(engine: engine)
     }
 
     /// Why nobody has called yet, in the founder's terms.

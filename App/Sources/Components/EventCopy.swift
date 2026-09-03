@@ -452,13 +452,22 @@ struct EventCopy {
 
         // MARK: Iteration 5
 
+        // WS-G — the independent ladder's ending.
+        case .stayedIndependent(let day):
+            (
+                "flag.checkered",
+                "\(state.company.name) is built, and still yours — every share of it",
+                day,
+                Theme.positiveCash
+            )
+
         // Scaffold: every lane's events read out of `EventPresenter` until
         // the lane writes its copy. Move your cases above and give them a
         // line; leave the others here.
         case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
              .incumbentRetreated, .roundBoughtBack, .earnOutReviewed,
              .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,
-             .staffPolicyReversed, .familyDateMissed, .alumnusJoinedBook, .stayedIndependent:
+             .staffPolicyReversed, .familyDateMissed, .alumnusJoinedBook:
             fallbackEntry(for: event)
 
         // Events added after this file land here instead of breaking the

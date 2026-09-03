@@ -64,6 +64,13 @@ struct FounderBiographyView: View {
             Text(info.kind.headline)
                 .font(.system(.largeTitle, design: .rounded).weight(.bold))
 
+            // WS-G: the independent ending's one line under the headline.
+            if info.kind == .independent {
+                Text("Built on your own money, and still yours.")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(Theme.positiveCash)
+            }
+
             HStack(spacing: Theme.Spacing.sm) {
                 PixelPortrait(
                     seed: state.employees.first?.appearanceSeed ?? 0,
