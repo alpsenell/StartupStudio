@@ -76,6 +76,7 @@ struct ActivitiesCard: View {
                         showingShop = true
                     }
                 }
+                EveningPips(engine: engine, compact: true)
                 Text(activityFooter(remainingToday: remainingToday, eveningsLeft: eveningsLeft))
                     .font(.caption)
                     .foregroundStyle(.tertiary)

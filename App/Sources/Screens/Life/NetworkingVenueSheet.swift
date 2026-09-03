@@ -35,6 +35,9 @@ struct NetworkingVenueSheet: View {
         NavigationStack {
             VStack(spacing: 0) {
                 if let event {
+                    EveningPips(engine: engine, compact: true)
+                        .padding(.horizontal, Theme.Spacing.lg)
+                        .padding(.vertical, Theme.Spacing.sm)
                     NetworkingFloorView(
                         venue: event.venue,
                         people: people,

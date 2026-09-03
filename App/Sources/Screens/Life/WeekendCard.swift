@@ -26,6 +26,7 @@ struct WeekendCard: View {
 
         CardView("Weekend plan", systemImage: "calendar") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                EveningPips(engine: engine, compact: true)
                 LazyVGrid(columns: columns, spacing: Theme.Spacing.md) {
                     ForEach(WeekendActivity.allCases, id: \.self) { activity in
                         ActivityCell(

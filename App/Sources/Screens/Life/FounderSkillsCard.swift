@@ -158,6 +158,7 @@ private struct TrainingSheet: View {
 
                     CardView("Train", systemImage: "book.fill") {
                         VStack(spacing: Theme.Spacing.md) {
+                            EveningPips(engine: engine, compact: true)
                             ForEach(TrainingMethod.allCases, id: \.self) { method in
                                 if let def = config.training(method) {
                                     MethodRow(

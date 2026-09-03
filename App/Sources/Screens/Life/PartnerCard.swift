@@ -32,6 +32,7 @@ struct PartnerCard: View {
         if family.stage != .single {
             CardView(family.partnerName ?? "Your partner", systemImage: "heart.fill") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    EveningPips(engine: engine, compact: true)
                     HStack(alignment: .top, spacing: Theme.Spacing.md) {
                         if let seed = family.partnerAppearanceSeed {
                             PixelPortrait(seed: seed, size: 44)

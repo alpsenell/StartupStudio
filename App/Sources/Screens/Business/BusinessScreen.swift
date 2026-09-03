@@ -19,6 +19,30 @@ struct BusinessScreen: View {
 
         var id: String { rawValue }
 
+        init?(desk: DeskSection) {
+            switch desk {
+            case .contracts: self = .contracts
+            case .market: self = .market
+            case .marketing: self = .marketing
+            case .finances: self = .finances
+            case .rivals: self = .rivals
+            case .investors: self = .investors
+            }
+        }
+
+        /// The section a route lands in, when it is one of ours.
+        init?(route: Route) {
+            switch route {
+            case .contracts: self = .contracts
+            case .market, .marketReport: self = .market
+            case .marketing: self = .marketing
+            case .finances: self = .finances
+            case .rivals: self = .rivals
+            case .investors: self = .investors
+            default: return nil
+            }
+        }
+
         /// Each section's own icon, taken from the headers inside it, so
         /// the pill and the screen it opens agree.
         var systemImage: String {
@@ -52,7 +76,8 @@ struct BusinessScreen: View {
                     title: \.rawValue,
                     systemImage: \.systemImage,
                     accessibilityLabel: "Business section",
-                    selection: $section
+                    selection: $section,
+                    badges: badges
                 )
                 .padding(.top, Theme.Spacing.xs)
                 .background(Theme.screenBackground)
@@ -60,6 +85,18 @@ struct BusinessScreen: View {
 
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
+                        // What has a clock on it, whichever section is
+                        // open: the tab used to land on two empty states
+                        // with a contract three days out hidden behind
+                        // the right pill.
+                        DeskCard(items: deskItems) { route in
+                            if let target = BusinessSection(route: route) {
+                                withAnimation(Theme.Motion.selection) { section = target }
+                                if case .marketReport = route { router.go(route) }
+                            } else {
+                                router.go(route)
+                            }
+                        }
                         switch section {
                         case .contracts:
                             ContractsView(engine: engine)
@@ -91,7 +128,33 @@ struct BusinessScreen: View {
             .onChange(of: router.pendingPush, initial: true) { _, _ in
                 consumeRoute()
             }
+            // Land on the section the desk's most urgent row points at,
+            // unless a deep link already chose one.
+            .onAppear {
+                guard router.pendingPush == nil, !landed, let first = deskItems.first,
+                      let target = BusinessSection(desk: first.section)
+                else { landed = true; return }
+                section = target
+                landed = true
+            }
         }
+    }
+
+    @State private var landed = false
+
+    private var deskItems: [DeskItem] {
+        Desk.items(in: engine.state, balance: engine.balance, content: engine.content)
+    }
+
+    /// How many desk rows point at each section.
+    private var badges: [String: Int] {
+        var counts: [String: Int] = [:]
+        for item in deskItems {
+            if let target = BusinessSection(desk: item.section) {
+                counts[target.id, default: 0] += 1
+            }
+        }
+        return counts
     }
 
     /// Switches to the segment a deep link asked for.

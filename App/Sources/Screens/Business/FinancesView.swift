@@ -416,6 +416,24 @@ private struct LedgerRow: View {
 /// from subscription products, one-time sales, and what the live products
 /// cost to keep running.
 private struct RunRateCard: View {
+    /// The same number the HUD shows under the date, in the one place the
+    /// money is itemised.
+    private var runwayValue: String {
+        let cash = engine.state.company.cash
+        let burn = engine.weeklyBurn
+        if cash < 0 { return "in the red" }
+        guard burn > 0 else { return "no burn" }
+        return "\(cash / burn) wk"
+    }
+
+    private var runwayTint: Color {
+        let cash = engine.state.company.cash
+        let burn = engine.weeklyBurn
+        if cash < 0 { return Theme.negativeCash }
+        guard burn > 0 else { return Theme.positiveCash }
+        return cash / burn <= 4 ? Theme.warning : .primary
+    }
+
     let engine: GameEngine
 
     /// Weekly subscription revenue across every live subscription product.
@@ -478,6 +496,11 @@ private struct RunRateCard: View {
                     label: "Running costs",
                     value: lastWeekRunningCosts.money,
                     tint: Theme.negativeCash
+                )
+                FinanceStat(
+                    label: "Runway",
+                    value: runwayValue,
+                    tint: runwayTint
                 )
             }
         }

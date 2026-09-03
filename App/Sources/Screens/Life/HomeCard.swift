@@ -12,6 +12,8 @@ import TycoonEngine
 struct HomeCard: View {
     let engine: GameEngine
 
+    @State private var showingCityMap = false
+
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI
     /// updates this property for presented content before the
@@ -45,6 +47,14 @@ struct HomeCard: View {
 
             if life.isAway(day: state.day) {
                 AwayBanner(reason: life.awayReason, untilDay: life.awayUntilDay, day: state.day)
+            }
+
+            Divider()
+            HomeCityRow(district: engine.state.city.district) {
+                showingCityMap = true
+            }
+            .fullScreenCover(isPresented: $showingCityMap) {
+                CityMapScreen(engine: engine)
             }
 
             if let next = life.home.next {
@@ -269,5 +279,38 @@ private struct HomeTierPill: View {
         .padding(.vertical, 2)
         .background(Theme.chipBackground, in: Capsule())
         .accessibilityLabel("Home: \(tier.displayName)")
+    }
+}
+
+/// The city, from the home: district and home are one decision for the
+/// founder, and the map used to be reachable only from HQ's office card.
+private struct HomeCityRow: View {
+    let district: DistrictID
+    let open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "map.fill")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("City map")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(.primary)
+                    Text(district.displayName)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.pressableRow)
+        .accessibilityLabel("City map, \(district.displayName)")
     }
 }
