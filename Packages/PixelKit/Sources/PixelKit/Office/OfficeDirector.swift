@@ -84,9 +84,32 @@ public enum OfficeDirector {
         let day = dayIndex(at: t)
         let key = PlanKey(input: input, day: day)
         if let cached = planCache.value(for: key) { return cached }
-        let plans = OfficeBehaviors.plans(for: input, dayIndex: day)
+        var plans = OfficeBehaviors.plans(for: input, dayIndex: day)
+        if input.reduceMotion {
+            plans = plans.map(seatedAllDay)
+        }
         planCache.store(plans, for: key)
         return plans
+    }
+
+    /// The same person, at their desk for the whole day: the plan Reduce
+    /// Motion asks for. The desk segment's pose and bubble are kept (a
+    /// gloomy coder still looks gloomy); only the walking goes.
+    private static func seatedAllDay(_ plan: ActorPlan) -> ActorPlan {
+        let desk = plan.segments.first { $0.waypointID == "desk" } ?? plan.segments.first
+        guard let desk else { return plan }
+        return ActorPlan(
+            id: plan.id,
+            seatIndex: plan.seatIndex,
+            deskAnchor: plan.deskAnchor,
+            segments: [
+                ActorSegment(
+                    start: 0, end: OfficeBehaviors.dayLength, pose: desk.pose,
+                    track: Track(parkedAt: plan.deskAnchor, from: 0),
+                    bubble: desk.bubble, waypointID: "desk"
+                ),
+            ]
+        )
     }
 
     /// The occupant whose sprite covers scene-space point (`x`, `y`) at
@@ -257,6 +280,92 @@ public enum OfficeDirector {
                 sprite: SpriteCache.shared("fx.note", make: OfficeFXSprites.stickyNote),
                 x: cell.x + 20, y: cell.y + 6,
                 kind: .prop, animation: .toggle(period: 5), phase: index % 3
+            ))
+        }
+
+        // 6b. What the company is under, one prop per signal. The founder's
+        //     desk carries the money (a pizza box for crunch, an envelope
+        //     pile for a short runway); the coffee machine carries debt;
+        //     a coder's desk carries the bugs; a leaver's desk carries the
+        //     flat box; the door carries the offer.
+        let pressure = input.pressure
+        let founderCell = SceneComposer.cellOrigin(tier: tier, index: tier.deskCapacity)
+        if pressure.crunch {
+            scene.append(PlacedSprite(
+                sprite: SpriteCache.shared("fx.pizza", make: OfficeFXSprites.pizzaBox),
+                x: founderCell.x + 24, y: founderCell.y + 9,
+                kind: .prop, animation: .still, phase: 0,
+                zIndex: founderCell.y + SceneComposer.Layout.cellHeight - 5
+            ))
+        }
+        if pressure.runwayIsShort {
+            scene.append(PlacedSprite(
+                sprite: SpriteCache.shared("fx.envelopes", make: OfficeFXSprites.envelopePile),
+                x: founderCell.x + 1, y: founderCell.y + 8,
+                kind: .prop, animation: .still, phase: 0,
+                zIndex: founderCell.y + SceneComposer.Layout.cellHeight - 5
+            ))
+        }
+        if pressure.inDebt {
+            // "Out of order": the note goes on the coffee machine, or the
+            // founder's monitor where the tier has no counter of its own.
+            let spot = OfficeWaypoints.coffee(for: tier).kitchenette.map { (x: $0.x + 2, y: $0.y - 2) }
+                ?? (x: founderCell.x + 12, y: founderCell.y + 2)
+            scene.append(PlacedSprite(
+                sprite: SpriteCache.shared("fx.note", make: OfficeFXSprites.stickyNote),
+                x: spot.x, y: spot.y,
+                kind: .prop, animation: .toggle(period: 5), phase: 1,
+                zIndex: spot.y + 20
+            ))
+        }
+        if pressure.bugLoad > 0 {
+            // More coders get a bug over the desk the worse the build is:
+            // one in three at load 1, two in three at 2, everyone at 3.
+            for (index, occupant) in OfficeBehaviors.seating(for: input)
+            where occupant.status == .coding && index % 3 < pressure.bugLoad {
+                let cell = SceneComposer.cellOrigin(tier: tier, index: index)
+                scene.append(PlacedSprite(
+                    sprite: SpriteCache.shared("bubble.testing") { SpriteLibrary.statusBubble(.testing) },
+                    x: cell.x + 16, y: cell.y - 9,
+                    kind: .prop, animation: .toggle(period: 3), phase: index % 2,
+                    zIndex: cell.y + SceneComposer.Layout.cellHeight + 40
+                ))
+            }
+        }
+        if !pressure.departing.isEmpty {
+            for (index, occupant) in OfficeBehaviors.seating(for: input)
+            where pressure.departing.contains(occupant.id) {
+                let cell = SceneComposer.cellOrigin(tier: tier, index: index)
+                scene.append(PlacedSprite(
+                    sprite: SpriteCache.shared("fx.flatbox", make: OfficeFXSprites.flatBox),
+                    x: cell.x + 4, y: cell.y + 23,
+                    kind: .prop, animation: .still, phase: 0,
+                    zIndex: cell.y + SceneComposer.Layout.cellHeight - 8
+                ))
+            }
+        }
+        if pressure.pendingOffer {
+            // A courier at the door, envelope out, until the offer is
+            // answered. Same door the hires walk in through.
+            let corridor = OfficeWaypoints.corridorY(for: tier)
+            let door: (x: Int, y: Int) = tier == .garage
+                ? (size.width - 20, l.wallHeight + 14)
+                : (10, Int(corridor))
+            let courierSprite = SpriteCache.shared("fx.courier") {
+                SpriteLibrary.person(appearance: CharacterAppearance(seed: 0xC0_FFEE), isFounder: false)
+            }
+            let feetY = door.y + 4
+            scene.append(PlacedSprite(
+                sprite: courierSprite,
+                x: door.x - courierSprite.width / 2, y: feetY - courierSprite.height,
+                kind: .prop, animation: .toggle(period: 4), phase: 0,
+                zIndex: feetY
+            ))
+            scene.append(PlacedSprite(
+                sprite: SpriteCache.shared("fx.envelope", make: OfficeFXSprites.envelope),
+                x: door.x + courierSprite.width / 2 - 3, y: feetY - courierSprite.height + 8,
+                kind: .prop, animation: .toggle(period: 2), phase: 0,
+                zIndex: feetY + 1
             ))
         }
 

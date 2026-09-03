@@ -57,7 +57,13 @@ final class GameShell {
 
     /// Last report's figures, for this report's deltas.
     @ObservationIgnored private var previousMorale: Double?
-    @ObservationIgnored private var previousMeters: WeeklyReport.MeterSnapshot?
+    @ObservationIgnored private var previousMeters: WeeklyReport.MeterSnapshot? {
+        didSet { weekStartMeters = previousMeters }
+    }
+    /// The founder's meters as they stood when the current week began —
+    /// the last report's snapshot — so the Life tab can show each meter's
+    /// change this week beside it. Observed, unlike the private copy.
+    private(set) var weekStartMeters: WeeklyReport.MeterSnapshot?
     /// The most recent week already offered, so the chip appears once.
     @ObservationIgnored private var lastOfferedWeek = 0
     /// The run's day the shell last saw, to detect week boundaries.

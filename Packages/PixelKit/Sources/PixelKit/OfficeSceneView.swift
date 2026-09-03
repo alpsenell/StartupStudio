@@ -63,6 +63,52 @@ public enum SceneCelebration: Sendable, Equatable, Hashable {
     case contractDelivered
 }
 
+/// What the company is under, read by the room.
+///
+/// Each field owns exactly one prop or one lighting change, so the office
+/// can show the four things a founder actually worries about — crunch,
+/// runway, bugs and people about to leave — and the one offer on the table.
+/// The engine already knows all of it; the scene used to know none of it,
+/// and inferred crunch from its own cosmetic clock.
+public struct OfficePressure: Sendable, Equatable, Hashable {
+    /// The team is on crunch pace: the lights stay on night, a pizza box
+    /// lands on the founder's desk, and the tempo reads crunch.
+    public var crunch: Bool
+    /// Weeks of runway, `nil` when there is no burn. Under four, an
+    /// envelope pile lands on the founder's desk.
+    public var runwayWeeks: Int?
+    /// Cash is negative: the coffee machine gets the "out of order" note.
+    public var inDebt: Bool
+    /// 0…3. Bug bubbles over the coders, more of them the worse it is.
+    public var bugLoad: Int
+    /// People on notice or being poached: a flattened box under the desk.
+    public var departing: Set<UUID>
+    /// A buyout on the table: a courier waits at the door.
+    public var pendingOffer: Bool
+
+    public init(
+        crunch: Bool = false,
+        runwayWeeks: Int? = nil,
+        inDebt: Bool = false,
+        bugLoad: Int = 0,
+        departing: Set<UUID> = [],
+        pendingOffer: Bool = false
+    ) {
+        self.crunch = crunch
+        self.runwayWeeks = runwayWeeks
+        self.inDebt = inDebt
+        self.bugLoad = min(3, max(0, bugLoad))
+        self.departing = departing
+        self.pendingOffer = pendingOffer
+    }
+
+    /// Nothing to show.
+    public static let none = OfficePressure()
+
+    /// Runway short enough to worry about.
+    public var runwayIsShort: Bool { runwayWeeks.map { $0 <= 4 } ?? false }
+}
+
 /// Everything the office scene is a function of.
 ///
 /// `Hashable` so the director can memoize its output per input and the app
@@ -72,6 +118,12 @@ public struct OfficeSceneInput: Sendable, Equatable, Hashable {
     public var occupants: [Occupant]
     public var amenities: Set<AmenityStyle>
     public var ambience: OfficeAmbience
+    /// What the company is under. Defaults to nothing, so every existing
+    /// caller and preview draws the room it always drew.
+    public var pressure: OfficePressure = .none
+    /// Honour Reduce Motion: nobody walks, the frame rate drops. Set by
+    /// `OfficeSceneView` from the environment; part of the cache key.
+    public var reduceMotion = false
     /// The celebration to play, with a token that changes when a *new*
     /// celebration starts.
     public var celebration: Celebration?
@@ -155,8 +207,14 @@ public struct OfficeSceneView: View {
         self.sceneSize = SceneComposer.sceneSize(for: input.tier)
     }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     public var body: some View {
-        let resolved = input
+        let resolved: OfficeSceneInput = {
+            var copy = input
+            copy.reduceMotion = reduceMotion
+            return copy
+        }()
         let timing = OfficeSceneTiming(
             celebrationStart: celebrationStart,
             statusChanges: statusChanges,
@@ -231,16 +289,21 @@ public struct OfficeSceneView: View {
     }
 }
 
-private extension OfficeSceneInput {
+extension OfficeSceneInput {
     /// The same input with the hour advanced by the scene's own cosmetic
     /// clock, so the room warms into morning, flattens at midday, goes
     /// amber at dusk and blue at night while the player watches.
     func withHourOfDay(at t: TimeInterval) -> OfficeSceneInput {
         var copy = self
-        copy.ambience.timeOfDay = OfficeAmbience.timeOfDay(
-            at: t, startingAt: ambience.timeOfDay,
-            offset: ambience.isWeekend ? 2 : 0
-        )
+        // Crunch pins the room to night: desk lamps on, windows dark, for
+        // as long as the team is on that pace. When it ends the clock
+        // resumes from wherever it would have been — the room exhales.
+        copy.ambience.timeOfDay = pressure.crunch
+            ? .night
+            : OfficeAmbience.timeOfDay(
+                at: t, startingAt: ambience.timeOfDay,
+                offset: ambience.isWeekend ? 2 : 0
+            )
         return copy
     }
 }

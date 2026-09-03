@@ -145,7 +145,9 @@ struct WalkCycleTests {
     // MARK: Tempo
 
     @Test func tempoReadsCrunchMoraleAndAnOrdinaryDay() {
-        func scene(time: TimeOfDay, mood: MoodLevel, building: Bool) -> OfficeSceneInput {
+        // Crunch is a fact the scene input carries (the team's pace), not
+        // something read off the room's own clock.
+        func scene(time: TimeOfDay, mood: MoodLevel, building: Bool, crunch: Bool = false) -> OfficeSceneInput {
             let statuses: [WorkStatus] = building ? [.coding, .designing, .testing] : [.idle, .marketing]
             let people = (0..<6).map { index in
                 Occupant(
@@ -153,15 +155,21 @@ struct WalkCycleTests {
                     status: statuses[index % statuses.count], isFounder: index == 0
                 )
             }
-            return OfficeSceneInput(
+            var input = OfficeSceneInput(
                 tier: .loft, occupants: people,
                 ambience: OfficeAmbience(timeOfDay: time, teamMood: mood)
             )
+            input.pressure = OfficePressure(crunch: crunch)
+            return input
         }
-        #expect(OfficeTempo.reading(for: scene(time: .night, mood: .okay, building: true)) == .crunch)
+        #expect(OfficeTempo.reading(for: scene(time: .night, mood: .okay, building: true, crunch: true)) == .crunch)
         #expect(
-            OfficeTempo.reading(for: scene(time: .night, mood: .great, building: true)) == .crunch,
-            "a good mood at midnight still looks like crunch"
+            OfficeTempo.reading(for: scene(time: .night, mood: .great, building: true, crunch: true)) == .crunch,
+            "a good mood on crunch still looks like crunch"
+        )
+        #expect(
+            OfficeTempo.reading(for: scene(time: .night, mood: .okay, building: true)) != .crunch,
+            "a late hour on its own is no longer crunch"
         )
         #expect(OfficeTempo.reading(for: scene(time: .night, mood: .okay, building: false)) == .steady)
         #expect(OfficeTempo.reading(for: scene(time: .day, mood: .great, building: true)) == .buoyant)

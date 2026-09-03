@@ -77,3 +77,24 @@ public struct HomeOccupants: Sendable, Equatable {
         self.hasCat = hasCat
     }
 }
+
+/// What the founder's life is under, read by the home the way the office
+/// reads the company. One thing in the room per meter, so the picture and
+/// the numbers under it never disagree.
+public struct HomeSignals: Sendable, Equatable, Hashable {
+    /// Relationships are low: the partner keeps to their end of the couch
+    /// under a low bubble, and there is no heart at dinner.
+    public var relationshipsLow: Bool
+    /// Health is low: takeaway boxes by the couch.
+    public var healthLow: Bool
+    /// The wallet will not cover the next rent: unpaid bills on the table.
+    public var billsDue: Bool
+
+    public init(relationshipsLow: Bool = false, healthLow: Bool = false, billsDue: Bool = false) {
+        self.relationshipsLow = relationshipsLow
+        self.healthLow = healthLow
+        self.billsDue = billsDue
+    }
+
+    public static let none = HomeSignals()
+}

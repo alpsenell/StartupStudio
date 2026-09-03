@@ -571,3 +571,82 @@ enum OfficeFXSprites {
         ":": ["   ", " # ", "   ", " # ", "   "],
     ]
 }
+
+// MARK: - Pressure props
+
+extension OfficeFXSprites {
+    /// A pizza box on the founder's desk: the team is on crunch. 12×5.
+    static func pizzaBox() -> PixelSprite {
+        PixelSprite(
+            frames: [[
+                "OOOOOOOOOOOO",
+                "OBBBBBBBBBBO",
+                "OBbbBBBBbbBO",
+                "OBBBBBBBBBBO",
+                "OOOOOOOOOOOO",
+            ]],
+            palette: [
+                "O": outline,
+                "B": RGBA(r: 198, g: 158, b: 106),
+                "b": RGBA(r: 172, g: 132, b: 84),
+            ]
+        )
+    }
+
+    /// Envelopes stacked on the founder's desk: runway under a month. 10×6.
+    static func envelopePile() -> PixelSprite {
+        PixelSprite(
+            frames: [[
+                "  OOOOOOO ",
+                " OWWWWWWWO",
+                "OWWWWWWWWO",
+                "OWRRWWWWWO",
+                "OWWWWWWWOO",
+                "OOOOOOOOO ",
+            ]],
+            palette: [
+                "O": outline,
+                "W": paperWhite,
+                "R": inkWarm,
+            ]
+        )
+    }
+
+    /// A flattened cardboard box under a desk: somebody is about to leave
+    /// and has started packing. 12×3.
+    static func flatBox() -> PixelSprite {
+        PixelSprite(
+            frames: [[
+                "OOOOOOOOOOOO",
+                "OBbBBbBBbBBO",
+                "OOOOOOOOOOOO",
+            ]],
+            palette: [
+                "O": outline,
+                "B": RGBA(r: 198, g: 158, b: 106),
+                "b": RGBA(r: 172, g: 132, b: 84),
+            ]
+        )
+    }
+
+    /// The envelope a courier holds out: an offer on the table. 8×5, two
+    /// frames so it can be held up and lowered.
+    static func envelope() -> PixelSprite {
+        let held = [
+            "OOOOOOOO",
+            "OWiWWiWO",
+            "OWWiiWWO",
+            "OWWWWWWO",
+            "OOOOOOOO",
+        ]
+        let blank = String(repeating: " ", count: 8)
+        return PixelSprite(
+            frames: [held, [blank] + Array(held.dropLast())],
+            palette: [
+                "O": outline,
+                "W": paperWhite,
+                "i": ink,
+            ]
+        )
+    }
+}

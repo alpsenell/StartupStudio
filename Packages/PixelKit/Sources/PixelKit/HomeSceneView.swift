@@ -14,10 +14,12 @@ public struct HomeSceneView: View {
         occupants: HomeOccupants,
         activity: HomeActivity,
         mood: MoodLevel,
-        ambience: HomeAmbience = .evening
+        ambience: HomeAmbience = .evening,
+        signals: HomeSignals = .none
     ) {
         self.placements = HomeSceneComposer.compose(
-            tier: tier, occupants: occupants, activity: activity, mood: mood, ambience: ambience
+            tier: tier, occupants: occupants, activity: activity, mood: mood,
+            ambience: ambience, signals: signals
         )
         self.sceneSize = HomeSceneComposer.sceneSize(for: tier)
     }

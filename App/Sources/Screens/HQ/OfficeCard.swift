@@ -142,12 +142,50 @@ struct OfficeCard: View {
     /// would say if tapped, the weather and whether it is the weekend, and
     /// the celebration the last day or two earned.
     private var sceneInput: OfficeSceneInput {
-        OfficeSceneInput(
+        var input = OfficeSceneInput(
             tier: tierStyle,
             occupants: occupants,
             amenities: amenityStyles,
             ambience: ambience,
             celebration: celebration
+        )
+        input.pressure = pressure
+        return input
+    }
+
+    /// What the company is under, for the room to show: the pace, the
+    /// runway, the bugs in the builds, who is on their way out, and an
+    /// offer on the table. All of it read from state the engine already
+    /// keeps; none of it changes anything.
+    private var pressure: OfficePressure {
+        let state = engine.state
+        let cash = state.company.cash
+        let burn = engine.weeklyBurn
+        let runway: Int? = burn > 0 && cash >= 0 ? cash / burn : nil
+
+        // The worst build's bug count, in three steps.
+        let worstBugs = state.productsInDevelopment.reduce(0) { worst, product in
+            guard case .development(let dev) = product.stage else { return worst }
+            return max(worst, dev.openBugs)
+        }
+        let bugLoad = worstBugs >= 12 ? 3 : worstBugs >= 6 ? 2 : worstBugs >= 2 ? 1 : 0
+
+        var departing: Set<UUID> = []
+        if let notice = state.economy.pendingResignation { departing.insert(notice.employeeID) }
+        if let poach = state.rivals.pendingPoach { departing.insert(poach.employeeID) }
+        let patience = engine.balance.staff.quitStreakDays
+        for employee in state.employees where !employee.isFounder
+            && patience - employee.lowMoraleStreakDays <= 3 && employee.lowMoraleStreakDays > 0 {
+            departing.insert(employee.id)
+        }
+
+        return OfficePressure(
+            crunch: state.economy.workPace == .crunch,
+            runwayWeeks: runway,
+            inDebt: cash < 0,
+            bugLoad: bugLoad,
+            departing: departing,
+            pendingOffer: state.rivals.pendingBuyout != nil
         )
     }
 
@@ -162,8 +200,10 @@ struct OfficeCard: View {
         case .autumn: .rain
         case .spring, .summer: .clear
         }
+        // Crunch is carried by `pressure` now (it pins the room to night);
+        // the clock always starts on morning.
         return OfficeAmbience(
-            timeOfDay: engine.state.economy.workPace == .crunch ? .dusk : .morning,
+            timeOfDay: .morning,
             weather: weather,
             isWeekend: calendar.isWeekend,
             teamMood: Self.mood(averageMorale)

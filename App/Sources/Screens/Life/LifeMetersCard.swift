@@ -8,18 +8,31 @@ import TycoonEngine
 struct LifeMetersCard: View {
     let engine: GameEngine
 
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
+
     var body: some View {
         let state = engine.state
         let life = state.life
         let hasCold = life.hasCold(day: state.day)
         let isAway = life.isAway(day: state.day)
+        // Each meter's change since the week began, so a slide is never
+        // silent. Nothing to compare against until the first report.
+        let start = shell.weekStartMeters
 
         CardView("Wellbeing", systemImage: "figure.mind.and.body") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                MeterRow(label: "Energy", systemImage: "bolt.fill", value: life.meters.energy)
-                MeterRow(label: "Health", systemImage: "heart.fill", value: life.meters.health)
-                MeterRow(label: "Mood", systemImage: "face.smiling", value: life.meters.mood)
-                MeterRow(label: "Relationships", systemImage: "person.2.heart", value: life.meters.relationships)
+                MeterRow(label: "Energy", systemImage: "bolt.fill", value: life.meters.energy,
+                         delta: start.map { life.meters.energy - $0.energy })
+                MeterRow(label: "Health", systemImage: "heart.fill", value: life.meters.health,
+                         delta: start.map { life.meters.health - $0.health })
+                MeterRow(label: "Mood", systemImage: "face.smiling", value: life.meters.mood,
+                         delta: start.map { life.meters.mood - $0.mood })
+                MeterRow(label: "Relationships", systemImage: "person.2.heart", value: life.meters.relationships,
+                         delta: start.map { life.meters.relationships - $0.relationships })
 
                 Divider()
 
@@ -41,6 +54,8 @@ private struct MeterRow: View {
     let label: String
     let systemImage: String
     let value: Double
+    /// Change since the week began, when known.
+    var delta: Double?
 
     private var rounded: Int { Int(value.rounded()) }
     private var tint: Color { lifeMeterTint(value) }
@@ -56,6 +71,14 @@ private struct MeterRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
+                if let delta, abs(delta) >= 0.5 {
+                    Text((delta > 0 ? "+" : "") + delta.formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale)))
+                        .font(Theme.Typography.number(.caption2))
+                        .foregroundStyle(delta > 0 ? Theme.positiveCash : Theme.negativeCash)
+                        .contentTransition(.numericText())
+                        .animation(Theme.Motion.valueChange, value: delta)
+                        .accessibilityLabel("\(delta > 0 ? "up" : "down") \(Int(abs(delta).rounded())) this week")
+                }
                 Text("\(rounded)")
                     .font(Theme.Typography.number(.caption))
                     .foregroundStyle(tint)
@@ -70,7 +93,10 @@ private struct MeterRow: View {
             .animation(Theme.Motion.valueChange, value: value)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(label) \(rounded) of 100")
+        .accessibilityLabel(
+            "\(label) \(rounded) of 100"
+                + (delta.map { abs($0) >= 0.5 ? ", \($0 > 0 ? "up" : "down") \(Int(abs($0).rounded())) this week" : "" } ?? "")
+        )
     }
 }
 

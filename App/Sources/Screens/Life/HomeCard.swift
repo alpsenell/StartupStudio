@@ -40,7 +40,7 @@ struct HomeCard: View {
             }
 
             PixelPanel(contentPadding: Theme.Spacing.xs) {
-                HomeSceneView(tier: tierStyle, occupants: occupants, activity: activity, mood: mood)
+                HomeSceneView(tier: tierStyle, occupants: occupants, activity: activity, mood: mood, signals: signals)
                     .frame(maxWidth: .infinity)
                     .accessibilityLabel(sceneAccessibilityLabel)
             }
@@ -95,6 +95,18 @@ struct HomeCard: View {
                 )
             }
         }
+    }
+
+    /// The meters the picture used to ignore: relationships, health and
+    /// the wallet against next week's rent. Read, never changed.
+    private var signals: HomeSignals {
+        let life = engine.state.life
+        let rent = homeWeeklyRent(life.home, balance: engine.balance)
+        return HomeSignals(
+            relationshipsLow: life.family.stage != .single && life.meters.relationships < 35,
+            healthLow: life.meters.health < 40,
+            billsDue: rent > 0 && life.wallet < rent
+        )
     }
 
     /// `HomeTier` and `HomeTierStyle` share raw values by design; the

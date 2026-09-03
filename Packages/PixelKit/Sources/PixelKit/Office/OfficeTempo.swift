@@ -32,8 +32,11 @@ public enum OfficeTempo: String, Sendable, Equatable, Hashable, CaseIterable {
     /// Order matters: crunch outranks morale, because a good mood at
     /// midnight still looks like crunch from across the room.
     public static func reading(for input: OfficeSceneInput) -> OfficeTempo {
-        let late = input.ambience.timeOfDay == .night || input.ambience.timeOfDay == .dusk
-        if late, OfficeBehaviors.isBuildingSomething(input) { return .crunch }
+        // Crunch is a fact the input carries now, not a guess from the
+        // hour: the room's own clock rolls through dusk and night every
+        // four minutes, and reading crunch off it said "crunch" half the
+        // time whatever the team was on.
+        if input.pressure.crunch { return .crunch }
         switch input.ambience.teamMood {
         case .great: return .buoyant
         case .okay: return .steady

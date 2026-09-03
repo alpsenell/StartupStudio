@@ -144,7 +144,8 @@ struct OfficeAnimationTests {
             }
             return 0
         }
-        let crunch = scene(12, ambience: OfficeAmbience(timeOfDay: .night, teamMood: .okay))
+        var crunch = scene(12, ambience: OfficeAmbience(timeOfDay: .night, teamMood: .okay))
+        crunch.pressure = OfficePressure(crunch: true)
         let flagging = scene(12, ambience: OfficeAmbience(timeOfDay: .day, teamMood: .low), mood: .okay)
         let ordinary = scene(12)
         #expect(OfficeTempo.reading(for: crunch) == .crunch)

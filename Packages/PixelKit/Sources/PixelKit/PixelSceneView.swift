@@ -94,8 +94,15 @@ public struct PixelSceneView: View {
         }
     }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private func canvas(scaleFor: @escaping (CGSize) -> Int) -> some View {
-        TimelineView(.animation(minimumInterval: AnimationClock.frameInterval, paused: false)) { timeline in
+        // Under Reduce Motion the scene is a state display, not a motion
+        // display: two frames a second is enough for a monitor to glow and
+        // a bubble to appear, and nothing walks (the office director
+        // seats everyone when the input says so).
+        let interval = reduceMotion ? 0.5 : AnimationClock.frameInterval
+        return TimelineView(.animation(minimumInterval: interval, paused: false)) { timeline in
             let t = max(0, timeline.date.timeIntervalSinceReferenceDate - epoch)
             Canvas { context, size in
                 draw(into: &context, size: size, scale: scaleFor(size), t: t)

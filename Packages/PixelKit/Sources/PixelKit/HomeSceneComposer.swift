@@ -154,6 +154,17 @@ public enum HomeSceneComposer {
         mood: MoodLevel,
         ambience: HomeAmbience
     ) -> [PlacedSprite] {
+        compose(tier: tier, occupants: occupants, activity: activity, mood: mood, ambience: ambience, signals: .none)
+    }
+
+    public static func compose(
+        tier: HomeTierStyle,
+        occupants: HomeOccupants,
+        activity: HomeActivity,
+        mood: MoodLevel,
+        ambience: HomeAmbience,
+        signals: HomeSignals
+    ) -> [PlacedSprite] {
         let l = layout(for: tier)
         let time = ambience.timeOfDay
         var scene: [PlacedSprite] = []
@@ -241,9 +252,20 @@ public enum HomeSceneComposer {
         case .okay:
             break
         }
-        if activity == .crunching {
-            // Crunch weeks leave their own evidence, whatever the mood.
+        if activity == .crunching || (signals.healthLow && mood != .low) {
+            // Crunch weeks leave their own evidence, whatever the mood —
+            // and so does a body that is not being looked after.
             place(.takeoutBoxes, Point(x: l.couch.x + 36, y: l.height - 11))
+        }
+        if signals.billsDue {
+            // Unpaid bills, on the table when there is one and on the
+            // couch arm when there is not.
+            let spot = l.table.map { Point(x: $0.x + 4, y: $0.y - 6) }
+                ?? Point(x: l.couch.x + 30, y: l.couch.y - 4)
+            scene.append(PlacedSprite(
+                sprite: OfficeFXSprites.stickyNote(), x: spot.x, y: spot.y,
+                kind: .prop, animation: .toggle(period: 5), phase: 1
+            ))
         }
 
         let children = Array(occupants.children.prefix(l.childSpots.count))
@@ -372,8 +394,14 @@ public enum HomeSceneComposer {
             } else if mood != .okay {
                 scene.append(bubble(SpriteLibrary.moodBubble(mood), over: founder, phase: 0))
             }
-            if activity == .dinner, let partner = partnerPlacement {
-                scene.append(bubble(SpriteLibrary.moodBubble(.great), over: partner, phase: 0))
+            if let partner = partnerPlacement {
+                if signals.relationshipsLow {
+                    // The number the meters show, on the person it is about:
+                    // no heart at dinner, a low bubble on the couch.
+                    scene.append(bubble(SpriteLibrary.moodBubble(.low), over: partner, phase: 1))
+                } else if activity == .dinner {
+                    scene.append(bubble(SpriteLibrary.moodBubble(.great), over: partner, phase: 0))
+                }
             }
         } else if let partner = partnerPlacement, activity == .awayPartnerAlone {
             // Nobody to eat with.
