@@ -428,9 +428,16 @@ enum RivalSystem {
             guard !state.rivals.rivals[index].isInPriceWar(on: day) else { continue }
 
             // A topic they both sell into, where the player is ahead.
+            //
+            // "Both": `share(for:)` reads 1.0 for a topic the player has
+            // never entered, which used to count a rival's first launch
+            // into an untouched topic as the player beating it — and two
+            // weeks later a company with no products was at war. Only a
+            // topic the share pass actually computed (the player has
+            // something live there) can be a topic the player is winning.
             let contested = rival.competingProducts(on: day)
                 .map(\.topicID)
-                .filter { state.rivals.share(for: $0) > 0.5 }
+                .filter { state.rivals.playerShare[$0] != nil && state.rivals.share(for: $0) > 0.5 }
                 .min()
             guard let topicID = contested else {
                 state.rivals.rivals[index].weeksBeaten = 0
