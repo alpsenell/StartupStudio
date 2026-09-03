@@ -182,7 +182,9 @@ enum ContractSystem {
             payout: offer.payout,
             penalty: offer.penalty,
             acceptedDay: state.day,
-            requiredSkill: offer.requiredSkill
+            requiredSkill: offer.requiredSkill,
+            topicID: offer.topicID,
+            sponsorRivalID: offer.sponsorRivalID
         ))
         return [.contractAccepted(contractID: offer.id, day: state.day)]
     }

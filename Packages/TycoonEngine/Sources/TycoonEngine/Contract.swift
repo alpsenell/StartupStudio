@@ -18,6 +18,13 @@ public struct ContractOffer: Codable, Equatable, Sendable, Identifiable {
     /// working the job. Delivering with a weaker crew reduces the payout
     /// (0 = the client has no expectations, the pre-quality behavior).
     public var requiredSkill: Double
+    /// The category the work is in. Only a rival-sponsored white-label
+    /// job carries one: it is the topic the sponsor ships into on
+    /// delivery. `nil` for an ordinary client job.
+    public var topicID: String?
+    /// The rival paying for the job, when a rival is. A sponsored offer
+    /// wears the rival's name as `clientName`; this is the id behind it.
+    public var sponsorRivalID: UUID?
 
     public init(
         id: UUID,
@@ -28,7 +35,9 @@ public struct ContractOffer: Codable, Equatable, Sendable, Identifiable {
         penalty: Int,
         deadlineDays: Int,
         expiresDay: Int,
-        requiredSkill: Double = 0
+        requiredSkill: Double = 0,
+        topicID: String? = nil,
+        sponsorRivalID: UUID? = nil
     ) {
         self.id = id
         self.clientName = clientName
@@ -39,13 +48,19 @@ public struct ContractOffer: Codable, Equatable, Sendable, Identifiable {
         self.deadlineDays = deadlineDays
         self.expiresDay = expiresDay
         self.requiredSkill = requiredSkill
+        self.topicID = topicID
+        self.sponsorRivalID = sponsorRivalID
     }
+
+    /// Whether a rival is paying for this: on delivery they ship what you
+    /// built, into `topicID`.
+    public var isSponsored: Bool { sponsorRivalID != nil }
 }
 
 extension ContractOffer {
     private enum CodingKeys: String, CodingKey {
         case id, clientName, requiredCodePts, requiredDesignPts, payout, penalty
-        case deadlineDays, expiresDay, requiredSkill
+        case deadlineDays, expiresDay, requiredSkill, topicID, sponsorRivalID
     }
 
     public init(from decoder: any Decoder) throws {
@@ -59,7 +74,11 @@ extension ContractOffer {
             penalty: try container.decode(Int.self, forKey: .penalty),
             deadlineDays: try container.decode(Int.self, forKey: .deadlineDays),
             expiresDay: try container.decode(Int.self, forKey: .expiresDay),
-            requiredSkill: try container.decodeIfPresent(Double.self, forKey: .requiredSkill) ?? 0
+            requiredSkill: try container.decodeIfPresent(Double.self, forKey: .requiredSkill) ?? 0,
+            // A save from before sponsored contracts existed carries
+            // neither key: the offer decodes as an ordinary job.
+            topicID: try container.decodeIfPresent(String.self, forKey: .topicID),
+            sponsorRivalID: try container.decodeIfPresent(UUID.self, forKey: .sponsorRivalID)
         )
     }
 }
@@ -86,6 +105,11 @@ public struct ContractJob: Codable, Equatable, Sendable, Identifiable {
     /// this job, graded against `requiredSkill` at delivery.
     public var skillDaySum: Double
     public var skillDays: Double
+    /// Carried over from the offer: the category a sponsor ships into on
+    /// delivery. `nil` for an ordinary client job.
+    public var topicID: String?
+    /// Carried over from the offer: the rival paying for the work.
+    public var sponsorRivalID: UUID?
 
     public init(
         id: UUID,
@@ -100,7 +124,9 @@ public struct ContractJob: Codable, Equatable, Sendable, Identifiable {
         acceptedDay: Int,
         requiredSkill: Double = 0,
         skillDaySum: Double = 0,
-        skillDays: Double = 0
+        skillDays: Double = 0,
+        topicID: String? = nil,
+        sponsorRivalID: UUID? = nil
     ) {
         self.id = id
         self.clientName = clientName
@@ -115,7 +141,13 @@ public struct ContractJob: Codable, Equatable, Sendable, Identifiable {
         self.requiredSkill = requiredSkill
         self.skillDaySum = skillDaySum
         self.skillDays = skillDays
+        self.topicID = topicID
+        self.sponsorRivalID = sponsorRivalID
     }
+
+    /// Whether a rival is paying for this: on delivery they ship what you
+    /// built, into `topicID`.
+    public var isSponsored: Bool { sponsorRivalID != nil }
 
     /// Average skill of the crew so far (0 with no recorded worker-days).
     public var averageCrewSkill: Double {
@@ -136,6 +168,7 @@ extension ContractJob {
     private enum CodingKeys: String, CodingKey {
         case id, clientName, requiredCodePts, requiredDesignPts, progressCode, progressDesign
         case deadlineDay, payout, penalty, acceptedDay, requiredSkill, skillDaySum, skillDays
+        case topicID, sponsorRivalID
     }
 
     public init(from decoder: any Decoder) throws {
@@ -153,7 +186,10 @@ extension ContractJob {
             acceptedDay: try container.decode(Int.self, forKey: .acceptedDay),
             requiredSkill: try container.decodeIfPresent(Double.self, forKey: .requiredSkill) ?? 0,
             skillDaySum: try container.decodeIfPresent(Double.self, forKey: .skillDaySum) ?? 0,
-            skillDays: try container.decodeIfPresent(Double.self, forKey: .skillDays) ?? 0
+            skillDays: try container.decodeIfPresent(Double.self, forKey: .skillDays) ?? 0,
+            // Absent in every save written before sponsored contracts.
+            topicID: try container.decodeIfPresent(String.self, forKey: .topicID),
+            sponsorRivalID: try container.decodeIfPresent(UUID.self, forKey: .sponsorRivalID)
         )
     }
 }
