@@ -1,15 +1,17 @@
 import Foundation
 
-/// A generic, versioned, single-slot save-file store.
+/// A generic, versioned save-file store with a few numbered slots.
 ///
-/// On-disk format (one JSON object per file, `slot0.json` plus a rotating
-/// `slot0.backup.json`):
+/// On-disk format (one JSON object per file, `slot<N>.json` plus a
+/// rotating `slot<N>.backup.json` for each slot; `slot0.json` is the file
+/// the single-slot store always wrote, byte for byte):
 ///
 /// ```json
 /// {
 ///   "appVersion": "1.2.3",
 ///   "formatVersion": 2,
 ///   "savedAt": "2026-08-21T10:00:00Z",
+///   "summary": { "companyName": "…", "founderName": "…", "day": 214 },
 ///   "state": { ... }
 /// }
 /// ```
@@ -20,13 +22,19 @@ import Foundation
 /// `JSONEncoder`/`JSONDecoder` (ISO 8601 dates, sorted keys). `State` must
 /// therefore encode to a JSON *object* (any `Codable` struct/class does).
 ///
+/// `summary` is optional: an app that predates it never wrote it and reads
+/// the envelope key by key, so it ignores the key on files this app writes;
+/// `slots()` fills a missing summary in by decoding the state once.
+///
 /// Durability:
 /// - Saves are staged to a temp file in the same directory and moved into
 ///   place, so a failed write never destroys the previous good save.
-/// - The previous good `slot0.json` rotates to `slot0.backup.json` before the
-///   new file lands; `load()` falls back to the backup when the main file is
-///   corrupt (or missing after an interrupted save).
+/// - The previous good `slot<N>.json` rotates to `slot<N>.backup.json`
+///   before the new file lands; `load(slot:)` falls back to the backup when
+///   the main file is corrupt (or missing after an interrupted save).
 /// - Loading never crashes: every failure path is a thrown error or `nil`.
+/// - Slots are independent: nothing that happens to one slot's files
+///   touches another's.
 ///
 /// Concurrency: this class is `Sendable` because it holds only immutable
 /// configuration. File I/O itself is not synchronized across instances (or
@@ -37,6 +45,7 @@ private enum Key {
     static let formatVersion = "formatVersion"
     static let savedAt = "savedAt"
     static let appVersion = "appVersion"
+    static let summary = "summary"
     static let state = "state"
 }
 
@@ -51,12 +60,30 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
         case missingMigration(fromVersion: Int)
     }
 
+    /// The raw pieces of one save file, before the state is decoded.
+    private struct RawSave {
+        var envelope: SaveEnvelope
+        var stateObject: [String: Any]
+    }
+
+    /// How many slots the game has. Three: the doc's number, and enough
+    /// that a second founder never has to bulldoze the first.
+    public static var defaultSlotCount: Int { 3 }
+
     private let directory: URL
     private let currentFormatVersion: Int
     private let migrationsByFromVersion: [Int: MigrationStep]
 
-    private var mainFileURL: URL { directory.appendingPathComponent("slot0.json") }
-    private var backupFileURL: URL { directory.appendingPathComponent("slot0.backup.json") }
+    /// Slots are numbered `0 ..< slotCount`.
+    public let slotCount: Int
+
+    private func mainFileURL(slot: Int) -> URL {
+        directory.appendingPathComponent("slot\(slot).json")
+    }
+
+    private func backupFileURL(slot: Int) -> URL {
+        directory.appendingPathComponent("slot\(slot).backup.json")
+    }
 
     /// - Parameters:
     ///   - directory: where save files live; pass `nil` for the default
@@ -65,10 +92,12 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
     ///   - currentFormatVersion: the format this app writes.
     ///   - migrations: ordered steps covering fromVersion = 1 ..< currentFormatVersion.
     ///     If several steps share a `fromVersion`, the first one wins.
+    ///   - slotCount: how many slots to keep; at least one.
     public init(
         directory: URL? = nil,
         currentFormatVersion: Int,
-        migrations: [MigrationStep] = []
+        migrations: [MigrationStep] = [],
+        slotCount: Int = SaveStore.defaultSlotCount
     ) {
         self.directory = directory ?? Self.defaultDirectory()
         self.currentFormatVersion = currentFormatVersion
@@ -76,11 +105,16 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
             migrations.map { ($0.fromVersion, $0) },
             uniquingKeysWith: { first, _ in first }
         )
+        self.slotCount = max(1, slotCount)
     }
 
-    /// Atomic write of envelope + state to `slot0.json`. The previous good
-    /// `slot0.json` (if any) rotates to `slot0.backup.json` first.
-    public func save(_ state: State, appVersion: String) throws {
+    /// Atomic write of envelope + state to `slot<N>.json`. The previous
+    /// good `slot<N>.json` (if any) rotates to `slot<N>.backup.json` first.
+    /// `summary` rides in the envelope for `slots()` to list.
+    public func save(
+        _ state: State, appVersion: String, summary: SaveSummary? = nil, slot: Int = 0
+    ) throws {
+        checkSlot(slot)
         let fileManager = FileManager.default
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
 
@@ -92,17 +126,24 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
             with: stateData, options: [.fragmentsAllowed]
         )
 
-        let root: [String: Any] = [
+        var root: [String: Any] = [
             Key.formatVersion: currentFormatVersion,
             Key.savedAt: ISO8601DateFormatter().string(from: Date()),
             Key.appVersion: appVersion,
             Key.state: stateObject,
         ]
+        if let summary {
+            root[Key.summary] = try JSONSerialization.jsonObject(
+                with: try encoder.encode(summary), options: [.fragmentsAllowed]
+            )
+        }
         let rootData = try JSONSerialization.data(withJSONObject: root, options: [.sortedKeys])
 
         // Stage the new save in the same directory first: if this write
         // fails, nothing on disk has been touched yet.
-        let stagingURL = directory.appendingPathComponent("slot0.\(UUID().uuidString).tmp")
+        let mainFileURL = mainFileURL(slot: slot)
+        let backupFileURL = backupFileURL(slot: slot)
+        let stagingURL = directory.appendingPathComponent("slot\(slot).\(UUID().uuidString).tmp")
         try rootData.write(to: stagingURL, options: [.atomic])
         do {
             // Rotate the previous good save to the backup slot, then move the
@@ -120,20 +161,112 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
         }
     }
 
-    /// `nil` when no save exists. Tries `slot0.json`; on decode/migration
-    /// failure falls back to `slot0.backup.json`; if both fail throws
-    /// `.corruptSave`. Throws `.futureFormat` if the envelope's
-    /// `formatVersion` exceeds current. Runs migrations when
+    /// `nil` when no save exists in the slot. Tries `slot<N>.json`; on
+    /// decode/migration failure falls back to `slot<N>.backup.json`; if
+    /// both fail throws `.corruptSave`. Throws `.futureFormat` if the
+    /// envelope's `formatVersion` exceeds current. Runs migrations when
     /// `formatVersion < current`, then decodes `State`.
-    public func load() throws -> (state: State, envelope: SaveEnvelope)? {
+    public func load(slot: Int = 0) throws -> (state: State, envelope: SaveEnvelope)? {
+        checkSlot(slot)
+        return try withFallback(slot: slot) { url in
+            let raw = try readRaw(at: url)
+            return (state: try decodeState(raw), envelope: raw.envelope)
+        }
+    }
+
+    /// True if `slot0.json` exists on disk.
+    public var hasSave: Bool {
+        hasSave(slot: 0)
+    }
+
+    /// True if `slot<N>.json` exists on disk.
+    public func hasSave(slot: Int) -> Bool {
+        checkSlot(slot)
+        return FileManager.default.fileExists(atPath: mainFileURL(slot: slot).path)
+    }
+
+    /// Removes `slot<N>.json` and `slot<N>.backup.json` — one slot, and
+    /// nothing else in the directory (new-game flow into that slot).
+    public func delete(slot: Int) throws {
+        checkSlot(slot)
         let fileManager = FileManager.default
+        for url in [mainFileURL(slot: slot), backupFileURL(slot: slot)]
+        where fileManager.fileExists(atPath: url.path) {
+            try fileManager.removeItem(at: url)
+        }
+    }
+
+    /// Removes every slot's save and backup.
+    public func deleteAll() throws {
+        for slot in 0..<slotCount {
+            try delete(slot: slot)
+        }
+    }
+
+    // MARK: - Listing
+
+    /// One row per slot, `0 ..< slotCount`, without decoding any state a
+    /// summary can stand in for.
+    ///
+    /// A slot whose envelope carries a summary lists from that alone. A
+    /// slot written before summaries existed (a single-slot `slot0.json`)
+    /// has its state decoded and migrated once and handed to `summarize`;
+    /// with no summarizer such a slot lists with an empty summary rather
+    /// than not at all. A corrupt or newer-format slot lists as exactly
+    /// that, and never stops the others listing.
+    public func slots(
+        summarize: ((State) -> SaveSummary)? = nil
+    ) -> [SlotSummary] {
+        (0..<slotCount).map { slotSummary(slot: $0, summarize: summarize) }
+    }
+
+    /// The listing row for one slot. See `slots(summarize:)`.
+    public func slotSummary(
+        slot: Int, summarize: ((State) -> SaveSummary)? = nil
+    ) -> SlotSummary {
+        checkSlot(slot)
+        do {
+            guard let found = try withFallback(slot: slot, { url -> (SaveSummary, SaveEnvelope) in
+                let raw = try readRaw(at: url)
+                if let summary = raw.envelope.summary {
+                    return (summary, raw.envelope)
+                }
+                // Decoding the state is the one way to know what an old
+                // save holds; a state that will not decode is a corrupt
+                // file, and the backup gets its turn.
+                let state = try decodeState(raw)
+                let summary = summarize?(state)
+                    ?? SaveSummary(companyName: "", founderName: "", day: 0)
+                return (summary, raw.envelope)
+            }) else {
+                return SlotSummary(slot: slot, contents: .empty)
+            }
+            return SlotSummary(slot: slot, contents: .saved(summary: found.0, envelope: found.1))
+        } catch SaveStoreError.futureFormat(let version) {
+            return SlotSummary(slot: slot, contents: .futureFormat(version))
+        } catch {
+            return SlotSummary(slot: slot, contents: .corrupt)
+        }
+    }
+
+    // MARK: - Private
+
+    /// Runs `read` on the slot's main file, then on its backup when the
+    /// main file is missing or fails for any reason but a newer format.
+    /// `nil` when the slot has neither file; `.corruptSave` when both fail.
+    private func withFallback<T>(
+        slot: Int, _ read: (URL) throws -> T
+    ) throws -> T? {
+        let fileManager = FileManager.default
+        let mainFileURL = mainFileURL(slot: slot)
+        let backupFileURL = backupFileURL(slot: slot)
         let mainExists = fileManager.fileExists(atPath: mainFileURL.path)
         let backupExists = fileManager.fileExists(atPath: backupFileURL.path)
         guard mainExists || backupExists else { return nil }
 
         if mainExists {
             do {
-                return try readSave(at: mainFileURL)
+                return try read(mainFileURL)
             } catch SaveStoreError.futureFormat(let version) {
                 // A newer-format save is intact, just unreadable by this app
                 // version; do not fall back over it.
@@ -144,7 +277,7 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
         }
         if backupExists {
             do {
-                return try readSave(at: backupFileURL)
+                return try read(backupFileURL)
             } catch SaveStoreError.futureFormat(let version) {
                 throw SaveStoreError.futureFormat(version)
             } catch {
@@ -154,23 +287,9 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
         throw SaveStoreError.corruptSave
     }
 
-    /// True if `slot0.json` exists on disk.
-    public var hasSave: Bool {
-        FileManager.default.fileExists(atPath: mainFileURL.path)
-    }
-
-    /// Removes `slot0.json` and `slot0.backup.json` (new-game flow).
-    public func deleteAll() throws {
-        let fileManager = FileManager.default
-        for url in [mainFileURL, backupFileURL]
-        where fileManager.fileExists(atPath: url.path) {
-            try fileManager.removeItem(at: url)
-        }
-    }
-
-    // MARK: - Private
-
-    private func readSave(at url: URL) throws -> (state: State, envelope: SaveEnvelope) {
+    /// Parses the envelope and runs the migrations on the raw state
+    /// dictionary, without decoding `State`.
+    private func readRaw(at url: URL) throws -> RawSave {
         let data = try Data(contentsOf: url)
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw ReadFailure.notAJSONObject
@@ -201,16 +320,38 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
             }
         }
 
-        let migratedData = try JSONSerialization.data(withJSONObject: stateObject)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let state = try decoder.decode(State.self, from: migratedData)
+        // A summary that will not decode is treated as absent, not as a
+        // corrupt save: it is a convenience beside the state, never the
+        // state itself.
+        var summary: SaveSummary?
+        if let summaryObject = root[Key.summary] as? [String: Any],
+           let summaryData = try? JSONSerialization.data(withJSONObject: summaryObject) {
+            summary = try? JSONDecoder().decode(SaveSummary.self, from: summaryData)
+        }
+
         let envelope = SaveEnvelope(
             formatVersion: formatVersion,
             savedAt: savedAt,
-            appVersion: appVersion
+            appVersion: appVersion,
+            summary: summary
         )
-        return (state: state, envelope: envelope)
+        return RawSave(envelope: envelope, stateObject: stateObject)
+    }
+
+    private func decodeState(_ raw: RawSave) throws -> State {
+        let migratedData = try JSONSerialization.data(withJSONObject: raw.stateObject)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(State.self, from: migratedData)
+    }
+
+    /// A slot outside `0 ..< slotCount` is a programming error, not a
+    /// data error: nothing on disk can make it happen.
+    private func checkSlot(_ slot: Int) {
+        precondition(
+            (0..<slotCount).contains(slot),
+            "SaveStore slot \(slot) is outside 0..<\(slotCount)"
+        )
     }
 
     private static func defaultDirectory() -> URL {

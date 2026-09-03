@@ -34,10 +34,12 @@ enum DebugLaunch {
     /// `-autoTab` on the command line.
     ///
     /// Those two flags exist so a screenshot pass can land on a running
-    /// game without tapping anything, and the onboarding flow (which
-    /// cannot be tapped either) would otherwise sit in front of every one
-    /// of them on a fresh install. A headless launch therefore skips
-    /// straight into a generated new game. Release builds never see it.
+    /// game without tapping anything, and the front door and the
+    /// onboarding flow (neither of which can be tapped either) would
+    /// otherwise sit in front of every one of them on a fresh install. A
+    /// headless launch therefore skips both, straight into slot 0: its
+    /// save if there is one, a generated new game otherwise. Release
+    /// builds never see it.
     static var isHeadlessPass: Bool {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments

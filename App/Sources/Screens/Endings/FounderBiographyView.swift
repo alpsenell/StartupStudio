@@ -20,6 +20,11 @@ struct FounderBiographyView: View {
 
     @State private var startingOver = false
 
+    /// U7: "Start a new company" goes through the front door and its slot
+    /// picker when there is one. Without a session (a snapshot, a preview)
+    /// the founder setup sheet stands in, as it did before slots.
+    @Environment(\.gameSession) private var session
+
     private var state: GameState { engine.state }
     private var balance: BalanceConfig { engine.balance }
     private var founder: FounderProfile { state.progression.founder }
@@ -437,7 +442,12 @@ struct FounderBiographyView: View {
                     .multilineTextAlignment(.center)
             }
             Button {
-                startingOver = true
+                if let session {
+                    Haptics.tap()
+                    session.returnToFrontDoor()
+                } else {
+                    startingOver = true
+                }
             } label: {
                 Label("Start a new company", systemImage: "arrow.counterclockwise")
                     .font(.system(.headline, design: .rounded))
