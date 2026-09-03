@@ -80,7 +80,10 @@ struct CategoryFightTests {
         // Designed at 1.0, shipped at 0.5 — see `DepthBalance`.
         #expect(depth.strengthPerWeekBeaten == 0.5)
         #expect(depth.incumbentEnabled)
-        #expect(depth.incumbentValuationFloor == 750_000)
+        // Designed at $750k with an owned-topics trigger, shipped at $1M
+        // on the valuation line alone — see `DepthBalance`.
+        #expect(depth.incumbentValuationFloor == 1_000_000)
+        #expect(depth.incumbentDominatedTopics == 0)
     }
 
     /// A `"rivals"` object from before the block, or one that tunes a

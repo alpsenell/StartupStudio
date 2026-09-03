@@ -366,8 +366,8 @@
       "strengthPerWeekBeaten": 0.5,
       "standingPerWeekBeaten": 1.0,
       "incumbentEnabled": true,
-      "incumbentValuationFloor": 750000,
-      "incumbentDominatedTopics": 2,
+      "incumbentValuationFloor": 1000000,
+      "incumbentDominatedTopics": 0,
       "incumbentStrengthFactor": 0.6,
       "incumbentStrengthMin": 70,
       "incumbentStrengthMax": 95,
@@ -375,7 +375,8 @@
       "incumbentReputationMax": 80,
       "incumbentRetreatWeeks": 26,
       "incumbentRetreatReputationGain": 5,
-      "incumbentRetreatStandingGain": 15
+      "incumbentRetreatStandingGain": 15,
+      "acquisitionAbsorbsShelf": true
     }
   },
   "city": {
