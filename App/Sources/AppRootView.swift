@@ -40,6 +40,16 @@ struct AppRootView: View {
             .onChange(of: engine.state.day) { _, _ in
                 shell.dayAdvanced(engine: engine)
             }
+            // The weekly report yields to a decision sheet, and its "Next
+            // week" button resumes the clock before it closes. A question
+            // that was waiting behind the report must stop the clock
+            // again, or days tick behind a modal nobody can dismiss.
+            .onChange(of: shell.showingWeeklyReport) { _, showing in
+                guard !showing, engine.state.speed != .paused,
+                      let prompt = currentPrompt(), prompt.id != shell.deferredChoiceID
+                else { return }
+                engine.setSpeed(.paused)
+            }
             // Toasts are no longer overlaid here: the notice rail under
             // each tab's HUD shows the newest one as its transient line,
             // so an acknowledgement can never land across the pause
@@ -171,21 +181,33 @@ struct AppRootView: View {
         )
     }
 
-    /// The pending offer needing an answer, if any. The setter is a no-op:
-    /// dismissal happens when an option's action clears the pending offer
-    /// (interactive dismissal is disabled on the sheet).
+    /// The pending offer needing an answer, if any. A story question the
+    /// player has put off is not re-presented: it lives on the notice rail
+    /// with its countdown until they tap it or the deadline answers. The
+    /// setter only sees a pull-down, which is "let me think" for a
+    /// deferrable prompt and impossible for the others.
     private var pendingDecision: Binding<DecisionPrompt?> {
         Binding(
             get: {
                 guard session.engine.state.gameOver == nil else { return nil }
                 guard shell.launchDayProductID == nil, !shell.showingWeeklyReport else { return nil }
-                return DecisionPrompt.pending(
-                    in: session.engine.state,
-                    content: session.engine.content,
-                    balance: session.engine.balance
-                )
+                guard let prompt = currentPrompt() else { return nil }
+                return prompt.id == shell.deferredChoiceID ? nil : prompt
             },
-            set: { _ in }
+            set: { newValue in
+                guard newValue == nil, let prompt = currentPrompt(),
+                      prompt.isDeferrable, shell.deferredChoiceID != prompt.id
+                else { return }
+                shell.postpone(prompt, engine: session.engine)
+            }
+        )
+    }
+
+    private func currentPrompt() -> DecisionPrompt? {
+        DecisionPrompt.pending(
+            in: session.engine.state,
+            content: session.engine.content,
+            balance: session.engine.balance
         )
     }
 

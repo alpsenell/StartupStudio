@@ -41,6 +41,20 @@ final class GameShell {
         deferredChoiceID = nil
     }
 
+    /// The speed the clock was last running at, so a deferred question
+    /// resumes the game at the pace the player had set — the engine
+    /// forgets it when an event pauses the tick.
+    private(set) var lastRunningSpeed: SimSpeed = .x1
+
+    /// "Let me think": closes a deferrable prompt, puts it on the notice
+    /// rail with its real countdown, and starts the clock again.
+    func postpone(_ prompt: DecisionPrompt, engine: GameEngine) {
+        guard prompt.isDeferrable else { return }
+        deferredChoiceID = prompt.id
+        engine.setSpeed(lastRunningSpeed == .paused ? .x1 : lastRunningSpeed)
+        Haptics.tap()
+    }
+
     /// Last report's figures, for this report's deltas.
     @ObservationIgnored private var previousMorale: Double?
     @ObservationIgnored private var previousMeters: WeeklyReport.MeterSnapshot?
@@ -79,6 +93,9 @@ final class GameShell {
     func dayAdvanced(engine: GameEngine) {
         let day = engine.state.day
         defer { lastSeenDay = day }
+        if engine.state.speed != .paused {
+            lastRunningSpeed = engine.state.speed
+        }
         guard day > lastSeenDay, lastSeenDay >= 0 else { return }
         guard day % 7 == 0, day > 0 else { return }
 

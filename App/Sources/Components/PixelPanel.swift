@@ -114,3 +114,58 @@ struct PixelSectionTitle: View {
     .padding()
     .background(Theme.screenBackground)
 }
+
+// MARK: - Buttons and tiles
+
+/// A button in the game's own hand: a flat fill with the pixel frame and
+/// the top bevel `PixelPanel` uses, and a one-pixel drop when pressed — the
+/// same press the speed control has. Used for the choices on a decision
+/// sheet, where `.borderedProminent` read as somebody else's app.
+struct PixelButtonStyle: ButtonStyle {
+    var fill: Color = Theme.pixelAccent
+    var ink: Color = Theme.pixelInk
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(Theme.ink(on: fill))
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(fill.opacity(configuration.isPressed ? 0.88 : 1))
+            .overlay {
+                PixelPanelBorder(thickness: 2, corner: 2)
+                    .fill(ink.opacity(0.55))
+            }
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(height: 2)
+                    .padding(.horizontal, 2)
+                    .padding(.top, 2)
+            }
+            .compositingGroup()
+            .offset(y: configuration.isPressed ? 1 : 0)
+            .animation(Theme.Motion.selection, value: configuration.isPressed)
+    }
+}
+
+/// An SF Symbol on a small pixel-framed square of paper, for a sheet whose
+/// subject has no face to draw.
+struct PixelIconTile: View {
+    let systemImage: String
+    var tint: Color = Theme.pixelAccent
+    var size: CGFloat = 64
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.system(size: size * 0.44, weight: .bold))
+            .foregroundStyle(tint)
+            .frame(width: size, height: size)
+            .background(Theme.pixelPaper)
+            .overlay {
+                PixelPanelBorder(thickness: 3, corner: 3)
+                    .fill(Theme.pixelInk)
+            }
+            .accessibilityHidden(true)
+    }
+}
