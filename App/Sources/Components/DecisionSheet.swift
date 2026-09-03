@@ -250,9 +250,17 @@ struct DecisionSheetContent: View {
     /// "−$2,300 → $9,250 · runway 8 wk": what the company looks like after
     /// this option, from the same numbers the HUD shows.
     private func afterState(_ delta: Int) -> String {
-        let cash = engine.state.company.cash
+        DecisionPrompt.afterState(delta: delta, cash: engine.state.company.cash, burn: engine.weeklyBurn)
+    }
+}
+
+extension DecisionPrompt {
+    /// The money line under an answer — "−$2,300 → $9,250 · runway 8 wk"
+    /// — from the same numbers the HUD shows. Shared with every confirm
+    /// that spends the company's cash, so the arithmetic reads the same
+    /// on a sheet and in a dialog.
+    static func afterState(delta: Int, cash: Int, burn: Int) -> String {
         let after = cash + delta
-        let burn = engine.weeklyBurn
         let signed = delta >= 0 ? "+" + delta.money : delta.money
         let runway: String = if after < 0 {
             "in the red"

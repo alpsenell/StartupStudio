@@ -890,7 +890,8 @@
     "earnOutReviews": 2,
     "earnOutPatienceWeeks": 12,
     "earnOutMoraleCost": 8.0,
-    "earnOutMissesToOust": 2
+    "earnOutMissesToOust": 2,
+    "buybackPremium": 2.5
   },
   "traits": {
     "teamGrowthStrength": 1.0,

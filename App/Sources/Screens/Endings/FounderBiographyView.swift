@@ -350,6 +350,14 @@ struct FounderBiographyView: View {
                     }
                     row("Company at the end", state.companyValuation(balance: balance).money)
                     row("You still owned", "\(state.investors.equityRemaining.oneDecimal)%")
+                    // WS-B: every round bought back out of the cap table.
+                    ForEach(state.investors.boughtOut) { round in
+                        row(
+                            "Bought out \(round.investorName) in year "
+                                + "\(yearOf(round.boughtOutDay ?? round.day))",
+                            (round.buybackPrice ?? 0).money
+                        )
+                    }
                     if state.investors.totalRaised > 0 {
                         row(
                             "Raised across \(state.investors.rounds.count) round"
@@ -362,6 +370,12 @@ struct FounderBiographyView: View {
             }
             .accessibilityElement(children: .contain)
         }
+    }
+
+    /// The game year a day falls in: fifty-two weeks to the year, as the
+    /// engine's own calendar counts it.
+    private func yearOf(_ day: Int) -> Int {
+        day / (GameState.daysPerWeek * 52) + 1
     }
 
     private func row(_ label: String, _ value: String) -> some View {

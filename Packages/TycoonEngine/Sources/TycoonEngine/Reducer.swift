@@ -308,8 +308,10 @@ public enum Reducer {
             events = []
 
         // MARK: WS-B (board)
-        case .buyBackRound:
-            events = []
+        case let .buyBackRound(investorID):
+            events = InvestorSystem.buyBackRound(
+                investorID: investorID, state: &state, balance: balance
+            )
         case .acceptBuyoutEarnOut:
             events = InvestorSystem.acceptBuyoutEarnOut(state: &state, balance: balance)
 

@@ -89,6 +89,10 @@ extension BalanceConfig {
         /// Missed earn-out reviews before the acquirer brings in their own
         /// CEO (the ordinary ousting, keeping what was paid).
         public var earnOutMissesToOust: Int
+        /// What a round costs to buy back, over its slice of today's
+        /// valuation — the same forward premium they paid, charged back.
+        /// The pressure surcharge on top is `1 + boardPressure / 100`.
+        public var buybackPremium: Double
 
         public init(
             offerIntervalDays: Int = 7,
@@ -121,7 +125,8 @@ extension BalanceConfig {
             earnOutReviews: Int = 2,
             earnOutPatienceWeeks: Int = 12,
             earnOutMoraleCost: Double = 8,
-            earnOutMissesToOust: Int = 2
+            earnOutMissesToOust: Int = 2,
+            buybackPremium: Double = 2.5
         ) {
             self.offerIntervalDays = offerIntervalDays
             self.offerCooldownDays = offerCooldownDays
@@ -154,6 +159,7 @@ extension BalanceConfig {
             self.earnOutPatienceWeeks = earnOutPatienceWeeks
             self.earnOutMoraleCost = earnOutMoraleCost
             self.earnOutMissesToOust = earnOutMissesToOust
+            self.buybackPremium = buybackPremium
         }
 
         public static let `default` = InvestorBalance()
@@ -179,6 +185,7 @@ extension BalanceConfig.InvestorBalance {
         case strategicPremiumMin, strategicPremiumMax
         case earnOutUpfrontShare, earnOutReviewShare, earnOutReviews
         case earnOutPatienceWeeks, earnOutMoraleCost, earnOutMissesToOust
+        case buybackPremium
     }
 
     public init(from decoder: any Decoder) throws {
@@ -257,7 +264,9 @@ extension BalanceConfig.InvestorBalance {
             earnOutMoraleCost: try container.decodeIfPresent(Double.self, forKey: .earnOutMoraleCost)
                 ?? fallback.earnOutMoraleCost,
             earnOutMissesToOust: try container.decodeIfPresent(Int.self, forKey: .earnOutMissesToOust)
-                ?? fallback.earnOutMissesToOust
+                ?? fallback.earnOutMissesToOust,
+            buybackPremium: try container.decodeIfPresent(Double.self, forKey: .buybackPremium)
+                ?? fallback.buybackPremium
         )
     }
 }

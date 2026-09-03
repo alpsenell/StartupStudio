@@ -100,6 +100,12 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
     /// The persona's patience, carried onto the cap table so the quarterly
     /// review can scale its verdict by it.
     public var patienceWeeks: Int
+    /// The day the founder bought this round back out of the cap table
+    /// (WS-B). `nil` on the rounds still seated; saves from before the
+    /// buyback existed decode `nil`.
+    public var boughtOutDay: Int?
+    /// What buying it back cost.
+    public var buybackPrice: Int?
 
     /// Stable across a save: one investor closes at most one round.
     public var id: String { investorID }
@@ -113,7 +119,9 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
         day: Int,
         takesBoardSeat: Bool,
         expects: BoardExpectation,
-        patienceWeeks: Int = 26
+        patienceWeeks: Int = 26,
+        boughtOutDay: Int? = nil,
+        buybackPrice: Int? = nil
     ) {
         self.investorID = investorID
         self.investorName = investorName
@@ -124,6 +132,8 @@ public struct RaisedRound: Codable, Equatable, Sendable, Identifiable {
         self.takesBoardSeat = takesBoardSeat
         self.expects = expects
         self.patienceWeeks = patienceWeeks
+        self.boughtOutDay = boughtOutDay
+        self.buybackPrice = buybackPrice
     }
 }
 
@@ -133,6 +143,7 @@ extension RaisedRound {
     private enum CodingKeys: String, CodingKey {
         case investorID, investorName, amount, equity, valuation, day
         case takesBoardSeat, expects, patienceWeeks
+        case boughtOutDay, buybackPrice
     }
 
     public init(from decoder: any Decoder) throws {
@@ -146,7 +157,9 @@ extension RaisedRound {
             day: try container.decode(Int.self, forKey: .day),
             takesBoardSeat: try container.decode(Bool.self, forKey: .takesBoardSeat),
             expects: try container.decode(BoardExpectation.self, forKey: .expects),
-            patienceWeeks: try container.decodeIfPresent(Int.self, forKey: .patienceWeeks) ?? 26
+            patienceWeeks: try container.decodeIfPresent(Int.self, forKey: .patienceWeeks) ?? 26,
+            boughtOutDay: try container.decodeIfPresent(Int.self, forKey: .boughtOutDay),
+            buybackPrice: try container.decodeIfPresent(Int.self, forKey: .buybackPrice)
         )
     }
 }
@@ -289,6 +302,10 @@ public struct InvestorState: Codable, Equatable, Sendable {
     /// A strategic buyout being paid out over the next reviews, with the
     /// acquirer in the room. Saves from before it existed decode `nil`.
     public var earnOut: EarnOut?
+    /// Rounds the founder bought back out of the cap table, oldest first
+    /// (WS-B). Their equity is home and their ask is out of the room;
+    /// they stay here for the biography. Decodes empty.
+    public var boughtOut: [RaisedRound]
 
     /// How many reviews the board room keeps.
     static let maxReviews = 24
@@ -309,7 +326,8 @@ public struct InvestorState: Codable, Equatable, Sendable {
         lastQuarterShipped: Int = 0,
         lastQuarterHeadcount: Int = 0,
         ipoDay: Int? = nil,
-        earnOut: EarnOut? = nil
+        earnOut: EarnOut? = nil,
+        boughtOut: [RaisedRound] = []
     ) {
         self.equityRemaining = equityRemaining
         self.rounds = rounds
@@ -327,6 +345,7 @@ public struct InvestorState: Codable, Equatable, Sendable {
         self.lastQuarterHeadcount = lastQuarterHeadcount
         self.ipoDay = ipoDay
         self.earnOut = earnOut
+        self.boughtOut = boughtOut
     }
 
     /// A fresh company: the founder owns all of it and nobody is watching.
@@ -406,7 +425,7 @@ extension InvestorState {
         case lastQuarterCash, lastQuarterRevenue, peakQuarterRevenue
         case lastQuarterShipped, lastQuarterHeadcount
         case ipoDay
-        case earnOut
+        case earnOut, boughtOut
     }
 
     public init(from decoder: any Decoder) throws {
@@ -434,7 +453,8 @@ extension InvestorState {
                 Int.self, forKey: .lastQuarterHeadcount
             ) ?? 0,
             ipoDay: try container.decodeIfPresent(Int.self, forKey: .ipoDay),
-            earnOut: try container.decodeIfPresent(EarnOut.self, forKey: .earnOut)
+            earnOut: try container.decodeIfPresent(EarnOut.self, forKey: .earnOut),
+            boughtOut: try container.decodeIfPresent([RaisedRound].self, forKey: .boughtOut) ?? []
         )
     }
 
@@ -456,6 +476,7 @@ extension InvestorState {
         try container.encode(lastQuarterHeadcount, forKey: .lastQuarterHeadcount)
         try container.encodeIfPresent(ipoDay, forKey: .ipoDay)
         try container.encodeIfPresent(earnOut, forKey: .earnOut)
+        try container.encode(boughtOut, forKey: .boughtOut)
     }
 }
 
@@ -511,6 +532,22 @@ extension GameState {
             return "Nothing on the market bills monthly. They want recurring revenue."
         }
         return nil
+    }
+}
+
+// MARK: - Buy back the board
+
+extension GameState {
+    /// What it costs to buy a round back today: their slice of the
+    /// company at today's valuation, at the same premium they bought in
+    /// at, plus a surcharge for the temperature of the room — an investor
+    /// who can smell a vote charges for the privilege. Cheapest when the
+    /// company is small and broke, dearest the moment it can afford it.
+    public func buybackPrice(for round: RaisedRound, balance: BalanceConfig) -> Int {
+        let slice = round.equity / 100 * Double(companyValuation(balance: balance))
+        let premium = balance.investors.buybackPremium
+        let surcharge = 1 + investors.boardPressure / 100
+        return max(0, Int((slice * premium * surcharge).rounded()))
     }
 }
 

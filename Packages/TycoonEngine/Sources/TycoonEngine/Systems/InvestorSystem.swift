@@ -370,6 +370,44 @@ enum InvestorSystem {
         return [.founderOusted(day: state.day), .gameOver(day: state.day)]
     }
 
+    // MARK: - Buy back the board
+
+    /// Pays a round back out of the cap table at
+    /// `GameState.buybackPrice(for:balance:)`. Cash out with a ledger
+    /// line, the round moves to `boughtOut`, the equity comes home, and
+    /// because `boardExpectations` is derived from seated rounds their
+    /// ask leaves the room by construction; when the last seat goes, so
+    /// does the pressure, and the quarterly review has nobody to grade
+    /// for. Refused without the cash, after the run has ended, or for a
+    /// round that is not on the table. No draws.
+    static func buyBackRound(
+        investorID: String,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard state.gameOver == nil,
+              let index = state.investors.rounds.firstIndex(where: { $0.investorID == investorID })
+        else { return [] }
+        let round = state.investors.rounds[index]
+        let price = state.buybackPrice(for: round, balance: balance)
+        guard state.company.cash >= price else { return [] }
+
+        state.company.cash -= price
+        state.ledger.post(LedgerEntry(
+            day: state.day, amount: -price, category: .other,
+            label: "Bought out \(round.investorName)"
+        ))
+        var bought = state.investors.rounds.remove(at: index)
+        bought.boughtOutDay = state.day
+        bought.buybackPrice = price
+        state.investors.boughtOut.append(bought)
+        state.investors.equityRemaining = min(100, state.investors.equityRemaining + round.equity)
+        if state.investors.boardExpectations.isEmpty {
+            state.investors.boardPressure = 0
+        }
+        return [.roundBoughtBack(investorID: investorID, amount: price, day: state.day)]
+    }
+
     // MARK: - Earn-out
 
     /// One earn-out review, graded by the review that just ran. A met
