@@ -128,14 +128,6 @@
     "cooldownDays": 180,
     "impact": { "energy": -5, "mood": -4 }
   },
-  {
-    "id": "anniversary_dinner",
-    "headline": "Anniversary dinner. You remembered. Barely.",
-    "weight": 3,
-    "minStage": "partner",
-    "cooldownDays": 240,
-    "impact": { "wallet": -150, "relationships": 10, "mood": 5 }
-  },
 
   {
     "id": "partner_asks_weekend",
@@ -169,7 +161,9 @@
         "effects": [
           { "type": "founderMeters", "relationships": -12, "mood": -6 },
           { "type": "hype", "amount": 5 }
-        ]
+        ],
+        "followUpEventID": "partner_weekend_after_launch",
+        "followUpDelayDays": 56
       }
     ]
   },
@@ -300,7 +294,9 @@
         "effects": [
           { "type": "reputation", "amount": 6 },
           { "type": "founderMeters", "relationships": -14, "mood": -10 }
-        ]
+        ],
+        "followUpEventID": "kid_brings_it_up",
+        "followUpDelayDays": 21
       }
     ]
   },
@@ -400,7 +396,9 @@
         "id": "ask_stay",
         "label": "Ask them to stay one more year",
         "detail": "Relationships −16 · they stay",
-        "effects": [{ "type": "founderMeters", "relationships": -16, "mood": -6 }]
+        "effects": [{ "type": "founderMeters", "relationships": -16, "mood": -6 }],
+        "followUpEventID": "partner_year_ends",
+        "followUpDelayDays": 365
       }
     ]
   },
@@ -846,7 +844,9 @@
         "id": "go",
         "label": "Go in on two hours of sleep",
         "detail": "Energy −16 · health −5 · relationships −6",
-        "effects": [{ "type": "founderMeters", "energy": -16, "health": -5, "relationships": -6 }]
+        "effects": [{ "type": "founderMeters", "energy": -16, "health": -5, "relationships": -6 }],
+        "followUpEventID": "kid_sick_second_night",
+        "followUpDelayDays": 1
       },
       {
         "id": "stay",
@@ -949,13 +949,743 @@
         "id": "honest",
         "label": "Give them a real answer with a date in it",
         "detail": "Relationships +16 · you have to keep it",
-        "effects": [{ "type": "founderMeters", "relationships": 16, "mood": 6 }]
+        "effects": [{ "type": "founderMeters", "relationships": 16, "mood": 6 }],
+        "followUpEventID": "partner_promise_date",
+        "followUpDelayDays": 90
       },
       {
         "id": "deflect",
         "label": "Say it depends on the next launch",
         "detail": "Relationships −10 · mood −6",
         "effects": [{ "type": "founderMeters", "relationships": -10, "mood": -6 }]
+      }
+    ]
+  },
+  {
+    "id": "partner_anniversary",
+    "headline": "Your anniversary with {partner} is this week.",
+    "body": "They booked the table a month ago and have not mentioned it since, which is how you know it matters. The week is what it is.",
+    "weight": 1,
+    "minStage": "dating",
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 2,
+    "diaryLabel": "Your anniversary with {partner}",
+    "missedVariantID": "partner_anniversary_again",
+    "impact": {},
+    "choices": [
+      {
+        "id": "go",
+        "label": "Keep the evening — phone off",
+        "detail": "An evening · affection +15 · −$140",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 15
+          },
+          {
+            "type": "founderMeters",
+            "mood": 6,
+            "relationships": 4,
+            "wallet": -140
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "team",
+        "label": "Take the wavering hire out instead",
+        "detail": "An evening · bond +10 with your unhappiest hire · affection −20",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "bond",
+            "amount": 10,
+            "pick": "lowestMorale"
+          },
+          {
+            "type": "morale",
+            "amount": 8,
+            "pick": "lowestMorale"
+          },
+          {
+            "type": "affection",
+            "amount": -20
+          },
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ],
+        "followUpEventID": "partner_after_missed_date",
+        "followUpDelayDays": 30,
+        "requires": {
+          "minHeadcount": 2,
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "flowers",
+        "label": "Send flowers from the office",
+        "detail": "Affection −20 · they say it's fine",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -20
+          },
+          {
+            "type": "founderMeters",
+            "mood": -4,
+            "wallet": -60
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ],
+        "followUpEventID": "partner_after_missed_date",
+        "followUpDelayDays": 30
+      }
+    ]
+  },
+  {
+    "id": "partner_anniversary_again",
+    "headline": "Your anniversary again. You missed the last one too.",
+    "body": "{partner} hasn't brought it up. That is not the same as not noticing. There is no table booked this year.",
+    "weight": 1,
+    "minStage": "dating",
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "diaryLabel": "Your anniversary with {partner}",
+    "impact": {},
+    "choices": [
+      {
+        "id": "go",
+        "label": "Be there — all of it",
+        "detail": "An evening · affection +22 · the last miss is forgiven",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 22
+          },
+          {
+            "type": "founderMeters",
+            "mood": 8,
+            "relationships": 6,
+            "wallet": -220
+          }
+        ],
+        "clearFlags": [
+          "family_date_missed"
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "flowers",
+        "label": "Flowers, again",
+        "detail": "Affection −25 · they don't say it's fine",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -25
+          },
+          {
+            "type": "founderMeters",
+            "mood": -8,
+            "relationships": -6,
+            "wallet": -60
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ],
+        "followUpEventID": "partner_after_missed_date",
+        "followUpDelayDays": 30
+      }
+    ]
+  },
+  {
+    "id": "partner_after_missed_date",
+    "headline": "{partner} brings up the evening you didn't come to.",
+    "body": "Not angrily, which is what makes it land. They ask, over the washing up, what it would take for the next one to be different.",
+    "weight": 1,
+    "minStage": "dating",
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "requires": {
+      "flagsAll": [
+        "family_date_missed"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "make_up",
+        "label": "Take them somewhere this week",
+        "detail": "An evening · affection +18 · −$300 · the miss is forgiven",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 18
+          },
+          {
+            "type": "founderMeters",
+            "mood": 6,
+            "relationships": 4,
+            "wallet": -300
+          }
+        ],
+        "clearFlags": [
+          "family_date_missed"
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "promise",
+        "label": "Promise the next one",
+        "detail": "Affection −5 · they have heard this",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -5
+          },
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kid_birthday",
+    "headline": "{child}'s birthday is on Saturday.",
+    "body": "They asked whether you'd be there, in the way kids ask when they already know the answer. The party is at four. The week is launch week, or it might as well be.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "diaryLabel": "{child}'s birthday",
+    "missedVariantID": "kid_birthday_again",
+    "impact": {},
+    "choices": [
+      {
+        "id": "party",
+        "label": "Take the afternoon for the party",
+        "detail": "An evening · relationships +12 · mood +10 · −$120",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 10,
+            "relationships": 12,
+            "energy": -4,
+            "wallet": -120
+          },
+          {
+            "type": "affection",
+            "amount": 6
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "present",
+        "label": "Send a present with a card you didn't write",
+        "detail": "Relationships −10 · mood −8 · affection −20 · −$150",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -8,
+            "relationships": -10,
+            "wallet": -150
+          },
+          {
+            "type": "affection",
+            "amount": -20
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ],
+        "followUpEventID": "kid_after_missed_birthday",
+        "followUpDelayDays": 21
+      }
+    ]
+  },
+  {
+    "id": "kid_birthday_again",
+    "headline": "{child}'s birthday. You missed the last one too.",
+    "body": "They didn't ask this year. There is a drawing on the fridge of everyone who was there last time; you are not in it.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "diaryLabel": "{child}'s birthday",
+    "impact": {},
+    "choices": [
+      {
+        "id": "party",
+        "label": "Be there, early, and stay to the end",
+        "detail": "An evening · relationships +16 · mood +12 · the last miss is forgiven",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 12,
+            "relationships": 16,
+            "energy": -4,
+            "wallet": -160
+          },
+          {
+            "type": "affection",
+            "amount": 8
+          }
+        ],
+        "clearFlags": [
+          "family_date_missed"
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "present",
+        "label": "A bigger present",
+        "detail": "Relationships −16 · mood −12 · affection −25 · −$400",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -12,
+            "relationships": -16,
+            "wallet": -400
+          },
+          {
+            "type": "affection",
+            "amount": -25
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ],
+        "followUpEventID": "kid_after_missed_birthday",
+        "followUpDelayDays": 21
+      }
+    ]
+  },
+  {
+    "id": "kid_after_missed_birthday",
+    "headline": "{child} asks why you weren't at the party.",
+    "body": "It comes out at bedtime, the way the real questions do. Not a complaint — a question, which is worse.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "requires": {
+      "flagsAll": [
+        "family_date_missed"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "day_out",
+        "label": "Take a day, just the two of you",
+        "detail": "An evening · relationships +14 · mood +10 · the miss is forgiven",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 10,
+            "relationships": 14,
+            "energy": -4,
+            "wallet": -90
+          },
+          {
+            "type": "affection",
+            "amount": 6
+          }
+        ],
+        "clearFlags": [
+          "family_date_missed"
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "explain",
+        "label": "Explain what a launch is to a six-year-old",
+        "detail": "Relationships −6 · mood −6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "partner_promise_date",
+    "headline": "The date you gave {partner} is this week.",
+    "body": "You said a date. They wrote it down. It is on the fridge, under the magnet from the launch party, and the week has arrived.",
+    "weight": 1,
+    "minStage": "partner",
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "diaryLabel": "The date you gave {partner}",
+    "impact": {},
+    "choices": [
+      {
+        "id": "kept",
+        "label": "You shipped. Take the week you promised.",
+        "detail": "An evening · affection +25 · relationships +14 · −$600",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 25
+          },
+          {
+            "type": "founderMeters",
+            "mood": 10,
+            "relationships": 14,
+            "energy": 6,
+            "wallet": -600
+          }
+        ],
+        "requires": {
+          "hasLiveProduct": true,
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "close",
+        "label": "Tell them it's close",
+        "detail": "Affection −20 · it isn't",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -20
+          },
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -6
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ],
+        "followUpEventID": "partner_promise_broken",
+        "followUpDelayDays": 30
+      }
+    ]
+  },
+  {
+    "id": "partner_promise_broken",
+    "headline": "{partner} has stopped asking where this is going.",
+    "body": "They don't mention the date any more. They have started making plans that don't have you in them, and telling you about them afterwards.",
+    "weight": 1,
+    "minStage": "partner",
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "requires": {
+      "flagsAll": [
+        "family_date_missed"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "weekend",
+        "label": "Cancel the week and go away together",
+        "detail": "An evening · affection +30 · hype −8 · −$1,400",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 30
+          },
+          {
+            "type": "founderMeters",
+            "mood": 10,
+            "relationships": 12,
+            "energy": 8,
+            "wallet": -1400
+          },
+          {
+            "type": "hype",
+            "amount": -8
+          }
+        ],
+        "clearFlags": [
+          "family_date_missed"
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "runway",
+        "label": "Explain the runway again",
+        "detail": "Affection −10 · relationships −8",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -10
+          },
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "partner_year_ends",
+    "headline": "The year you asked {partner} for is up.",
+    "body": "They didn't set a reminder. They didn't need to. The job is still there, and so is the question, and this time they are not waiting to see your face.",
+    "weight": 1,
+    "minStage": "partner",
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "go_with",
+        "label": "Tell them to take it — you'll make it work from here",
+        "detail": "Affection +20 · relationships +18 · energy −12 for the commuting",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": 20
+          },
+          {
+            "type": "founderMeters",
+            "mood": 6,
+            "relationships": 18,
+            "energy": -12
+          },
+          {
+            "type": "hype",
+            "amount": -4
+          }
+        ]
+      },
+      {
+        "id": "ask_again",
+        "label": "Ask for one more",
+        "detail": "Affection −30 · relationships −18",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -30
+          },
+          {
+            "type": "founderMeters",
+            "mood": -10,
+            "relationships": -18
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kid_brings_it_up",
+    "headline": "{child} has stopped practising.",
+    "body": "The eight bars were for you. They say they are bored of the piano now, in the voice that means something else.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "listen",
+        "label": "Ask them to play it for you tonight",
+        "detail": "An evening · relationships +12 · mood +8",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 8,
+            "relationships": 12
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "weekend",
+        "label": "Say you'll hear it at the weekend",
+        "detail": "Relationships −6 · mood −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4,
+            "relationships": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kid_sick_second_night",
+    "headline": "The fever hasn't broken. Second night.",
+    "body": "The meeting went fine. Nobody at the meeting is awake at three in the morning holding a thermometer.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "stay_home",
+        "label": "Stay home today",
+        "detail": "Away 1 day · relationships +10 · affection +8",
+        "effects": [
+          {
+            "type": "away",
+            "days": 1,
+            "reason": "A sick kid"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -8,
+            "mood": 4,
+            "relationships": 10
+          },
+          {
+            "type": "affection",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "id": "go_again",
+        "label": "Go in again",
+        "detail": "Energy −18 · health −6 · relationships −10 · you catch it",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -18,
+            "health": -6,
+            "relationships": -10
+          },
+          {
+            "type": "affection",
+            "amount": -10
+          },
+          {
+            "type": "cold",
+            "days": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "partner_weekend_after_launch",
+    "headline": "The weekend you said you'd take after the launch.",
+    "body": "The launch happened, or it didn't. Either way it is eight weeks later, and {partner} has kept count.",
+    "weight": 1,
+    "minStage": "dating",
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "take_it",
+        "label": "Take it now",
+        "detail": "An evening · affection +16 · relationships +14 · hype −4",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 16
+          },
+          {
+            "type": "founderMeters",
+            "mood": 8,
+            "relationships": 14,
+            "energy": 8
+          },
+          {
+            "type": "hype",
+            "amount": -4
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "next_one",
+        "label": "After the next one",
+        "detail": "Affection −18 · relationships −10",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -18
+          },
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -10
+          }
+        ]
       }
     ]
   }

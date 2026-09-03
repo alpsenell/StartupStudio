@@ -195,6 +195,96 @@ struct BundledCatalogTests {
         #expect(events.contains { $0.impact.mood > 0 })
         #expect(events.contains { $0.impact.relationships > 0 })
     }
+
+    // 7. The date in the diary (WS-E)
+
+    @Test("the diary is wired: calendar ids, twins, follow-ups, the polite miss and the evening")
+    func diaryContentIsWired() {
+        let byID = Dictionary(uniqueKeysWithValues: catalog.lifeEvents.map { ($0.id, $0) })
+        let missed = "family_date_missed"
+
+        // The two dates the engine schedules itself.
+        for id in ["partner_anniversary", "kid_birthday"] {
+            #expect(byID[id]?.isDated == true, "\(id) is the calendar's and must be dated")
+        }
+
+        let dated = catalog.lifeEvents.filter { $0.isDated }
+        #expect(dated.count >= 5, "\(dated.count) dated beats")
+        for def in dated {
+            #expect(def.followUpOnly, "\(def.id) is scheduled, never rolled")
+            #expect(!def.choices.isEmpty, "\(def.id) has to ask")
+            #expect(
+                def.choices.contains { ($0.requires?.minEveningsLeft ?? 0) > 0 },
+                "\(def.id): going costs an evening"
+            )
+            let auto = def.autoChoiceIndex ?? def.choices.count - 1
+            let miss = def.choices[auto]
+            #expect(miss.requires == nil, "\(def.id): the polite miss is always open")
+            #expect(
+                miss.effects.contains {
+                    if case .affection(let amount) = $0 { return amount <= -20 }
+                    return false
+                },
+                "\(def.id): missing costs affection −20"
+            )
+            #expect(miss.setFlags.contains(missed), "\(def.id): the miss leaves a flag")
+            if let twin = def.missedVariantID {
+                #expect(byID[twin]?.isDated == true, "\(def.id) -> \(twin)")
+                #expect(byID[twin]?.diaryLabel == def.diaryLabel, "\(twin) reads as the same date")
+            }
+        }
+
+        // Every follow-up and twin resolves.
+        for def in catalog.lifeEvents {
+            for choice in def.choices {
+                if let target = choice.followUpEventID {
+                    #expect(byID[target] != nil, "\(def.id)/\(choice.id) -> unknown \(target)")
+                }
+            }
+            if let twin = def.missedVariantID {
+                #expect(byID[twin] != nil, "\(def.id) -> unknown twin \(twin)")
+            }
+        }
+
+        // The family beats that were already there have second acts.
+        for (event, choice) in [
+            ("partner_asks_future", "honest"), ("partner_job_offer", "ask_stay"),
+            ("recital_vs_dinner", "dinner"), ("kid_sick_night", "go"),
+            ("partner_asks_weekend", "after"),
+        ] {
+            let target = byID[event]?.choices.first { $0.id == choice }?.followUpEventID
+            #expect(target.flatMap { byID[$0] }?.followUpOnly == true, "\(event)/\(choice) has no second act")
+        }
+
+        // The second acts require the miss, and making it up clears it.
+        let secondActs = catalog.lifeEvents.filter { $0.requires?.flagsAll.contains(missed) == true }
+        #expect(secondActs.count >= 3, "\(secondActs.count) beats read the missed flag")
+        #expect(catalog.lifeEvents.contains { $0.choices.contains { $0.clearFlags.contains(missed) } })
+
+        // Placeholders only where the engine fills them, and only when
+        // there is somebody to name.
+        for def in catalog.lifeEvents {
+            let text = def.headline + (def.body ?? "") + (def.diaryLabel ?? "")
+                + def.choices.map { $0.label + ($0.detail ?? "") }.joined()
+            let leftovers = text
+                .replacingOccurrences(of: "{partner}", with: "")
+                .replacingOccurrences(of: "{child}", with: "")
+                .replacingOccurrences(of: "{company}", with: "")
+            #expect(!leftovers.contains("{"), "\(def.id) has an unknown placeholder")
+            if text.contains("{child}") {
+                #expect(
+                    def.requiresChildren || def.requires?.requiresChildren == true,
+                    "\(def.id) names a child without requiring one"
+                )
+            }
+            if text.contains("{partner}") {
+                #expect(
+                    def.minStage != nil || def.requires?.minStage != nil,
+                    "\(def.id) names a partner without requiring one"
+                )
+            }
+        }
+    }
 }
 
 // MARK: - LifeEventDef JSON format
