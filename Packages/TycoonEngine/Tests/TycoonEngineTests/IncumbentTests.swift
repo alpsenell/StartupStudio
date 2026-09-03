@@ -269,4 +269,114 @@ struct IncumbentTests {
         let (held, _, _) = try Self.standoff(fitnessQuality: 40, musicQuality: 40, weeks: 4)
         #expect(held.rivals.incumbentHeldSinceDay == 7)
     }
+
+    // MARK: - Acquisition buys the shelf
+
+    /// A rich, dominant studio selling in fitness (a 60), music (a 50) and
+    /// travel (a 70), and a small rival with: two products beating it — a
+    /// 72 in fitness, a 55 in music — a second, weaker fitness app, a 40
+    /// in travel that is worse than the player's, an 80 in dating where
+    /// the player has nothing, and one long faded.
+    private static func buyable() throws -> (state: GameState, balance: BalanceConfig, rivalID: UUID) {
+        var balance = try Self.balance(rivals: 1)
+        balance.delistFraction = 0
+        var state = GameState.newGame(companyName: "Acme", seed: 54, balance: balance)
+        state.company.cash = 300_000
+        RivalFightFixtures.addPlayerProduct(to: &state, topicID: "fitness", score: 60, name: "Stride")
+        RivalFightFixtures.addPlayerProduct(to: &state, topicID: "music", score: 50, name: "Chord")
+        RivalFightFixtures.addPlayerProduct(to: &state, topicID: "travel", score: 70, name: "Wander")
+        let rivalID = UUID()
+        state.rivals.rivals = [Rival(
+            id: rivalID, name: "Halcyon Systems", strength: 20, reputation: 20,
+            focusTopicIDs: ["fitness", "music"], foundedDay: 0, appearanceSeed: 3,
+            products: [
+                RivalProduct(id: UUID(), name: "Kite Notes", topicID: "fitness", typeID: "mobile_app",
+                             quality: 72, launchDay: 10, weeklyUnits: 300),
+                RivalProduct(id: UUID(), name: "Kite Lite", topicID: "fitness", typeID: "mobile_app",
+                             quality: 65, launchDay: 12, weeklyUnits: 100),
+                RivalProduct(id: UUID(), name: "Orbit Deck", topicID: "music", typeID: "mobile_app",
+                             quality: 55, launchDay: 20, weeklyUnits: 200),
+                RivalProduct(id: UUID(), name: "Lesser Trip", topicID: "travel", typeID: "mobile_app",
+                             quality: 40, launchDay: 18, weeklyUnits: 50),
+                RivalProduct(id: UUID(), name: "Side Bet", topicID: "dating", typeID: "mobile_app",
+                             quality: 80, launchDay: 15, weeklyUnits: 200),
+                RivalProduct(id: UUID(), name: "Old Lantern", topicID: "fitness", typeID: "mobile_app",
+                             quality: 90, launchDay: -400, weeklyUnits: 0),
+            ],
+            personality: .copycat
+        )]
+        // A week on the market so the shelf is contested and the numbers
+        // are the live ones.
+        for _ in 0..<GameState.daysPerWeek {
+            Reducer.tick(&state, balance: balance, content: Self.content)
+        }
+        state.day = 30
+        return (state, balance, rivalID)
+    }
+
+    @Test func buyingARivalAbsorbsWhatItIsSelling() throws {
+        var (state, balance, rivalID) = try Self.buyable()
+        let before = state.products.count
+        let events = Reducer.apply(
+            .acquireRival(rivalID: rivalID), to: &state, balance: balance, content: Self.content
+        )
+        #expect(events.contains { if case .rivalAcquired(rivalID, _, _, _) = $0 { true } else { false } },
+                "the acquisition was refused, so this proves nothing")
+        #expect(state.rivals.rival(id: rivalID) == nil)
+
+        let absorbed = state.products.suffix(from: before)
+        #expect(
+            absorbed.count == 2,
+            "only the best product beating the player's in each category comes; the rest stay behind"
+        )
+        #expect(absorbed.map(\.name) == ["Kite Notes", "Orbit Deck"])
+        #expect(absorbed.map(\.topicID) == ["fitness", "music"])
+        for (product, quality) in zip(absorbed, [72.0, 55.0]) {
+            guard case .released(let info) = product.stage else {
+                Issue.record("\(product.name) was not absorbed as released")
+                continue
+            }
+            #expect(!info.offMarket)
+            #expect(info.quality == quality)
+            #expect(info.reviews.count == balance.reviewOutlets.count)
+            #expect(abs(Double(info.averageReviewScore) - quality) <= 3, "\(product.name) reviews at \(info.averageReviewScore) against a \(quality)")
+            #expect(info.reviews.allSatisfy { !$0.blurb.isEmpty })
+            #expect(Set(info.reviews.map(\.outlet)) == Set(balance.reviewOutlets))
+            #expect(info.priceTier == .standard)
+            #expect(!info.isSubscription)
+        }
+        for left in ["Kite Lite", "Lesser Trip", "Side Bet", "Old Lantern"] {
+            #expect(
+                !state.products.contains { $0.name == left },
+                Comment(rawValue: "\(left) should have stayed behind")
+            )
+        }
+    }
+
+    @Test func anAbsorbedShelfSellsAndHoldsItsTopics() throws {
+        var (state, balance, rivalID) = try Self.buyable()
+        _ = Reducer.apply(.acquireRival(rivalID: rivalID), to: &state, balance: balance, content: Self.content)
+        // The field re-founds a fresh minnow; whatever it does, the topics
+        // the shelf came with are the player's whole market next week.
+        for _ in 0..<GameState.daysPerWeek {
+            Reducer.tick(&state, balance: balance, content: Self.content)
+        }
+        for name in ["Kite Notes", "Orbit Deck"] {
+            let product = try #require(state.products.first { $0.name == name })
+            guard case .released(let info) = product.stage else { continue }
+            #expect(!info.weeklySales.isEmpty, "\(name) posted no sales")
+            #expect(info.weeklySales.last?.revenue ?? 0 > 0)
+        }
+        #expect(state.rivals.share(for: "fitness") == 1.0)
+        #expect(state.rivals.share(for: "music") == 1.0)
+        #expect(state.market.standing(for: "fitness") > 0)
+    }
+
+    @Test func aRefusedAcquisitionAbsorbsNothing() throws {
+        var (state, balance, rivalID) = try Self.buyable()
+        state.company.cash = 0
+        let before = state
+        #expect(Reducer.apply(.acquireRival(rivalID: rivalID), to: &state, balance: balance, content: Self.content).isEmpty)
+        #expect(state == before)
+    }
 }

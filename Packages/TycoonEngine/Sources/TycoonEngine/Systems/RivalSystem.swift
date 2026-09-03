@@ -1155,7 +1155,11 @@ enum RivalSystem {
     /// partially joins — `strength / absorbDivisor` hires, capped by the
     /// office headroom, each rolled from `worldRNG` (two id words, first
     /// name, last name, three skill rolls, salary jitter, appearance
-    /// seed) — and the rival leaves the field for good.
+    /// seed) — then its shelf: every product still competing joins the
+    /// player's line as released and on the market, in its topic, with
+    /// reviews synthesised from its quality (one `worldRNG` word per
+    /// review, for the blurb). Acquisition buys a category, not a
+    /// reputation bump. The rival leaves the field for good.
     static func acquireRival(
         rivalID: UUID,
         state: inout GameState,
@@ -1190,6 +1194,7 @@ enum RivalSystem {
                 from: rival, index: hireIndex, state: &state, balance: balance, content: content
             ))
         }
+        absorbShelf(of: rival, state: &state, balance: balance, content: content)
 
         state.rivals.rivals.remove(at: rivalIndex)
         if state.rivals.pendingPoach?.rivalID == rival.id { state.rivals.pendingPoach = nil }
@@ -1200,6 +1205,87 @@ enum RivalSystem {
         return [.rivalAcquired(
             rivalID: rival.id, name: rival.name, hiresAbsorbed: joining, day: state.day
         )]
+    }
+
+    /// The shelf that comes with an acquired rival (WS-A, iteration 5): in
+    /// every topic the player is live in, the rival's best product still
+    /// on the market there — when it scores above the player's best —
+    /// becomes a released player product in that topic, on the market
+    /// from its own launch day, so an older app sells like an older app.
+    /// Topics in sorted order, so it replays. Its reviews are synthesised
+    /// from its quality: the score with a small fixed spread across the
+    /// outlets so the average lands on the quality, and a blurb picked
+    /// the way a launch picks one, one `worldRNG` word each.
+    ///
+    /// That is what "buys a category" means: the product that was beating
+    /// you becomes yours; one worse than yours is shut down, and apps in
+    /// categories you have nothing in are not what you paid for. It is
+    /// also what keeps the investor suite honest. Measured with the whole
+    /// shelf absorbed, a funded founder who had stopped growing could buy
+    /// a minnow a quarter and have its month-old launches counted as
+    /// their own ships, and the board never removed anybody; every
+    /// absorbed app also counts as the studio's own recent release when
+    /// its next launch in that topic is scaled for a crowded shelf.
+    private static func absorbShelf(
+        of rival: Rival,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) {
+        let day = state.day
+        let shelf = StandingSystem.liveTopicIDs(state).sorted().compactMap { topicID -> RivalProduct? in
+            guard let theirs = rival.bestProduct(in: topicID, on: day),
+                  let ours = playerBestProduct(in: topicID, state),
+                  theirs.quality > Double(ours.score)
+            else { return nil }
+            return theirs
+        }
+        guard !shelf.isEmpty else { return }
+        let outlets = balance.reviewOutlets.isEmpty ? ["The Trade"] : balance.reviewOutlets
+        // Around the quality, summing to nothing over four outlets.
+        let spread = [-2, 1, -1, 2]
+
+        for item in shelf {
+            let type = content.productType(item.typeID) ?? content.productTypes.first
+            let context = ReviewContext(
+                productName: item.name,
+                typeName: type?.name ?? "app",
+                topicName: content.topic(item.topicID)?.name ?? item.topicID,
+                bugRatio: 0,
+                polishRatio: 1,
+                hype: 0,
+                marketScale: 1
+            )
+            var reviews: [Review] = []
+            for (index, outlet) in outlets.enumerated() {
+                let score = min(
+                    balance.reviewCeiling,
+                    max(balance.reviewFloor, Int(item.quality.rounded()) + spread[index % spread.count])
+                )
+                reviews.append(Review(
+                    outlet: outlet,
+                    score: score,
+                    blurb: ReviewBlurbs.pick(
+                        for: score, rng: &state.worldRNG,
+                        outlet: outlet, context: context, catalog: content.reviews
+                    )
+                ))
+            }
+            state.products.append(Product(
+                id: item.id,
+                name: item.name,
+                typeID: type?.id ?? item.typeID,
+                topicID: item.topicID,
+                stage: .released(ReleaseInfo(
+                    launchDay: item.launchDay,
+                    quality: item.quality,
+                    reviews: reviews,
+                    weeklySales: [],
+                    offMarket: false,
+                    isSubscription: type?.revenueModel == .subscription
+                ))
+            ))
+        }
     }
 
     /// One employee inherited from an acquired rival. Skills roll against

@@ -333,7 +333,10 @@ struct RivalCard: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Part of their team joins you; \(rival.name) leaves the market for good.")
+            Text(absorbedShelfCount > 0
+                ? "Part of their team and the \(absorbedShelfCount) product\(absorbedShelfCount == 1 ? "" : "s") "
+                    + "they're selling join you; \(rival.name) leaves the market for good."
+                : "Part of their team joins you; \(rival.name) leaves the market for good.")
         }
     }
 
@@ -460,6 +463,31 @@ struct RivalCard: View {
     }
 
     // MARK: Acquisition
+
+    /// What comes with the sale, mirroring `RivalSystem.acquireRival`'s
+    /// rule (the engine stays the enforcer): in each category the player
+    /// is in, their best product there if it beats the player's.
+    private var absorbedShelfCount: Int {
+        let state = engine.state
+        let day = state.day
+        var count = 0
+        for topicID in Set(state.products.compactMap { product -> String? in
+            guard case .released(let info) = product.stage, !info.offMarket else { return nil }
+            return product.topicID
+        }) {
+            let ours = state.products
+                .compactMap { product -> Int? in
+                    guard product.topicID == topicID, case .released(let info) = product.stage, !info.offMarket
+                    else { return nil }
+                    return info.averageReviewScore
+                }
+                .max() ?? 0
+            if let theirs = rival.bestProduct(in: topicID, on: day), theirs.quality > Double(ours) {
+                count += 1
+            }
+        }
+        return count
+    }
 
     private var acquisitionCost: Int {
         Int((Double(rival.valuation(balance: engine.balance))
