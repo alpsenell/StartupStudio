@@ -63,7 +63,9 @@ struct EventCopy {
             .market
         case .rivalFounded, .rivalShipped, .rivalFolded, .poachAttempt, .poachDefeated,
              .employeePoached, .buyoutOffered, .buyoutWithdrawn, .companySold, .rivalAcquired,
-             .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .sponsoredContractDelivered:
+             .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .sponsoredContractDelivered,
+             // WS-A: the category fight and the incumbent.
+             .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived, .incumbentRetreated:
             .rivals
         // WS-A's founder consequences are life, not company: the landlord,
         // the diagnosis and the meltdown all happen to the person.
@@ -506,26 +508,6 @@ struct EventCopy {
                     Theme.warning
                 )
 
-        // MARK: Iteration 5
-
-        // WS-E — the date in the diary.
-        case .familyDateMissed(let eventID, let day):
-            ("heart.slash.fill", missedDateMessage(eventID), day, Theme.warning)
-        // WS-G — the independent ladder's ending.
-        case .stayedIndependent(let day):
-            (
-                "flag.checkered",
-                "\(state.company.name) is built, and still yours — every share of it",
-                day,
-                Theme.positiveCash
-            )
-
-        // Scaffold: every lane's events read out of `EventPresenter` until
-        // the lane writes its copy. Move your cases above and give them a
-        // line; leave the others here.
-        case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
-             .incumbentRetreated:
-            fallbackEntry(for: event)
 
         // MARK: WS-D — the answer becomes the policy
 
@@ -557,6 +539,47 @@ struct EventCopy {
                 day,
                 Theme.warning
             )
+
+        // MARK: Iteration 5
+
+        // WS-E — the date in the diary.
+        case .familyDateMissed(let eventID, let day):
+            ("heart.slash.fill", missedDateMessage(eventID), day, Theme.warning)
+        // WS-G — the independent ladder's ending.
+        case .stayedIndependent(let day):
+            (
+                "flag.checkered",
+                "\(state.company.name) is built, and still yours — every share of it",
+                day,
+                Theme.positiveCash
+            )
+        // WS-A — the category fight and the incumbent.
+        case .categoryChallenged(let rivalID, let topicID, let productName, let quality, let respondByDay, let day):
+            (
+                "flag.2.crossed.fill",
+                "\(rivalName(rivalID)) launched \(productName) into \(topicName(topicID)) — "
+                    + "a \(quality). Six weeks to hold it (day \(respondByDay)).",
+                day,
+                Theme.warning
+            )
+        case .categoryHeld(let rivalID, let topicID, let day):
+            (
+                "checkmark.shield.fill",
+                "You held \(topicName(topicID)) — \(rivalName(rivalID)) lost ground, your standing there grew",
+                day,
+                Theme.positiveCash
+            )
+        case .categoryLost(let rivalID, let topicID, let day):
+            (
+                "xmark.shield.fill",
+                "\(rivalName(rivalID)) took \(topicName(topicID)) — your standing there fell, and they're staying",
+                day,
+                Theme.negativeCash
+            )
+        case .incumbentArrived(_, let name, let day):
+            ("building.columns.fill", "\(name) arrived in your best markets, with money to lose", day, Theme.warning)
+        case .incumbentRetreated(_, let name, let day):
+            ("flag.checkered", "\(name) gave up your categories", day, Theme.positiveCash)
 
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a

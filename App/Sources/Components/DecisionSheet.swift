@@ -312,6 +312,12 @@ extension DecisionPrompt {
         if let buyout = state.rivals.pendingBuyout {
             return buyoutPrompt(buyout, state: state, balance: balance)
         }
+        // A rival launched into a category the player holds (WS-A). The
+        // fight settles itself in six weeks; the sheet is the moment to
+        // decide whether it is worth defending.
+        if let challenge = state.rivals.pendingChallenge {
+            return challengePrompt(challenge, state: state, content: content, balance: balance)
+        }
         if let staffEvent = state.pendingStaffEvent {
             return staffEventPrompt(staffEvent, state: state, content: content, balance: balance)
         }
@@ -572,6 +578,116 @@ extension DecisionPrompt {
             portraitSeed: rival?.appearanceSeed
         )
     }
+
+    /// The category fight: the rival's face, the numbers the decision is
+    /// made of — your share now, their score against your best, the
+    /// weeks until it settles — and answers that are actions the game
+    /// already has, routed to the product that holds the category. Only
+    /// the answers that would land are offered: a patch needs a free
+    /// build slot, a campaign has a cooldown, a budget product cannot go
+    /// budget again. "Let it go" is always there, and says what the six
+    /// weeks decide either way.
+    static func challengePrompt(
+        _ challenge: CategoryChallenge,
+        state: GameState,
+        content: ContentCatalog,
+        balance: BalanceConfig
+    ) -> DecisionPrompt? {
+        let rival = state.rivals.rival(id: challenge.rivalID)
+        let rivalName = rival?.name ?? "A rival"
+        let topic = content.topic(challenge.topicID)?.name ?? challenge.topicID
+        let depth = balance.rivals.depth
+        let theirs = Int(challenge.quality.rounded())
+        let share = Int((state.rivals.share(for: challenge.topicID) * 100).rounded())
+        let holdShare = Int((depth.challengeHoldShare * 100).rounded())
+        let daysLeft = max(0, challenge.settlesDay - state.day)
+        let weeksLeft = max(1, (daysLeft + 6) / 7)
+
+        // The product that holds the category: the best thing the player
+        // has on the market there, which is what the share pass scores.
+        let best = state.products
+            .compactMap { product -> (product: Product, info: ReleaseInfo)? in
+                guard product.topicID == challenge.topicID,
+                      case .released(let info) = product.stage,
+                      !info.offMarket
+                else { return nil }
+                return (product, info)
+            }
+            .max { lhs, rhs in
+                if lhs.info.averageReviewScore != rhs.info.averageReviewScore {
+                    return lhs.info.averageReviewScore < rhs.info.averageReviewScore
+                }
+                return lhs.product.id.uuidString > rhs.product.id.uuidString
+            }
+
+        var options: [Option] = []
+        if let best {
+            if best.info.priceTier != .budget {
+                options.append(Option(
+                    label: "Cut the price",
+                    detail: "\(best.product.name) goes budget — more of the market, less per sale",
+                    action: .defendCategory(topicID: challenge.topicID, defense: .budgetPrice)
+                ))
+            }
+            if state.hasFreeDevSlot {
+                options.append(Option(
+                    label: "Patch \(best.product.name)",
+                    detail: "Takes a build slot for a few weeks; the press takes another look",
+                    action: .defendCategory(topicID: challenge.topicID, defense: .patch)
+                ))
+            }
+            // Mirrors `MarketingSystem.startCampaign`'s repeat guard for
+            // the social push (`CampaignKind.socialPush`, "social_push"),
+            // so the answer is only offered when the engine would take it.
+            let cooldown = max(0, balance.economy.campaignCooldownDays)
+            let day = state.day
+            let productID = best.product.id
+            let campaignBlocked = state.campaigns.contains { campaign in
+                guard campaign.kindID == "social_push", campaign.productID == productID else { return false }
+                let sinceEnd: Int = day - campaign.endDay
+                return sinceEnd < cooldown || campaign.endDay >= day
+            }
+            if !campaignBlocked {
+                let days = balance.socialPushDurationDays
+                let cost = balance.socialPushDailyCost * days
+                options.append(Option(
+                    label: "Run a campaign",
+                    detail: "A social push on \(best.product.name), \(cost.money) over \(days) days",
+                    cashDelta: -cost,
+                    action: .defendCategory(topicID: challenge.topicID, defense: .campaign)
+                ))
+            }
+        }
+        options.append(Option(
+            label: "Let it go",
+            detail: "Hold \(holdShare)% when it settles and they lose \(Int(depth.heldRivalStrengthLoss)) strength; "
+                + "lose it and your standing here drops \(Int(depth.lostStandingLoss))",
+            role: .destructive,
+            action: .concedeCategory
+        ))
+
+        let yours = best.map { "\($0.info.averageReviewScore)" } ?? "—"
+        let against = best.map { "\($0.product.name) scores \($0.info.averageReviewScore)" }
+            ?? "you have nothing on the market there"
+        return DecisionPrompt(
+            id: "challenge-\(challenge.id)",
+            systemImage: "flag.2.crossed.fill",
+            tint: Theme.warning,
+            title: "\(rivalName) launched into \(topic)",
+            message: "\(challenge.productName) scores \(theirs); \(against). "
+                + "You hold \(share)% of \(topic) today. In \(weeksLeft) week\(weeksLeft == 1 ? "" : "s") "
+                + "whoever holds half of it keeps the category.",
+            stats: [
+                ("Your share", "\(share)%"),
+                ("Them · you", "\(theirs) · \(yours)"),
+                ("Settles in", daysLeft == 0 ? "today" : "\(daysLeft)d"),
+            ],
+            options: options,
+            kicker: "CHALLENGE",
+            portraitSeed: rival?.appearanceSeed
+        )
+    }
+
 
     /// A rival's offer for the company. The sheet says plainly which of
     /// the two kinds it is, because they end very differently: a strategic

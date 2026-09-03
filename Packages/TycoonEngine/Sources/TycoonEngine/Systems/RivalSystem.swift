@@ -21,11 +21,16 @@ import TycoonContent
 /// rival: one gaussian, one uniform event roll, one topic pick and — when
 /// it launches — one product id, two name words and one quality jitter) →
 /// fold replacements (founding draws each) → copycat pass (a clone's id,
-/// two name words and a quality jitter per copying rival) → share and
-/// price-war passes (no draws) → poach check (one uniform, plus one premium uniform
-/// on a hit) → buyout check (one uniform, plus one fraction-or-premium
-/// uniform on a hit). Founding draws two id words, the name pick, strength,
+/// two name words and a quality jitter per copying rival) → incumbent
+/// founding, the week it happens (two id words, name, reputation,
+/// appearance seed, then its opener's id, two words and a jitter) →
+/// challenge, share, price-war, bleed, settlement and retreat passes (no
+/// draws) → poach check (one uniform, plus one premium uniform on a hit)
+/// → buyout check (one uniform, plus one fraction-or-premium uniform on
+/// a hit). Founding draws two id words, the name pick, strength,
 /// reputation, the topic pick, the appearance seed and the personality.
+/// An acquisition draws the absorbed hires' words and one word per
+/// synthesised review on the absorbed shelf.
 enum RivalSystem {
     /// Strength a rival gains by successfully hiring away an employee.
     private static let poachedStrengthGain: Double = 5
@@ -49,10 +54,26 @@ enum RivalSystem {
         }
 
         if state.day % config.evolveIntervalDays == 0 {
-            events.append(contentsOf: evolve(&state, balance, content))
-            events.append(contentsOf: copycatCheck(&state, balance, content))
+            // The week's launches, read off the evolve and copycat events
+            // so the challenge pass needs no second draw and no extra
+            // state.
+            var launches: [GameEvent] = []
+            launches.append(contentsOf: evolve(&state, balance, content))
+            launches.append(contentsOf: copycatCheck(&state, balance, content))
+            events.append(contentsOf: launches)
+            // The giant, when the company is first worth having: it
+            // opens its own challenge, so its launch is not in `launches`.
+            events.append(contentsOf: incumbentCheck(&state, balance, content))
+            events.append(contentsOf: challengeCheck(&state, launches: launches, balance))
             recomputeShare(&state, balance)
             events.append(contentsOf: priceWarCheck(&state, balance))
+            bleedStrength(&state, balance)
+            events.append(contentsOf: settleChallenges(&state, balance))
+            let retreat = incumbentRetreatCheck(&state, balance)
+            events.append(contentsOf: retreat)
+            // The giant's products leave the shelf with it; the week's
+            // share should say so now rather than next week.
+            if !retreat.isEmpty { recomputeShare(&state, balance) }
         }
         // Re-applied every day, not just on evolution days: `MarketSystem`
         // rebuilds each `TopicMarket` on its weekly shift, and this system
@@ -76,14 +97,7 @@ enum RivalSystem {
         _ content: ContentCatalog
     ) -> Rival {
         let id = UUID(from: &state.worldRNG)
-        // Software studios, not bakeries: WS-B's `rivalStudios` pool once
-        // it exists, the built-in one until then. The client-company pool
-        // that used to name every rival is deliberately not in the mix —
-        // it is where "Moonbeam Dairy" came from.
-        let namePool = content.names.rivalStudios.isEmpty
-            ? fallbackStudioNames
-            : content.names.rivalStudios
-        let name = pick(namePool, &state.worldRNG) ?? "Nimbus Labs"
+        let name = studioName(&state, content)
         let strength = config.foundingStrengthMin
             + state.worldRNG.nextUniform() * (config.foundingStrengthMax - config.foundingStrengthMin)
         let reputation = config.foundingReputationMin
@@ -108,6 +122,18 @@ enum RivalSystem {
             appearanceSeed: appearanceSeed,
             personality: personality
         )
+    }
+
+    /// One name pick. Software studios, not bakeries: WS-B's
+    /// `rivalStudios` pool once it exists, the built-in one until then.
+    /// The client-company pool that used to name every rival is
+    /// deliberately not in the mix — it is where "Moonbeam Dairy" came
+    /// from.
+    private static func studioName(_ state: inout GameState, _ content: ContentCatalog) -> String {
+        let namePool = content.names.rivalStudios.isEmpty
+            ? fallbackStudioNames
+            : content.names.rivalStudios
+        return pick(namePool, &state.worldRNG) ?? "Nimbus Labs"
     }
 
     /// Studio names used until WS-B fills `names.rivalStudios`. Software
@@ -290,12 +316,21 @@ enum RivalSystem {
     /// a 70 keeps about a quarter — before the floor, which guarantees
     /// every topic is worth *something*. A rival running a price war takes
     /// a further flat slice. Deterministic: no draws.
+    ///
+    /// Standing holds share: the floor rises to `shareFloorAtFullStanding
+    /// × standing / maxStanding` — 0.55 at full standing — which only
+    /// clears the 0.30 hard floor above standing ~55, so a category the
+    /// studio has held for a year is sticky and one it has just entered
+    /// reads exactly as before. At standing 0 the term is 0 and the
+    /// clamp is the shipped clamp to the digit.
     private static func recomputeShare(_ state: inout GameState, _ balance: BalanceConfig) {
         // The best product's review score, and what it is priced at: a
         // topic is fought over on quality *and* on price, and undercutting
         // is the only thing that makes the budget tier worth choosing.
         var shares: [String: (quality: Double, tier: PriceTier)] = [:]
         let day = state.day
+        let floorAtFull = balance.rivals.depth.shareFloorAtFullStanding
+        let maxStanding = max(1, balance.market.standing.maxStanding)
 
         for product in state.products {
             guard case .released(let info) = product.stage, !info.offMarket else { continue }
@@ -323,8 +358,11 @@ enum RivalSystem {
             if competitors.contains(where: { $0.rival.isInPriceWar(on: day) && $0.rival.priceWarTopicID == topicID }) {
                 share -= RivalDepthTuning.priceWarSharePenalty
             }
+            let standingFloor = floorAtFull * state.market.standing(for: topicID) / maxStanding
             computed[topicID] = clamp(
-                share, min: RivalDepthTuning.shareMin, max: RivalDepthTuning.shareMax
+                share,
+                min: max(RivalDepthTuning.shareMin, standingFloor),
+                max: RivalDepthTuning.shareMax
             )
         }
         state.rivals.playerShare = computed
@@ -428,9 +466,16 @@ enum RivalSystem {
             guard !state.rivals.rivals[index].isInPriceWar(on: day) else { continue }
 
             // A topic they both sell into, where the player is ahead.
+            //
+            // "Both": `share(for:)` reads 1.0 for a topic the player has
+            // never entered, which used to count a rival's first launch
+            // into an untouched topic as the player beating it — and two
+            // weeks later a company with no products was at war. Only a
+            // topic the share pass actually computed (the player has
+            // something live there) can be a topic the player is winning.
             let contested = rival.competingProducts(on: day)
                 .map(\.topicID)
-                .filter { state.rivals.share(for: $0) > 0.5 }
+                .filter { state.rivals.playerShare[$0] != nil && state.rivals.share(for: $0) > 0.5 }
                 .min()
             guard let topicID = contested else {
                 state.rivals.rivals[index].weeksBeaten = 0
@@ -451,6 +496,393 @@ enum RivalSystem {
         // The war's bite lands on this week's share.
         if !events.isEmpty { recomputeShare(&state, balance) }
         return events
+    }
+
+    // MARK: - The category fight
+
+    /// Hold the Category, phase two: a rival launch into a category the
+    /// player holds stops the clock for six weeks' worth of decision.
+    ///
+    /// For each launch this week, in event order: the topic has no fight
+    /// in progress and is off its cooldown, the player's standing there
+    /// clears `challengeMinStanding`, and the launch scores no more than
+    /// `challengeQualityWindow` below the player's best live product —
+    /// anything better is a challenge by definition. Deterministic, no
+    /// draws; every input is a launch that already drew.
+    private static func challengeCheck(
+        _ state: inout GameState,
+        launches: [GameEvent],
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let depth = balance.rivals.depth
+        var events: [GameEvent] = []
+        for event in launches {
+            guard case let .rivalProductLaunched(rivalID, productName, topicID, quality, _) = event,
+                  state.rivals.challenge(in: topicID) == nil,
+                  state.rivals.lastChallengeDay[topicID].map({
+                      state.day - $0 >= depth.challengeCooldownWeeks * GameState.daysPerWeek
+                  }) ?? true,
+                  state.market.standing(for: topicID) >= depth.challengeMinStanding,
+                  let best = playerBestScore(in: topicID, state),
+                  Double(quality) >= Double(best) - depth.challengeQualityWindow
+            else { continue }
+            events.append(openChallenge(
+                rivalID: rivalID, topicID: topicID, productName: productName,
+                quality: Double(quality), &state, depth
+            ))
+        }
+        return events
+    }
+
+    /// Opens a fight in a topic: the record, the cooldown stamp, and the
+    /// critical event that stops the clock.
+    private static func openChallenge(
+        rivalID: UUID,
+        topicID: String,
+        productName: String,
+        quality: Double,
+        _ state: inout GameState,
+        _ depth: BalanceConfig.RivalBalance.DepthBalance
+    ) -> GameEvent {
+        let settlesDay = state.day + depth.challengeWeeks * GameState.daysPerWeek
+        state.rivals.challenges.append(CategoryChallenge(
+            rivalID: rivalID,
+            topicID: topicID,
+            productName: productName,
+            quality: quality,
+            startedDay: state.day,
+            settlesDay: settlesDay
+        ))
+        state.rivals.lastChallengeDay[topicID] = state.day
+        return .categoryChallenged(
+            rivalID: rivalID,
+            topicID: topicID,
+            productName: productName,
+            quality: Int(quality.rounded()),
+            respondByDay: settlesDay,
+            day: state.day
+        )
+    }
+
+    /// Settles every fight that has reached its day, on the share the
+    /// week's pass just computed. Held (share at or above
+    /// `challengeHoldShare`): the rival loses `heldRivalStrengthLoss`, the
+    /// player gains `heldStandingGain` there. Lost: the player loses
+    /// `lostStandingLoss` — the retainer stops covering the decay and the
+    /// category goes quiet — the rival gains `lostRivalStrengthGain` and
+    /// adds the topic to its focus, so it keeps coming. A rival that has
+    /// folded or been bought since still settles: the player out-sold it
+    /// off the board, which is holding the category.
+    ///
+    /// The share table has an entry only where the player has something
+    /// live, so a category the player walked out of mid-fight is lost
+    /// rather than held by default. Deterministic, no draws.
+    private static func settleChallenges(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let depth = balance.rivals.depth
+        let day = state.day
+        let due = state.rivals.challenges.filter { $0.settlesDay <= day }
+        guard !due.isEmpty else { return [] }
+        state.rivals.challenges.removeAll { $0.settlesDay <= day }
+
+        var events: [GameEvent] = []
+        for challenge in due {
+            let held = (state.rivals.playerShare[challenge.topicID] ?? 0) >= depth.challengeHoldShare
+            let rivalIndex = state.rivals.rivals.firstIndex { $0.id == challenge.rivalID }
+            if held {
+                if let rivalIndex {
+                    state.rivals.rivals[rivalIndex].strength = clamp(
+                        state.rivals.rivals[rivalIndex].strength - depth.heldRivalStrengthLoss,
+                        min: 1, max: 100
+                    )
+                }
+                StandingSystem.adjust(depth.heldStandingGain, in: challenge.topicID, &state, balance)
+                events.append(.categoryHeld(
+                    rivalID: challenge.rivalID, topicID: challenge.topicID, day: day
+                ))
+            } else {
+                StandingSystem.adjust(-depth.lostStandingLoss, in: challenge.topicID, &state, balance)
+                if let rivalIndex {
+                    state.rivals.rivals[rivalIndex].strength = clamp(
+                        state.rivals.rivals[rivalIndex].strength + depth.lostRivalStrengthGain,
+                        min: 1, max: 100
+                    )
+                    if !state.rivals.rivals[rivalIndex].focusTopicIDs.contains(challenge.topicID) {
+                        state.rivals.rivals[rivalIndex].focusTopicIDs.append(challenge.topicID)
+                    }
+                }
+                events.append(.categoryLost(
+                    rivalID: challenge.rivalID, topicID: challenge.topicID, day: day
+                ))
+            }
+        }
+        return events
+    }
+
+    /// The first move: weekly, in every topic where the player has
+    /// something live and a rival sells too, the side with the lower share
+    /// pays. Every rival with a competing product there loses
+    /// `strengthPerWeekBeaten` when the player holds more than half the
+    /// market; the player loses `standingPerWeekBeaten` there when a
+    /// rival does. An exact half costs nobody. A rival out-sold for a
+    /// year reaches the fold threshold — shipping a strong product *into*
+    /// a rival's topic is now a way to push it off the board.
+    ///
+    /// Gated on the player having a live product in the topic (that is
+    /// what a share entry means), which is the same guard as the war fix
+    /// and the reason the pacing suite never reaches this. Topics are
+    /// visited in sorted order and rivals in array order, so it replays.
+    /// Deterministic, no draws.
+    private static func bleedStrength(_ state: inout GameState, _ balance: BalanceConfig) {
+        let depth = balance.rivals.depth
+        guard depth.strengthPerWeekBeaten > 0 || depth.standingPerWeekBeaten > 0 else { return }
+        let day = state.day
+        for topicID in state.rivals.playerShare.keys.sorted() {
+            let share = state.rivals.playerShare[topicID] ?? 1
+            let competing = state.rivals.rivals.indices.filter {
+                state.rivals.rivals[$0].bestProduct(in: topicID, on: day) != nil
+            }
+            guard !competing.isEmpty else { continue }
+            if share > 0.5 {
+                for index in competing {
+                    state.rivals.rivals[index].strength = clamp(
+                        state.rivals.rivals[index].strength - depth.strengthPerWeekBeaten,
+                        min: 1, max: 100
+                    )
+                }
+            } else if share < 0.5 {
+                StandingSystem.adjust(-depth.standingPerWeekBeaten, in: topicID, &state, balance)
+            }
+        }
+    }
+
+    /// The player's best live product in a topic: its id and its review
+    /// score, the standard the share pass uses. Ties break on the id
+    /// string so the pick replays identically.
+    static func playerBestProduct(in topicID: String, _ state: GameState) -> (id: UUID, score: Int)? {
+        state.products
+            .compactMap { product -> (id: UUID, score: Int)? in
+                guard product.topicID == topicID,
+                      case .released(let info) = product.stage,
+                      !info.offMarket
+                else { return nil }
+                return (product.id, info.averageReviewScore)
+            }
+            .max { lhs, rhs in
+                if lhs.score != rhs.score { return lhs.score < rhs.score }
+                return lhs.id.uuidString > rhs.id.uuidString
+            }
+    }
+
+    private static func playerBestScore(in topicID: String, _ state: GameState) -> Int? {
+        playerBestProduct(in: topicID, state)?.score
+    }
+
+    /// "Let it go": the pending challenge is answered and the sheet comes
+    /// down. The settlement still runs at its day — six weeks decide the
+    /// category whether or not the player fought for it. Ignored with
+    /// nothing pending.
+    static func concedeCategory(state: inout GameState) -> [GameEvent] {
+        guard let index = state.rivals.challenges.firstIndex(where: \.isPending) else { return [] }
+        state.rivals.challenges[index].answeredDay = state.day
+        state.rivals.challenges[index].conceded = true
+        return []
+    }
+
+    /// Answers a challenge with an action the game already has, routed to
+    /// the player's best live product in the topic: the budget tier, a
+    /// patch, or a social push. The challenge counts as answered only when
+    /// the routed action took effect — a patch with no free build slot or
+    /// a campaign on cooldown leaves it open, and returns nothing, so the
+    /// sheet does not close on an answer that did nothing. Works on a
+    /// fight already answered, too: a second defence is still a defence.
+    /// Ignored with no fight in the topic.
+    static func defendCategory(
+        topicID: String,
+        defense: CategoryDefense,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let index = state.rivals.challenges.firstIndex(where: { $0.topicID == topicID }),
+              let target = playerBestProduct(in: topicID, state)
+        else { return [] }
+
+        let events: [GameEvent]
+        let applied: Bool
+        switch defense {
+        case .budgetPrice:
+            events = ProductSystem.setPriceTier(
+                productID: target.id, tier: .budget, state: &state, balance: balance
+            )
+            applied = !events.isEmpty
+        case .patch:
+            // `startUpdate` returns nothing on success; the patch on the
+            // books is the evidence.
+            events = ProductSystem.startUpdate(
+                productID: target.id, state: &state, balance: balance, content: content
+            )
+            applied = state.economy.update(for: target.id) != nil
+        case .campaign:
+            events = MarketingSystem.startCampaign(
+                kindID: CampaignKind.socialPush.rawValue, productID: target.id,
+                state: &state, balance: balance, content: content
+            )
+            applied = !events.isEmpty
+        }
+        guard applied else { return [] }
+        if state.rivals.challenges[index].answeredDay == nil {
+            state.rivals.challenges[index].answeredDay = state.day
+        }
+        return events
+    }
+
+    // MARK: - The incumbent
+
+    /// Once the company is worth having — valuation past
+    /// `incumbentValuationFloor`, or `incumbentDominatedTopics` topics
+    /// owned outright — and no incumbent has ever been founded, a giant is
+    /// founded into the player's two best markets: deep pockets (it never
+    /// folds), strength `incumbentStrengthFactor × valuation /
+    /// valuationPerStrength` clamped to its band, reputation rolled in
+    /// its band, focus = the two topics where the player has the highest
+    /// standing *and* something live. It ships into the higher at once
+    /// and opens a challenge there, whatever the standing or the score:
+    /// this one is the fight the late game was missing. Worth ~$600k at
+    /// strength 95, it is also the buyer the strategic buyout was written
+    /// for, and it can be bought.
+    ///
+    /// Draws, in order: two id words, the name pick, the reputation roll,
+    /// the appearance seed, then the opener's id, two name words and a
+    /// quality jitter — and only when it founds, so a world that never
+    /// crosses the line never draws. Once per run, and never at
+    /// `rivalCount = 0`, where there is no field for it to join.
+    private static func incumbentCheck(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        let config = balance.rivals
+        let depth = config.depth
+        guard depth.incumbentEnabled,
+              config.rivalCount > 0,
+              state.rivals.incumbentFoundedDay == nil,
+              state.rivals.incumbent == nil
+        else { return [] }
+        let valuation = state.companyValuation(balance: balance)
+        guard valuation >= depth.incumbentValuationFloor
+            || state.rivals.dominatedTopicCount >= depth.incumbentDominatedTopics
+        else { return [] }
+
+        // Its markets: the two the player holds highest and is live in.
+        // "Highest standing" alone can name a category whose products are
+        // long off the market; the live filter is what makes it a fight.
+        let focus = Array(
+            StandingSystem.liveTopicIDs(state)
+                .sorted { lhs, rhs in
+                    let left = state.market.standing(for: lhs)
+                    let right = state.market.standing(for: rhs)
+                    if left != right { return left > right }
+                    return lhs < rhs
+                }
+                .prefix(2)
+        )
+        guard let opening = focus.first else { return [] }
+
+        let id = UUID(from: &state.worldRNG)
+        let name = studioName(&state, content)
+        let strength = clamp(
+            depth.incumbentStrengthFactor * Double(valuation) / config.valuationPerStrength,
+            min: depth.incumbentStrengthMin, max: depth.incumbentStrengthMax
+        )
+        let reputation = depth.incumbentReputationMin
+            + state.worldRNG.nextUniform() * (depth.incumbentReputationMax - depth.incumbentReputationMin)
+        let appearanceSeed = state.worldRNG.next()
+        var rival = Rival(
+            id: id,
+            name: name,
+            strength: strength,
+            reputation: reputation,
+            focusTopicIDs: focus,
+            foundedDay: state.day,
+            appearanceSeed: appearanceSeed,
+            personality: .deepPockets,
+            isIncumbent: true
+        )
+        let opener = launchProduct(for: rival, in: opening, &state, balance, content)
+        rival.products = [opener]
+        rival.lastShippedDay = state.day
+        state.rivals.rivals.append(rival)
+        state.rivals.incumbentFoundedDay = state.day
+        state.rivals.incumbentHeldSinceDay = nil
+
+        var events: [GameEvent] = [
+            .incumbentArrived(rivalID: id, name: name, day: state.day),
+            .rivalProductLaunched(
+                rivalID: id,
+                productName: opener.name,
+                topicID: opening,
+                quality: Int(opener.quality.rounded()),
+                day: state.day
+            ),
+        ]
+        if state.rivals.challenge(in: opening) == nil {
+            events.append(openChallenge(
+                rivalID: id, topicID: opening, productName: opener.name,
+                quality: opener.quality, &state, depth
+            ))
+        }
+        return events
+    }
+
+    /// The incumbent can be beaten: hold `challengeHoldShare` in every
+    /// topic on its list for `incumbentRetreatWeeks` running and it gives
+    /// them up — drops the topics and its products in them, stops being
+    /// the incumbent (an ordinary, large, buyable rival stays on the
+    /// board), and pays the player `incumbentRetreatReputationGain` and
+    /// `incumbentRetreatStandingGain` in each. The clock starts on the
+    /// first weekly pass the player holds every topic and resets the
+    /// first week they do not. A topic the player has nothing live in is
+    /// not held. Deterministic, no draws.
+    private static func incumbentRetreatCheck(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let depth = balance.rivals.depth
+        guard let index = state.rivals.rivals.firstIndex(where: \.isIncumbent) else {
+            state.rivals.incumbentHeldSinceDay = nil
+            return []
+        }
+        let topics = state.rivals.rivals[index].focusTopicIDs
+        let holding = !topics.isEmpty && topics.allSatisfy {
+            (state.rivals.playerShare[$0] ?? 0) >= depth.challengeHoldShare
+        }
+        guard holding else {
+            state.rivals.incumbentHeldSinceDay = nil
+            return []
+        }
+        let since = state.rivals.incumbentHeldSinceDay ?? state.day
+        state.rivals.incumbentHeldSinceDay = since
+        guard state.day - since >= depth.incumbentRetreatWeeks * GameState.daysPerWeek else { return [] }
+
+        let rival = state.rivals.rivals[index]
+        state.rivals.rivals[index].focusTopicIDs = []
+        state.rivals.rivals[index].products.removeAll { topics.contains($0.topicID) }
+        state.rivals.rivals[index].isIncumbent = false
+        // A war over a market it just gave up ends with it.
+        state.rivals.rivals[index].priceWarUntilDay = nil
+        state.rivals.rivals[index].priceWarTopicID = nil
+        state.rivals.rivals[index].weeksBeaten = 0
+        state.rivals.incumbentHeldSinceDay = nil
+        state.company.reputation = clamp(
+            state.company.reputation + depth.incumbentRetreatReputationGain, min: 0, max: 100
+        )
+        for topicID in topics {
+            StandingSystem.adjust(depth.incumbentRetreatStandingGain, in: topicID, &state, balance)
+        }
+        return [.incumbentRetreated(rivalID: rival.id, name: rival.name, day: state.day)]
     }
 
     // MARK: - Poaching
@@ -740,7 +1172,11 @@ enum RivalSystem {
     /// partially joins — `strength / absorbDivisor` hires, capped by the
     /// office headroom, each rolled from `worldRNG` (two id words, first
     /// name, last name, three skill rolls, salary jitter, appearance
-    /// seed) — and the rival leaves the field for good.
+    /// seed) — then its shelf: every product still competing joins the
+    /// player's line as released and on the market, in its topic, with
+    /// reviews synthesised from its quality (one `worldRNG` word per
+    /// review, for the blurb). Acquisition buys a category, not a
+    /// reputation bump. The rival leaves the field for good.
     static func acquireRival(
         rivalID: UUID,
         state: inout GameState,
@@ -775,6 +1211,7 @@ enum RivalSystem {
                 from: rival, index: hireIndex, state: &state, balance: balance, content: content
             ))
         }
+        absorbShelf(of: rival, state: &state, balance: balance, content: content)
 
         state.rivals.rivals.remove(at: rivalIndex)
         if state.rivals.pendingPoach?.rivalID == rival.id { state.rivals.pendingPoach = nil }
@@ -785,6 +1222,87 @@ enum RivalSystem {
         return [.rivalAcquired(
             rivalID: rival.id, name: rival.name, hiresAbsorbed: joining, day: state.day
         )]
+    }
+
+    /// The shelf that comes with an acquired rival (WS-A, iteration 5): in
+    /// every topic the player is live in, the rival's best product still
+    /// on the market there — when it scores above the player's best —
+    /// becomes a released player product in that topic, on the market
+    /// from its own launch day, so an older app sells like an older app.
+    /// Topics in sorted order, so it replays. Its reviews are synthesised
+    /// from its quality: the score with a small fixed spread across the
+    /// outlets so the average lands on the quality, and a blurb picked
+    /// the way a launch picks one, one `worldRNG` word each.
+    ///
+    /// That is what "buys a category" means: the product that was beating
+    /// you becomes yours; one worse than yours is shut down, and apps in
+    /// categories you have nothing in are not what you paid for. It is
+    /// also what keeps the investor suite honest. Measured with the whole
+    /// shelf absorbed, a funded founder who had stopped growing could buy
+    /// a minnow a quarter and have its month-old launches counted as
+    /// their own ships, and the board never removed anybody; every
+    /// absorbed app also counts as the studio's own recent release when
+    /// its next launch in that topic is scaled for a crowded shelf.
+    private static func absorbShelf(
+        of rival: Rival,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) {
+        let day = state.day
+        let shelf = StandingSystem.liveTopicIDs(state).sorted().compactMap { topicID -> RivalProduct? in
+            guard let theirs = rival.bestProduct(in: topicID, on: day),
+                  let ours = playerBestProduct(in: topicID, state),
+                  theirs.quality > Double(ours.score)
+            else { return nil }
+            return theirs
+        }
+        guard !shelf.isEmpty else { return }
+        let outlets = balance.reviewOutlets.isEmpty ? ["The Trade"] : balance.reviewOutlets
+        // Around the quality, summing to nothing over four outlets.
+        let spread = [-2, 1, -1, 2]
+
+        for item in shelf {
+            let type = content.productType(item.typeID) ?? content.productTypes.first
+            let context = ReviewContext(
+                productName: item.name,
+                typeName: type?.name ?? "app",
+                topicName: content.topic(item.topicID)?.name ?? item.topicID,
+                bugRatio: 0,
+                polishRatio: 1,
+                hype: 0,
+                marketScale: 1
+            )
+            var reviews: [Review] = []
+            for (index, outlet) in outlets.enumerated() {
+                let score = min(
+                    balance.reviewCeiling,
+                    max(balance.reviewFloor, Int(item.quality.rounded()) + spread[index % spread.count])
+                )
+                reviews.append(Review(
+                    outlet: outlet,
+                    score: score,
+                    blurb: ReviewBlurbs.pick(
+                        for: score, rng: &state.worldRNG,
+                        outlet: outlet, context: context, catalog: content.reviews
+                    )
+                ))
+            }
+            state.products.append(Product(
+                id: item.id,
+                name: item.name,
+                typeID: type?.id ?? item.typeID,
+                topicID: item.topicID,
+                stage: .released(ReleaseInfo(
+                    launchDay: item.launchDay,
+                    quality: item.quality,
+                    reviews: reviews,
+                    weeklySales: [],
+                    offMarket: false,
+                    isSubscription: type?.revenueModel == .subscription
+                ))
+            ))
+        }
     }
 
     /// One employee inherited from an acquired rival. Skills roll against

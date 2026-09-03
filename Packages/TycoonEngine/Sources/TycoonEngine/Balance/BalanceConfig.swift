@@ -956,6 +956,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         /// Absorbed hires = `strength / absorbDivisor` (capped by headroom).
         public var absorbDivisor: Double
 
+        /// The Category Fight and the Incumbent (WS-A, iteration 5).
+        /// Declared with an inline default and read through the
+        /// `KeyedDecodingContainer` overload in `BalanceConfig+RivalDepth`,
+        /// so a `"rivals"` object without a `"depth"` block still decodes.
+        public var depth: DepthBalance = .default
+
         public init(
             rivalCount: Int,
             evolveIntervalDays: Int,

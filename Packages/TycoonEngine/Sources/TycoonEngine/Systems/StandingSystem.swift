@@ -88,6 +88,20 @@ enum StandingSystem {
         award(-balance.sponsoredContracts.standingLoss, in: topicID, &state, balance.market.standing)
     }
 
+    /// The rival system's awards (WS-A, iteration 5): a challenge held or
+    /// lost, the weekly bleed on the out-sold side, an incumbent's
+    /// retreat. Signed, and the same clamp as everything else here; every
+    /// caller is gated on a rival selling into a topic the player is
+    /// selling into, so at `rivalCount = 0` this is never reached.
+    static func adjust(
+        _ amount: Double,
+        in topicID: String,
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) {
+        award(amount, in: topicID, &state, balance.market.standing)
+    }
+
     /// Topics the studio currently has something selling in.
     static func liveTopicIDs(_ state: GameState) -> Set<String> {
         var ids: Set<String> = []
