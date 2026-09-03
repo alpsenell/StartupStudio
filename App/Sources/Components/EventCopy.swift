@@ -51,7 +51,8 @@ struct EventCopy {
     func category(of event: GameEvent) -> JournalCategory {
         switch event {
         case .lifeEvent, .founderAway, .founderBack, .relationshipChanged, .breakup,
-             .childBorn, .homeUpgraded, .weekendSpent, .instantActivityDone, .itemPurchased:
+             .childBorn, .homeUpgraded, .weekendSpent, .instantActivityDone, .itemPurchased,
+             .familyDateMissed:
             .life
         case .hired, .fired, .candidatesRefreshed, .employeeQuit, .employeePromoted,
              .employeeDemoted, .salaryChanged, .employeeTrained, .socialActivity,
@@ -452,13 +453,17 @@ struct EventCopy {
 
         // MARK: Iteration 5
 
+        // WS-E — the date in the diary.
+        case .familyDateMissed(let eventID, let day):
+            ("heart.slash.fill", missedDateMessage(eventID), day, Theme.warning)
+
         // Scaffold: every lane's events read out of `EventPresenter` until
         // the lane writes its copy. Move your cases above and give them a
         // line; leave the others here.
         case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
              .incumbentRetreated, .roundBoughtBack, .earnOutReviewed,
              .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,
-             .staffPolicyReversed, .familyDateMissed, .alumnusJoinedBook, .stayedIndependent:
+             .staffPolicyReversed, .alumnusJoinedBook, .stayedIndependent:
             fallbackEntry(for: event)
 
         // Events added after this file land here instead of breaking the
@@ -512,6 +517,20 @@ struct EventCopy {
     /// catalog no longer knows.
     private func lifeEventHeadline(_ id: String) -> String {
         content.lifeEvent(id)?.headline ?? "Something happened at home"
+    }
+
+    /// "You missed Sam's birthday. They noticed." The diary line of the
+    /// beat, filled from live state; a date whose def the catalog no
+    /// longer knows still reads as what it was.
+    private func missedDateMessage(_ eventID: String) -> String {
+        guard var label = state.diaryLabel(for: eventID, content: content) else {
+            return "You missed a date you had promised. They noticed."
+        }
+        // "Your anniversary…" mid-sentence; a name keeps its capital.
+        for prefix in ["Your ", "The "] where label.hasPrefix(prefix) {
+            label = prefix.lowercased() + label.dropFirst(prefix.count)
+        }
+        return "You missed \(label). They noticed."
     }
 
     /// The partner's name is read from live state: by the time a breakup
