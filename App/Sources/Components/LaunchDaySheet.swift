@@ -7,6 +7,10 @@ import TycoonEngine
 /// Shown when a product ships, and again when its reviews land — at which
 /// point the outlets reveal one at a time, each blurb typing itself out
 /// under a score that counts up, before the average stamps down.
+///
+/// The reveal itself (`ReviewRevealList`, `LaunchScoreStamp`,
+/// `ReviewCardView`) is shared with the war room, which plays the same
+/// moment inside the office when the build ships while the room is open.
 struct LaunchDaySheet: View {
     let engine: GameEngine
     let product: Product
@@ -16,9 +20,6 @@ struct LaunchDaySheet: View {
 
     /// How many reviews have been revealed so far.
     @State private var revealed = 0
-    /// The average stamp's scale, animated on arrival.
-    @State private var stampScale: CGFloat = 2.4
-    @State private var stampOpacity: Double = 0
 
     private var release: ReleaseInfo? {
         if case .released(let info) = product.stage { return info }
@@ -42,7 +43,10 @@ struct LaunchDaySheet: View {
                         if release.reviews.isEmpty {
                             waitingForReviews(release)
                         } else {
-                            reviewsSection(release)
+                            ReviewRevealList(release: release, revealed: revealed, productID: nil) { route in
+                                dismiss()
+                                router.go(route)
+                            }
                         }
                         salesSection(release)
                     }
@@ -69,7 +73,7 @@ struct LaunchDaySheet: View {
                 ProductBoxArtView(
                     typeID: product.typeID,
                     topicID: product.topicID,
-                    seed: product.id.uuidString.utf8.reduce(UInt64(0)) { $0 &* 31 &+ UInt64($1) },
+                    seed: product.boxArtSeed,
                     size: 120
                 )
                 .shadow(color: Theme.pixelShadow, radius: 0, x: 3, y: 3)
@@ -106,71 +110,6 @@ struct LaunchDaySheet: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
             }
-        }
-    }
-
-    private func reviewsSection(_ release: ReleaseInfo) -> some View {
-        VStack(spacing: Theme.Spacing.md) {
-            ForEach(Array(release.reviews.enumerated()), id: \.offset) { index, review in
-                if index < revealed {
-                    ReviewCardView(review: review)
-                        .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
-                }
-            }
-
-            if revealed >= release.reviews.count {
-                averageStamp(release)
-                if let forecast = release.launchForecast, let reason = forecast.limitingFactor {
-                    LaunchReasonRow(reason: reason, fix: forecast.fix) { route in
-                        dismiss()
-                        router.go(route)
-                    }
-                    .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
-                }
-            }
-        }
-    }
-
-    private func averageStamp(_ release: ReleaseInfo) -> some View {
-        VStack(spacing: Theme.Spacing.xs) {
-            PixelText(
-                text: "\(release.averageReviewScore)",
-                scale: 6,
-                color: Theme.scoreTint(release.averageReviewScore),
-                shadow: true
-            )
-            PixelText(text: verdict(release.averageReviewScore), scale: 2, color: .secondary)
-        }
-        .padding(Theme.Spacing.lg)
-        .frame(maxWidth: .infinity)
-        .overlay {
-            PixelPanelBorder(thickness: 3, corner: 3)
-                .fill(Theme.scoreTint(release.averageReviewScore).opacity(0.6))
-        }
-        .scaleEffect(stampScale)
-        .opacity(stampOpacity)
-        .onAppear {
-            Sounds.play(.review)
-            Haptics.success()
-            withAnimation(Theme.Motion.emphatic) {
-                stampScale = 1
-                stampOpacity = 1
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "Average score \(release.averageReviewScore) out of 100. \(verdict(release.averageReviewScore))."
-        )
-    }
-
-    private func verdict(_ score: Int) -> String {
-        switch score {
-        case 90...: "A hit"
-        case 75..<90: "Well received"
-        case 60..<75: "Solid"
-        case 45..<60: "Mixed"
-        case 30..<45: "Rough"
-        default: "A misfire"
         }
     }
 
@@ -222,7 +161,7 @@ struct LaunchDaySheet: View {
         Haptics.commit()
         Task {
             for index in release.reviews.indices {
-                try? await Task.sleep(for: .milliseconds(index == 0 ? 400 : 900))
+                try? await Task.sleep(for: .milliseconds(ReviewReveal.delay(forOutlet: index)))
                 withAnimation(Theme.Motion.emphatic) { revealed = index + 1 }
                 Sounds.play(.tap)
                 Haptics.tap()
@@ -231,7 +170,115 @@ struct LaunchDaySheet: View {
     }
 }
 
-private struct LaunchStat: View {
+extension Product {
+    /// The seed the box art is drawn from: the product's id folded into a
+    /// word, so the same product always gets the same cover.
+    var boxArtSeed: UInt64 {
+        id.uuidString.utf8.reduce(UInt64(0)) { $0 &* 31 &+ UInt64($1) }
+    }
+}
+
+/// The pacing of the reveal, shared by the sheet and the war room so the
+/// outlets arrive at the same beat wherever the moment plays.
+enum ReviewReveal {
+    /// Milliseconds before outlet `index` lands: a short beat for the
+    /// first, a longer one between the rest.
+    static func delay(forOutlet index: Int) -> Int {
+        index == 0 ? 400 : 900
+    }
+}
+
+/// The outlets so far, then the average stamp and the reason row once the
+/// last one has weighed in. `revealed` is owned by whoever is playing the
+/// moment; the list only draws what it is told to.
+struct ReviewRevealList: View {
+    let release: ReleaseInfo
+    let revealed: Int
+    /// The product the "Live ops" fix routes to; `nil` when there is no
+    /// route back (the launch sheet dismisses to the tab instead).
+    var productID: UUID?
+    /// Whether each blurb types itself out. Off for a static frame.
+    var typesOut = true
+    let onRoute: (Route) -> Void
+
+    var body: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            ForEach(Array(release.reviews.enumerated()), id: \.offset) { index, review in
+                if index < revealed {
+                    ReviewCardView(review: review, typesOut: typesOut)
+                        .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
+                }
+            }
+
+            if revealed >= release.reviews.count {
+                LaunchScoreStamp(score: release.averageReviewScore)
+                if let forecast = release.launchForecast, let reason = forecast.limitingFactor {
+                    LaunchReasonRow(reason: reason, fix: forecast.fix, productID: productID, onRoute: onRoute)
+                        .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
+                }
+            }
+        }
+    }
+}
+
+/// The average, stamped down: arrives large and settles, with the review
+/// sound and the success haptic.
+struct LaunchScoreStamp: View {
+    let score: Int
+
+    /// The stamp's scale, animated on arrival.
+    @State private var stampScale: CGFloat = 2.4
+    @State private var stampOpacity: Double = 0
+
+    var body: some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            PixelText(
+                text: "\(score)",
+                scale: 6,
+                color: Theme.scoreTint(score),
+                shadow: true
+            )
+            PixelText(text: LaunchVerdict.text(for: score), scale: 2, color: .secondary)
+        }
+        .padding(Theme.Spacing.lg)
+        .frame(maxWidth: .infinity)
+        .overlay {
+            PixelPanelBorder(thickness: 3, corner: 3)
+                .fill(Theme.scoreTint(score).opacity(0.6))
+        }
+        .scaleEffect(stampScale)
+        .opacity(stampOpacity)
+        .onAppear {
+            Sounds.play(.review)
+            Haptics.success()
+            withAnimation(Theme.Motion.emphatic) {
+                stampScale = 1
+                stampOpacity = 1
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Average score \(score) out of 100. \(LaunchVerdict.text(for: score))."
+        )
+    }
+}
+
+/// The one-word verdict under an average score.
+enum LaunchVerdict {
+    static func text(for score: Int) -> String {
+        switch score {
+        case 90...: "A hit"
+        case 75..<90: "Well received"
+        case 60..<75: "Solid"
+        case 45..<60: "Mixed"
+        case 30..<45: "Rough"
+        default: "A misfire"
+        }
+    }
+}
+
+/// A labelled launch figure.
+struct LaunchStat: View {
     let label: String
     let value: String
     var tint: Color = .primary
@@ -249,19 +296,24 @@ private struct LaunchStat: View {
     }
 }
 
-/// One outlet's verdict, with its blurb typing itself out.
-private struct ReviewCardView: View {
+/// One outlet's verdict, with its blurb typing itself out — unless the
+/// player has asked for less motion, or the frame is a static one, in
+/// which case the verdict is simply there.
+struct ReviewCardView: View {
     let review: Review
+    var typesOut = true
 
     @State private var shownCharacters = 0
     @State private var shownScore = 0
+
+    private var animates: Bool { typesOut && !Theme.Motion.isReduced }
 
     var body: some View {
         CardView(review.outlet, systemImage: "newspaper") {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 HStack(spacing: Theme.Spacing.sm) {
                     PixelText(
-                        text: "\(shownScore)",
+                        text: "\(animates ? shownScore : review.score)",
                         scale: 3,
                         color: Theme.scoreTint(review.score)
                     )
@@ -270,7 +322,7 @@ private struct ReviewCardView: View {
                         .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
                 }
-                Text(String(review.blurb.prefix(shownCharacters)))
+                Text(animates ? String(review.blurb.prefix(shownCharacters)) : review.blurb)
                     .font(.subheadline)
                     .italic()
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -283,6 +335,7 @@ private struct ReviewCardView: View {
     }
 
     private func animate() {
+        guard animates else { return }
         Task {
             // Score counts up in ten steps, then the blurb types.
             for step in 1...10 {
