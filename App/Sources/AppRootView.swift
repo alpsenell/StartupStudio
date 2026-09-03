@@ -1,9 +1,10 @@
 import SwiftUI
 import TycoonEngine
 
-/// Root of the app: the tab bar, the acknowledgement layer (toasts,
-/// launch day, weekly report), the new-game flow, the game-over cover, and
-/// the one-time load-failure notice.
+/// Root of the app: the front door (U7's title screen with the save
+/// slots) or the game — the tab bar, the acknowledgement layer (toasts,
+/// launch day, weekly report), the game-over cover — with the new-game
+/// flow and the one-time load-failure notice over either.
 ///
 /// The persistent top HUD is NOT attached here. Each tab's root screen
 /// attaches it inside its own `NavigationStack` (see `TopHUD`), so that

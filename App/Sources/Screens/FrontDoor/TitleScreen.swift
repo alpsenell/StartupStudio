@@ -361,26 +361,24 @@ private struct SlotRow: View {
                             .font(.system(.headline, design: .rounded))
                             .foregroundStyle(row.isEmpty ? .secondary : .primary)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                         Text(detail)
                             .font(.caption)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
-                        if let lastPlayed = row.lastPlayed {
-                            Text("Last played \(Self.relative.localizedString(for: lastPlayed, relativeTo: Date()))")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                        if let footnote {
+                            Text(footnote)
+                                .font(.caption2.weight(isCurrent ? .semibold : .regular))
+                                .foregroundStyle(isCurrent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.tertiary))
+                                .lineLimit(1)
                         }
                     }
                     Spacer(minLength: 0)
                     if isCurrent {
-                        Text("Current")
-                            .font(.caption2.weight(.semibold))
+                        Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(Theme.accent)
-                            .padding(.horizontal, Theme.Spacing.sm)
-                            .padding(.vertical, 3)
-                            .background(Theme.accent.opacity(0.12), in: Capsule())
                     } else if row.isEmpty {
                         Image(systemName: "plus.circle")
                             .foregroundStyle(.tertiary)
@@ -401,9 +399,10 @@ private struct SlotRow: View {
                 Button(role: .destructive, action: onDelete) {
                     Image(systemName: "trash")
                         .font(.body)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 44)
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderless)
                 .tint(Theme.negativeCash)
                 .accessibilityLabel("Delete slot \(row.slot + 1)")
             }
@@ -413,6 +412,16 @@ private struct SlotRow: View {
             isCurrent ? Theme.accent.opacity(0.10) : Theme.cardBackground,
             in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
         )
+    }
+
+    /// "Current · Last played an hour ago", or just when it was played.
+    private var footnote: String? {
+        var parts: [String] = []
+        if isCurrent { parts.append("Current") }
+        if let lastPlayed = row.lastPlayed {
+            parts.append("Last played \(Self.relative.localizedString(for: lastPlayed, relativeTo: Date()))")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     private static let relative: RelativeDateTimeFormatter = {
