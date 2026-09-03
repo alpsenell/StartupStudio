@@ -201,7 +201,7 @@ final class LadderSnapshotTests: XCTestCase {
         XCTAssertTrue(info.kind.isSuccess)
         XCTAssertTrue(info.reason.hasPrefix("You still owned 100%."))
         screenSnapshot("biography_independent") {
-            FounderBiographyView(engine: engine, info: info, onNewGame: { _, _ in })
+            FounderBiographyView(engine: engine, info: info, onNewGame: { _, _, _ in })
                 .environment(AppRouter())
                 .environment(GameShell())
         }

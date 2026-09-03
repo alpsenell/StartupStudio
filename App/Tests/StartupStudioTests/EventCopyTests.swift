@@ -159,6 +159,8 @@ final class EventCopyTests: XCTestCase {
             rivalID: UUID(), topicID: "gone", quality: 40, day: 91
         ))
         XCTAssertEqual(gone.message, "a rival shipped the A niche app you built for them at 40 — the press knows whose work it was")
+    }
+
     /// WS-B's three events read as sentences with the names in them, and
     /// file under Company.
     func testTheBoardAndTheExitReadAsCompanyNews() {
@@ -181,6 +183,8 @@ final class EventCopyTests: XCTestCase {
         XCTAssertFalse(missed.message.contains("to go"), "the last review has nothing to go")
         XCTAssertEqual(copy.category(of: .earnOutReviewed(met: true, paid: 1, remainingReviews: 1, day: 1)), .company)
         XCTAssertNotEqual(met.message, "Something happened")
+    }
+
     /// A missed date reads as the date it was, from the diary's own line
     /// and the people in the founder's life (WS-E).
     func testAMissedDateNamesTheDateFromTheDiary() {

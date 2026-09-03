@@ -85,7 +85,7 @@ final class EndingSnapshotTests: XCTestCase {
     }
 
     private func biography(_ engine: GameEngine) -> some View {
-        FounderBiographyView(engine: engine, info: engine.state.gameOver!, onNewGame: { _, _ in })
+        FounderBiographyView(engine: engine, info: engine.state.gameOver!, onNewGame: { _, _, _ in })
             .biographyContent
             .environment(GameShell())
             .environment(AppRouter())
