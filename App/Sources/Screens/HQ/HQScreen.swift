@@ -13,9 +13,15 @@ struct HQScreen: View {
 
     @State private var showingNewProduct = false
     @State private var showingSettings = false
+    /// The story screens (the front page, the timeline) push onto this;
+    /// the cards' own `NavigationLink`s resolve through the same
+    /// destination, so a deep link and a tap land on the same screen.
+    @State private var path = NavigationPath()
+
+    @Environment(AppRouter.self) private var router
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
                     if engine.state.company.daysInDebt > 0 {
@@ -64,6 +70,29 @@ struct HQScreen: View {
             .sheet(isPresented: $showingSettings) {
                 SettingsSheet(engine: engine, onNewGame: onNewGame)
             }
+            .navigationDestination(for: StoryDestination.self) { destination in
+                switch destination {
+                case .newspaper: NewspaperScreen(engine: engine)
+                case .timeline: TimelineScreen(engine: engine)
+                }
+            }
+            .onChange(of: router.pendingPush, initial: true) { _, _ in
+                consumeRoute()
+            }
+            // A headless screenshot pass cannot tap the journal card:
+            // `-autoRoute newspaper|timeline` opens the screen on launch.
+            .task {
+                if let route = DebugLaunch.launchRoute { router.go(route) }
+            }
+        }
+    }
+
+    /// Deep links into this tab: the week's front page and the timeline.
+    private func consumeRoute() {
+        if router.take(.newspaper) {
+            path.append(StoryDestination.newspaper)
+        } else if router.take(.timeline) {
+            path.append(StoryDestination.timeline)
         }
     }
 }

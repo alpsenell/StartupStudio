@@ -30,8 +30,27 @@ enum DebugLaunch {
         #endif
     }
 
-    /// Whether this launch is a headless QA pass — `-autoSpeed` or
-    /// `-autoTab` on the command line.
+    /// The screen a headless pass opens on top of HQ: `-autoRoute
+    /// newspaper|timeline` in debug builds, `nil` otherwise. U2's two
+    /// screens are pushed from cards nobody can tap from the command line.
+    static var launchRoute: Route? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-autoRoute"),
+              arguments.indices.contains(flag + 1)
+        else { return nil }
+        return switch arguments[flag + 1].lowercased() {
+        case "newspaper": .newspaper
+        case "timeline": .timeline
+        default: nil
+        }
+        #else
+        return nil
+        #endif
+    }
+
+    /// Whether this launch is a headless QA pass — `-autoSpeed`,
+    /// `-autoTab` or `-autoRoute` on the command line.
     ///
     /// Those two flags exist so a screenshot pass can land on a running
     /// game without tapping anything, and the onboarding flow (which
@@ -42,6 +61,7 @@ enum DebugLaunch {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         return arguments.contains("-autoSpeed") || arguments.contains("-autoTab")
+            || arguments.contains("-autoRoute")
         #else
         return false
         #endif

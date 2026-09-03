@@ -127,23 +127,35 @@ struct JournalCard: View {
 
     var body: some View {
         CardView("Journal", systemImage: "book.closed.fill") {
-            if rows.isEmpty {
-                Text("All quiet. Time to build something.")
-                    .emptySectionText()
-            } else {
-                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                if rows.isEmpty {
+                    Text("All quiet. Time to build something.")
+                        .emptySectionText()
+                } else {
                     ForEach(groupedByWeek(rows), id: \.week) { group in
                         WeekGroup(week: group.week, rows: group.rows)
                     }
-                    NavigationLink {
-                        JournalScreen(engine: engine)
-                    } label: {
-                        Label("See all", systemImage: "chevron.right")
+                }
+                HStack(spacing: Theme.Spacing.lg) {
+                    if !rows.isEmpty {
+                        NavigationLink {
+                            JournalScreen(engine: engine)
+                        } label: {
+                            Label("See all", systemImage: "chevron.right")
+                                .font(.footnote.weight(.semibold))
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    Spacer(minLength: 0)
+                    // The same weeks, set as a front page (U2).
+                    NavigationLink(value: StoryDestination.newspaper) {
+                        Label("Front page", systemImage: "newspaper.fill")
                             .font(.footnote.weight(.semibold))
                     }
                     .buttonStyle(.borderless)
-                    .padding(.top, Theme.Spacing.xs)
+                    .accessibilityHint("Opens this week's newspaper")
                 }
+                .padding(.top, Theme.Spacing.xs)
             }
         }
     }

@@ -44,6 +44,14 @@ struct GoalsCard: View {
                             .foregroundStyle(.tertiary)
                             .accessibilityLabel("Next chapter: \(teaser)")
                     }
+
+                    // The chapters so far, as a line (U2).
+                    NavigationLink(value: StoryDestination.timeline) {
+                        Label("Timeline", systemImage: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityHint("Opens the company timeline")
                 }
             }
         }
