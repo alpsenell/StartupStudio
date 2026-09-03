@@ -29,19 +29,25 @@ public struct PendingResignation: Codable, Equatable, Sendable {
     /// The weekly salary they were on when they resigned, so a counter can
     /// be graded against it.
     public var salaryAtNotice: Int
+    /// Why, when the notice is the second act of an answer the founder
+    /// gave (WS-D) — a sentence the resignation sheet shows. Nil for a
+    /// resignation morale alone explains, and in every older save.
+    public var reason: String?
 
     public init(
         employeeID: UUID,
         name: String,
         sinceDay: Int,
         respondByDay: Int,
-        salaryAtNotice: Int
+        salaryAtNotice: Int,
+        reason: String? = nil
     ) {
         self.employeeID = employeeID
         self.name = name
         self.sinceDay = sinceDay
         self.respondByDay = respondByDay
         self.salaryAtNotice = salaryAtNotice
+        self.reason = reason
     }
 }
 

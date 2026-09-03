@@ -57,7 +57,9 @@
       "label": "Tell them to wait for the review cycle",
       "detail": "Free · morale −10 · loyalty −14",
       "morale": -10,
-      "loyalty": -14
+      "loyalty": -14,
+      "followUpEventID": "raiseRequest_market",
+      "followUpDelayDays": 45
     }
   },
   {
@@ -74,13 +76,17 @@
       "morale": 14,
       "loyalty": 12,
       "skill": -4,
-      "clearsAssignment": true
+      "clearsAssignment": true,
+      "followUpEventID": "roleSwitch_thriving",
+      "followUpDelayDays": 90
     },
     "strict": {
       "label": "Keep them where they're needed",
       "detail": "Free · morale −12",
       "morale": -12,
-      "loyalty": -8
+      "loyalty": -8,
+      "followUpEventID": "roleSwitch_evenings",
+      "followUpDelayDays": 60
     }
   },
   {
@@ -139,14 +145,18 @@
       "detail": "Morale +16 · loyalty +18 · reputation +2",
       "morale": 16,
       "loyalty": 18,
-      "reputation": 2
+      "reputation": 2,
+      "followUpEventID": "sideProject_shipped",
+      "followUpDelayDays": 120
     },
     "strict": {
       "label": "Remind them of the IP clause",
       "detail": "Free · morale −16 · team morale −6",
       "morale": -16,
       "moraleAll": -6,
-      "loyalty": -18
+      "loyalty": -18,
+      "followUpEventID": "sideProject_notice",
+      "followUpDelayDays": 90
     }
   },
   {
@@ -186,7 +196,9 @@
       "loyalty": 20,
       "moraleAll": 12,
       "reputation": 4,
-      "clearsAssignment": true
+      "clearsAssignment": true,
+      "followUpEventID": "parentalLeave_back",
+      "followUpDelayDays": 100
     },
     "strict": {
       "label": "The statutory minimum",
@@ -195,7 +207,9 @@
       "moraleAll": -12,
       "loyalty": -14,
       "reputation": -3,
-      "clearsAssignment": true
+      "clearsAssignment": true,
+      "followUpEventID": "parentalLeave_gone",
+      "followUpDelayDays": 75
     }
   },
   {
@@ -217,7 +231,9 @@
       "label": "This is an in-person company",
       "detail": "Free · morale −16 · loyalty −20",
       "morale": -16,
-      "loyalty": -20
+      "loyalty": -20,
+      "followUpEventID": "remoteRequest_moved",
+      "followUpDelayDays": 60
     }
   },
   {
@@ -235,7 +251,9 @@
       "morale": 10,
       "loyalty": 14,
       "moraleAll": 10,
-      "reputation": 3
+      "reputation": 3,
+      "followUpEventID": "harassmentComplaint_outcome",
+      "followUpDelayDays": 45
     },
     "strict": {
       "label": "Have a quiet word with everyone involved",
@@ -243,7 +261,220 @@
       "morale": -18,
       "moraleAll": -18,
       "loyalty": -22,
+      "reputation": -6,
+      "followUpEventID": "harassmentComplaint_second",
+      "followUpDelayDays": 30
+    }
+  },
+
+  {
+    "id": "sideProject_notice",
+    "kind": "sideProject",
+    "title": "{name} is leaving over the side project",
+    "body": "It got an offer. They would like to build it somewhere the lawyers have not read their contract.",
+    "headline": "{name} handed in notice over the side project.",
+    "weight": 1,
+    "requires": { "flagsNone": ["ip_generous"] },
+    "strict": {
+      "label": "They hand in notice",
+      "moraleAll": -4,
+      "noticeReason": "They are leaving to build the side project you said belonged to the company."
+    }
+  },
+  {
+    "id": "sideProject_shipped",
+    "kind": "sideProject",
+    "title": "{name}'s side project shipped",
+    "body": "It is small and it is good, and {company} is in the credits because you said it was theirs in writing. They would like to know whether you meant it.",
+    "headline": "{name}'s side project shipped, with {company} in the credits.",
+    "weight": 1,
+    "requires": { "flagsNone": ["ip_strict"] },
+    "supportive": {
+      "label": "Put it in the newsletter",
+      "detail": "Reputation +3 · morale +6 · loyalty +4",
+      "reputation": 3,
+      "morale": 6,
+      "loyalty": 4
+    },
+    "strict": {
+      "label": "Ask for a share of it",
+      "detail": "+$1,500 · morale −8 · loyalty −12",
+      "cash": 1500,
+      "morale": -8,
+      "loyalty": -12
+    }
+  },
+  {
+    "id": "harassmentComplaint_second",
+    "kind": "harassmentComplaint",
+    "title": "{name} says it has happened again",
+    "body": "To someone else this time. They are asking, in writing, why the first one was a quiet word in the kitchen. So is the person it happened to.",
+    "headline": "A second complaint, and the first one was a quiet word.",
+    "weight": 1,
+    "requires": { "flagsNone": ["process_trusted"] },
+    "supportive": {
+      "label": "Run the process now, and say why it's late",
+      "detail": "−$3,000 · morale +4 for everyone · reputation −2",
+      "cash": -3000,
+      "morale": 8,
+      "loyalty": 8,
+      "moraleAll": 4,
+      "reputation": -2
+    },
+    "strict": {
+      "label": "Another quiet word",
+      "detail": "Free · morale −14 for everyone · reputation −6",
+      "morale": -14,
+      "moraleAll": -14,
+      "loyalty": -20,
       "reputation": -6
+    }
+  },
+  {
+    "id": "harassmentComplaint_outcome",
+    "kind": "harassmentComplaint",
+    "title": "The process concluded",
+    "body": "{name} has read the finding. They want to know whether the rest of the team will.",
+    "headline": "The complaint {name} raised has a finding.",
+    "weight": 1,
+    "requires": { "flagsNone": ["quiet_word"] },
+    "supportive": {
+      "label": "Publish the finding, names removed",
+      "detail": "Reputation +3 · morale +5 for everyone · loyalty +6",
+      "reputation": 3,
+      "moraleAll": 5,
+      "loyalty": 6
+    },
+    "strict": {
+      "label": "Keep it between the people involved",
+      "detail": "Free · morale −6 · loyalty −6",
+      "morale": -6,
+      "loyalty": -6
+    }
+  },
+  {
+    "id": "parentalLeave_back",
+    "kind": "parentalLeave",
+    "title": "{name} is back, and asking for four-day weeks",
+    "body": "Three months went fast. They would like a four-day week until the spring, on full pay, and they are asking because the policy says nothing about it.",
+    "headline": "{name} came back from leave and asked for a four-day week.",
+    "weight": 1,
+    "requires": { "flagsNone": ["leave_statutory"] },
+    "supportive": {
+      "label": "Four days, full pay, until spring",
+      "detail": "−$2,000 · morale +10 · loyalty +12",
+      "cash": -2000,
+      "morale": 10,
+      "loyalty": 12
+    },
+    "strict": {
+      "label": "Full time, or the leave was for nothing",
+      "detail": "Free · morale −10 · loyalty −10",
+      "morale": -10,
+      "loyalty": -10
+    }
+  },
+  {
+    "id": "parentalLeave_gone",
+    "kind": "parentalLeave",
+    "title": "{name} is not coming back",
+    "body": "The statutory minimum ran out. They found somewhere with a policy.",
+    "headline": "{name} did not come back from leave.",
+    "weight": 1,
+    "requires": { "flagsNone": ["good_leave_policy"] },
+    "strict": {
+      "label": "They hand in notice",
+      "moraleAll": -4,
+      "noticeReason": "The statutory minimum ran out, and they found somewhere with a leave policy."
+    }
+  },
+  {
+    "id": "remoteRequest_moved",
+    "kind": "remoteRequest",
+    "title": "{name} moved anyway",
+    "body": "Their partner started the job. They have been doing four hours each way twice a week and they cannot keep it up. They are asking one more time.",
+    "headline": "{name} moved, and asked about remote work again.",
+    "weight": 1,
+    "requires": { "flagsNone": ["remote_friendly"] },
+    "supportive": {
+      "label": "Fine — remote it is",
+      "detail": "Morale +12 · loyalty +10",
+      "morale": 12,
+      "loyalty": 10
+    },
+    "strict": {
+      "label": "Then this is goodbye",
+      "detail": "They hand in notice · team morale −3",
+      "moraleAll": -3,
+      "noticeReason": "They moved to be with their partner, and you said this is an in-person company."
+    }
+  },
+  {
+    "id": "raiseRequest_market",
+    "kind": "raiseRequest",
+    "title": "{name} has an offer in hand",
+    "body": "The market data was right. Somebody else read it too. The number is fifteen percent over what they asked you for, and they would still rather stay.",
+    "headline": "{name} came back with an offer in hand.",
+    "weight": 1,
+    "requires": { "flagsNone": ["raises_on_evidence"] },
+    "supportive": {
+      "label": "Match it",
+      "detail": "+15% salary · morale +6 · loyalty +10",
+      "salaryPercent": 15,
+      "morale": 6,
+      "loyalty": 10
+    },
+    "strict": {
+      "label": "Wish them luck",
+      "detail": "They hand in notice · team morale −5",
+      "moraleAll": -5,
+      "noticeReason": "They took the offer you told them to wait for the review cycle over."
+    }
+  },
+  {
+    "id": "roleSwitch_thriving",
+    "kind": "roleSwitch",
+    "title": "{name} is good at the new job",
+    "body": "The slow start lasted a month. They are now the person the others ask. They would like the salary to notice.",
+    "headline": "{name} grew into the new role.",
+    "weight": 1,
+    "requires": { "flagsNone": ["roles_fixed"] },
+    "supportive": {
+      "label": "Pay the new role's rate",
+      "detail": "+8% salary · morale +8 · loyalty +10 · skill +4",
+      "salaryPercent": 8,
+      "morale": 8,
+      "loyalty": 10,
+      "skill": 4
+    },
+    "strict": {
+      "label": "The move was the reward",
+      "detail": "Free · morale −8 · loyalty −6",
+      "morale": -8,
+      "loyalty": -6
+    }
+  },
+  {
+    "id": "roleSwitch_evenings",
+    "kind": "roleSwitch",
+    "title": "{name} is still doing the other job at night",
+    "body": "Two months of evenings, on somebody else's product now. They have not said so; the commits have their name on them.",
+    "headline": "{name} kept doing the other job on their own time.",
+    "weight": 1,
+    "requires": { "flagsNone": ["roles_flexible"] },
+    "supportive": {
+      "label": "Let them move, late",
+      "detail": "Morale +10 · loyalty +6 · they start slower",
+      "morale": 10,
+      "loyalty": 6,
+      "skill": -4,
+      "clearsAssignment": true
+    },
+    "strict": {
+      "label": "Enforce the contract",
+      "detail": "Free · morale −14 · loyalty −14",
+      "morale": -14,
+      "loyalty": -14
     }
   }
 ]

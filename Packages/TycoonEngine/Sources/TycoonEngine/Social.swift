@@ -106,6 +106,19 @@ public struct StaffEvent: Codable, Equatable, Sendable {
 
 // MARK: - Memory (WS-D)
 
+/// The rule flags the engine itself reads. Content raises them (a def's
+/// `policy` block) and may raise others; these two have mechanics behind
+/// them beyond the story gates.
+public enum StaffPolicyFlag {
+    /// `remoteRequest` answered generously: `teamConflict` is
+    /// `remoteConflictWeightFactor` times as likely, and the people the
+    /// rule answered for grow bonds at `remoteBondGrowthFactor`.
+    public static let remoteFriendly = "remote_friendly"
+    /// `parentalLeave` answered generously: every candidate's ask is
+    /// multiplied by `leavePolicyAskFactor`.
+    public static let goodLeavePolicy = "good_leave_policy"
+}
+
 /// A rule the founder set by answering one person.
 ///
 /// A supportive answer to a policy-shaped kind (one whose def carries a

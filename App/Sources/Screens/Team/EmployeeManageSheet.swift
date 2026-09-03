@@ -196,6 +196,21 @@ struct EmployeeManageSheet: View {
         } else if traitDelta >= 2 {
             causes.append(("It's who they are — see Personality", true))
         }
+
+        // The last time they asked and the answer was no (WS-D). The
+        // strict outcome already landed on their morale; this is the
+        // sentence that says why they remember it.
+        if let refusal = state.staffMemory.refusal(for: employee.id) {
+            let month = GameCalendar(day: refusal.day).monthName
+            let about = engine.content.staffEvent(refusal.kind.rawValue)?.policy?.name.lowercased()
+            let subject = about.map { " to \($0)" } ?? ""
+            causes.append((
+                refusal.automatic
+                    ? "You never answered them in \(month)"
+                    : "You said no\(subject) in \(month)",
+                false
+            ))
+        }
         return causes.map { (text: $0.0, isGood: $0.1) }
     }
 

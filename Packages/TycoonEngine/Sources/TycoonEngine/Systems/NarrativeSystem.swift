@@ -314,9 +314,10 @@ enum NarrativeSystem {
             guard let def = content.lifeEvent(due.eventID) else { return [] }
             return fireLife(def, state: &state, balance: balance)
         case .staff:
-            // WS-D fires the scheduled staff follow-up as a pending staff
-            // event for `due.employeeID`. Scaffold: dropped.
-            return []
+            // WS-D: a staff second act becomes the pending staff moment for
+            // `due.employeeID` (or lands at once), through the social
+            // system so its numbers come from the same place the sheet's do.
+            return SocialSystem.fireStaffFollowUp(due, state: &state, balance: balance, content: content)
         }
     }
 

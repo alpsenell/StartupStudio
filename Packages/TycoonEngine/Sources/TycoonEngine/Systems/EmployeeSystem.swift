@@ -764,6 +764,11 @@ enum EmployeeSystem {
                 && (company.candidateRoleWeights[role.rawValue] ?? 0) > 0
                 && state.company.officeTier.rank >= company.candidateMinTier(role).rank
         }
+        // WS-D: a studio with a leave policy is a cheaper place to say yes
+        // to. One multiplier on the ask, 1.0 without the flag, no draw.
+        let askFactor = state.narrative.hasFlag(StaffPolicyFlag.goodLeavePolicy)
+            ? balance.staff.leavePolicyAskFactor
+            : 1
 
         var pool: [Candidate] = []
         pool.reserveCapacity(count)
@@ -787,7 +792,7 @@ enum EmployeeSystem {
             let jitter = 1 + (state.rng.nextUniform() * 2 - 1) * balance.salaryJitter
             let salaryFactor = role.department != nil ? company.supportSalaryFactor : 1
             let salary = (Double(balance.salaryBase) + balance.salaryPerSkillPoint * skills.total)
-                * jitter * salaryFactor
+                * jitter * salaryFactor * askFactor
             pool.append(Candidate(
                 id: id,
                 name: name,

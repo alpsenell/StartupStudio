@@ -432,6 +432,9 @@ extension DecisionPrompt {
             title: "\(resignation.name) is leaving",
             message: "\(resignation.name) has handed in notice after "
                 + "\(state.day - employee.hiredDay) days at \(state.company.name). "
+                // A notice that is the second act of an answer says so
+                // (WS-D); one that morale alone explains says nothing more.
+                + (resignation.reason.map { "\($0) " } ?? "")
                 + "A real raise or a promotion still turns it around — "
                 + "anything less and they walk.",
             stats: [
