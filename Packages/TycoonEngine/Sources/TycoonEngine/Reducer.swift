@@ -316,8 +316,10 @@ public enum Reducer {
             events = InvestorSystem.acceptBuyoutEarnOut(state: &state, balance: balance)
 
         // MARK: WS-D (policy)
-        case .reverseStaffPolicy:
-            events = []
+        case let .reverseStaffPolicy(flag):
+            events = SocialSystem.reverseStaffPolicy(
+                flag: flag, state: &state, balance: balance, content: content
+            )
 
         // MARK: WS-G (ladders)
         case .declareIndependence:

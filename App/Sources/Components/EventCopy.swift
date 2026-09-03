@@ -94,6 +94,9 @@ struct EventCopy {
         // WS-B: the cap table and the sale of the company are company news.
         case .roundBoughtBack, .earnOutSigned, .earnOutReviewed:
             .company
+        // A rule the team lives by, made, applied or taken back (WS-D).
+        case .staffPolicySet, .staffPolicyApplied, .staffPolicyReversed:
+            .team
         default:
             .company
         }
@@ -270,9 +273,7 @@ struct EventCopy {
         case .staffEventOccurred(let employeeID, let kind, _, let day):
             (
                 "person.crop.circle.badge.questionmark",
-                kind == .familyEmergency
-                    ? "\(employeeName(employeeID)) has a family emergency"
-                    : "\(employeeName(employeeID)) is being courted by a rival",
+                staffMomentTitle(kind, employeeID: employeeID),
                 day,
                 Theme.warning
             )
@@ -510,10 +511,39 @@ struct EventCopy {
         // the lane writes its copy. Move your cases above and give them a
         // line; leave the others here.
         case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
-             .incumbentRetreated,
-             .staffPolicySet, .staffPolicyApplied,
-             .staffPolicyReversed, .familyDateMissed, .stayedIndependent:
+             .incumbentRetreated, .familyDateMissed, .stayedIndependent:
             fallbackEntry(for: event)
+
+        // MARK: WS-D — the answer becomes the policy
+
+        case .staffPolicySet(let flag, let employeeID, let day):
+            (
+                "text.book.closed.fill",
+                policyRule(flag).map {
+                    "\($0.name) is the rule now: \(lowercasingFirst($0.answer)) — "
+                        + "\(employeeName(employeeID)) asked, and that was the answer"
+                } ?? "That is the rule now — \(employeeName(employeeID)) asked, and that was the answer",
+                day,
+                Theme.accent
+            )
+        case .staffPolicyApplied(let flag, let employeeID, let day):
+            (
+                "checkmark.seal.fill",
+                policyRule(flag).map {
+                    "\(employeeName(employeeID)) — \($0.name.lowercased()), by the rule: "
+                        + lowercasingFirst($0.answer)
+                } ?? "The rule answered for \(employeeName(employeeID))",
+                day,
+                policyRule(flag)?.generous == false ? Color.secondary : Theme.positiveCash
+            )
+        case .staffPolicyReversed(let flag, let day):
+            (
+                "arrow.uturn.backward.circle.fill",
+                policyRule(flag).map { "You reversed the \($0.name.lowercased()) rule — everyone heard" }
+                    ?? "You reversed a rule — everyone heard",
+                day,
+                Theme.warning
+            )
 
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a
@@ -551,6 +581,42 @@ struct EventCopy {
             return (line.icon, line.message, line.day, line.tint)
         }
         return ("sparkles", "Something happened", state.day, Color.secondary)
+    }
+
+    /// The staff moment's own title from the catalog ("Priya is having a
+    /// baby"); the two original kinds' sentences when the catalog has no
+    /// definition for it.
+    private func staffMomentTitle(_ kind: StaffEventKind, employeeID: UUID) -> String {
+        let name = employeeName(employeeID)
+        if let def = content.staffEvent(kind.rawValue) {
+            return def.title
+                .replacingOccurrences(of: "{name}", with: name)
+                .replacingOccurrences(of: "{company}", with: state.company.name)
+        }
+        return kind == .familyEmergency
+            ? "\(name) has a family emergency"
+            : "\(name) is being courted by a rival"
+    }
+
+    /// "Full pay, three months" after a colon reads as "full pay, three
+    /// months"; a proper noun or an acronym keeps its capital.
+    private func lowercasingFirst(_ text: String) -> String {
+        guard let first = text.first, first.isUppercase,
+              text.dropFirst().first.map({ !$0.isUppercase }) ?? true
+        else { return text }
+        return first.lowercased() + text.dropFirst()
+    }
+
+    /// The rule behind a policy flag: its name and the answer it gives,
+    /// from the def whose policy block raised the flag. Nil for a flag the
+    /// catalog no longer names.
+    private func policyRule(_ flag: String) -> (name: String, answer: String, generous: Bool)? {
+        guard let def = content.staffEvents.first(where: {
+            $0.policy?.supportiveFlag == flag || $0.policy?.strictFlag == flag
+        }), let policy = def.policy else { return nil }
+        let generous = policy.supportiveFlag == flag
+        let answer = generous ? (def.supportive?.label ?? def.strict.label) : def.strict.label
+        return (policy.name, answer, generous)
     }
 
     private func socialMessage(_ kind: SocialActivityKind, employeeID: UUID?) -> String {

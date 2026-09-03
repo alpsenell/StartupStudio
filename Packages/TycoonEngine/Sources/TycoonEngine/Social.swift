@@ -71,6 +71,15 @@ public enum StaffEventChoice: String, Codable, Equatable, Sendable {
     /// The firm answer: usually free, dents loyalty. Also what the
     /// deadline picks when the founder never got back to them.
     case strict
+    /// The firm answer, made the rule (WS-D): the strict outcome lands and
+    /// the kind's strict policy is set, so the next person who asks gets
+    /// the same answer without a sheet — the cheap-now, remembered-later
+    /// choice. Appended; the deadline never picks it, and a kind with no
+    /// policy block treats it as plain `strict`.
+    case strictAsPolicy
+
+    /// Whether the answer is the firm one, rule or not.
+    public var isStrict: Bool { self != .supportive }
 }
 
 /// A pending staff event, stored until answered or auto-resolved.
@@ -78,11 +87,149 @@ public struct StaffEvent: Codable, Equatable, Sendable {
     public var employeeID: UUID
     public var kind: StaffEventKind
     public var respondByDay: Int
+    /// The `StaffEventDef` id when this is a scheduled second act rather
+    /// than a rolled kind (WS-D); `kind` is then the act's parent kind, for
+    /// the icon and the feed. Nil for every rolled moment, so saves from
+    /// before second acts decode as before.
+    public var defID: String?
 
-    public init(employeeID: UUID, kind: StaffEventKind, respondByDay: Int) {
+    public init(employeeID: UUID, kind: StaffEventKind, respondByDay: Int, defID: String? = nil) {
         self.employeeID = employeeID
         self.kind = kind
         self.respondByDay = respondByDay
+        self.defID = defID
+    }
+
+    /// The definition this moment renders and resolves against.
+    public var definitionID: String { defID ?? kind.rawValue }
+}
+
+// MARK: - Memory (WS-D)
+
+/// The rule flags the engine itself reads. Content raises them (a def's
+/// `policy` block) and may raise others; these two have mechanics behind
+/// them beyond the story gates.
+public enum StaffPolicyFlag {
+    /// `remoteRequest` answered generously: `teamConflict` is
+    /// `remoteConflictWeightFactor` times as likely, and the people the
+    /// rule answered for grow bonds at `remoteBondGrowthFactor`.
+    public static let remoteFriendly = "remote_friendly"
+    /// `parentalLeave` answered generously: every candidate's ask is
+    /// multiplied by `leavePolicyAskFactor`.
+    public static let goodLeavePolicy = "good_leave_policy"
+}
+
+/// A rule the founder set by answering one person.
+///
+/// A supportive answer to a policy-shaped kind (one whose def carries a
+/// `policy` block) becomes the rule: the next person who brings the same
+/// kind is answered by it — the same numbers, a ledger line, no sheet.
+/// The strict answer sets no rule unless the founder makes it one. The
+/// flag itself lives in `NarrativeState.flags` so content can gate on it;
+/// this record is who set it, when, and everyone it has answered for,
+/// which is what reversing it costs.
+public struct StaffPolicy: Codable, Equatable, Sendable, Identifiable {
+    public var id: String { flag }
+    public var kind: StaffEventKind
+    /// The narrative flag the rule raised (`good_leave_policy`, …).
+    public var flag: String
+    /// `.supportive` or `.strict`: which of the kind's two answers the
+    /// rule gives.
+    public var choice: StaffEventChoice
+    public var setDay: Int
+    /// The person whose question became the rule.
+    public var setBy: UUID
+    /// Their name, kept so the card still reads after they leave.
+    public var setByName: String
+    /// Everyone the rule has answered for, the person who set it first.
+    public var beneficiaries: [UUID]
+
+    public init(
+        kind: StaffEventKind,
+        flag: String,
+        choice: StaffEventChoice,
+        setDay: Int,
+        setBy: UUID,
+        setByName: String,
+        beneficiaries: [UUID]
+    ) {
+        self.kind = kind
+        self.flag = flag
+        self.choice = choice
+        self.setDay = setDay
+        self.setBy = setBy
+        self.setByName = setByName
+        self.beneficiaries = beneficiaries
+    }
+}
+
+/// A staff moment answered strictly, remembered by the person who asked —
+/// the fact behind "You said no in March" on their manage sheet.
+public struct StaffRefusal: Codable, Equatable, Sendable {
+    public var employeeID: UUID
+    public var kind: StaffEventKind
+    public var day: Int
+    /// Whether the deadline answered rather than the founder.
+    public var automatic: Bool
+
+    public init(employeeID: UUID, kind: StaffEventKind, day: Int, automatic: Bool) {
+        self.employeeID = employeeID
+        self.kind = kind
+        self.day = day
+        self.automatic = automatic
+    }
+}
+
+/// What the staff remember about the founder's answers: the rules those
+/// answers became, and the last time each person was told no. Empty in
+/// every save written before it existed, and in every pacing run — the
+/// bots never answer, so nothing here ever moves the baseline.
+public struct StaffMemory: Codable, Equatable, Sendable {
+    /// At most one per kind, in the order they were set.
+    public var policies: [StaffPolicy]
+    /// At most one per employee: the latest.
+    public var refusals: [StaffRefusal]
+
+    public init(policies: [StaffPolicy] = [], refusals: [StaffRefusal] = []) {
+        self.policies = policies
+        self.refusals = refusals
+    }
+
+    public static let initial = StaffMemory()
+
+    public var isEmpty: Bool { policies.isEmpty && refusals.isEmpty }
+
+    /// The rule for a kind, if the founder has set one.
+    public func policy(for kind: StaffEventKind) -> StaffPolicy? {
+        policies.first { $0.kind == kind }
+    }
+
+    /// The rule behind a flag, if it is one.
+    public func policy(flag: String) -> StaffPolicy? {
+        policies.first { $0.flag == flag }
+    }
+
+    /// The last strict answer this person got, if any.
+    public func refusal(for employeeID: UUID) -> StaffRefusal? {
+        refusals.first { $0.employeeID == employeeID }
+    }
+
+    /// Records a strict answer, replacing the person's earlier one.
+    public mutating func remember(_ refusal: StaffRefusal) {
+        refusals.removeAll { $0.employeeID == refusal.employeeID }
+        refusals.append(refusal)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case policies, refusals
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            policies: try container.decodeIfPresent([StaffPolicy].self, forKey: .policies) ?? [],
+            refusals: try container.decodeIfPresent([StaffRefusal].self, forKey: .refusals) ?? []
+        )
     }
 }
 

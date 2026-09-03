@@ -60,6 +60,12 @@ struct TeamScreen: View {
                     // Departments form by hiring the matching role, so the
                     // card lives where the hiring happens (it led HQ before).
                     DepartmentsCard(engine: engine)
+                    // The rules the founder's answers became. Only once
+                    // there is one: a rule can only be made by somebody
+                    // asking, never from a card.
+                    if !engine.state.staffMemory.policies.isEmpty {
+                        PoliciesCard(engine: engine)
+                    }
                 }
 
                 Section {

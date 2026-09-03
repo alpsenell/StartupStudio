@@ -45,6 +45,17 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
         public var skill: Double
         /// A narrative flag raised by this answer.
         public var setFlag: String?
+        /// A second act this answer schedules for the same person: the id
+        /// of another staff def, fired `followUpDelayDays` later as a
+        /// pending staff moment (or landing at once, if that def has no
+        /// supportive answer). Only a founder's own answer schedules one;
+        /// the deadline's never does.
+        public var followUpEventID: String?
+        public var followUpDelayDays: Int
+        /// The person hands in notice with this reason (shown on the
+        /// resignation sheet). Where the economy has no notice period
+        /// they walk today.
+        public var noticeReason: String?
 
         public init(
             label: String,
@@ -57,7 +68,10 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             salaryPercent: Double = 0,
             clearsAssignment: Bool = false,
             skill: Double = 0,
-            setFlag: String? = nil
+            setFlag: String? = nil,
+            followUpEventID: String? = nil,
+            followUpDelayDays: Int = 0,
+            noticeReason: String? = nil
         ) {
             self.label = label
             self.detail = detail
@@ -70,11 +84,15 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             self.clearsAssignment = clearsAssignment
             self.skill = skill
             self.setFlag = setFlag
+            self.followUpEventID = followUpEventID
+            self.followUpDelayDays = followUpDelayDays
+            self.noticeReason = noticeReason
         }
 
         private enum CodingKeys: String, CodingKey {
             case label, detail, cash, morale, loyalty, moraleAll, reputation
             case salaryPercent, clearsAssignment, skill, setFlag
+            case followUpEventID, followUpDelayDays, noticeReason
         }
 
         public init(from decoder: any Decoder) throws {
@@ -90,7 +108,10 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
                 salaryPercent: try container.decodeIfPresent(Double.self, forKey: .salaryPercent) ?? 0,
                 clearsAssignment: try container.decodeIfPresent(Bool.self, forKey: .clearsAssignment) ?? false,
                 skill: try container.decodeIfPresent(Double.self, forKey: .skill) ?? 0,
-                setFlag: try container.decodeIfPresent(String.self, forKey: .setFlag)
+                setFlag: try container.decodeIfPresent(String.self, forKey: .setFlag),
+                followUpEventID: try container.decodeIfPresent(String.self, forKey: .followUpEventID),
+                followUpDelayDays: try container.decodeIfPresent(Int.self, forKey: .followUpDelayDays) ?? 0,
+                noticeReason: try container.decodeIfPresent(String.self, forKey: .noticeReason)
             )
         }
 
@@ -107,6 +128,9 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             try container.encode(clearsAssignment, forKey: .clearsAssignment)
             try container.encode(skill, forKey: .skill)
             try container.encodeIfPresent(setFlag, forKey: .setFlag)
+            try container.encodeIfPresent(followUpEventID, forKey: .followUpEventID)
+            if followUpDelayDays != 0 { try container.encode(followUpDelayDays, forKey: .followUpDelayDays) }
+            try container.encodeIfPresent(noticeReason, forKey: .noticeReason)
         }
     }
 
@@ -130,6 +154,11 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
         public var minHeadcount: Int?
         /// Office tier raw value the studio must have reached.
         public var minTier: String?
+        /// Narrative flags that must all be set — a rule the founder made,
+        /// or an earlier answer's story flag.
+        public var flagsAll: [String]
+        /// Narrative flags none of which may be set.
+        public var flagsNone: [String]
 
         public init(
             anyTrait: [String] = [],
@@ -142,7 +171,9 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             requiresFriend: Bool? = nil,
             requiresDepartment: String? = nil,
             minHeadcount: Int? = nil,
-            minTier: String? = nil
+            minTier: String? = nil,
+            flagsAll: [String] = [],
+            flagsNone: [String] = []
         ) {
             self.anyTrait = anyTrait
             self.noTrait = noTrait
@@ -155,12 +186,14 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             self.requiresDepartment = requiresDepartment
             self.minHeadcount = minHeadcount
             self.minTier = minTier
+            self.flagsAll = flagsAll
+            self.flagsNone = flagsNone
         }
 
         private enum CodingKeys: String, CodingKey {
             case anyTrait, noTrait, minTenureDays, minMorale, maxMorale
             case minLoyalty, maxLoyalty, requiresFriend, requiresDepartment
-            case minHeadcount, minTier
+            case minHeadcount, minTier, flagsAll, flagsNone
         }
 
         public init(from decoder: any Decoder) throws {
@@ -176,7 +209,9 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
                 requiresFriend: try container.decodeIfPresent(Bool.self, forKey: .requiresFriend),
                 requiresDepartment: try container.decodeIfPresent(String.self, forKey: .requiresDepartment),
                 minHeadcount: try container.decodeIfPresent(Int.self, forKey: .minHeadcount),
-                minTier: try container.decodeIfPresent(String.self, forKey: .minTier)
+                minTier: try container.decodeIfPresent(String.self, forKey: .minTier),
+                flagsAll: try container.decodeIfPresent([String].self, forKey: .flagsAll) ?? [],
+                flagsNone: try container.decodeIfPresent([String].self, forKey: .flagsNone) ?? []
             )
         }
 
@@ -193,6 +228,30 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
             try container.encodeIfPresent(requiresDepartment, forKey: .requiresDepartment)
             try container.encodeIfPresent(minHeadcount, forKey: .minHeadcount)
             try container.encodeIfPresent(minTier, forKey: .minTier)
+            if !flagsAll.isEmpty { try container.encode(flagsAll, forKey: .flagsAll) }
+            if !flagsNone.isEmpty { try container.encode(flagsNone, forKey: .flagsNone) }
+        }
+    }
+
+    /// The rule a kind can become (WS-D). A def with one is policy-shaped:
+    /// a supportive answer raises `supportiveFlag` and answers the next
+    /// person who asks; "…and make that the rule" on the strict side
+    /// raises `strictFlag` and does the same. Reversing a generous rule
+    /// flips its flag to `strictFlag`.
+    ///
+    ///     "policy": { "name": "Parental leave",
+    ///                 "supportiveFlag": "good_leave_policy",
+    ///                 "strictFlag": "leave_statutory" }
+    public struct PolicyFlags: Codable, Equatable, Sendable {
+        /// How the rule reads on the *How we do things here* card.
+        public var name: String
+        public var supportiveFlag: String
+        public var strictFlag: String
+
+        public init(name: String, supportiveFlag: String, strictFlag: String) {
+            self.name = name
+            self.supportiveFlag = supportiveFlag
+            self.strictFlag = strictFlag
         }
     }
 
@@ -206,12 +265,23 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
     public var headline: String
     /// Relative pick probability among the eligible kinds, >= 1.
     public var weight: Int
-    /// When this kind can come up.
+    /// When this kind can come up. For a second act, checked again the
+    /// day it is due — a `flagsNone` gate lets a rule made in between
+    /// call it off.
     public var requires: Gate?
-    /// The generous answer.
-    public var supportive: Outcome
+    /// The generous answer. A def without one is a second act that does
+    /// not ask: `strict` lands the day it is due, with no sheet.
+    public var supportive: Outcome?
     /// The firm answer — also what the deadline picks.
     public var strict: Outcome
+    /// For a second act: the `StaffEventKind` it belongs to (the icon and
+    /// the feed line). A rolled kind's def is its own kind.
+    public var kind: String?
+    /// The rule this kind can become, if it is policy-shaped.
+    public var policy: PolicyFlags?
+
+    /// Whether this def is a second act that lands without asking.
+    public var isImmediate: Bool { supportive == nil }
 
     public init(
         id: String,
@@ -220,8 +290,10 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
         headline: String,
         weight: Int,
         requires: Gate? = nil,
-        supportive: Outcome,
-        strict: Outcome
+        supportive: Outcome?,
+        strict: Outcome,
+        kind: String? = nil,
+        policy: PolicyFlags? = nil
     ) {
         self.id = id
         self.title = title
@@ -231,5 +303,7 @@ public struct StaffEventDef: Codable, Equatable, Sendable, Identifiable {
         self.requires = requires
         self.supportive = supportive
         self.strict = strict
+        self.kind = kind
+        self.policy = policy
     }
 }
