@@ -576,6 +576,7 @@ enum RivalSystem {
         events.append(contentsOf: SocialSystem.friendDeparted(
             employee.id, state: &state, balance: balance
         ))
+        events.append(contentsOf: NetworkingSystem.departed(employee, reason: .poached, poachOffer: offer.offeredWeeklySalary, state: &state, balance: balance))
         return events
     }
 
