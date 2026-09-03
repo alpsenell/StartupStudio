@@ -112,6 +112,9 @@ enum FinanceSystem {
         state.company.officeTier = next
         state.milestonesReached.insert(next.rawValue)
         events.append(.officeUpgraded(tier: next, day: state.day))
+        // A co-founder on $0 starts drawing pay the day the office can
+        // afford them (WS-H). Nothing to do in a company without one.
+        events.append(contentsOf: OriginRules.cofoundersStartDrawingPay(&state, balance))
         return events
     }
 
