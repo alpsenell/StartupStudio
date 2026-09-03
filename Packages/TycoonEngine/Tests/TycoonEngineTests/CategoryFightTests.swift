@@ -179,11 +179,368 @@ struct CategoryFightTests {
         #expect(shipped.share == off.share)
         #expect(!shipped.share.isEmpty, "the run was never contested, so this proves nothing")
     }
+
+    // MARK: - The challenge opens
+
+    /// A player at standing `standing` in fitness with a product scoring
+    /// `score`, and a copycat elsewhere at `rivalStrength` that will clone
+    /// the product eight weeks after its launch. Returns the state after
+    /// `weeks` weeks and the challenge events seen.
+    private static func copycatScenario(
+        standing: Double,
+        score: Int = 60,
+        rivalStrength: Double = 70,
+        weeks: Int = 9,
+        lastChallengeDay: Int? = nil,
+        configure: (inout BalanceConfig) -> Void = { _ in }
+    ) throws -> (state: GameState, challenged: [GameEvent], launched: Int) {
+        var balance = try Self.balance(rivals: 1)
+        RivalFightFixtures.stillRivals(&balance)
+        configure(&balance)
+        var state = GameState.newGame(companyName: "Acme", seed: 46, balance: balance)
+        state.rivals.rivals = []
+        RivalFightFixtures.addPlayerProduct(to: &state, topicID: "fitness", score: score)
+        _ = RivalProductTests.addRival(
+            to: &state, personality: .copycat, topicID: "productivity", productQuality: nil
+        )
+        state.rivals.rivals[0].strength = rivalStrength
+        state.market.standing["fitness"] = standing
+        if let lastChallengeDay { state.rivals.lastChallengeDay["fitness"] = lastChallengeDay }
+
+        var challenged: [GameEvent] = []
+        var launched = 0
+        for _ in 0..<(weeks * GameState.daysPerWeek) {
+            for event in Reducer.tick(&state, balance: balance, content: Self.content) {
+                if case .categoryChallenged = event { challenged.append(event) }
+                if case .rivalProductLaunched = event { launched += 1 }
+            }
+        }
+        return (state, challenged, launched)
+    }
+
+    @Test func aLaunchIntoAHeldCategoryStopsTheClock() throws {
+        let (state, challenged, launched) = try Self.copycatScenario(standing: 60)
+        #expect(launched == 1, "the copycat never cloned the product, so this proves nothing")
+        #expect(challenged.count == 1)
+        guard case let .categoryChallenged(rivalID, topicID, productName, quality, respondByDay, day)? = challenged.first
+        else { return }
+        #expect(topicID == "fitness")
+        #expect(rivalID == state.rivals.rivals[0].id)
+        #expect(!productName.isEmpty)
+        // Within the window below the player's 60, or better.
+        #expect(quality >= 45)
+        #expect(respondByDay == day + 6 * GameState.daysPerWeek)
+        #expect(challenged[0].severity == .critical, "the challenge has to stop the clock")
+
+        let pending = try #require(state.rivals.pendingChallenge)
+        #expect(pending.topicID == "fitness")
+        #expect(pending.isPending)
+        #expect(pending.settlesDay == respondByDay)
+        #expect(state.rivals.lastChallengeDay["fitness"] == day)
+        #expect(state.rivals.challenge(in: "fitness") == pending)
+    }
+
+    @Test func noChallengeBelowTheStandingBar() throws {
+        // Eight weeks of the retainer (+0.5 a week) run before the clone
+        // lands; 40 stays under the bar, 49 would not.
+        let (_, challenged, launched) = try Self.copycatScenario(standing: 40)
+        #expect(launched == 1)
+        #expect(challenged.isEmpty, "a category the player does not hold is not worth a clock stop")
+    }
+
+    @Test func noChallengeFromALaunchWellBelowThePlayersBest() throws {
+        // A strength-20 studio clones at 20-ish: nowhere near a 60.
+        let (_, challenged, launched) = try Self.copycatScenario(standing: 60, rivalStrength: 20)
+        #expect(launched == 1)
+        #expect(challenged.isEmpty, "a weak clone read as a challenge — that is the nag the window guards")
+    }
+
+    @Test func oneChallengePerTopicPerCooldown() throws {
+        // The clone lands on day 56. A fight opened 100 days before that is
+        // inside the 26-week cooldown; one opened 200 days before is not.
+        let inside = try Self.copycatScenario(standing: 60, lastChallengeDay: -100)
+        #expect(inside.launched == 1)
+        #expect(inside.challenged.isEmpty)
+        let outside = try Self.copycatScenario(standing: 60, lastChallengeDay: -200)
+        #expect(outside.challenged.count == 1)
+    }
+
+    @Test func theKnobsAreTheWholeOfIt() throws {
+        // The bar off the scale: never a challenge, however held the topic.
+        let (_, challenged, launched) = try Self.copycatScenario(standing: 100) {
+            $0.rivals.depth.challengeMinStanding = .infinity
+        }
+        #expect(launched == 1)
+        #expect(challenged.isEmpty)
+    }
+
+    // MARK: - The settlement
+
+    /// A fight already open in fitness, settling on the next weekly pass,
+    /// against a rival product of `rivalQuality`; the player scores
+    /// `score` at `standing`. Rivals are still (no drift, no rolls), so
+    /// every number below is exact.
+    private static func settle(
+        score: Int,
+        rivalQuality: Double,
+        standing: Double = 60,
+        before: (inout GameState) -> Void = { _ in }
+    ) throws -> (state: GameState, events: [GameEvent], rivalID: UUID, standingBefore: Double, strengthBefore: Double) {
+        var balance = try Self.balance(rivals: 1)
+        RivalFightFixtures.stillRivals(&balance)
+        var state = GameState.newGame(companyName: "Acme", seed: 48, balance: balance)
+        state.rivals.rivals = []
+        RivalFightFixtures.addPlayerProduct(to: &state, topicID: "fitness", score: score)
+        let rivalID = RivalProductTests.addRival(
+            to: &state, personality: .deepPockets, topicID: "music", productQuality: nil
+        )
+        state.rivals.rivals[0].products = [RivalProduct(
+            id: UUID(), name: "Their Thing", topicID: "fitness", typeID: "mobile_app",
+            quality: rivalQuality, launchDay: 0, weeklyUnits: 100
+        )]
+        state.market.standing["fitness"] = standing
+        state.rivals.challenges = [CategoryChallenge(
+            rivalID: rivalID, topicID: "fitness", productName: "Their Thing",
+            quality: rivalQuality, startedDay: 0, settlesDay: balance.rivals.evolveIntervalDays
+        )]
+        before(&state)
+        let standingBefore = state.market.standing(for: "fitness")
+        let strengthBefore = state.rivals.rivals.first?.strength ?? 0
+
+        var events: [GameEvent] = []
+        for _ in 0..<balance.rivals.evolveIntervalDays {
+            events.append(contentsOf: Reducer.tick(&state, balance: balance, content: Self.content))
+        }
+        return (state, events, rivalID, standingBefore, strengthBefore)
+    }
+
+    @Test func holdingTheCategoryCostsTheRivalStrengthAndPaysStanding() throws {
+        let depth = BalanceConfig.RivalBalance.DepthBalance.default
+        let (state, events, rivalID, standingBefore, strengthBefore) = try Self.settle(score: 80, rivalQuality: 45)
+        #expect(state.rivals.share(for: "fitness") >= depth.challengeHoldShare)
+        #expect(events.contains(.categoryHeld(rivalID: rivalID, topicID: "fitness", day: state.day)))
+        #expect(!events.contains { if case .categoryLost = $0 { true } else { false } })
+        #expect(state.rivals.challenges.isEmpty, "a settled fight is over")
+        #expect(state.rivals.rivals[0].strength == strengthBefore - depth.heldRivalStrengthLoss)
+        // The week's retainer (+0.5) lands on the same day; the award is on top of it.
+        let gained = state.market.standing(for: "fitness") - standingBefore
+        #expect(gained >= depth.heldStandingGain && gained < depth.heldStandingGain + 1, "standing moved by \(gained)")
+        #expect(!state.rivals.rivals[0].focusTopicIDs.contains("fitness"))
+    }
+
+    @Test func losingTheCategoryCostsStandingAndFeedsTheRival() throws {
+        let depth = BalanceConfig.RivalBalance.DepthBalance.default
+        let (state, events, rivalID, standingBefore, strengthBefore) = try Self.settle(score: 50, rivalQuality: 95)
+        #expect(state.rivals.share(for: "fitness") < depth.challengeHoldShare)
+        #expect(events.contains(.categoryLost(rivalID: rivalID, topicID: "fitness", day: state.day)))
+        #expect(state.rivals.rivals[0].strength == strengthBefore + depth.lostRivalStrengthGain)
+        let lost = standingBefore - state.market.standing(for: "fitness")
+        #expect(lost > depth.lostStandingLoss - 1 && lost <= depth.lostStandingLoss, "standing moved by \(-lost)")
+        // …and it keeps coming: the topic is on its list now.
+        #expect(state.rivals.rivals[0].focusTopicIDs.contains("fitness"))
+    }
+
+    @Test func aCategoryWalkedOutOfMidFightIsLostNotHeldByDefault() throws {
+        let (state, events, rivalID, _, _) = try Self.settle(score: 80, rivalQuality: 45) { state in
+            // Delist the player's only product there before the settlement.
+            if case .released(var info) = state.products[0].stage {
+                info.offMarket = true
+                state.products[0].stage = .released(info)
+            }
+        }
+        #expect(state.rivals.playerShare["fitness"] == nil)
+        #expect(events.contains(.categoryLost(rivalID: rivalID, topicID: "fitness", day: state.day)))
+    }
+
+    @Test func aFightSettlesEvenWhenTheRivalIsGone() throws {
+        // The rival folded or was bought mid-fight: the player out-sold it
+        // off the board, which is holding the category.
+        let (state, events, rivalID, _, _) = try Self.settle(score: 80, rivalQuality: 45) { state in
+            state.rivals.rivals = []
+        }
+        #expect(events.contains(.categoryHeld(rivalID: rivalID, topicID: "fitness", day: state.day)))
+        #expect(state.rivals.challenges.isEmpty)
+    }
+
+    // MARK: - The answers
+
+    /// A fight open in fitness with the player at 60 and a rival at 55,
+    /// nothing in development, so every routed answer can land.
+    private static func openFight(
+        configure: (inout GameState, BalanceConfig) -> Void = { _, _ in }
+    ) throws -> (GameState, BalanceConfig, UUID) {
+        var balance = try Self.balance(rivals: 1)
+        RivalFightFixtures.stillRivals(&balance)
+        var state = GameState.newGame(companyName: "Acme", seed: 49, balance: balance)
+        state.rivals.rivals = []
+        let productID = RivalFightFixtures.addPlayerProduct(to: &state, topicID: "fitness", score: 60)
+        let rivalID = RivalProductTests.addRival(
+            to: &state, personality: .deepPockets, topicID: "fitness", productQuality: 55
+        )
+        state.market.standing["fitness"] = 60
+        state.rivals.challenges = [CategoryChallenge(
+            rivalID: rivalID, topicID: "fitness", productName: "Their Thing",
+            quality: 55, startedDay: state.day, settlesDay: state.day + 42
+        )]
+        configure(&state, balance)
+        return (state, balance, productID)
+    }
+
+    @Test func concedingClearsTheSheetButNotTheSettlement() throws {
+        var (state, balance, _) = try Self.openFight()
+        #expect(state.rivals.pendingChallenge != nil)
+        let events = Reducer.apply(.concedeCategory, to: &state, balance: balance, content: Self.content)
+        #expect(events.isEmpty)
+        #expect(state.rivals.pendingChallenge == nil, "the sheet is still up")
+        let fight = try #require(state.rivals.challenge(in: "fitness"))
+        #expect(fight.conceded)
+        #expect(fight.answeredDay == state.day)
+        // Conceding twice is nothing.
+        #expect(Reducer.apply(.concedeCategory, to: &state, balance: balance, content: Self.content).isEmpty)
+
+        // Six weeks on, the fight still settles — on the numbers.
+        var settled: [GameEvent] = []
+        for _ in 0..<42 {
+            settled.append(contentsOf: Reducer.tick(&state, balance: balance, content: Self.content))
+        }
+        #expect(settled.contains { if case .categoryHeld = $0 { true } else { false } })
+        #expect(state.rivals.challenges.isEmpty)
+    }
+
+    @Test func aPriceCutRoutesToTheBestProductAndAnswers() throws {
+        var (state, balance, productID) = try Self.openFight()
+        let events = Reducer.apply(
+            .defendCategory(topicID: "fitness", defense: .budgetPrice),
+            to: &state, balance: balance, content: Self.content
+        )
+        #expect(events.contains(.priceChanged(productID: productID, tier: .budget, day: state.day)))
+        guard case .released(let info) = state.products[0].stage else { return }
+        #expect(info.priceTier == .budget)
+        let fight = try #require(state.rivals.challenge(in: "fitness"))
+        #expect(!fight.isPending)
+        #expect(!fight.conceded)
+        #expect(state.rivals.pendingChallenge == nil)
+
+        // Already budget: nothing to route, and the fight stays as it was.
+        let again = Reducer.apply(
+            .defendCategory(topicID: "fitness", defense: .budgetPrice),
+            to: &state, balance: balance, content: Self.content
+        )
+        #expect(again.isEmpty)
+    }
+
+    @Test func aPatchTakesTheBuildSlotOrLeavesTheQuestionOpen() throws {
+        // With the one garage slot taken, the patch cannot start and the
+        // challenge stays pending — the sheet must not close on nothing.
+        var (busy, balance, productID) = try Self.openFight { state, balance in
+            _ = Reducer.apply(
+                .startProduct(typeID: "mobile_app", topicID: "music", name: "Next", focus: .balanced),
+                to: &state, balance: balance, content: Self.content
+            )
+        }
+        #expect(!busy.hasFreeDevSlot)
+        let refused = Reducer.apply(
+            .defendCategory(topicID: "fitness", defense: .patch),
+            to: &busy, balance: balance, content: Self.content
+        )
+        #expect(refused.isEmpty)
+        #expect(busy.economy.update(for: productID) == nil)
+        #expect(busy.rivals.pendingChallenge != nil)
+
+        // With the slot free, the patch starts and the question is answered.
+        var (free, _, freeProductID) = try Self.openFight()
+        _ = Reducer.apply(
+            .defendCategory(topicID: "fitness", defense: .patch),
+            to: &free, balance: balance, content: Self.content
+        )
+        #expect(free.economy.update(for: freeProductID) != nil)
+        #expect(free.rivals.pendingChallenge == nil)
+    }
+
+    @Test func aCampaignCostsCashAndAnswers() throws {
+        var (state, balance, productID) = try Self.openFight()
+        let events = Reducer.apply(
+            .defendCategory(topicID: "fitness", defense: .campaign),
+            to: &state, balance: balance, content: Self.content
+        )
+        #expect(events.contains { if case .campaignStarted = $0 { true } else { false } })
+        #expect(state.campaigns.contains { $0.productID == productID && $0.kindID == CampaignKind.socialPush.rawValue })
+        #expect(state.rivals.pendingChallenge == nil)
+    }
+
+    @Test func aDefenceInATopicWithNoFightIsNothing() throws {
+        var (state, balance, _) = try Self.openFight()
+        let before = state
+        let events = Reducer.apply(
+            .defendCategory(topicID: "music", defense: .budgetPrice),
+            to: &state, balance: balance, content: Self.content
+        )
+        #expect(events.isEmpty)
+        #expect(state == before)
+    }
+
+    // MARK: - Save compatibility
+
+    @Test func challengesRoundTripAndOldSavesDecodeWithNone() throws {
+        var rivals = RivalsState.empty
+        let rivalID = UUID()
+        rivals.challenges = [CategoryChallenge(
+            rivalID: rivalID, topicID: "fitness", productName: "Kite Notes",
+            quality: 58, startedDay: 100, settlesDay: 142, answeredDay: 101, conceded: true
+        )]
+        rivals.lastChallengeDay = ["music": 40, "fitness": 100]
+        rivals.incumbentFoundedDay = 300
+        rivals.incumbentHeldSinceDay = 310
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let data = try encoder.encode(rivals)
+        let decoded = try JSONDecoder().decode(RivalsState.self, from: data)
+        #expect(decoded == rivals)
+        #expect(decoded.pendingChallenge == nil)
+        #expect(decoded.challenge(in: "fitness")?.conceded == true)
+
+        // Stable order for the cooldown table.
+        var object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let days = try #require(object["lastChallengeDay"] as? [[String: Any]])
+        #expect(days.compactMap { $0["topicID"] as? String } == ["fitness", "music"])
+
+        // A save from before the fight existed.
+        for key in ["challenges", "lastChallengeDay", "incumbentFoundedDay", "incumbentHeldSinceDay"] {
+            object.removeValue(forKey: key)
+        }
+        let legacy = try JSONDecoder().decode(
+            RivalsState.self, from: try JSONSerialization.data(withJSONObject: object)
+        )
+        #expect(legacy.challenges.isEmpty)
+        #expect(legacy.lastChallengeDay.isEmpty)
+        #expect(legacy.incumbentFoundedDay == nil)
+        #expect(legacy.incumbentHeldSinceDay == nil)
+        #expect(legacy.pendingChallenge == nil)
+
+        // …and a rival from before the incumbent.
+        let rival = try JSONDecoder().decode(Rival.self, from: Data("""
+        {"id": "11111111-2222-3333-4444-555555555555", "name": "Old", "strength": 42,
+         "reputation": 30, "focusTopicIDs": ["fitness"], "foundedDay": 3, "appearanceSeed": 99}
+        """.utf8))
+        #expect(!rival.isIncumbent)
+    }
 }
 
+
 /// Shared fixtures for the WS-A suites: a player product on the market at
-/// a chosen score, in a chosen topic.
+/// a chosen score, in a chosen topic, and a field that holds still.
 enum RivalFightFixtures {
+    /// Rivals that neither drift, ship, stumble nor bleed, so a test about
+    /// one settlement's numbers is about that settlement alone.
+    static func stillRivals(_ balance: inout BalanceConfig) {
+        balance.rivals.strengthDriftSigma = 0
+        balance.rivals.shipChance = 0
+        balance.rivals.stumbleChance = 0
+        balance.rivals.depth.strengthPerWeekBeaten = 0
+        balance.rivals.depth.standingPerWeekBeaten = 0
+        balance.rivals.depth.incumbentEnabled = false
+    }
+
     @discardableResult
     static func addPlayerProduct(
         to state: inout GameState,

@@ -126,6 +126,25 @@ enum Desk {
             )
         }
 
+        // A category fight with a clock on it (WS-A).
+        for challenge in state.rivals.challenges {
+            let rival = state.rivals.rival(id: challenge.rivalID)?.name ?? "A rival"
+            let topic = content.topic(challenge.topicID)?.name ?? challenge.topicID
+            let share = state.rivals.share(for: challenge.topicID)
+            let holding = share >= balance.rivals.depth.challengeHoldShare
+            items.append(
+                DeskItem(
+                    id: "challenge-\(challenge.id)",
+                    systemImage: "flag.2.crossed.fill",
+                    text: "\(rival) is challenging \(topic) · you hold \(Int((share * 100).rounded()))%",
+                    daysLeft: max(0, challenge.settlesDay - day),
+                    tint: holding ? Theme.warning : Theme.negativeCash,
+                    route: .rivals,
+                    section: .rivals
+                )
+            )
+        }
+
         // The bank.
         if state.loanBalance > 0 {
             items.append(

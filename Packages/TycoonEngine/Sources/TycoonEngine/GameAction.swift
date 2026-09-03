@@ -153,6 +153,11 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// WS-A: lets a challenged category go without answering. The
     /// answers that defend it are actions the game already has.
     case concedeCategory
+    /// WS-A: answers a challenge with one of those actions — budget tier,
+    /// a patch, a social push — routed to the player's best live product
+    /// in the topic. The challenge counts as answered only when the
+    /// routed action took effect.
+    case defendCategory(topicID: String, defense: CategoryDefense)
     /// WS-B: pays a seated round out of the cap table and its ask off the board.
     case buyBackRound(investorID: String)
     /// WS-B: takes a strategic buyout as 60% now and the rest over two

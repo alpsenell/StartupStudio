@@ -89,6 +89,11 @@ private struct TopicBattleCard: View {
             .first { $0.isInPriceWar(on: engine.state.day) && $0.priceWarTopicID == topicID }
     }
 
+    /// The category fight in progress here, if any (WS-A).
+    private var challenge: CategoryChallenge? {
+        engine.state.rivals.challenge(in: topicID)
+    }
+
     var body: some View {
         CardView(topicName, systemImage: "target") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
@@ -136,8 +141,55 @@ private struct TopicBattleCard: View {
                     .foregroundStyle(Theme.negativeCash)
                     .fixedSize(horizontal: false, vertical: true)
                 }
+
+                if let challenge {
+                    challengeBanner(challenge)
+                }
             }
         }
+    }
+
+    /// The fight and its clock: who launched what, the share that decides
+    /// it, and whether the player is holding it today.
+    private func challengeBanner(_ challenge: CategoryChallenge) -> some View {
+        let depth = engine.balance.rivals.depth
+        let rivalName = engine.state.rivals.rival(id: challenge.rivalID)?.name ?? "A rival"
+        let daysLeft = max(0, challenge.settlesDay - engine.state.day)
+        let holding = share >= depth.challengeHoldShare
+        return VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Label("CHALLENGE", systemImage: "flag.2.crossed.fill")
+                    .font(.caption2.weight(.bold))
+                    .kerning(0.5)
+                    .foregroundStyle(Theme.warning)
+                Spacer(minLength: Theme.Spacing.xs)
+                Text(daysLeft == 0 ? "settles today" : "settles in \(daysLeft)d")
+                    .font(Theme.Typography.number(.caption2))
+                    .foregroundStyle(daysLeft <= 7 ? Theme.negativeCash : .secondary)
+                    .padding(.horizontal, Theme.Spacing.sm)
+                    .padding(.vertical, 2)
+                    .background(Theme.chipBackground, in: Capsule())
+            }
+            Text(
+                "\(rivalName) launched \(challenge.productName) (\(Int(challenge.quality.rounded()))) here. "
+                    + "Hold \(Int((depth.challengeHoldShare * 100).rounded()))% when it settles and they lose "
+                    + "\(Int(depth.heldRivalStrengthLoss)) strength; lose it and your standing here drops "
+                    + "\(Int(depth.lostStandingLoss))."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            Text(
+                challenge.conceded
+                    ? (holding ? "You let it go — and you're holding it anyway." : "You let it go.")
+                    : (holding ? "You're holding it." : "You're not holding it.")
+            )
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(holding ? Theme.positiveCash : Theme.negativeCash)
+        }
+        .padding(Theme.Spacing.sm)
+        .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 
     private var shareTint: Color {

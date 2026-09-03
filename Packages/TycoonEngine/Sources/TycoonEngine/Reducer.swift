@@ -305,7 +305,12 @@ public enum Reducer {
 
         // MARK: WS-A (category fight)
         case .concedeCategory:
-            events = []
+            events = RivalSystem.concedeCategory(state: &state)
+        case let .defendCategory(topicID, defense):
+            events = RivalSystem.defendCategory(
+                topicID: topicID, defense: defense,
+                state: &state, balance: balance, content: content
+            )
 
         // MARK: WS-B (board)
         case .buyBackRound:

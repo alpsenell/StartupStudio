@@ -49,10 +49,17 @@ enum RivalSystem {
         }
 
         if state.day % config.evolveIntervalDays == 0 {
-            events.append(contentsOf: evolve(&state, balance, content))
-            events.append(contentsOf: copycatCheck(&state, balance, content))
+            // The week's launches, read off the evolve and copycat events
+            // so the challenge pass needs no second draw and no extra
+            // state.
+            var launches: [GameEvent] = []
+            launches.append(contentsOf: evolve(&state, balance, content))
+            launches.append(contentsOf: copycatCheck(&state, balance, content))
+            events.append(contentsOf: launches)
+            events.append(contentsOf: challengeCheck(&state, launches: launches, balance))
             recomputeShare(&state, balance)
             events.append(contentsOf: priceWarCheck(&state, balance))
+            events.append(contentsOf: settleChallenges(&state, balance))
         }
         // Re-applied every day, not just on evolution days: `MarketSystem`
         // rebuilds each `TopicMarket` on its weekly shift, and this system
@@ -469,6 +476,210 @@ enum RivalSystem {
         }
         // The war's bite lands on this week's share.
         if !events.isEmpty { recomputeShare(&state, balance) }
+        return events
+    }
+
+    // MARK: - The category fight
+
+    /// Hold the Category, phase two: a rival launch into a category the
+    /// player holds stops the clock for six weeks' worth of decision.
+    ///
+    /// For each launch this week, in event order: the topic has no fight
+    /// in progress and is off its cooldown, the player's standing there
+    /// clears `challengeMinStanding`, and the launch scores no more than
+    /// `challengeQualityWindow` below the player's best live product —
+    /// anything better is a challenge by definition. Deterministic, no
+    /// draws; every input is a launch that already drew.
+    private static func challengeCheck(
+        _ state: inout GameState,
+        launches: [GameEvent],
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let depth = balance.rivals.depth
+        var events: [GameEvent] = []
+        for event in launches {
+            guard case let .rivalProductLaunched(rivalID, productName, topicID, quality, _) = event,
+                  state.rivals.challenge(in: topicID) == nil,
+                  state.rivals.lastChallengeDay[topicID].map({
+                      state.day - $0 >= depth.challengeCooldownWeeks * GameState.daysPerWeek
+                  }) ?? true,
+                  state.market.standing(for: topicID) >= depth.challengeMinStanding,
+                  let best = playerBestScore(in: topicID, state),
+                  Double(quality) >= Double(best) - depth.challengeQualityWindow
+            else { continue }
+            events.append(openChallenge(
+                rivalID: rivalID, topicID: topicID, productName: productName,
+                quality: Double(quality), &state, depth
+            ))
+        }
+        return events
+    }
+
+    /// Opens a fight in a topic: the record, the cooldown stamp, and the
+    /// critical event that stops the clock.
+    private static func openChallenge(
+        rivalID: UUID,
+        topicID: String,
+        productName: String,
+        quality: Double,
+        _ state: inout GameState,
+        _ depth: BalanceConfig.RivalBalance.DepthBalance
+    ) -> GameEvent {
+        let settlesDay = state.day + depth.challengeWeeks * GameState.daysPerWeek
+        state.rivals.challenges.append(CategoryChallenge(
+            rivalID: rivalID,
+            topicID: topicID,
+            productName: productName,
+            quality: quality,
+            startedDay: state.day,
+            settlesDay: settlesDay
+        ))
+        state.rivals.lastChallengeDay[topicID] = state.day
+        return .categoryChallenged(
+            rivalID: rivalID,
+            topicID: topicID,
+            productName: productName,
+            quality: Int(quality.rounded()),
+            respondByDay: settlesDay,
+            day: state.day
+        )
+    }
+
+    /// Settles every fight that has reached its day, on the share the
+    /// week's pass just computed. Held (share at or above
+    /// `challengeHoldShare`): the rival loses `heldRivalStrengthLoss`, the
+    /// player gains `heldStandingGain` there. Lost: the player loses
+    /// `lostStandingLoss` — the retainer stops covering the decay and the
+    /// category goes quiet — the rival gains `lostRivalStrengthGain` and
+    /// adds the topic to its focus, so it keeps coming. A rival that has
+    /// folded or been bought since still settles: the player out-sold it
+    /// off the board, which is holding the category.
+    ///
+    /// The share table has an entry only where the player has something
+    /// live, so a category the player walked out of mid-fight is lost
+    /// rather than held by default. Deterministic, no draws.
+    private static func settleChallenges(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let depth = balance.rivals.depth
+        let day = state.day
+        let due = state.rivals.challenges.filter { $0.settlesDay <= day }
+        guard !due.isEmpty else { return [] }
+        state.rivals.challenges.removeAll { $0.settlesDay <= day }
+
+        var events: [GameEvent] = []
+        for challenge in due {
+            let held = (state.rivals.playerShare[challenge.topicID] ?? 0) >= depth.challengeHoldShare
+            let rivalIndex = state.rivals.rivals.firstIndex { $0.id == challenge.rivalID }
+            if held {
+                if let rivalIndex {
+                    state.rivals.rivals[rivalIndex].strength = clamp(
+                        state.rivals.rivals[rivalIndex].strength - depth.heldRivalStrengthLoss,
+                        min: 1, max: 100
+                    )
+                }
+                StandingSystem.adjust(depth.heldStandingGain, in: challenge.topicID, &state, balance)
+                events.append(.categoryHeld(
+                    rivalID: challenge.rivalID, topicID: challenge.topicID, day: day
+                ))
+            } else {
+                StandingSystem.adjust(-depth.lostStandingLoss, in: challenge.topicID, &state, balance)
+                if let rivalIndex {
+                    state.rivals.rivals[rivalIndex].strength = clamp(
+                        state.rivals.rivals[rivalIndex].strength + depth.lostRivalStrengthGain,
+                        min: 1, max: 100
+                    )
+                    if !state.rivals.rivals[rivalIndex].focusTopicIDs.contains(challenge.topicID) {
+                        state.rivals.rivals[rivalIndex].focusTopicIDs.append(challenge.topicID)
+                    }
+                }
+                events.append(.categoryLost(
+                    rivalID: challenge.rivalID, topicID: challenge.topicID, day: day
+                ))
+            }
+        }
+        return events
+    }
+
+    /// The player's best live product in a topic: its id and its review
+    /// score, the standard the share pass uses. Ties break on the id
+    /// string so the pick replays identically.
+    static func playerBestProduct(in topicID: String, _ state: GameState) -> (id: UUID, score: Int)? {
+        state.products
+            .compactMap { product -> (id: UUID, score: Int)? in
+                guard product.topicID == topicID,
+                      case .released(let info) = product.stage,
+                      !info.offMarket
+                else { return nil }
+                return (product.id, info.averageReviewScore)
+            }
+            .max { lhs, rhs in
+                if lhs.score != rhs.score { return lhs.score < rhs.score }
+                return lhs.id.uuidString > rhs.id.uuidString
+            }
+    }
+
+    private static func playerBestScore(in topicID: String, _ state: GameState) -> Int? {
+        playerBestProduct(in: topicID, state)?.score
+    }
+
+    /// "Let it go": the pending challenge is answered and the sheet comes
+    /// down. The settlement still runs at its day — six weeks decide the
+    /// category whether or not the player fought for it. Ignored with
+    /// nothing pending.
+    static func concedeCategory(state: inout GameState) -> [GameEvent] {
+        guard let index = state.rivals.challenges.firstIndex(where: \.isPending) else { return [] }
+        state.rivals.challenges[index].answeredDay = state.day
+        state.rivals.challenges[index].conceded = true
+        return []
+    }
+
+    /// Answers a challenge with an action the game already has, routed to
+    /// the player's best live product in the topic: the budget tier, a
+    /// patch, or a social push. The challenge counts as answered only when
+    /// the routed action took effect — a patch with no free build slot or
+    /// a campaign on cooldown leaves it open, and returns nothing, so the
+    /// sheet does not close on an answer that did nothing. Works on a
+    /// fight already answered, too: a second defence is still a defence.
+    /// Ignored with no fight in the topic.
+    static func defendCategory(
+        topicID: String,
+        defense: CategoryDefense,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let index = state.rivals.challenges.firstIndex(where: { $0.topicID == topicID }),
+              let target = playerBestProduct(in: topicID, state)
+        else { return [] }
+
+        let events: [GameEvent]
+        let applied: Bool
+        switch defense {
+        case .budgetPrice:
+            events = ProductSystem.setPriceTier(
+                productID: target.id, tier: .budget, state: &state, balance: balance
+            )
+            applied = !events.isEmpty
+        case .patch:
+            // `startUpdate` returns nothing on success; the patch on the
+            // books is the evidence.
+            events = ProductSystem.startUpdate(
+                productID: target.id, state: &state, balance: balance, content: content
+            )
+            applied = state.economy.update(for: target.id) != nil
+        case .campaign:
+            events = MarketingSystem.startCampaign(
+                kindID: CampaignKind.socialPush.rawValue, productID: target.id,
+                state: &state, balance: balance, content: content
+            )
+            applied = !events.isEmpty
+        }
+        guard applied else { return [] }
+        if state.rivals.challenges[index].answeredDay == nil {
+            state.rivals.challenges[index].answeredDay = state.day
+        }
         return events
     }
 

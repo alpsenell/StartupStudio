@@ -168,6 +168,11 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
     /// until this day.
     public var priceWarUntilDay: Int?
     public var priceWarTopicID: String?
+    /// The Incumbent (WS-A, iteration 5): the deep-pockets giant founded
+    /// into the player's two best markets once the company is worth
+    /// having. True while it is still fighting for them; a retreat clears
+    /// it and leaves an ordinary — large — rival on the board.
+    public var isIncumbent: Bool
 
     public init(
         id: UUID,
@@ -183,7 +188,8 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
         personality: RivalPersonality = .deepPockets,
         weeksBeaten: Int = 0,
         priceWarUntilDay: Int? = nil,
-        priceWarTopicID: String? = nil
+        priceWarTopicID: String? = nil,
+        isIncumbent: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -199,6 +205,7 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
         self.weeksBeaten = weeksBeaten
         self.priceWarUntilDay = priceWarUntilDay
         self.priceWarTopicID = priceWarTopicID
+        self.isIncumbent = isIncumbent
     }
 
     /// The products still fighting for share on a given day.
@@ -238,6 +245,7 @@ extension Rival {
         case id, name, strength, reputation, focusTopicIDs, hqDistrict
         case lastShippedDay, foundedDay, appearanceSeed
         case products, personality, weeksBeaten, priceWarUntilDay, priceWarTopicID
+        case isIncumbent
     }
 
     public init(from decoder: any Decoder) throws {
@@ -257,7 +265,8 @@ extension Rival {
                 ?? .deepPockets,
             weeksBeaten: try container.decodeIfPresent(Int.self, forKey: .weeksBeaten) ?? 0,
             priceWarUntilDay: try container.decodeIfPresent(Int.self, forKey: .priceWarUntilDay),
-            priceWarTopicID: try container.decodeIfPresent(String.self, forKey: .priceWarTopicID)
+            priceWarTopicID: try container.decodeIfPresent(String.self, forKey: .priceWarTopicID),
+            isIncumbent: try container.decodeIfPresent(Bool.self, forKey: .isIncumbent) ?? false
         )
     }
 }
@@ -295,6 +304,90 @@ public struct BuyoutOffer: Codable, Equatable, Sendable {
     }
 }
 
+/// A rival's launch into a category the player holds — "The Category
+/// Fight" (WS-A, iteration 5). Opened by `RivalSystem` when a launch lands
+/// in a topic where the player's standing clears
+/// `rivals.depth.challengeMinStanding` and the product scores inside the
+/// quality window; settled `challengeWeeks` later on the share the player
+/// holds then. Until it is answered — a defence routed through
+/// `GameAction.defendCategory`, or `concedeCategory` — it is the pending
+/// decision the app puts on a sheet.
+public struct CategoryChallenge: Codable, Equatable, Sendable, Identifiable {
+    public var rivalID: UUID
+    public var topicID: String
+    /// The launch that opened it, and what it scored.
+    public var productName: String
+    public var quality: Double
+    public var startedDay: Int
+    /// The day the fight is decided: share at or above
+    /// `rivals.depth.challengeHoldShare` holds the category.
+    public var settlesDay: Int
+    /// The day the player answered, `nil` while the sheet is still up.
+    /// The settlement runs either way.
+    public var answeredDay: Int?
+    /// Whether the answer was "let it go".
+    public var conceded: Bool
+
+    public init(
+        rivalID: UUID,
+        topicID: String,
+        productName: String,
+        quality: Double,
+        startedDay: Int,
+        settlesDay: Int,
+        answeredDay: Int? = nil,
+        conceded: Bool = false
+    ) {
+        self.rivalID = rivalID
+        self.topicID = topicID
+        self.productName = productName
+        self.quality = quality
+        self.startedDay = startedDay
+        self.settlesDay = settlesDay
+        self.answeredDay = answeredDay
+        self.conceded = conceded
+    }
+
+    /// Stable across the fight, and different for the next one in the
+    /// same topic, so the sheet re-presents exactly once per challenge.
+    public var id: String { "\(topicID)-\(startedDay)-\(rivalID.uuidString)" }
+
+    /// Whether the player still owes an answer.
+    public var isPending: Bool { answeredDay == nil }
+
+    private enum CodingKeys: String, CodingKey {
+        case rivalID, topicID, productName, quality, startedDay, settlesDay, answeredDay, conceded
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            rivalID: try container.decode(UUID.self, forKey: .rivalID),
+            topicID: try container.decode(String.self, forKey: .topicID),
+            productName: try container.decode(String.self, forKey: .productName),
+            quality: try container.decode(Double.self, forKey: .quality),
+            startedDay: try container.decode(Int.self, forKey: .startedDay),
+            settlesDay: try container.decode(Int.self, forKey: .settlesDay),
+            answeredDay: try container.decodeIfPresent(Int.self, forKey: .answeredDay),
+            conceded: try container.decodeIfPresent(Bool.self, forKey: .conceded) ?? false
+        )
+    }
+}
+
+/// The three answers to a challenge that the game already had as actions.
+/// `GameAction.defendCategory` routes one of these to the player's best
+/// live product in the challenged topic — the sheet offers them, and so
+/// can a bot — and marks the challenge answered when it took effect.
+public enum CategoryDefense: String, Codable, Equatable, Sendable, CaseIterable {
+    /// `setPriceTier(.budget)`: more of the market, less per sale.
+    case budgetPrice
+    /// `startUpdate`: a build slot for a few weeks and another look from
+    /// the press.
+    case patch
+    /// `startCampaign(.socialPush)`: cash for hype.
+    case campaign
+}
+
 /// Everything about the competitive landscape, advanced by `RivalSystem`.
 public struct RivalsState: Codable, Equatable, Sendable {
     public var rivals: [Rival]
@@ -313,6 +406,16 @@ public struct RivalsState: Codable, Equatable, Sendable {
     /// Whether the last buyout offer was a strategic approach (a premium
     /// for a company worth having) rather than a distress bid.
     public var lastBuyoutWasStrategic: Bool
+    /// The category fights in progress, one per topic at most, oldest
+    /// first. Settled and removed by `RivalSystem` on `settlesDay`.
+    public var challenges: [CategoryChallenge]
+    /// The day each topic was last challenged, for the per-topic cooldown.
+    public var lastChallengeDay: [String: Int]
+    /// The day the incumbent was founded, `nil` until it is. One per run.
+    public var incumbentFoundedDay: Int?
+    /// The first weekly check on which the player held both of the
+    /// incumbent's topics; `nil` whenever they do not. Its retreat clock.
+    public var incumbentHeldSinceDay: Int?
 
     public init(
         rivals: [Rival],
@@ -321,7 +424,11 @@ public struct RivalsState: Codable, Equatable, Sendable {
         lastPoachDay: Int? = nil,
         lastBuyoutDay: Int? = nil,
         playerShare: [String: Double] = [:],
-        lastBuyoutWasStrategic: Bool = false
+        lastBuyoutWasStrategic: Bool = false,
+        challenges: [CategoryChallenge] = [],
+        lastChallengeDay: [String: Int] = [:],
+        incumbentFoundedDay: Int? = nil,
+        incumbentHeldSinceDay: Int? = nil
     ) {
         self.rivals = rivals
         self.pendingPoach = pendingPoach
@@ -330,6 +437,10 @@ public struct RivalsState: Codable, Equatable, Sendable {
         self.lastBuyoutDay = lastBuyoutDay
         self.playerShare = playerShare
         self.lastBuyoutWasStrategic = lastBuyoutWasStrategic
+        self.challenges = challenges
+        self.lastChallengeDay = lastChallengeDay
+        self.incumbentFoundedDay = incumbentFoundedDay
+        self.incumbentHeldSinceDay = incumbentHeldSinceDay
     }
 
     /// Pre-rivals saves start here; `RivalSystem` founds the field on its
@@ -338,6 +449,23 @@ public struct RivalsState: Codable, Equatable, Sendable {
 
     public func rival(id: UUID) -> Rival? {
         rivals.first { $0.id == id }
+    }
+
+    /// The challenge still waiting for an answer — the shape of
+    /// `pendingPoach`, for the decision sheet. Oldest first.
+    public var pendingChallenge: CategoryChallenge? {
+        challenges.first { $0.isPending }
+    }
+
+    /// The fight in progress in a topic, if any.
+    public func challenge(in topicID: String) -> CategoryChallenge? {
+        challenges.first { $0.topicID == topicID }
+    }
+
+    /// The deep-pockets giant in the player's best markets, while it is
+    /// still fighting for them.
+    public var incumbent: Rival? {
+        rivals.first { $0.isIncumbent }
     }
 
     /// The player's slice of a topic, 1.0 for a topic nobody contests.
@@ -379,6 +507,7 @@ extension RivalsState {
     private enum CodingKeys: String, CodingKey {
         case rivals, pendingPoach, pendingBuyout, lastPoachDay, lastBuyoutDay
         case playerShare, lastBuyoutWasStrategic
+        case challenges, lastChallengeDay, incumbentFoundedDay, incumbentHeldSinceDay
     }
 
     private struct ShareEntry: Codable {
@@ -386,9 +515,15 @@ extension RivalsState {
         var share: Double
     }
 
+    private struct DayEntry: Codable {
+        var topicID: String
+        var day: Int
+    }
+
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let entries = try container.decodeIfPresent([ShareEntry].self, forKey: .playerShare) ?? []
+        let challengeDays = try container.decodeIfPresent([DayEntry].self, forKey: .lastChallengeDay) ?? []
         self.init(
             rivals: try container.decode([Rival].self, forKey: .rivals),
             pendingPoach: try container.decodeIfPresent(PoachOffer.self, forKey: .pendingPoach),
@@ -400,7 +535,13 @@ extension RivalsState {
             ),
             lastBuyoutWasStrategic: try container.decodeIfPresent(
                 Bool.self, forKey: .lastBuyoutWasStrategic
-            ) ?? false
+            ) ?? false,
+            challenges: try container.decodeIfPresent([CategoryChallenge].self, forKey: .challenges) ?? [],
+            lastChallengeDay: Dictionary(
+                challengeDays.map { ($0.topicID, $0.day) }, uniquingKeysWith: { _, last in last }
+            ),
+            incumbentFoundedDay: try container.decodeIfPresent(Int.self, forKey: .incumbentFoundedDay),
+            incumbentHeldSinceDay: try container.decodeIfPresent(Int.self, forKey: .incumbentHeldSinceDay)
         )
     }
 
@@ -416,5 +557,14 @@ extension RivalsState {
             forKey: .playerShare
         )
         try container.encode(lastBuyoutWasStrategic, forKey: .lastBuyoutWasStrategic)
+        try container.encode(challenges, forKey: .challenges)
+        // Sorted for the same reason as the share table: identical states
+        // must encode to identical bytes whatever the dictionary's order.
+        try container.encode(
+            lastChallengeDay.keys.sorted().map { DayEntry(topicID: $0, day: lastChallengeDay[$0] ?? 0) },
+            forKey: .lastChallengeDay
+        )
+        try container.encodeIfPresent(incumbentFoundedDay, forKey: .incumbentFoundedDay)
+        try container.encodeIfPresent(incumbentHeldSinceDay, forKey: .incumbentHeldSinceDay)
     }
 }
