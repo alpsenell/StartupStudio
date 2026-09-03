@@ -109,6 +109,8 @@ extension NetworkingSystem {
             state.life.lowRelationshipStreakDays = 0
             state.economy.lonelySinceDay = nil
             state.networking.contacts[index].outcome = .romance
+            // WS-E: a year from tonight is an anniversary.
+            FamilyCalendar.stageChanged(&state, balance: balance, content: content)
             events.append(.relationshipChanged(stage: .dating, day: state.day))
             events.append(.romanceStarted(contactID: contactID, name: contact.name, day: state.day))
         }

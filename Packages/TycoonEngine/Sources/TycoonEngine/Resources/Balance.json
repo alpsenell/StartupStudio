@@ -1038,7 +1038,13 @@
     "mentorCooldownDays": 7,
     "bondOutputFactor": 0.12,
     "bondMoraleTargetFactor": 0.06,
-    "bondLoyaltyPerDay": 0.15
+    "bondLoyaltyPerDay": 0.15,
+    "diary": {
+      "windowDays": 10,
+      "spacingDays": 60,
+      "stageGraceDays": 90,
+      "yearDays": 365
+    }
   },
   "codebase": {
     "carryFraction": 0.35,
