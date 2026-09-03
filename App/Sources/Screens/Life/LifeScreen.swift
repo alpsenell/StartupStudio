@@ -11,10 +11,27 @@ import TycoonEngine
 struct LifeScreen: View {
     let engine: GameEngine
 
+    @Environment(AppRouter.self) private var router
+    @State private var path: [LifeDestination] = []
+
+    /// What Life can push. One case today; an enum rather than a
+    /// `NavigationPath` so the deep link can ask "am I already there?".
+    enum LifeDestination: Hashable {
+        case agenda
+    }
+
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
+                    // The fortnight leads: it is the only card that answers
+                    // "what is coming" — everything under it answers "what
+                    // is true now".
+                    AgendaCard(
+                        engine: engine,
+                        onOpen: { path = [.agenda] },
+                        onRoute: { router.go($0) }
+                    )
                     ThisWeekCard(engine: engine)
 
                     BusinessSectionHeader(title: "This week", systemImage: "calendar")
@@ -48,6 +65,26 @@ struct LifeScreen: View {
             .navigationTitle("Life")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: LifeDestination.self) { destination in
+                switch destination {
+                case .agenda:
+                    AgendaScreen(engine: engine)
+                }
+            }
+            .onChange(of: router.pendingPush, initial: true) { _, _ in
+                consumeRoute()
+            }
+        }
+    }
+
+    /// Deep links into this tab: `.agenda` pushes the fortnight, and
+    /// `.life` — which the agenda's own diary rows send — means "the Life
+    /// tab itself", so it pops back to the root.
+    private func consumeRoute() {
+        if router.take(.agenda) {
+            path = [.agenda]
+        } else if router.take(.life) {
+            path = []
         }
     }
 }
