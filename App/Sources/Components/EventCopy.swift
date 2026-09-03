@@ -213,7 +213,11 @@ struct EventCopy {
         case .buyoutWithdrawn(let rivalID, let day):
             ("envelope", "\(rivalName(rivalID)) withdrew its buyout offer", day, Color.secondary)
         case .companySold(let rivalID, let amount, let day):
-            ("crown.fill", "Sold the company to \(rivalName(rivalID)) for \(amount.money)!", day, Theme.positiveCash)
+            // A distress sale is the same event with a different ending
+            // behind it; the line should not crown a fire sale.
+            state.gameOver?.kind == .soldUp
+                ? ("tag.fill", "Sold up: \(rivalName(rivalID)) bought the name and the desks for \(amount.money)", day, Theme.warning)
+                : ("crown.fill", "Sold the company to \(rivalName(rivalID)) for \(amount.money)!", day, Theme.positiveCash)
         case .rivalAcquired(_, let name, let hires, let day):
             (
                 "building.2.crop.circle.fill",

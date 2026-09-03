@@ -65,7 +65,8 @@ struct ExitTests {
         #expect(Double(offer.amount) <= Double(valuation) * balance.rivals.offerFractionMax * 1.01)
     }
 
-    /// Selling ends the run as a success, whichever kind of offer it was.
+    /// Selling to a strategic buyer ends the run as a success. (A distress
+    /// bid ends as `.soldUp` — see `ExitTermsTests`.)
     @Test func acceptingAnOfferEndsTheRunAsAnExit() throws {
         let balance = try Self.balance()
         var state = GameState.newGame(companyName: "Acme", seed: 33, balance: balance)

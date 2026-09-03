@@ -505,20 +505,35 @@ extension DecisionPrompt {
         )
     }
 
+    /// A rival's offer for the company. The sheet says plainly which of
+    /// the two kinds it is, because they end very differently: a strategic
+    /// approach is a premium for something worth having and ends as
+    /// *Acquired*; a distress bid is somebody picking up the name and the
+    /// desks and ends as *Sold up*, post-mortem and all.
     private static func buyoutPrompt(_ offer: BuyoutOffer, state: GameState) -> DecisionPrompt? {
         let rival = state.rivals.rival(id: offer.rivalID)
         let rivalName = rival?.name ?? "A rival"
+        let strategic = state.rivals.lastBuyoutWasStrategic
+        let message = strategic
+            ? "A strategic approach: they want what you built, and \(offer.amount.money) is a premium "
+                + "on what \(state.company.name) is worth today. Selling ends the run as an acquisition."
+            : "A distress bid. \(offer.amount.money) buys the name, the desks and whatever is on the "
+                + "shelf. Selling ends the run — sold up, not a win."
         return DecisionPrompt(
             id: "buyout-\(offer.rivalID.uuidString)-\(offer.respondByDay)",
-            systemImage: "envelope.badge.fill",
-            tint: Theme.accent,
+            systemImage: strategic ? "envelope.badge.fill" : "tag.fill",
+            tint: strategic ? Theme.accent : Theme.warning,
             title: "\(rivalName) wants to buy you out",
-            message: "They're offering \(offer.amount.money) for \(state.company.name). Accepting ends the run as a successful exit.",
-            stats: [("Offer", offer.amount.money)],
+            message: message,
+            stats: [
+                ("Offer", offer.amount.money),
+                ("Kind", strategic ? "strategic" : "distress"),
+            ],
             options: [
                 Option(
-                    label: "Sell the company",
-                    detail: "Exit with \(offer.amount.money)",
+                    label: strategic ? "Sell for \(offer.amount.money)" : "Sell up for \(offer.amount.money)",
+                    detail: strategic ? "Cash today · ends the run as Acquired" : "Ends the run as Sold up",
+                    role: strategic ? nil : .destructive,
                     action: .acceptBuyout
                 ),
                 Option(
@@ -527,7 +542,7 @@ extension DecisionPrompt {
                     action: .declineBuyout
                 ),
             ],
-            kicker: "BUYOUT OFFER",
+            kicker: strategic ? "BUYOUT OFFER" : "DISTRESS BID",
             portraitSeed: rival?.appearanceSeed
         )
     }

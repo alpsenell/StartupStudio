@@ -63,19 +63,21 @@ final class DecisionSheetSnapshotTests: XCTestCase {
         .environment(AppRouter())
     }
 
+    /// The distress bid: the sheet says what it is and what accepting ends
+    /// as, because it used to call a fire sale a successful exit.
     private var buyout: DecisionPrompt {
         DecisionPrompt(
             id: "buyout-preview",
-            systemImage: "envelope.badge.fill",
-            tint: Theme.accent,
+            systemImage: "tag.fill",
+            tint: Theme.warning,
             title: "Waypoint Nine wants to buy you out",
-            message: "They're offering $26,966 for Rooftop. Accepting ends the run as a successful exit.",
-            stats: [("Offer", "$26,966")],
+            message: "A distress bid. $26,966 buys the name, the desks and whatever is on the shelf. Selling ends the run — sold up, not a win.",
+            stats: [("Offer", "$26,966"), ("Kind", "distress")],
             options: [
-                .init(label: "Sell the company", detail: "Exit with $26,966", action: .acceptBuyout),
+                .init(label: "Sell up for $26,966", detail: "Ends the run as Sold up", role: .destructive, action: .acceptBuyout),
                 .init(label: "Decline", detail: "Keep building", action: .declineBuyout),
             ],
-            kicker: "BUYOUT OFFER",
+            kicker: "DISTRESS BID",
             portraitSeed: 0xBEEF
         )
     }

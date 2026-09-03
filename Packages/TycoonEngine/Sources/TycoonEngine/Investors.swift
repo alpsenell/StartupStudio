@@ -442,3 +442,21 @@ extension GameState {
         return nil
     }
 }
+
+// MARK: - Dollars in prose
+
+extension Int {
+    /// "$20,460" — for the one-line reasons an ending writes, which the
+    /// biography prints verbatim. The App has its own `money` formatter;
+    /// this one exists so an engine-authored sentence reads the same.
+    var dollars: String {
+        let sign = self < 0 ? "-" : ""
+        let digits = String(magnitude)
+        var grouped = ""
+        for (offset, character) in digits.reversed().enumerated() {
+            if offset != 0, offset.isMultiple(of: 3) { grouped.append(",") }
+            grouped.append(character)
+        }
+        return sign + "$" + String(grouped.reversed())
+    }
+}
