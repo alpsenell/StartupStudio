@@ -70,8 +70,36 @@ extension BalanceConfig.RivalBalance {
         /// Master switch. Off, no incumbent is ever founded.
         public var incumbentEnabled: Bool
         /// The company valuation that first brings one…
+        ///
+        /// Designed at $750k and shipped at $1M. Measured on the merged
+        /// iteration-5 tree with the owned-topics trigger off, $750k
+        /// brought the giant to the independent player (`GoalIndependentBot`,
+        /// four years) at days 602–889 on six seeds and left it at *Still
+        /// yours* on 2 of 10, under the ladder's 3–7; at $1M it arrives
+        /// five weeks later (days 637–959) and the count is 4. The funded
+        /// studio still meets it on 7 of 10 inside two years (days
+        /// 546–644); at $1.5M that is 3, and at $2M none. A strength-95
+        /// incumbent is worth $610k–680k, so at the $1M line it is also
+        /// the buyer the strategic buyout can name once the company
+        /// outgrows it by the 2× the exit asks for.
         public var incumbentValuationFloor: Int
-        /// …or this many dominated topics, whichever comes first.
+        /// …or this many dominated topics, whichever comes first; 0 turns
+        /// the second trigger off.
+        ///
+        /// Designed at 2 and shipped at 0. Measured on the merged
+        /// iteration-5 tree, two owned topics is not a size: a topic is
+        /// "dominated" at 65% share against whatever a minnow launched
+        /// into it, and a garage founder who has stopped growing owns two
+        /// inside seven months. The trigger brought the giant to the
+        /// coasting founder (day 217–441) and the independent player
+        /// (day 224–546) in year one, and three investor gates moved —
+        /// the coaster was never under warning, never recovered, and the
+        /// independent ladder's last chapter went from 6 seeds to 3. On
+        /// the valuation line alone the coaster never meets a company it
+        /// is not worth, the independent player meets one in year 2–3 on
+        /// 6 seeds and still finishes, and the funded studio meets it on 8
+        /// inside two years; raising the floor instead changed nothing,
+        /// because this trigger fired first.
         public var incumbentDominatedTopics: Int
         /// Strength = `factor × valuation / valuationPerStrength`, clamped.
         public var incumbentStrengthFactor: Double
@@ -88,6 +116,13 @@ extension BalanceConfig.RivalBalance {
         public var incumbentRetreatReputationGain: Double
         public var incumbentRetreatStandingGain: Double
 
+        // MARK: Acquisition
+
+        /// Whether buying a rival brings the product that was beating you
+        /// in each of your categories. Off, an acquisition is the
+        /// reputation bump and the hires it always was.
+        public var acquisitionAbsorbsShelf: Bool
+
         public init(
             shareFloorAtFullStanding: Double = 0.55,
             challengeMinStanding: Double = 50,
@@ -102,8 +137,8 @@ extension BalanceConfig.RivalBalance {
             strengthPerWeekBeaten: Double = 0.5,
             standingPerWeekBeaten: Double = 1.0,
             incumbentEnabled: Bool = true,
-            incumbentValuationFloor: Int = 750_000,
-            incumbentDominatedTopics: Int = 2,
+            incumbentValuationFloor: Int = 1_000_000,
+            incumbentDominatedTopics: Int = 0,
             incumbentStrengthFactor: Double = 0.6,
             incumbentStrengthMin: Double = 70,
             incumbentStrengthMax: Double = 95,
@@ -111,7 +146,8 @@ extension BalanceConfig.RivalBalance {
             incumbentReputationMax: Double = 80,
             incumbentRetreatWeeks: Int = 26,
             incumbentRetreatReputationGain: Double = 5,
-            incumbentRetreatStandingGain: Double = 15
+            incumbentRetreatStandingGain: Double = 15,
+            acquisitionAbsorbsShelf: Bool = true
         ) {
             self.shareFloorAtFullStanding = shareFloorAtFullStanding
             self.challengeMinStanding = challengeMinStanding
@@ -136,6 +172,7 @@ extension BalanceConfig.RivalBalance {
             self.incumbentRetreatWeeks = incumbentRetreatWeeks
             self.incumbentRetreatReputationGain = incumbentRetreatReputationGain
             self.incumbentRetreatStandingGain = incumbentRetreatStandingGain
+            self.acquisitionAbsorbsShelf = acquisitionAbsorbsShelf
         }
 
         /// The shipped numbers — the same ones `Balance.json` carries.
@@ -149,7 +186,8 @@ extension BalanceConfig.RivalBalance {
             challengeMinStanding: .infinity,
             strengthPerWeekBeaten: 0,
             standingPerWeekBeaten: 0,
-            incumbentEnabled: false
+            incumbentEnabled: false,
+            acquisitionAbsorbsShelf: false
         )
     }
 }
@@ -171,6 +209,7 @@ extension BalanceConfig.RivalBalance.DepthBalance {
         case incumbentStrengthFactor, incumbentStrengthMin, incumbentStrengthMax
         case incumbentReputationMin, incumbentReputationMax
         case incumbentRetreatWeeks, incumbentRetreatReputationGain, incumbentRetreatStandingGain
+        case acquisitionAbsorbsShelf
     }
 
     public init(from decoder: any Decoder) throws {
@@ -224,7 +263,9 @@ extension BalanceConfig.RivalBalance.DepthBalance {
             ) ?? base.incumbentRetreatReputationGain,
             incumbentRetreatStandingGain: try container.decodeIfPresent(
                 Double.self, forKey: .incumbentRetreatStandingGain
-            ) ?? base.incumbentRetreatStandingGain
+            ) ?? base.incumbentRetreatStandingGain,
+            acquisitionAbsorbsShelf: try container.decodeIfPresent(Bool.self, forKey: .acquisitionAbsorbsShelf)
+                ?? base.acquisitionAbsorbsShelf
         )
     }
 }
