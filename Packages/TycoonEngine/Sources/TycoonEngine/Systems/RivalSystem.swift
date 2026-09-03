@@ -290,12 +290,21 @@ enum RivalSystem {
     /// a 70 keeps about a quarter — before the floor, which guarantees
     /// every topic is worth *something*. A rival running a price war takes
     /// a further flat slice. Deterministic: no draws.
+    ///
+    /// Standing holds share: the floor rises to `shareFloorAtFullStanding
+    /// × standing / maxStanding` — 0.55 at full standing — which only
+    /// clears the 0.30 hard floor above standing ~55, so a category the
+    /// studio has held for a year is sticky and one it has just entered
+    /// reads exactly as before. At standing 0 the term is 0 and the
+    /// clamp is the shipped clamp to the digit.
     private static func recomputeShare(_ state: inout GameState, _ balance: BalanceConfig) {
         // The best product's review score, and what it is priced at: a
         // topic is fought over on quality *and* on price, and undercutting
         // is the only thing that makes the budget tier worth choosing.
         var shares: [String: (quality: Double, tier: PriceTier)] = [:]
         let day = state.day
+        let floorAtFull = balance.rivals.depth.shareFloorAtFullStanding
+        let maxStanding = max(1, balance.market.standing.maxStanding)
 
         for product in state.products {
             guard case .released(let info) = product.stage, !info.offMarket else { continue }
@@ -323,8 +332,11 @@ enum RivalSystem {
             if competitors.contains(where: { $0.rival.isInPriceWar(on: day) && $0.rival.priceWarTopicID == topicID }) {
                 share -= RivalDepthTuning.priceWarSharePenalty
             }
+            let standingFloor = floorAtFull * state.market.standing(for: topicID) / maxStanding
             computed[topicID] = clamp(
-                share, min: RivalDepthTuning.shareMin, max: RivalDepthTuning.shareMax
+                share,
+                min: max(RivalDepthTuning.shareMin, standingFloor),
+                max: RivalDepthTuning.shareMax
             )
         }
         state.rivals.playerShare = computed

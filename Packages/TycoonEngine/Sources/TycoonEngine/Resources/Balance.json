@@ -346,7 +346,32 @@
     "acquirePremium": 1.3,
     "acquireDominanceFactor": 1.5,
     "acquireRepBonus": 5,
-    "absorbDivisor": 25
+    "absorbDivisor": 25,
+    "depth": {
+      "shareFloorAtFullStanding": 0.55,
+      "challengeMinStanding": 50,
+      "challengeQualityWindow": 15,
+      "challengeWeeks": 6,
+      "challengeCooldownWeeks": 26,
+      "challengeHoldShare": 0.5,
+      "heldRivalStrengthLoss": 8,
+      "heldStandingGain": 10,
+      "lostStandingLoss": 20,
+      "lostRivalStrengthGain": 5,
+      "strengthPerWeekBeaten": 1.0,
+      "standingPerWeekBeaten": 1.0,
+      "incumbentEnabled": true,
+      "incumbentValuationFloor": 750000,
+      "incumbentDominatedTopics": 2,
+      "incumbentStrengthFactor": 0.6,
+      "incumbentStrengthMin": 70,
+      "incumbentStrengthMax": 95,
+      "incumbentReputationMin": 60,
+      "incumbentReputationMax": 80,
+      "incumbentRetreatWeeks": 26,
+      "incumbentRetreatReputationGain": 5,
+      "incumbentRetreatStandingGain": 15
+    }
   },
   "city": {
     "districts": {
