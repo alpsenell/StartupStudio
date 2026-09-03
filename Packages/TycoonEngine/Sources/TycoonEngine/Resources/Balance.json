@@ -175,7 +175,12 @@
     "trainingCost": 800,
     "trainingSkillBoost": 6.0,
     "trainingMoraleBoost": 4.0,
-    "trainingCooldownDays": 14
+    "trainingCooldownDays": 14,
+    "policyReversalMoralePenalty": 10,
+    "policyReversalLoyaltyPenalty": 15,
+    "leavePolicyAskFactor": 0.95,
+    "remoteConflictWeightFactor": 2,
+    "remoteBondGrowthFactor": 0.5
   },
   "contractQuality": {
     "skillMin": 25.0,

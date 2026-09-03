@@ -179,7 +179,9 @@ struct EventDefV2Tests {
         """)
         #expect(def.requires?.minTenureDays == 120)
         #expect(def.requires?.anyTrait == ["grumbler"])
-        #expect(def.supportive.salaryPercent == 15)
+        #expect(def.supportive?.salaryPercent == 15)
+        #expect(def.isImmediate == false)
+        #expect(def.policy == nil)
         #expect(def.strict.morale == -8)
         #expect(def.strict.cash == 0)
     }

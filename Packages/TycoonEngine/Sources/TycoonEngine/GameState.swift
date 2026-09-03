@@ -667,6 +667,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// type: filled pools to start the next build from, and the debt that
     /// comes with them. Empty until something ships.
     public var codebases: [Codebase] = []
+    /// What the staff remember about the founder's answers: the rules
+    /// they became and who was told no (WS-D). Empty until somebody asks.
+    public var staffMemory: StaffMemory = .initial
     public var gameOver: GameOverInfo?
 
     /// Starts a fresh company. `balance` is used as given — pass the
@@ -927,6 +930,7 @@ extension GameState {
         case economy, narrative, progression, investors
         case socialRNG, networking
         case codebases
+        case staffMemory
     }
 
     public init(from decoder: any Decoder) throws {
@@ -986,6 +990,10 @@ extension GameState {
             // A save written before codebases existed has none, so every
             // product in it is greenfield and behaves exactly as it did.
             codebases: try container.decodeIfPresent([Codebase].self, forKey: .codebases) ?? [],
+            // Absent in every save from before rules existed, and in every
+            // save where nobody ever asked; both read as nothing remembered.
+            staffMemory: try container.decodeIfPresent(StaffMemory.self, forKey: .staffMemory)
+                ?? .initial,
             gameOver: try container.decodeIfPresent(GameOverInfo.self, forKey: .gameOver)
         )
         seed = try container.decodeIfPresent(UInt64.self, forKey: .seed) ?? 0
@@ -1038,6 +1046,12 @@ extension GameState {
         try container.encode(investors, forKey: .investors)
         try container.encode(networking, forKey: .networking)
         try container.encode(codebases, forKey: .codebases)
+        // Written only once there is something to remember, so a run in
+        // which nobody was ever answered — every pacing run — encodes to
+        // the same bytes it did before the key existed.
+        if !staffMemory.isEmpty {
+            try container.encode(staffMemory, forKey: .staffMemory)
+        }
         try container.encodeIfPresent(gameOver, forKey: .gameOver)
     }
 }

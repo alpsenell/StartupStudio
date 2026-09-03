@@ -86,12 +86,16 @@ struct StaffEventTests {
     @Test("the shipped catalog defines a definition for every staff kind")
     func everyKindHasADefinition() throws {
         let content = TestContent.bundled
-        #expect(content.staffEvents.count == StaffEventKind.allCases.count)
+        // Rolled kinds are the defs whose id is a kind; the rest are
+        // second acts (WS-D), reachable only through a follow-up.
+        let rolled = content.staffEvents.filter { StaffEventKind(rawValue: $0.id) != nil }
+        #expect(rolled.count == StaffEventKind.allCases.count)
         for kind in StaffEventKind.allCases {
             let def = try #require(
                 content.staffEvent(kind.rawValue), "no definition for \(kind.rawValue)"
             )
-            #expect(!def.supportive.label.isEmpty)
+            let supportive = try #require(def.supportive, "\(kind.rawValue) must ask")
+            #expect(!supportive.label.isEmpty)
             #expect(!def.strict.label.isEmpty)
             #expect(def.title.contains("{name}"))
         }

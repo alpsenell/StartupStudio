@@ -23,7 +23,7 @@ enum SocialSystem {
         let config = balance.social
         var events: [GameEvent] = []
 
-        autoResolveStaffEvent(&state, config, content, &events)
+        autoResolveStaffEvent(&state, balance, content, &events)
         driftLoyalty(&state, config)
         pruneFriendships(&state)
 
@@ -31,7 +31,7 @@ enum SocialSystem {
             events.append(contentsOf: updateBonds(&state, config))
         }
 
-        events.append(contentsOf: staffEventCheck(&state, config, content))
+        events.append(contentsOf: staffEventCheck(&state, balance, content))
         return events
     }
 
@@ -50,10 +50,14 @@ enum SocialSystem {
 
     // MARK: - Friendships
 
-    /// Drops bonds whose members left (quit, fired, poached) or faded out.
+    /// Drops bonds whose members left (quit, fired, poached) or faded out,
+    /// and the refusals they remembered with them.
     private static func pruneFriendships(_ state: inout GameState) {
         let ids = Set(state.employees.map(\.id))
         state.friendships.removeAll { !ids.contains($0.a) || !ids.contains($0.b) || $0.strength <= 0 }
+        if !state.staffMemory.refusals.isEmpty {
+            state.staffMemory.refusals.removeAll { !ids.contains($0.employeeID) }
+        }
     }
 
     /// Weekly: co-assigned pairs without a bond roll one uniform each
@@ -182,11 +186,17 @@ enum SocialSystem {
     /// departments). With no content — the unit-test catalogs — that draw
     /// never happens and the kind is the old `familyEmergency` /
     /// `rivalOfferRumor` coin flip.
+    ///
+    /// With a rule for the rolled kind (WS-D), the rule answers: the same
+    /// outcome the sheet would have landed, a ledger line, and no pending
+    /// event. The roll above is the beat either way, so a policy replaces
+    /// a pause and never adds one.
     private static func staffEventCheck(
         _ state: inout GameState,
-        _ config: BalanceConfig.SocialBalance,
+        _ balance: BalanceConfig,
         _ content: ContentCatalog
     ) -> [GameEvent] {
+        let config = balance.social
         guard state.day % config.staffEventIntervalDays == 0,
               state.pendingStaffEvent == nil
         else { return [] }
@@ -218,6 +228,10 @@ enum SocialSystem {
         let kind = pickKind(
             for: target, fallback: fallback, state: &state, config: config, content: content
         )
+        if let policy = state.staffMemory.policy(for: kind),
+           let def = content.staffEvent(kind.rawValue) {
+            return applyPolicy(policy, def: def, to: target.id, state: &state, balance: balance)
+        }
         let event = StaffEvent(
             employeeID: target.id,
             kind: kind,
@@ -288,47 +302,141 @@ enum SocialSystem {
     }
 
     /// A pending staff event past its deadline resolves as `strict` (the
-    /// founder never got back to them). No draws.
+    /// founder never got back to them). No draws — and no rule: a rule is
+    /// something the founder says, which is what keeps every pacing run
+    /// on the pre-policy numbers.
     private static func autoResolveStaffEvent(
         _ state: inout GameState,
-        _ config: BalanceConfig.SocialBalance,
+        _ balance: BalanceConfig,
         _ content: ContentCatalog,
         _ events: inout [GameEvent]
     ) {
         guard let pending = state.pendingStaffEvent, state.day > pending.respondByDay else { return }
         state.pendingStaffEvent = nil
         events.append(contentsOf: applyStaffChoice(
-            .strict, to: pending, state: &state, config: config, content: content
+            .strict, to: pending, automatic: true, state: &state, balance: balance, content: content
         ))
     }
 
-    /// Applies one answer. The numbers come from the kind's
+    /// Applies one answer. The numbers come from the moment's
     /// `StaffEventDef` when the catalog has one, and from the generic
     /// `balance.social` costs when it doesn't.
+    ///
+    /// A supportive answer to a policy-shaped kind (WS-D) also sets the
+    /// rule — only when the founder gave it (`automatic == false`), and
+    /// only for a rolled kind, never a second act. Any strict answer is
+    /// remembered by the person who got it.
     private static func applyStaffChoice(
         _ choice: StaffEventChoice,
         to event: StaffEvent,
+        automatic: Bool,
         state: inout GameState,
-        config: BalanceConfig.SocialBalance,
+        balance: BalanceConfig,
         content: ContentCatalog
     ) -> [GameEvent] {
         guard let index = state.employees.firstIndex(where: { $0.id == event.employeeID }) else {
             return []
         }
-        guard let def = content.staffEvent(event.kind.rawValue) else {
-            applyGenericStaffChoice(choice, kind: event.kind, index: index, state: &state, config: config)
-            return [.staffEventResolved(employeeID: event.employeeID, choice: choice, day: state.day)]
+        let resolved: GameEvent = .staffEventResolved(
+            employeeID: event.employeeID, choice: choice, day: state.day
+        )
+        guard let def = content.staffEvent(event.definitionID) else {
+            applyGenericStaffChoice(
+                choice, kind: event.kind, index: index, state: &state, config: balance.social
+            )
+            return [resolved]
         }
 
-        let outcome = choice == .supportive ? def.supportive : def.strict
-        let name = state.employees[index].name
+        let employee = state.employees[index]
+        var events: [GameEvent] = [resolved]
+        if choice != .supportive {
+            state.staffMemory.remember(StaffRefusal(
+                employeeID: employee.id, kind: event.kind, day: state.day, automatic: automatic
+            ))
+        }
+        if !automatic, event.defID == nil, let flags = def.policy,
+           choice == .supportive,
+           state.staffMemory.policy(for: event.kind) == nil {
+            let policy = StaffPolicy(
+                kind: event.kind,
+                flag: flags.supportiveFlag,
+                choice: .supportive,
+                setDay: state.day,
+                setBy: employee.id,
+                setByName: employee.name,
+                beneficiaries: [employee.id]
+            )
+            state.staffMemory.policies.append(policy)
+            state.narrative.flags.remove(flags.strictFlag)
+            state.narrative.flags.insert(policy.flag)
+            events.append(.staffPolicySet(flag: policy.flag, employeeID: employee.id, day: state.day))
+        }
+
+        let outcome = choice == .supportive ? (def.supportive ?? def.strict) : def.strict
+        events.append(contentsOf: applyOutcome(
+            outcome,
+            to: employee.id,
+            ledgerLabel: def.headline.replacingOccurrences(of: "{name}", with: employee.name),
+            state: &state,
+            balance: balance
+        ))
+        return events
+    }
+
+    /// The rule answering for somebody (WS-D): the outcome the sheet would
+    /// have landed, a ledger line that says so, and the person added to
+    /// the people the rule has answered for.
+    private static func applyPolicy(
+        _ policy: StaffPolicy,
+        def: StaffEventDef,
+        to employeeID: UUID,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard let index = state.employees.firstIndex(where: { $0.id == employeeID }) else { return [] }
+        let employee = state.employees[index]
+        var events: [GameEvent] = [
+            .staffPolicyApplied(flag: policy.flag, employeeID: employee.id, day: state.day)
+        ]
+        if let slot = state.staffMemory.policies.firstIndex(where: { $0.flag == policy.flag }),
+           !state.staffMemory.policies[slot].beneficiaries.contains(employee.id) {
+            state.staffMemory.policies[slot].beneficiaries.append(employee.id)
+        }
+        if policy.choice != .supportive {
+            state.staffMemory.remember(StaffRefusal(
+                employeeID: employee.id, kind: policy.kind, day: state.day, automatic: false
+            ))
+        }
+        let outcome = policy.choice == .supportive ? (def.supportive ?? def.strict) : def.strict
+        let name = def.policy?.name ?? def.headline.replacingOccurrences(of: "{name}", with: employee.name)
+        events.append(contentsOf: applyOutcome(
+            outcome,
+            to: employee.id,
+            ledgerLabel: "\(name): \(employee.name) · the policy",
+            state: &state,
+            balance: balance
+        ))
+        return events
+    }
+
+    /// Lands one outcome's numbers on one person and the company around
+    /// them. Shared by the sheet's answer and the rule's, so the two can
+    /// never drift.
+    private static func applyOutcome(
+        _ outcome: StaffEventDef.Outcome,
+        to employeeID: UUID,
+        ledgerLabel: String,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard let index = state.employees.firstIndex(where: { $0.id == employeeID }) else { return [] }
         if outcome.cash != 0 {
             state.company.cash += outcome.cash
             state.ledger.post(LedgerEntry(
                 day: state.day,
                 amount: outcome.cash,
                 category: .other,
-                label: "\(def.headline.replacingOccurrences(of: "{name}", with: name))"
+                label: ledgerLabel
             ))
         }
         state.employees[index].morale = clamp(state.employees[index].morale + outcome.morale)
@@ -363,10 +471,7 @@ enum SocialSystem {
         if let flag = outcome.setFlag {
             state.narrative.flags.insert(flag)
         }
-
-        return [.staffEventResolved(
-            employeeID: event.employeeID, choice: choice, day: state.day
-        )]
+        return []
     }
 
     /// The pre-content behavior, kept for kinds with no definition.
@@ -525,7 +630,7 @@ enum SocialSystem {
         guard let pending = state.pendingStaffEvent else { return [] }
         state.pendingStaffEvent = nil
         return applyStaffChoice(
-            choice, to: pending, state: &state, config: balance.social, content: content
+            choice, to: pending, automatic: false, state: &state, balance: balance, content: content
         )
     }
 }

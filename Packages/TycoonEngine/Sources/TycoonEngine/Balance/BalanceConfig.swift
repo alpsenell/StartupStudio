@@ -519,6 +519,30 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
         public var trainingMoraleBoost: Double
         public var trainingCooldownDays: Int
 
+        // MARK: Iteration 5 (WS-D — the answer becomes the policy)
+
+        // Every knob below is gated on a rule or a flag only a founder's
+        // own answer can set. The pacing bots never answer a staff moment
+        // — the deadline picks strict, which sets neither — so none of
+        // these numbers is ever read in a pacing run.
+
+        /// Morale every hired employee loses when a generous rule is
+        /// publicly reversed.
+        public var policyReversalMoralePenalty: Double
+        /// Loyalty the people the rule answered for lose on top of that.
+        public var policyReversalLoyaltyPenalty: Double
+        /// What every candidate's ask is multiplied by while
+        /// `good_leave_policy` is set (a studio with a leave policy is a
+        /// cheaper place to say yes to). 1.0 without the flag.
+        public var leavePolicyAskFactor: Double
+        /// What `teamConflict`'s pick weight is multiplied by while
+        /// `remote_friendly` is set. 1 without the flag.
+        public var remoteConflictWeightFactor: Double
+        /// What weekly bond growth is multiplied by for a friendship with
+        /// someone the remote rule answered for — people who never share
+        /// a room. 1.0 without the rule.
+        public var remoteBondGrowthFactor: Double
+
         public init(
             startingMorale: Double, moraleAdaptRate: Double, baselineMorale: Double,
             underpaidThreshold: Double, underpaidTargetPenalty: Double,
@@ -532,7 +556,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             moraleNeutral: Double, performancePerMoralePoint: Double,
             performanceMin: Double, performanceMax: Double, levelOutputBonus: Double,
             trainingCost: Int, trainingSkillBoost: Double,
-            trainingMoraleBoost: Double, trainingCooldownDays: Int
+            trainingMoraleBoost: Double, trainingCooldownDays: Int,
+            policyReversalMoralePenalty: Double = 10,
+            policyReversalLoyaltyPenalty: Double = 15,
+            leavePolicyAskFactor: Double = 0.95,
+            remoteConflictWeightFactor: Double = 2,
+            remoteBondGrowthFactor: Double = 0.5
         ) {
             self.startingMorale = startingMorale
             self.moraleAdaptRate = moraleAdaptRate
@@ -562,6 +591,11 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             self.trainingSkillBoost = trainingSkillBoost
             self.trainingMoraleBoost = trainingMoraleBoost
             self.trainingCooldownDays = trainingCooldownDays
+            self.policyReversalMoralePenalty = policyReversalMoralePenalty
+            self.policyReversalLoyaltyPenalty = policyReversalLoyaltyPenalty
+            self.leavePolicyAskFactor = leavePolicyAskFactor
+            self.remoteConflictWeightFactor = remoteConflictWeightFactor
+            self.remoteBondGrowthFactor = remoteBondGrowthFactor
         }
 
         public static let standard = StaffBalance(

@@ -45,6 +45,7 @@
     "headline": "{name} asked for a raise, with evidence.",
     "weight": 6,
     "requires": { "minTenureDays": 120 },
+    "policy": { "name": "Raises", "supportiveFlag": "raises_on_evidence", "strictFlag": "raises_by_cycle" },
     "supportive": {
       "label": "Give them the raise",
       "detail": "+12% salary · morale +10 · loyalty +16",
@@ -66,6 +67,7 @@
     "headline": "{name} asked to change roles.",
     "weight": 4,
     "requires": { "minTenureDays": 180, "minHeadcount": 4 },
+    "policy": { "name": "Role changes", "supportiveFlag": "roles_flexible", "strictFlag": "roles_fixed" },
     "supportive": {
       "label": "Let them move",
       "detail": "Morale +14 · loyalty +12 · they start slower",
@@ -131,13 +133,13 @@
     "headline": "{name} has been building something on the side.",
     "weight": 4,
     "requires": { "minTenureDays": 150 },
+    "policy": { "name": "Side projects", "supportiveFlag": "ip_generous", "strictFlag": "ip_strict" },
     "supportive": {
       "label": "It's theirs — say so in writing",
       "detail": "Morale +16 · loyalty +18 · reputation +2",
       "morale": 16,
       "loyalty": 18,
-      "reputation": 2,
-      "setFlag": "ip_generous"
+      "reputation": 2
     },
     "strict": {
       "label": "Remind them of the IP clause",
@@ -175,6 +177,7 @@
     "headline": "{name} asked what the parental leave policy is.",
     "weight": 3,
     "requires": { "minTenureDays": 180, "minHeadcount": 4 },
+    "policy": { "name": "Parental leave", "supportiveFlag": "good_leave_policy", "strictFlag": "leave_statutory" },
     "supportive": {
       "label": "Full pay, three months, written down",
       "detail": "−$4,000 · morale +12 for everyone · reputation +4",
@@ -183,8 +186,7 @@
       "loyalty": 20,
       "moraleAll": 12,
       "reputation": 4,
-      "clearsAssignment": true,
-      "setFlag": "good_leave_policy"
+      "clearsAssignment": true
     },
     "strict": {
       "label": "The statutory minimum",
@@ -203,13 +205,13 @@
     "headline": "{name} asked to work remotely for good.",
     "weight": 4,
     "requires": { "minTenureDays": 120 },
+    "policy": { "name": "Remote work", "supportiveFlag": "remote_friendly", "strictFlag": "in_person_only" },
     "supportive": {
       "label": "Make it work",
       "detail": "Morale +14 · loyalty +16 · team morale −3",
       "morale": 14,
       "loyalty": 16,
-      "moraleAll": -3,
-      "setFlag": "remote_friendly"
+      "moraleAll": -3
     },
     "strict": {
       "label": "This is an in-person company",
@@ -225,6 +227,7 @@
     "headline": "{name} filed a formal complaint.",
     "weight": 3,
     "requires": { "requiresDepartment": "hr", "minHeadcount": 8 },
+    "policy": { "name": "Complaints", "supportiveFlag": "process_trusted", "strictFlag": "quiet_word" },
     "supportive": {
       "label": "Run a proper process",
       "detail": "−$3,000 · morale +10 for everyone · reputation +3",
@@ -232,8 +235,7 @@
       "morale": 10,
       "loyalty": 14,
       "moraleAll": 10,
-      "reputation": 3,
-      "setFlag": "process_trusted"
+      "reputation": 3
     },
     "strict": {
       "label": "Have a quiet word with everyone involved",
