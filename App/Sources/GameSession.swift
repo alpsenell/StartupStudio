@@ -72,14 +72,20 @@ final class GameSession {
 
     /// Deletes the save and replaces the engine with a fresh game built
     /// from the new-game flow's choices: the founder's name, archetype and
-    /// look, the studio's name, and the difficulty.
-    func startNewGame(profile: FounderProfile, companyName: String, difficulty: Difficulty) {
+    /// look, the studio's name, the difficulty, and how the company starts.
+    func startNewGame(
+        profile: FounderProfile,
+        companyName: String,
+        difficulty: Difficulty,
+        origin: FoundingOrigin = .garage
+    ) {
         replaceEngine {
             GameEngine.newGame(
                 companyName: companyName,
                 seed: UInt64.random(in: .min ... .max),
                 difficulty: difficulty,
-                founder: profile
+                founder: profile,
+                origin: origin
             )
         }
         GameSettings.hasCompletedOnboarding = true
@@ -87,9 +93,9 @@ final class GameSession {
     }
 
     /// The same year again: a fresh engine on the run's own seed, founder,
-    /// company and difficulty, so the same events and candidates come
-    /// round. The engine is deterministic — same seed, same game — and the
-    /// player is the only thing that changes.
+    /// company, difficulty and origin, so the same events and candidates
+    /// come round. The engine is deterministic — same seed, same game —
+    /// and the player is the only thing that changes.
     func replayCurrentGame() {
         let ended = engine.state
         replaceEngine {
@@ -97,7 +103,8 @@ final class GameSession {
                 companyName: ended.company.name,
                 seed: ended.seed,
                 difficulty: ended.difficulty,
-                founder: ended.progression.founder
+                founder: ended.progression.founder,
+                origin: ended.origin
             )
         }
         GameSettings.hasCompletedOnboarding = true
@@ -121,8 +128,12 @@ final class GameSession {
     /// ending screen. Used by the endings screens (which offer the founder
     /// setup sheet) and the Settings sheet's "Start a new game…" (which
     /// does not, and so gets a generated founder).
-    func startNewGame(difficulty: Difficulty, founder: FounderProfile? = nil) {
-        replaceEngine { Self.makeFreshEngine(difficulty: difficulty, founder: founder) }
+    func startNewGame(
+        difficulty: Difficulty,
+        founder: FounderProfile? = nil,
+        origin: FoundingOrigin = .garage
+    ) {
+        replaceEngine { Self.makeFreshEngine(difficulty: difficulty, founder: founder, origin: origin) }
     }
 
     /// Shared teardown/rebuild behind every "new game" path. Stopping the
@@ -174,7 +185,8 @@ final class GameSession {
     /// is fine.
     private static func makeFreshEngine(
         difficulty: Difficulty = .normal,
-        founder: FounderProfile? = nil
+        founder: FounderProfile? = nil,
+        origin: FoundingOrigin = .garage
     ) -> GameEngine {
         // Nobody is ever called "Founder" at a company called "Startup
         // Studio": the new-game flow names both, and the paths that skip
@@ -196,7 +208,10 @@ final class GameSession {
             companyName: StudioNameGenerator.companyName(index: index),
             seed: UInt64.random(in: .min ... .max),
             difficulty: difficulty,
-            founder: founder ?? generated
+            founder: founder ?? generated,
+            // A headless screenshot pass can ask for a non-garage start;
+            // every other caller gets what it asked for.
+            origin: DebugLaunch.launchOrigin ?? origin
         )
     }
 

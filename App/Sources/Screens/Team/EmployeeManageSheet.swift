@@ -67,9 +67,13 @@ struct EmployeeManageSheet: View {
                         RoleBadge(role: employee.role)
                         LevelBadge(level: employee.level)
                     }
-                    Text("\(employee.weeklySalary.money)/wk · hired day \(employee.hiredDay)")
-                        .font(Theme.Typography.number(.caption, weight: .regular))
-                        .foregroundStyle(.secondary)
+                    Text(
+                        employee.isCofounder
+                            ? "Co-founder · owns \(cofounderStake)% · \(employee.weeklySalary.money)/wk"
+                            : "\(employee.weeklySalary.money)/wk · hired day \(employee.hiredDay)"
+                    )
+                    .font(Theme.Typography.number(.caption, weight: .regular))
+                    .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 0)
             }
@@ -83,10 +87,11 @@ struct EmployeeManageSheet: View {
     private func traitSection(_ employee: Employee) -> some View {
         let explanations = TraitEffects.explanations(for: employee, content: engine.content)
         if !explanations.isEmpty {
+            let revealed = TraitChipRow.revealedCount(for: employee, day: engine.state.day)
             Section {
-                TraitChipRow(traits: employee.traits, content: engine.content)
+                TraitChipRow(traits: employee.traits, content: engine.content, revealedCount: revealed)
                     .padding(.vertical, Theme.Spacing.xs)
-                ForEach(Array(explanations.enumerated()), id: \.offset) { _, entry in
+                ForEach(Array(explanations.prefix(revealed ?? explanations.count).enumerated()), id: \.offset) { _, entry in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(entry.name)
                             .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -167,7 +172,9 @@ struct EmployeeManageSheet: View {
 
         let fair = Double(EmployeeSalaryGuide.fairPay(for: employee, balance: balance))
         let ratio = fair > 0 ? Double(employee.weeklySalary) / fair : 1
-        if ratio < staff.underpaidThreshold {
+        if state.cofounderWorksForEquity(employee, balance: balance) {
+            // The deal, not a grievance: the morale pass reads it as fair.
+        } else if ratio < staff.underpaidThreshold {
             causes.append(("Paid below the market rate", false))
         } else if ratio > staff.wellPaidThreshold {
             causes.append(("Paid well above the market rate", true))
@@ -385,7 +392,11 @@ struct EmployeeManageSheet: View {
                 Text("\(fair.money)/wk")
                     .font(Theme.Typography.number(.body, weight: .regular))
             }
-            if Double(employee.weeklySalary) < Double(fair) * engine.balance.staff.underpaidThreshold {
+            if engine.state.cofounderWorksForEquity(employee, balance: engine.balance) {
+                Text("Works for equity until the \(engine.balance.origins.cofounderPaidFrom.displayName.lowercased()) — fair pay starts the day you move.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else if Double(employee.weeklySalary) < Double(fair) * engine.balance.staff.underpaidThreshold {
                 Text("Underpaid — morale is draining.")
                     .font(.caption)
                     .foregroundStyle(Theme.warning)
@@ -529,9 +540,19 @@ struct EmployeeManageSheet: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("No severance in the garage era.")
+                Text(
+                    employee.isCofounder
+                        ? "They keep their \(cofounderStake)%. Firing a co-founder doesn't buy it back."
+                        : "No severance in the garage era."
+                )
             }
         }
+    }
+
+    /// What a co-founder owns, as the balance wrote it: the slice
+    /// `equityRemaining` gave up on day 0.
+    private var cofounderStake: Int {
+        Int(engine.balance.origins.cofounderEquity.rounded())
     }
 }
 

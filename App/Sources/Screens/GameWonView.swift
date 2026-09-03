@@ -9,7 +9,7 @@ import TycoonEngine
 struct GameWonView: View {
     let engine: GameEngine
     let info: GameOverInfo
-    let onNewGame: (Difficulty, FounderProfile) -> Void
+    let onNewGame: (Difficulty, FounderProfile, FoundingOrigin) -> Void
     var onReplay: (() -> Void)?
 
     var body: some View {

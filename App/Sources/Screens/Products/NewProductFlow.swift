@@ -663,6 +663,9 @@ private struct TopicStep: View {
                         category: category,
                         fit: fit(for: category.topic),
                         ceiling: ceiling(for: category.topic),
+                        // A spin-out's non-compete (WS-H): greyed, with the date.
+                        lockedUntil: engine.state.topicUnlockDay(category.id)
+                            .map { GameState.dateLabel(forDay: $0) },
                         isSelected: selectedTopicID == category.id,
                         select: { selectedTopicID = category.id }
                     )
@@ -778,15 +781,19 @@ private struct TopicCell: View {
     let fit: Fit?
     /// The crew ceiling here, once a type is chosen.
     let ceiling: Int?
+    /// The date a non-compete lifts, when one covers this topic. A locked
+    /// cell is greyed and cannot be selected.
+    var lockedUntil: String? = nil
     let isSelected: Bool
     let select: () -> Void
 
     private var topic: TopicDef { category.topic }
+    private var isLocked: Bool { lockedUntil != nil }
 
     var body: some View {
         Button(action: select) {
             VStack(spacing: Theme.Spacing.xs) {
-                Image(systemName: topic.iconSystemName)
+                Image(systemName: isLocked ? "lock.fill" : topic.iconSystemName)
                     .font(.title3)
                     .foregroundStyle(isSelected ? Theme.accent : .primary)
                     .frame(height: 26)
@@ -809,10 +816,19 @@ private struct TopicCell: View {
                     .frame(height: 3)
                     .padding(.horizontal, Theme.Spacing.sm)
                     .opacity(category.standing > 0 ? 1 : 0)
-                Text(fit?.text ?? " ")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(fit?.tint ?? .clear)
-                if let ceiling {
+                if let lockedUntil {
+                    Text("Non-compete until \(lockedUntil)")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.warning)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.75)
+                } else {
+                    Text(fit?.text ?? " ")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(fit?.tint ?? .clear)
+                }
+                if let ceiling, !isLocked {
                     Text("~\(ceiling)")
                         .font(.caption2.weight(.bold))
                         .monospacedDigit()
@@ -829,14 +845,17 @@ private struct TopicCell: View {
                 RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
                     .strokeBorder(isSelected ? Theme.accent : .clear, lineWidth: 2)
             )
+            .opacity(isLocked ? 0.45 : 1)
         }
         .buttonStyle(.pressableRow)
+        .disabled(isLocked)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var accessibilityText: String {
         var parts = [topic.name]
+        if let lockedUntil { parts.append("locked by a non-compete until \(lockedUntil)") }
         if let fit { parts.append(fit.text.lowercased()) }
         if let ceiling { parts.append("could review around \(ceiling)") }
         parts.append("demand \(category.market.multiplierLabel)")

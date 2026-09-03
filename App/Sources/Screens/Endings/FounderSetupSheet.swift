@@ -10,13 +10,14 @@ import TycoonEngine
 /// way archetype skill spreads reach the game.
 struct FounderSetupSheet: View {
     let defaultCompanyName: String
-    let onStart: (Difficulty, FounderProfile) -> Void
+    let onStart: (Difficulty, FounderProfile, FoundingOrigin) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
     @State private var name: String = ""
     @State private var archetype: FounderArchetype = .hacker
     @State private var difficulty: Difficulty = .normal
+    @State private var origin: FoundingOrigin = .garage
     /// Re-rolled by the shuffle button; `nil` lets the engine draw one.
     @State private var appearanceSeed: UInt64 = UInt64.random(in: .min ... .max)
 
@@ -27,6 +28,7 @@ struct FounderSetupSheet: View {
                     facePicker
                     nameField
                     archetypePicker
+                    originPicker
                     difficultyPicker
                     startButton
                 }
@@ -113,6 +115,15 @@ struct FounderSetupSheet: View {
         }
     }
 
+    // MARK: - Origin
+
+    /// The same four starts the new-game flow's Stakes page offers.
+    private var originPicker: some View {
+        CardView("How it starts", systemImage: "flag.fill") {
+            OriginPicker(origin: $origin, rowsAreCards: false)
+        }
+    }
+
     // MARK: - Difficulty
 
     private var difficultyPicker: some View {
@@ -140,7 +151,8 @@ struct FounderSetupSheet: View {
         Button {
             onStart(
                 difficulty,
-                FounderProfile(name: name, archetype: archetype, appearanceSeed: appearanceSeed)
+                FounderProfile(name: name, archetype: archetype, appearanceSeed: appearanceSeed),
+                origin
             )
         } label: {
             Label("Start building", systemImage: "play.fill")
@@ -152,7 +164,7 @@ struct FounderSetupSheet: View {
         .tint(Theme.accent)
         .accessibilityLabel(
             "Start a new company as \(name.isEmpty ? "Founder" : name), "
-                + "\(archetype.displayName), on \(difficulty.displayName)"
+                + "\(archetype.displayName), \(origin.displayName), on \(difficulty.displayName)"
         )
     }
 }

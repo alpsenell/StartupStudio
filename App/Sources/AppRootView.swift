@@ -57,9 +57,10 @@ struct AppRootView: View {
             .fullScreenCover(isPresented: onboardingPresented) {
                 NewGameFlow(
                     content: engine.content,
-                    onStart: { profile, companyName, difficulty in
+                    onStart: { profile, companyName, difficulty, origin in
                         session.startNewGame(
-                            profile: profile, companyName: companyName, difficulty: difficulty
+                            profile: profile, companyName: companyName, difficulty: difficulty,
+                            origin: origin
                         )
                         shell.rebase(to: session.engine)
                         router.tab = .hq
@@ -79,16 +80,16 @@ struct AppRootView: View {
                     if info.kind.isSuccess {
                         GameWonView(
                             engine: engine, info: info,
-                            onNewGame: { difficulty, founder in
-                                session.startNewGame(difficulty: difficulty, founder: founder)
+                            onNewGame: { difficulty, founder, origin in
+                                session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
                             },
                             onReplay: { session.replayCurrentGame() }
                         )
                     } else {
                         GameOverView(
                             engine: engine, info: info,
-                            onNewGame: { difficulty, founder in
-                                session.startNewGame(difficulty: difficulty, founder: founder)
+                            onNewGame: { difficulty, founder, origin in
+                                session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
                             },
                             onReplay: { session.replayCurrentGame() }
                         )

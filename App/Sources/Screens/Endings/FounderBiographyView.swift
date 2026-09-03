@@ -12,7 +12,7 @@ import TycoonEngine
 struct FounderBiographyView: View {
     let engine: GameEngine
     let info: GameOverInfo
-    let onNewGame: (Difficulty, FounderProfile) -> Void
+    let onNewGame: (Difficulty, FounderProfile, FoundingOrigin) -> Void
     /// The same year again: same seed, same founder, same company. The
     /// engine is deterministic, so the same events and candidates come
     /// round and the player can play them differently.
@@ -45,16 +45,18 @@ struct FounderBiographyView: View {
             }
         }
         .sheet(isPresented: $startingOver) {
-            FounderSetupSheet(defaultCompanyName: state.company.name) { difficulty, profile in
+            FounderSetupSheet(defaultCompanyName: state.company.name) { difficulty, profile, origin in
                 startingOver = false
-                onNewGame(difficulty, profile)
+                onNewGame(difficulty, profile, origin)
             }
         }
     }
 
     // MARK: - Banner
 
-    private var banner: some View {
+    /// Internal so the snapshot suite can render the banner on its own:
+    /// `ImageRenderer` cannot lay out the screen's scroll view.
+    var banner: some View {
         VStack(spacing: Theme.Spacing.md) {
             Image(systemName: bannerIcon)
                 .font(.system(size: 56))
@@ -79,6 +81,12 @@ struct FounderBiographyView: View {
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    // How it started (WS-H): the biography's first line.
+                    Label(state.origin.biographyLine, systemImage: state.origin.systemImageName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .accessibilityElement(children: .combine)
