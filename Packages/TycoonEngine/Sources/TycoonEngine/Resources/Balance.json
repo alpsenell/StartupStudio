@@ -884,7 +884,10 @@
     "strategicMinReputation": 60.0,
     "strategicPremiumMin": 1.5,
     "strategicPremiumMax": 2.5,
-    "raisePressureRelief": 0.5
+    "raisePressureRelief": 0.5,
+    "independentProfitableQuarters": 8,
+    "independentMinReputation": 70.0,
+    "independentMinDay": 728
   },
   "traits": {
     "teamGrowthStrength": 1.0,

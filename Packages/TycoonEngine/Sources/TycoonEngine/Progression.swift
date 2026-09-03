@@ -1,4 +1,5 @@
 import Foundation
+import TycoonContent
 
 // MARK: - Founder identity
 
@@ -239,6 +240,9 @@ public struct ProgressionStats: Codable, Equatable, Sendable {
     /// How many contracts were open at the last daily sweep, so the next
     /// one can tell an acceptance from a settlement.
     public var openContracts: Int
+    /// Weeks that ended with at least two products on the market at once
+    /// (WS-G, the independent ladder). Saves from before it decode as 0.
+    public var liveProductsWeeks: Int
 
     public init(
         peakHeadcount: Int = 1,
@@ -254,7 +258,8 @@ public struct ProgressionStats: Codable, Equatable, Sendable {
         bestReviewScore: Int = 0,
         bestProductRevenue: Int = 0,
         topicsDominated: Int = 0,
-        openContracts: Int = 0
+        openContracts: Int = 0,
+        liveProductsWeeks: Int = 0
     ) {
         self.peakHeadcount = peakHeadcount
         self.departmentsEverFormed = departmentsEverFormed
@@ -270,6 +275,7 @@ public struct ProgressionStats: Codable, Equatable, Sendable {
         self.bestProductRevenue = bestProductRevenue
         self.topicsDominated = topicsDominated
         self.openContracts = openContracts
+        self.liveProductsWeeks = liveProductsWeeks
     }
 
     public static let initial = ProgressionStats()
@@ -286,7 +292,7 @@ extension ProgressionStats {
         case peakHeadcount, departmentsEverFormed, contractsAccepted, contractsSettled
         case cashPositiveWeeks, weekendsOff, crashesWeathered, campaignsRun
         case rivalsAcquired, roundsRaised, bestReviewScore, bestProductRevenue
-        case topicsDominated, openContracts
+        case topicsDominated, openContracts, liveProductsWeeks
     }
 
     public init(from decoder: any Decoder) throws {
@@ -305,7 +311,8 @@ extension ProgressionStats {
             bestReviewScore: try container.decodeIfPresent(Int.self, forKey: .bestReviewScore) ?? 0,
             bestProductRevenue: try container.decodeIfPresent(Int.self, forKey: .bestProductRevenue) ?? 0,
             topicsDominated: try container.decodeIfPresent(Int.self, forKey: .topicsDominated) ?? 0,
-            openContracts: try container.decodeIfPresent(Int.self, forKey: .openContracts) ?? 0
+            openContracts: try container.decodeIfPresent(Int.self, forKey: .openContracts) ?? 0,
+            liveProductsWeeks: try container.decodeIfPresent(Int.self, forKey: .liveProductsWeeks) ?? 0
         )
     }
 }
@@ -359,11 +366,20 @@ public struct ProgressionState: Codable, Equatable, Sendable {
     public var interviewedCandidateIDs: Set<UUID>
     /// The last day an interview happened — one per day.
     public var lastInterviewDay: Int?
+    /// The day the founder first turned a term sheet down while still
+    /// owning all of the company — the declaration that opens the
+    /// independent ladder (WS-G). Never cleared; a round signed afterwards
+    /// overrides it for good, because the track reads the cap table first.
+    /// Saves from before the ladders decode as `nil`, the undeclared state,
+    /// which reads exactly as the old catalog did.
+    public var independentSinceDay: Int?
 
     /// How many chapters `Goals.json` ships.
     public static let chapterCount = 5
     /// How many goals the card shows at once.
     public static let activeGoalLimit = 3
+    /// The first chapter whose goals differ between the two ladders.
+    public static let firstSplitChapter = 3
 
     public init(
         founder: FounderProfile = .default,
@@ -376,7 +392,8 @@ public struct ProgressionState: Codable, Equatable, Sendable {
         chapterLog: [ChapterEntry] = [ChapterEntry(chapter: 1, day: 0)],
         stats: ProgressionStats = .initial,
         interviewedCandidateIDs: Set<UUID> = [],
-        lastInterviewDay: Int? = nil
+        lastInterviewDay: Int? = nil,
+        independentSinceDay: Int? = nil
     ) {
         self.founder = founder
         self.chapter = chapter
@@ -389,6 +406,7 @@ public struct ProgressionState: Codable, Equatable, Sendable {
         self.stats = stats
         self.interviewedCandidateIDs = interviewedCandidateIDs
         self.lastInterviewDay = lastInterviewDay
+        self.independentSinceDay = independentSinceDay
     }
 
     /// A fresh company's progression state: the default founder, chapter 1,
@@ -429,6 +447,7 @@ extension ProgressionState {
         case founder, chapter, chapterTitle, completedGoalIDs, activeGoals
         case goalProgress, perks, chapterLog, stats
         case interviewedCandidateIDs, lastInterviewDay
+        case independentSinceDay
     }
 
     private struct ProgressEntry: Codable {
@@ -457,7 +476,8 @@ extension ProgressionState {
             interviewedCandidateIDs: Set(
                 try container.decodeIfPresent([UUID].self, forKey: .interviewedCandidateIDs) ?? []
             ),
-            lastInterviewDay: try container.decodeIfPresent(Int.self, forKey: .lastInterviewDay)
+            lastInterviewDay: try container.decodeIfPresent(Int.self, forKey: .lastInterviewDay),
+            independentSinceDay: try container.decodeIfPresent(Int.self, forKey: .independentSinceDay)
         )
     }
 
@@ -480,6 +500,34 @@ extension ProgressionState {
             forKey: .interviewedCandidateIDs
         )
         try container.encodeIfPresent(lastInterviewDay, forKey: .lastInterviewDay)
+        try container.encodeIfPresent(independentSinceDay, forKey: .independentSinceDay)
+    }
+}
+
+// MARK: - The two ladders
+
+extension GameState {
+    /// Which ladder the late chapters are on right now.
+    ///
+    /// The cap table speaks first: any equity sold — a round signed, a
+    /// co-founder — is the funded ladder, for good. Owning all of it is
+    /// not yet a declaration; the founder makes one the first time they
+    /// turn a term sheet down (`ProgressionState.independentSinceDay`),
+    /// and from then on the independent ladder is theirs unless they
+    /// sign. Before either, the catalog reads as it always did — which is
+    /// the neutrality argument: the pacing bots never answer a term sheet,
+    /// so they never leave the funded goals they were measured on.
+    public var goalTrack: GoalTrack {
+        declaredGoalTrack ?? .funded
+    }
+
+    /// The ladder the founder has actually chosen, or `nil` while the
+    /// question is still open. The card shows the name only once it is
+    /// answered.
+    public var declaredGoalTrack: GoalTrack? {
+        if investors.equityRemaining < 100 { return .funded }
+        if progression.independentSinceDay != nil { return .independent }
+        return nil
     }
 }
 

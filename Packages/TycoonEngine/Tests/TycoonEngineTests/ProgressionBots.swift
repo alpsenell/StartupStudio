@@ -120,6 +120,69 @@ struct GoalCrunchBot: BotPolicy {
     }
 }
 
+/// The independent player (WS-G, iteration 5): the recurring-revenue
+/// studio, played by somebody who has a life and says no to money.
+///
+/// `SaaSBuilderBot`'s company, unchanged — the platform, the support
+/// desk, the fair pay — plus the three things the independent ladder asks
+/// for that no pacing bot does: every weekend spent on something (a date
+/// once there is somebody to take), a relationship pushed forward whenever
+/// the meters allow, and every term sheet turned down. It buys the office
+/// once the deeds cost less than a quarter of the bank, and it declares
+/// *Still yours* the day it can.
+///
+/// The tell for the whole feature: it has to reach the ending on some of
+/// the seeds inside four years and fail on the rest. Zero means the ladder
+/// is the funded one with the numbers filed off; ten means it is free.
+struct GoalIndependentBot: BotPolicy {
+    let name = "goal-independent"
+    private let studio = SaaSBuilderBot()
+
+    func actions(
+        for state: GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameAction] {
+        // The ending, the day it opens.
+        if state.canStayIndependent(balance: balance) {
+            return [.declareIndependence]
+        }
+        // The studio first: its monthly weekend plan is overridden below,
+        // because a later action on the same day wins.
+        var actions = studio.actions(for: state, balance: balance, content: content)
+        if state.investors.pendingOffer != nil {
+            actions.append(.declineInvestment)
+        }
+
+        // A life: somebody to go home to, and a weekend that is not rest.
+        // `SaaSBuilderBot` plans one weekend a month; this founder plans
+        // every one, which is what the ladder's "move in", "marry" and
+        // "three children" cost in evenings.
+        if !state.life.isAway(day: state.day) {
+            let wanted: WeekendActivity = state.life.family.stage == .single ? .friends : .dateNight
+            if state.life.plannedActivity != wanted {
+                actions.append(.planWeekend(wanted))
+            }
+        }
+        if state.life.family.stage != .married {
+            // Ignored by the engine until every gate (meters, days at the
+            // stage, the wedding money) is met, so asking daily is harmless.
+            actions.append(.advanceRelationship)
+        } else {
+            actions.append(.haveChild)
+        }
+
+        // The deeds, once they are cheap against the bank.
+        if !state.city.ownership.isOwned {
+            let price = state.officePurchasePrice(in: state.city.district, balance: balance)
+            if state.company.cash >= price * 4 {
+                actions.append(.buyOffice)
+            }
+        }
+        return actions
+    }
+}
+
 /// The other end: one person, no hires, no office moves. Builds a product
 /// at a time to full completion and ships it. Everything the early chapters
 /// ask for has to be reachable by playing like this.

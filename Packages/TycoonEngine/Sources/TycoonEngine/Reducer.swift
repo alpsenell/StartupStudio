@@ -253,8 +253,17 @@ public enum Reducer {
         // MARK: WS-F
         case .acceptInvestment:
             events = InvestorSystem.acceptOffer(state: &state, balance: balance)
+            // WS-G: signing closes the independent ladder; the goals card
+            // flips the same day.
+            if !events.isEmpty {
+                ProgressionSystem.termSheetAnswered(declined: false, state: &state, content: content)
+            }
         case .declineInvestment:
             events = InvestorSystem.declineOffer(state: &state)
+            // WS-G: "Stay independent" is the declaration that opens it.
+            if !events.isEmpty {
+                ProgressionSystem.termSheetAnswered(declined: true, state: &state, content: content)
+            }
         case .fileIPO:
             events = InvestorSystem.fileIPO(state: &state, balance: balance)
         case let .interviewCandidate(candidateID):
@@ -319,7 +328,7 @@ public enum Reducer {
 
         // MARK: WS-G (ladders)
         case .declareIndependence:
-            events = []
+            events = InvestorSystem.declareIndependence(state: &state, balance: balance)
         }
 
         state.logEvents(events)

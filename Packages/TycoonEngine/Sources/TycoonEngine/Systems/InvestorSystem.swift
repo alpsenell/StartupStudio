@@ -417,4 +417,35 @@ enum InvestorSystem {
         )
         return [.wentPublic(proceeds: proceeds, day: state.day), .gameOver(day: state.day)]
     }
+
+    // MARK: Iteration 5 — Still yours (WS-G)
+
+    /// Declares the company built, still owning all of it. Gated exactly
+    /// as `GameState.canStayIndependent` reports, so the UI can explain a
+    /// refusal before the player taps. Nobody is bought out and nothing is
+    /// cashed in — the founder keeps the company, which is the point — and
+    /// the run ends on the independent ladder's note.
+    static func declareIndependence(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        guard state.canStayIndependent(balance: balance) else { return [] }
+        let staff = state.headcount - 1
+        let onSale = state.products.count { product in
+            guard case .released(let info) = product.stage else { return false }
+            return !info.offMarket
+        }
+        let quarters = state.investors.profitableQuarters
+        let years = state.day / GameState.daysPerYear
+
+        state.ledger.post(LedgerEntry(
+            day: state.day, amount: 0, category: .other, label: "Still yours"
+        ))
+        state.gameOver = GameOverInfo(
+            day: state.day,
+            reason: "You still owned 100%. \(state.company.name) at \(years) years: "
+                + "\(staff) \(staff == 1 ? "person" : "people") on payroll, "
+                + "\(onSale) \(onSale == 1 ? "product" : "products") on sale, "
+                + "\(quarters) profitable quarters in a row, and nobody in the room but you.",
+            kind: .independent
+        )
+        return [.stayedIndependent(day: state.day), .gameOver(day: state.day)]
+    }
 }

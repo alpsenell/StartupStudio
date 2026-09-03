@@ -68,6 +68,18 @@ extension BalanceConfig {
         public var strategicPremiumMin: Double
         public var strategicPremiumMax: Double
 
+        // MARK: Iteration 5 — Still yours (WS-G)
+
+        // Gates, not multipliers: nothing reads them until the founder
+        // asks whether they can declare, and no pacing bot ever does.
+
+        /// Consecutive profitable quarters the *Still yours* ending needs.
+        public var independentProfitableQuarters: Int
+        /// Reputation the *Still yours* ending needs.
+        public var independentMinReputation: Double
+        /// The earliest day the founder can call the company built.
+        public var independentMinDay: Int
+
         public init(
             offerIntervalDays: Int = 7,
             offerCooldownDays: Int = 56,
@@ -93,7 +105,10 @@ extension BalanceConfig {
             strategicDominanceFactor: Double = 2,
             strategicMinReputation: Double = 60,
             strategicPremiumMin: Double = 1.5,
-            strategicPremiumMax: Double = 2.5
+            strategicPremiumMax: Double = 2.5,
+            independentProfitableQuarters: Int = 8,
+            independentMinReputation: Double = 70,
+            independentMinDay: Int = 728
         ) {
             self.offerIntervalDays = offerIntervalDays
             self.offerCooldownDays = offerCooldownDays
@@ -120,6 +135,9 @@ extension BalanceConfig {
             self.strategicMinReputation = strategicMinReputation
             self.strategicPremiumMin = strategicPremiumMin
             self.strategicPremiumMax = strategicPremiumMax
+            self.independentProfitableQuarters = independentProfitableQuarters
+            self.independentMinReputation = independentMinReputation
+            self.independentMinDay = independentMinDay
         }
 
         public static let `default` = InvestorBalance()
@@ -143,6 +161,7 @@ extension BalanceConfig.InvestorBalance {
         case ipoValuationMultiple, roundValuationPremium, patienceReferenceWeeks
         case strategicDominanceFactor, strategicMinReputation
         case strategicPremiumMin, strategicPremiumMax
+        case independentProfitableQuarters, independentMinReputation, independentMinDay
     }
 
     public init(from decoder: any Decoder) throws {
@@ -209,7 +228,15 @@ extension BalanceConfig.InvestorBalance {
             strategicPremiumMin: try container.decodeIfPresent(Double.self, forKey: .strategicPremiumMin)
                 ?? fallback.strategicPremiumMin,
             strategicPremiumMax: try container.decodeIfPresent(Double.self, forKey: .strategicPremiumMax)
-                ?? fallback.strategicPremiumMax
+                ?? fallback.strategicPremiumMax,
+            independentProfitableQuarters: try container.decodeIfPresent(
+                Int.self, forKey: .independentProfitableQuarters
+            ) ?? fallback.independentProfitableQuarters,
+            independentMinReputation: try container.decodeIfPresent(
+                Double.self, forKey: .independentMinReputation
+            ) ?? fallback.independentMinReputation,
+            independentMinDay: try container.decodeIfPresent(Int.self, forKey: .independentMinDay)
+                ?? fallback.independentMinDay
         )
     }
 }

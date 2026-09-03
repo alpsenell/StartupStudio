@@ -62,13 +62,22 @@ struct InvestorTargetsTests {
 
     /// The upside, measured against the identical studio that said no.
     ///
-    /// Chapters 4 and 5 are gated on things only money reaches — amenities,
-    /// a campus, an acquisition, a round on the cap table — so this is the
-    /// clearest statement of what the cheque is *for*. Measured over two
-    /// years: the funded studio reaches chapter 4 on 8 seeds of 10 and
-    /// chapter 5 on 6; the bootstrapper reaches chapter 4 on 3 and chapter
-    /// 5 on none, and it is not close.
-    @Test func takingTheMoneyIsWhatOpensTheLateGame() throws {
+    /// The funded ladder's chapters 4 and 5 are gated on things only money
+    /// reaches — amenities, a campus, an acquisition, a round on the cap
+    /// table — so this is the clearest statement of what the cheque buys:
+    /// *speed*. Measured over two years the funded studio reaches chapter
+    /// 4 on 8 seeds of 10 and chapter 5 on 6.
+    ///
+    /// Since the two ladders (WS-G) the studio that says no is on the
+    /// independent ladder, which asks for a company that lasts — people
+    /// who stay, quarters in the black, the deeds, somebody to go home
+    /// to. This bootstrapper has no life and never buys anything, so it
+    /// is walled at chapter 3 by design; it stays here as the money
+    /// control. The founder who plays the independent game
+    /// (`GoalIndependentBot`) reaches chapter 5 on 5 seeds of 10 in three
+    /// years and 8 in four — a year behind the cheque, on none of its
+    /// terms. That is the feature: the money is no longer the only way up.
+    @Test func takingTheMoneyIsWhatOpensTheLateGameFaster() throws {
         let funded = try Self.runAll(InvestorBot())
         let boot = try Self.runAll(.bootstrapper)
 
@@ -86,7 +95,26 @@ struct InvestorTargetsTests {
         )
         #expect(
             Self.count(boot) { $0.state.progression.chapter >= 5 } == 0,
-            "a bootstrapper reached chapter 5, which is supposed to need the money"
+            "a bootstrapper with no life reached chapter 5 — the independent ladder is free"
+        )
+
+        // The flip: the last chapter is reachable without the money, by a
+        // founder who does what the independent ladder asks.
+        let fourYears = 4 * SimRunner.daysPerYear
+        let independent = try Self.seeds.map {
+            SimRunner.run(
+                days: fourYears, seed: $0, bot: GoalIndependentBot(),
+                balance: try Self.balance(), content: TestContent.bundled
+            )
+        }
+        let independentChapterFive = Self.count(independent) { $0.state.progression.chapter >= 5 }
+        #expect(
+            independentChapterFive >= 5,
+            "the independent player reached chapter 5 on only \(independentChapterFive)/10 seeds"
+        )
+        #expect(
+            independent.allSatisfy { $0.state.investors.equityRemaining == 100 },
+            "the independent player sold a share"
         )
     }
 
