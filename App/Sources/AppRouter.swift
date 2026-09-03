@@ -36,6 +36,28 @@ enum Route: Hashable {
     /// buying the office needs somewhere to send you (WS-G).
     case city
 
+    // MARK: Iteration 6 — new surfaces
+
+    // Scaffolded so seven lanes never edit this enum at once. Each lane's
+    // tab root consumes its own route with `router.take`.
+
+    /// The launch-week war room for the build that is about to ship (U1).
+    case warRoom
+    /// This week's front page (U2).
+    case newspaper
+    /// The company's timeline (U2).
+    case timeline
+    /// The market as a map (U3).
+    case marketMap
+    /// One rival's profile (U3).
+    case rivalProfile(rivalID: UUID)
+    /// The week ahead (U5).
+    case agenda
+    /// The org chart (U5).
+    case orgChart
+    /// A product's storefront page (U6).
+    case storefront(productID: UUID)
+
     /// The tab this destination lives in.
     var tab: GameTab {
         switch self {
@@ -44,6 +66,12 @@ enum Route: Hashable {
         case .contracts, .marketReport, .market, .finances, .marketing, .investors, .rivals: .business
         case .life: .life
         case .city: .hq
+        // Iteration 6
+        case .warRoom, .storefront: .products
+        case .newspaper, .timeline: .hq
+        case .marketMap, .rivalProfile: .business
+        case .agenda: .life
+        case .orgChart: .team
         }
     }
 }
