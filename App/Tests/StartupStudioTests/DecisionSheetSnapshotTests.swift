@@ -169,9 +169,76 @@ final class DecisionSheetSnapshotTests: XCTestCase {
         snapshot("decision_term_sheet") { sheet(termSheet, engine: engine) }
     }
 
+    /// A policy-shaped kind: the generous answer says it becomes the
+    /// rule, and the firm answer comes twice — for them, and as the rule.
+    private var policyStaff: DecisionPrompt {
+        DecisionPrompt(
+            id: "staff-policy-preview",
+            systemImage: "figure.and.child.holdinghands",
+            tint: Theme.warning,
+            title: "Priya is having a baby",
+            message: "They want to know what the policy is. There is no policy. Whatever you say next becomes the policy.",
+            stats: [("Morale", "71"), ("Loyalty", "58")],
+            options: [
+                .init(
+                    label: "Full pay, three months, written down",
+                    detail: "−$4,000 · morale +12 for everyone · reputation +4 · becomes the rule",
+                    cashDelta: -4_000,
+                    action: .resolveStaffEvent(choice: .supportive)
+                ),
+                .init(
+                    label: "The statutory minimum",
+                    detail: "Free · morale −12 for everyone · reputation −3",
+                    role: .destructive,
+                    action: .resolveStaffEvent(choice: .strict)
+                ),
+                .init(
+                    label: "…and make that the rule",
+                    detail: "Parental leave: the same answer for everyone who asks · no sheet next time",
+                    role: .destructive,
+                    action: .resolveStaffEvent(choice: .strictAsPolicy)
+                ),
+            ],
+            kicker: "STAFF",
+            portraitSeed: 0xA11CE
+        )
+    }
+
     func testRendersAStaffMomentWithTheirFace() {
         let engine = engine()
         snapshot("decision_staff") { sheet(staff, engine: engine) }
+    }
+
+    func testRendersAPolicyShapedStaffMomentWithTheThirdButton() {
+        let engine = engine()
+        snapshot("decision_staff_policy", height: 640) { sheet(policyStaff, engine: engine) }
+    }
+
+    func testAPolicyShapedKindOffersTheRuleAndAFollowUpDoesNot() throws {
+        let engine = engine()
+        var state = engine.state
+        let worker = Employee(
+            id: UUID(), name: "Priya Nair",
+            skills: SkillSet(coding: 50, design: 30, marketing: 20),
+            weeklySalary: 900, assignment: .idle, isFounder: false, hiredDay: 0,
+            appearanceSeed: 0xA11CE, role: .backend
+        )
+        state.employees.append(worker)
+        state.pendingStaffEvent = StaffEvent(employeeID: worker.id, kind: .parentalLeave, respondByDay: 5)
+        let prompt = try XCTUnwrap(
+            DecisionPrompt.pending(in: state, content: engine.content, balance: engine.balance)
+        )
+        XCTAssertEqual(prompt.options.count, 3)
+        XCTAssertEqual(prompt.options[2].label, "…and make that the rule")
+        XCTAssertEqual(prompt.options[0].cashDelta, -4_000, "the def's cost, not the generic support cost")
+        XCTAssertTrue(prompt.options[0].detail?.hasSuffix("becomes the rule") == true)
+
+        // A kind with no policy block keeps its two answers.
+        state.pendingStaffEvent = StaffEvent(employeeID: worker.id, kind: .familyEmergency, respondByDay: 5)
+        let plain = try XCTUnwrap(
+            DecisionPrompt.pending(in: state, content: engine.content, balance: engine.balance)
+        )
+        XCTAssertEqual(plain.options.count, 2)
     }
 
     func testTheTitleSurvivesAccessibilitySizes() {

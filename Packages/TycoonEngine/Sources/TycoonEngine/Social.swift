@@ -71,6 +71,15 @@ public enum StaffEventChoice: String, Codable, Equatable, Sendable {
     /// The firm answer: usually free, dents loyalty. Also what the
     /// deadline picks when the founder never got back to them.
     case strict
+    /// The firm answer, made the rule (WS-D): the strict outcome lands and
+    /// the kind's strict policy is set, so the next person who asks gets
+    /// the same answer without a sheet — the cheap-now, remembered-later
+    /// choice. Appended; the deadline never picks it, and a kind with no
+    /// policy block treats it as plain `strict`.
+    case strictAsPolicy
+
+    /// Whether the answer is the firm one, rule or not.
+    public var isStrict: Bool { self != .supportive }
 }
 
 /// A pending staff event, stored until answered or auto-resolved.

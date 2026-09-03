@@ -323,9 +323,10 @@ enum SocialSystem {
     /// `balance.social` costs when it doesn't.
     ///
     /// A supportive answer to a policy-shaped kind (WS-D) also sets the
-    /// rule — only when the founder gave it (`automatic == false`), and
-    /// only for a rolled kind, never a second act. Any strict answer is
-    /// remembered by the person who got it.
+    /// rule, and `.strictAsPolicy` sets the strict one — only when the
+    /// founder gave it (`automatic == false`), and only for a rolled kind,
+    /// never a second act. Any strict answer is remembered by the person
+    /// who got it.
     private static func applyStaffChoice(
         _ choice: StaffEventChoice,
         to event: StaffEvent,
@@ -355,19 +356,20 @@ enum SocialSystem {
             ))
         }
         if !automatic, event.defID == nil, let flags = def.policy,
-           choice == .supportive,
+           choice != .strict,
            state.staffMemory.policy(for: event.kind) == nil {
+            let supportive = choice == .supportive
             let policy = StaffPolicy(
                 kind: event.kind,
-                flag: flags.supportiveFlag,
-                choice: .supportive,
+                flag: supportive ? flags.supportiveFlag : flags.strictFlag,
+                choice: supportive ? .supportive : .strict,
                 setDay: state.day,
                 setBy: employee.id,
                 setByName: employee.name,
                 beneficiaries: [employee.id]
             )
             state.staffMemory.policies.append(policy)
-            state.narrative.flags.remove(flags.strictFlag)
+            state.narrative.flags.remove(supportive ? flags.strictFlag : flags.supportiveFlag)
             state.narrative.flags.insert(policy.flag)
             events.append(.staffPolicySet(flag: policy.flag, employeeID: employee.id, day: state.day))
         }
@@ -498,7 +500,7 @@ enum SocialSystem {
             if kind == .familyEmergency {
                 state.employees[index].assignment = .idle
             }
-        case .strict:
+        case .strict, .strictAsPolicy:
             state.employees[index].loyalty = max(0,
                 state.employees[index].loyalty - config.strictLoyaltyPenalty)
         }

@@ -214,6 +214,86 @@ struct StaffPolicyTests {
         #expect(state.pendingStaffEvent != nil)
     }
 
+    @Test("\u{2026}and make that the rule: the strict answer as a rule answers the next asker strictly")
+    func theStrictAnswerAsARule() throws {
+        let balance = Self.balance()
+        let content = Self.catalog([Self.parentalLeave])
+        var state = Self.stateWithTeam(balance)
+        Self.tickUntilPending(&state, balance: balance, content: content)
+        let first = try #require(state.pendingStaffEvent)
+        let cashBefore = state.company.cash
+        let moraleBefore = try #require(state.employee(id: first.employeeID)?.morale)
+        Reducer.apply(
+            .resolveStaffEvent(choice: .strictAsPolicy), to: &state, balance: balance, content: content
+        )
+
+        // The strict numbers land on the asker, and the rule is strict.
+        #expect(state.company.cash == cashBefore, "the firm answer is free")
+        #expect(state.employee(id: first.employeeID)?.morale == moraleBefore - 12)
+        let policy = try #require(state.staffMemory.policy(for: .parentalLeave))
+        #expect(policy.choice == .strict)
+        #expect(policy.flag == "leave_statutory")
+        #expect(state.narrative.flags.contains("leave_statutory"))
+        #expect(!state.narrative.flags.contains("good_leave_policy"))
+        #expect(state.staffMemory.refusal(for: first.employeeID)?.automatic == false)
+
+        // The next asker gets the same answer without a sheet, and
+        // remembers it as a no.
+        var applied: UUID?
+        let start = state.day
+        while applied == nil, state.day - start < 120 {
+            for event in Reducer.tick(&state, balance: balance, content: content) {
+                if case .staffPolicyApplied(let flag, let employeeID, _) = event,
+                   employeeID != first.employeeID {
+                    #expect(flag == "leave_statutory")
+                    applied = employeeID
+                }
+            }
+            #expect(state.pendingStaffEvent == nil)
+        }
+        let second = try #require(applied)
+        #expect(
+            !state.ledger.entries.contains { $0.label.hasSuffix("· the policy") },
+            "nothing on the ledger for a strict rule"
+        )
+        #expect(state.employee(id: second)?.morale ?? 100 < 70)
+        #expect(state.staffMemory.refusal(for: second)?.kind == .parentalLeave)
+        #expect(state.staffMemory.policy(for: .parentalLeave)?.beneficiaries.contains(second) == true)
+    }
+
+    @Test("the rule button on a kind with no policy block is a plain no")
+    func strictAsPolicyWithoutAPolicyBlock() throws {
+        let balance = Self.balance()
+        let content = Self.catalog([
+            StaffEventDef(
+                id: "familyEmergency", title: "{name} has a family emergency", body: "Body.",
+                headline: "{name} needed time off.", weight: 1,
+                supportive: StaffEventDef.Outcome(label: "Cover for them", cash: -500, loyalty: 12),
+                strict: StaffEventDef.Outcome(label: "Business first", loyalty: -10)
+            ),
+        ])
+        var state = Self.stateWithTeam(balance)
+        Self.tickUntilPending(&state, balance: balance, content: content)
+        let pending = try #require(state.pendingStaffEvent)
+        let loyaltyBefore = try #require(state.employee(id: pending.employeeID)?.loyalty)
+        Reducer.apply(
+            .resolveStaffEvent(choice: .strictAsPolicy), to: &state, balance: balance, content: content
+        )
+        #expect(state.staffMemory.policies.isEmpty)
+        #expect(state.employee(id: pending.employeeID)?.loyalty == loyaltyBefore - 10)
+
+        // And with no catalog at all it is the generic strict answer.
+        var bare = Self.stateWithTeam(balance)
+        Self.tickUntilPending(&bare, balance: balance, content: TestContent.tiny())
+        let barePending = try #require(bare.pendingStaffEvent)
+        let bareLoyalty = try #require(bare.employee(id: barePending.employeeID)?.loyalty)
+        Reducer.apply(
+            .resolveStaffEvent(choice: .strictAsPolicy), to: &bare, balance: balance, content: TestContent.tiny()
+        )
+        #expect(bare.employee(id: barePending.employeeID)?.loyalty
+            == bareLoyalty - balance.social.strictLoyaltyPenalty)
+    }
+
     @Test("a kind with no policy block never becomes a rule, however generous the answer")
     func onlyPolicyShapedKindsBecomeRules() throws {
         let balance = Self.balance()

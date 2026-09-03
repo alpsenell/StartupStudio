@@ -302,6 +302,10 @@ extension DecisionPrompt {
     /// consequence lines come from `StaffEvents.json`; a kind with no
     /// definition falls back to the generic phrasing and the balance's
     /// support cost, which is what the two original kinds used.
+    ///
+    /// A policy-shaped kind (WS-D) says so on its generous answer — it
+    /// becomes the rule — and offers the firm answer twice: once for this
+    /// person, and once as the rule for everyone who asks after them.
     private static func staffEventPrompt(
         _ event: StaffEvent,
         state: GameState,
@@ -310,7 +314,7 @@ extension DecisionPrompt {
     ) -> DecisionPrompt? {
         guard let employee = state.employee(id: event.employeeID) else { return nil }
         let social = balance.social
-        let def = content.staffEvent(event.kind.rawValue)
+        let def = content.staffEvent(event.definitionID)
 
         func fill(_ text: String) -> String {
             text
@@ -322,11 +326,48 @@ extension DecisionPrompt {
             ?? "\(employee.name) needs an answer"
         let message = def.map { fill($0.body) }
             ?? "They came to you with something. Back them, or hold the line."
-        let supportLabel = def?.supportive.label ?? "Be supportive"
-        let supportDetail = def?.supportive.detail
+        // A rolled kind with a policy block can become a rule; a second
+        // act never can, and neither can a kind that already has one.
+        let policy = event.defID == nil && state.staffMemory.policy(for: event.kind) == nil
+            ? def?.policy
+            : nil
+        let supportLabel = def?.supportive?.label ?? "Be supportive"
+        var supportDetail = def?.supportive?.detail
             ?? "Costs \(social.supportCost.money) · loyalty way up"
+        if policy != nil { supportDetail += " · becomes the rule" }
+        // The def's own cash cost, so the after-state on the button is
+        // the number the ledger will show; the generic support cost only
+        // for a kind the catalog does not describe.
+        let supportCash: Int? = if let def {
+            def.supportive.map(\.cash).flatMap { $0 != 0 ? $0 : nil }
+        } else {
+            social.supportCost > 0 ? -social.supportCost : nil
+        }
         let strictLabel = def?.strict.label ?? "Business first"
         let strictDetail = def?.strict.detail ?? "Free, but loyalty takes a hit"
+
+        var options = [
+            Option(
+                label: supportLabel,
+                detail: supportDetail,
+                cashDelta: supportCash,
+                action: .resolveStaffEvent(choice: .supportive)
+            ),
+            Option(
+                label: strictLabel,
+                detail: strictDetail,
+                role: .destructive,
+                action: .resolveStaffEvent(choice: .strict)
+            ),
+        ]
+        if let policy {
+            options.append(Option(
+                label: "…and make that the rule",
+                detail: "\(policy.name): the same answer for everyone who asks · no sheet next time",
+                role: .destructive,
+                action: .resolveStaffEvent(choice: .strictAsPolicy)
+            ))
+        }
 
         return DecisionPrompt(
             id: "staff-\(event.employeeID.uuidString)-\(event.respondByDay)",
@@ -338,20 +379,7 @@ extension DecisionPrompt {
                 ("Morale", "\(Int(employee.morale.rounded()))"),
                 ("Loyalty", "\(Int(employee.loyalty.rounded()))"),
             ],
-            options: [
-                Option(
-                    label: supportLabel,
-                    detail: supportDetail,
-                    cashDelta: social.supportCost > 0 ? -social.supportCost : nil,
-                    action: .resolveStaffEvent(choice: .supportive)
-                ),
-                Option(
-                    label: strictLabel,
-                    detail: strictDetail,
-                    role: .destructive,
-                    action: .resolveStaffEvent(choice: .strict)
-                ),
-            ],
+            options: options,
             kicker: "STAFF",
             portraitSeed: employee.appearanceSeed
         )
