@@ -103,7 +103,13 @@ struct NewProductFlow: View {
                 selectedTopicID: $selectedTopicID
             )
         case .details:
-            DetailsStep(name: $name, focus: $focus, suggestion: suggestion) {
+            DetailsStep(
+                name: $name,
+                focus: $focus,
+                suggestion: suggestion,
+                forecast: preStartForecast,
+                matching: selectedTypeID.flatMap { engine.content.productType($0) }.map { PhaseFocus.matching(type: $0) }
+            ) {
                 nameEdited = true
             }
         }
@@ -129,7 +135,7 @@ struct NewProductFlow: View {
 
             if step == .details {
                 Button(action: start) {
-                    Label("Start building", systemImage: "hammer.fill")
+                    Label(startLabel, systemImage: "hammer.fill")
                         .font(.system(.headline, design: .rounded))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, Theme.Spacing.xs)
@@ -157,6 +163,20 @@ struct NewProductFlow: View {
         .padding(Theme.Spacing.lg)
         .background(.bar)
         .overlay(alignment: .top) { Divider() }
+    }
+
+    /// The crew's best case on the chosen type, topic and base.
+    private var preStartForecast: ShipForecast? {
+        guard let selectedTypeID else { return nil }
+        return ShipForecast.preStart(
+            typeID: selectedTypeID, topicID: selectedTopicID, codebaseID: selectedCodebaseID,
+            state: engine.state, balance: engine.balance, content: engine.content
+        )
+    }
+
+    /// "Start · ~58 best case": the number on the button that commits.
+    private var startLabel: String {
+        preStartForecast.map { "Start · ~\(Int($0.quality.rounded())) best case" } ?? "Start building"
     }
 
     private var canAdvance: Bool {
@@ -297,11 +317,20 @@ private struct TypeStep: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
+            if let first = engine.content.productTypes.first,
+               let forecast = ShipForecast.preStart(
+                   typeID: first.id, topicID: nil, codebaseID: nil,
+                   state: engine.state, balance: engine.balance, content: engine.content
+               ) {
+                CrewCeilingNote(ceiling: Int(forecast.quality.rounded()))
+                    .padding(.horizontal, Theme.Spacing.xs)
+            }
             ForEach(engine.content.productTypes) { type in
                 TypeCard(
                     type: type,
                     // Research unlocks count, not just `unlockedFromStart`.
                     isUnlocked: engine.state.isProductTypeUnlocked(type.id, content: engine.content),
+                    ceiling: nil,
                     isSelected: selectedTypeID == type.id,
                     select: { selectedTypeID = type.id }
                 )
@@ -313,6 +342,8 @@ private struct TypeStep: View {
 private struct TypeCard: View {
     let type: ProductTypeDef
     let isUnlocked: Bool
+    /// What the idle crew could reach on this type, before topic and bugs.
+    let ceiling: Int?
     let isSelected: Bool
     let select: () -> Void
 
@@ -361,6 +392,14 @@ private struct TypeCard: View {
                             "\(Int(type.marketSize).formatted(.number.notation(.compactName).locale(Theme.gameLocale))) market",
                             systemImage: "chart.bar"
                         )
+                        if let ceiling {
+                            // The number that used to arrive one step too
+                            // late: what this crew could review as.
+                            Label("~\(ceiling) with this crew", systemImage: "person.3.fill")
+                                .font(.caption.weight(.semibold))
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.scoreTint(ceiling))
+                        }
                     } else {
                         statLabel("Research to unlock", systemImage: "lock.fill")
                     }
@@ -623,6 +662,7 @@ private struct TopicStep: View {
                     TopicCell(
                         category: category,
                         fit: fit(for: category.topic),
+                        ceiling: ceiling(for: category.topic),
                         isSelected: selectedTopicID == category.id,
                         select: { selectedTopicID = category.id }
                     )
@@ -642,6 +682,16 @@ private struct TopicStep: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+    }
+
+    /// The crew ceiling on this type in this topic: the type's number with
+    /// the topic's fit folded in.
+    private func ceiling(for topic: TopicDef) -> Int? {
+        guard let selectedTypeID else { return nil }
+        return ShipForecast.preStart(
+            typeID: selectedTypeID, topicID: topic.id, codebaseID: nil,
+            state: engine.state, balance: engine.balance, content: engine.content
+        ).map { Int($0.quality.rounded()) }
     }
 
     /// Fit hint against the chosen type: above 1.0 -> great fit,
@@ -726,6 +776,8 @@ private struct TopicCell: View {
 
     let category: CategorySnapshot
     let fit: Fit?
+    /// The crew ceiling here, once a type is chosen.
+    let ceiling: Int?
     let isSelected: Bool
     let select: () -> Void
 
@@ -760,6 +812,12 @@ private struct TopicCell: View {
                 Text(fit?.text ?? " ")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(fit?.tint ?? .clear)
+                if let ceiling {
+                    Text("~\(ceiling)")
+                        .font(.caption2.weight(.bold))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.scoreTint(ceiling))
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.md)
@@ -780,6 +838,7 @@ private struct TopicCell: View {
     private var accessibilityText: String {
         var parts = [topic.name]
         if let fit { parts.append(fit.text.lowercased()) }
+        if let ceiling { parts.append("could review around \(ceiling)") }
         parts.append("demand \(category.market.multiplierLabel)")
         if category.standing > 0 {
             parts.append("your standing \(category.standingLabel)")
@@ -794,10 +853,18 @@ private struct DetailsStep: View {
     @Binding var name: String
     @Binding var focus: PhaseFocus
     let suggestion: String
+    /// The crew's best case on this type and topic, with the one-line fix.
+    let forecast: ShipForecast?
+    /// The split the type demands, offered as the starting focus.
+    let matching: PhaseFocus?
     let onNameEdited: () -> Void
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
+            if let forecast {
+                PreStartForecastCard(forecast: forecast)
+            }
+
             CardView("Name", systemImage: "textformat") {
                 TextField("Product name", text: $name)
                     .font(.system(.title3, design: .rounded).weight(.semibold))
@@ -815,8 +882,50 @@ private struct DetailsStep: View {
             }
 
             CardView("Starting focus", systemImage: "slider.horizontal.3") {
-                FocusEditor(focus: $focus)
+                FocusEditor(focus: $focus, matching: matching)
             }
         }
+        .onAppear {
+            // Start on the split the type asks for, not a flat third each;
+            // a player who wants to over-polish can still drag.
+            if let matching, focus == .balanced { focus = matching }
+        }
+    }
+}
+
+/// "Best case with this crew and topic: 58" — the forecast the detail
+/// screen shows, one step earlier, before the player commits.
+private struct PreStartForecastCard: View {
+    let forecast: ShipForecast
+
+    var body: some View {
+        let score = Int(forecast.quality.rounded())
+        CardView("Best case with this crew", systemImage: "person.3.fill") {
+            HStack(alignment: .top, spacing: Theme.Spacing.lg) {
+                PixelText(text: "\(score)", scale: 4, color: Theme.scoreTint(score), shadow: true)
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text(
+                        forecast.crewCeiling >= 0.95
+                            ? "Every pool full and no bugs would review around \(score)."
+                            : (forecast.limitingFactor ?? "More work still pays — the pools aren't full.")
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    if forecast.topicFit < 0.95 {
+                        Text("The topic is a poor match for the type (×\(forecast.topicFit.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale)))).")
+                            .font(.caption)
+                            .foregroundStyle(Theme.warning)
+                    }
+                    if forecast.codebaseCeiling < 0.99, let name = forecast.codebaseName {
+                        Text("Built on \(name), carrying \(Int(forecast.codebaseDebt.rounded())) debt.")
+                            .font(.caption)
+                            .foregroundStyle(Theme.warning)
+                    }
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Best case with this crew: \(score) out of 100")
     }
 }

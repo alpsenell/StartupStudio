@@ -40,7 +40,12 @@ struct ProductsListView: View {
                 // Day 0 used to be one card and a blank screen. The
                 // catalog shows what a product is before the player
                 // starts one.
-                TypeCatalogPreview(engine: engine)
+                TypeCatalogPreview(engine: engine) { typeID in
+                    ShipForecast.preStart(
+                        typeID: typeID, topicID: nil, codebaseID: nil,
+                        state: engine.state, balance: engine.balance, content: engine.content
+                    ).map { Int($0.quality.rounded()) }
+                }
             } else if hasFreeSlot {
                 // In-content CTA: nav-bar toolbars sit underneath the
                 // opaque top HUD in this design, so actions live in
@@ -144,6 +149,13 @@ private struct InDevelopmentCard: View {
                 .accessibilityHint("Opens details and the focus editor")
 
                 TriPhaseProgress(progress: progress, type: type)
+                if engine.state.economy.workPace != .normal || engine.state.employees.contains(where: { !$0.isFounder }) {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        WorkPacePill(pace: engine.state.economy.workPace)
+                        Spacer(minLength: 0)
+                    }
+                    WorkPaceControl(engine: engine, compact: true)
+                }
 
                 Button {
                     confirmingShip = true
@@ -346,9 +358,14 @@ struct TypeCatalogPreview: View {
     var body: some View {
         CardView("What you could build", systemImage: "square.grid.2x2.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                // The crew ceiling is the same whatever the type — it is
+                // the people, not the product — so it is said once.
+                if let first = types.first, let crewCeiling = ceiling(first.id) {
+                    CrewCeilingNote(ceiling: crewCeiling)
+                }
                 ForEach(types) { type in
                     let unlocked = engine.state.isProductTypeUnlocked(type.id, content: engine.content)
-                    TypePreviewRow(type: type, isUnlocked: unlocked, ceiling: ceiling(type.id))
+                    TypePreviewRow(type: type, isUnlocked: unlocked, ceiling: nil)
                     if type.id != types.last?.id {
                         Divider()
                     }
@@ -418,5 +435,26 @@ private struct TypePreviewRow: View {
         .accessibilityLabel(
             isUnlocked ? "\(type.name). \(type.blurb)" : "\(type.name), locked. Research to unlock."
         )
+    }
+}
+
+/// "With today's crew, the best any of these reviews is ~58." Once, above
+/// a list of types, because the number belongs to the people.
+struct CrewCeilingNote: View {
+    let ceiling: Int
+
+    var body: some View {
+        Label {
+            Text("With today's crew, the best any of these reviews is about ")
+                + Text("\(ceiling)").foregroundStyle(Theme.scoreTint(ceiling)).bold()
+                + Text(". Better people raise it; the topic moves it.")
+        } icon: {
+            Image(systemName: "person.3.fill")
+                .foregroundStyle(Theme.scoreTint(ceiling))
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityLabel("With today's crew the best any product reviews is about \(ceiling) out of 100")
     }
 }

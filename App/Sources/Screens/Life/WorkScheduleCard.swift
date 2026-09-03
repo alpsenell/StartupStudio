@@ -61,18 +61,8 @@ struct WorkScheduleCard: View {
                     Divider()
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         SwitchLabel("The team")
-                        Picker("Company pace", selection: paceBinding) {
-                            ForEach(WorkPace.allCases, id: \.self) { option in
-                                Text(option.displayName).tag(option)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .accessibilityLabel("Company work pace")
-
-                        Text(pace.consequence)
-                            .font(.footnote)
-                            .foregroundStyle(pace == .crunch ? Theme.warning : .secondary)
-                            .animation(.default, value: pace)
+                        // One control, shared with the product screens.
+                        WorkPaceControl(engine: engine)
 
                         if moraleImpact < 0 {
                             FounderImpactNote(

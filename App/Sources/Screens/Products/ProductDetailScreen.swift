@@ -85,11 +85,21 @@ struct ProductDetailScreen: View {
         )
 
         CardView("Progress", systemImage: "chart.bar.fill") {
-            TriPhaseProgress(progress: progress, type: type)
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                TriPhaseProgress(progress: progress, type: type)
+                if engine.state.employees.contains(where: { !$0.isFounder }) {
+                    Divider()
+                    // The pace, where "we need to ship sooner" is decided.
+                    WorkPaceControl(engine: engine, compact: true)
+                }
+            }
         }
 
         CardView("Focus", systemImage: "slider.horizontal.3") {
-            FocusEditor(focus: focusBinding(fallback: progress.focus))
+            FocusEditor(
+                focus: focusBinding(fallback: progress.focus),
+                matching: type.map { PhaseFocus.matching(progress: progress, type: $0) }
+            )
         }
 
         if let forecast = engine.state.shipForecast(
@@ -486,6 +496,14 @@ private struct ReleasedHeaderCard: View {
                         systemImage: "calendar",
                         value: "Launched \(gameDateLabel(forDay: info.launchDay))"
                     )
+                }
+
+                if let reason = info.launchForecast?.limitingFactor {
+                    // Why the score was what it was, kept where the score is.
+                    Label(reason, systemImage: "lightbulb.fill")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if info.offMarket {

@@ -125,3 +125,65 @@ struct AssignmentMenu: View {
     }
 }
 
+
+/// "Put someone on it": a menu of the people who are idle, sending
+/// `.assign` straight from the screen that has the work — a contract that
+/// nobody is on, a lab that banks no points — instead of a hop to the Team
+/// tab and back.
+struct IdleAssignMenu: View {
+    let engine: GameEngine
+    let assignment: Assignment
+    var label = "Assign"
+
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, because SwiftUI
+    /// updates this property for presented content before the
+    /// environment is installed and the non-optional form traps there.
+    private var shell: GameShell { injectedShell ?? .shared }
+    @Environment(AppRouter.self) private var router
+
+    private var idle: [Employee] {
+        engine.state.employees.filter { $0.assignment == .idle }
+    }
+
+    var body: some View {
+        Menu {
+            if idle.isEmpty {
+                Text("Nobody is idle")
+                Button {
+                    router.go(.hiring)
+                } label: {
+                    Label("Open the team", systemImage: "person.2.fill")
+                }
+            } else {
+                ForEach(idle) { employee in
+                    Button {
+                        shell.toasts.send(
+                            .assign(employeeID: employee.id, to: assignment),
+                            to: engine,
+                            ack: "\(employee.name) is on it"
+                        )
+                    } label: {
+                        Label(employee.name, systemImage: employee.isFounder ? "crown.fill" : "person.fill")
+                    }
+                }
+                if idle.count > 1 {
+                    Divider()
+                    Button {
+                        for employee in idle {
+                            engine.send(.assign(employeeID: employee.id, to: assignment))
+                        }
+                        shell.toasts.show("Everyone idle is on it", icon: "person.3.fill")
+                    } label: {
+                        Label("Everyone idle", systemImage: "person.3.fill")
+                    }
+                }
+            }
+        } label: {
+            Label(label, systemImage: "person.badge.plus")
+                .font(.system(.footnote, design: .rounded).weight(.semibold))
+        }
+        .buttonStyle(.bordered)
+        .accessibilityLabel("\(label): choose someone who is idle")
+    }
+}

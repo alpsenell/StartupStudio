@@ -14,6 +14,7 @@ struct MarketReportScreen: View {
     var initialTopicID: String?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppRouter.self) private var router
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -32,7 +33,12 @@ struct MarketReportScreen: View {
             .navigationTitle("Market Report")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: TopicRoute.self) { route in
-                TopicDetailView(engine: engine, topicID: route.topicID)
+                TopicDetailView(engine: engine, topicID: route.topicID) { route in
+                    // Close the report first, then deep-link: the flow opens
+                    // on the Products tab, not under this sheet.
+                    dismiss()
+                    router.go(route)
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

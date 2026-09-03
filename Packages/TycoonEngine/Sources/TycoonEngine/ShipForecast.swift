@@ -133,3 +133,138 @@ extension GameState {
         )
     }
 }
+
+// MARK: - Before the first line of code, and after the last
+
+/// The forecast's terms as they stood the day a product shipped, kept on
+/// the release so launch day can say *why* the score was what it was —
+/// "your crew capped this at 61", "open bugs cost 12 points" — at the one
+/// moment the player is ready to hear it. A pure record; nothing reads it
+/// back into the simulation.
+public struct LaunchForecast: Codable, Equatable, Sendable {
+    public var crewCeiling: Double
+    public var skillCeiling: Double
+    public var codebaseCeiling: Double
+    public var topicFit: Double
+    public var bugFactor: Double
+    public var marketScale: Double
+    /// `ShipForecast.limitingFactor` at ship, in the player's words.
+    public var limitingFactor: String?
+
+    public init(
+        crewCeiling: Double,
+        skillCeiling: Double,
+        codebaseCeiling: Double,
+        topicFit: Double,
+        bugFactor: Double,
+        marketScale: Double,
+        limitingFactor: String?
+    ) {
+        self.crewCeiling = crewCeiling
+        self.skillCeiling = skillCeiling
+        self.codebaseCeiling = codebaseCeiling
+        self.topicFit = topicFit
+        self.bugFactor = bugFactor
+        self.marketScale = marketScale
+        self.limitingFactor = limitingFactor
+    }
+
+    /// Which screen fixes the thing that held the score down.
+    public enum Fix: Sendable, Equatable {
+        case hiring, refactor, bugs, market
+    }
+
+    /// The biggest lever, in the same order `limitingFactor` names them.
+    public var fix: Fix? {
+        if codebaseCeiling < 0.99, codebaseCeiling < skillCeiling { return .refactor }
+        if skillCeiling < 0.95 { return .hiring }
+        if bugFactor < 0.95 { return .bugs }
+        if topicFit < 0.95 { return .market }
+        return nil
+    }
+}
+
+extension ShipForecast {
+    /// This forecast, frozen for the release.
+    public var snapshot: LaunchForecast {
+        LaunchForecast(
+            crewCeiling: crewCeiling,
+            skillCeiling: skillCeiling,
+            codebaseCeiling: codebaseCeiling,
+            topicFit: topicFit,
+            bugFactor: bugFactor,
+            marketScale: marketScale,
+            limitingFactor: limitingFactor
+        )
+    }
+
+    /// What a product of this type and topic could reach if the people who
+    /// would join it today built it with every pool full and no bugs.
+    ///
+    /// The number that decides whether a product is worth starting, shown
+    /// *before* the player commits rather than one step after. The crew is
+    /// whoever is idle — the founder included — because that is exactly who
+    /// `startProduct` puts on a new build; its skill goes through the same
+    /// `crewSkillSample` the daily tick uses, so the ceiling here equals
+    /// the ceiling the detail screen shows on day one. The market term is
+    /// left at 1: saturation is a property of the launch, not the plan.
+    public static func preStart(
+        typeID: String,
+        topicID: String?,
+        codebaseID: String?,
+        state: GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> ShipForecast? {
+        guard content.productType(typeID) != nil else { return nil }
+        let crew = state.employees.filter { $0.assignment == .idle }
+        let skillIndex = ProductSystem.crewSkillSample(
+            designSkillSum: crew.reduce(0) { $0 + $1.skills.design },
+            codingSkillSum: crew.reduce(0) { $0 + $1.skills.coding },
+            crewCount: crew.count,
+            balance: balance
+        )
+        let ceiling = ProductSystem.qualityCeiling(skillIndex: skillIndex, balance: balance)
+        let topicFit = topicID.flatMap { content.topic($0)?.fitByType[typeID] } ?? 1
+        let techMultiplier = state.qualityTechMultiplier(
+            content: content, cap: balance.techQualityMultiplierCap
+        )
+        let codebase = codebaseID.flatMap { state.codebase(id: $0) }
+        let codebaseDebt = codebase?.debt ?? 0
+        let codebaseCeiling = balance.codebase.debtCeiling(codebaseDebt)
+        let crewCeiling = min(1, topicFit * techMultiplier * ceiling * codebaseCeiling)
+        return ShipForecast(
+            quality: min(100, max(0, 100 * crewCeiling)),
+            crewCeiling: crewCeiling,
+            skillCeiling: ceiling,
+            codebaseCeiling: codebaseCeiling,
+            codebaseDebt: codebaseDebt,
+            codebaseName: codebase?.name,
+            topicFit: topicFit,
+            bugFactor: 1,
+            marketScale: 1,
+            canShip: false
+        )
+    }
+}
+
+extension PhaseFocus {
+    /// A split matching what a build still needs: each pool weighted by
+    /// the points it is short, so nobody pours a third of their days into
+    /// a pool that is already full. With nothing left it falls back to
+    /// balanced. The engine's own pacing bots have played this way from
+    /// the start; now the screen can offer it in one tap.
+    public static func matching(progress: DevProgress, type: ProductTypeDef) -> PhaseFocus {
+        let design = max(0, type.designPts - progress.designPts)
+        let code = max(0, type.codePts - progress.codePts)
+        let polish = max(0, type.polishPts - progress.polishPts)
+        guard design + code + polish > 0 else { return .balanced }
+        return PhaseFocus(design: design, code: code, polish: polish)
+    }
+
+    /// The split a fresh build of `type` should start on: the pools in the
+    /// proportion the type demands.
+    public static func matching(type: ProductTypeDef) -> PhaseFocus {
+        PhaseFocus(design: type.designPts, code: type.codePts, polish: type.polishPts)
+    }
+}

@@ -12,6 +12,7 @@ struct LaunchDaySheet: View {
     let product: Product
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppRouter.self) private var router
 
     /// How many reviews have been revealed so far.
     @State private var revealed = 0
@@ -119,6 +120,13 @@ struct LaunchDaySheet: View {
 
             if revealed >= release.reviews.count {
                 averageStamp(release)
+                if let forecast = release.launchForecast, let reason = forecast.limitingFactor {
+                    LaunchReasonRow(reason: reason, fix: forecast.fix) { route in
+                        dismiss()
+                        router.go(route)
+                    }
+                    .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
+                }
             }
         }
     }
@@ -286,5 +294,51 @@ private struct ReviewCardView: View {
                 shownCharacters = index
             }
         }
+    }
+}
+
+/// The sentence under the score that says why, with the screen that fixes
+/// it one tap away. Shown once the last outlet has weighed in.
+struct LaunchReasonRow: View {
+    let reason: String
+    let fix: LaunchForecast.Fix?
+    var productID: UUID?
+    let onRoute: (Route) -> Void
+
+    private var action: (label: String, route: Route)? {
+        switch fix {
+        case .hiring: ("Hire", .hiring)
+        case .refactor: ("The team", .hiring)
+        case .bugs: productID.map { ("Live ops", .product($0)) }
+        case .market: ("The market", .market)
+        case nil: nil
+        }
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            Image(systemName: "lightbulb.fill")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(Theme.warning)
+                .frame(width: 22)
+            Text(reason)
+                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: Theme.Spacing.sm)
+            if let action {
+                Button {
+                    Haptics.tap()
+                    onRoute(action.route)
+                } label: {
+                    Text(action.label)
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.warning.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Why: \(reason)")
     }
 }

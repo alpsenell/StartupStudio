@@ -9,10 +9,32 @@ import TycoonEngine
 /// normalized split.
 struct FocusEditor: View {
     @Binding var focus: PhaseFocus
+    /// The split that matches what the build still needs, when known. The
+    /// engine's own bots have played this way from the start; the button
+    /// makes it one tap instead of three drags.
+    var matching: PhaseFocus?
+
+    private var matchesTheWork: Bool {
+        guard let matching else { return true }
+        return normalized(focus) == normalized(matching)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             let split = normalizedPercentages
+            if let matching, !matchesTheWork {
+                Button {
+                    Haptics.tap()
+                    withAnimation(Theme.Motion.selection) { focus = matching }
+                } label: {
+                    Label("Match the work", systemImage: "wand.and.stars")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(Theme.accent)
+                .accessibilityHint("Weights each phase by the points it still needs")
+            }
             sliderRow(
                 label: "Design",
                 value: $focus.design,
@@ -65,7 +87,9 @@ struct FocusEditor: View {
 
     /// The three weights as whole percentages that always sum to exactly
     /// 100 (the last value absorbs rounding error).
-    private var normalizedPercentages: [Int] {
+    private var normalizedPercentages: [Int] { normalized(focus) }
+
+    private func normalized(_ focus: PhaseFocus) -> [Int] {
         let weights = [max(focus.design, 0), max(focus.code, 0), max(focus.polish, 0)]
         let total = weights.reduce(0, +)
         guard total > 0 else { return [34, 33, 33] }

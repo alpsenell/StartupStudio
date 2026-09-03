@@ -429,6 +429,11 @@ enum ProductSystem {
                 - marketingAvg / adoptionConfig.marketingDivisor
                 - hypeAtLaunch / adoptionConfig.hypeDivisor)
 
+        // The forecast as it stood this morning, frozen for launch day.
+        let launchForecast = state.shipForecast(
+            productID: productID, balance: balance, content: content
+        )?.snapshot
+
         let info = ReleaseInfo(
             launchDay: state.day,
             quality: quality,
@@ -441,7 +446,8 @@ enum ProductSystem {
             // context; reuse it rather than calling it twice.
             launchMarketScale: marketScale,
             liveBugs: Int((Double(dev.openBugs) * balance.economy.liveBugSeedFraction).rounded()),
-            isSubscription: type.revenueModel == .subscription
+            isSubscription: type.revenueModel == .subscription,
+            launchForecast: launchForecast
         )
         let averageScore = info.averageReviewScore
 

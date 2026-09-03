@@ -9,6 +9,25 @@ import TycoonEngine
 struct TopicDetailView: View {
     let engine: GameEngine
     let topicID: String
+    /// Where the actions go: the market report supplies a closure that
+    /// closes the sheet first, so the flow opens on the Products tab.
+    var onRoute: ((Route) -> Void)?
+
+    @Environment(AppRouter.self) private var router
+
+    /// The studio's product on the market here, if any: the one a campaign
+    /// or a price change would be for.
+    private var releasedProduct: Product? {
+        engine.state.products.first { product in
+            guard case .released(let info) = product.stage, !info.offMarket else { return false }
+            return product.topicID == topicID
+        }
+    }
+
+    private func go(_ route: Route) {
+        Haptics.tap()
+        if let onRoute { onRoute(route) } else { router.go(route) }
+    }
 
     private var snapshot: TopicSnapshot? {
         engine.content.topic(topicID).map { TopicSnapshot(topic: $0, market: engine.state.market) }
@@ -47,6 +66,48 @@ struct TopicDetailView: View {
         .background(Theme.screenBackground)
         .navigationTitle(snapshot?.topic.name ?? "Market")
         .navigationBarTitleDisplayMode(.inline)
+        // The market used to be a number the player read and could not
+        // touch: the report's only button said "Done". The topic detail
+        // now does something with what it says.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if let topic = snapshot?.topic {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Button {
+                        go(.newProduct(topicID: topic.id))
+                    } label: {
+                        Label("Start a product in \(topic.name)", systemImage: "hammer.fill")
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Theme.Spacing.xs)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+                    if let product = releasedProduct {
+                        Button {
+                            go(.marketing)
+                        } label: {
+                            Label("Campaign", systemImage: "megaphone.fill")
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                .padding(.vertical, Theme.Spacing.xs)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Run a campaign for \(product.name)")
+                        Button {
+                            go(.product(product.id))
+                        } label: {
+                            Label("Price", systemImage: "tag.fill")
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                .padding(.vertical, Theme.Spacing.xs)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Change the price of \(product.name)")
+                    }
+                }
+                .padding(Theme.Spacing.lg)
+                .background(.bar)
+                .overlay(alignment: .top) { Divider() }
+            }
+        }
     }
 }
 

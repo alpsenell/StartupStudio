@@ -108,15 +108,7 @@ private struct ActiveContractCard: View {
                         .font(.footnote)
                         .foregroundStyle(Theme.warning)
                     Spacer(minLength: Theme.Spacing.sm)
-                    Button {
-                        Haptics.tap()
-                        router.tab = .team
-                    } label: {
-                        Label("Assign", systemImage: "person.2.fill")
-                            .font(.system(.footnote, design: .rounded).weight(.semibold))
-                    }
-                    .buttonStyle(.bordered)
-                    .accessibilityLabel("Assign someone to the \(job.clientName) contract")
+                    IdleAssignMenu(engine: engine, assignment: .contract(job.id))
                 }
             }
         }

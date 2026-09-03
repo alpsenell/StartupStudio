@@ -200,6 +200,9 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     public var lastUpdateDay: Int?
     /// How many patches have shipped for this product.
     public var updateCount: Int
+    /// The forecast's terms the day this shipped, for launch day to say
+    /// why. Absent on releases from before it was recorded.
+    public var launchForecast: LaunchForecast?
 
     public init(
         launchDay: Int,
@@ -216,8 +219,10 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         subscribers: Int = 0,
         isSubscription: Bool = false,
         lastUpdateDay: Int? = nil,
-        updateCount: Int = 0
+        updateCount: Int = 0,
+        launchForecast: LaunchForecast? = nil
     ) {
+        self.launchForecast = launchForecast
         self.launchDay = launchDay
         self.quality = quality
         self.reviews = reviews
@@ -259,6 +264,7 @@ extension ReleaseInfo {
         case liveHype
         case launchMarketScale, liveBugs, priceTier, subscribers, isSubscription
         case lastUpdateDay, updateCount
+        case launchForecast
     }
 
     public init(from decoder: any Decoder) throws {
@@ -278,7 +284,8 @@ extension ReleaseInfo {
             subscribers: try container.decodeIfPresent(Int.self, forKey: .subscribers) ?? 0,
             isSubscription: try container.decodeIfPresent(Bool.self, forKey: .isSubscription) ?? false,
             lastUpdateDay: try container.decodeIfPresent(Int.self, forKey: .lastUpdateDay),
-            updateCount: try container.decodeIfPresent(Int.self, forKey: .updateCount) ?? 0
+            updateCount: try container.decodeIfPresent(Int.self, forKey: .updateCount) ?? 0,
+            launchForecast: try container.decodeIfPresent(LaunchForecast.self, forKey: .launchForecast)
         )
     }
 }
