@@ -77,7 +77,8 @@ struct CategoryFightTests {
         #expect(depth == .default)
         #expect(depth.shareFloorAtFullStanding == 0.55)
         #expect(depth.challengeWeeks == 6)
-        #expect(depth.strengthPerWeekBeaten == 1.0)
+        // Designed at 1.0, shipped at 0.5 — see `DepthBalance`.
+        #expect(depth.strengthPerWeekBeaten == 0.5)
         #expect(depth.incumbentEnabled)
         #expect(depth.incumbentValuationFloor == 750_000)
     }
@@ -477,6 +478,86 @@ struct CategoryFightTests {
         )
         #expect(events.isEmpty)
         #expect(state == before)
+    }
+
+    // MARK: - The strength bleed
+
+    /// A player product scoring `score` in fitness against one rival
+    /// product at `rivalQuality` there (and one somewhere the player is
+    /// not), run for `weeks` with a still field so the bleed is the only
+    /// thing moving strength.
+    private static func bleed(
+        score: Int,
+        rivalQuality: Double,
+        weeks: Int = 4,
+        playerLive: Bool = true
+    ) throws -> (state: GameState, strengthBefore: Double, standingBefore: Double) {
+        var balance = try Self.balance(rivals: 1)
+        RivalFightFixtures.stillRivals(&balance)
+        balance.rivals.depth.strengthPerWeekBeaten = 1
+        balance.rivals.depth.standingPerWeekBeaten = 1
+        var state = GameState.newGame(companyName: "Acme", seed: 50, balance: balance)
+        state.rivals.rivals = []
+        if playerLive {
+            RivalFightFixtures.addPlayerProduct(to: &state, topicID: "fitness", score: score)
+        }
+        _ = RivalProductTests.addRival(
+            to: &state, personality: .deepPockets, topicID: "fitness", productQuality: rivalQuality
+        )
+        // A second shelf entry in a topic the player is not in: never bled.
+        state.rivals.rivals[0].products.append(RivalProduct(
+            id: UUID(), name: "Elsewhere", topicID: "music", typeID: "mobile_app",
+            quality: 30, launchDay: 0, weeklyUnits: 10
+        ))
+        state.market.standing["fitness"] = 30
+        let strengthBefore = state.rivals.rivals[0].strength
+        let standingBefore = state.market.standing(for: "fitness")
+        for _ in 0..<(weeks * GameState.daysPerWeek) {
+            Reducer.tick(&state, balance: balance, content: Self.content)
+        }
+        return (state, strengthBefore, standingBefore)
+    }
+
+    @Test func anOutSoldRivalLosesAPointOfStrengthAWeek() throws {
+        let (state, before, _) = try Self.bleed(score: 80, rivalQuality: 40, weeks: 4)
+        #expect(state.rivals.share(for: "fitness") > 0.5)
+        #expect(state.rivals.rivals[0].strength == before - 4)
+    }
+
+    @Test func anOutSoldPlayerLosesAPointOfStandingAWeek() throws {
+        let (state, strengthBefore, standingBefore) = try Self.bleed(score: 40, rivalQuality: 80, weeks: 4)
+        #expect(state.rivals.share(for: "fitness") < 0.5)
+        #expect(state.rivals.rivals[0].strength == strengthBefore)
+        // Four weeks of the retainer (+0.5) against four of the bleed (−1).
+        #expect(abs(state.market.standing(for: "fitness") - (standingBefore + 4 * 0.5 - 4)) < 1e-9)
+    }
+
+    @Test func anEvenSplitCostsNobody() throws {
+        let (state, strengthBefore, standingBefore) = try Self.bleed(score: 60, rivalQuality: 60, weeks: 4)
+        #expect(state.rivals.share(for: "fitness") == 0.5)
+        #expect(state.rivals.rivals[0].strength == strengthBefore)
+        #expect(abs(state.market.standing(for: "fitness") - (standingBefore + 4 * 0.5)) < 1e-9)
+    }
+
+    @Test func aTopicThePlayerIsNotInBleedsNobody() throws {
+        // The rival sells in music and fitness; the player has nothing
+        // anywhere. No share entry, no bleed — the same guard as the war fix.
+        let (state, strengthBefore, _) = try Self.bleed(score: 0, rivalQuality: 40, weeks: 4, playerLive: false)
+        #expect(state.rivals.playerShare.isEmpty)
+        #expect(state.rivals.rivals[0].strength == strengthBefore)
+    }
+
+    @Test func sixMonthsOfBeingOutSoldTakesTwentyFivePoints() throws {
+        // A product competes for `relevanceWeeks` (26) and fades on the
+        // 26th evolve day before the bleed runs, so six months of being
+        // out-sold is 25 points — a mid-range founding lands at the fold
+        // line. (The fold itself is `evolve`'s; the deep-pockets studio
+        // here takes the beating and stays. Fold rates over seeds are
+        // measured in `RivalFightBotTests`.)
+        let (state, before, _) = try Self.bleed(score: 85, rivalQuality: 40, weeks: 26)
+        #expect(before == 50)
+        #expect(state.rivals.rivals[0].strength == before - 25)
+        #expect(state.rivals.rivals[0].competingProducts(on: state.day).isEmpty)
     }
 
     // MARK: - Save compatibility

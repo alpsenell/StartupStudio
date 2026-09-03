@@ -358,7 +358,7 @@
       "heldStandingGain": 10,
       "lostStandingLoss": 20,
       "lostRivalStrengthGain": 5,
-      "strengthPerWeekBeaten": 1.0,
+      "strengthPerWeekBeaten": 0.5,
       "standingPerWeekBeaten": 1.0,
       "incumbentEnabled": true,
       "incumbentValuationFloor": 750000,

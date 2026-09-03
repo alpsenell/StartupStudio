@@ -59,6 +59,7 @@ enum RivalSystem {
             events.append(contentsOf: challengeCheck(&state, launches: launches, balance))
             recomputeShare(&state, balance)
             events.append(contentsOf: priceWarCheck(&state, balance))
+            bleedStrength(&state, balance)
             events.append(contentsOf: settleChallenges(&state, balance))
         }
         // Re-applied every day, not just on evolution days: `MarketSystem`
@@ -600,6 +601,43 @@ enum RivalSystem {
             }
         }
         return events
+    }
+
+    /// The first move: weekly, in every topic where the player has
+    /// something live and a rival sells too, the side with the lower share
+    /// pays. Every rival with a competing product there loses
+    /// `strengthPerWeekBeaten` when the player holds more than half the
+    /// market; the player loses `standingPerWeekBeaten` there when a
+    /// rival does. An exact half costs nobody. A rival out-sold for a
+    /// year reaches the fold threshold — shipping a strong product *into*
+    /// a rival's topic is now a way to push it off the board.
+    ///
+    /// Gated on the player having a live product in the topic (that is
+    /// what a share entry means), which is the same guard as the war fix
+    /// and the reason the pacing suite never reaches this. Topics are
+    /// visited in sorted order and rivals in array order, so it replays.
+    /// Deterministic, no draws.
+    private static func bleedStrength(_ state: inout GameState, _ balance: BalanceConfig) {
+        let depth = balance.rivals.depth
+        guard depth.strengthPerWeekBeaten > 0 || depth.standingPerWeekBeaten > 0 else { return }
+        let day = state.day
+        for topicID in state.rivals.playerShare.keys.sorted() {
+            let share = state.rivals.playerShare[topicID] ?? 1
+            let competing = state.rivals.rivals.indices.filter {
+                state.rivals.rivals[$0].bestProduct(in: topicID, on: day) != nil
+            }
+            guard !competing.isEmpty else { continue }
+            if share > 0.5 {
+                for index in competing {
+                    state.rivals.rivals[index].strength = clamp(
+                        state.rivals.rivals[index].strength - depth.strengthPerWeekBeaten,
+                        min: 1, max: 100
+                    )
+                }
+            } else if share < 0.5 {
+                StandingSystem.adjust(-depth.standingPerWeekBeaten, in: topicID, &state, balance)
+            }
+        }
     }
 
     /// The player's best live product in a topic: its id and its review

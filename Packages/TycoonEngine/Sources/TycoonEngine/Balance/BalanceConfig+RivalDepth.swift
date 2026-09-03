@@ -53,6 +53,14 @@ extension BalanceConfig.RivalBalance {
 
         /// Weekly, in every topic where the player has something live and
         /// a rival sells too: the out-sold rival loses this much strength…
+        ///
+        /// Designed at 1.0 (six months of being out-sold reaches the fold
+        /// line from a mid-range founding) and shipped at 0.5: measured
+        /// at 1.0 the investor suite, which runs with rivals on, lost
+        /// three of its nine gates — rivals the funded bots out-sell
+        /// launch worse products, share and revenue rise, and the coasting
+        /// founder meets the board's number too often to be voted out.
+        /// At 0.5 all nine hold and a rival out-sold for a year folds.
         public var strengthPerWeekBeaten: Double
         /// …and an out-sold player loses this much standing there.
         public var standingPerWeekBeaten: Double
@@ -91,7 +99,7 @@ extension BalanceConfig.RivalBalance {
             heldStandingGain: Double = 10,
             lostStandingLoss: Double = 20,
             lostRivalStrengthGain: Double = 5,
-            strengthPerWeekBeaten: Double = 1.0,
+            strengthPerWeekBeaten: Double = 0.5,
             standingPerWeekBeaten: Double = 1.0,
             incumbentEnabled: Bool = true,
             incumbentValuationFloor: Int = 750_000,
