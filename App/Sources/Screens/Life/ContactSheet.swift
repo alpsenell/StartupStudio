@@ -47,7 +47,7 @@ struct ContactSheet: View {
         let state = engine.state
         if let contact = state.networking.contact(contactID) {
             VStack(spacing: Theme.Spacing.lg) {
-                ContactHeader(contact: contact)
+                ContactHeader(contact: contact, day: state.day)
                 // Everything below spends an evening; the balance is here.
                 EveningPips(engine: engine)
                 if let lastLine {
@@ -116,7 +116,7 @@ struct ContactSheet: View {
         CardView("On the table", systemImage: "hands.and.sparkles.fill") {
             VStack(spacing: Theme.Spacing.sm) {
                 if let outcome = contact.outcome {
-                    Text(outcome.closingLine(name: contact.name))
+                    Text(outcome.closingLine(for: contact))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -156,14 +156,22 @@ struct ContactSheet: View {
 
 private struct ContactHeader: View {
     let contact: Contact
+    let day: Int
 
     var body: some View {
-        CardView(contact.archetype.displayName, systemImage: contact.archetype.systemImage) {
+        CardView(title, systemImage: contact.archetype.systemImage) {
             HStack(alignment: .top, spacing: Theme.Spacing.md) {
                 PixelPortrait(seed: contact.appearanceSeed, size: 56)
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                     Text(contact.name)
                         .font(.system(.title3, design: .rounded).weight(.semibold))
+                    if let former = formerLine {
+                        // Who they were to you, before what they do now.
+                        Text(former)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                     if let company = contact.companyName {
                         Text("Runs \(company)")
                             .font(.caption)
@@ -176,6 +184,21 @@ private struct ContactHeader: View {
                 }
             }
         }
+    }
+
+    /// Somebody who used to work here is introduced as that first; the
+    /// archetype is what everybody else is.
+    private var title: String {
+        contact.isAlumnus ? "Former colleague" : contact.archetype.displayName
+    }
+
+    /// "Was your backend dev · quit in March".
+    private var formerLine: String? {
+        guard contact.isAlumnus else { return nil }
+        let was = AlumniCopy.formerRole(contact)
+        let capitalised = was.prefix(1).uppercased() + was.dropFirst()
+        guard let reason = AlumniCopy.reasonLine(contact, today: day) else { return capitalised }
+        return "\(capitalised) · \(reason)"
     }
 }
 
@@ -314,7 +337,7 @@ private struct DossierCard: View {
                 DossierRow(label: "Marketing", value: "\(Int(contact.skills.marketing.rounded()))")
                 Divider()
                 DossierRow(label: "Salary ask", value: "\(contact.askingSalary.money)/wk")
-                if contact.archetype.hasCompany, contact.companyValuation > 0 {
+                if contact.runsACompany {
                     DossierRow(
                         label: "\(contact.companyName ?? "Their company") valued at",
                         value: contact.companyValuation.money
@@ -422,7 +445,7 @@ extension NetworkingOffer {
     func applies(to contact: Contact, state: GameState) -> Bool {
         switch self {
         case .recruit, .equityHire: true
-        case .backThem: contact.archetype.hasCompany
+        case .backThem: contact.runsACompany
         case .takeTheirMoney: contact.archetype.isBacker
         case .askOut: state.life.family.stage == .single
         }
@@ -465,6 +488,21 @@ extension NetworkingOffer {
 }
 
 extension ContactOutcome {
+    /// The closing line, with the two endings only a former employee can
+    /// have: they came back, or you burned them on the way out.
+    func closingLine(for contact: Contact) -> String {
+        let first = contact.name.split(separator: " ").first.map(String.init) ?? contact.name
+        guard contact.isAlumnus else { return closingLine(name: contact.name) }
+        switch self {
+        case .hired, .partner:
+            return "\(first) is back — they're on the Team tab."
+        case .lost:
+            return "You let \(first) go with nothing to fall back on. They're not taking your calls."
+        case .backed, .angel, .romance:
+            return closingLine(name: contact.name)
+        }
+    }
+
     func closingLine(name: String) -> String {
         let first = name.split(separator: " ").first.map(String.init) ?? name
         switch self {

@@ -87,6 +87,10 @@ struct EventCopy {
         // team news wherever they were raised.
         case .resignationNotice, .candidateInterviewed:
             .team
+        // Somebody leaving into the address book is team news however
+        // they left — the team is where the player last saw them.
+        case .alumnusJoinedBook:
+            .team
         default:
             .company
         }
@@ -450,6 +454,11 @@ struct EventCopy {
              .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .candidateInterviewed:
             fallbackEntry(for: event)
 
+        // MARK: WS-F — the boomerang
+
+        case .alumnusJoinedBook(let contactID, let name, let day):
+            alumnusEntry(contactID: contactID, name: name, day: day)
+
         // MARK: Iteration 5
 
         // Scaffold: every lane's events read out of `EventPresenter` until
@@ -458,7 +467,7 @@ struct EventCopy {
         case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
              .incumbentRetreated, .roundBoughtBack, .earnOutReviewed,
              .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,
-             .staffPolicyReversed, .familyDateMissed, .alumnusJoinedBook, .stayedIndependent:
+             .staffPolicyReversed, .familyDateMissed, .stayedIndependent:
             fallbackEntry(for: event)
 
         // Events added after this file land here instead of breaking the
@@ -469,6 +478,25 @@ struct EventCopy {
         @unknown default:
             fallbackEntry(for: event)
         }
+    }
+
+    /// How they left says what the line is. Somebody the founder burned is
+    /// in the book only as history; everybody else is a call the founder
+    /// can still make — and the line says so, because "you'll see them
+    /// again" is the promise the poach sheet just made.
+    private func alumnusEntry(
+        contactID: UUID, name: String, day: Int
+    ) -> (icon: String, message: String, day: Int, tint: Color) {
+        let contact = state.networking.contact(contactID)
+        if contact?.outcome == .lost {
+            return (
+                "person.crop.circle.badge.xmark",
+                "\(name) left with no reason to take your call",
+                day,
+                Color.secondary
+            )
+        }
+        return ("book.pages.fill", "\(name) is in your address book — you'll see them again", day, Theme.accent)
     }
 
     private func fallbackEntry(for event: GameEvent) -> (icon: String, message: String, day: Int, tint: Color) {

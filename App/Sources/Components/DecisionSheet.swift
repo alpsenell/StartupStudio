@@ -482,10 +482,11 @@ extension DecisionPrompt {
             systemImage: "person.fill.questionmark",
             tint: Theme.warning,
             title: "\(rivalName) wants \(employee.name)",
-            message: "They're offering \(offer.offeredWeeklySalary.money)/wk (currently \(employee.weeklySalary.money)/wk). Match it, or let \(employee.name) walk.",
+            message: "They're offering \(offer.offeredWeeklySalary.money)/wk (currently \(employee.weeklySalary.money)/wk). Match it, or let \(employee.name) walk — they'll stay in your address book at that number, and people come back.",
             stats: [
                 ("Offer", "\(offer.offeredWeeklySalary.money)/wk"),
                 ("Loyalty", "\(Int(employee.loyalty.rounded()))"),
+                ("Bond", "\(Int(employee.founderBond.rounded()))"),
             ],
             options: [
                 Option(
@@ -494,8 +495,8 @@ extension DecisionPrompt {
                     action: .matchPoachOffer
                 ),
                 Option(
-                    label: "Let them go",
-                    detail: "\(employee.name) joins \(rivalName)",
+                    label: "Let them go — you'll see them again",
+                    detail: "\(employee.name) joins \(rivalName) and goes into your address book",
                     role: .destructive,
                     action: .declinePoachOffer
                 ),
