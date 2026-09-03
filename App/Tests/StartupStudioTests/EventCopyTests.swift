@@ -130,6 +130,30 @@ final class EventCopyTests: XCTestCase {
         XCTAssertFalse(copy.line(for: .lifeEvent(eventID: "gone", day: 1)).message.isEmpty)
     }
 
+    /// WS-B's three events read as sentences with the names in them, and
+    /// file under Company.
+    func testTheBoardAndTheExitReadAsCompanyNews() {
+        let copy = makeCopy()
+        let bought = copy.line(for: .roundBoughtBack(investorID: "lantern_partners", amount: 240_000, day: 400))
+        XCTAssertTrue(bought.message.contains("Lantern Partners"), bought.message)
+        XCTAssertTrue(bought.message.contains("$240,000"), bought.message)
+        XCTAssertEqual(copy.category(of: .roundBoughtBack(investorID: "x", amount: 1, day: 1)), .company)
+
+        let signed = copy.line(for: .earnOutSigned(rivalID: UUID(), upfront: 744_000, price: 1_240_000, day: 300))
+        XCTAssertTrue(signed.message.contains("$744,000"), signed.message)
+        XCTAssertTrue(signed.message.contains("$1,240,000"), signed.message)
+        XCTAssertEqual(copy.category(of: .earnOutSigned(rivalID: UUID(), upfront: 1, price: 2, day: 1)), .company)
+
+        let met = copy.line(for: .earnOutReviewed(met: true, paid: 248_000, remainingReviews: 1, day: 391))
+        XCTAssertTrue(met.message.contains("$248,000"), met.message)
+        XCTAssertTrue(met.message.contains("1 review to go"), met.message)
+        let missed = copy.line(for: .earnOutReviewed(met: false, paid: 0, remainingReviews: 0, day: 482))
+        XCTAssertTrue(missed.message.contains("missed"), missed.message)
+        XCTAssertFalse(missed.message.contains("to go"), "the last review has nothing to go")
+        XCTAssertEqual(copy.category(of: .earnOutReviewed(met: true, paid: 1, remainingReviews: 1, day: 1)), .company)
+        XCTAssertNotEqual(met.message, "Something happened")
+    }
+
     func testCategoriesRouteEventsToTheRightJournalFilter() {
         let copy = makeCopy()
         XCTAssertEqual(copy.category(of: .breakup(day: 1)), .life)

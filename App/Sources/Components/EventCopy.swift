@@ -87,6 +87,9 @@ struct EventCopy {
         // team news wherever they were raised.
         case .resignationNotice, .candidateInterviewed:
             .team
+        // WS-B: the cap table and the sale of the company are company news.
+        case .roundBoughtBack, .earnOutSigned, .earnOutReviewed:
+            .company
         default:
             .company
         }
@@ -454,13 +457,45 @@ struct EventCopy {
              .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .candidateInterviewed:
             fallbackEntry(for: event)
 
+        // MARK: Iteration 5 — WS-B (the board and the exit)
+
+        case .roundBoughtBack(let investorID, let amount, let day):
+            (
+                "arrow.uturn.backward.circle.fill",
+                "Bought out \(investorName(investorID)) for \(amount.money) — their seat is empty",
+                day,
+                Theme.accent
+            )
+        case .earnOutSigned(let rivalID, let upfront, let price, let day):
+            (
+                "signature",
+                "Signed the earn-out with \(rivalName(rivalID)): \(upfront.money) now, "
+                    + "up to \(price.money) if you hit their number",
+                day,
+                Theme.positiveCash
+            )
+        case .earnOutReviewed(let met, let paid, let remainingReviews, let day):
+            met
+                ? (
+                    "checkmark.seal.fill",
+                    "Earn-out review passed — \(paid.money) paid" + reviewsToGo(remainingReviews),
+                    day,
+                    Theme.positiveCash
+                )
+                : (
+                    "xmark.seal.fill",
+                    "Earn-out review missed — nothing paid this quarter" + reviewsToGo(remainingReviews),
+                    day,
+                    Theme.warning
+                )
+
         // MARK: Iteration 5
 
         // Scaffold: every lane's events read out of `EventPresenter` until
         // the lane writes its copy. Move your cases above and give them a
         // line; leave the others here.
         case .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived,
-             .incumbentRetreated, .roundBoughtBack, .earnOutReviewed,
+             .incumbentRetreated,
              .sponsoredContractDelivered, .staffPolicySet, .staffPolicyApplied,
              .staffPolicyReversed, .familyDateMissed, .alumnusJoinedBook, .stayedIndependent:
             fallbackEntry(for: event)
@@ -504,6 +539,21 @@ struct EventCopy {
     /// state, so their events fall back.
     private func rivalName(_ id: UUID) -> String {
         state.rivals.rival(id: id)?.name ?? "a rival"
+    }
+
+    /// The investor behind a round, from the catalog or — for a persona
+    /// the catalog no longer carries — the cap table itself.
+    private func investorName(_ id: String) -> String {
+        content.investors.first { $0.id == id }?.name
+            ?? state.investors.boughtOut.first { $0.investorID == id }?.investorName
+            ?? state.investors.rounds.first { $0.investorID == id }?.investorName
+            ?? "an investor"
+    }
+
+    /// ", 1 review to go" — or nothing on the last one, when the sale
+    /// closes in the same breath.
+    private func reviewsToGo(_ remaining: Int) -> String {
+        remaining == 0 ? "" : ", \(remaining) review\(remaining == 1 ? "" : "s") to go"
     }
 
     /// Defensive name lookup — saves can reference topic ids the catalog no
