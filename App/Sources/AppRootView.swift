@@ -21,6 +21,47 @@ struct AppRootView: View {
 
     var body: some View {
         let engine = session.engine
+        // U7: the front door in front of the game. The title screen and
+        // the tabs swap at the root, so leaving for the door tears the
+        // game's covers down and coming back re-presents whichever one
+        // the engine's state calls for.
+        ZStack {
+            if session.isAtFrontDoor {
+                TitleScreen(session: session)
+                    .transition(Theme.Motion.transition(.opacity))
+            } else {
+                game(engine: engine)
+                    .transition(Theme.Motion.transition(.opacity))
+            }
+        }
+        .animation(Theme.Motion.entrance, value: session.isAtFrontDoor)
+        .environment(\.gameSession, session)
+        // The new-game flow is opened from the front door, into the slot
+        // the player picked there; cancelling goes back to the door.
+        .fullScreenCover(isPresented: onboardingPresented) {
+            NewGameFlow(
+                content: engine.content,
+                onStart: { profile, companyName, difficulty, origin in
+                    session.startNewGame(
+                        profile: profile, companyName: companyName, difficulty: difficulty,
+                        origin: origin
+                    )
+                    shell.rebase(to: session.engine)
+                    router.tab = .hq
+                },
+                onCancel: { session.cancelOnboarding() }
+            )
+            .interactiveDismissDisabled()
+        }
+        .alert("Couldn't load your save", isPresented: loadFailurePresented) {
+            Button("OK") { session.clearLoadFailure() }
+        } message: {
+            Text(session.loadFailureMessage ?? "")
+        }
+    }
+
+    /// The game itself: the tabs and every layer that sits over them.
+    private func game(engine: GameEngine) -> some View {
         tabs(engine: engine)
             .tint(Theme.accent)
             .environment(router)
@@ -54,23 +95,6 @@ struct AppRootView: View {
             // each tab's HUD shows the newest one as its transient line,
             // so an acknowledgement can never land across the pause
             // reason or the report chip.
-            .fullScreenCover(isPresented: onboardingPresented) {
-                NewGameFlow(
-                    content: engine.content,
-                    onStart: { profile, companyName, difficulty, origin in
-                        session.startNewGame(
-                            profile: profile, companyName: companyName, difficulty: difficulty,
-                            origin: origin
-                        )
-                        shell.rebase(to: session.engine)
-                        router.tab = .hq
-                    },
-                    onCancel: session.needsOnboarding && engine.state.day > 0
-                        ? { session.cancelOnboarding() }
-                        : nil
-                )
-                .interactiveDismissDisabled()
-            }
             .fullScreenCover(isPresented: gameOverPresented) {
                 if let info = engine.state.gameOver {
                     // WS-F: four endings now, graded by `EndingKind.isSuccess`
@@ -117,11 +141,6 @@ struct AppRootView: View {
                         router.go(route)
                     }
                 }
-            }
-            .alert("Couldn't load your save", isPresented: loadFailurePresented) {
-                Button("OK") { session.clearLoadFailure() }
-            } message: {
-                Text(session.loadFailureMessage ?? "")
             }
     }
 
