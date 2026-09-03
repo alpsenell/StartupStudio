@@ -97,6 +97,7 @@ final class EventCopyTests: XCTestCase {
             .staffBirthday(employeeID: id, day: 63),
             .staffEventOccurred(employeeID: id, kind: .rivalOfferRumor, respondByDay: 70, day: 64),
             .staffEventResolved(employeeID: id, choice: .supportive, day: 65),
+            .sponsoredContractDelivered(rivalID: id, topicID: "fitness", quality: 71, day: 66),
         ]
     }
 
@@ -130,12 +131,45 @@ final class EventCopyTests: XCTestCase {
         XCTAssertFalse(copy.line(for: .lifeEvent(eventID: "gone", day: 1)).message.isEmpty)
     }
 
+    /// A sponsored delivery names the rival and the category, and says why
+    /// it cost you standing.
+    func testASponsoredDeliveryNamesTheRivalAndTheTopic() {
+        var state = GameState.newGame(
+            companyName: "Fixture Softworks", seed: 7, balance: Self.balance, difficulty: .normal
+        )
+        let rivalID = UUID()
+        state.rivals.rivals = [Rival(
+            id: rivalID, name: "Northwind Software", strength: 52, reputation: 45,
+            focusTopicIDs: ["fitness"], foundedDay: 7, appearanceSeed: 3
+        )]
+        let copy = EventCopy(state: state, content: Self.content, balance: Self.balance)
+        let line = copy.line(for: .sponsoredContractDelivered(
+            rivalID: rivalID, topicID: "fitness", quality: 68, day: 90
+        ))
+        XCTAssertEqual(
+            line.message,
+            "Northwind Software shipped the Fitness app you built for them at 68 — the press knows whose work it was"
+        )
+        XCTAssertEqual(line.icon, "flag.fill")
+        XCTAssertEqual(line.day, 90)
+
+        // A rival that has since folded, and a topic the catalog lost.
+        let gone = copy.line(for: .sponsoredContractDelivered(
+            rivalID: UUID(), topicID: "gone", quality: 40, day: 91
+        ))
+        XCTAssertEqual(gone.message, "a rival shipped the A niche app you built for them at 40 — the press knows whose work it was")
+    }
+
     func testCategoriesRouteEventsToTheRightJournalFilter() {
         let copy = makeCopy()
         XCTAssertEqual(copy.category(of: .breakup(day: 1)), .life)
         XCTAssertEqual(copy.category(of: .hired(employeeID: UUID(), day: 1)), .team)
         XCTAssertEqual(copy.category(of: .marketCrash(topicID: "fitness", day: 1)), .market)
         XCTAssertEqual(copy.category(of: .rivalFolded(rivalID: UUID(), name: "X", day: 1)), .rivals)
+        XCTAssertEqual(
+            copy.category(of: .sponsoredContractDelivered(rivalID: UUID(), topicID: "fitness", quality: 70, day: 1)),
+            .rivals
+        )
         XCTAssertEqual(copy.category(of: .officeUpgraded(tier: .loft, day: 1)), .company)
     }
 
