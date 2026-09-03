@@ -119,6 +119,10 @@ enum EmployeeSystem {
             + balance.city.district(state.city.district).moraleBonus
         let perkBonus = (hasHR ? company.hrMoraleBonus : 0)
             + state.ownedAmenities.reduce(0.0) { $0 + company.amenity($1).moraleBonus }
+            // WS-G: the Veteran Crew perk (chapter 4's "three amenities")
+            // was awarded and read by nothing. A crew that has been
+            // through it sits a little higher, for everyone.
+            + (state.progression.hasPerk(.veteranCrew) ? balance.progression.veteranCrewMoraleBonus : 0)
         let quitStreakDays = staff.quitStreakDays
             + (hasHR ? company.hrQuitStreakBonus : 0)
             + state.ownedAmenities.reduce(0) { $0 + company.amenity($1).quitStreakBonusDays }

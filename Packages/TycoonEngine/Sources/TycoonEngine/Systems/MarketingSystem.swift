@@ -166,11 +166,18 @@ enum MarketingSystem {
         // and how often you have already told this story.
         let hypeFactor = TraitEffects.campaignHypeFactor(state.employees, content: content)
             * pow(balance.economy.campaignRepeatHypeDecay, Double(previous.count))
-        let oneShotHype: Double = switch kind {
+        let kindHype: Double = switch kind {
         case .socialPush: 0 // Hype accrues daily while the push runs.
         case .pressRelease: balance.pressReleaseHype * hypeFactor
         case .launchEvent: balance.launchEventHype * hypeFactor
         }
+        // WS-G: the Press Contacts perk (chapter 2's "score 60") was
+        // awarded and read by nothing. Journalists who take your calls
+        // land every campaign harder — a flat bonus, whatever the kind.
+        let perkHype = state.progression.hasPerk(.pressContacts)
+            ? balance.progression.pressContactsHypeBonus
+            : 0
+        let oneShotHype = kindHype + perkHype
         if oneShotHype > 0 {
             switch state.products[productIndex].stage {
             case .development(var dev):
