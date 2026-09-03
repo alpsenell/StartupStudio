@@ -1053,5 +1053,22 @@
     "refactorCodingDivisor": 200.0
   },
   "sponsoredContracts": {},
-  "origins": {}
+  "origins": {
+    "cofounderCoding": 40.0,
+    "cofounderDesign": 40.0,
+    "cofounderMarketing": 40.0,
+    "cofounderEquity": 30.0,
+    "cofounderBond": 40.0,
+    "cofounderLoyalty": 70.0,
+    "cofounderPaidFromTier": "loft",
+    "spinOutContractPoints": 100.0,
+    "spinOutContractCodeSplit": 0.65,
+    "spinOutContractPayout": 9000,
+    "spinOutContractDeadlineDays": 84,
+    "spinOutContractRequiredSkill": 35.0,
+    "spinOutReputation": 15.0,
+    "spinOutLockWeeks": 52,
+    "mortgagedLoan": 25000,
+    "mortgagedHome": "apartment"
+  }
 }
