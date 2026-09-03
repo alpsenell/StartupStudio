@@ -29,19 +29,8 @@ struct FounderBiographyView: View {
             Theme.screenBackground.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: Theme.Spacing.lg) {
-                    banner
-                    if !info.kind.isSuccess {
-                        postMortemCard
-                    }
-                    chaptersCard
-                    if let product = bestProduct { productCard(product) }
-                    if let longest = longestServing { peopleCard(longest) }
-                    lifeCard
-                    moneyCard
-                    playAgainButton
-                }
-                .padding(Theme.Spacing.lg)
+                biographyContent
+                    .padding(Theme.Spacing.lg)
             }
         }
         .sheet(isPresented: $startingOver) {
@@ -49,6 +38,24 @@ struct FounderBiographyView: View {
                 startingOver = false
                 onNewGame(difficulty, profile)
             }
+        }
+    }
+
+    /// The biography as one column, without the scroll view, so the
+    /// snapshot tests can draw it: `ImageRenderer` draws nothing inside a
+    /// `ScrollView`, the same reason `DecisionSheetContent` exists.
+    var biographyContent: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            banner
+            if !info.kind.isSuccess {
+                postMortemCard
+            }
+            chaptersCard
+            if let product = bestProduct { productCard(product) }
+            if let longest = longestServing { peopleCard(longest) }
+            lifeCard
+            moneyCard
+            playAgainButton
         }
     }
 
