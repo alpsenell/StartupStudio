@@ -20,7 +20,7 @@ enum ContractSystem {
             events.append(.contractOffersRefreshed(day: state.day))
         }
 
-        events.append(contentsOf: settleContracts(&state, balance))
+        events.append(contentsOf: settleContracts(&state, balance, content))
         return events
     }
 
@@ -180,9 +180,14 @@ enum ContractSystem {
     /// by `legalPayoutBonus` and scales every missed-deadline penalty by
     /// `legalPenaltyFactor`. Settled jobs leave `activeContracts`; the
     /// daily employee sweep then returns their workers to idle.
+    ///
+    /// A delivered *sponsored* job is also handed to its rival — see
+    /// `shipSponsoredDelivery` — after the pay and the grade have landed
+    /// exactly as they would for any client.
     private static func settleContracts(
         _ state: inout GameState,
-        _ balance: BalanceConfig
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
     ) -> [GameEvent] {
         var events: [GameEvent] = []
         var remaining: [ContractJob] = []
@@ -224,6 +229,11 @@ enum ContractSystem {
                 events.append(.contractDelivered(
                     contractID: job.id, quality: quality, payout: paid, day: state.day
                 ))
+                if job.isSponsored {
+                    events.append(contentsOf: shipSponsoredDelivery(
+                        job, quality: quality, &state, balance, content
+                    ))
+                }
             } else if state.day > job.deadlineDay {
                 let penalty = Int((Double(job.penalty) * penaltyFactor).rounded())
                 state.company.cash -= penalty
@@ -241,6 +251,76 @@ enum ContractSystem {
 
         state.activeContracts = remaining
         return events
+    }
+
+    /// What a sponsored delivery does beyond the pay: the rival ships
+    /// what you built. Its product lands on the sponsor's shelf at
+    /// `productQuality(forProjected:)` — a little under the grade you
+    /// delivered, clamped like any rival launch — the topic joins the
+    /// sponsor's focus, it gains `rivalStrengthGain`, and the player's
+    /// standing in the topic takes `standingLoss`. A poor delivery has
+    /// already cost half the pay and a little reputation; what it hands
+    /// the rival is correspondingly weak. Sandbagging is a choice, with
+    /// a price on both sides.
+    ///
+    /// Draws one product id from `worldRNG` — only ever on a delivery to
+    /// a rival, so a world without rivals never reaches this. A sponsor
+    /// that folded or was bought before delivery has nobody to ship it:
+    /// the job pays like any other and nothing else happens.
+    private static func shipSponsoredDelivery(
+        _ job: ContractJob,
+        quality projectedQuality: Int,
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let rivalID = job.sponsorRivalID,
+              let topicID = job.topicID,
+              let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return [] }
+        let config = balance.sponsoredContracts
+        let rival = state.rivals.rivals[index]
+        let quality = config.productQuality(forProjected: projectedQuality)
+
+        // The same shape `RivalSystem.launchProduct` gives its own
+        // launches: the readable units stand-in, the catalog's first
+        // type. The name is the sponsor's brand on your category — no
+        // draw, so the only word the world stream spends is the id.
+        let product = RivalProduct(
+            id: UUID(from: &state.worldRNG),
+            name: sponsoredProductName(rival: rival, topicID: topicID, content),
+            topicID: topicID,
+            typeID: content.productTypes.first?.id ?? "mobile_app",
+            quality: quality,
+            launchDay: state.day,
+            weeklyUnits: Int((rival.strength * 40 * (0.5 + quality / 200)).rounded())
+        )
+        RivalSystem.appendProduct(product, to: index, in: &state)
+        state.rivals.rivals[index].lastShippedDay = state.day
+        state.rivals.rivals[index].strength = min(100, max(1, rival.strength + config.rivalStrengthGain))
+        if !rival.focusTopicIDs.contains(topicID) {
+            state.rivals.rivals[index].focusTopicIDs.append(topicID)
+        }
+        StandingSystem.recordSponsoredDelivery(topicID: topicID, &state, balance)
+
+        return [.sponsoredContractDelivered(
+            rivalID: rivalID,
+            topicID: topicID,
+            quality: Int(quality.rounded()),
+            day: state.day
+        )]
+    }
+
+    /// "Northwind Fitness": the first word of the sponsor's name on the
+    /// topic it now sells into.
+    private static func sponsoredProductName(
+        rival: Rival,
+        topicID: String,
+        _ content: ContentCatalog
+    ) -> String {
+        let brand = rival.name.split(separator: " ").first.map(String.init) ?? rival.name
+        let topic = content.topic(topicID)?.name ?? topicID.capitalized
+        return "\(brand) \(topic)"
     }
 
     // MARK: - Actions

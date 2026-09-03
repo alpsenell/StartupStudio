@@ -239,4 +239,159 @@ struct SponsoredContractTests {
         #expect(a.worldRNG != b.worldRNG)
         #expect(a.rivals == b.rivals)
     }
+
+    // MARK: - Delivery
+
+    private struct Scene {
+        var state: GameState
+        var balance: BalanceConfig
+        var content: ContentCatalog
+        var rivalID: UUID
+        var jobID: UUID
+    }
+
+    /// A sponsored job one founder-day from clearing, a hand-built
+    /// sponsor to deliver to, and the founder alone on it: their 35
+    /// average skill against `requiredSkill` sets the grade, exactly as
+    /// `ContractLifecycleTests` grades an ordinary job.
+    private static func scene(requiredSkill: Double, standing: Double? = 40) -> Scene {
+        let balance = TestBalance.make(skillGrowthRate: 0, life: TestBalance.quietLife)
+        let content = TestContent.tiny()
+        var state = GameState.newGame(companyName: "Acme", seed: 44, balance: balance)
+        TestLife.pinPeak(&state)
+        let rivalID = UUID()
+        state.rivals.rivals = [Rival(
+            id: rivalID, name: "Northwind Software", strength: 50, reputation: 40,
+            focusTopicIDs: ["other"], foundedDay: 0, appearanceSeed: 7
+        )]
+        if let standing { state.market.standing["testing"] = standing }
+        let job = ContractJob(
+            id: UUID(), clientName: "Northwind Software",
+            requiredCodePts: 2, requiredDesignPts: 2, progressCode: 0, progressDesign: 0,
+            deadlineDay: 50, payout: 9_000, penalty: 2_700, acceptedDay: 0,
+            requiredSkill: requiredSkill, topicID: "testing", sponsorRivalID: rivalID
+        )
+        state.activeContracts = [job]
+        let founderID = state.employees[0].id
+        Reducer.apply(
+            .assign(employeeID: founderID, to: .contract(job.id)),
+            to: &state, balance: balance, content: content
+        )
+        return Scene(state: state, balance: balance, content: content, rivalID: rivalID, jobID: job.id)
+    }
+
+    @Test func aGoodDeliveryShipsTheirProductAtThePromisedQualityAndCostsYouStanding() throws {
+        var scene = Self.scene(requiredSkill: 30)
+        let cashBefore = scene.state.company.cash
+        let reputationBefore = scene.state.company.reputation
+
+        // Founder 35 against 30: 35/30 × 80 = 93, a great delivery.
+        let events = Reducer.tick(&scene.state, balance: scene.balance, content: scene.content)
+
+        #expect(events.contains(.contractDelivered(contractID: scene.jobID, quality: 93, payout: 9_000, day: 1)))
+        #expect(events.contains(.sponsoredContractDelivered(
+            rivalID: scene.rivalID, topicID: "testing", quality: 84, day: 1
+        )))
+        #expect(scene.state.company.cash == cashBefore + 9_000)
+        #expect(scene.state.company.reputation == reputationBefore + scene.balance.contractReputationReward)
+        #expect(scene.state.activeContracts.isEmpty)
+
+        let rival = try #require(scene.state.rivals.rival(id: scene.rivalID))
+        let product = try #require(rival.products.first)
+        #expect(rival.products.count == 1)
+        #expect(product.topicID == "testing")
+        #expect(product.name == "Northwind Testing")
+        #expect(product.launchDay == 1)
+        #expect(abs(product.quality - 93 * 0.9) < 1e-9)
+        #expect(product.quality == scene.balance.sponsoredContracts.productQuality(forProjected: 93))
+        #expect(rival.strength == 50 + scene.balance.sponsoredContracts.rivalStrengthGain)
+        #expect(rival.focusTopicIDs == ["other", "testing"])
+        #expect(rival.lastShippedDay == 1)
+        #expect(scene.state.market.standing["testing"] == 40 - scene.balance.sponsoredContracts.standingLoss)
+        #expect(scene.state.eventLog.contains(.sponsoredContractDelivered(
+            rivalID: scene.rivalID, topicID: "testing", quality: 84, day: 1
+        )))
+    }
+
+    /// Sandbagging: deliver badly and you are paid half and docked
+    /// reputation, exactly as any client would — and what they ship is
+    /// weak. Their product still lands, and so does the standing loss.
+    @Test func aPoorDeliveryPaysHalfAndHandsThemAWeakProduct() throws {
+        var scene = Self.scene(requiredSkill: 60)
+        let cashBefore = scene.state.company.cash
+        let reputationBefore = scene.state.company.reputation
+
+        // Founder 35 against 60: 35/60 × 80 = 47, below the okay line.
+        let events = Reducer.tick(&scene.state, balance: scene.balance, content: scene.content)
+
+        #expect(events.contains(.contractDelivered(contractID: scene.jobID, quality: 47, payout: 4_500, day: 1)))
+        #expect(scene.state.company.cash == cashBefore + 4_500)
+        #expect(scene.state.company.reputation
+            == reputationBefore - scene.balance.contractQuality.poorReputationPenalty)
+
+        let rival = try #require(scene.state.rivals.rival(id: scene.rivalID))
+        let product = try #require(rival.products.first)
+        #expect(product.quality < 55)
+        #expect(abs(product.quality - 47 * 0.9) < 1e-9)
+        #expect(events.contains(.sponsoredContractDelivered(
+            rivalID: scene.rivalID, topicID: "testing", quality: 42, day: 1
+        )))
+        #expect(rival.strength == 56)
+        #expect(scene.state.market.standing["testing"] == 35)
+    }
+
+    /// The product quality never leaves the band any rival launch lives
+    /// in, however the delivery graded.
+    @Test func theProductQualityIsClampedLikeAnyRivalLaunch() {
+        let config = BalanceConfig.SponsoredContractBalance()
+        #expect(config.productQuality(forProjected: 100) == 90)
+        #expect(config.productQuality(forProjected: 50) == 45)
+        #expect(config.productQuality(forProjected: 10) == RivalDepthTuning.qualityMin)
+        #expect(config.productQuality(forProjected: 0) == RivalDepthTuning.qualityMin)
+    }
+
+    /// A sponsor that folded before delivery has nobody to ship it: the
+    /// job pays like any other and the world does not move.
+    @Test func aSponsorThatIsGoneJustPays() throws {
+        var scene = Self.scene(requiredSkill: 30)
+        scene.state.rivals.rivals = []
+        let cashBefore = scene.state.company.cash
+
+        let events = Reducer.tick(&scene.state, balance: scene.balance, content: scene.content)
+
+        #expect(events.contains(.contractDelivered(contractID: scene.jobID, quality: 93, payout: 9_000, day: 1)))
+        #expect(scene.state.company.cash == cashBefore + 9_000)
+        #expect(!events.contains { if case .sponsoredContractDelivered = $0 { true } else { false } })
+        #expect(scene.state.market.standing["testing"] == 40)
+    }
+
+    /// You cannot lose a standing you never held: no ledger entry is
+    /// created for a topic the studio has never entered.
+    @Test func standingIsOnlyLostWhereItIsHeld() throws {
+        var scene = Self.scene(requiredSkill: 30, standing: nil)
+        #expect(scene.state.market.standing["testing"] == nil)
+
+        let events = Reducer.tick(&scene.state, balance: scene.balance, content: scene.content)
+
+        #expect(events.contains { if case .sponsoredContractDelivered = $0 { true } else { false } })
+        #expect(scene.state.market.standing["testing"] == nil)
+        let rival = try #require(scene.state.rivals.rival(id: scene.rivalID))
+        #expect(rival.products.count == 1)
+    }
+
+    /// A missed deadline on a sponsored job is a missed deadline: the
+    /// penalty, the reputation hit, and nothing shipped to anyone.
+    @Test func blowingASponsoredDeadlineShipsNothing() throws {
+        var scene = Self.scene(requiredSkill: 30)
+        scene.state.activeContracts[0].requiredCodePts = 1_000
+        scene.state.activeContracts[0].deadlineDay = 0
+
+        let events = Reducer.tick(&scene.state, balance: scene.balance, content: scene.content)
+
+        #expect(events.contains(.contractFailed(contractID: scene.jobID, penalty: 2_700, day: 1)))
+        let rival = try #require(scene.state.rivals.rival(id: scene.rivalID))
+        #expect(rival.products.isEmpty)
+        #expect(rival.strength == 50)
+        #expect(scene.state.market.standing["testing"] == 40)
+    }
 }
