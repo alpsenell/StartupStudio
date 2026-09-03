@@ -107,7 +107,7 @@ private struct OutputLine: View {
     let isAway: Bool
 
     private var text: String {
-        "Founder output ×" + multiplier.formatted(.number.precision(.fractionLength(2)))
+        "Founder output ×" + multiplier.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))
     }
 
     private var tint: Color {

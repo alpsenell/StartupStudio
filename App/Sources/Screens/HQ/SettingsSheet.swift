@@ -43,7 +43,7 @@ struct SettingsSheet: View {
                             .gaugeStyle(.accessoryLinearCapacity)
                             .tint(Theme.accent)
                             .frame(width: 80)
-                            Text(engine.state.company.reputation.formatted(.number.precision(.fractionLength(0...1))))
+                            Text(engine.state.company.reputation.formatted(.number.precision(.fractionLength(0...1)).locale(Theme.gameLocale)))
                                 .font(Theme.Typography.number(.caption))
                         }
                     }

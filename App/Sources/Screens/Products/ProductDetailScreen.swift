@@ -224,7 +224,7 @@ private struct SubscriptionCard: View {
     var body: some View {
         CardView("Subscription", systemImage: "arrow.triangle.2.circlepath") {
             HStack(alignment: .top, spacing: Theme.Spacing.xl) {
-                DetailStat(label: "Subscribers", value: info.subscribers.formatted())
+                DetailStat(label: "Subscribers", value: info.subscribers.formatted(.number.locale(Theme.gameLocale)))
                 DetailStat(label: "Weekly run rate", value: weeklyRevenue.money, tint: Theme.positiveCash)
             }
         }
@@ -385,7 +385,7 @@ private struct LiveOpsCard: View {
 
             Text(noSlot
                 ? "No build slot free — a patch takes one, like a new product."
-                : "+\(worth.formatted(.number.precision(.fractionLength(1)))) quality · "
+                : "+\(worth.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale))) quality · "
                     + "half the live bugs · a bumper sales week · uses a build slot")
                 .font(.caption2)
                 .monospacedDigit()
@@ -593,7 +593,7 @@ private struct SalesCard: View {
                 }
 
                 HStack(alignment: .top, spacing: Theme.Spacing.xl) {
-                    totalBlock(label: "Units sold", value: totalUnits.formatted())
+                    totalBlock(label: "Units sold", value: totalUnits.formatted(.number.locale(Theme.gameLocale)))
                     totalBlock(label: "Total revenue", value: info.totalRevenue.money)
                 }
             }
@@ -742,7 +742,7 @@ private struct ShipForecastCard: View {
                     // binding constraint yet, because by the time it binds
                     // the only fix left is weeks of refactoring.
                     Label(
-                        "Built on \(name), carrying \(Int(forecast.codebaseDebt.rounded())) debt — a ×\(forecast.codebaseCeiling.formatted(.number.precision(.fractionLength(2)))) ceiling you cannot polish past.",
+                        "Built on \(name), carrying \(Int(forecast.codebaseDebt.rounded())) debt — a ×\(forecast.codebaseCeiling.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))) ceiling you cannot polish past.",
                         systemImage: "shippingbox.fill"
                     )
                     .font(.caption)

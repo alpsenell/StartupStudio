@@ -147,7 +147,7 @@ private struct FounderImpactNote: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(Theme.warning)
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(points.formatted(.number.precision(.fractionLength(1)))) morale across the team")
+                Text("\(points.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale))) morale across the team")
                     .font(.caption.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(Theme.warning)

@@ -129,11 +129,11 @@ struct WeeklyReportSheet: View {
                                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
                                     .foregroundStyle(.primary)
                                 if sales.isSubscription {
-                                    Text("\(sales.subscribers.formatted()) subscribers")
+                                    Text("\(sales.subscribers.formatted(.number.locale(Theme.gameLocale))) subscribers")
                                         .font(Theme.Typography.number(.caption, weight: .regular))
                                         .foregroundStyle(.secondary)
                                 } else {
-                                    Text("\(sales.units.formatted()) sold")
+                                    Text("\(sales.units.formatted(.number.locale(Theme.gameLocale))) sold")
                                         .font(Theme.Typography.number(.caption, weight: .regular))
                                         .foregroundStyle(.secondary)
                                 }
@@ -170,7 +170,7 @@ struct WeeklyReportSheet: View {
                 HStack(alignment: .top, spacing: Theme.Spacing.xl) {
                     ReportStat(
                         label: "Average morale",
-                        value: report.averageMorale.formatted(.number.precision(.fractionLength(0))),
+                        value: report.averageMorale.formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale)),
                         tint: moraleTint
                     )
                     ReportStat(
@@ -192,7 +192,7 @@ struct WeeklyReportSheet: View {
                             Text("\(person.name) is unhappy")
                                 .font(.footnote)
                             Spacer(minLength: 0)
-                            Text(person.morale.formatted(.number.precision(.fractionLength(0))))
+                            Text(person.morale.formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale)))
                                 .font(Theme.Typography.number(.footnote))
                                 .foregroundStyle(Theme.negativeCash)
                         }
@@ -325,7 +325,7 @@ struct WeeklyReportSheet: View {
 
     private func signed(_ value: Double) -> String {
         let rounded = value.rounded()
-        return (rounded >= 0 ? "+" : "") + rounded.formatted(.number.precision(.fractionLength(0)))
+        return (rounded >= 0 ? "+" : "") + rounded.formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale))
     }
 }
 

@@ -10,13 +10,13 @@ struct MeterDelta: View {
 
     var body: some View {
         VStack(spacing: 2) {
-            Text(value.formatted(.number.precision(.fractionLength(0))))
+            Text(value.formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale)))
                 .font(Theme.Typography.number(.headline, weight: .bold))
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             if abs(delta) >= 0.5 {
-                Text((delta > 0 ? "+" : "") + delta.formatted(.number.precision(.fractionLength(0))))
+                Text((delta > 0 ? "+" : "") + delta.formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale)))
                     .font(Theme.Typography.number(.caption2))
                     .foregroundStyle(delta > 0 ? Theme.positiveCash : Theme.negativeCash)
             } else {

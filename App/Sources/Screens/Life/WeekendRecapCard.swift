@@ -112,7 +112,7 @@ private struct MeterChange: View {
                 Image(systemName: systemImage)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                Text((delta > 0 ? "+" : "") + delta.formatted(.number.precision(.fractionLength(0))))
+                Text((delta > 0 ? "+" : "") + delta.formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale)))
                     .font(Theme.Typography.number(.footnote, weight: .bold))
                     .foregroundStyle(delta > 0 ? Theme.positiveCash : Theme.negativeCash)
                 Text(label)
@@ -157,7 +157,7 @@ struct PossessionsCard: View {
                                 .font(.subheadline)
                             Spacer(minLength: Theme.Spacing.sm)
                             if item.def.dailyMoodDrift > 0 {
-                                Text("+\(item.def.dailyMoodDrift.formatted(.number.precision(.fractionLength(0...1)))) mood/day")
+                                Text("+\(item.def.dailyMoodDrift.formatted(.number.precision(.fractionLength(0...1)).locale(Theme.gameLocale))) mood/day")
                                     .font(Theme.Typography.number(.caption, weight: .regular))
                                     .foregroundStyle(.secondary)
                             }
@@ -166,7 +166,7 @@ struct PossessionsCard: View {
                     }
                     if dailyMood > 0 {
                         Text(
-                            "Your things add \(dailyMood.formatted(.number.precision(.fractionLength(0...1)))) mood a day."
+                            "Your things add \(dailyMood.formatted(.number.precision(.fractionLength(0...1)).locale(Theme.gameLocale))) mood a day."
                         )
                         .font(.caption)
                         .foregroundStyle(.tertiary)

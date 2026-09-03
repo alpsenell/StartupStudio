@@ -334,7 +334,7 @@ struct EventCopy {
             (
                 "brain.head.profile",
                 "\(method.displayName): \(skill.displayName) "
-                    + "+\(gained.formatted(.number.precision(.fractionLength(1))))",
+                    + "+\(gained.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))",
                 day,
                 Theme.accent
             )
@@ -353,14 +353,14 @@ struct EventCopy {
             (
                 "person.2.badge.key.fill",
                 "\(name) came in as a partner for "
-                    + "\(equity.formatted(.number.precision(.fractionLength(1))))%",
+                    + "\(equity.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))%",
                 day,
                 Theme.positiveCash
             )
         case .stakeAcquired(_, let companyName, let stakePercent, let amount, let day):
             (
                 "chart.pie.fill",
-                "Bought \(stakePercent.formatted(.number.precision(.fractionLength(1))))% "
+                "Bought \(stakePercent.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))% "
                     + "of \(companyName) for \(amount.money)",
                 day,
                 Theme.accent
@@ -383,7 +383,7 @@ struct EventCopy {
             (
                 "banknote.fill",
                 "\(name) put \(amount.money) in for "
-                    + "\(equity.formatted(.number.precision(.fractionLength(1))))%",
+                    + "\(equity.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))%",
                 day,
                 Theme.positiveCash
             )

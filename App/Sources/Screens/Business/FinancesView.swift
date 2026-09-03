@@ -503,6 +503,7 @@ private struct RunRateCard: View {
                     tint: runwayTint
                 )
             }
+            MoneySheetLink(engine: engine)
         }
     }
 }

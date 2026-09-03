@@ -56,13 +56,13 @@ struct FounderSkillsCard: View {
         case .leadership:
             let delta = state.founderLeadershipMoraleDelta(balance)
             guard abs(delta) >= 0.05 else { return nil }
-            return "\(delta > 0 ? "+" : "")\(delta.formatted(.number.precision(.fractionLength(1)))) morale"
+            return "\(delta > 0 ? "+" : "")\(delta.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale))) morale"
         }
     }
 
     private func factor(_ value: Double, _ label: String) -> String? {
         guard abs(value - 1) >= 0.005 else { return nil }
-        return "×\(value.formatted(.number.precision(.fractionLength(2)))) \(label)"
+        return "×\(value.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))) \(label)"
     }
 }
 
@@ -225,7 +225,7 @@ private struct MethodRow: View {
                     Text(method.displayName)
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
                         .foregroundStyle(.primary)
-                    Text("+\(gain.formatted(.number.precision(.fractionLength(1)))) · −\(Int(def.energy)) energy")
+                    Text("+\(gain.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale))) · −\(Int(def.energy)) energy")
                         .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                     if let blocker {

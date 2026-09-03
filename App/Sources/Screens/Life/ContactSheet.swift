@@ -437,16 +437,16 @@ extension NetworkingOffer {
             return "\(contact.askingSalary.money)/wk on payroll"
         case .equityHire:
             let equity = contact.equityAsk(config)
-            return "\(equity.formatted(.number.precision(.fractionLength(1))))% of your company, "
+            return "\(equity.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))% of your company, "
                 + "\(contact.equityHireSalary(config).money)/wk"
         case .backThem:
             let stake = contact.stakeOnOffer(config)
-            return "\(stake.formatted(.number.precision(.fractionLength(1))))% of "
+            return "\(stake.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))% of "
                 + "\(contact.companyName ?? "their company") for \(contact.stakePrice(config).money)"
         case .takeTheirMoney:
             let terms = contact.angelTerms(config, dealFactor: state.founderDealFactor(balance))
             return "\(terms.amount.money) for "
-                + "\(terms.equity.formatted(.number.precision(.fractionLength(1))))% of you"
+                + "\(terms.equity.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))% of you"
         case .askOut:
             return "See where it goes"
         }

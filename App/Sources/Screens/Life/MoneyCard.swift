@@ -75,6 +75,7 @@ struct MoneyCard: View {
                     )
                 }
 
+                MoneySheetLink(engine: engine)
                 Text("The company pays your salary out of cash each week; rent comes out of your wallet.")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
@@ -233,7 +234,7 @@ private struct PayBandNote: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.warning)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("−\(moralePenalty.formatted(.number.precision(.fractionLength(1)))) morale across the team")
+                    Text("−\(moralePenalty.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale))) morale across the team")
                         .font(.caption.weight(.semibold))
                         .monospacedDigit()
                         .foregroundStyle(Theme.warning)

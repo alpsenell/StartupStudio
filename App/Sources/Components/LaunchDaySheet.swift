@@ -182,7 +182,7 @@ struct LaunchDaySheet: View {
                 HStack(alignment: .top, spacing: Theme.Spacing.xl) {
                     if let firstWeek = release.weeklySales.first {
                         LaunchStat(label: "First week", value: firstWeek.revenue.money, tint: Theme.positiveCash)
-                        LaunchStat(label: "Units", value: firstWeek.units.formatted())
+                        LaunchStat(label: "Units", value: firstWeek.units.formatted(.number.locale(Theme.gameLocale)))
                     } else {
                         LaunchStat(
                             label: "Quality",
@@ -195,7 +195,7 @@ struct LaunchDaySheet: View {
                         )
                     }
                     if release.isSubscription {
-                        LaunchStat(label: "Subscribers", value: release.subscribers.formatted())
+                        LaunchStat(label: "Subscribers", value: release.subscribers.formatted(.number.locale(Theme.gameLocale)))
                     }
                 }
                 if release.liveBugs > 0 {

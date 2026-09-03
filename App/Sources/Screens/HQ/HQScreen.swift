@@ -31,6 +31,7 @@ struct HQScreen: View {
                     BurnRateCard(
                         weeklyBurn: engine.weeklyBurn,
                         cash: engine.state.company.cash,
+                        engineForSheet: engine,
                         codebases: engine.state.codebases,
                         accruingDebt: engine.state.productsInDevelopment.reduce(0.0) {
                             guard case .development(let dev) = $1.stage else { return $0 }
@@ -129,6 +130,8 @@ private struct DebtBanner: View {
 private struct BurnRateCard: View {
     let weeklyBurn: Int
     let cash: Int
+    /// The whole money story, one tap away from its summary.
+    var engineForSheet: GameEngine?
     /// The studio's codebases, for the second kind of debt this card
     /// reports. Empty until something ships, and the line is hidden then.
     let codebases: [Codebase]
@@ -154,6 +157,7 @@ private struct BurnRateCard: View {
                         .font(.footnote)
                         .foregroundStyle(Theme.negativeCash)
                 }
+                MoneySheetLink(engine: engineForSheet)
                 // The other debt. It is on the burn card and not on a
                 // screen of its own because it is the same kind of number
                 // as the runway: something that is quietly getting worse

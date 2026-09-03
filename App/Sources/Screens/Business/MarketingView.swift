@@ -243,7 +243,7 @@ private struct CampaignKindSpec: Identifiable {
     }
 
     private static func format(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...1)))
+        value.formatted(.number.precision(.fractionLength(0...1)).locale(Theme.gameLocale))
     }
 }
 

@@ -146,7 +146,7 @@ private struct PortfolioCard: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(holding.companyName)
                                 .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            Text("\(holding.stakePercent.formatted(.number.precision(.fractionLength(1))))% · paid \(holding.invested.money)")
+                            Text("\(holding.stakePercent.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))% · paid \(holding.invested.money)")
                                 .font(Theme.Typography.number(.caption2, weight: .regular))
                                 .foregroundStyle(.secondary)
                         }
@@ -194,7 +194,7 @@ private struct CapTableCard: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 0)
-                        Text("\(grant.percent.formatted(.number.precision(.fractionLength(1))))%")
+                        Text("\(grant.percent.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))%")
                             .font(Theme.Typography.number(.subheadline))
                     }
                 }
@@ -204,7 +204,7 @@ private struct CapTableCard: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(founderEquity.formatted(.number.precision(.fractionLength(1))))%")
+                    Text("\(founderEquity.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale)))%")
                         .font(Theme.Typography.number(.subheadline))
                 }
             }

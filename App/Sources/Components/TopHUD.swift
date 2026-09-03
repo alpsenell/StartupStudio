@@ -22,6 +22,7 @@ struct TopHUD: View {
     /// The sign colour the cash pill flashes when money moves, so the
     /// direction reads even when the delta's digits are not.
     @State private var cashFlash: Color?
+    @State private var showingMoney = false
 
     private var calendar: GameCalendar { engine.state.gameCalendar }
 
@@ -130,18 +131,45 @@ struct TopHUD: View {
 
     // MARK: - Cash
 
+    /// The cash pill. The figure rolls when it changes — the pixel face's
+    /// version of `.numericText()` — and tapping it opens the one screen
+    /// where all the money is: company, bank and the founder's own.
     private var cashCounter: some View {
         let cash = engine.state.company.cash
-        return PixelText(
-            text: cash.money,
-            scale: 2,
-            color: cash < 0 ? Theme.negativeCash : Theme.pixelInk,
-            shadow: true
-        )
-        .padding(.horizontal, Theme.Spacing.sm)
-        .padding(.vertical, Theme.Spacing.xs)
-        .background(cashFlash ?? Theme.chipBackground, in: Capsule())
+        return Button {
+            Haptics.tap()
+            showingMoney = true
+        } label: {
+            ZStack {
+                PixelText(
+                    text: cash.money,
+                    scale: 2,
+                    color: cash < 0 ? Theme.negativeCash : Theme.pixelInk,
+                    shadow: true
+                )
+                .id(cash)
+                .transition(
+                    Theme.Motion.transition(
+                        .asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        )
+                    )
+                )
+            }
+            .clipped()
+            .animation(Theme.Motion.valueChange, value: cash)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.xs)
+            .background(cashFlash ?? Theme.chipBackground, in: Capsule())
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.pressable)
         .accessibilityLabel("Cash \(cash.money)")
+        .accessibilityHint("Opens the money sheet")
+        .sheet(isPresented: $showingMoney) {
+            MoneySheet(engine: engine)
+        }
     }
 
     private func flash(_ delta: Int) {
