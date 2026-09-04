@@ -174,6 +174,26 @@ enum DebugLaunch {
         return false
         #endif
     }
+
+    /// The screen a headless QA pass wants to land on, from
+    /// `-autoRoute <name>` — `storefront` is U6's, since the "View in
+    /// store" button cannot be tapped either. `nil` in a release build and
+    /// whenever the flag is absent.
+    ///
+    /// Only the argument is parsed here. What to do about it belongs to
+    /// the surface that owns the route (see `StorefrontAutoRoute`), so
+    /// this file never grows a branch per lane.
+    static var autoRouteName: String? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-autoRoute"),
+              arguments.indices.contains(flag + 1)
+        else { return nil }
+        return arguments[flag + 1].lowercased()
+        #else
+        return nil
+        #endif
+    }
 }
 
 extension Route {
