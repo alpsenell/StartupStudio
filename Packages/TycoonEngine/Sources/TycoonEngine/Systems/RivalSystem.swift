@@ -74,6 +74,13 @@ enum RivalSystem {
             // The giant's products leave the shelf with it; the week's
             // share should say so now rather than next week.
             if !retreat.isEmpty { recomputeShare(&state, balance) }
+            // The week's closing strength, for the profile's sparkline:
+            // after every settlement above, so the sample is the number
+            // the rivals screen shows this week. No draws, and nothing in
+            // the simulation reads it back.
+            for index in state.rivals.rivals.indices {
+                state.rivals.rivals[index].recordStrength()
+            }
         }
         // Re-applied every day, not just on evolution days: `MarketSystem`
         // rebuilds each `TopicMarket` on its weekly shift, and this system
