@@ -352,26 +352,44 @@ struct NoticeRail: View {
     }
 
     private func reportRow(week: Int) -> some View {
-        Button {
-            shell.openWeeklyReport(engine: engine)
-        } label: {
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "calendar.badge.clock")
-                    .font(.footnote.weight(.bold))
-                Text("Week \(week) report")
-                    .font(.system(.footnote, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.secondary)
+        HStack(spacing: Theme.Spacing.sm) {
+            Button {
+                shell.openWeeklyReport(engine: engine)
+            } label: {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.footnote.weight(.bold))
+                    Text("Week \(week) report")
+                        .font(.system(.footnote, design: .rounded).weight(.semibold))
+                        .monospacedDigit()
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(minHeight: 34)
+                .contentShape(Rectangle())
             }
-            .frame(minHeight: 34)
-            .contentShape(Rectangle())
+            .buttonStyle(.pressableRow)
+            .accessibilityHint("Opens the weekly report")
+
+            // The report's companion: the same week as a front page (U2).
+            if let onRoute {
+                Button {
+                    Haptics.tap()
+                    onRoute(.newspaper)
+                } label: {
+                    Image(systemName: "newspaper.fill")
+                        .font(.footnote.weight(.bold))
+                        .frame(width: 34, height: 34)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.pressableRow)
+                .accessibilityLabel("Front page")
+                .accessibilityHint("Opens the week's newspaper")
+            }
         }
-        .buttonStyle(.pressableRow)
         .foregroundStyle(Theme.accent)
-        .accessibilityHint("Opens the weekly report")
     }
 
     /// The newest toast. The message stays in the system face because a
