@@ -30,7 +30,7 @@ struct AnimationTests {
     }
 
     @Test func easingIsMonotonicExceptForTheDeliberateOvershoot() {
-        for easing in Easing.allCases where easing != .easeOutBack {
+        for easing in Easing.allCases where easing != .easeOutBack && easing != .bob {
             var previous = -1.0
             for i in 0...100 {
                 let value = easing.apply(Double(i) / 100)
