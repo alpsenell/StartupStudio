@@ -164,6 +164,25 @@ final class StorefrontSnapshotTests: XCTestCase {
         }
     }
 
+    /// At an accessibility text size the hero stacks instead of clipping
+    /// the name against the box art, and the shot strip steps down a
+    /// whole pixel scale to keep fitting.
+    func testTheHeroStacksAtAccessibilityTextSizes() {
+        let info = ReleaseInfo(
+            launchDay: 96, quality: 74, reviews: Array(reviews.prefix(2)),
+            weeklySales: [WeeklySale(weekIndex: 0, units: 4_180, revenue: 12_540)],
+            offMarket: false, priceTier: .standard, updateCount: 1
+        )
+        let product = releasedProduct(
+            typeID: "mobile_app", topicID: "fitness", name: "Overcast", info: info
+        )
+        let engine = engine(with: product)
+        snapshot("storefront_large_type") {
+            StorefrontPage(engine: engine, product: product)
+                .environment(\.dynamicTypeSize, .accessibility3)
+        }
+    }
+
     /// The deep link lands in the tab that consumes it, and consuming it
     /// clears the request so a redraw cannot push twice.
     func testTheStorefrontRouteBelongsToProductsAndIsConsumedOnce() {

@@ -238,7 +238,10 @@ private struct StorefrontHero: View {
                             .accessibilityLabel("Coming soon")
                     }
                 }
-                Spacer(minLength: 0)
+                // Not a `Spacer`: in the stacked accessibility layout a
+                // spacer takes the vertical axis and leaves half a panel
+                // of empty paper under the rating.
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -343,7 +346,7 @@ private struct StorefrontWeekCard: View {
                 Text("The first week is still ticking — nothing to report yet.")
                     .emptySectionText()
             } else {
-                HStack(alignment: .top, spacing: Theme.Spacing.xl) {
+                StatRowLayout {
                     if info.isSubscription {
                         StorefrontStat(
                             label: "Subscribers",
@@ -356,10 +359,25 @@ private struct StorefrontWeekCard: View {
                         )
                     }
                     StorefrontStat(label: "Revenue", value: (latest?.revenue ?? 0).money)
-                    Spacer(minLength: 0)
                 }
             }
         }
+    }
+}
+
+/// Two figures side by side — stacked instead at accessibility text
+/// sizes, where a money figure otherwise wraps in the middle of its own
+/// digits.
+private struct StatRowLayout<Content: View>: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Spacing.md))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: Theme.Spacing.xl))
+        layout { content }
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -472,14 +490,22 @@ private struct StorefrontReviewsCard: View {
 private struct ReviewQuoteCard: View {
     let review: Review
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack(spacing: Theme.Spacing.sm) {
                 ScoreBadge(score: review.score)
                 Text(review.outlet)
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
-                StoreStarsCompact(score: review.score)
+                // The badge already carries the number; at accessibility
+                // sizes the stars would squeeze the outlet's name down to
+                // two letters and an ellipsis, so they go.
+                if !dynamicTypeSize.isAccessibilitySize {
+                    StoreStarsCompact(score: review.score)
+                }
             }
             Text("“\(review.blurb)”")
                 .font(.footnote)
@@ -541,7 +567,7 @@ private struct ComingSoonCard: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                HStack(alignment: .top, spacing: Theme.Spacing.xl) {
+                StatRowLayout {
                     StorefrontStat(
                         label: "Built",
                         value: (completion * 100)
@@ -553,7 +579,6 @@ private struct ComingSoonCard: View {
                         value: progress.hype
                             .formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale))
                     )
-                    Spacer(minLength: 0)
                 }
                 TriPhaseProgress(progress: progress, type: type, compact: true)
             }

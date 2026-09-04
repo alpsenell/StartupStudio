@@ -88,13 +88,15 @@ struct ProductsScreen: View {
             .onChange(of: router.pendingPush, initial: true) { _, _ in
                 consumeRoute()
             }
-            // U6: `-autoRoute storefront` lands a headless screenshot pass
-            // on the store page, which otherwise needs a tap to reach.
-            .storefrontAutoRoute(engine: engine, router: router)
             .sheet(item: $newProductRequest) { request in
                 NewProductFlow(engine: engine, initialTopicID: request.topicID)
             }
         }
+        // U6: `-autoRoute storefront` lands a headless screenshot pass on
+        // the store page, which otherwise needs a tap to reach. On the
+        // stack, not on its root content: the root goes away when a
+        // destination is pushed, and its `task` with it.
+        .storefrontAutoRoute(engine: engine, router: router)
     }
 
     /// Deep links into this tab: R&D picks the segment, a product id
