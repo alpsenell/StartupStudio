@@ -34,10 +34,10 @@ struct BusinessScreen: View {
         init?(route: Route) {
             switch route {
             case .contracts: self = .contracts
-            case .market, .marketReport: self = .market
+            case .market, .marketReport, .marketMap: self = .market
             case .marketing: self = .marketing
             case .finances: self = .finances
-            case .rivals: self = .rivals
+            case .rivals, .rivalProfile: self = .rivals
             case .investors: self = .investors
             default: return nil
             }
@@ -58,6 +58,9 @@ struct BusinessScreen: View {
     }
 
     @State private var section: BusinessSection = .contracts
+    /// Report or map on the Market section (U3): held here so the
+    /// `.marketMap` deep link can pick the map before the section draws.
+    @State private var marketLens: MarketLens = .report
 
     @Environment(AppRouter.self) private var router
 
@@ -101,7 +104,7 @@ struct BusinessScreen: View {
                         case .contracts:
                             ContractsView(engine: engine)
                         case .market:
-                            MarketView(engine: engine)
+                            MarketView(engine: engine, lens: $marketLens)
                         case .marketing:
                             MarketingView(engine: engine)
                         case .finances:
@@ -127,6 +130,14 @@ struct BusinessScreen: View {
             // Deep links into this tab pick their own segment.
             .onChange(of: router.pendingPush, initial: true) { _, _ in
                 consumeRoute()
+            }
+            // A headless pass can ask for one of this tab's screens; the
+            // profile waits for a rival to exist, so this is checked as
+            // the days pass. Nil outside debug builds.
+            .onChange(of: engine.state.day, initial: true) { _, _ in
+                if let route = DebugLaunch.takeLaunchRoute(in: engine.state) {
+                    router.go(route)
+                }
             }
             // Land on the section the desk's most urgent row points at,
             // unless a deep link already chose one.
@@ -161,9 +172,14 @@ struct BusinessScreen: View {
     ///
     /// Routes this screen can satisfy on its own are consumed here;
     /// `.marketReport` only picks the segment and is left in place for
-    /// `MarketView` to open the report on the right topic.
+    /// `MarketView` to open the report on the right topic. `.marketMap`
+    /// picks the segment and the map.
     private func consumeRoute() {
         switch router.pendingPush {
+        case .marketMap:
+            section = .market
+            marketLens = .map
+            router.take(.marketMap)
         case .contracts:
             section = .contracts
             router.take(.contracts)

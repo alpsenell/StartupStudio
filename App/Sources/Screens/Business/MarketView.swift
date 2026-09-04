@@ -6,8 +6,12 @@ import TycoonEngine
 /// demand — the latest boom or crash, the hottest and coldest markets, a
 /// sparkline grid — and the way into the full report, presented as a sheet
 /// with its own navigation so it stays clear of the hidden-nav-bar tab root.
+/// A segment beside the report turns the same market into a map (U3).
 struct MarketView: View {
     let engine: GameEngine
+    /// Report or map. Owned by `BusinessScreen`, which the `.marketMap`
+    /// deep link lands on.
+    @Binding var lens: MarketLens
 
     @State private var showingReport = false
     /// Topic the report should open on, when a deep link named one.
@@ -22,22 +26,43 @@ struct MarketView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
-            BusinessSectionHeader(title: "Market pulse", systemImage: "chart.xyaxis.line")
+            BusinessSectionHeader(
+                title: lens == .map ? "Market map" : "Market pulse",
+                systemImage: lens == .map ? "map.fill" : "chart.xyaxis.line"
+            )
 
-            if let latest = engine.state.market.recentEvents.last {
-                MarketEventBanner(
-                    event: latest,
-                    topicName: engine.content.topic(latest.topicID)?.name ?? latest.topicID,
-                    isCurrentWeek: latest.day / MarketAnalysis.daysPerWeek
-                        == engine.state.day / MarketAnalysis.daysPerWeek
-                )
+            Picker("Market view", selection: $lens.animation(Theme.Motion.selection)) {
+                ForEach(MarketLens.allCases) { lens in
+                    Text(lens.rawValue).tag(lens)
+                }
             }
+            .pickerStyle(.segmented)
+            .accessibilityLabel("Market view")
 
-            HotColdCard(snapshots: snapshots)
-            CategoryHoldCard(engine: engine)
-            SparklineGridCard(snapshots: engine.content.topics.map {
-                TopicSnapshot(topic: $0, market: engine.state.market)
-            })
+            switch lens {
+            case .report:
+                if let latest = engine.state.market.recentEvents.last {
+                    MarketEventBanner(
+                        event: latest,
+                        topicName: engine.content.topic(latest.topicID)?.name ?? latest.topicID,
+                        isCurrentWeek: latest.day / MarketAnalysis.daysPerWeek
+                            == engine.state.day / MarketAnalysis.daysPerWeek
+                    )
+                }
+
+                HotColdCard(snapshots: snapshots)
+                CategoryHoldCard(engine: engine)
+                SparklineGridCard(snapshots: engine.content.topics.map {
+                    TopicSnapshot(topic: $0, market: engine.state.market)
+                })
+            case .map:
+                // A tapped district opens the report on that topic — the
+                // same road a boom's "Details" takes.
+                MarketMapScreen(engine: engine) { topicID in
+                    reportTopicID = topicID
+                    showingReport = true
+                }
+            }
 
             Button {
                 Haptics.tap()
@@ -53,11 +78,13 @@ struct MarketView: View {
             .tint(Theme.accent)
             .accessibilityHint("Opens the detailed market report")
 
-            Text("Demand multiplies weekly sales for products in that market. Conditions shift every week; booms and crashes make the news.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, Theme.Spacing.xs)
+            if lens == .report {
+                Text("Demand multiplies weekly sales for products in that market. Conditions shift every week; booms and crashes make the news.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Theme.Spacing.xs)
+            }
         }
         .sheet(isPresented: $showingReport) {
             MarketReportScreen(engine: engine, initialTopicID: reportTopicID)
