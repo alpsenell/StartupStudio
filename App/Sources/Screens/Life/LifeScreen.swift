@@ -13,6 +13,8 @@ struct LifeScreen: View {
 
     @Environment(AppRouter.self) private var router
     @State private var path: [LifeDestination] = []
+    /// Whether the debug `-autoRoute` landing has already been taken.
+    @State private var tookLaunchRoute = false
 
     /// What Life can push. One case today; an enum rather than a
     /// `NavigationPath` so the deep link can ask "am I already there?".
@@ -81,6 +83,15 @@ struct LifeScreen: View {
     /// `.life` — which the agenda's own diary rows send — means "the Life
     /// tab itself", so it pops back to the root.
     private func consumeRoute() {
+        // A headless screenshot pass cannot tap: `-autoRoute agenda` lands
+        // on the fortnight, once.
+        if !tookLaunchRoute {
+            tookLaunchRoute = true
+            if Route.launchRoute == .agenda {
+                path = [.agenda]
+                return
+            }
+        }
         if router.take(.agenda) {
             path = [.agenda]
         } else if router.take(.life) {

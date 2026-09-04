@@ -31,6 +31,8 @@ struct TeamScreen: View {
     }
 
     @State private var teamView: TeamView = .roster
+    /// Whether the debug `-autoRoute` landing has already been taken.
+    @State private var tookLaunchRoute = false
     @State private var showingHiring = false
     @State private var employeeToFire: Employee?
     @State private var employeeToManage: Employee?
@@ -81,6 +83,15 @@ struct TeamScreen: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .onChange(of: router.pendingPush, initial: true) { _, _ in
+                // A headless screenshot pass cannot tap the picker:
+                // `-autoRoute orgChart` opens the chart, once.
+                if !tookLaunchRoute {
+                    tookLaunchRoute = true
+                    if Route.launchRoute == .orgChart {
+                        teamView = .chart
+                        return
+                    }
+                }
                 if router.take(.orgChart) {
                     teamView = .chart
                 }

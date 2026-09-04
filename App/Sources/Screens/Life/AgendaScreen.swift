@@ -93,11 +93,13 @@ struct AgendaContent: View {
             }
             if let eveningsLeft, let eveningsTotal, eveningsTotal > 0 {
                 Label(
-                    "\(eveningsLeft) of \(eveningsTotal) evenings left this week — a dot is a night that is still yours.",
+                    "\(eveningsLeft) of \(eveningsTotal) evenings left. A filled dot is a free night.",
                     systemImage: "moon.stars.fill"
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
                 .accessibilityLabel(
                     "\(eveningsLeft) of \(eveningsTotal) evenings left this week"
                 )

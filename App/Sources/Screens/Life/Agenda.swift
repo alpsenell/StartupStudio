@@ -202,11 +202,18 @@ enum Agenda {
             }
         }
 
-        return items.sorted { lhs, rhs in
-            if lhs.day != rhs.day { return lhs.day < rhs.day }
-            if lhs.kind.rank != rhs.kind.rank { return lhs.kind.rank < rhs.kind.rank }
-            return lhs.id < rhs.id
-        }
+        // Day, then what matters first, then the order they were read in —
+        // an id tiebreak would sort the loan's interest above the rent for
+        // no reason a player could name, and `sorted` is not stable.
+        return items.enumerated()
+            .sorted { lhs, rhs in
+                if lhs.element.day != rhs.element.day { return lhs.element.day < rhs.element.day }
+                if lhs.element.kind.rank != rhs.element.kind.rank {
+                    return lhs.element.kind.rank < rhs.element.kind.rank
+                }
+                return lhs.offset < rhs.offset
+            }
+            .map(\.element)
     }
 
     // MARK: - Evenings
