@@ -71,7 +71,10 @@ struct OfficeCard: View {
                     content: OfficeScenePanel(
                         input: sceneInput,
                         sceneLabel: sceneAccessibilityLabel,
-                        onTapRegion: { kind in handleTap(kind) }
+                        onTapRegion: { kind in handleTap(kind) },
+                        accessibilityHint: { kind in
+                            OfficeTapDestination.accessibilityHint(for: kind, state: engine.state)
+                        }
                     )
                 )
             }
@@ -360,9 +363,27 @@ struct OfficeCard: View {
                     speech: speech(for: employee),
                     role: roleLook(for: employee),
                     name: employee.name,
-                    isAway: employee.isFounder && founderIsAway
+                    isAway: employee.isFounder && founderIsAway,
+                    roleDescription: Self.roleDescription(for: employee)
                 )
             }
+    }
+
+    /// What VoiceOver calls this person after their name: "backend dev",
+    /// "designer", "QA". The scene only knows the role *look*, which does
+    /// not tell a frontend dev from a backend one.
+    static func roleDescription(for employee: Employee) -> String {
+        switch employee.role {
+        case .founder: "founder"
+        case .frontend: "frontend dev"
+        case .backend: "backend dev"
+        case .designer: "designer"
+        case .qa: "QA"
+        case .marketer: "marketer"
+        case .lawyer: "lawyer"
+        case .hr: "HR"
+        case .ops: "ops"
+        }
     }
 
     /// Who this person will get up and go and talk to. Only real bonds —
@@ -622,16 +643,18 @@ private struct OfficeScenePanel: View, Equatable {
     let input: OfficeSceneInput
     let sceneLabel: String
     let onTapRegion: (OfficeHitRegion.Kind) -> Void
+    /// What VoiceOver says a tap on a region does.
+    let accessibilityHint: (OfficeHitRegion.Kind) -> String?
 
     var body: some View {
-        OfficeSceneView(input: input, onTapRegion: onTapRegion)
+        OfficeSceneView(input: input, onTapRegion: onTapRegion, accessibilityHint: accessibilityHint)
             .frame(maxWidth: .infinity)
             .accessibilityLabel(sceneLabel)
     }
 
-    /// The closure is deliberately excluded: it is recreated on every body
-    /// evaluation but always does the same thing, and comparing it would
-    /// defeat the whole point of the `EquatableView`.
+    /// The closures are deliberately excluded: they are recreated on every
+    /// body evaluation but always do the same thing, and comparing them
+    /// would defeat the whole point of the `EquatableView`.
     nonisolated static func == (lhs: OfficeScenePanel, rhs: OfficeScenePanel) -> Bool {
         lhs.input == rhs.input && lhs.sceneLabel == rhs.sceneLabel
     }
