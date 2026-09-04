@@ -518,7 +518,7 @@ enum EmployeeSystem {
 
     /// One day's raw pool output from everyone assigned to `productID`,
     /// before the tech, crowding and pace multipliers.
-    private struct CrewOutput {
+    struct CrewOutput {
         var design = 0.0
         var code = 0.0
         var polish = 0.0
@@ -538,7 +538,7 @@ enum EmployeeSystem {
         }
     }
 
-    private static func gatherCrewOutput(
+    static func gatherCrewOutput(
         productID: UUID,
         focus: PhaseFocus,
         state: GameState,
