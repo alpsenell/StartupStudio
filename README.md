@@ -222,6 +222,31 @@ answer in the world, and an answer has a memory.
   with a client, a deadline and a year's non-compete; or mortgaged, a year
   of runway borrowed against the flat you live in.
 
+### New rooms
+
+Iteration 6 gave the game places it did not have:
+
+- **A front door.** The office at night, *Continue* with your founder's
+  face, and three save slots.
+- **The launch week war room.** A full-screen mode for the last seven days
+  before a ship and launch day itself: countdown, hype, the forecast band,
+  the press rolling in, and the review reveal played in the room.
+- **The weekly newspaper.** A pixel front page every Monday, composed from
+  the journal: your headline, the rival column, the market column, a photo
+  of the office.
+- **The company timeline.** Products, hires, chapters, the crash, the
+  round, the incumbent, on one scrollable line.
+- **The market as a map.** Twelve districts sized by market and coloured by
+  standing, with rival flags, the incumbent's fortress and a siege marker
+  on an active challenge; tap a rival for their studio, their year of
+  strength and the history between you.
+- **The office is the interface.** Tap a person, the coffee machine, the
+  whiteboard, the door or your own desk.
+- **The agenda and the org chart.** The next fortnight, dated; and the
+  company as a tree with bonds as line weight.
+- **The storefront.** Every product's app-store page, screenshots drawn
+  from its type and topic.
+
 Plus autosave with versioned migrations, and a deterministic engine — same
 seed, same game — under all of it.
 
