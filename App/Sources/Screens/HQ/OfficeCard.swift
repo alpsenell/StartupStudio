@@ -17,8 +17,17 @@ struct OfficeCard: View {
     @State private var showingAmenities = false
     @State private var showingCityMap = false
     @State private var confirmingUpgrade = false
-    /// The person a tap on the scene opened.
-    @State private var tappedEmployeeID: UUID?
+    /// What a tap on the scene opened.
+    @State private var destination: OfficeTapDestination?
+    /// Whether the first-time "tap anyone" line has been dismissed.
+    @State private var tapHintDismissed = GameSettings.dismissedTips.contains(OfficeTapHint.tipID)
+
+    /// Draws the scene with this pressed, for a snapshot of the pressed
+    /// state; the live card leaves it to the scene's own gesture.
+    var pressedForPreview: OfficeHitRegion.Kind?
+    /// Shows the first-time hint whatever the player has dismissed, for a
+    /// snapshot of it.
+    var showsTapHintForPreview = false
 
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI
@@ -62,15 +71,15 @@ struct OfficeCard: View {
                     content: OfficeScenePanel(
                         input: sceneInput,
                         sceneLabel: sceneAccessibilityLabel,
-                        onTapOccupant: { id in
-                            guard engine.state.employee(id: id) != nil else { return }
-                            Haptics.tap()
-                            tappedEmployeeID = id
-                        }
+                        onTapRegion: { kind in handleTap(kind) }
                     )
                 )
             }
             .frame(maxWidth: .infinity)
+
+            if showsTapHint {
+                OfficeTapHint { dismissTapHint() }
+            }
 
             Divider()
             AmenitiesRow(ownedCount: ownedAmenities.count) {
@@ -140,10 +149,43 @@ struct OfficeCard: View {
         .fullScreenCover(isPresented: $showingCityMap) {
             CityMapScreen(engine: engine)
         }
-        .sheet(item: Binding(get: { tappedEmployeeID.map(IdentifiedUUID.init) },
-                             set: { tappedEmployeeID = $0?.id })) { picked in
-            EmployeeManageSheet(engine: engine, employeeID: picked.id)
+        .sheet(item: $destination) { destination in
+            switch destination {
+            case .person(let id):
+                EmployeeManageSheet(engine: engine, employeeID: id)
+            case .coffee:
+                CoffeeMachineSheet(engine: engine)
+            case .product(let id):
+                ProductSheet(engine: engine, productID: id)
+            case .newProduct:
+                NewProductFlow(engine: engine)
+            case .hiring:
+                HiringSheet(engine: engine)
+            case .work:
+                WorkScheduleSheet(engine: engine)
+            }
         }
+    }
+
+    // MARK: - Taps
+
+    /// The scene says what was touched; `OfficeTapDestination` says what
+    /// that means; this opens it. Every tap that lands gets a haptic, and
+    /// the first one retires the hint — the tap is the proof it was read.
+    private func handleTap(_ kind: OfficeHitRegion.Kind) {
+        guard let target = OfficeTapDestination.destination(for: kind, state: engine.state) else { return }
+        Haptics.tap()
+        destination = target
+        if !tapHintDismissed { dismissTapHint() }
+    }
+
+    private var showsTapHint: Bool {
+        showsTapHintForPreview || !tapHintDismissed
+    }
+
+    private func dismissTapHint() {
+        withAnimation(Theme.Motion.entrance) { tapHintDismissed = true }
+        GameSettings.dismissedTips.insert(OfficeTapHint.tipID)
     }
 
     /// Everything the scene needs, as one `Hashable` value: who is in the
@@ -159,6 +201,7 @@ struct OfficeCard: View {
             celebration: celebration
         )
         input.pressure = pressure
+        input.pressed = pressedForPreview
         return input
     }
 
@@ -578,10 +621,10 @@ private struct HeadcountPill: View {
 private struct OfficeScenePanel: View, Equatable {
     let input: OfficeSceneInput
     let sceneLabel: String
-    let onTapOccupant: (UUID) -> Void
+    let onTapRegion: (OfficeHitRegion.Kind) -> Void
 
     var body: some View {
-        OfficeSceneView(input: input, onTapOccupant: onTapOccupant)
+        OfficeSceneView(input: input, onTapRegion: onTapRegion)
             .frame(maxWidth: .infinity)
             .accessibilityLabel(sceneLabel)
     }
@@ -592,9 +635,4 @@ private struct OfficeScenePanel: View, Equatable {
     nonisolated static func == (lhs: OfficeScenePanel, rhs: OfficeScenePanel) -> Bool {
         lhs.input == rhs.input && lhs.sceneLabel == rhs.sceneLabel
     }
-}
-
-/// `UUID` wrapper so a tapped person can drive a `sheet(item:)`.
-private struct IdentifiedUUID: Identifiable {
-    let id: UUID
 }
