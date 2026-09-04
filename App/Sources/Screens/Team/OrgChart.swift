@@ -92,8 +92,13 @@ enum OrgChart {
     /// Places everybody. Pure: the same roster always lays out the same
     /// way, which is what makes "nobody overlaps" a testable claim.
     static func layout(employees: [Employee], friendships: [Friendship] = []) -> Layout {
-        guard let founder = employees.first(where: \.isFounder) else { return Layout() }
+        // The founder is optional, and that is not a defensive `if let`: a
+        // founder who is ousted or bought out is replaced, and the company
+        // that is left still has an org. Without a founder the branches
+        // simply start at the top row and their leads hang from nothing.
+        let founder = employees.first(where: \.isFounder)
         let staff = employees.filter { !$0.isFounder }
+        guard founder != nil || !staff.isEmpty else { return Layout() }
 
         // 1. Branches: the departments that exist, then the floor — the
         //    people whose role staffs nothing, under the founder directly.
@@ -109,8 +114,9 @@ enum OrgChart {
         // 2. Ranks: the ladder rungs anybody actually stands on, so a
         //    company of four juniors is one row deep rather than four.
         let occupied = ladder.filter { level in staff.contains { $0.level == level } }
+        let firstStaffRow = founder == nil ? 0 : 1
         let rowIndex = Dictionary(
-            uniqueKeysWithValues: occupied.enumerated().map { ($1, $0 + 1) }
+            uniqueKeysWithValues: occupied.enumerated().map { ($1, $0 + firstStaffRow) }
         )
 
         // 3. Bands: each branch is as wide as its widest rank.
@@ -131,21 +137,28 @@ enum OrgChart {
         }
 
         let contentWidth = max(cursor - branchGap + padding, nodeSize.width + 2 * padding)
-        let depth = occupied.count + 1
-        let contentHeight = CGFloat(depth - 1) * rowStride + nodeSize.height + 2 * padding
+        let depth = occupied.count + firstStaffRow
+        let contentHeight = CGFloat(max(0, depth - 1)) * rowStride + nodeSize.height + 2 * padding
 
         var layout = Layout()
         layout.size = CGSize(width: contentWidth, height: contentHeight)
 
         // 4. The founder, centred over the whole company.
-        let founderPosition = CGPoint(x: contentWidth / 2, y: rowY(0))
-        layout.nodes.append(Node(employee: founder, position: founderPosition, parentID: nil))
+        if let founder {
+            layout.nodes.append(
+                Node(
+                    employee: founder,
+                    position: CGPoint(x: contentWidth / 2, y: rowY(0)),
+                    parentID: nil
+                )
+            )
+        }
 
         // 5. Everybody else, rank by rank, centred inside their band.
         for band in bands {
             for (levelIndex, level) in occupied.enumerated() {
                 guard let members = band.members[level], !members.isEmpty else { continue }
-                let row = rowIndex[level] ?? levelIndex + 1
+                let row = rowIndex[level] ?? levelIndex + firstStaffRow
                 // The line runs up to the nearest more senior person in the
                 // same branch, and to the founder when there is nobody.
                 let parent = occupied[..<levelIndex].reversed()
@@ -157,7 +170,7 @@ enum OrgChart {
                         Node(
                             employee: member,
                             position: CGPoint(x: band.centre + shift * columnStride, y: rowY(row)),
-                            parentID: parent?.id ?? founder.id
+                            parentID: parent?.id ?? founder?.id
                         )
                     )
                 }

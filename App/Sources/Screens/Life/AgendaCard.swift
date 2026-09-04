@@ -42,8 +42,11 @@ struct AgendaCard: View {
 
                 Divider()
 
+                // No evening pips here: "Your week", directly below this
+                // card, owns the evening budget, and the same three dots
+                // twice on one screen reads as a bug. The fortnight's own
+                // page carries them, per day, where they are the answer.
                 HStack {
-                    EveningPips(engine: engine, compact: true)
                     Spacer(minLength: Theme.Spacing.sm)
                     Button {
                         Haptics.tap()

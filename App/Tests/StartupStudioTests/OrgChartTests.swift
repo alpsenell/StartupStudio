@@ -96,6 +96,32 @@ final class OrgChartTests: XCTestCase {
         XCTAssertTrue(OrgChart.layout(employees: []).nodes.isEmpty)
     }
 
+    /// An ousted or bought-out founder is replaced, and the company that is
+    /// left still has an org — which is exactly the save that drew a blank
+    /// screen before the founder became optional.
+    func testACompanyWithNoFounderStillHasAChart() {
+        let staff = fullStudio().filter { !$0.isFounder }
+        let layout = OrgChart.layout(employees: staff)
+        XCTAssertEqual(layout.nodes.count, staff.count)
+        XCTAssertGreaterThan(layout.size.height, 0)
+        XCTAssertTrue(
+            layout.nodes.allSatisfy { node in
+                node.parentID.map { id in layout.node(id: id) != nil } ?? true
+            },
+            "a line runs to somebody who is not on the chart"
+        )
+        let top = layout.nodes.map(\.position.y).min()
+        XCTAssertTrue(
+            layout.nodes.filter { $0.position.y == top }.allSatisfy { $0.parentID == nil },
+            "the top rank hangs from nothing when there is no founder"
+        )
+        for (index, node) in layout.nodes.enumerated() {
+            for other in layout.nodes[(index + 1)...] {
+                XCTAssertFalse(node.frame.intersects(other.frame))
+            }
+        }
+    }
+
     // MARK: - The shape
 
     func testTheFounderIsAloneAtTheTop() {
@@ -184,8 +210,17 @@ final class OrgChartTests: XCTestCase {
         XCTAssertEqual(layout.friendships.count, 1, "a friendship with somebody who left is not drawn")
         let link = layout.friendships.first
         XCTAssertEqual(link?.strength, 71)
-        XCTAssertEqual(link?.from, layout.node(id: people[1].id)?.position)
-        XCTAssertEqual(link?.to, layout.node(id: people[3].id)?.position)
+        // `Friendship` normalises the pair by uuid, so the link's ends are
+        // the two people in whichever order it chose.
+        XCTAssertEqual(
+            Set([link?.a, link?.b].compactMap { $0 }), Set([people[1].id, people[3].id])
+        )
+        XCTAssertEqual(
+            [link?.from, link?.to].compactMap { $0 }.sorted { $0.y < $1.y },
+            [people[1].id, people[3].id]
+                .compactMap { layout.node(id: $0)?.position }
+                .sorted { $0.y < $1.y }
+        )
     }
 
     func testTheLayoutIsTheSameEveryTimeItIsRead() {

@@ -25,9 +25,23 @@ struct OrgChartView: View {
     }
 
     var body: some View {
-        ScrollView([.horizontal, .vertical]) {
-            OrgChartCanvas(layout: layout, onSelect: onSelect)
-                .padding(.bottom, Theme.Spacing.xl)
+        let layout = layout
+        return ScrollView([.horizontal, .vertical]) {
+            if layout.nodes.isEmpty {
+                // A company can genuinely have nobody on it — the founder
+                // ousted or bought out and no hires — and a blank scroll
+                // view would read as a broken screen rather than an empty
+                // one.
+                CardView("Nobody on the chart", systemImage: "person.2.slash") {
+                    Text("There is nobody on the payroll to draw.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(Theme.Spacing.lg)
+            } else {
+                OrgChartCanvas(layout: layout, onSelect: onSelect)
+                    .padding(.bottom, Theme.Spacing.xl)
+            }
         }
         .background(Theme.screenBackground)
     }
@@ -41,16 +55,26 @@ struct OrgChartCanvas: View {
     let onSelect: (Employee) -> Void
 
     var body: some View {
+        // Everything is placed by `.offset` from the top-left, and the
+        // lines are one `Canvas`, because the chart lives inside a two-way
+        // `ScrollView`: there the proposed size is unbounded on both axes,
+        // and `.position` — which hands that proposal straight back — left
+        // the whole chart collapsed to nothing on the real screen while
+        // rendering perfectly in a snapshot. An offset owes the parent's
+        // proposal nothing.
         ZStack(alignment: .topLeading) {
-            reportingLines
-            friendshipLines
+            lines
+                .frame(width: layout.size.width, height: layout.size.height)
             ForEach(layout.branches) { branch in
                 branchLabel(branch)
             }
             ForEach(layout.nodes) { node in
                 OrgChartNodeView(node: node) { onSelect(node.employee) }
                     .frame(width: OrgChart.nodeSize.width, height: OrgChart.nodeSize.height)
-                    .position(node.position)
+                    .offset(
+                        x: node.position.x - OrgChart.nodeSize.width / 2,
+                        y: node.position.y - OrgChart.nodeSize.height / 2
+                    )
             }
         }
         .frame(width: layout.size.width, height: layout.size.height, alignment: .topLeading)
@@ -59,35 +83,35 @@ struct OrgChartCanvas: View {
 
     // MARK: - Lines
 
-    /// One line per person, up to whoever they hang from, drawn as an
-    /// elbow so a wide rank does not become a fan of diagonals. The weight
-    /// is the bond: 1pt at no bond, 4pt at a bond of 100.
-    private var reportingLines: some View {
-        ForEach(layout.nodes) { node in
-            if let parentID = node.parentID, let parent = layout.node(id: parentID) {
-                elbow(from: parent.position, to: node.position)
-                    .stroke(
-                        Theme.accent.opacity(0.25 + 0.5 * min(1, node.bond / 100)),
-                        style: StrokeStyle(
-                            lineWidth: 1 + 3 * min(1, node.bond / 100),
-                            lineCap: .round, lineJoin: .round
-                        )
+    /// Both kinds of line in one pass. A person's line runs up to whoever
+    /// they hang from as an elbow, so a wide rank does not become a fan of
+    /// diagonals, at a weight set by their bond with the founder: 1pt at no
+    /// bond, 4pt at a bond of 100. The dotted ones are friendships — who
+    /// actually likes working with whom.
+    private var lines: some View {
+        Canvas { context, _ in
+            for node in layout.nodes {
+                guard let parentID = node.parentID,
+                      let parent = layout.node(id: parentID) else { continue }
+                let bond = min(1, node.bond / 100)
+                context.stroke(
+                    elbow(from: parent.position, to: node.position),
+                    with: .color(Theme.accent.opacity(0.25 + 0.5 * bond)),
+                    style: StrokeStyle(
+                        lineWidth: 1 + 3 * bond, lineCap: .round, lineJoin: .round
                     )
+                )
             }
-        }
-    }
-
-    /// The dotted lines: who actually likes working with whom.
-    private var friendshipLines: some View {
-        ForEach(layout.friendships) { link in
-            Path { path in
+            for link in layout.friendships {
+                var path = Path()
                 path.move(to: link.from)
                 path.addLine(to: link.to)
+                context.stroke(
+                    path,
+                    with: .color(Theme.romance.opacity(0.2 + 0.5 * min(1, link.strength / 100))),
+                    style: StrokeStyle(lineWidth: 1.5, dash: [3, 4])
+                )
             }
-            .stroke(
-                Theme.romance.opacity(0.2 + 0.5 * min(1, link.strength / 100)),
-                style: StrokeStyle(lineWidth: 1.5, dash: [3, 4])
-            )
         }
     }
 
@@ -120,7 +144,13 @@ struct OrgChartCanvas: View {
         .padding(.vertical, 2)
         .background(Theme.chipBackground, in: Capsule())
         .fixedSize()
-        .position(branch.position)
+        // Centred over the branch by giving the label a known width to sit
+        // in the middle of, so it can be offset like everything else.
+        .frame(width: OrgChart.columnStride * 2)
+        .offset(
+            x: branch.position.x - OrgChart.columnStride,
+            y: branch.position.y - 10
+        )
         .accessibilityLabel("\(branch.department.displayName), \(branch.headcount) people")
     }
 }
