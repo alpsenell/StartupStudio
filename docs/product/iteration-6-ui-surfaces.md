@@ -74,6 +74,14 @@ A front door before onboarding: the office scene at night (`OfficeSceneView(time
 
 **U7 → U4 → U1 → U6 → U3 → U5 → U2.** The front door first (it touches the app root), then the scene lanes, then the screens that only add files.
 
-## Status
+## Status (4 September)
 
-*Filled in at merge.*
+Seven lanes in worktrees: U1, U2, U3, U4, U7 on Fable; U5, U6 on Opus. Merged onto `iteration-6` as they landed (U7 → U1 → U2 → U4 → U5 → U6 → U3), the app suite and the touched package suites re-run after each. Deviations as each lane reported them:
+
+- **U7 — front door and slots.** The slot rows are the picker (tap an empty row to found there; *New company* takes the first empty slot or asks which to replace); the biography reaches the door through a session environment value; Settings' "Start a new game" returns to the door. Fixed a latent bug: backgrounding during onboarding wrote a generated company to slot 0 and skipped onboarding next launch. TycoonSave 9 → 21 tests; `slot0.json`'s envelope keys are asserted unchanged.
+- **U1 — war room.** The engine had no "days to done", so a pure query `GameState.buildETA` was added (two privates in `EmployeeSystem` opened). The Ship button lives in the room, since shipping is a player action; the room suppresses the root launch-day sheet for its own product; `ReviewCardView` stops typing under Reduce Motion; the room composes its own scene rather than refactoring `OfficeCard`. `-autoRoute warRoom|launchDay|shipInRoom`.
+- **U2 — newspaper and timeline.** Added `-autoAnswer` so a headless pass survives its story prompts (every lane's screenshot pass hits the first modal within seconds). Crash markers filtered to topics the studio sells into; refresh notices never lead; newsprint dark tokens are local (the pixel-paper token goes dark, the brief asked for dimmed paper). Noted, not changed: `ProductBoxArt` keys on `"mobile"`/`"web"` while type ids are `mobile_app`/`web_app`.
+- **U4 — office as the interface.** Hit regions come from the director's own placement (figures over furniture over floor); only the garage draws a door, so other tiers get a doormat region; the founder's desk opens the work schedule (the manage sheet excludes the founder); the coffee menu and the whiteboard open sheets rather than routing away. Fixed a latent bug: the old tap hit-tested walking plans under Reduce Motion. PixelKit 274 → 297.
+- **U5 — agenda and org chart.** Also needed a "when" query and added `GameState.shipETA` — a second ETA beside U1's `buildETA`; consolidating them is a wave-2 cleanup. `officeWeeklyRent` made public (three call sites re-derived it). The Team toggle is a segmented picker under the HUD (that tab hides its navigation bar); the agenda carries every dated desk row; the card omits evening pips because "Your week" beneath it owns them; the chart tolerates a founderless company and draws inside a two-way scroll view with offsets, since `.position` rendered nothing on device.
+
+Cross-lane fixes at merge: U1 and U2 both declared a `launchRoute` accessor (HQ's typed one is now `launchStoryRoute`); the Xcode project must be regenerated after every merge that adds files.
