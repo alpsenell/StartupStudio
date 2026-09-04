@@ -810,7 +810,7 @@ public struct GameState: Codable, Equatable, Sendable {
     /// This week's office rent: the tier's rent scaled by the district,
     /// after the Operations discount. An owned office pays no rent
     /// (`CitySystem` posts property tax instead).
-    func officeWeeklyRent(balance: BalanceConfig) -> Int {
+    public func officeWeeklyRent(balance: BalanceConfig) -> Int {
         guard !city.ownership.isOwned else { return 0 }
         let rent = Double(balance.office(company.officeTier).weeklyRent)
             * balance.city.district(city.district).rentMultiplier

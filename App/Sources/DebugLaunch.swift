@@ -136,6 +136,33 @@ enum DebugLaunch {
     }
 }
 
+extension Route {
+    /// The destination a headless pass lands on inside its tab:
+    /// `-autoRoute agenda` (Life) or `-autoRoute orgChart` (Team), `nil`
+    /// otherwise.
+    ///
+    /// `-autoTab` gets a screenshot pass to a tab; anything one tap deeper
+    /// than that used to be unreachable, because the simulator cannot be
+    /// tapped without accessibility permissions. The tab roots read this
+    /// once when they first appear and push it themselves, so no shared
+    /// root has to know about it. Release builds never see it.
+    static var launchRoute: Route? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-autoRoute"),
+              arguments.indices.contains(flag + 1)
+        else { return nil }
+        return switch arguments[flag + 1].lowercased() {
+        case "agenda": .agenda
+        case "orgchart": .orgChart
+        default: nil
+        }
+        #else
+        return nil
+        #endif
+    }
+}
+
 extension GameTab {
     /// The tab the app opens on: `-autoTab <name>` in debug builds, HQ
     /// otherwise.
