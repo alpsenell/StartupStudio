@@ -127,6 +127,11 @@ public struct OfficeSceneInput: Sendable, Equatable, Hashable {
     /// The celebration to play, with a token that changes when a *new*
     /// celebration starts.
     public var celebration: Celebration?
+    /// What the player's finger is on: the figure or prop gets a one-pixel
+    /// outline and, unless motion is reduced, a small bob. `OfficeSceneView`
+    /// sets this from its own gesture; a caller sets it to draw the pressed
+    /// state on demand (a snapshot). Defaults to nothing pressed.
+    public var pressed: OfficeHitRegion.Kind?
 
     /// A celebration plus the token that makes it fire once.
     public struct Celebration: Sendable, Equatable, Hashable {
@@ -167,6 +172,8 @@ public struct OfficeSceneInput: Sendable, Equatable, Hashable {
 public struct OfficeSceneView: View {
     private let input: OfficeSceneInput
     private let onTapOccupant: ((UUID) -> Void)?
+    private let onTapRegion: ((OfficeHitRegion.Kind) -> Void)?
+    private let accessibilityHint: ((OfficeHitRegion.Kind) -> String?)?
     private let sceneSize: SceneComposer.SceneSize
 
     /// When the current celebration token first appeared, in scene time.
@@ -179,8 +186,16 @@ public struct OfficeSceneView: View {
     @State private var knownStatuses: [UUID: WorkStatus] = [:]
     /// The name plate currently on screen.
     @State private var tap: OfficeSceneTiming.Tap?
+    /// What the player's finger is on right now, and when it landed.
+    @State private var pressed: OfficeHitRegion.Kind?
+    @State private var pressStart: TimeInterval = 0
     /// Scene-time origin, matching `PixelSceneView`'s own clock.
     @State private var epoch = Date.timeIntervalSinceReferenceDate
+
+    /// How long a press outline may outlive its finger. A touch the system
+    /// takes away (a phone call, a scroll that took over) never reports
+    /// its end, and an outline round something nobody is pressing is a bug.
+    static let pressTimeout: Duration = .seconds(2)
 
     /// The plainest office: a tier and the people in it.
     public init(tier: OfficeTierStyle, occupants: [Occupant]) {
@@ -201,29 +216,58 @@ public struct OfficeSceneView: View {
     ///     rebuild).
     ///   - onTapOccupant: called with the id of the person tapped. The
     ///     scene also puts their name plate up for four seconds.
-    public init(input: OfficeSceneInput, onTapOccupant: ((UUID) -> Void)? = nil) {
+    ///   - onTapRegion: called with whatever was tapped — a person, the
+    ///     coffee machine, the whiteboard, the door or the founder's desk.
+    ///     A tap on a person reaches both callbacks.
+    ///   - accessibilityHint: the VoiceOver hint for a region, so the app
+    ///     can say what a tap does ("Opens hiring"). PixelKit knows what
+    ///     things are, not what they do.
+    public init(
+        input: OfficeSceneInput,
+        onTapOccupant: ((UUID) -> Void)? = nil,
+        onTapRegion: ((OfficeHitRegion.Kind) -> Void)? = nil,
+        accessibilityHint: ((OfficeHitRegion.Kind) -> String?)? = nil
+    ) {
         self.input = input
         self.onTapOccupant = onTapOccupant
+        self.onTapRegion = onTapRegion
+        self.accessibilityHint = accessibilityHint
         self.sceneSize = SceneComposer.sceneSize(for: input.tier)
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
 
-    public var body: some View {
-        let resolved: OfficeSceneInput = {
-            var copy = input
-            copy.reduceMotion = reduceMotion
-            return copy
-        }()
-        let timing = OfficeSceneTiming(
+    /// The input as drawn: the environment's motion preference folded in,
+    /// and the press the view itself is tracking unless the caller pinned
+    /// one (a snapshot of the pressed state).
+    private var resolvedInput: OfficeSceneInput {
+        var copy = input
+        // VoiceOver reads the room as a list of things to tap. A list whose
+        // entries walk about under the cursor is unusable, so VoiceOver
+        // gets the seated, still room that Reduce Motion gets.
+        copy.reduceMotion = reduceMotion || voiceOverEnabled
+        if copy.pressed == nil { copy.pressed = pressed }
+        return copy
+    }
+
+    private var timing: OfficeSceneTiming {
+        OfficeSceneTiming(
             celebrationStart: celebrationStart,
             statusChanges: statusChanges,
-            tap: tap
+            tap: tap,
+            pressStart: pressStart
         )
+    }
+
+    public var body: some View {
+        let resolved = resolvedInput
+        let timing = timing
         PixelSceneView(
             sceneSize: (sceneSize.width, sceneSize.height),
             accessibilityLabel: accessibilityLabel,
-            onTapScenePoint: { x, y, t in handleTap(x: x, y: y, at: t) }
+            onTapScenePoint: { x, y, t in handleTap(x: x, y: y, at: t) },
+            onPress: { press in handlePress(press) }
         ) { t in
             OfficeDirector.compose(
                 input: resolved.withHourOfDay(at: t),
@@ -231,6 +275,14 @@ public struct OfficeSceneView: View {
                 at: t
             )
         }
+        // To VoiceOver the canvas is one picture. The regions laid over it
+        // are the things *in* the picture, so the picture steps aside and
+        // the container carries the summary.
+        .accessibilityHidden(true)
+        .overlay { accessibilityRegions(input: resolved, timing: timing) }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(accessibilityLabel)
+        .task(id: pressed) { await releaseStalePress() }
         .onAppear { syncStatuses() }
         .onChange(of: input.occupants) { syncStatuses() }
         .onChange(of: input.celebration?.token) { startCelebration() }
@@ -242,6 +294,50 @@ public struct OfficeSceneView: View {
         return people == 1
             ? "Office scene: the \(tier), one person at work"
             : "Office scene: the \(tier), \(people) people at work"
+    }
+
+    /// One accessibility element per hit region, laid over the scene where
+    /// the region is and refreshed once a second, so the office is
+    /// navigable without sight: VoiceOver lands on "Mara, backend dev,
+    /// happy" and "Coffee machine" rather than on one picture. Touches
+    /// pass straight through to the scene's own gesture.
+    private func accessibilityRegions(input: OfficeSceneInput, timing: OfficeSceneTiming) -> some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let t = max(0, context.date.timeIntervalSinceReferenceDate - epoch)
+            GeometryReader { proxy in
+                let geometry = PixelSceneGeometry(
+                    sceneSize: (sceneSize.width, sceneSize.height), viewSize: proxy.size
+                )
+                let regions = OfficeDirector.hitRegions(
+                    input: input.withHourOfDay(at: t), timing: timing, at: t
+                )
+                ForEach(regions) { region in
+                    let rect = geometry.viewRect(
+                        x: region.x, y: region.y, width: region.width, height: region.height
+                    )
+                    Color.clear
+                        .frame(width: rect.width, height: rect.height)
+                        .position(x: rect.midX, y: rect.midY)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(accessibilityLabel(for: region.kind))
+                        .accessibilityHint(accessibilityHint?(region.kind) ?? "")
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { activate(region.kind, at: t) }
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func accessibilityLabel(for kind: OfficeHitRegion.Kind) -> String {
+        switch kind {
+        case .person(let id):
+            input.occupants.first { $0.id == id }?.accessibilityLabel ?? "Someone"
+        case .coffeeMachine: "Coffee machine"
+        case .whiteboard: "Whiteboard"
+        case .door: "Door"
+        case .founderDesk: "Founder's desk"
+        }
     }
 
     /// Scene time right now, on the same clock `PixelSceneView` draws with.
@@ -280,12 +376,44 @@ public struct OfficeSceneView: View {
         statusChanges = changes
     }
 
+    /// Hit-tests against the room as it is drawn — the resolved input, so
+    /// that under Reduce Motion (everyone seated) the finger finds people
+    /// where they are, not where their walking plan would have had them.
+    private func region(x: Int, y: Int, at t: TimeInterval) -> OfficeHitRegion? {
+        OfficeDirector.hitTest(
+            input: resolvedInput.withHourOfDay(at: t), timing: timing, at: t, x: x, y: y
+        )
+    }
+
     private func handleTap(x: Int, y: Int, at t: TimeInterval) {
-        guard let id = OfficeDirector.hitTest(
-            input: input.withHourOfDay(at: t), t: t, x: x, y: y
-        ) else { return }
-        tap = OfficeSceneTiming.Tap(id: id, at: TimeInterval(AnimationClock.secondBucket(at: t)))
-        onTapOccupant?(id)
+        guard let region = region(x: x, y: y, at: t) else { return }
+        activate(region.kind, at: t)
+    }
+
+    private func handlePress(_ press: ScenePress) {
+        switch press {
+        case .began(let x, let y, let t):
+            pressed = region(x: x, y: y, at: t)?.kind
+            pressStart = t
+        case .ended:
+            pressed = nil
+        }
+    }
+
+    private func activate(_ kind: OfficeHitRegion.Kind, at t: TimeInterval) {
+        if case .person(let id) = kind {
+            tap = OfficeSceneTiming.Tap(id: id, at: TimeInterval(AnimationClock.secondBucket(at: t)))
+            onTapOccupant?(id)
+        }
+        onTapRegion?(kind)
+    }
+
+    /// Takes the outline off a press whose end never arrived.
+    private func releaseStalePress() async {
+        guard pressed != nil else { return }
+        try? await Task.sleep(for: Self.pressTimeout)
+        guard !Task.isCancelled else { return }
+        pressed = nil
     }
 }
 

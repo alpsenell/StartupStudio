@@ -16,6 +16,11 @@ public struct OfficeSceneTiming: Sendable, Equatable, Hashable {
     public var statusChanges: [UUID: TimeInterval]
     /// The most recent tap on a person, if it is still on screen.
     public var tap: Tap?
+    /// When the finger behind `OfficeSceneInput.pressed` landed, so the
+    /// press bob starts under it. The one time here that is *not* a whole
+    /// second: a press is shorter than a second, and a bob anchored to the
+    /// start of the second it happened in would be over before it began.
+    public var pressStart: TimeInterval
 
     /// A tap the scene is still showing a name plate for.
     public struct Tap: Sendable, Equatable, Hashable {
@@ -31,11 +36,13 @@ public struct OfficeSceneTiming: Sendable, Equatable, Hashable {
     public init(
         celebrationStart: TimeInterval = 0,
         statusChanges: [UUID: TimeInterval] = [:],
-        tap: Tap? = nil
+        tap: Tap? = nil,
+        pressStart: TimeInterval = 0
     ) {
         self.celebrationStart = celebrationStart
         self.statusChanges = statusChanges
         self.tap = tap
+        self.pressStart = pressStart
     }
 
     /// Nothing has happened yet.
@@ -82,9 +89,13 @@ public enum OfficeDirector {
     /// Everyone's plan for the office day containing `t`.
     public static func plans(for input: OfficeSceneInput, at t: TimeInterval) -> [ActorPlan] {
         let day = dayIndex(at: t)
-        let key = PlanKey(input: input, day: day)
+        // A press changes what is drawn round somebody, never where anybody
+        // goes: keep it out of the key so a tap does not replan the room.
+        var planInput = input
+        planInput.pressed = nil
+        let key = PlanKey(input: planInput, day: day)
         if let cached = planCache.value(for: key) { return cached }
-        var plans = OfficeBehaviors.plans(for: input, dayIndex: day)
+        var plans = OfficeBehaviors.plans(for: planInput, dayIndex: day)
         if input.reduceMotion {
             plans = plans.map(seatedAllDay)
         }
@@ -110,26 +121,6 @@ public enum OfficeDirector {
                 ),
             ]
         )
-    }
-
-    /// The occupant whose sprite covers scene-space point (`x`, `y`) at
-    /// time `t`, or `nil` when the tap missed everybody. The person drawn
-    /// closest to the viewer wins.
-    public static func hitTest(
-        input: OfficeSceneInput,
-        t: TimeInterval,
-        x: Int,
-        y: Int
-    ) -> UUID? {
-        var best: (id: UUID, zIndex: Int)?
-        for actor in actorFrames(input: input, timing: .none, at: t) {
-            guard x >= actor.x, x < actor.x + actor.width,
-                  y >= actor.y, y < actor.y + actor.height else { continue }
-            if best == nil || actor.zIndex > best!.zIndex {
-                best = (actor.id, actor.zIndex)
-            }
-        }
-        return best?.id
     }
 
     /// Which office day `t` falls in. A day is four real-time minutes.
@@ -227,14 +218,41 @@ public enum OfficeDirector {
         scene += OfficeFX.weather(ambience.weather, sceneWidth: size.width, wallHeight: l.wallHeight)
 
         // 3. Fixed props, then the runtime's own kitchenette where the tier
-        //    has no coffee machine of its own.
-        scene += SceneComposer.props(for: tier, size: size, layout: l, ambience: ambience)
+        //    has no coffee machine of its own and its own doormat where the
+        //    tier has no door. Whichever of them is under the player's
+        //    finger gets its outline here.
+        let pressed = input.pressed
+        for prop in SceneComposer.propPlacements(for: tier, size: size, layout: l) {
+            let placement = SceneComposer.placed(prop, ambience: ambience)
+            if let name = prop.name, let kind = pressKind(of: name), kind == pressed {
+                scene += pressedPlacements(
+                    placement, key: "prop.\(name.rawValue)", input: input, timing: timing
+                )
+            } else {
+                scene.append(placement)
+            }
+        }
         if let origin = OfficeWaypoints.coffee(for: tier).kitchenette {
-            scene.append(PlacedSprite(
+            let kitchenette = PlacedSprite(
                 sprite: SpriteCache.shared("fx.kitchenette", make: OfficeFXSprites.kitchenette),
                 x: origin.x, y: origin.y,
                 kind: .prop, animation: .toggle(period: 6), phase: 0
-            ))
+            )
+            scene += pressed == .coffeeMachine
+                ? pressedPlacements(kitchenette, key: "fx.kitchenette", input: input, timing: timing)
+                : [kitchenette]
+        }
+        if let mat = doorMat(for: tier) {
+            let doormat = PlacedSprite(
+                sprite: SpriteCache.shared("fx.doormat", make: OfficeFXSprites.doorMat),
+                x: mat.x, y: mat.y,
+                kind: .prop, animation: .still, phase: 0,
+                // On the floor, under everybody's feet.
+                zIndex: -50_000
+            )
+            scene += pressed == .door
+                ? pressedPlacements(doormat, key: "fx.doormat", input: input, timing: timing)
+                : [doormat]
         }
 
         // 4. The flip-chart, only while somebody is actually huddled at it.
@@ -254,12 +272,12 @@ public enum OfficeDirector {
         for index in 0...tier.deskCapacity {
             let cell = SceneComposer.cellOrigin(tier: tier, index: index)
             let occupied = seatedIDs[index] != nil
-            scene.append(PlacedSprite(
+            let desk = PlacedSprite(
                 sprite: SpriteCache.shared("desk", make: SpriteLibrary.desk),
                 x: cell.x + 3, y: cell.y + 13,
                 kind: .desk, animation: .still, phase: 0
-            ))
-            scene.append(PlacedSprite(
+            )
+            let monitor = PlacedSprite(
                 sprite: SpriteCache.shared("monitor", make: SpriteLibrary.monitor),
                 x: cell.x + 10, y: cell.y + 7,
                 kind: .monitor,
@@ -268,7 +286,14 @@ public enum OfficeDirector {
                 // The monitor stands on the desk, in front of whoever is
                 // sitting behind it: nudge it past the desk's own baseline.
                 zIndex: cell.y + SceneComposer.Layout.cellHeight - 6
-            ))
+            )
+            if index == tier.deskCapacity, pressed == .founderDesk {
+                scene += pressedPlacements(desk, key: "desk", input: input, timing: timing)
+                scene += pressedPlacements(monitor, key: "monitor", input: input, timing: timing)
+            } else {
+                scene.append(desk)
+                scene.append(monitor)
+            }
         }
 
         // 6. A note on the desk of anyone who is out today.
@@ -389,7 +414,7 @@ public enum OfficeDirector {
             let baseline = origin.y + sprite.height
             let rhythm = ActorRhythm(id: plan.id)
 
-            scene.append(PlacedSprite(
+            let figure = PlacedSprite(
                 sprite: sprite,
                 x: origin.x, y: origin.y,
                 kind: .person,
@@ -406,7 +431,16 @@ public enum OfficeDirector {
                 zIndex: baseline,
                 opacity: state.opacity,
                 flipX: state.facing.flipsX
-            ))
+            )
+            if case .person(let id)? = pressed, id == plan.id {
+                // The outline is traced from the sprite, so its key is the
+                // sprite's: look, pose, facing, hoodie and role accessory.
+                let key = "person.\(occupant.appearance.hashValue).\(state.pose).\(state.facing)"
+                    + ".\(occupant.isFounder).\(occupant.role.rawValue)"
+                scene += pressedPlacements(figure, key: key, input: input, timing: timing)
+            } else {
+                scene.append(figure)
+            }
 
             // A leaver carries their desk out with them.
             if state.pose == .carryBox {
@@ -628,6 +662,46 @@ public enum OfficeDirector {
             to: ScenePoint(x: motion.to.x + dx, y: motion.to.y + dy),
             start: motion.start, duration: motion.duration, easing: motion.easing
         )
+    }
+
+    // MARK: - Press feedback
+
+    /// How far a pressed figure or prop settles above its resting place
+    /// while the finger is on it, and how long the hop up takes. The hop
+    /// overshoots to twice the lift and settles — a small bob, so the
+    /// scene answers a touch the way a button does. Under Reduce Motion
+    /// nothing lifts: the outline alone says what is pressed.
+    static let pressLift = 1
+    static let pressBobDuration: TimeInterval = 0.3
+
+    /// The placement under the player's finger, plus its one-pixel outline.
+    ///
+    /// The outline shares the figure's animation, phase, start, motion and
+    /// mirroring, so it follows the typing hands and the walk cycle frame
+    /// for frame. Anything already travelling keeps its own motion and gets
+    /// the outline only — a bob on top of a walk is two motions fighting.
+    private static func pressedPlacements(
+        _ placement: PlacedSprite,
+        key: String,
+        input: OfficeSceneInput,
+        timing: OfficeSceneTiming
+    ) -> [PlacedSprite] {
+        var figure = placement
+        if !input.reduceMotion, placement.motion == nil {
+            figure.motion = Motion(
+                from: ScenePoint(x: placement.x, y: placement.y),
+                to: ScenePoint(x: placement.x, y: placement.y - pressLift),
+                start: timing.pressStart, duration: pressBobDuration, easing: .bob
+            )
+        }
+        var outline = figure
+        outline.sprite = SpriteCache.shared("outline.\(key)") { OfficeFXSprites.outline(of: placement.sprite) }
+        outline.kind = .highlight
+        outline.x -= 1
+        outline.y -= 1
+        outline.motion = figure.motion.map { offset($0, dx: -1, dy: -1) }
+        outline.zIndex = figure.zIndex + 1
+        return [figure, outline]
     }
 
     // MARK: - Bubbles

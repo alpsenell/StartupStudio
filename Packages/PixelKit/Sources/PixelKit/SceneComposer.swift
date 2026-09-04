@@ -18,6 +18,9 @@ public enum PlacementKind: Sendable, Equatable, Hashable {
     /// A city-map element (building, landmark, marker, selection border),
     /// tagged by a short name so layouts can be inspected.
     case cityProp(String)
+    /// The press outline the office draws around a tapped figure or prop.
+    /// Drawn just above what it outlines, below the bubbles.
+    case highlight
 }
 
 /// How a placed sprite animates. Cosmetic only — the scene view drives it
@@ -346,63 +349,94 @@ public enum SceneComposer {
         return cell
     }
 
+    /// One fixed prop on a tier's walls or floor, by name and top-left
+    /// corner. A `nil` name is a window: its art depends on the hour and
+    /// the weather, so it is looked up through the ambience seam.
+    ///
+    /// The single source of where the whiteboard, the coffee machine and
+    /// the garage door are. `props(for:)` draws this list and the office's
+    /// hit regions read it, so a tap on the coffee machine can never drift
+    /// away from the coffee machine.
+    struct PropPlacement: Equatable {
+        var name: SpriteLibrary.PropName?
+        var x: Int
+        var y: Int
+
+        var sprite: PixelSprite {
+            name.map(SceneComposer.propSprite) ?? SceneComposer.windowSprite(ambience: .plain)
+        }
+    }
+
+    /// The tier's fixed props, in draw order.
+    static func propPlacements(
+        for tier: OfficeTierStyle,
+        size: SceneSize,
+        layout l: Layout
+    ) -> [PropPlacement] {
+        let boardX = (size.width - 22) / 2
+        switch tier {
+        case .garage:
+            return [
+                PropPlacement(name: .garageDoor, x: size.width - 34, y: l.wallHeight - 16),
+                PropPlacement(name: .whiteboard, x: boardX, y: 4),
+                PropPlacement(name: .toolbox, x: 2, y: l.wallHeight + 1),
+            ]
+        case .loft:
+            return [
+                PropPlacement(name: nil, x: 14, y: 3),
+                PropPlacement(name: nil, x: size.width - 26, y: 3),
+                PropPlacement(name: .whiteboard, x: boardX, y: 3),
+                PropPlacement(name: .plant, x: 2, y: l.wallHeight + 2),
+                PropPlacement(name: .plant, x: size.width - 11, y: size.height - 14),
+            ]
+        case .studio:
+            return [
+                PropPlacement(name: .whiteboard, x: boardX, y: 4),
+                PropPlacement(name: .coffeeMachine, x: size.width - 12, y: l.wallHeight + 3),
+                PropPlacement(name: .plant, x: 2, y: l.wallHeight + 2),
+            ]
+        case .campus:
+            let step = (size.width - 44) / 3
+            var props = (0..<4).map { PropPlacement(name: nil, x: 16 + $0 * step, y: 4) }
+            props.append(PropPlacement(name: .whiteboard, x: boardX, y: 4))
+            props.append(PropPlacement(name: .plant, x: 2, y: l.wallHeight + 2))
+            props.append(PropPlacement(name: .plant, x: size.width - 10, y: l.wallHeight + 2))
+            props.append(PropPlacement(name: .coffeeMachine, x: size.width - 12, y: size.height - 20))
+            return props
+        }
+    }
+
+    /// The shared, cached sprite for a fixed prop.
+    static func propSprite(_ name: SpriteLibrary.PropName) -> PixelSprite {
+        SpriteCache.shared("prop.\(name.rawValue)") { SpriteLibrary.prop(name) }
+    }
+
+    /// The shared, cached office window at an hour, in a weather.
+    static func windowSprite(ambience: OfficeAmbience) -> PixelSprite {
+        SpriteCache.shared(
+            "window.office.\(ambience.timeOfDay.rawValue).\(ambience.weather.rawValue)"
+        ) {
+            SpriteLibrary.window(
+                style: .office, time: ambience.timeOfDay, weather: ambience.weather
+            )
+        }
+    }
+
+    /// A fixed prop as the sprite the renderer draws. Windows carry the
+    /// hour and the weather (WS-D's art), so they go through the ambience.
+    static func placed(_ prop: PropPlacement, ambience: OfficeAmbience) -> PlacedSprite {
+        PlacedSprite(
+            sprite: prop.name.map(propSprite) ?? windowSprite(ambience: ambience),
+            x: prop.x, y: prop.y, kind: .prop, animation: .still, phase: 0
+        )
+    }
+
     static func props(
         for tier: OfficeTierStyle,
         size: SceneSize,
         layout l: Layout,
         ambience: OfficeAmbience = .plain
     ) -> [PlacedSprite] {
-        func place(_ name: SpriteLibrary.PropName, _ x: Int, _ y: Int) -> PlacedSprite {
-            PlacedSprite(
-                sprite: SpriteCache.shared("prop.\(name.rawValue)") { SpriteLibrary.prop(name) },
-                x: x, y: y, kind: .prop, animation: .still, phase: 0
-            )
-        }
-        // Windows carry the hour and the weather (WS-D's art; a daylight
-        // pane until it lands), so they go through the ambience seam.
-        func window(_ x: Int, _ y: Int) -> PlacedSprite {
-            PlacedSprite(
-                sprite: SpriteCache.shared(
-                    "window.office.\(ambience.timeOfDay.rawValue).\(ambience.weather.rawValue)"
-                ) {
-                    SpriteLibrary.window(
-                        style: .office, time: ambience.timeOfDay, weather: ambience.weather
-                    )
-                },
-                x: x, y: y, kind: .prop, animation: .still, phase: 0
-            )
-        }
-        let boardX = (size.width - 22) / 2
-
-        switch tier {
-        case .garage:
-            return [
-                place(.garageDoor, size.width - 34, l.wallHeight - 16),
-                place(.whiteboard, boardX, 4),
-                place(.toolbox, 2, l.wallHeight + 1),
-            ]
-        case .loft:
-            return [
-                window(14, 3),
-                window(size.width - 26, 3),
-                place(.whiteboard, boardX, 3),
-                place(.plant, 2, l.wallHeight + 2),
-                place(.plant, size.width - 11, size.height - 14),
-            ]
-        case .studio:
-            return [
-                place(.whiteboard, boardX, 4),
-                place(.coffeeMachine, size.width - 12, l.wallHeight + 3),
-                place(.plant, 2, l.wallHeight + 2),
-            ]
-        case .campus:
-            let step = (size.width - 44) / 3
-            var props = (0..<4).map { window(16 + $0 * step, 4) }
-            props.append(place(.whiteboard, boardX, 4))
-            props.append(place(.plant, 2, l.wallHeight + 2))
-            props.append(place(.plant, size.width - 10, l.wallHeight + 2))
-            props.append(place(.coffeeMachine, size.width - 12, size.height - 20))
-            return props
-        }
+        propPlacements(for: tier, size: size, layout: l).map { placed($0, ambience: ambience) }
     }
 }

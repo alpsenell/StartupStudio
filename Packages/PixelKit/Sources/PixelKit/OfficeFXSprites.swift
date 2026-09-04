@@ -650,3 +650,60 @@ extension OfficeFXSprites {
         )
     }
 }
+
+// MARK: - Press feedback and the doorway
+
+extension OfficeFXSprites {
+    /// The colour of a press outline: the lightest gold in the master
+    /// palette, warm enough to read on the night wash and light enough to
+    /// read on a daytime wall.
+    static let highlight = Palettes.gold[0]
+
+    /// The one-pixel outline the office draws round whatever the player is
+    /// pressing.
+    ///
+    /// Traced from the sprite's own silhouette, frame for frame: every
+    /// transparent pixel with an opaque neighbour lights up, so the outline
+    /// follows the typing hands and the walk cycle instead of boxing the
+    /// figure in. Two pixels larger than the source on each axis; draw it
+    /// at `(x - 1, y - 1)` with the source's own animation and phase.
+    static func outline(of sprite: PixelSprite) -> PixelSprite {
+        let width = sprite.width + 2
+        let height = sprite.height + 2
+        let frames = sprite.frames.map { frame -> [String] in
+            let grid = frame.map(Array.init)
+            func opaque(_ x: Int, _ y: Int) -> Bool {
+                guard x >= 0, y >= 0, x < sprite.width, y < sprite.height else { return false }
+                let character = grid[y][x]
+                return character != " " && (sprite.palette[character]?.a ?? 0) > 0
+            }
+            return (0..<height).map { y in
+                String((0..<width).map { x -> Character in
+                    let sx = x - 1
+                    let sy = y - 1
+                    let edge = !opaque(sx, sy)
+                        && (opaque(sx - 1, sy) || opaque(sx + 1, sy) || opaque(sx, sy - 1) || opaque(sx, sy + 1))
+                    return edge ? "H" : " "
+                })
+            }
+        }
+        return PixelSprite(frames: frames, palette: ["H": highlight])
+    }
+
+    /// A doormat, 16×2, at the front-left corner where hires walk in and
+    /// the courier waits. The tiers with no door of their own get this so
+    /// the door is somewhere a finger can find.
+    static func doorMat() -> PixelSprite {
+        PixelSprite(
+            frames: [[
+                "OmmmmmmmmmmmmmmO",
+                "OMMMMMMMMMMMMMMO",
+            ]],
+            palette: [
+                "O": outline,
+                "m": RGBA(r: 172, g: 132, b: 84),
+                "M": RGBA(r: 150, g: 96, b: 50),
+            ]
+        )
+    }
+}

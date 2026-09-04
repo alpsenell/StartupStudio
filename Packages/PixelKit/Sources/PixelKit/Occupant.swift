@@ -34,6 +34,10 @@ public struct Occupant: Sendable, Equatable, Hashable, Identifiable {
     /// Out of the building today — a trip, leave, an off-site. Their desk
     /// stays empty with a note stuck to the monitor instead of a person.
     public var isAway: Bool
+    /// What this person is, for VoiceOver ("backend dev"). The app knows
+    /// the real job; without it the label falls back to the role look or
+    /// to what they are doing.
+    public var roleDescription: String?
 
     public init(
         id: UUID,
@@ -45,7 +49,8 @@ public struct Occupant: Sendable, Equatable, Hashable, Identifiable {
         speech: String? = nil,
         role: RoleLook = .none,
         name: String? = nil,
-        isAway: Bool = false
+        isAway: Bool = false,
+        roleDescription: String? = nil
     ) {
         self.id = id
         self.appearance = appearance
@@ -57,5 +62,58 @@ public struct Occupant: Sendable, Equatable, Hashable, Identifiable {
         self.role = role
         self.name = name
         self.isAway = isAway
+        self.roleDescription = roleDescription
+    }
+
+    /// How VoiceOver names this person in the office: "Mara, backend dev,
+    /// happy". Name, what they are, how they feel, and whether they are in.
+    public var accessibilityLabel: String {
+        var parts = [name ?? (isFounder ? "The founder" : "Someone")]
+        parts.append(roleDescription ?? role.accessibilityWord ?? status.accessibilityWord)
+        parts.append(mood.accessibilityWord)
+        if isAway { parts.append("away today") }
+        return parts.joined(separator: ", ")
+    }
+}
+
+extension RoleLook {
+    /// The role as a word, or `nil` for the plain look that says nothing.
+    var accessibilityWord: String? {
+        switch self {
+        case .none: nil
+        case .founder: "founder"
+        case .qa: "QA"
+        case .designer: "designer"
+        case .marketer: "marketer"
+        case .lawyer: "lawyer"
+        case .hr: "HR"
+        case .ops: "ops"
+        }
+    }
+}
+
+extension WorkStatus {
+    var accessibilityWord: String {
+        switch self {
+        case .idle: "idle"
+        case .coding: "coding"
+        case .designing: "designing"
+        case .marketing: "marketing"
+        case .researching: "researching"
+        case .testing: "testing"
+        case .legal: "legal"
+        case .peopleOps: "people ops"
+        case .operations: "operations"
+        }
+    }
+}
+
+extension MoodLevel {
+    var accessibilityWord: String {
+        switch self {
+        case .great: "happy"
+        case .okay: "okay"
+        case .low: "unhappy"
+        }
     }
 }

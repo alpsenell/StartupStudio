@@ -20,6 +20,11 @@ public enum Easing: String, Sendable, Equatable, Hashable, Codable, CaseIterable
     /// Holds at `from` for the whole duration, then snaps to `to` — a hard
     /// cut that still occupies time (the office-upgrade wipe uses it).
     case step
+    /// Overshoots to *twice* the distance, then settles. A hop: over a
+    /// one-pixel lift `easeOutBack`'s ten percent rounds away to nothing,
+    /// and a press that lifts by a whole pixel then settles by one reads as
+    /// the scene answering the finger. The office's press bob uses it.
+    case bob
 
     /// Maps normalized progress onto normalized distance.
     ///
@@ -47,6 +52,11 @@ public enum Easing: String, Sendable, Equatable, Hashable, Codable, CaseIterable
             return 1 + c3 * q * q * q + c1 * q * q
         case .step:
             return p >= 1 ? 1 : 0
+        case .bob:
+            // Straight up to the peak in the first two fifths, then back
+            // down to the settle point.
+            let peak = 0.4
+            return p < peak ? 2 * p / peak : 2 - (p - peak) / (1 - peak)
         }
     }
 }
