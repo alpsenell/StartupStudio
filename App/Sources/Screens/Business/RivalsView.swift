@@ -269,19 +269,29 @@ struct RivalCard: View {
     var body: some View {
         CardView(rival.name, systemImage: "flag.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    PixelPortrait(seed: rival.appearanceSeed)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("~\(rival.headcount) people")
-                            .font(Theme.Typography.number(.subheadline))
-                        Text("Valued around \(rival.valuation(balance: engine.balance).money)")
-                            .font(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
+                // The card's head opens the profile (U3): the studio
+                // scene, the strength history, the history between you.
+                NavigationLink(value: RivalRoute(rivalID: rival.id)) {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        PixelPortrait(seed: rival.appearanceSeed)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("~\(rival.headcount) people")
+                                .font(Theme.Typography.number(.subheadline))
+                            Text("Valued around \(rival.valuation(balance: engine.balance).money)")
+                                .font(.caption)
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 0)
+                        personalityBadge
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
                     }
-                    Spacer(minLength: 0)
-                    personalityBadge
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.pressableRow)
+                .accessibilityHint("Opens \(rival.name)'s profile")
 
                 Text(rival.personality.blurb)
                     .font(.caption)
