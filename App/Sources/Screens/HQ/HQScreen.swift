@@ -84,7 +84,7 @@ struct HQScreen: View {
             // and `-autoAnswer` keeps the run going past its questions.
             .task {
                 DebugLaunch.startAutoAnswering(engine: engine)
-                if let route = DebugLaunch.launchRoute { router.go(route) }
+                if let route = DebugLaunch.launchStoryRoute { router.go(route) }
             }
         }
     }

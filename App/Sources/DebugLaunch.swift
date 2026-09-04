@@ -50,7 +50,9 @@ enum DebugLaunch {
     /// The screen a headless pass opens on top of HQ: `-autoRoute
     /// newspaper|timeline` in debug builds, `nil` otherwise. U2's two
     /// screens are pushed from cards nobody can tap from the command line.
-    static var launchRoute: Route? {
+    /// (`launchRoute` above is the raw flag every tab root reads; this is
+    /// HQ's typed reading of it.)
+    static var launchStoryRoute: Route? {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-autoRoute"),
