@@ -159,7 +159,7 @@ struct MarketMapTests {
         let scene = MarketMapComposer.compose(input)
         #expect(scene.contains { $0.kind == .cityProp("fortress") })
         #expect(scene.filter { $0.kind == .cityProp("playerBuilding") }.count == 1)
-        #expect(scene.filter { $0.kind == .cityProp("rivalFlag") }.count == 2)
+        #expect(scene.filter { $0.kind == .cityProp("rivalFlag") }.count == 1)
         #expect(scene.contains { $0.kind == .cityProp("siege") })
         #expect(scene.contains { $0.kind == .cityProp("weather") })
     }

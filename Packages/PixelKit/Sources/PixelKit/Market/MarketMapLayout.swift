@@ -1,7 +1,8 @@
 import Foundation
 
 /// The fixed geometry of the market map: twelve cells in a 4×3 grid, each a
-/// name strip over a square block area, on a 116×105 scene.
+/// name strip over a square block area, on a 108×99 scene — narrow enough
+/// that a 375pt phone draws it at three points per pixel.
 ///
 /// A district's *position* is its catalog index and never moves, so a
 /// topic keeps its place on the map as the numbers change; what moves is
@@ -33,10 +34,10 @@ public enum MarketMapLayout {
 
     /// The square each district's block sits in, and the widest a block
     /// can be.
-    public static let blockArea = 27
+    public static let blockArea = 25
     /// The smallest block a market shrinks to. Chosen so a small district
     /// still fits the fortress and one of the studio's own buildings.
-    public static let minBlock = 19
+    public static let minBlock = 17
     /// The name strip above each block, where the app lays the label.
     public static let stripHeight = 6
     /// The road between cells, and the frame round the map.
