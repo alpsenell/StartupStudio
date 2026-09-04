@@ -173,6 +173,17 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
     /// having. True while it is still fighting for them; a retreat clears
     /// it and leaves an ordinary — large — rival on the board.
     public var isIncumbent: Bool
+    /// Strength at the end of each weekly pass, oldest first, capped at
+    /// `strengthHistoryWeeks` (iteration 6, U3). The rival profile's
+    /// sparkline; nothing in the simulation reads it. Append-only, kept
+    /// by `RivalSystem` after the week's evolution and settlements, so a
+    /// sample is the number the player saw that week. Decodes empty from
+    /// a save written before it existed and is written only once it has
+    /// something in it, so such a save keeps its bytes.
+    public var strengthHistory: [Double]
+
+    /// A year of weekly samples.
+    public static let strengthHistoryWeeks = 52
 
     public init(
         id: UUID,
@@ -189,7 +200,8 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
         weeksBeaten: Int = 0,
         priceWarUntilDay: Int? = nil,
         priceWarTopicID: String? = nil,
-        isIncumbent: Bool = false
+        isIncumbent: Bool = false,
+        strengthHistory: [Double] = []
     ) {
         self.id = id
         self.name = name
@@ -206,6 +218,17 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
         self.priceWarUntilDay = priceWarUntilDay
         self.priceWarTopicID = priceWarTopicID
         self.isIncumbent = isIncumbent
+        self.strengthHistory = strengthHistory
+    }
+
+    /// Appends this week's strength to the history, dropping the oldest
+    /// past a year. Called once per weekly pass by `RivalSystem`.
+    public mutating func recordStrength() {
+        strengthHistory.append(strength)
+        let overflow = strengthHistory.count - Self.strengthHistoryWeeks
+        if overflow > 0 {
+            strengthHistory.removeFirst(overflow)
+        }
     }
 
     /// The products still fighting for share on a given day.
@@ -238,7 +261,9 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
 
 // Hand-written decode so a save written before rival depth existed keeps
 // loading: products read as none, the personality falls back to the
-// patient one, and no price war is in progress.
+// patient one, and no price war is in progress. Hand-written encode so
+// the strength history is written only once there is one — a save from
+// before it existed, re-encoded, keeps its bytes.
 
 extension Rival {
     private enum CodingKeys: String, CodingKey {
@@ -246,6 +271,29 @@ extension Rival {
         case lastShippedDay, foundedDay, appearanceSeed
         case products, personality, weeksBeaten, priceWarUntilDay, priceWarTopicID
         case isIncumbent
+        case strengthHistory
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(strength, forKey: .strength)
+        try container.encode(reputation, forKey: .reputation)
+        try container.encode(focusTopicIDs, forKey: .focusTopicIDs)
+        try container.encodeIfPresent(hqDistrict, forKey: .hqDistrict)
+        try container.encodeIfPresent(lastShippedDay, forKey: .lastShippedDay)
+        try container.encode(foundedDay, forKey: .foundedDay)
+        try container.encode(appearanceSeed, forKey: .appearanceSeed)
+        try container.encode(products, forKey: .products)
+        try container.encode(personality, forKey: .personality)
+        try container.encode(weeksBeaten, forKey: .weeksBeaten)
+        try container.encodeIfPresent(priceWarUntilDay, forKey: .priceWarUntilDay)
+        try container.encodeIfPresent(priceWarTopicID, forKey: .priceWarTopicID)
+        try container.encode(isIncumbent, forKey: .isIncumbent)
+        if !strengthHistory.isEmpty {
+            try container.encode(strengthHistory, forKey: .strengthHistory)
+        }
     }
 
     public init(from decoder: any Decoder) throws {
@@ -266,7 +314,8 @@ extension Rival {
             weeksBeaten: try container.decodeIfPresent(Int.self, forKey: .weeksBeaten) ?? 0,
             priceWarUntilDay: try container.decodeIfPresent(Int.self, forKey: .priceWarUntilDay),
             priceWarTopicID: try container.decodeIfPresent(String.self, forKey: .priceWarTopicID),
-            isIncumbent: try container.decodeIfPresent(Bool.self, forKey: .isIncumbent) ?? false
+            isIncumbent: try container.decodeIfPresent(Bool.self, forKey: .isIncumbent) ?? false,
+            strengthHistory: try container.decodeIfPresent([Double].self, forKey: .strengthHistory) ?? []
         )
     }
 }
