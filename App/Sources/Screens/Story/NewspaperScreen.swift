@@ -15,6 +15,9 @@ struct NewspaperScreen: View {
 
     @State private var issues: [NewspaperIssue] = []
     @State private var selectedWeek = 0
+    /// An issue the player turned to by hand. The stand follows the newest
+    /// issue as weeks land, unless the player is reading an older one.
+    @State private var pinnedWeek: Int?
     /// Which way the last page turn went, so the incoming page slides in
     /// from the right side.
     @State private var turnedForward = true
@@ -93,17 +96,21 @@ struct NewspaperScreen: View {
     private func turn(to week: Int) {
         guard week != selectedWeek else { return }
         turnedForward = week > selectedWeek
+        pinnedWeek = week
         withAnimation(Theme.Motion.entrance) {
             selectedWeek = week
         }
     }
 
-    /// Recomposes the newsstand. The selection survives a new week landing
-    /// while the page is open, unless its issue has left the stand.
+    /// Recomposes the newsstand. The newest issue is on top unless the
+    /// player turned to an older one that is still on the stand.
     private func refresh() {
         let fresh = composer.issues()
         issues = fresh
-        if !fresh.contains(where: { $0.week == selectedWeek }) {
+        if let pinnedWeek, fresh.contains(where: { $0.week == pinnedWeek }) {
+            selectedWeek = pinnedWeek
+        } else {
+            pinnedWeek = nil
             selectedWeek = fresh.last?.week ?? 0
         }
     }

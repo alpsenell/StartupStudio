@@ -158,14 +158,15 @@ struct TimelineStrip: View {
     @Binding var selectedID: String?
 
     /// Fixed so the screen can frame it; the lanes are laid out inside it.
-    static let height: CGFloat = 288
+    static let height: CGFloat = 324
     static let todayID = "today"
 
-    private static let inset: CGFloat = 24
-    private static let baselineY: CGFloat = 150
-    /// Two levels above and two below, so neighbours a week apart do not
-    /// cover each other.
-    private static let levels: [CGFloat] = [48, 108]
+    /// Room at either end for a label centred on day 0 and on today.
+    private static let inset: CGFloat = 40
+    private static let baselineY: CGFloat = 166
+    /// Three levels above and three below, so neighbours a week apart do
+    /// not cover each other.
+    private static let levels: [CGFloat] = [46, 86, 126]
     private static let artSize: CGFloat = 28
 
     /// Days after today the line keeps running, so today's mark is not
@@ -177,7 +178,7 @@ struct TimelineStrip: View {
         max(0.1, (viewportWidth - Self.inset * 2) / CGFloat(zoom.daysAcross(spanDays: spanDays)))
     }
     private var contentWidth: CGFloat {
-        max(viewportWidth, CGFloat(spanDays) * pointsPerDay + Self.inset * 2)
+        max(viewportWidth, x(forDay: spanDays) + Self.inset)
     }
 
     private func x(forDay day: Int) -> CGFloat {

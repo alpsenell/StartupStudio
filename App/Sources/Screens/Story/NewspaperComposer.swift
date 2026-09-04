@@ -139,7 +139,7 @@ struct NewspaperComposer {
             isInProgress: inProgress,
             masthead: Self.masthead,
             dateline: dateline(day: publishedDay),
-            edition: edition(day: publishedDay),
+            edition: edition(weekStarting: start),
             lead: lead,
             rivalColumn: rivalColumn(from: events),
             marketColumn: marketColumn(from: events, includeForecast: isLatest),
@@ -170,19 +170,26 @@ struct NewspaperComposer {
         return "\(weekday), \(calendar.monthName) \(calendar.dayOfMonth), Year \(calendar.year)"
     }
 
-    private func edition(day: Int) -> String {
-        let calendar = GameCalendar(day: day)
+    /// The volume is the year and the number is the week *covered*, so
+    /// the issue for week 1 is No. 1 even though it prints in week 2.
+    private func edition(weekStarting start: Int) -> String {
+        let calendar = GameCalendar(day: start)
         return "Vol. \(calendar.year) · No. \(calendar.weekOfYear)"
     }
 
     // MARK: - The lead
 
-    /// The loudest thing that happened to the company: severity first,
-    /// then the company's own strands (company, team) ahead of the world's,
-    /// then the most recent. A week with nothing worth a headline gets the
-    /// quiet-week story rather than a blank.
+    /// The loudest thing that happened to the company: the company's own
+    /// strands (company, team) first, by severity and then recency; only
+    /// a week with nothing of its own leads with the world's news, which
+    /// otherwise stays in its columns. A week with nothing worth a
+    /// headline gets the quiet-week story rather than a blank.
     private func leadStory(from events: [Dated], week: Int) -> NewspaperIssue.Story {
-        let candidates = events.filter { !Self.isRoutine($0.event) && $0.category != .life }
+        let newsworthy = events.filter {
+            !Self.isRoutine($0.event) && !Self.isDrumbeat($0.event) && $0.category != .life
+        }
+        let own = newsworthy.filter { $0.category == .company || $0.category == .team }
+        let candidates = own.isEmpty ? newsworthy : own
         let best = candidates.enumerated().max { lhs, rhs in
             let l = leadRank(lhs.element), r = leadRank(rhs.element)
             if l != r { return l < r }
@@ -291,10 +298,8 @@ struct NewspaperComposer {
                 case .cooling: "cooling"
                 case .steady: "steady"
                 }
-                let expected = forecast.expected.formatted(
-                    .number.precision(.fractionLength(2)).locale(Theme.gameLocale)
-                )
-                return "\(topic.name) looks \(verb): ×\(expected) in \(forecast.weeksAhead) weeks."
+                let band = forecast.expected.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))
+                return "\(topic.name) looks \(verb): ×\(band) in \(forecast.weeksAhead) weeks."
             }
             lines.append(contentsOf: held.prefix(2))
         }
@@ -381,7 +386,7 @@ struct NewspaperComposer {
         scene.reduceMotion = true
 
         let count = occupants.count
-        let where_ = "The \(state.company.officeTier.displayName.lowercased()), "
+        let place = "The \(state.company.officeTier.displayName.lowercased()), "
             + "\(calendar.shortMonthName) \(calendar.dayOfMonth)"
         let who = count == 1 ? "the founder alone at the desk" : "\(count) at their desks"
         let spirits: String = switch mood {
@@ -389,7 +394,7 @@ struct NewspaperComposer {
         case .okay: "Heads down."
         case .low: "A long week."
         }
-        let caption = "\(where_): \(who). \(spirits)"
+        let caption = "\(place): \(who). \(spirits)"
 
         // Twenty seconds in: the monitors are on, the first cup is poured.
         return NewspaperIssue.Photo(scene: scene, caption: caption, moment: 20)
@@ -417,6 +422,18 @@ struct NewspaperComposer {
     static func isRoutine(_ event: GameEvent) -> Bool {
         switch event {
         case .weekendSpent, .instantActivityDone, .itemPurchased, .networkingTalk:
+            true
+        default:
+            false
+        }
+    }
+
+    /// The weekly refresh notices: small print, never a headline. A week
+    /// in which the only company news is that the phone rang is a quiet
+    /// week, and the page should say so.
+    static func isDrumbeat(_ event: GameEvent) -> Bool {
+        switch event {
+        case .candidatesRefreshed, .contractOffersRefreshed:
             true
         default:
             false

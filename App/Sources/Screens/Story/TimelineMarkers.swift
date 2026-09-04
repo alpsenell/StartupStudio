@@ -147,11 +147,20 @@ enum TimelineBuilder {
 
         // The world's blows, from the log: the crash, the incumbent, the
         // category fights, and the sale.
+        //
+        // A run logs a dozen crashes a year across twelve topics; the one
+        // that belongs on this company's line is the one in a market it
+        // sells into — the same relevance the pause policy applies.
+        let soldTopics = Set(state.products.compactMap { product -> String? in
+            guard case .released = product.stage else { return nil }
+            return product.topicID
+        })
         var seenCrashes: Set<String> = []
         var sawIncumbent = false
         for (index, event) in state.eventLog.enumerated() {
             switch event {
             case .marketCrash(let topicID, let day):
+                guard soldTopics.contains(topicID) else { continue }
                 let key = "\(topicID)-\(day)"
                 guard seenCrashes.insert(key).inserted else { continue }
                 markers.append(TimelineMarker(
