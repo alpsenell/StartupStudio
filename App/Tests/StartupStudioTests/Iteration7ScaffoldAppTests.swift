@@ -90,10 +90,16 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
     func testTitleMenuAndOnboardingPagesStayOffUntilALaneFlipsThem() {
         let menu = TitleMenu.make(onDaily: {}, onCustom: {}, onFromCode: {})
         XCTAssertEqual(menu.rows.count, 3)
-        XCTAssertTrue(menu.enabledRows.isEmpty, "every row is behind a flag that ships off")
+        // R3 has landed: *Today's company* is on, and the Game Center row
+        // with it. R4's two rows and R6's Restore are still behind their
+        // own flags.
+        XCTAssertEqual(menu.enabledRows.map(\.id), [.daily])
+        XCTAssertTrue(TitleMenu.Flags.daily)
+        XCTAssertFalse(TitleMenu.Flags.custom || TitleMenu.Flags.fromCode)
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)
-        XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.gameCenter || ServiceFlags.restore)
+        XCTAssertTrue(ServiceFlags.gameCenter)
+        XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.restore)
     }
 
     func testPrivacyManifestShipsInTheBundleAndDeclaresNoTracking() throws {

@@ -20,6 +20,8 @@ struct TitleScreen: View {
     @State private var choosingSlotToReplace = false
     /// The content settles in on arrival; Reduce Motion drops the drift.
     @State private var arrived = false
+    /// Iteration 7 (R3): today's company, while its sheet is up.
+    @State private var dailyEntry: DailyEntry?
 
     var body: some View {
         ScrollView {
@@ -43,7 +45,7 @@ struct TitleScreen: View {
                 // Iteration 7: each row is behind its lane's flag in
                 // `TitleMenu.Flags`; the closures are the lanes' to fill.
                 menu: .make(
-                    onDaily: { /* R3 */ },
+                    onDaily: { openDaily(DailyChallenge.today()) },
                     onCustom: { /* R4 */ },
                     onFromCode: { /* R4 */ }
                 )
@@ -57,6 +59,38 @@ struct TitleScreen: View {
         .onAppear {
             session.refreshSlots()
             withAnimation(Theme.Motion.entrance) { arrived = true }
+            // Iteration 7 (R3): Game Center authenticates once per launch,
+            // from the one screen every launch passes through, and starts
+            // mapping the run's events onto achievements. Idempotent.
+            session.startGameCenter()
+            // A daily that has just been scored — the year ran out, or the
+            // company ended — hands itself back here, and the result card
+            // is the only thing that says so. Shown once.
+            if let finished = session.daily, finished.score != nil {
+                session.daily = nil
+                openDaily(finished.challenge)
+            } else if let challenge = DebugLaunch.launchDailyChallenge {
+                // `-autoDaily 20260905` lands a headless pass on the card;
+                // with a speed as well it plays the day through, which is
+                // how the result card is photographed without tapping.
+                openDaily(challenge)
+                if DebugLaunch.playsDailyAutomatically {
+                    dailyEntry = nil
+                    session.playDaily(challenge)
+                }
+            }
+        }
+        // Iteration 7 (R3): today's company — the challenge, the attempt
+        // under way, or the result once the day is recorded.
+        .sheet(item: $dailyEntry) { entry in
+            DailySheet(
+                entry: entry,
+                onPlay: { challenge in
+                    dailyEntry = nil
+                    session.playDaily(challenge)
+                },
+                onClose: { dailyEntry = nil }
+            )
         }
         .confirmationDialog(
             "Delete this save?",
@@ -92,6 +126,12 @@ struct TitleScreen: View {
     /// moved into yet.
     private var scene: OfficeSceneInput {
         session.hasCurrentGame ? TitleScene.input(for: session.engine.state) : TitleScene.emptyGarage
+    }
+
+    /// Iteration 7 (R3): opens today's company on whatever it is now —
+    /// a challenge, an attempt to resume, or the day's result.
+    private func openDaily(_ challenge: DailyChallenge) {
+        dailyEntry = session.dailyEntry(for: challenge)
     }
 
     /// New company goes into the first empty slot; with none, the player

@@ -81,6 +81,11 @@ final class GameSession {
     /// `let` constants are never observation-tracked, no annotation needed.
     private let store: SaveStore<GameState>
 
+    /// Where the slots live (`nil` for the app's own directory). R3's
+    /// daily opens its own store beside them, so the directory is kept
+    /// here rather than copied into a second default.
+    let saveDirectory: URL?
+
     /// Whether slot changes are written to `GameSettings.currentSlot`.
     /// Off for tests, which would otherwise redirect the next real launch.
     private let remembersSlot: Bool
@@ -98,6 +103,7 @@ final class GameSession {
             directory: saveDirectory, currentFormatVersion: Self.saveFormatVersion
         )
         self.store = store
+        self.saveDirectory = saveDirectory
         self.remembersSlot = remembersSlot
 
         let headless = DebugLaunch.isHeadlessPass
@@ -146,6 +152,54 @@ final class GameSession {
     func removeGate(id: String) {
         gates.removeAll { $0.id == id }
         wireEngineHooks()
+    }
+
+    // MARK: Iteration 7 — a game that plays outside the slots (R3)
+
+    /// The slot the player came from while a detached game is live;
+    /// `nil` whenever the engine is a slot's own.
+    private(set) var detachedReturnSlot: Int?
+
+    /// Whether the live engine is playing outside the slots (the daily).
+    var isDetached: Bool { detachedReturnSlot != nil }
+
+    /// Makes `newEngine` the live game without touching a slot: its
+    /// autosave goes wherever `autosave` writes it, and the slot the
+    /// player came from is restored on the way back to the front door.
+    ///
+    /// The daily needs this: it is one attempt in its own store, and it
+    /// must be impossible to copy into a save.
+    func startDetachedGame(
+        _ newEngine: GameEngine, autosave: @escaping @MainActor (GameState) -> Void
+    ) {
+        if detachedReturnSlot == nil { detachedReturnSlot = currentSlot }
+        engine.shutdown()
+        engine = newEngine
+        engine.autosave = autosave
+        hasCurrentGame = true
+        needsOnboarding = false
+        isAtFrontDoor = false
+        wireEngineHooks()
+        applyDebugLaunchArguments()
+    }
+
+    /// Ends a detached game and puts the slot's own game back — loaded
+    /// from its file, or the placeholder behind an empty slot. A no-op
+    /// when nothing is detached.
+    func endDetachedGame() {
+        guard let slot = detachedReturnSlot else { return }
+        detachedReturnSlot = nil
+        engine.shutdown()
+        let resumed = (try? store.load(slot: slot))?.state
+        engine = resumed.map(GameEngine.resume(state:)) ?? Self.makeFreshEngine()
+        currentSlot = slot
+        newGameSlot = slot
+        hasCurrentGame = resumed != nil
+        if resumed != nil {
+            wireAutosave(slot: slot)
+        }
+        wireEngineHooks()
+        refreshSlots()
     }
 
     /// Registers a lane's event observer, replacing one under the same key.
@@ -200,6 +254,9 @@ final class GameSession {
         if hasCurrentGame {
             engine.pauseForBackground()
         }
+        // Iteration 7 (R3): a detached run — the daily — hands the slot's
+        // own game back on the way out, so Continue is never the daily.
+        endDetachedGame()
         needsOnboarding = false
         refreshSlots()
         isAtFrontDoor = true
@@ -313,6 +370,9 @@ final class GameSession {
     /// and the player is the only thing that changes. Plays in the slot
     /// the ended run was in.
     func replayCurrentGame() {
+        // Iteration 7 (R3): a detached run has no slot to replay into and
+        // must never bulldoze the one the player came from.
+        guard !isDetached else { returnToFrontDoor(); return }
         let ended = engine.state
         replaceEngine(inSlot: currentSlot) {
             GameEngine.newGame(
@@ -337,6 +397,8 @@ final class GameSession {
         founder: FounderProfile? = nil,
         origin: FoundingOrigin = .garage
     ) {
+        // Iteration 7 (R3): see `replayCurrentGame`.
+        guard !isDetached else { returnToFrontDoor(); return }
         replaceEngine(inSlot: currentSlot) {
             Self.makeFreshEngine(difficulty: difficulty, founder: founder, origin: origin)
         }
