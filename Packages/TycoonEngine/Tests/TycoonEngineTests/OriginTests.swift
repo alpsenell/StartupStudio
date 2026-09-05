@@ -94,6 +94,23 @@ struct OriginTests {
         #expect(explicit.ledger.entries.isEmpty)
     }
 
+    /// Iteration 7 (R2): the heirloom parameter defaults to nothing, and
+    /// nothing is what it does — a garage founded with `heirloom: nil`
+    /// is the `scaffold-5` garage byte for byte, so the pacing suites
+    /// never see the heirloom seam.
+    @Test func aGarageWithNoHeirloomIsTheGameThatShipped() throws {
+        let balance = try Self.balance()
+        let explicit = GameState.newGame(
+            companyName: "Garage Ref", seed: 4_242, balance: balance, origin: .garage,
+            content: Self.content, heirloom: nil, rules: .standard, mode: .standard
+        )
+        let reference = try Self.fixture("scaffold5-garage-day0-4242")
+        #expect(try Self.sortedJSON(explicit) == reference, "heirloom: nil moved the garage")
+        #expect(explicit.heirloom == nil)
+        #expect(explicit.eventLog.isEmpty)
+        #expect(explicit.isRanked)
+    }
+
     /// An origin is deltas only: the four streams sit exactly where the
     /// garage left them, so nothing an origin invents is a draw.
     @Test(arguments: FoundingOrigin.allCases)

@@ -44,11 +44,20 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         )
     }
 
+    /// How many of the address book's contacts a finished company leaves
+    /// in the ledger.
+    public static let peopleCarried = 8
+
     /// Records a finished run. Pure: the caller (the app, the moment
     /// `gameOver` becomes non-nil) writes the result back to disk.
     ///
-    /// R2 fills in the people, the perks and the deed; the scaffold
-    /// records the facts every run has.
+    /// The people are the address book's top `peopleCarried` contacts by
+    /// rapport — everyone the founder met, hired or lost to a rival, with
+    /// the skills they had at the end and the traits the founder had
+    /// learned (a contact who was never listened to shows none). Someone
+    /// who burned the founder (`.lost`) or married them (`.romance`) is
+    /// not a hire for the next company and stays out. The deed is the
+    /// office, when the company owned it outright.
     public mutating func record(_ state: GameState, balance: BalanceConfig) {
         guard let over = state.gameOver else { return }
         let run = LegacyRun(
@@ -61,12 +70,116 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
             ending: over.kind,
             day: state.day,
             founderNetWorth: state.founderNetWorth(balance: balance),
-            people: [],
+            people: Self.people(in: state),
             perks: Array(state.progression.perks).sorted(),
-            deed: nil
+            deed: Self.deed(in: state)
         )
         runs.append(run)
         endingsReached.insert(over.kind)
+    }
+
+    /// The address book's best `peopleCarried` contacts by rapport, ties
+    /// broken by id so the same state always records the same eight.
+    static func people(in state: GameState) -> [LegacyPerson] {
+        state.networking.contacts
+            .filter { $0.outcome != .lost && $0.outcome != .romance }
+            .sorted { lhs, rhs in
+                if lhs.rapport != rhs.rapport { return lhs.rapport > rhs.rapport }
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            .prefix(peopleCarried)
+            .map { contact in
+                LegacyPerson(
+                    id: contact.id,
+                    name: contact.name,
+                    appearanceSeed: contact.appearanceSeed,
+                    skills: contact.skills,
+                    revealedTraits: contact.isRevealed
+                        ? TraitEffects.derivedTraitIDs(appearanceSeed: contact.appearanceSeed)
+                        : [],
+                    rapport: contact.rapport,
+                    role: contact.leftRole ?? contact.archetype.employeeRole
+                )
+            }
+    }
+
+    static func deed(in state: GameState) -> LegacyDeed? {
+        guard state.city.ownership.isOwned else { return nil }
+        return LegacyDeed(tier: state.company.officeTier, district: state.city.district)
+    }
+
+    // MARK: Offers
+
+    /// What the Heirlooms page can put on the table: every person, perk
+    /// and deed the finished companies left, once each, minus the ones
+    /// already carried. People are offered from the run that saw them
+    /// last; perks in `ProgressionPerk` order; each (tier, district) deed
+    /// once. Empty when the page has nothing to show.
+    public var offers: [HeirloomOffer] {
+        var seen: Set<String> = []
+        var offers: [HeirloomOffer] = []
+
+        // People, newest run first so the most recent version of a face
+        // that appears in two ledgers wins.
+        for run in runs.reversed() {
+            for person in run.people {
+                let heirloom = Heirloom.person(person)
+                guard !seen.contains("person.\(person.id.uuidString)") else { continue }
+                seen.insert("person.\(person.id.uuidString)")
+                offers.append(HeirloomOffer(heirloom: heirloom, companyName: run.companyName, ending: run.ending))
+            }
+        }
+        // Perks, in the declaration order the chapter card uses.
+        for perk in ProgressionPerk.allCases {
+            guard let run = runs.last(where: { $0.perks.contains(perk.rawValue) }) else { continue }
+            offers.append(HeirloomOffer(
+                heirloom: .perk(id: perk.rawValue), companyName: run.companyName, ending: run.ending
+            ))
+        }
+        // Deeds, newest first, once per building.
+        for run in runs.reversed() {
+            guard let deed = run.deed else { continue }
+            let heirloom = Heirloom.deed(deed)
+            guard !seen.contains(heirloom.id) else { continue }
+            seen.insert(heirloom.id)
+            offers.append(HeirloomOffer(heirloom: heirloom, companyName: run.companyName, ending: run.ending))
+        }
+        return offers.filter { !spentHeirlooms.contains($0.heirloom.id) }
+    }
+
+    /// Marks an heirloom carried, so it is never offered again.
+    public mutating func spend(_ heirloom: Heirloom) {
+        spentHeirlooms.insert(heirloom.id)
+    }
+
+    // MARK: Merging two devices' ledgers
+
+    /// The union of two ledgers — this device's and the cloud's. Runs are
+    /// matched by id (this ledger's order first, the other's unseen runs
+    /// after, oldest first); endings and spent heirlooms are unions, so
+    /// an heirloom carried on either device is spent on both.
+    public func merged(with other: LegacyLedger) -> LegacyLedger {
+        var merged = self
+        let known = Set(runs.map(\.id))
+        merged.runs.append(contentsOf: other.runs.filter { !known.contains($0.id) })
+        merged.endingsReached.formUnion(other.endingsReached)
+        merged.spentHeirlooms.formUnion(other.spentHeirlooms)
+        return merged
+    }
+}
+
+/// One heirloom the ledger can offer, and the company it came from.
+public struct HeirloomOffer: Equatable, Hashable, Sendable, Identifiable {
+    public var heirloom: Heirloom
+    public var companyName: String
+    public var ending: EndingKind
+
+    public var id: String { heirloom.id }
+
+    public init(heirloom: Heirloom, companyName: String, ending: EndingKind) {
+        self.heirloom = heirloom
+        self.companyName = companyName
+        self.ending = ending
     }
 }
 
@@ -118,10 +231,14 @@ public struct LegacyPerson: Codable, Equatable, Sendable, Identifiable {
     public var skills: SkillSet
     public var revealedTraits: [String]
     public var rapport: Double
+    /// What they did for a living — the role they left with, or the one
+    /// their archetype implies. Decodes as `nil` from a ledger written
+    /// before it was recorded; the skills then say.
+    public var role: EmployeeRole?
 
     public init(
         id: UUID, name: String, appearanceSeed: UInt64, skills: SkillSet,
-        revealedTraits: [String] = [], rapport: Double
+        revealedTraits: [String] = [], rapport: Double, role: EmployeeRole? = nil
     ) {
         self.id = id
         self.name = name
@@ -129,6 +246,12 @@ public struct LegacyPerson: Codable, Equatable, Sendable, Identifiable {
         self.skills = skills
         self.revealedTraits = revealedTraits
         self.rapport = rapport
+        self.role = role
+    }
+
+    /// The role the next company sees them as.
+    public var resolvedRole: EmployeeRole {
+        role ?? .inferred(isFounder: false, skills: skills)
     }
 }
 
@@ -182,14 +305,72 @@ extension LegacyPerson: Hashable {
 extension LegacyDeed: Hashable {}
 
 extension GameState {
-    /// Lands `heirloom` on a day-0 state. R2 writes the three deltas; the
-    /// scaffold records the choice and emits nothing, so `newGame` with an
-    /// heirloom is `newGame` without one until then.
+    /// The rapport a carried person arrives with: warm, not bought.
+    static let heirloomRapport = 60.0
+    /// Their interest in the new company: neutral, the pitch is still yours.
+    static let heirloomInterest = 50.0
+    /// What a carried person asks over fair pay — the alumni's number.
+    static let heirloomAskOverFairPay = 1.1
+    /// The deed is capped here: a campus on day 0 would skip the game.
+    static let heirloomDeedCap = OfficeTier.studio
+
+    /// Lands `heirloom` on a day-0 state, after the origin and after every
+    /// draw `newGame` makes. Three pure deltas, and nothing else moves:
+    ///
+    /// - `.person` → one `Contact` in the address book, with their skills,
+    ///   their face, `leftReason: .formerCompany`, rapport 60, revealed,
+    ///   asking fair pay and a tenth — you still recruit them.
+    /// - `.perk` → the perk in `progression.perks` from day 0.
+    /// - `.deed` → the office at the tier they owned, capped at studio, in
+    ///   its district, owned outright at what buying it would cost — so
+    ///   there is no rent, and selling it later returns a real number.
+    ///
+    /// No RNG stream is read; a run with an heirloom is a different
+    /// starting state under the same rules. The choice is logged so the
+    /// journal's first line says what came with you.
     mutating func applyHeirloom(_ heirloom: Heirloom, balance: BalanceConfig) {
-        // R2: `.person` → a `Contact` with `leftReason: .formerCompany`,
-        // rapport 60; `.perk` → `progression.perks.insert`; `.deed` → the
-        // office owned at `deed.tier` (capped at studio) in `deed.district`.
-        _ = balance
+        switch heirloom {
+        case .person(let person):
+            let role = person.resolvedRole
+            // Fair pay is a function of skills and seniority; the stand-in
+            // employee is built only to ask the balance what that is.
+            let standIn = Employee(
+                id: person.id, name: person.name, skills: person.skills, weeklySalary: 0,
+                assignment: .idle, isFounder: false, hiredDay: 0,
+                appearanceSeed: person.appearanceSeed,
+                level: .forSkillTotal(person.skills.total), role: role
+            )
+            let ask = Int((balance.fairWeeklyPay(for: standIn) * Self.heirloomAskOverFairPay).rounded())
+            networking.contacts.removeAll { $0.id == person.id }
+            networking.contacts.append(Contact(
+                id: person.id,
+                name: person.name,
+                appearanceSeed: person.appearanceSeed,
+                archetype: role.contactArchetype,
+                skills: person.skills,
+                askingSalary: max(1, ask),
+                rapport: Self.heirloomRapport,
+                interest: Self.heirloomInterest,
+                metDay: day,
+                lastMetDay: day,
+                isRevealed: true,
+                leftDay: day,
+                leftReason: .formerCompany,
+                leftRole: role
+            ))
+
+        case .perk(let id):
+            progression.perks.insert(id)
+
+        case .deed(let deed):
+            let tier = deed.tier.rank <= Self.heirloomDeedCap.rank ? deed.tier : Self.heirloomDeedCap
+            company.officeTier = tier
+            city.district = deed.district
+            let price = officePurchasePrice(in: deed.district, balance: balance)
+            city.ownership = .owned(purchasePrice: price)
+            city.propertyValue = price
+        }
+        logEvents([.heirloomApplied(kind: heirloom.kind, day: day)])
     }
 
     /// Whether an ending in this run may post to the ranked boards: a
