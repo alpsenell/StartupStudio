@@ -82,6 +82,14 @@ struct AppRootView: View {
             .onChange(of: engine.state.day) { _, _ in
                 shell.dayAdvanced(engine: engine)
             }
+            // Iteration 7 (R5, fix 4): `-autoAnswer` used to start from
+            // HQ's own task, so a headless pass launched with
+            // `-autoTab business` never answered anything and stopped at
+            // the first story question. It belongs to the game, not to a
+            // tab: started here, it runs whichever tab the pass opens on.
+            .task {
+                DebugLaunch.startAutoAnswering(engine: engine)
+            }
             // The weekly report yields to a decision sheet, and its "Next
             // week" button resumes the clock before it closes. A question
             // that was waiting behind the report must stop the clock
@@ -108,7 +116,18 @@ struct AppRootView: View {
                             onNewGame: { difficulty, founder, origin in
                                 session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
                             },
-                            onReplay: { session.replayCurrentGame() }
+                            onReplay: { session.replayCurrentGame() },
+                            // Iteration 7 (R5): "Keep running it", on the
+                            // two endings the founder chose for
+                            // themselves. Sending it clears the game over,
+                            // which is what dismisses this cover — the
+                            // binding below reads the engine, so there is
+                            // nothing else to close.
+                            actions: BiographyActions(
+                                onContinueRunning: canContinue(info) ? {
+                                    engine.send(.continueAfterEnding)
+                                } : nil
+                            )
                         )
                     } else {
                         GameOverView(
@@ -187,6 +206,13 @@ struct AppRootView: View {
     /// Presented whenever the engine reports game over. The setter is a
     /// no-op: dismissal happens when "New game" swaps in a fresh engine
     /// whose state has no `gameOver`.
+    /// Iteration 7 (R5): the endings a company can be run past. The
+    /// reducer is the authority and refuses the rest; this is the same
+    /// rule, so the button is not offered where it would do nothing.
+    func canContinue(_ info: GameOverInfo) -> Bool {
+        (info.kind == .ipo || info.kind == .independent) && session.engine.state.epilogue == nil
+    }
+
     private var gameOverPresented: Binding<Bool> {
         Binding(
             get: { session.engine.state.gameOver != nil && !session.needsOnboarding },

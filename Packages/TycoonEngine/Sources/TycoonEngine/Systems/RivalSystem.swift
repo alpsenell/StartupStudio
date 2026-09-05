@@ -1047,6 +1047,12 @@ enum RivalSystem {
         let config = balance.rivals
         let exits = balance.investors
         guard state.day % config.buyoutIntervalDays == config.buyoutOffsetDays,
+              // Iteration 7 (R5): nobody bids for a company that already
+              // had its ending. The guard sits before the draw, so an
+              // epilogue run's `worldRNG` differs from a hypothetical
+              // continuation of the same seed — and no other run has an
+              // epilogue, so every pinned suite is byte-identical.
+              state.epilogue == nil,
               state.rivals.pendingBuyout == nil,
               state.rivals.lastBuyoutDay.map({ state.day - $0 >= config.buyoutCooldownDays }) ?? true,
               let buyer = strongestRival(state)

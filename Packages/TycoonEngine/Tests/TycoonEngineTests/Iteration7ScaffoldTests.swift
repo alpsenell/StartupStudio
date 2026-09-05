@@ -117,7 +117,9 @@ struct Iteration7ScaffoldTests {
 
     // MARK: The action
 
-    @Test("continueAfterEnding is refused by the scaffold, live or ended")
+    /// R5 implements the ending-side behaviour in `EndlessTests`; a live
+    /// game has nothing to continue past, whoever asks.
+    @Test("continueAfterEnding is refused on a live game")
     func continueAfterEndingRefused() {
         var live = GameState.newGame(companyName: "Live", seed: 15, balance: Self.balance)
         #expect(Reducer.apply(.continueAfterEnding, to: &live, balance: Self.balance, content: TestContent.bundled).isEmpty)

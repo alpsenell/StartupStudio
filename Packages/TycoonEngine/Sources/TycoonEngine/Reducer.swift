@@ -119,6 +119,14 @@ public enum Reducer {
         balance: BalanceConfig,
         content: ContentCatalog
     ) -> [GameEvent] {
+        // Iteration 7 (R5): the one action an ended game answers, so it is
+        // handled before the guard below — the guard is the thing it is
+        // for. Everything else about an ended run stays refused.
+        if case .continueAfterEnding = action {
+            let events = continueAfterEnding(&state)
+            state.logEvents(events)
+            return events
+        }
         guard state.gameOver == nil else { return [] }
 
         let events: [GameEvent]
@@ -340,13 +348,42 @@ public enum Reducer {
             events = InvestorSystem.declareIndependence(state: &state, balance: balance)
 
         // MARK: Iteration 7 — R5 (endless)
-        // The scaffold refuses it; R5 handles it *before* the game-over
-        // guard above (an ended game is the only place it applies).
+        // Handled above, before the game-over guard — an ended game is the
+        // only place it applies, so this arm is unreachable.
         case .continueAfterEnding:
             events = []
         }
 
         state.logEvents(events)
         return events
+    }
+
+    // MARK: Iteration 7 — R5 (endless)
+
+    /// Keeps the company running past an ending that allows it.
+    ///
+    /// Only the two endings the founder walks away from on their own terms
+    /// — the IPO and *Still yours* — can be played past: a bankruptcy, an
+    /// ousting, a sale and an acquisition all hand the company to somebody
+    /// else, and there is nothing left to run. The ending is remembered in
+    /// `state.epilogue` rather than thrown away, so the biography, the
+    /// front door and the systems that must stand down (no board, no term
+    /// sheets, no buyers) can all read one fact.
+    ///
+    /// Refused when there is no ending, when the ending is one of the four
+    /// that end it, and when the company is already running an epilogue.
+    /// Draws nothing and moves no number: an epilogue run is the same
+    /// simulation with three doors closed.
+    private static func continueAfterEnding(_ state: inout GameState) -> [GameEvent] {
+        guard let ending = state.gameOver,
+              ending.kind == .ipo || ending.kind == .independent,
+              state.epilogue == nil
+        else { return [] }
+        // The clock has not moved since the ending — `tick` refuses an
+        // ended game — so this is both the day it ended and the day the
+        // founder decided to carry on.
+        state.epilogue = Epilogue(ending: ending.kind, day: state.day)
+        state.gameOver = nil
+        return [.continuedAfterEnding(ending: ending.kind, day: state.day)]
     }
 }

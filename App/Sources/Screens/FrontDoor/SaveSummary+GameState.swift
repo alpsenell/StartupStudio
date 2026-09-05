@@ -28,6 +28,14 @@ extension SaveSummary {
     var endingKind: EndingKind? {
         ending.flatMap(EndingKind.init(rawValue:))
     }
+
+    /// Iteration 7 (R5): the ending the company is *running past*, when
+    /// the founder chose to keep going. A slot has one or the other —
+    /// `endingKind` while a finished run is waiting to be read, this while
+    /// it is still being played.
+    var epilogueKind: EndingKind? {
+        epilogue.flatMap(EndingKind.init(rawValue:))
+    }
 }
 
 extension GameSettings {

@@ -506,8 +506,12 @@ extension GameState {
     /// Whether the company could file to go public today: a big enough
     /// valuation, a run of profitable quarters, and recurring revenue.
     public func canFileIPO(balance: BalanceConfig) -> Bool {
-        // A company being paid for over an earn-out is already sold.
-        guard gameOver == nil, investors.ipoDay == nil, investors.earnOut == nil else { return false }
+        // A company being paid for over an earn-out is already sold, and a
+        // company running past its own ending (R5) has rung the bell once
+        // already — there is no second one.
+        guard gameOver == nil, epilogue == nil,
+              investors.ipoDay == nil, investors.earnOut == nil
+        else { return false }
         let config = balance.investors
         return companyValuation(balance: balance) >= config.ipoValuationFloor
             && investors.profitableQuarters >= config.ipoProfitableQuarters
@@ -516,6 +520,8 @@ extension GameState {
 
     /// Why the company can't file yet, in one line, or `nil` when it can.
     public func ipoBlocker(balance: BalanceConfig) -> String? {
+        // R5: the run is past its ending; the bell only rings once.
+        if let epilogue { return "This company had its ending on day \(epilogue.day)." }
         guard investors.ipoDay == nil else { return "You've already filed." }
         if let earnOut = investors.earnOut {
             return "\(earnOut.buyerName) is buying the company. The bell is theirs to ring."
@@ -543,7 +549,9 @@ extension GameState {
     /// name people know, and enough years in to mean it. Mirrors
     /// `canFileIPO`; the independent ladder's ending.
     public func canStayIndependent(balance: BalanceConfig) -> Bool {
-        guard gameOver == nil else { return false }
+        // R5: an epilogue is already the answer to "and then?", so the
+        // ending cannot be declared a second time.
+        guard gameOver == nil, epilogue == nil else { return false }
         let config = balance.investors
         return investors.equityRemaining >= 100
             && investors.profitableQuarters >= config.independentProfitableQuarters
@@ -554,6 +562,8 @@ extension GameState {
     /// Why the founder can't declare yet, in one line, or `nil` when they
     /// can. Cap table first: a sold share is the one gate no quarter fixes.
     public func independenceBlocker(balance: BalanceConfig) -> String? {
+        // R5: the run is past its ending; it cannot be declared twice.
+        if let epilogue { return "This company had its ending on day \(epilogue.day)." }
         let config = balance.investors
         if investors.equityRemaining < 100 {
             return "Somebody else owns \(Int((100 - investors.equityRemaining).rounded()))% of it. This ending needs all of it."

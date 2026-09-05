@@ -27,7 +27,15 @@ enum InvestorSystem {
         _ content: ContentCatalog
     ) -> [GameEvent] {
         var events: [GameEvent] = []
+        // A term sheet left on the desk when the run ended still lapses;
+        // it costs no draw and clears the board room on the way out.
         events.append(contentsOf: expireOffer(&state))
+        // Iteration 7 (R5): a company running past its own ending has no
+        // board room. Nobody writes it a term sheet and nobody grades its
+        // quarter — the offer check's draw is skipped with it, which only
+        // ever moves `investorRNG` inside an epilogue run (no other run
+        // has one), so every pinned suite is byte-identical.
+        guard state.epilogue == nil else { return events }
         events.append(contentsOf: offerCheck(&state, balance, content))
         events.append(contentsOf: quarterlyReview(&state, balance))
         return events
@@ -470,7 +478,9 @@ enum InvestorSystem {
     /// slice, and the investor onto the cap table (and the board, if the
     /// term sheet asked for a seat). Ignored with nothing pending.
     static func acceptOffer(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
-        guard let offer = state.investors.pendingOffer else { return [] }
+        // R5: no round is seated past the ending, including one whose
+        // term sheet was already on the desk when the bell rang.
+        guard let offer = state.investors.pendingOffer, state.epilogue == nil else { return [] }
         state.investors.pendingOffer = nil
 
         state.company.cash += offer.amount
@@ -532,7 +542,10 @@ enum InvestorSystem {
         guard let offer = state.rivals.pendingBuyout,
               state.rivals.lastBuyoutWasStrategic,
               state.investors.earnOut == nil,
-              state.gameOver == nil
+              state.gameOver == nil,
+              // R5: an earn-out seats the acquirer as the board, and an
+              // epilogue run has no board.
+              state.epilogue == nil
         else { return [] }
         let config = balance.investors
         state.rivals.pendingBuyout = nil
@@ -595,7 +608,8 @@ enum InvestorSystem {
         state.gameOver = GameOverInfo(
             day: state.day,
             reason: "\(state.company.name) went public. \(state.progression.founder.displayName) "
-                + "walked away with \(proceeds) for a \(Int(state.investors.equityRemaining))% stake.",
+                + "walked away with \(proceeds.dollars) for a "
+                + "\(Int(state.investors.equityRemaining))% stake.",
             kind: .ipo
         )
         return [.wentPublic(proceeds: proceeds, day: state.day), .gameOver(day: state.day)]
