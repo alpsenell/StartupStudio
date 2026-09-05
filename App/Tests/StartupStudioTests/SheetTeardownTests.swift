@@ -14,10 +14,14 @@ import XCTest
 /// still reading it that way; both now read it optionally, the way
 /// `OfficeCard` has since iteration 6.
 ///
+/// The same audit found two more, both presented content:
+/// `MarketReportScreen` (a sheet off the Market segment) and
+/// `WarRoomScreen` (a cover off Products). Those read optionally too.
+///
 /// The test does the teardown for real — a hosted window, a presented
 /// sheet, and `launchDayProductID` cleared out from under it — and draws
-/// both sheets with no router in the environment at all, which is what
-/// the inside of a torn-down host looks like.
+/// all four with no router in the environment at all, which is what the
+/// inside of a torn-down host looks like.
 @MainActor
 final class SheetTeardownTests: XCTestCase {
     private func engineWithALaunch() -> (GameEngine, Product) {
@@ -103,5 +107,26 @@ final class SheetTeardownTests: XCTestCase {
                 .frame(width: 393)
         )
         XCTAssertNotNil(money.uiImage, "the money sheet needs a router to draw")
+    }
+
+    /// The other two the audit turned up: the market report is a sheet,
+    /// the war room is a cover, and both used to promise the environment
+    /// always has a router.
+    func testTheReportAndTheWarRoomDrawWithoutARouter() {
+        let (engine, product) = engineWithALaunch()
+
+        let report = ImageRenderer(
+            content: MarketReportScreen(engine: engine)
+                .environment(GameShell())
+                .frame(width: 393, height: 852)
+        )
+        XCTAssertNotNil(report.uiImage, "the market report needs a router to draw")
+
+        let warRoom = ImageRenderer(
+            content: WarRoomScreen(engine: engine, productID: product.id)
+                .environment(GameShell())
+                .frame(width: 393, height: 852)
+        )
+        XCTAssertNotNil(warRoom.uiImage, "the war room needs a router to draw")
     }
 }
