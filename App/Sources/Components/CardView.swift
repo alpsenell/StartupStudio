@@ -30,6 +30,8 @@ struct CardView<Content: View>: View {
                     .textCase(.uppercase)
                     .kerning(0.6)
                     .foregroundStyle(.secondary)
+                    // A card's own name is never the thing to truncate.
+                    .fixedSize(horizontal: false, vertical: true)
             }
             content
         }

@@ -28,7 +28,7 @@ struct CityMapScreen: View {
                         placements: CityMapComposer.compose(districts: districtInfos),
                         sceneSize: CityMapComposer.sceneSize(),
                         scale: .fixed(Self.mapScale),
-                        accessibilityLabel: "City map"
+                        accessibilityLabel: mapAccessibilityLabel
                     )
                     .onTapGesture { location in
                         let x = Int(location.x) / Self.mapScale
@@ -38,6 +38,12 @@ struct CityMapScreen: View {
                             selectedDistrict = district
                         }
                     }
+                    // The canvas is one picture; the districts laid over it
+                    // are the things in it.
+                    .accessibilityHidden(true)
+                    .overlay { districtElements }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel(mapAccessibilityLabel)
                     .padding(.bottom, 280) // keep every district reachable above the panel
                 }
                 .defaultScrollAnchor(.center)
@@ -55,6 +61,111 @@ struct CityMapScreen: View {
                 }
             }
         }
+    }
+
+    /// One thing on the map VoiceOver can land on: a district block, or
+    /// the player's own office marker sitting in one.
+    private struct MapElement: Identifiable {
+        var id: String
+        var district: DistrictID
+        var rect: CityMapComposer.Rect
+        var label: String
+        var hint: String
+        var sortPriority: Double
+    }
+
+    /// The five district rects plus the office marker as a sixth, built
+    /// from exactly the frames the composer draws and hit-tests with.
+    private var mapElements: [MapElement] {
+        let state = engine.state
+        var elements: [MapElement] = []
+        for district in DistrictID.allCases {
+            guard let style = DistrictStyle(rawValue: district.rawValue) else { continue }
+            elements.append(MapElement(
+                id: district.rawValue,
+                district: district,
+                rect: CityMapComposer.districtFrame(style),
+                label: districtLabel(district),
+                hint: "Shows this district's rent, price and perks",
+                sortPriority: district == selectedDistrict ? 1 : 0
+            ))
+            if district == state.city.district {
+                elements.append(MapElement(
+                    id: district.rawValue + ".office",
+                    district: district,
+                    rect: CityMapComposer.officeMarkerFrame(for: style),
+                    label: "Your office, " + district.displayName,
+                    hint: "Shows this district's terms",
+                    sortPriority: 2
+                ))
+            }
+        }
+        return elements
+    }
+
+    /// One invisible button per element, laid over the map exactly where
+    /// the composer put it. The office's overlay is the pattern; unlike
+    /// the office this one uses no `TimelineView` — the city does not
+    /// move, and an overlay that rebuilt itself would take VoiceOver's
+    /// focus with it.
+    ///
+    /// Activating one selects the district, which is exactly what a tap
+    /// does: the `DistrictDetailPanel` below is already showing the
+    /// selection, so the terms, the rivals and the move/buy/sell buttons
+    /// are the next elements after the map.
+    private var districtElements: some View {
+        let scene = CityMapComposer.sceneSize()
+        let scale = CGFloat(Self.mapScale)
+        return ZStack(alignment: .topLeading) {
+            ForEach(mapElements) { element in
+                Color.clear
+                    .frame(
+                        width: CGFloat(element.rect.width) * scale,
+                        height: CGFloat(element.rect.height) * scale
+                    )
+                    .offset(
+                        x: CGFloat(element.rect.x) * scale,
+                        y: CGFloat(element.rect.y) * scale
+                    )
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(element.label)
+                    .accessibilityHint(element.hint)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilitySortPriority(element.sortPriority)
+                    .accessibilityAction { selectedDistrict = element.district }
+            }
+        }
+        .frame(
+            width: CGFloat(scene.width) * scale,
+            height: CGFloat(scene.height) * scale,
+            alignment: .topLeading
+        )
+        // The scene's own tap gesture stays the finger's route in; these
+        // are the assistive-technology route.
+        .allowsHitTesting(false)
+    }
+
+    /// What a district says when VoiceOver lands on it: the name, whether
+    /// it is yours, who else is here, and whether it is the one selected.
+    func districtLabel(_ district: DistrictID) -> String {
+        let state = engine.state
+        var parts = [district.displayName]
+        if district == state.city.district {
+            parts.append(state.city.ownership.isOwned ? "your office, owned" : "your office, renting")
+        }
+        let rivals = state.rivals.rivals.filter { $0.homeDistrict == district }
+        switch rivals.count {
+        case 0: break
+        case 1: parts.append(rivals[0].name + " is based here")
+        default: parts.append("\(rivals.count) rival studios based here")
+        }
+        if district == selectedDistrict { parts.append("selected") }
+        return parts.joined(separator: ", ")
+    }
+
+    /// The map in one line, for the container the districts sit in.
+    private var mapAccessibilityLabel: String {
+        "City map: five districts, your office in " + engine.state.city.district.displayName
     }
 
     /// The composer's per-district state: selection, the player flag, and

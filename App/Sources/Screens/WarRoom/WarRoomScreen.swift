@@ -343,11 +343,15 @@ private struct CountdownPanel: View {
                 Text("ETA \(GameCalendar(day: day + days).longLabel)")
                     .font(Theme.Typography.number(.caption, weight: .regular))
                     .foregroundStyle(Theme.pixelInk.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             if forecast?.canShip == true, days > 0 {
                 Text("Past the ship gate — it could go out today.")
                     .font(.caption)
                     .foregroundStyle(Theme.positiveCash)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         } else {
             PixelText(text: "—", scale: 7, color: .secondary)
@@ -406,20 +410,38 @@ private struct WhiteboardPanel: View {
     let engine: GameEngine
     let onShip: () -> Void
 
+    @ViewBuilder
+    private var pacePill: some View {
+        if engine.state.economy.workPace != .normal {
+            WorkPacePill(pace: engine.state.economy.workPace)
+        }
+    }
+
+    private var bugPill: some View {
+        StatPill(
+            systemImage: "ladybug.fill",
+            value: "\(progress.openBugs) bug\(progress.openBugs == 1 ? "" : "s")",
+            tint: progress.openBugs > 0 ? Theme.warning : .secondary
+        )
+    }
+
     var body: some View {
         PixelPanel {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                HStack {
-                    PixelSectionTitle(title: "Whiteboard")
-                    Spacer(minLength: Theme.Spacing.sm)
-                    if engine.state.economy.workPace != .normal {
-                        WorkPacePill(pace: engine.state.economy.workPace)
+                // The pace and the bug count sit beside the heading until
+                // the reader's text needs the line to itself.
+                ViewThatFits(in: .horizontal) {
+                    HStack {
+                        PixelSectionTitle(title: "Whiteboard")
+                        Spacer(minLength: Theme.Spacing.sm)
+                        pacePill
+                        bugPill
                     }
-                    StatPill(
-                        systemImage: "ladybug.fill",
-                        value: "\(progress.openBugs) bug\(progress.openBugs == 1 ? "" : "s")",
-                        tint: progress.openBugs > 0 ? Theme.warning : .secondary
-                    )
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        PixelSectionTitle(title: "Whiteboard")
+                        pacePill
+                        bugPill
+                    }
                 }
                 TriPhaseProgress(progress: progress, type: type)
                 if let eta {
@@ -474,6 +496,8 @@ private struct HypePanel: View {
     let engine: GameEngine
     let onRoute: (Route) -> Void
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     private var value: Int { Int(hype.rounded()) }
 
     private struct Feed: Identifiable {
@@ -487,7 +511,14 @@ private struct HypePanel: View {
         PixelPanel {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 PixelSectionTitle(title: "Hype")
-                HStack(alignment: .lastTextBaseline, spacing: Theme.Spacing.md) {
+                // The number is a bitmap and stays put; the exchange rate
+                // beside it grows. Baseline-aligned they collide once the
+                // rate needs three lines, so at the accessibility sizes it
+                // goes underneath instead.
+                let worthLayout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Spacing.xs))
+                    : AnyLayout(HStackLayout(alignment: .lastTextBaseline, spacing: Theme.Spacing.md))
+                worthLayout {
                     PixelText(text: "\(value)", scale: 5, color: Theme.pixelAccent)
                         .id(value)
                         .animation(Theme.Motion.valueChange, value: value)
@@ -613,26 +644,44 @@ private struct ForecastBand: View {
     private var quality: Int { Int(forecast.quality.rounded()) }
     private var ceiling: Int { Int((forecast.crewCeiling * 100).rounded()) }
 
+    private var scoreFigure: some View {
+        PixelText(text: "\(quality)", scale: 5, color: Theme.scoreTint(quality))
+            .id(quality)
+            .animation(Theme.Motion.valueChange, value: quality)
+    }
+
+    private var forecastLines: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("if it shipped today")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(
+                forecast.codebaseCeiling < forecast.skillCeiling
+                    ? "the codebase tops out at \(ceiling)"
+                    : "the crew tops out at \(ceiling)"
+            )
+            .font(.caption)
+            .monospacedDigit()
+            .foregroundStyle(.tertiary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     var body: some View {
         PixelPanel {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 PixelSectionTitle(title: "Forecast")
-                HStack(alignment: .lastTextBaseline, spacing: Theme.Spacing.md) {
-                    PixelText(text: "\(quality)", scale: 5, color: Theme.scoreTint(quality))
-                        .id(quality)
-                        .animation(Theme.Motion.valueChange, value: quality)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("if it shipped today")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(
-                            forecast.codebaseCeiling < forecast.skillCeiling
-                                ? "the codebase tops out at \(ceiling)"
-                                : "the crew tops out at \(ceiling)"
-                        )
-                        .font(.caption)
-                        .monospacedDigit()
-                        .foregroundStyle(.tertiary)
+                // The figure is a bitmap and never grows; the two lines
+                // beside it do, and used to be cut off mid-word.
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .lastTextBaseline, spacing: Theme.Spacing.md) {
+                        scoreFigure
+                        forecastLines
+                    }
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        scoreFigure
+                        forecastLines
                     }
                 }
                 band

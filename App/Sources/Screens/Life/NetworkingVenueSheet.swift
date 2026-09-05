@@ -41,7 +41,8 @@ struct NetworkingVenueSheet: View {
                     NetworkingFloorView(
                         venue: event.venue,
                         people: people,
-                        founderSeed: founderAppearanceSeed
+                        founderSeed: founderAppearanceSeed,
+                        exchangesLeft: event.conversationsLeft
                     ) { contact in
                         talkingTo = contact
                     }
@@ -103,6 +104,9 @@ struct NetworkingFloorView: View {
     let venue: NetworkingVenue
     let people: [Contact]
     let founderSeed: UInt64
+    /// How many exchanges the evening has left — the number the bar under
+    /// the room shows, spoken on the figure it belongs to.
+    var exchangesLeft: Int = 0
     let tap: (Contact) -> Void
 
     var body: some View {
@@ -154,7 +158,13 @@ struct NetworkingFloorView: View {
                     x: geometry.size.width * 0.16,
                     y: geometry.size.height * 0.88
                 )
-                .accessibilityHidden(true)
+                // The guests are buttons; the founder is the one figure in
+                // the room that was not on the list at all. Static text —
+                // there is nothing to activate on yourself — but you are
+                // where the count of what is left belongs.
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(founderLabel)
+                .accessibilitySortPriority(1)
 
                 ForEach(Array(people.enumerated()), id: \.element.id) { index, contact in
                     let spot = position(for: index, of: people.count, in: geometry.size)
@@ -172,6 +182,16 @@ struct NetworkingFloorView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
+        }
+    }
+
+    /// "You, three exchanges left" — the founder's own figure, which used
+    /// to be hidden from VoiceOver entirely.
+    var founderLabel: String {
+        switch exchangesLeft {
+        case ...0: "You, no exchanges left"
+        case 1: "You, one exchange left"
+        default: "You, \(exchangesLeft) exchanges left"
         }
     }
 

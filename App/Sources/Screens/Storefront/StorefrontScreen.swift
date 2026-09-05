@@ -265,31 +265,18 @@ struct StoreStars: View {
     let count: Int
 
     /// Score out of five, to the nearest half.
-    private var stars: Double {
+    private var starsOutOfFive: Double {
         (Double(score) / 20 * 2).rounded() / 2
     }
 
+    /// Five stars and the score beside them where the width allows, and
+    /// stacked under them where it does not. At the accessibility sizes
+    /// the star glyphs alone are most of a phone wide, and the row used to
+    /// squeeze "No reviews yet" into a one-letter column.
     var body: some View {
-        HStack(spacing: Theme.Spacing.xs) {
-            HStack(spacing: 1) {
-                ForEach(0..<5, id: \.self) { index in
-                    Image(systemName: symbol(index: index))
-                        .foregroundStyle(count == 0 ? Theme.pixelInk.opacity(0.3) : Theme.warning)
-                }
-            }
-            .font(.footnote)
-            if count > 0 {
-                Text(starsText)
-                    .font(Theme.Typography.number(.footnote))
-                    .foregroundStyle(Theme.pixelInk)
-                Text("(\(count.formatted(.number.locale(Theme.gameLocale))))")
-                    .font(.caption)
-                    .foregroundStyle(Theme.pixelInk.opacity(0.7))
-            } else {
-                Text("No reviews yet")
-                    .font(.caption)
-                    .foregroundStyle(Theme.pixelInk.opacity(0.7))
-            }
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: Theme.Spacing.xs) { stars; caption }
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) { stars; caption }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
@@ -299,12 +286,40 @@ struct StoreStars: View {
         )
     }
 
+    private var stars: some View {
+        HStack(spacing: 1) {
+            ForEach(0..<5, id: \.self) { index in
+                Image(systemName: symbol(index: index))
+                    .foregroundStyle(count == 0 ? Theme.pixelInk.opacity(0.3) : Theme.warning)
+            }
+        }
+        .font(.footnote)
+        .fixedSize()
+    }
+
+    @ViewBuilder
+    private var caption: some View {
+        if count > 0 {
+            Text(starsText)
+                .font(Theme.Typography.number(.footnote))
+                .foregroundStyle(Theme.pixelInk)
+            Text("(\(count.formatted(.number.locale(Theme.gameLocale))))")
+                .font(.caption)
+                .foregroundStyle(Theme.pixelInk.opacity(0.7))
+        } else {
+            Text("No reviews yet")
+                .font(.caption)
+                .foregroundStyle(Theme.pixelInk.opacity(0.7))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var starsText: String {
-        stars.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale))
+        starsOutOfFive.formatted(.number.precision(.fractionLength(1)).locale(Theme.gameLocale))
     }
 
     private func symbol(index: Int) -> String {
-        let filled = stars - Double(index)
+        let filled = starsOutOfFive - Double(index)
         if filled >= 1 { return "star.fill" }
         if filled >= 0.5 { return "star.leadinghalf.filled" }
         return "star"
@@ -416,12 +431,11 @@ private struct WhatsNewCard: View {
     var body: some View {
         CardView("What's new", systemImage: "arrow.triangle.2.circlepath") {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Text(version)
-                        .font(Theme.Typography.number(.subheadline, weight: .bold))
-                    Text(dateLine)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                // "Version 1.2" is a figure, not a sentence: it never
+                // hyphenates. The date moves under it instead.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: Theme.Spacing.sm) { versionLine; dateStamp }
+                    VStack(alignment: .leading, spacing: 2) { versionLine; dateStamp }
                 }
                 Text(note)
                     .font(.footnote)
@@ -437,6 +451,20 @@ private struct WhatsNewCard: View {
             }
             .accessibilityElement(children: .combine)
         }
+    }
+
+    private var versionLine: some View {
+        Text(version)
+            .font(Theme.Typography.number(.subheadline, weight: .bold))
+            .lineLimit(1)
+            .fixedSize()
+    }
+
+    private var dateStamp: some View {
+        Text(dateLine)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var version: String { "Version 1.\(info.updateCount)" }

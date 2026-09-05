@@ -165,7 +165,8 @@ final class FounderLifeSnapshotTests: XCTestCase {
             NetworkingFloorView(
                 venue: event.venue,
                 people: engine.state.networking.contactsInRoom,
-                founderSeed: 0x5EED
+                founderSeed: 0x5EED,
+                exchangesLeft: event.conversationsLeft
             ) { _ in }
         }
     }
