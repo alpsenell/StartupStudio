@@ -89,7 +89,7 @@ struct SettingsSheet: View {
                         }
                         if ServiceFlags.gameCenter {
                             // R3: presents GKGameCenterViewController.
-                            Button {} label: { Label("Game Center", systemImage: "gamecontroller") }
+                            GameCenterRow()
                         }
                         if ServiceFlags.restore {
                             // R6: AppStore.sync() behind a confirmation.

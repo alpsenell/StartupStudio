@@ -10,7 +10,7 @@ import SwiftUI
 struct TitleMenu {
     enum Flags {
         /// R3.
-        static let daily = false
+        static let daily = true
         /// R4.
         static let custom = true
         /// R4.

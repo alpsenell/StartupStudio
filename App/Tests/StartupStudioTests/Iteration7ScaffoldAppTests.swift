@@ -90,11 +90,14 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
     func testTitleMenuAndOnboardingPagesStayOffUntilALaneFlipsThem() {
         let menu = TitleMenu.make(onDaily: {}, onCustom: {}, onFromCode: {})
         XCTAssertEqual(menu.rows.count, 3)
-        // R4 flipped its two rows on; the daily's is R3's to flip.
-        XCTAssertEqual(menu.enabledRows.map(\.id), [.custom, .fromCode])
+        // R3 and R4 have landed: the daily and the two custom rows are on;
+        // R6's Restore is still behind its flag.
+        XCTAssertEqual(menu.enabledRows.map(\.id), [.daily, .custom, .fromCode])
+        XCTAssertTrue(TitleMenu.Flags.daily && TitleMenu.Flags.custom && TitleMenu.Flags.fromCode)
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)
-        XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.gameCenter || ServiceFlags.restore)
+        XCTAssertTrue(ServiceFlags.gameCenter)
+        XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.restore)
     }
 
     func testPrivacyManifestShipsInTheBundleAndDeclaresNoTracking() throws {

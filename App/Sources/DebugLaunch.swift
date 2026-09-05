@@ -168,6 +168,10 @@ enum DebugLaunch {
     static var isHeadlessPass: Bool {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
+        // Iteration 7 (R3): `-autoDaily` is entered *from* the front door —
+        // the daily is a title-screen row — so a pass carrying it keeps the
+        // door even alongside a speed, and the daily starts itself there.
+        guard !arguments.contains("-autoDaily") else { return false }
         return arguments.contains("-autoSpeed") || arguments.contains("-autoTab")
             || arguments.contains("-autoRoute")
         #else
