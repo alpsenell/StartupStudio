@@ -41,3 +41,21 @@ enum GameCenterID {
     static func achievement(ending: String) -> String { "\(prefix).ending.\(ending)" }
     static func leaderboard(_ name: String) -> String { "\(prefix).lb.\(name)" }
 }
+
+// MARK: - The boards
+
+extension GameCenterID {
+    /// The days-to-IPO board for a difficulty (integer, ascending).
+    static func ipoDays(_ difficulty: String) -> String { leaderboard("ipo_days.\(difficulty)") }
+
+    /// The *Still yours* net-worth board for a difficulty (money, descending).
+    static func stillYoursNetWorth(_ difficulty: String) -> String {
+        leaderboard("still_yours_net_worth.\(difficulty)")
+    }
+
+    /// The longest anyone stayed, any ending, any mode (integer, descending).
+    static let tenureDays = leaderboard("tenure_days")
+
+    /// Today's company (recurring, daily, UTC, money, descending).
+    static let daily = leaderboard("daily")
+}

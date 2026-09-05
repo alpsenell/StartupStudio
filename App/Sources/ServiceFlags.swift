@@ -7,7 +7,7 @@ enum ServiceFlags {
     /// R2: the iCloud status row.
     static let cloud = false
     /// R3: the Game Center row.
-    static let gameCenter = false
+    static let gameCenter = true
     /// R6: Restore purchases.
     static let restore = false
 }
