@@ -255,13 +255,31 @@ extension GameTab {
 // own. All DEBUG-only, like the rest.
 extension DebugLaunch {
     /// `-unlocked`: the full game, for the screenshot pipeline (R6, R8).
+    ///
+    /// The flag sticks: one launch with `-unlocked` is remembered on the
+    /// device, so an icon launch afterwards keeps the game open — a
+    /// personal-team device build cannot make even a sandbox purchase. A
+    /// launch with `-locked` forgets it. Debug builds only; release never
+    /// reads the key.
     static var isUnlocked: Bool {
         #if DEBUG
-        return ProcessInfo.processInfo.arguments.contains("-unlocked")
+        let arguments = ProcessInfo.processInfo.arguments
+        let defaults = UserDefaults.standard
+        if arguments.contains("-locked") {
+            defaults.removeObject(forKey: persistentUnlockKey)
+            return false
+        }
+        if arguments.contains("-unlocked") {
+            defaults.set(true, forKey: persistentUnlockKey)
+            return true
+        }
+        return defaults.bool(forKey: persistentUnlockKey)
         #else
         return false
         #endif
     }
+
+    private static let persistentUnlockKey = "debug.unlocked"
 
     /// `-autoTour <beat>`: land on a tour beat headlessly (R1). The beat
     /// is `TutorialStep.rawValue`, 0–8.
