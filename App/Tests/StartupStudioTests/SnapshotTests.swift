@@ -107,7 +107,7 @@ final class SnapshotTests: XCTestCase {
             VStack(spacing: Theme.Spacing.lg) {
                 PixelPanel {
                     VStack(spacing: Theme.Spacing.md) {
-                        ProductBoxArtView(typeID: "mobile", topicID: "fitness", seed: 99, size: 120)
+                        ProductBoxArtView(typeID: "mobile_app", topicID: "fitness", seed: 99, size: 120)
                         PixelText(text: "Overcast", scale: 3, color: Theme.pixelInk, shadow: true)
                         Text("Mobile App · Fitness")
                             .font(.footnote)
@@ -132,7 +132,7 @@ final class SnapshotTests: XCTestCase {
     func testRendersTheBoxArtSheet() {
         snapshot("product_box_art", width: 360) {
             VStack(spacing: Theme.Spacing.md) {
-                ForEach(["mobile", "web", "desktop"], id: \.self) { type in
+                ForEach(["mobile_app", "web_app", "desktop_tool"], id: \.self) { type in
                     HStack(spacing: Theme.Spacing.md) {
                         ForEach(["fitness", "finance", "education"], id: \.self) { topic in
                             ProductBoxArtView(typeID: type, topicID: topic, seed: 7, size: 72)
@@ -141,8 +141,8 @@ final class SnapshotTests: XCTestCase {
                 }
                 HStack(spacing: Theme.Spacing.md) {
                     ProductBoxArtView(typeID: "game", topicID: "games", seed: 3, size: 72)
-                    ProductBoxArtView(typeID: "saas", topicID: "productivity", seed: 3, size: 72)
-                    ProductBoxArtView(typeID: "enterprise", topicID: "logistics", seed: 3, size: 72)
+                    ProductBoxArtView(typeID: "saas_platform", topicID: "productivity", seed: 3, size: 72)
+                    ProductBoxArtView(typeID: "enterprise_tool", topicID: "logistics", seed: 3, size: 72)
                 }
             }
             .padding(Theme.Spacing.lg)

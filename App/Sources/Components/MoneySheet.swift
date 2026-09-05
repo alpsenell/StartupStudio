@@ -37,7 +37,14 @@ struct MoneySheetContent: View {
     /// Called before a deep link, so the sheet is out of the way.
     var beforeRoute: (() -> Void)?
 
-    @Environment(AppRouter.self) private var router
+    /// Optional, not because a sheet might be drawn without a router —
+    /// it always has one — but because SwiftUI updates a presented sheet's
+    /// content *while the host is being torn down*, and a non-optional
+    /// `@Environment(AppRouter.self)` read traps there (the crash
+    /// `StorefrontAutoRoute` documents). `OfficeCard` reads it the same
+    /// way for the same reason. A nil router means the tap has nowhere to
+    /// go, which on a sheet that is closing is exactly right.
+    @Environment(AppRouter.self) private var router: AppRouter?
 
     var body: some View {
         let state = engine.state
@@ -138,7 +145,7 @@ struct MoneySheetContent: View {
         Button {
             Haptics.tap()
             beforeRoute?()
-            router.go(route)
+            router?.go(route)
         } label: {
             Label(label, systemImage: systemImage)
                 .font(.system(.subheadline, design: .rounded).weight(.semibold))

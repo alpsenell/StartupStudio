@@ -63,19 +63,61 @@ final class NewspaperComposerTests: XCTestCase {
         // Week 4: the reviews (notable, company) beat the crash and the
         // incumbent (notable, but the world's news) and the birthday.
         XCTAssertEqual(issues[3].lead.headline, "Reviews are in for Overcast")
-        XCTAssertEqual(issues[3].lead.body, "Reviews are in for Overcast: 72")
+        // The deck is the day's numbers, not the headline's own sentence.
+        XCTAssertTrue(issues[3].lead.body.hasPrefix("Day 23: "), issues[3].lead.body)
         XCTAssertEqual(issues[3].lead.kicker, "Company")
         XCTAssertEqual(issues[3].lead.severity, .notable)
         XCTAssertEqual(issues[3].lead.day, 23)
 
         // Week 3: a chapter opening outranks the launch and the round.
         XCTAssertEqual(issues[2].lead.severity, .notable)
-        XCTAssertTrue(issues[2].lead.body.hasPrefix("Chapter 2:"), issues[2].lead.body)
+        XCTAssertTrue(issues[2].lead.headline.hasPrefix("Chapter 2"), issues[2].lead.headline)
 
         // Week 2: at equal severity the company's own strand leads the
         // team's, and the boom stays in the market column.
         XCTAssertEqual(issues[1].lead.headline, "Delivered for a client")
         XCTAssertFalse(issues[1].lead.body.contains("booming"))
+    }
+
+    /// Iteration 7 (R5, fix 5): the deck under the headline used to be the
+    /// sentence the headline was compressed from, so the front page said
+    /// one thing twice. It is now the rest of the copy, or the day's
+    /// numbers — never the headline again, on any week of any fixture.
+    func testTheDeckIsNeverTheSentenceTheHeadlineWasCompressedFrom() {
+        for state in [StoryFixtures.fourWeeks(), StoryFixtures.longRun(), StoryFixtures.newState(day: 0)] {
+            for issue in composer(state).issues() {
+                let lead = issue.lead
+                XCTAssertNotEqual(lead.body, lead.headline, "week \(issue.week)")
+                XCTAssertFalse(lead.body.isEmpty, "week \(issue.week)")
+                XCTAssertFalse(
+                    lead.body.hasPrefix(lead.headline),
+                    "week \(issue.week) repeats the headline: \(lead.body)"
+                )
+                XCTAssertFalse(
+                    Headline.compress(lead.body) == lead.headline,
+                    "week \(issue.week) is the same sentence twice: \(lead.body)"
+                )
+            }
+        }
+    }
+
+    /// When the copy has a second sentence, that is the deck; when it does
+    /// not, the deck is the day's money and standing.
+    func testTheDeckIsTheSecondSentenceOrTheNumbers() {
+        XCTAssertEqual(
+            NewspaperComposer.afterTheFirstSentence(
+                "Priya handed in her notice. She has three weeks of patience left."
+            ),
+            "She has three weeks of patience left."
+        )
+        // One sentence, or a remainder too thin to set: no deck from the copy.
+        XCTAssertNil(NewspaperComposer.afterTheFirstSentence("Reviews are in for Overcast: 72"))
+        XCTAssertNil(NewspaperComposer.afterTheFirstSentence("Shipped Overcast! Nice."))
+
+        // The numbers line names the day, the account and the standing.
+        let issue = composer(StoryFixtures.fourWeeks()).issues()[3]
+        XCTAssertTrue(issue.lead.body.contains("in the account"), issue.lead.body)
+        XCTAssertTrue(issue.lead.body.contains("reputation"), issue.lead.body)
     }
 
     func testTheWorldLeadsOnlyWhenTheCompanyHasNothingOfItsOwn() {

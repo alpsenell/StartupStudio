@@ -11,8 +11,8 @@ enum ProductBoxArt {
     /// Builds the sprite for a product.
     ///
     /// - Parameters:
-    ///   - typeID: the product type id ("mobile", "saas", …); picks the
-    ///     silhouette.
+    ///   - typeID: the product type id as `ProductTypes.json` spells it
+    ///     ("mobile_app", "saas_platform", …); picks the silhouette.
     ///   - topicID: the topic id; picks the palette.
     ///   - seed: the product id's low bits; picks the pattern variation.
     static func sprite(typeID: String, topicID: String, seed: UInt64) -> PixelSprite {
@@ -90,10 +90,35 @@ enum ProductBoxArt {
         return rows
     }
 
-    /// 14×14 device shapes, one per product type family.
-    private static func silhouette(typeID: String) -> [String] {
+    /// The device families the catalog's six types draw as. Two of them
+    /// share a shape — a SaaS platform and an enterprise tool are both the
+    /// stack of panes — and the monitor is both the desktop tool's own
+    /// shape and the fallback for a type this file has never heard of.
+    enum Silhouette: String, CaseIterable {
+        case handset, browser, cartridge, stack, monitor
+    }
+
+    /// The family a product type draws as, or `nil` for an id the catalog
+    /// does not contain. `ProductBoxArtTests` walks `ContentCatalog` and
+    /// fails if any shipped type lands here as `nil` — which is how the
+    /// keys drifted from "mobile"/"web" to the real ids for a year
+    /// without anybody noticing that every box on the shelf was the same
+    /// monitor.
+    static func family(typeID: String) -> Silhouette? {
         switch typeID {
-        case "mobile":
+        case "mobile_app": .handset
+        case "web_app": .browser
+        case "game": .cartridge
+        case "saas_platform", "enterprise_tool": .stack
+        case "desktop_tool": .monitor
+        default: nil
+        }
+    }
+
+    /// 14×14 device shapes, one per family.
+    private static func silhouette(typeID: String) -> [String] {
+        switch family(typeID: typeID) ?? .monitor {
+        case .handset:
             [
                 "   OOOOOOOO   ",
                 "   OLLLLLLO   ",
@@ -108,7 +133,7 @@ enum ProductBoxArt {
                 "   OOOOOOOO   ",
                 "              ",
             ]
-        case "web":
+        case .browser:
             // A browser window: title bar with three dots, no stand —
             // otherwise it reads as the desktop monitor.
             [
@@ -125,7 +150,7 @@ enum ProductBoxArt {
                 " OOOOOOOOOOOO ",
                 "              ",
             ]
-        case "game":
+        case .cartridge:
             [
                 "  OOOOOOOOOO  ",
                 " OLLLLLLLLLLO ",
@@ -140,7 +165,7 @@ enum ProductBoxArt {
                 "              ",
                 "              ",
             ]
-        case "saas", "enterprise":
+        case .stack:
             [
                 "  OOOOOOOOOO  ",
                 "  OLLLLLLLLO  ",
@@ -155,8 +180,9 @@ enum ProductBoxArt {
                 "              ",
                 "              ",
             ]
-        default:
-            // Desktop and anything new: a monitor on a stand.
+        case .monitor:
+            // The desktop tool, and anything the catalog gains later: a
+            // monitor on a stand.
             [
                 " OOOOOOOOOOOO ",
                 " OLLLLLLLLLLO ",

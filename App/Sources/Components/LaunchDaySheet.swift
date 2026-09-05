@@ -16,7 +16,14 @@ struct LaunchDaySheet: View {
     let product: Product
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(AppRouter.self) private var router
+    /// Optional, not because a sheet might be drawn without a router —
+    /// it always has one — but because SwiftUI updates a presented sheet's
+    /// content *while the host is being torn down*, and a non-optional
+    /// `@Environment(AppRouter.self)` read traps there (the crash
+    /// `StorefrontAutoRoute` documents). `OfficeCard` reads it the same
+    /// way for the same reason. A nil router means the tap has nowhere to
+    /// go, which on a sheet that is closing is exactly right.
+    @Environment(AppRouter.self) private var router: AppRouter?
 
     /// How many reviews have been revealed so far.
     @State private var revealed = 0
@@ -45,7 +52,7 @@ struct LaunchDaySheet: View {
                         } else {
                             ReviewRevealList(release: release, revealed: revealed, productID: nil) { route in
                                 dismiss()
-                                router.go(route)
+                                router?.go(route)
                             }
                         }
                         salesSection(release)

@@ -80,10 +80,10 @@ struct HQScreen: View {
                 consumeRoute()
             }
             // A headless screenshot pass cannot tap the journal card:
-            // `-autoRoute newspaper|timeline` opens the screen on launch,
-            // and `-autoAnswer` keeps the run going past its questions.
+            // `-autoRoute newspaper|timeline` opens the screen on launch.
+            // (`-autoAnswer` starts from `AppRootView.game`, so it runs
+            // whichever tab the pass opened on — R5, fix 4.)
             .task {
-                DebugLaunch.startAutoAnswering(engine: engine)
                 if let route = DebugLaunch.launchStoryRoute { router.go(route) }
             }
         }

@@ -42,8 +42,9 @@ struct NewspaperIssue: Identifiable, Equatable {
     var id: Int { week }
 
     /// The lead story: a kicker naming the strand, a headline short
-    /// enough for the bitmap face, and the journal's own sentence as the
-    /// body.
+    /// enough for the bitmap face, and a deck under it that says something
+    /// the headline did not — never the sentence the headline was
+    /// compressed from.
     struct Story: Equatable {
         let kicker: String
         let headline: String
@@ -129,7 +130,7 @@ struct NewspaperComposer {
             .filter { range.contains($0.1) }
             .map { Dated(event: $0.0, day: $0.1, line: copy.line(for: $0.0), category: copy.category(of: $0.0)) }
 
-        let lead = leadStory(from: events, week: week)
+        let (lead, leadSource) = leadStory(from: events, week: week)
         let isLatest = week == latestWeek
 
         return NewspaperIssue(
@@ -143,7 +144,7 @@ struct NewspaperComposer {
             lead: lead,
             rivalColumn: rivalColumn(from: events),
             marketColumn: marketColumn(from: events, includeForecast: isLatest),
-            smallPrint: smallPrint(from: events, excluding: lead),
+            smallPrint: smallPrint(from: events, excluding: leadSource),
             photo: photo(endingDay: end, lead: lead, isLatest: isLatest)
         )
     }
@@ -184,7 +185,11 @@ struct NewspaperComposer {
     /// a week with nothing of its own leads with the world's news, which
     /// otherwise stays in its columns. A week with nothing worth a
     /// headline gets the quiet-week story rather than a blank.
-    private func leadStory(from events: [Dated], week: Int) -> NewspaperIssue.Story {
+    ///
+    /// Returns the story and the event's own line, which the small print
+    /// needs to leave out — the body is no longer that line, so equality
+    /// on it would print the lead twice.
+    private func leadStory(from events: [Dated], week: Int) -> (NewspaperIssue.Story, String?) {
         let newsworthy = events.filter {
             !Self.isRoutine($0.event) && !Self.isDrumbeat($0.event) && $0.category != .life
         }
@@ -196,17 +201,61 @@ struct NewspaperComposer {
             return lhs.offset < rhs.offset
         }
         guard let best else {
-            return quietWeekStory(week: week)
+            return (quietWeekStory(week: week), nil)
         }
         let dated = best.element
-        return NewspaperIssue.Story(
-            kicker: kicker(for: dated.category),
-            headline: Headline.compress(dated.line.message),
-            body: dated.line.message,
-            day: dated.day,
-            severity: dated.severity,
-            icon: dated.line.icon
+        return (
+            NewspaperIssue.Story(
+                kicker: kicker(for: dated.category),
+                headline: Headline.compress(dated.line.message),
+                body: leadBody(for: dated),
+                day: dated.day,
+                severity: dated.severity,
+                icon: dated.line.icon
+            ),
+            dated.line.message
         )
+    }
+
+    /// The sub-line under the headline.
+    ///
+    /// It used to be the journal's sentence — the *same* sentence the
+    /// headline was compressed from, so the front page said one thing
+    /// twice ("Reviews are in for Overcast" / "Reviews are in for
+    /// Overcast: 72"). A newspaper's deck adds something the headline did
+    /// not have: the rest of the copy when there is any, and otherwise the
+    /// day's numbers, which is what a reader would ask next.
+    private func leadBody(for dated: Dated) -> String {
+        Self.afterTheFirstSentence(dated.line.message) ?? numbersLine(for: dated)
+    }
+
+    /// Everything after the first sentence of `message`, or `nil` when the
+    /// copy is a single sentence (most of it is) or the remainder is too
+    /// thin to set as a paragraph.
+    static func afterTheFirstSentence(_ message: String) -> String? {
+        var cut: String.Index?
+        for terminator in [". ", "! ", "? "] {
+            guard let range = message.range(of: terminator) else { continue }
+            if cut.map({ range.upperBound < $0 }) ?? true { cut = range.upperBound }
+        }
+        guard let cut else { return nil }
+        let rest = message[cut...].trimmingCharacters(in: .whitespaces)
+        guard rest.split(separator: " ").count >= 3 else { return nil }
+        return rest
+    }
+
+    /// The day's money, and where the company stood at the end of it: the
+    /// deck for a headline whose copy is one sentence long.
+    private func numbersLine(for dated: Dated) -> String {
+        let entries = state.ledger.entries.filter { $0.day == dated.day }
+        let inflow = entries.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount }
+        let outflow = entries.filter { $0.amount < 0 }.reduce(0) { $0 - $1.amount }
+        var parts: [String] = []
+        if inflow > 0 { parts.append("+\(inflow.money) in") }
+        if outflow > 0 { parts.append("−\(outflow.money) out") }
+        parts.append("\(state.company.cash.money) in the account")
+        parts.append("reputation \(Int(state.company.reputation.rounded()))")
+        return "Day \(dated.day): " + parts.joined(separator: " · ")
     }
 
     /// Severity in tens, the company's own strands in ones: a notable
@@ -314,14 +363,14 @@ struct NewspaperComposer {
 
     /// The quiet events, oldest first, that did not make the lead. The
     /// industry drumbeat lands here too.
-    private func smallPrint(from events: [Dated], excluding lead: NewspaperIssue.Story) -> [String] {
+    private func smallPrint(from events: [Dated], excluding leadMessage: String?) -> [String] {
         let quiet = events.filter { dated in
             switch dated.severity {
             case .quiet, .info: break
             case .notable, .critical: return false
             }
             if case .networkingTalk = dated.event { return false }
-            return dated.line.message != lead.body
+            return dated.line.message != leadMessage
         }
         let lines = quiet.map { dated -> String in
             var message = dated.line.message
