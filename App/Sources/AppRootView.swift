@@ -181,31 +181,51 @@ struct AppRootView: View {
             }
     }
 
+    /// Iteration 7 (R1): the tour introduces the tabs one beat at a time,
+    /// so the bar draws only the ones it has reached — all five by the
+    /// desk beat, and always all five for anyone not on the tour.
     private func tabs(engine: GameEngine) -> some View {
-        TabView(selection: Binding(get: { router.tab }, set: { router.tab = $0 })) {
-            HQScreen(engine: engine) { session.requestOnboarding() }
-                .tabItem { Label("HQ", systemImage: "building.2") }
-                .tag(GameTab.hq)
+        let visible = session.tutorial?.visibleTabs ?? TutorialScript.allTabs
+        return TabView(selection: Binding(get: { router.tab }, set: { router.tab = $0 })) {
+            if visible.contains(.hq) {
+                HQScreen(engine: engine) { session.requestOnboarding() }
+                    .tutorialCardInset(session: session, engine: engine)
+                    .tabItem { Label("HQ", systemImage: "building.2") }
+                    .tag(GameTab.hq)
+            }
 
-            LifeScreen(engine: engine)
-                .tabItem { Label("Life", systemImage: "heart.fill") }
-                .tag(GameTab.life)
+            if visible.contains(.life) {
+                LifeScreen(engine: engine)
+                    .tutorialCardInset(session: session, engine: engine)
+                    .tabItem { Label("Life", systemImage: "heart.fill") }
+                    .tag(GameTab.life)
+            }
 
-            TeamScreen(engine: engine)
-                .tabItem { Label("Team", systemImage: "person.2.fill") }
-                .badge(EmployeeStatus.attentionCount(in: engine.state, balance: engine.balance, content: engine.content))
-                .tag(GameTab.team)
+            if visible.contains(.team) {
+                TeamScreen(engine: engine)
+                    .tutorialCardInset(session: session, engine: engine)
+                    .tabItem { Label("Team", systemImage: "person.2.fill") }
+                    .badge(EmployeeStatus.attentionCount(in: engine.state, balance: engine.balance, content: engine.content))
+                    .tag(GameTab.team)
+            }
 
             // Products and R&D share one tab (segmented inside) to keep the
             // bar at five tabs.
-            ProductsScreen(engine: engine)
-                .tabItem { Label("Products", systemImage: "shippingbox.fill") }
-                .tag(GameTab.products)
+            if visible.contains(.products) {
+                ProductsScreen(engine: engine)
+                    .tutorialCardInset(session: session, engine: engine)
+                    .tabItem { Label("Products", systemImage: "shippingbox.fill") }
+                    .tag(GameTab.products)
+            }
 
-            BusinessScreen(engine: engine)
-                .tabItem { Label("Business", systemImage: "briefcase.fill") }
-                .tag(GameTab.business)
+            if visible.contains(.business) {
+                BusinessScreen(engine: engine)
+                    .tutorialCardInset(session: session, engine: engine)
+                    .tabItem { Label("Business", systemImage: "briefcase.fill") }
+                    .tag(GameTab.business)
+            }
         }
+        .tutorialTourRoot(session: session, engine: engine)
     }
 
     /// Presented on a first launch with no save, and whenever Settings

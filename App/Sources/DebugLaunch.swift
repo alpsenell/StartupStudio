@@ -156,7 +156,7 @@ enum DebugLaunch {
     #endif
 
     /// Whether this launch is a headless QA pass — `-autoSpeed`,
-    /// `-autoTab` or `-autoRoute` on the command line.
+    /// `-autoTab`, `-autoRoute` or `-autoTour` on the command line.
     ///
     /// Those two flags exist so a screenshot pass can land on a running
     /// game without tapping anything, and the front door and the
@@ -173,7 +173,7 @@ enum DebugLaunch {
         // door even alongside a speed, and the daily starts itself there.
         guard !arguments.contains("-autoDaily") else { return false }
         return arguments.contains("-autoSpeed") || arguments.contains("-autoTab")
-            || arguments.contains("-autoRoute")
+            || arguments.contains("-autoRoute") || arguments.contains("-autoTour")
         #else
         return false
         #endif

@@ -118,6 +118,18 @@ enum GameSettings {
         UserDefaults.standard.removeObject(forKey: dismissedTipsKey)
     }
 
+    // MARK: Iteration 7 — the first hour (R1)
+
+    private static let tutorialCompletedKey = "settings.tutorialCompleted"
+
+    /// Set once the tour has been finished or skipped. A fresh install
+    /// sees the tour once; nobody with this set sees it again, whatever
+    /// company they found next.
+    static var tutorialCompleted: Bool {
+        get { UserDefaults.standard.bool(forKey: tutorialCompletedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: tutorialCompletedKey) }
+    }
+
     private static func bool(forKey key: String, default fallback: Bool) -> Bool {
         UserDefaults.standard.object(forKey: key) as? Bool ?? fallback
     }

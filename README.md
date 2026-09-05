@@ -309,7 +309,10 @@ Either flag marks the launch as a headless pass: onboarding is skipped so
 the app reaches the game, and the weekly report does not auto-open (it
 holds the clock until somebody presses "Next week", which is right for a
 player and a wall for a screenshot run). Both are `#if DEBUG` only —
-release builds see neither.
+release builds see neither. `-autoTour <0–8>` lands a headless pass on
+one beat of the first-hour tour (`TutorialStep.rawValue`), with the tabs
+that beat has opened; the ship beat is shown rather than dormant, so it
+can be photographed on a company with nothing ready.
 
 ## Notes
 
