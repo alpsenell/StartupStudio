@@ -30,6 +30,11 @@ struct StartupStudioApp: App {
 
     private var gameRoot: some View {
         AppRootView(session: session)
+            // Iteration 7 (R4): `startupstudio://seed/<code>` off a share
+            // card parks the code for the title screen's *From a code* row.
+            .onOpenURL { url in
+                session.handleOpenURL(url)
+            }
             .onChange(of: scenePhase) { _, newPhase in
                 switch newPhase {
                 case .active:

@@ -69,6 +69,8 @@ final class GameSession {
     var daily: DailyState?
     /// A code that arrived by URL, for the custom page to pick up (R4).
     var pendingSeedCode: SeedCode?
+    /// *Custom company* was asked for: the flow opens on the custom page (R4).
+    var customGameRequested = false
     /// Whether the full game is owned (R6).
     var unlock: UnlockState = .unknown
 

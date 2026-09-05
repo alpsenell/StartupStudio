@@ -21,6 +21,8 @@ struct OfficeCard: View {
     @State private var destination: OfficeTapDestination?
     /// Whether the first-time "tap anyone" line has been dismissed.
     @State private var tapHintDismissed = GameSettings.dismissedTips.contains(OfficeTapHint.tipID)
+    /// Iteration 7 (R4): the office photo, as a share card.
+    @State private var sharingPhoto = false
 
     /// Draws the scene with this pressed, for a snapshot of the pressed
     /// state; the live card leaves it to the scene's own gesture.
@@ -79,6 +81,27 @@ struct OfficeCard: View {
                 )
             }
             .frame(maxWidth: .infinity)
+            // R4: a small camera on the frame shares the office photo.
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    Haptics.tap()
+                    Sounds.play(.tap)
+                    sharingPhoto = true
+                } label: {
+                    Image(systemName: "camera.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Theme.pixelInk)
+                        .padding(5)
+                        .background(Theme.pixelPaper)
+                        .overlay {
+                            PixelPanelBorder(thickness: 2, corner: 2)
+                                .fill(Theme.pixelInk)
+                        }
+                }
+                .buttonStyle(.plain)
+                .padding(Theme.Spacing.sm + 3)
+                .accessibilityLabel("Share a photo of the office")
+            }
 
             if showsTapHint {
                 OfficeTapHint { dismissTapHint() }
@@ -148,6 +171,9 @@ struct OfficeCard: View {
         }
         .sheet(isPresented: $showingAmenities) {
             AmenitiesSheet(engine: engine)
+        }
+        .sheet(isPresented: $sharingPhoto) {
+            ShareCardSheet(card: .officePhoto(engine: engine))
         }
         .fullScreenCover(isPresented: $showingCityMap) {
             CityMapScreen(engine: engine)

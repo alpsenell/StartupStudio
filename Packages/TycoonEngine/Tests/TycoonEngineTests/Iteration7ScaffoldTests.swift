@@ -156,7 +156,7 @@ struct Iteration7ScaffoldTests {
 
     // MARK: Seed codes (R4 implements)
 
-    @Test("A seed code round-trips", .disabled("R4 implements SeedCode"))
+    @Test("A seed code round-trips")
     func seedCodeRoundTrips() {
         let code = SeedCode(seed: 0xDEAD_BEEF_0000_0001, origin: .spinOut, difficulty: .hard)
         #expect(SeedCode.decode(code.encoded) == code)

@@ -12,9 +12,9 @@ struct TitleMenu {
         /// R3.
         static let daily = false
         /// R4.
-        static let custom = false
+        static let custom = true
         /// R4.
-        static let fromCode = false
+        static let fromCode = true
     }
 
     struct Row: Identifiable {

@@ -43,8 +43,17 @@ struct NewGameOptions {
     /// A code that arrived by URL or the *From a code* row, prefilling
     /// the Custom page. R4.
     var seedCode: SeedCode?
+    /// The endings the ledger has, for the origin lock and the earned
+    /// looks (R4). Passed in rather than read from the environment: a
+    /// full-screen cover does not see the presenting view's environment.
+    var endingsReached: Set<EndingKind> = []
 
     static let standard = NewGameOptions()
+
+    /// The origins padlocked on the Stakes page.
+    var lockedOrigins: Set<FoundingOrigin> {
+        Unlocks.lockedOrigins(endingsReached: endingsReached)
+    }
 }
 
 struct NewGameFlow: View {
@@ -53,8 +62,9 @@ struct NewGameFlow: View {
     /// Which optional pages the flow shows (iteration 7).
     var options: NewGameOptions = .standard
     /// Called with everything the flow collected; the session builds the
-    /// engine from it.
-    let onStart: (FounderProfile, String, Difficulty, FoundingOrigin) -> Void
+    /// engine from it. Iteration 7 (R4): the fifth value is what the
+    /// custom page added — `.standard` on the plain path.
+    let onStart: (FounderProfile, String, Difficulty, FoundingOrigin, RunSetup) -> Void
     /// Shown only when there is a game to go back to (Settings entry).
     var onCancel: (() -> Void)?
 
@@ -91,13 +101,28 @@ struct NewGameFlow: View {
     @State private var appearanceIndex = 0
     @State private var nameShuffle = 0
     @State private var introPage = 0
+    /// Iteration 7 (R4): what the custom page collects.
+    @State private var custom = CustomChoices()
+    @State private var prefilledFromCode = false
 
     /// Appearance seeds the picker cycles through. Fixed and small so the
     /// founder you chose is the founder you get.
-    private static let appearanceSeeds: [UInt64] = (0..<24).map { 0x5EED_0000 &+ UInt64($0) &* 2_654_435_761 }
+    static let appearanceSeeds: [UInt64] = (0..<24).map { 0x5EED_0000 &+ UInt64($0) &* 2_654_435_761 }
+
+    /// The 24 base looks and, after them, one per ending the ledger has
+    /// reached (R4), each with the ending it was earned for.
+    private var looks: [(seed: UInt64, earnedFor: EndingKind?)] {
+        Self.appearanceSeeds.map { ($0, nil) }
+            + Unlocks.earnedLookSeeds(endingsReached: options.endingsReached).map { ($0.seed, $0.ending) }
+    }
 
     private var appearanceSeed: UInt64 {
-        Self.appearanceSeeds[appearanceIndex % Self.appearanceSeeds.count]
+        looks[appearanceIndex % looks.count].seed
+    }
+
+    /// The ending the current look was earned for, if it is one of those.
+    private var currentLookEarnedFor: EndingKind? {
+        looks[appearanceIndex % looks.count].earnedFor
     }
 
     private var suggestedFounderName: String {
@@ -136,6 +161,25 @@ struct NewGameFlow: View {
             if !openedOnFirstStep, let first = steps.first {
                 openedOnFirstStep = true
                 step = first
+            }
+            // R4: a code from a card or a URL fills the custom page and
+            // sets the origin the Stakes page opens on.
+            if !prefilledFromCode, let code = options.seedCode {
+                prefilledFromCode = true
+                origin = custom.prefill(with: code)
+                difficulty = code.difficulty
+            }
+        }
+        // R4: the custom page's difficulty is the run's; the Stakes page
+        // keeps only the origins on this path.
+        .onChange(of: custom.difficulty) { _, new in
+            if options.showsCustomStep { difficulty = new }
+        }
+        // A code typed later on the page carries its own origin too.
+        .onChange(of: custom.entry) { old, new in
+            if case .code(let code) = new, old != new {
+                origin = code.origin
+                custom.difficulty = code.difficulty
             }
         }
     }
@@ -176,13 +220,10 @@ struct NewGameFlow: View {
 
     // MARK: - Iteration 7 placeholders
 
-    /// R4 replaces this with `CustomStep` (seed, difficulty, rivals,
-    /// incumbent, starting cash, and the line about leaderboards).
+    /// R4: seed, difficulty, rivals, incumbent, starting cash, and the
+    /// line about leaderboards.
     private var customStep: some View {
-        StepHeadline(
-            title: "A company on your terms",
-            detail: "Seed, stakes, rivals and cash. A custom company earns achievements but does not post to leaderboards."
-        )
+        CustomStepContent(choices: $custom, defaultCash: DifficultyCash.startingCash(for:))
     }
 
     /// R2 replaces this with `HeirloomsStep` (one person, perk or deed
@@ -222,8 +263,7 @@ struct NewGameFlow: View {
                 VStack(spacing: Theme.Spacing.md) {
                     HStack(spacing: Theme.Spacing.lg) {
                         Button {
-                            appearanceIndex = (appearanceIndex + Self.appearanceSeeds.count - 1)
-                                % Self.appearanceSeeds.count
+                            appearanceIndex = (appearanceIndex + looks.count - 1) % looks.count
                         } label: {
                             Image(systemName: "chevron.left.circle.fill").font(.title2)
                         }
@@ -234,7 +274,7 @@ struct NewGameFlow: View {
                             .transition(Theme.Motion.transition(.scale.combined(with: .opacity)))
 
                         Button {
-                            appearanceIndex = (appearanceIndex + 1) % Self.appearanceSeeds.count
+                            appearanceIndex = (appearanceIndex + 1) % looks.count
                         } label: {
                             Image(systemName: "chevron.right.circle.fill").font(.title2)
                         }
@@ -242,10 +282,15 @@ struct NewGameFlow: View {
                     }
                     .animation(Theme.Motion.selection, value: appearanceIndex)
 
-                    Text("Look \(appearanceIndex + 1) of \(Self.appearanceSeeds.count)")
+                    Text("Look \(appearanceIndex + 1) of \(looks.count)")
                         .font(.caption)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
+                    // R4: the ribbon on a look an ending earned.
+                    if let earnedFor = currentLookEarnedFor {
+                        EarnedLookRibbon(ending: earnedFor)
+                            .transition(Theme.Motion.transition(.opacity))
+                    }
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -308,7 +353,11 @@ struct NewGameFlow: View {
     // MARK: - Step 3: the stakes
 
     private var difficultyStep: some View {
-        StakesStepContent(origin: $origin, difficulty: $difficulty)
+        StakesStepContent(
+            origin: $origin, difficulty: $difficulty,
+            showsDifficulty: !options.showsCustomStep,
+            lockedOrigins: options.lockedOrigins
+        )
     }
 
     // MARK: - Step 4: the illustrated intro
@@ -382,7 +431,19 @@ struct NewGameFlow: View {
             archetype: archetype,
             appearanceSeed: appearanceSeed
         )
-        onStart(profile, resolvedCompanyName, difficulty, origin)
+        onStart(profile, resolvedCompanyName, difficulty, origin, runSetup)
+    }
+
+    /// R4: what the custom page adds. `.standard` unless the page was
+    /// shown and something on it moved.
+    private var runSetup: RunSetup {
+        guard options.showsCustomStep else { return .standard }
+        let defaultCash = DifficultyCash.startingCash(for: custom.difficulty)
+        return RunSetup(
+            seed: custom.entry.seed,
+            rules: custom.rules(defaultCash: defaultCash),
+            mode: custom.mode(defaultCash: defaultCash)
+        )
     }
 }
 
@@ -392,6 +453,10 @@ struct NewGameFlow: View {
 struct StakesStepContent: View {
     @Binding var origin: FoundingOrigin
     @Binding var difficulty: Difficulty
+    /// Off on the custom path (R4), where the rows live on the custom page.
+    var showsDifficulty = true
+    /// The origins padlocked (R4); `nil` lets the picker read the session.
+    var lockedOrigins: Set<FoundingOrigin>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
@@ -399,17 +464,19 @@ struct StakesStepContent: View {
                 title: "How does it start?",
                 detail: "Four ways to found it. Each one costs something the others don't."
             )
-            OriginPicker(origin: $origin)
+            OriginPicker(origin: $origin, lockedOrigins: lockedOrigins)
 
-            StepHeadline(
-                title: "How hard should this be?",
-                detail: "Difficulty scales starting cash, costs, and how forgiving the market is."
-            )
-            .padding(.top, Theme.Spacing.sm)
-            VStack(spacing: Theme.Spacing.sm) {
-                ForEach(Difficulty.allCases, id: \.self) { candidate in
-                    DifficultyRow(difficulty: candidate, isSelected: candidate == difficulty) {
-                        withAnimation(Theme.Motion.selection) { difficulty = candidate }
+            if showsDifficulty {
+                StepHeadline(
+                    title: "How hard should this be?",
+                    detail: "Difficulty scales starting cash, costs, and how forgiving the market is."
+                )
+                .padding(.top, Theme.Spacing.sm)
+                VStack(spacing: Theme.Spacing.sm) {
+                    ForEach(Difficulty.allCases, id: \.self) { candidate in
+                        StakesDifficultyRow(difficulty: candidate, isSelected: candidate == difficulty) {
+                            withAnimation(Theme.Motion.selection) { difficulty = candidate }
+                        }
                     }
                 }
             }
@@ -418,9 +485,32 @@ struct StakesStepContent: View {
     }
 }
 
+/// R4: the ribbon under a look an ending earned.
+struct EarnedLookRibbon: View {
+    let ending: EndingKind
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.xs) {
+            Image(systemName: "rosette")
+                .font(.caption2.weight(.bold))
+            PixelText(text: Unlocks.ribbon(for: ending), scale: 2, color: Theme.ink(on: Theme.pixelAccent))
+        }
+        .foregroundStyle(Theme.ink(on: Theme.pixelAccent))
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, 4)
+        .background(Theme.pixelAccent)
+        .overlay {
+            PixelPanelBorder(thickness: 2, corner: 2)
+                .fill(Theme.pixelInk.opacity(0.55))
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Earned look: \(ending.headline)")
+    }
+}
+
 // MARK: - Pieces
 
-private struct StepHeadline: View {
+struct StepHeadline: View {
     let title: String
     let detail: String
 
@@ -546,7 +636,7 @@ private struct SkillChip: View {
     }
 }
 
-private struct DifficultyRow: View {
+struct StakesDifficultyRow: View {
     let difficulty: Difficulty
     let isSelected: Bool
     let action: () -> Void
@@ -688,5 +778,5 @@ private struct IntroPanelView: View {
     NewGameFlow(content: (try? ContentCatalog.loadBundled()) ?? .init(
         productTypes: [], topics: [], techTree: [], events: [],
         names: NamePools(firstNames: [], lastNames: [], clientCompanies: [])
-    )) { _, _, _, _ in }
+    )) { _, _, _, _, _ in }
 }
