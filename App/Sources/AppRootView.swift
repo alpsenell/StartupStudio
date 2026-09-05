@@ -42,10 +42,12 @@ struct AppRootView: View {
         .fullScreenCover(isPresented: onboardingPresented) {
             NewGameFlow(
                 content: engine.content,
-                onStart: { profile, companyName, difficulty, origin in
+                // R2: the Heirlooms page, when the ledger offers something.
+                options: session.newGameOptions,
+                onStart: { profile, companyName, difficulty, origin, heirloom in
                     session.startNewGame(
                         profile: profile, companyName: companyName, difficulty: difficulty,
-                        origin: origin
+                        origin: origin, heirloom: heirloom
                     )
                     shell.rebase(to: session.engine)
                     router.tab = .hq

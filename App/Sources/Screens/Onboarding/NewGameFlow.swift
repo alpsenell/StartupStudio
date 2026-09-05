@@ -43,6 +43,10 @@ struct NewGameOptions {
     /// A code that arrived by URL or the *From a code* row, prefilling
     /// the Custom page. R4.
     var seedCode: SeedCode?
+    /// What the Heirlooms page offers from. R2.
+    var ledger: LegacyLedger = .empty
+    /// Open on the Heirlooms page (the `-autoHeirlooms` screenshot pass). R2.
+    var startsOnHeirlooms = false
 
     static let standard = NewGameOptions()
 }
@@ -54,7 +58,7 @@ struct NewGameFlow: View {
     var options: NewGameOptions = .standard
     /// Called with everything the flow collected; the session builds the
     /// engine from it.
-    let onStart: (FounderProfile, String, Difficulty, FoundingOrigin) -> Void
+    let onStart: (FounderProfile, String, Difficulty, FoundingOrigin, Heirloom?) -> Void
     /// Shown only when there is a game to go back to (Settings entry).
     var onCancel: (() -> Void)?
 
@@ -88,6 +92,8 @@ struct NewGameFlow: View {
     @State private var archetype: FounderArchetype = .hacker
     @State private var difficulty: Difficulty = .normal
     @State private var origin: FoundingOrigin = .garage
+    /// The one thing carried from the ledger (R2); `nil` is "carry nothing".
+    @State private var heirloom: Heirloom?
     @State private var appearanceIndex = 0
     @State private var nameShuffle = 0
     @State private var introPage = 0
@@ -135,7 +141,7 @@ struct NewGameFlow: View {
             if companyName.isEmpty { companyName = suggestedCompanyName }
             if !openedOnFirstStep, let first = steps.first {
                 openedOnFirstStep = true
-                step = first
+                step = options.startsOnHeirlooms && steps.contains(.heirlooms) ? .heirlooms : first
             }
         }
     }
@@ -185,13 +191,9 @@ struct NewGameFlow: View {
         )
     }
 
-    /// R2 replaces this with `HeirloomsStep` (one person, perk or deed
-    /// from the ledger, spent once).
+    /// R2: one person, perk or deed from the ledger, spent once.
     private var heirloomsStep: some View {
-        StepHeadline(
-            title: "One thing from the last company",
-            detail: "A person, a perk, or the deed. It carries once, and a company that carries one is unranked."
-        )
+        HeirloomsStep(ledger: options.ledger, content: content, selection: $heirloom)
     }
 
     // MARK: - Step 1: the founder
@@ -382,7 +384,8 @@ struct NewGameFlow: View {
             archetype: archetype,
             appearanceSeed: appearanceSeed
         )
-        onStart(profile, resolvedCompanyName, difficulty, origin)
+        // The heirloom only counts when the page was shown (R2).
+        onStart(profile, resolvedCompanyName, difficulty, origin, options.showsHeirloomsStep ? heirloom : nil)
     }
 }
 
@@ -688,5 +691,5 @@ private struct IntroPanelView: View {
     NewGameFlow(content: (try? ContentCatalog.loadBundled()) ?? .init(
         productTypes: [], topics: [], techTree: [], events: [],
         names: NamePools(firstNames: [], lastNames: [], clientCompanies: [])
-    )) { _, _, _, _ in }
+    )) { _, _, _, _, _ in }
 }

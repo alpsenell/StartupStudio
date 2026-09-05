@@ -46,7 +46,9 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
         let session = GameSession(saveDirectory: directory, slot: 0, remembersSlot: false)
 
         XCTAssertTrue(session.engine.mayAdvance, "no gate means the clock runs")
-        XCTAssertNil(session.engine.eventSink)
+        // R2's ledger observer rides every engine from launch; it is the only one.
+        XCTAssertEqual(Array(session.eventObservers.keys), ["legacy"])
+        XCTAssertNotNil(session.engine.eventSink)
 
         let closed = RefusingGate(id: "unlock", open: false)
         session.installGate(closed)
@@ -93,7 +95,8 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
         XCTAssertTrue(menu.enabledRows.isEmpty, "every row is behind a flag that ships off")
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)
-        XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.gameCenter || ServiceFlags.restore)
+        // R2 flipped `cloud`; the other two stay off until their lanes land.
+        XCTAssertFalse(ServiceFlags.gameCenter || ServiceFlags.restore)
     }
 
     func testPrivacyManifestShipsInTheBundleAndDeclaresNoTracking() throws {

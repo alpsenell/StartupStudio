@@ -40,6 +40,8 @@ struct TitleScreen: View {
                     session.openSlot(slot)
                 },
                 onDeleteSlot: { slot in slotToDelete = slot },
+                // R2: "Slot 2 · updated from iCloud, day 340", when it was.
+                notice: session.cloud.titleNotice,
                 // Iteration 7: each row is behind its lane's flag in
                 // `TitleMenu.Flags`; the closures are the lanes' to fill.
                 menu: .make(
@@ -147,6 +149,9 @@ struct TitleScreenContent: View {
     var onNewCompany: () -> Void = {}
     var onOpenSlot: (Int) -> Void = { _ in }
     var onDeleteSlot: (Int) -> Void = { _ in }
+    /// R2: one line under the masthead when a slot came in from iCloud;
+    /// nothing when `nil`.
+    var notice: String? = nil
     /// Iteration 7: the rows under New company. Nothing is drawn while
     /// every row is off.
     var menu: TitleMenu = TitleMenu()
@@ -155,6 +160,14 @@ struct TitleScreenContent: View {
         VStack(spacing: Theme.Spacing.lg) {
             hero
             masthead
+            if let notice {
+                Label(notice, systemImage: "icloud.and.arrow.down")
+                    .font(.caption.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.accent)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityLabel(notice)
+            }
             if let current {
                 ContinueCard(summary: current, action: onContinue)
             }
