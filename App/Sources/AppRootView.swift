@@ -30,7 +30,11 @@ struct AppRootView: View {
         // the engine's state calls for.
         ZStack {
             if session.isAtFrontDoor {
+                // R8: the front door takes the same centred column as the
+                // game, so an iPad opens on a title screen the size of a
+                // title screen rather than a wall of office.
                 TitleScreen(session: session)
+                    .gameColumn()
                     .transition(Theme.Motion.transition(.opacity))
             } else {
                 game(engine: engine)
@@ -47,6 +51,20 @@ struct AppRootView: View {
         // The new-game flow is opened from the front door, into the slot
         // the player picked there; cancelling goes back to the door.
         .fullScreenCover(isPresented: onboardingPresented) {
+            newGameFlow(engine: engine)
+                .gameColumn()
+        }
+        .alert("Couldn't load your save", isPresented: loadFailurePresented) {
+            Button("OK") { session.clearLoadFailure() }
+        } message: {
+            Text(session.loadFailureMessage ?? "")
+        }
+    }
+
+    /// The onboarding flow, in its own function so the cover above can put
+    /// it in the column — a cover is presented at window level, where the
+    /// game's own frame does not reach it.
+    private func newGameFlow(engine: GameEngine) -> some View {
             NewGameFlow(
                 content: engine.content,
                 // Iteration 7 (R4): the custom page and its prefill, the
@@ -65,13 +83,72 @@ struct AppRootView: View {
                 onCancel: { session.cancelCustomGame() }
             )
             .interactiveDismissDisabled()
-        }
-        .alert("Couldn't load your save", isPresented: loadFailurePresented) {
-            Button("OK") { session.clearLoadFailure() }
-        } message: {
-            Text(session.loadFailureMessage ?? "")
+    }
+
+    /// The ending: the founder biography, won or lost. In its own function
+    /// for the same reason as `newGameFlow` — a cover is outside the
+    /// game's frame, so it takes the column itself.
+    ///
+    /// WS-F: four endings now, graded by `EndingKind.isSuccess` rather
+    /// than one named case, and both screens are thin wrappers on the
+    /// founder biography, so they take the engine and hand back the
+    /// founder to play again as.
+    @ViewBuilder
+    private func endingCover(engine: GameEngine) -> some View {
+        if let info = engine.state.gameOver {
+            // WS-F: four endings now, graded by `EndingKind.isSuccess`
+            // rather than one named case, and both screens are thin
+            // wrappers on the founder biography, so they take the engine
+            // and hand back the founder to play again as.
+            // Iteration 7 (R4): the share button opens the biography card.
+            // Iteration 7 (R5): "Keep running it", on the two endings the
+            // founder chose for themselves. Sending it clears the game
+            // over, which is what dismisses this cover — the binding reads
+            // the engine, so there is nothing else to close.
+            let actions = BiographyActions(
+                onShare: { sharingBiography = true },
+                onContinueRunning: canContinue(info) ? {
+                    engine.send(.continueAfterEnding)
+                } : nil
+            )
+            if info.kind.isSuccess {
+                GameWonView(
+                    engine: engine, info: info,
+                    onNewGame: { difficulty, founder, origin in
+                        session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
+                    },
+                    onReplay: { session.replayCurrentGame() },
+                    actions: actions
+                )
+                .sheet(isPresented: $sharingBiography) {
+                    ShareCardSheet(card: .biography(engine: engine, info: info))
+                }
+            } else {
+                GameOverView(
+                    engine: engine, info: info,
+                    onNewGame: { difficulty, founder, origin in
+                        session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
+                    },
+                    onReplay: { session.replayCurrentGame() },
+                    actions: actions
+                )
+                .sheet(isPresented: $sharingBiography) {
+                    ShareCardSheet(card: .biography(engine: engine, info: info))
+                }
+            }
         }
     }
+
+    /// The widest the game's column is ever drawn (R8).
+    ///
+    /// The iPad runs the phone layout in a centred column rather than a
+    /// second design: 640 points is a large phone's width plus a little,
+    /// which is as wide as a one-column reading measure wants to be and
+    /// exactly what the pixel scenes were drawn for. Everything outside
+    /// it is `Theme.screenBackground`, so the letterbox is the game's own
+    /// paper rather than a grey gutter. On every iPhone the cap is wider
+    /// than the screen and therefore invisible.
+    static let maxColumnWidth: CGFloat = 640
 
     /// The game itself: the tabs and every layer that sits over them.
     private func game(engine: GameEngine) -> some View {
@@ -131,50 +208,8 @@ struct AppRootView: View {
             // so an acknowledgement can never land across the pause
             // reason or the report chip.
             .fullScreenCover(isPresented: gameOverPresented) {
-                if let info = engine.state.gameOver {
-                    // WS-F: four endings now, graded by `EndingKind.isSuccess`
-                    // rather than one named case, and both screens are thin
-                    // wrappers on the founder biography, so they take the
-                    // engine and hand back the founder to play again as.
-                    // Iteration 7 (R4): the share button opens the
-                    // biography card.
-                    // Iteration 7 (R5): "Keep running it", on the two
-                    // endings the founder chose for themselves. Sending it
-                    // clears the game over, which is what dismisses this
-                    // cover — the binding below reads the engine, so there
-                    // is nothing else to close.
-                    let actions = BiographyActions(
-                        onShare: { sharingBiography = true },
-                        onContinueRunning: canContinue(info) ? {
-                            engine.send(.continueAfterEnding)
-                        } : nil
-                    )
-                    if info.kind.isSuccess {
-                        GameWonView(
-                            engine: engine, info: info,
-                            onNewGame: { difficulty, founder, origin in
-                                session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
-                            },
-                            onReplay: { session.replayCurrentGame() },
-                            actions: actions
-                        )
-                        .sheet(isPresented: $sharingBiography) {
-                            ShareCardSheet(card: .biography(engine: engine, info: info))
-                        }
-                    } else {
-                        GameOverView(
-                            engine: engine, info: info,
-                            onNewGame: { difficulty, founder, origin in
-                                session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
-                            },
-                            onReplay: { session.replayCurrentGame() },
-                            actions: actions
-                        )
-                        .sheet(isPresented: $sharingBiography) {
-                            ShareCardSheet(card: .biography(engine: engine, info: info))
-                        }
-                    }
-                }
+                endingCover(engine: engine)
+                    .gameColumn()
             }
             // Pending rival offers surface here (not per tab) so the paused
             // timeline always has its question on screen.
@@ -209,6 +244,7 @@ struct AppRootView: View {
             if visible.contains(.hq) {
                 HQScreen(engine: engine) { session.requestOnboarding() }
                     .tutorialCardInset(session: session, engine: engine)
+                    .gameColumn()
                     .tabItem { Label("HQ", systemImage: "building.2") }
                     .tag(GameTab.hq)
             }
@@ -216,6 +252,7 @@ struct AppRootView: View {
             if visible.contains(.life) {
                 LifeScreen(engine: engine)
                     .tutorialCardInset(session: session, engine: engine)
+                    .gameColumn()
                     .tabItem { Label("Life", systemImage: "heart.fill") }
                     .tag(GameTab.life)
             }
@@ -223,6 +260,7 @@ struct AppRootView: View {
             if visible.contains(.team) {
                 TeamScreen(engine: engine)
                     .tutorialCardInset(session: session, engine: engine)
+                    .gameColumn()
                     .tabItem { Label("Team", systemImage: "person.2.fill") }
                     .badge(EmployeeStatus.attentionCount(in: engine.state, balance: engine.balance, content: engine.content))
                     .tag(GameTab.team)
@@ -233,6 +271,7 @@ struct AppRootView: View {
             if visible.contains(.products) {
                 ProductsScreen(engine: engine)
                     .tutorialCardInset(session: session, engine: engine)
+                    .gameColumn()
                     .tabItem { Label("Products", systemImage: "shippingbox.fill") }
                     .tag(GameTab.products)
             }
@@ -240,6 +279,7 @@ struct AppRootView: View {
             if visible.contains(.business) {
                 BusinessScreen(engine: engine)
                     .tutorialCardInset(session: session, engine: engine)
+                    .gameColumn()
                     .tabItem { Label("Business", systemImage: "briefcase.fill") }
                     .tag(GameTab.business)
             }
@@ -349,5 +389,26 @@ struct AppRootView: View {
                 if !presented { session.clearLoadFailure() }
             }
         )
+    }
+}
+
+// MARK: - The iPad column (iteration 7, R8)
+
+extension View {
+    /// Caps a tab's content at `AppRootView.maxColumnWidth` and centres it
+    /// on the game's own paper.
+    ///
+    /// Applied per tab rather than to the whole `TabView` on purpose: the
+    /// tab bar is the system's and wants the screen's full width — capped
+    /// with the content, iPadOS runs out of room for the fifth tab and
+    /// folds Business behind a chevron. So the chrome is native and
+    /// full-width, and only what the player reads is a column.
+    ///
+    /// On every iPhone the cap is wider than the screen, so this is
+    /// `maxWidth: .infinity` with a background nobody can see.
+    func gameColumn() -> some View {
+        frame(maxWidth: AppRootView.maxColumnWidth)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Theme.screenBackground.ignoresSafeArea())
     }
 }

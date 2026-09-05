@@ -12,8 +12,36 @@ struct CityMapScreen: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedDistrict: DistrictID
 
-    /// Pixel scale of the map content (fixed, so taps map exactly).
-    private static let mapScale = 3
+    /// The phone's pixel scale, and the floor everywhere: 224 × 3 = 672
+    /// points, panned inside the ScrollView on every iPhone.
+    private static let phoneMapScale = 3
+
+    /// The map's integer pixel scale for a view this wide (R8).
+    ///
+    /// It has to be a whole number and the same number the tap handler
+    /// divides by, which is why this is `.fixed(_)` rather than
+    /// `.fitWidth` — a pannable scene takes its exact drawn size so a
+    /// finger lands on the pixel it looks like it landed on.
+    ///
+    /// The map is presented as a full-screen cover, so on an iPad it gets
+    /// the whole 1,024-point screen rather than the game's centred column,
+    /// and a scale pinned at 3 left the city floating small in the middle
+    /// of it. Above 5 the districts stop reading as one city, so that is
+    /// the ceiling.
+    static func mapScale(forWidth width: CGFloat) -> Int {
+        let sceneWidth = CityMapComposer.sceneSize().width
+        guard width.isFinite, width > 0, sceneWidth > 0 else { return phoneMapScale }
+        return min(5, max(phoneMapScale, Int(width) / sceneWidth))
+    }
+
+    /// Room under the map for the district panel, so every district can be
+    /// scrolled clear of it. Expressed in *scene rows* rather than points
+    /// (280 points at the phone's scale 3, and the same rows of clearance
+    /// at every larger scale), so a bigger map keeps the same margin
+    /// around its own bottom edge.
+    static func panelClearance(scale: Int) -> CGFloat {
+        (280.0 / CGFloat(phoneMapScale) * CGFloat(scale)).rounded()
+    }
 
     init(engine: GameEngine, initialDistrict: DistrictID? = nil) {
         self.engine = engine
@@ -22,36 +50,42 @@ struct CityMapScreen: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
-                ScrollView([.horizontal, .vertical]) {
-                    PixelSceneView(
-                        placements: CityMapComposer.compose(districts: districtInfos),
-                        sceneSize: CityMapComposer.sceneSize(),
-                        scale: .fixed(Self.mapScale),
-                        accessibilityLabel: mapAccessibilityLabel
-                    )
-                    .onTapGesture { location in
-                        let x = Int(location.x) / Self.mapScale
-                        let y = Int(location.y) / Self.mapScale
-                        if let style = CityMapComposer.hitTest(x: x, y: y),
-                           let district = DistrictID(rawValue: style.rawValue) {
-                            selectedDistrict = district
+            GeometryReader { proxy in
+                let scale = Self.mapScale(forWidth: proxy.size.width)
+                ZStack(alignment: .bottom) {
+                    ScrollView([.horizontal, .vertical]) {
+                        PixelSceneView(
+                            placements: CityMapComposer.compose(districts: districtInfos),
+                            sceneSize: CityMapComposer.sceneSize(),
+                            scale: .fixed(scale),
+                            accessibilityLabel: mapAccessibilityLabel
+                        )
+                        .onTapGesture { location in
+                            let x = Int(location.x) / scale
+                            let y = Int(location.y) / scale
+                            if let style = CityMapComposer.hitTest(x: x, y: y),
+                               let district = DistrictID(rawValue: style.rawValue) {
+                                selectedDistrict = district
+                            }
                         }
+                        // Keep every district reachable above the panel.
+                        .padding(.bottom, Self.panelClearance(scale: scale))
                     }
                     // The canvas is one picture; the districts laid over it
                     // are the things in it.
                     .accessibilityHidden(true)
-                    .overlay { districtElements }
+                    .overlay { districtElements(scale: scale) }
                     .accessibilityElement(children: .contain)
                     .accessibilityLabel(mapAccessibilityLabel)
-                    .padding(.bottom, 280) // keep every district reachable above the panel
-                }
-                .defaultScrollAnchor(.center)
-                .background(Theme.screenBackground)
+                    .defaultScrollAnchor(.center)
+                    .background(Theme.screenBackground)
 
-                DistrictDetailPanel(engine: engine, district: selectedDistrict)
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .padding(.bottom, Theme.Spacing.md)
+                    DistrictDetailPanel(engine: engine, district: selectedDistrict)
+                        .frame(maxWidth: AppRootView.maxColumnWidth)
+                        .padding(.horizontal, Theme.Spacing.lg)
+                        .padding(.bottom, Theme.Spacing.md)
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
             }
             .navigationTitle("City map")
             .navigationBarTitleDisplayMode(.inline)
@@ -113,9 +147,9 @@ struct CityMapScreen: View {
     /// does: the `DistrictDetailPanel` below is already showing the
     /// selection, so the terms, the rivals and the move/buy/sell buttons
     /// are the next elements after the map.
-    private var districtElements: some View {
+    private func districtElements(scale mapScale: Int) -> some View {
         let scene = CityMapComposer.sceneSize()
-        let scale = CGFloat(Self.mapScale)
+        let scale = CGFloat(mapScale)
         return ZStack(alignment: .topLeading) {
             ForEach(mapElements) { element in
                 Color.clear

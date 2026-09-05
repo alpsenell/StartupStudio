@@ -43,6 +43,17 @@ targets:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        # Iteration 7 (R8): the iPad is the phone layout in a centred
+        # column, not a second design. Requiring full screen means the
+        # app is never asked for a multitasking size, so portrait-only
+        # holds there too (Split View demands all four orientations).
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+        UIRequiresFullScreen: true
+        # Iteration 7 (R8): the store listing's own keys.
+        LSApplicationCategoryType: public.app-category.simulation-games
+        NSHumanReadableCopyright: Copyright © 2026 Alp Senel. All rights reserved.
         # Iteration 7 (R4): a share card's code opens the app on the custom page.
         CFBundleURLTypes:
           - CFBundleURLName: com.alpsenel.startupstudio.seed
@@ -70,11 +81,15 @@ targets:
         DEVELOPMENT_TEAM: 6S7Q8F967Q
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES
-        MARKETING_VERSION: "0.1.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.0.0"
+        # CURRENT_PROJECT_VERSION is NOT set here on purpose: a target
+        # setting beats an xcconfig, and the build number comes from
+        # App/Config/Version.xcconfig, which `make gen` rewrites from
+        # `git rev-list --count HEAD`.
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        TARGETED_DEVICE_FAMILY: "1"
+        # Iteration 7 (R8): iPhone and iPad.
+        TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
@@ -82,6 +97,17 @@ targets:
       configs:
         Debug:
           CODE_SIGN_ENTITLEMENTS: App/StartupStudio.debug.entitlements
+        Release:
+          # R8: the screenshot fixtures (App/Resources/Fixtures) are DEBUG
+          # data for `-autoFixture`. This keeps them out of the shipped
+          # bundle — Xcode filters build-phase inputs by these globs.
+          EXCLUDED_SOURCE_FILE_NAMES: "release-*.json"
+    # The build number, rewritten by `make gen` from the commit count.
+    # An xcconfig because xcodegen cannot shell out and the number must
+    # not be hand-edited before every upload.
+    configFiles:
+      Debug: App/Config/Version.xcconfig
+      Release: App/Config/Version.xcconfig
     scheme:
       configVariants: []
       # Iteration 7 (R6): the one product, for simulator purchases. Never
