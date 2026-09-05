@@ -22,7 +22,13 @@ struct WarRoomScreen: View {
     let productID: UUID
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(AppRouter.self) private var router
+    /// Optional for the reason `LaunchDaySheet` and `OfficeCard` are:
+    /// SwiftUI updates presented content while its host is being torn
+    /// down, and a non-optional `@Environment(AppRouter.self)` read traps
+    /// there (the crash `StorefrontAutoRoute` documents). A nil router
+    /// means the deep link has nowhere to go, which on a screen that is
+    /// closing is exactly right.
+    @Environment(AppRouter.self) private var router: AppRouter?
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI updates
     /// this property for presented content before the environment is
@@ -58,7 +64,7 @@ struct WarRoomScreen: View {
                         onBack: { dismiss() },
                         onRoute: { route in
                             dismiss()
-                            router.go(route)
+                            router?.go(route)
                         }
                     )
                     .padding(Theme.Spacing.lg)

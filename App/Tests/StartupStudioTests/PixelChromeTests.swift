@@ -1,3 +1,4 @@
+import TycoonContent
 import TycoonEngine
 import XCTest
 
@@ -173,23 +174,62 @@ final class GameCalendarTests: XCTestCase {
 /// The generated product cover art has to be a valid sprite for every
 /// product type, and the same product must always draw the same box.
 final class ProductBoxArtTests: XCTestCase {
-    func testEveryProductTypeProducesAValidSprite() {
-        for typeID in ["mobile", "web", "desktop", "game", "saas", "enterprise", "unknown_type"] {
+    /// The shipped catalog, so the guard below reads the real ids rather
+    /// than a list somebody has to remember to update.
+    private func catalog() throws -> ContentCatalog {
+        try ContentCatalog.loadBundled()
+    }
+
+    func testEveryProductTypeProducesAValidSprite() throws {
+        for typeID in try catalog().productTypes.map(\.id) + ["unknown_type"] {
             let sprite = ProductBoxArt.sprite(typeID: typeID, topicID: "fitness", seed: 12)
             XCTAssertEqual(sprite.width, 24, "\(typeID) is not 24 wide")
             XCTAssertEqual(sprite.height, 24, "\(typeID) is not 24 tall")
         }
     }
 
+    /// Iteration 7 (R5, fix 3): the box art was keyed on "mobile"/"web",
+    /// which `ProductTypes.json` has never called them — every product in
+    /// the game drew the fallback monitor. This is the guard that fails
+    /// the build if the keys and the catalog part company again.
+    func testEveryCatalogTypeHitsItsOwnSilhouette() throws {
+        let types = try catalog().productTypes
+        XCTAssertFalse(types.isEmpty)
+        for type in types {
+            XCTAssertNotNil(
+                ProductBoxArt.family(typeID: type.id),
+                "\(type.id) draws the fallback silhouette"
+            )
+        }
+        // An id the catalog does not have still draws — as the fallback.
+        XCTAssertNil(ProductBoxArt.family(typeID: "unknown_type"))
+        // And the six types are not all the same picture: a phone, a
+        // browser, a cartridge, a stack and a monitor.
+        let families = Set(types.compactMap { ProductBoxArt.family(typeID: $0.id) })
+        XCTAssertEqual(families.count, 5)
+    }
+
     func testTheSameProductAlwaysDrawsTheSameBox() {
-        let first = ProductBoxArt.sprite(typeID: "mobile", topicID: "fitness", seed: 99)
-        let second = ProductBoxArt.sprite(typeID: "mobile", topicID: "fitness", seed: 99)
+        let first = ProductBoxArt.sprite(typeID: "mobile_app", topicID: "fitness", seed: 99)
+        let second = ProductBoxArt.sprite(typeID: "mobile_app", topicID: "fitness", seed: 99)
         XCTAssertEqual(first, second)
     }
 
     func testDifferentTopicsGetDifferentBoxes() {
-        let fitness = ProductBoxArt.sprite(typeID: "mobile", topicID: "fitness", seed: 99)
-        let finance = ProductBoxArt.sprite(typeID: "mobile", topicID: "finance", seed: 99)
+        let fitness = ProductBoxArt.sprite(typeID: "mobile_app", topicID: "fitness", seed: 99)
+        let finance = ProductBoxArt.sprite(typeID: "mobile_app", topicID: "finance", seed: 99)
         XCTAssertNotEqual(fitness, finance)
+    }
+
+    /// The three shapes that used to be unreachable now draw, and they
+    /// draw differently from the monitor everything used to fall back to.
+    func testTheRealIdsDrawTheirOwnShapes() {
+        let desktop = ProductBoxArt.sprite(typeID: "desktop_tool", topicID: "fitness", seed: 5)
+        for typeID in ["mobile_app", "web_app", "game", "saas_platform", "enterprise_tool"] {
+            XCTAssertNotEqual(
+                ProductBoxArt.sprite(typeID: typeID, topicID: "fitness", seed: 5), desktop,
+                "\(typeID) still draws the desktop monitor"
+            )
+        }
     }
 }

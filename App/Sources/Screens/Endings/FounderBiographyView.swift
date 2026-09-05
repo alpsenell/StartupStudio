@@ -118,6 +118,17 @@ struct FounderBiographyView: View {
                     .foregroundStyle(Theme.positiveCash)
             }
 
+            // Iteration 7 (R5): the ending this company already had and
+            // kept going past. The banner above is untouched — this is one
+            // line under it, and it is the only thing on the screen that
+            // knows the run has been here before.
+            if let epilogue = state.epilogue {
+                Text(Self.epilogueLine(epilogue, endedOn: state.gameOver?.day))
+                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
             HStack(spacing: Theme.Spacing.sm) {
                 PixelPortrait(
                     seed: state.employees.first?.appearanceSeed ?? 0,
@@ -154,6 +165,17 @@ struct FounderBiographyView: View {
                 StatPill(systemImage: "clock", value: state.dateLabel)
             }
         }
+    }
+
+    /// "Public since day 812 · still running" while the company is
+    /// running, and what it did with the extra time once something finally
+    /// stopped it — "still running" under a bankruptcy headline would be
+    /// the screen contradicting itself.
+    static func epilogueLine(_ epilogue: Epilogue, endedOn endDay: Int?) -> String {
+        let since = "\(epilogue.ending.epilogueNoun) since day \(epilogue.day)"
+        guard let endDay else { return since + " · still running" }
+        let extra = max(0, endDay - epilogue.day)
+        return since + " · ran on for \(extra) more day\(extra == 1 ? "" : "s")"
     }
 
     private var bannerIcon: String {

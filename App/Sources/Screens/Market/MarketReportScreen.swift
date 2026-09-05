@@ -14,7 +14,13 @@ struct MarketReportScreen: View {
     var initialTopicID: String?
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(AppRouter.self) private var router
+    /// Optional for the reason `LaunchDaySheet` and `OfficeCard` are:
+    /// SwiftUI updates presented content while its host is being torn
+    /// down, and a non-optional `@Environment(AppRouter.self)` read traps
+    /// there (the crash `StorefrontAutoRoute` documents). A nil router
+    /// means the deep link has nowhere to go, which on a screen that is
+    /// closing is exactly right.
+    @Environment(AppRouter.self) private var router: AppRouter?
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -37,7 +43,7 @@ struct MarketReportScreen: View {
                     // Close the report first, then deep-link: the flow opens
                     // on the Products tab, not under this sheet.
                     dismiss()
-                    router.go(route)
+                    router?.go(route)
                 }
             }
             .toolbar {

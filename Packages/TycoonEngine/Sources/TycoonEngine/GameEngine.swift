@@ -123,6 +123,15 @@ public final class GameEngine {
     public func send(_ action: GameAction) -> [GameEvent] {
         let events = Reducer.apply(action, to: &state, balance: balance, content: content)
         if !events.isEmpty {
+            // Iteration 7 (R5): the tick that ended the run cancelled the
+            // loop for good and left `speed` where the player had it. If
+            // this action cleared the game over — "Keep running it" is the
+            // only one that can — the clock is allowed to run again, so
+            // the loop comes back here rather than waiting for a speed
+            // change to a value the control is already showing.
+            if state.gameOver == nil, state.speed != .paused, !isTickLoopRunning, mayAdvance {
+                restartTickLoop()
+            }
             autosave?(state)
             eventSink?(events)
         }

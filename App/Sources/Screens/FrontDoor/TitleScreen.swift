@@ -293,6 +293,10 @@ private struct ContinueCard: View {
         var parts = ["Day \(summary.day)"]
         if let ending = summary.endingKind {
             parts.append(ending.headline)
+        } else if let epilogue = summary.epilogueKind {
+            // Iteration 7 (R5): a company running past its own ending says
+            // so on the door, the way the biography does.
+            parts.append("\(epilogue.epilogueNoun) · still running")
         } else if let chapter = summary.chapter {
             var line = "Chapter \(chapter)"
             if let title = summary.chapterTitle, !title.isEmpty { line += " · \(title)" }
