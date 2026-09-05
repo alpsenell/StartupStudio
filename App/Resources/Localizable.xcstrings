@@ -278,6 +278,16 @@
         }
       }
     },
+    "%@ · %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@ · %3$@"
+          }
+        }
+      }
+    },
     "%@ · %lld desks · %@/wk rent" : {
       "localizations" : {
         "en" : {
@@ -305,6 +315,26 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ · Day %2$lld · %3$@"
+          }
+        }
+      }
+    },
+    "%@ · day %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · day %2$lld"
+          }
+        }
+      }
+    },
+    "%@ · day %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · day %2$lld of %3$lld"
           }
         }
       }
@@ -352,6 +382,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@%2$lld%% revenue per buyer reached"
+          }
+        }
+      }
+    },
+    "%@'s own. %@ to %@, in %@ steps." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@'s own. %2$@ to %3$@, in %4$@ steps."
           }
         }
       }
@@ -466,6 +506,16 @@
         }
       }
     },
+    "%@, locked. %@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, locked. %2$@. %3$@"
+          }
+        }
+      }
+    },
     "%@, locked. Requires %@" : {
       "localizations" : {
         "en" : {
@@ -563,6 +613,16 @@
     },
     "%lld" : {
 
+    },
+    "%lld %@ · %lld of 6 endings · %lld on the table" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@ · %3$lld of 6 endings · %4$lld on the table"
+          }
+        }
+      }
     },
     "%lld / %lld RP" : {
       "localizations" : {
@@ -783,6 +843,16 @@
     "%lld%% of the market" : {
 
     },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "%lld/%lld desks" : {
       "localizations" : {
         "en" : {
@@ -854,8 +924,20 @@
     "A %@ secures nothing; the bank lends on the company's name alone." : {
 
     },
-    "A company on your terms" : {
-      "comment" : "Onboarding page heading"
+    "A 1080 × 1350 image, the size a story wants." : {
+
+    },
+    "A code off a share card founds the same company on this phone: the same seed, the same start, the same stakes — and everything that comes with them." : {
+
+    },
+    "A company from a code earns achievements but does not post to leaderboards." : {
+
+    },
+    "A custom company earns achievements but does not post to leaderboards." : {
+
+    },
+    "A deep-pocketed giant that founds into your two best markets once you are worth the trouble." : {
+
     },
     "A distress bid for the name and the desks: taking it ends the run as a sale." : {
 
@@ -872,8 +954,8 @@
     "A pay cut hits morale hard, and underpaid people start listening to rivals." : {
 
     },
-    "A person, a perk, or the deed. It carries once, and a company that carries one is unranked." : {
-      "comment" : "Onboarding page subheading under the heading above"
+    "A person, a perk, or the deed. Whatever you take carries once — and a company that carries one never posts to the leaderboards." : {
+
     },
     "A premium for what you built: taking it ends the run as an acquisition." : {
 
@@ -942,6 +1024,15 @@
     "Apply %@/wk" : {
 
     },
+    "Asking the App Store for the price" : {
+
+    },
+    "Asking the App Store for the price…" : {
+
+    },
+    "Asks the App Store for a purchase made on another device" : {
+
+    },
     "Assign" : {
       "comment" : "Menu title: put an idle person on this piece of work"
     },
@@ -994,6 +1085,9 @@
     "Back to the office" : {
 
     },
+    "Back to the paused game. Nothing is lost." : {
+
+    },
     "Backend" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
     },
@@ -1005,6 +1099,16 @@
     },
     "Be supportive" : {
       "comment" : "Default generous answer to a staff question when the catalog has none"
+    },
+    "Beat %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Beat %1$lld of %2$lld"
+          }
+        }
+      }
     },
     "Best case with this crew: %lld out of 100" : {
 
@@ -1104,6 +1208,9 @@
     "Buy them out — %@" : {
 
     },
+    "Buys every chapter after the garage" : {
+
+    },
     "CHALLENGE" : {
       "comment" : "Bitmap kicker: a rival has launched into one of your topics. Uppercase A-Z only"
     },
@@ -1179,6 +1286,9 @@
     "City map, office in %@" : {
 
     },
+    "Clear the seed" : {
+
+    },
     "Client expects skill ~%lld. Nobody has worked on it yet." : {
 
     },
@@ -1214,6 +1324,9 @@
     "Code" : {
       "comment" : "Used both for the code build phase and for the founder coding skill. One word, on a chip or a bar label"
     },
+    "Code or number" : {
+
+    },
     "Coding" : {
       "comment" : "One of the three skills a person is rated 0-100 on"
     },
@@ -1226,11 +1339,24 @@
     "Cold" : {
 
     },
+    "Come back tomorrow for a new one." : {
+
+    },
     "Coming soon" : {
 
     },
     "Company" : {
       "comment" : "Money sheet card: the company purse"
+    },
+    "Company at %@ · %@%% yours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Company at %1$@ · %2$@%% yours"
+          }
+        }
+      }
     },
     "Company name" : {
 
@@ -1387,6 +1513,16 @@
     "Day %lld" : {
 
     },
+    "Day %lld · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Day %1$lld · %2$@"
+          }
+        }
+      }
+    },
     "Day %lld. %@" : {
       "localizations" : {
         "en" : {
@@ -1466,6 +1602,9 @@
     "Done" : {
 
     },
+    "Drawing the card" : {
+
+    },
     "Drop the rule" : {
 
     },
@@ -1488,11 +1627,17 @@
         }
       }
     },
+    "Earned look: %@" : {
+
+    },
     "Effect" : {
 
     },
     "Empty" : {
       "comment" : "Save slot title: nothing saved here"
+    },
+    "Ends the tour and opens every tab" : {
+
     },
     "Energy" : {
       "comment" : "Founder meter: how rested the founder is"
@@ -1504,6 +1649,9 @@
 
     },
     "Evenings" : {
+
+    },
+    "Every chapter after the garage — the loft, the studio, the scale-up and whatever it was all for — on this Apple ID, forever." : {
 
     },
     "Every development slot is busy. Ship something, or move to a bigger office for more." : {
@@ -1609,8 +1757,31 @@
     "From %@" : {
 
     },
+    "From %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "From %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "From a code" : {
+
+    },
     "Front page" : {
 
+    },
+    "Front page card: %@, week %lld. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Front page card: %1$@, week %2$lld. %3$@"
+          }
+        }
+      }
     },
     "Frontend" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
@@ -1861,6 +2032,9 @@
     "Loan amount" : {
 
     },
+    "Locked" : {
+
+    },
     "Longest serving: %@, joined day %lld" : {
       "localizations" : {
         "en" : {
@@ -1964,6 +2138,9 @@
     },
     "Name the studio" : {
       "comment" : "Onboarding page heading"
+    },
+    "Named studios shipping into your topics, copying your hits and starting price wars." : {
+
     },
     "Need %@ more" : {
 
@@ -2079,6 +2256,9 @@
     "No transactions yet — the books are still blank." : {
 
     },
+    "Nobody but you, start to finish." : {
+
+    },
     "Nobody can buy this any more." : {
 
     },
@@ -2110,6 +2290,9 @@
 
     },
     "Not in the store" : {
+
+    },
+    "Not now" : {
 
     },
     "Not reviewed yet" : {
@@ -2148,6 +2331,9 @@
     "Nothing posted yet." : {
 
     },
+    "Nothing reached the shelf." : {
+
+    },
     "Nothing to watch" : {
 
     },
@@ -2178,6 +2364,9 @@
     "On the market" : {
 
     },
+    "One purchase. No subscription, and nothing else in the game is for sale. Your save is exactly where you left it either way." : {
+
+    },
     "One thing from the last company" : {
       "comment" : "Onboarding page heading"
     },
@@ -2185,6 +2374,9 @@
 
     },
     "Open hiring" : {
+
+    },
+    "Open the custom page" : {
 
     },
     "Open the fortnight" : {
@@ -2197,6 +2389,9 @@
 
     },
     "Opens %@'s profile" : {
+
+    },
+    "Opens achievements and leaderboards" : {
 
     },
     "Opens details and the focus editor" : {
@@ -2227,6 +2422,12 @@
 
     },
     "Opens the money sheet" : {
+
+    },
+    "Opens the new-game flow on the custom page with this code filled in" : {
+
+    },
+    "Opens the system share sheet with the card as a 1080 by 1350 image" : {
 
     },
     "Opens the week's newspaper" : {
@@ -2341,6 +2542,9 @@
     "Plan another networking weekend to get back out there." : {
 
     },
+    "Play" : {
+
+    },
     "Play the same year again with the same founder and company" : {
 
     },
@@ -2375,6 +2579,9 @@
 
     },
     "Price tier for %@" : {
+
+    },
+    "Price: %@" : {
 
     },
     "Product" : {
@@ -2554,6 +2761,16 @@
         }
       }
     },
+    "Reset to %@'s %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reset to %1$@'s %2$@"
+          }
+        }
+      }
+    },
     "Restore purchases" : {
 
     },
@@ -2603,7 +2820,13 @@
     "Rival offer pending · %@/wk" : {
       "comment" : "Roster status: a rival has bid for this person. The figure is money per week"
     },
+    "Rivals" : {
+
+    },
     "Role: %@" : {
+
+    },
+    "Roll a random seed" : {
 
     },
     "Roster" : {
@@ -2684,8 +2907,8 @@
     "See the rivals" : {
 
     },
-    "Seed, stakes, rivals and cash. A custom company earns achievements but does not post to leaderboards." : {
-      "comment" : "Onboarding page subheading under the heading above"
+    "Seed: a code or a number" : {
+
     },
     "Sell for %@" : {
 
@@ -2704,6 +2927,15 @@
     },
     "Settles in" : {
       "comment" : "Decision sheet stat label: when the category fight is decided"
+    },
+    "Share" : {
+
+    },
+    "Share a photo of the office" : {
+
+    },
+    "Share this front page" : {
+
     },
     "Share this life" : {
 
@@ -2766,7 +2998,19 @@
     "Sign the guarantee" : {
 
     },
+    "Signed in" : {
+
+    },
+    "Signed out" : {
+
+    },
+    "Signs in to Game Center" : {
+
+    },
     "Simulation speed" : {
+
+    },
+    "Skip the tour" : {
 
     },
     "Slot %lld is cleared. This can't be undone." : {
@@ -2863,6 +3107,9 @@
 
     },
     "Start your first product" : {
+
+    },
+    "Starting cash" : {
 
     },
     "Starts a new company in this slot" : {
@@ -2995,11 +3242,20 @@
         }
       }
     },
+    "The %@ at night, the lights still on" : {
+
+    },
     "The bell, the confetti, and the end of the run. Your stake is bought out at the offer price." : {
 
     },
     "The business" : {
       "comment" : "Heading of the onboarding panel about the business"
+    },
+    "The card: %@" : {
+
+    },
+    "The clock is stopped at this chapter. Opens the unlock." : {
+
     },
     "The clock runs on; it answers itself at the deadline." : {
 
@@ -3017,6 +3273,12 @@
 
     },
     "The fortnight" : {
+
+    },
+    "The garage was free. %@ has outgrown it." : {
+
+    },
+    "The incumbent" : {
 
     },
     "The journal fills in as the weeks go by." : {
@@ -3080,6 +3342,9 @@
       }
     },
     "The room's empty" : {
+
+    },
+    "The same seed, the same company, everywhere. One attempt, one game year." : {
 
     },
     "The team" : {
@@ -3182,6 +3447,9 @@
     "Timeline zoom" : {
 
     },
+    "Today" : {
+
+    },
     "Today, day %lld" : {
 
     },
@@ -3189,6 +3457,19 @@
 
     },
     "Total payroll %@ per week" : {
+
+    },
+    "Tour, %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tour, %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "Tour: %@" : {
 
     },
     "Tracking starts now — sparklines fill in weekly." : {
@@ -3206,6 +3487,9 @@
     "Traits come with the person and never change. They shape output, learning, mood, patience and how hard a rival finds it to hire them away." : {
 
     },
+    "Traits you never learned" : {
+
+    },
     "Try for a baby?" : {
 
     },
@@ -3221,6 +3505,16 @@
     "Two people in a garage, one laptop, and a name you'll have to defend." : {
       "comment" : "Onboarding page subheading under the heading above"
     },
+    "Under way — day %lld of %lld." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Under way — day %1$lld of %2$lld."
+          }
+        }
+      }
+    },
     "Underpaid · market rate %@/wk" : {
       "comment" : "Roster status: paid below the going rate. The figure is money per week"
     },
@@ -3231,6 +3525,12 @@
       "comment" : "Launch day figure: copies sold"
     },
     "Unknown market" : {
+
+    },
+    "Unlock the company" : {
+
+    },
+    "Unlock the company · %@" : {
 
     },
     "Unlocks at the %@" : {
@@ -3636,6 +3936,9 @@
     "today" : {
 
     },
+    "what you walked away with" : {
+
+    },
     "you have nothing on the market there" : {
       "comment" : "Fills a sentence comparing your product with a rival when you have none in that topic"
     },
@@ -3662,6 +3965,9 @@
       }
     },
     "~%lld with this crew" : {
+
+    },
+    "· %@" : {
 
     },
     "×1.00 baseline" : {

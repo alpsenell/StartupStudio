@@ -45,7 +45,11 @@ final class StringsAuditTests: XCTestCase {
     /// **When you merge a lane that adds pixel chrome**, this number moves.
     /// Localize the new site if the string is prose, then re-pin the count
     /// here in the same commit — deliberately, with the reason.
-    static let pixelTextLiteralBaseline = 24
+    // Re-pinned at the iteration 7 merge: R9 counted 24 on its own branch;
+    // the tutorial card (R1), the daily cards (R3), the share cards and the
+    // custom page (R4) and the paywall (R6) add thirteen more. The bar is
+    // still "no new ones from here".
+    static let pixelTextLiteralBaseline = 37
 
     func testNoNewUnlocalizedPixelChrome() throws {
         let sources = try Self.appSourceFiles()
