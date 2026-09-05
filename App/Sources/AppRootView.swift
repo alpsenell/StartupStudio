@@ -28,7 +28,11 @@ struct AppRootView: View {
         // the engine's state calls for.
         ZStack {
             if session.isAtFrontDoor {
+                // R8: the front door takes the same centred column as the
+                // game, so an iPad opens on a title screen the size of a
+                // title screen rather than a wall of office.
                 TitleScreen(session: session)
+                    .gameColumn()
                     .transition(Theme.Motion.transition(.opacity))
             } else {
                 game(engine: engine)
@@ -60,6 +64,17 @@ struct AppRootView: View {
             Text(session.loadFailureMessage ?? "")
         }
     }
+
+    /// The widest the game's column is ever drawn (R8).
+    ///
+    /// The iPad runs the phone layout in a centred column rather than a
+    /// second design: 640 points is a large phone's width plus a little,
+    /// which is as wide as a one-column reading measure wants to be and
+    /// exactly what the pixel scenes were drawn for. Everything outside
+    /// it is `Theme.screenBackground`, so the letterbox is the game's own
+    /// paper rather than a grey gutter. On every iPhone the cap is wider
+    /// than the screen and therefore invisible.
+    static let maxColumnWidth: CGFloat = 640
 
     /// The game itself: the tabs and every layer that sits over them.
     private func game(engine: GameEngine) -> some View {
@@ -148,14 +163,17 @@ struct AppRootView: View {
     private func tabs(engine: GameEngine) -> some View {
         TabView(selection: Binding(get: { router.tab }, set: { router.tab = $0 })) {
             HQScreen(engine: engine) { session.requestOnboarding() }
+                .gameColumn()
                 .tabItem { Label("HQ", systemImage: "building.2") }
                 .tag(GameTab.hq)
 
             LifeScreen(engine: engine)
+                .gameColumn()
                 .tabItem { Label("Life", systemImage: "heart.fill") }
                 .tag(GameTab.life)
 
             TeamScreen(engine: engine)
+                .gameColumn()
                 .tabItem { Label("Team", systemImage: "person.2.fill") }
                 .badge(EmployeeStatus.attentionCount(in: engine.state, balance: engine.balance, content: engine.content))
                 .tag(GameTab.team)
@@ -163,10 +181,12 @@ struct AppRootView: View {
             // Products and R&D share one tab (segmented inside) to keep the
             // bar at five tabs.
             ProductsScreen(engine: engine)
+                .gameColumn()
                 .tabItem { Label("Products", systemImage: "shippingbox.fill") }
                 .tag(GameTab.products)
 
             BusinessScreen(engine: engine)
+                .gameColumn()
                 .tabItem { Label("Business", systemImage: "briefcase.fill") }
                 .tag(GameTab.business)
         }
@@ -249,5 +269,26 @@ struct AppRootView: View {
                 if !presented { session.clearLoadFailure() }
             }
         )
+    }
+}
+
+// MARK: - The iPad column (iteration 7, R8)
+
+extension View {
+    /// Caps a tab's content at `AppRootView.maxColumnWidth` and centres it
+    /// on the game's own paper.
+    ///
+    /// Applied per tab rather than to the whole `TabView` on purpose: the
+    /// tab bar is the system's and wants the screen's full width — capped
+    /// with the content, iPadOS runs out of room for the fifth tab and
+    /// folds Business behind a chevron. So the chrome is native and
+    /// full-width, and only what the player reads is a column.
+    ///
+    /// On every iPhone the cap is wider than the screen, so this is
+    /// `maxWidth: .infinity` with a background nobody can see.
+    func gameColumn() -> some View {
+        frame(maxWidth: AppRootView.maxColumnWidth)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Theme.screenBackground.ignoresSafeArea())
     }
 }

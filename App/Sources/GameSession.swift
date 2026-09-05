@@ -100,6 +100,11 @@ final class GameSession {
         self.store = store
         self.remembersSlot = remembersSlot
 
+        // R8: `-autoFixture <name>` lands a bundled company in slot 0
+        // before anything reads the slot, so the screenshot pass resumes
+        // it down the ordinary path. No-op in release builds.
+        ReleaseFixture.installIfAsked(into: store, appVersion: Self.appVersion)
+
         let headless = DebugLaunch.isHeadlessPass
         let remembered = remembersSlot ? GameSettings.currentSlot : 0
         let slot = headless ? 0 : Self.clamp(slot ?? remembered, to: store)
