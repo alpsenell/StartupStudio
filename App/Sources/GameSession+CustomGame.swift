@@ -27,12 +27,7 @@ extension GameSession {
         options.seedCode = pendingSeedCode
         options.endingsReached = ledger.endingsReached
         // R2: the Heirlooms page, when the ledger offers something.
-        options.ledger = ledger
-        options.showsHeirloomsStep = !ledger.offers.isEmpty
-        #if DEBUG
-        options.startsOnHeirlooms = DebugLaunch.opensHeirloomsPage && options.showsHeirloomsStep
-        #endif
-        return options
+        return heirloomOptions(over: options)
     }
 
     /// *Custom company* or *From a code* on the title screen: parks the

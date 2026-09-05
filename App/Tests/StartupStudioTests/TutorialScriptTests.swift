@@ -312,7 +312,9 @@ final class TutorialScriptTests: XCTestCase {
         XCTAssertEqual(GameSettings.dismissedTips, Set(CoachTip.all.map(\.id)))
         XCTAssertEqual(CoachTip.all.count, 6)
         XCTAssertNil(GameSession.tutorialStore.load(slot: 0), "the bookmark is gone")
-        XCTAssertNil(session.engine.eventSink, "and the tour stops listening")
+        // R2 keeps a "legacy" observer on every session, so the sink itself
+        // is never nil; the tour's own observer is what goes.
+        XCTAssertNil(session.eventObservers["tour"], "and the tour stops listening")
 
         // A second company on the same install shows nothing.
         session.returnToFrontDoor()

@@ -92,8 +92,10 @@ final class LegacyLedgerAppTests: XCTestCase {
         session.ledger = .sample
         let offers = session.ledger.offers
         XCTAssertFalse(offers.isEmpty)
-        XCTAssertTrue(session.newGameOptions.showsHeirloomsStep)
-        XCTAssertEqual(session.newGameOptions.ledger, session.ledger)
+        XCTAssertTrue(session.offersHeirlooms)
+        let options = session.heirloomOptions(over: .standard)
+        XCTAssertTrue(options.showsHeirloomsStep)
+        XCTAssertEqual(options.ledger, session.ledger)
 
         let deed = try XCTUnwrap(offers.first { if case .deed = $0.heirloom { return true } else { return false } }).heirloom
         session.beginNewGame(inSlot: 0)
@@ -119,14 +121,21 @@ final class LegacyLedgerAppTests: XCTestCase {
     func testTheHeirloomsPageIsOfferedOnlyWhenTheLedgerHasSomething() {
         let session = GameSession(saveDirectory: saves, slot: 0, remembersSlot: false)
         XCTAssertTrue(session.ledger.isEmpty)
-        XCTAssertFalse(session.newGameOptions.showsHeirloomsStep)
+        XCTAssertFalse(session.offersHeirlooms)
+        XCTAssertFalse(session.heirloomOptions(over: .standard).showsHeirloomsStep)
 
         // A ledger with runs but nothing left to carry shows no page either.
         var spent = LegacyLedger.sample
         for offer in spent.offers { spent.spend(offer.heirloom) }
         session.ledger = spent
-        XCTAssertFalse(session.newGameOptions.showsHeirloomsStep)
-        XCTAssertFalse(session.newGameOptions.startsOnHeirlooms)
+        XCTAssertFalse(session.offersHeirlooms)
+        let options = session.heirloomOptions(over: .standard)
+        XCTAssertFalse(options.showsHeirloomsStep)
+        XCTAssertFalse(options.startsOnHeirlooms)
+        // Layering keeps what the other lanes set.
+        var custom = NewGameOptions.standard
+        custom.showsCustomStep = true
+        XCTAssertTrue(session.heirloomOptions(over: custom).showsCustomStep)
     }
 
     func testTheFirstLaunchSeedsTheEndingsFromTheSlots() throws {
