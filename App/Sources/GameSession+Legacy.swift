@@ -67,14 +67,19 @@ extension GameSession {
         if push { pushLedger() }
     }
 
-    /// What the new-game flow opens with: the Heirlooms page only when the
-    /// ledger has something to offer.
-    var newGameOptions: NewGameOptions {
-        var options = NewGameOptions.standard
+    /// Whether the new-game flow should show the Heirlooms page: only when
+    /// the ledger has something left to offer.
+    var offersHeirlooms: Bool { !ledger.offers.isEmpty }
+
+    /// `options` with the Heirlooms page turned on when the ledger offers
+    /// something. The new-game flow's call site layers this over whatever
+    /// options the other lanes built (R4's `newGameOptions`).
+    func heirloomOptions(over options: NewGameOptions) -> NewGameOptions {
+        var options = options
         options.ledger = ledger
-        options.showsHeirloomsStep = !ledger.offers.isEmpty
+        options.showsHeirloomsStep = offersHeirlooms
         #if DEBUG
-        options.startsOnHeirlooms = DebugLaunch.opensHeirloomsPage && options.showsHeirloomsStep
+        options.startsOnHeirlooms = DebugLaunch.opensHeirloomsPage && offersHeirlooms
         #endif
         return options
     }

@@ -43,7 +43,7 @@ struct AppRootView: View {
             NewGameFlow(
                 content: engine.content,
                 // R2: the Heirlooms page, when the ledger offers something.
-                options: session.newGameOptions,
+                options: session.heirloomOptions(over: .standard),
                 onStart: { profile, companyName, difficulty, origin, heirloom in
                     session.startNewGame(
                         profile: profile, companyName: companyName, difficulty: difficulty,
