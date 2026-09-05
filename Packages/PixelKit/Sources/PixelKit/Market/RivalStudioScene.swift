@@ -112,20 +112,47 @@ public enum RivalStudioComposer {
     }
 }
 
+extension StrengthBand {
+    /// The rung as a word: the same four the profile draws.
+    public var accessibilityWord: String {
+        switch self {
+        case .minnow: "a minnow"
+        case .small: "a small studio"
+        case .mid: "a mid-sized studio"
+        case .large: "a large studio"
+        }
+    }
+}
+
 /// A rival's studio on its street, on the shared pixel renderer.
+///
+/// The picture *is* the numbers — the building's size is strength and the
+/// lit windows are reputation — so the one label says both rather than
+/// naming a shape nobody can see.
 public struct RivalStudioScene: View {
     private let placements: [PlacedSprite]
+    private let input: RivalStudioInput
 
     public init(input: RivalStudioInput) {
         self.placements = RivalStudioComposer.compose(input)
+        self.input = input
     }
 
     public var body: some View {
         PixelSceneView(
             placements: placements,
             sceneSize: RivalStudioComposer.sceneSize,
-            accessibilityLabel: "Rival studio"
+            accessibilityLabel: Self.accessibilityLabel(for: input)
         )
+    }
+
+    /// "Rival studio: a mid-sized studio, reputation 70 percent, for sale."
+    /// The incumbent gets its fortress named instead of a band.
+    public static func accessibilityLabel(for input: RivalStudioInput) -> String {
+        var parts = [input.isFortress ? "Rival studio: the incumbent's fortress" : "Rival studio: \(input.band.accessibilityWord)"]
+        parts.append("reputation \(Int((input.reputation * 100).rounded())) percent")
+        if input.forSale { parts.append("for sale") }
+        return parts.joined(separator: ", ")
     }
 }
 

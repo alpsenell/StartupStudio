@@ -424,44 +424,52 @@ private struct SlotRow: View {
     let onOpen: () -> Void
     let onDelete: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
         HStack(spacing: Theme.Spacing.sm) {
             Button(action: onOpen) {
-                HStack(spacing: Theme.Spacing.md) {
-                    slotNumber
-                    if let summary = row.summary {
-                        PixelPortrait(seed: summary.founderAppearanceSeed ?? 0, isFounder: true, size: 34)
+                // The number, the face and the company sit on one line
+                // until the company's name needs the whole width. At the
+                // accessibility sizes the row was three ellipses.
+                let layout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Spacing.sm))
+                    : AnyLayout(HStackLayout(spacing: Theme.Spacing.md))
+                layout {
+                    HStack(spacing: Theme.Spacing.md) {
+                        slotNumber
+                        if let summary = row.summary {
+                            PixelPortrait(seed: summary.founderAppearanceSeed ?? 0, isFounder: true, size: 34)
+                        }
+                        if typeSize.isAccessibilitySize {
+                            Spacer(minLength: 0)
+                            trailingIcon
+                        }
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title)
                             .font(.system(.headline, design: .rounded))
                             .foregroundStyle(row.isEmpty ? .secondary : .primary)
-                            .lineLimit(1)
+                            .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
                             .minimumScaleFactor(0.85)
+                            .fixedSize(horizontal: false, vertical: true)
                         Text(detail)
                             .font(.caption)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
-                            .lineLimit(2)
+                            .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
                             .fixedSize(horizontal: false, vertical: true)
                         if let footnote {
                             Text(footnote)
                                 .font(.caption2.weight(isCurrent ? .semibold : .regular))
                                 .foregroundStyle(isCurrent ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(.tertiary))
-                                .lineLimit(1)
+                                .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    Spacer(minLength: 0)
-                    if isCurrent {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(Theme.accent)
-                    } else if row.isEmpty {
-                        Image(systemName: "plus.circle")
-                            .foregroundStyle(.tertiary)
-                    } else if row.summary != nil {
-                        Image(systemName: "chevron.right")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.tertiary)
+                    if !typeSize.isAccessibilitySize {
+                        Spacer(minLength: 0)
+                        trailingIcon
                     }
                 }
                 .contentShape(Rectangle())
@@ -488,6 +496,23 @@ private struct SlotRow: View {
             isCurrent ? Theme.accent.opacity(0.10) : Theme.cardBackground,
             in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
         )
+    }
+
+    /// The mark at the end of the row: the tick on the game you are in,
+    /// the plus on an empty slot, the chevron on anything else.
+    @ViewBuilder
+    private var trailingIcon: some View {
+        if isCurrent {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(Theme.accent)
+        } else if row.isEmpty {
+            Image(systemName: "plus.circle")
+                .foregroundStyle(.tertiary)
+        } else if row.summary != nil {
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
     }
 
     /// "Current · Played an hour ago", or just when it was played.

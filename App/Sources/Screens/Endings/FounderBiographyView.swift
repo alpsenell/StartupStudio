@@ -35,6 +35,8 @@ struct FounderBiographyView: View {
 
     @State private var startingOver = false
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     /// U7: "Start a new company" goes through the front door and its slot
     /// picker when there is one. Without a session (a snapshot, a preview)
     /// the founder setup sheet stands in, as it did before slots.
@@ -129,7 +131,12 @@ struct FounderBiographyView: View {
                     .multilineTextAlignment(.center)
             }
 
-            HStack(spacing: Theme.Spacing.sm) {
+            // The portrait sits beside the name until the name needs the
+            // width, and then above it.
+            let headerLayout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Spacing.sm))
+                : AnyLayout(HStackLayout(spacing: Theme.Spacing.sm))
+            headerLayout {
                 PixelPortrait(
                     seed: state.employees.first?.appearanceSeed ?? 0,
                     isFounder: true,
@@ -138,12 +145,15 @@ struct FounderBiographyView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(founder.displayName)
                         .font(.system(.headline, design: .rounded))
+                        .fixedSize(horizontal: false, vertical: true)
                     Label(
                         "\(founder.archetype.displayName) · \(state.company.name)",
                         systemImage: founder.archetype.systemImageName
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                     // How it started (WS-H): the biography's first line.
                     Label(state.origin.biographyLine, systemImage: state.origin.systemImageName)
                         .font(.caption)
@@ -160,9 +170,15 @@ struct FounderBiographyView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: Theme.Spacing.sm) {
-                StatPill(systemImage: "calendar", value: "Day \(info.day)")
-                StatPill(systemImage: "clock", value: state.dateLabel)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    StatPill(systemImage: "calendar", value: "Day \(info.day)")
+                    StatPill(systemImage: "clock", value: state.dateLabel)
+                }
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    StatPill(systemImage: "calendar", value: "Day \(info.day)")
+                    StatPill(systemImage: "clock", value: state.dateLabel)
+                }
             }
         }
     }
@@ -199,26 +215,7 @@ struct FounderBiographyView: View {
         CardView("The story so far", systemImage: "book.closed.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 ForEach(state.progression.chapterLog, id: \.chapter) { entry in
-                    HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
-                        Text("\(entry.chapter)")
-                            .font(Theme.Typography.number(.caption, weight: .bold))
-                            .frame(width: 18)
-                            .foregroundStyle(Theme.accent)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(ChapterDef.title(for: entry.chapter))
-                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            Text(ChapterDef.teaser(for: entry.chapter))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        Spacer(minLength: Theme.Spacing.sm)
-                        Text(entry.day == 0 ? "Day one" : "Day \(entry.day)")
-                            .font(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(.tertiary)
-                    }
-                    .accessibilityElement(children: .combine)
+                    BiographyChapterRow(entry: entry)
                 }
 
                 Divider()
@@ -229,7 +226,9 @@ struct FounderBiographyView: View {
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    Spacer()
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
                 }
 
                 if !state.progression.earnedPerks.isEmpty {
@@ -410,14 +409,20 @@ struct FounderBiographyView: View {
         let netWorth = state.founderNetWorth(balance: balance)
         return CardView("The money", systemImage: "dollarsign.circle.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(netWorth.money)
-                        .font(Theme.Typography.number(.title2, weight: .bold))
-                        .foregroundStyle(netWorth >= 0 ? Theme.positiveCash : Theme.negativeCash)
-                    Text("final net worth")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline) {
+                        netWorthFigure(netWorth)
+                        Text("final net worth")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 0)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        netWorthFigure(netWorth)
+                        Text("final net worth")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     // WS-B: an earn-out is a sale in three numbers.
@@ -460,15 +465,44 @@ struct FounderBiographyView: View {
         day / (GameState.daysPerWeek * 52) + 1
     }
 
+    private func netWorthFigure(_ netWorth: Int) -> some View {
+        Text(netWorth.money)
+            .font(Theme.Typography.number(.title2, weight: .bold))
+            .foregroundStyle(netWorth >= 0 ? Theme.positiveCash : Theme.negativeCash)
+            .lineLimit(1)
+            .fixedSize()
+    }
+
+    /// A label and its figure on one line where they fit, and the figure
+    /// under the label where they do not — never a money figure broken
+    /// across two lines, which is what a plain `HStack` does at the
+    /// accessibility sizes.
     private func row(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .font(Theme.Typography.number(.caption))
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                rowLabel(label)
+                Spacer(minLength: Theme.Spacing.sm)
+                rowValue(value)
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                rowLabel(label)
+                rowValue(value)
+            }
         }
+    }
+
+    private func rowLabel(_ label: String) -> some View {
+        Text(label)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func rowValue(_ value: String) -> some View {
+        Text(value)
+            .font(Theme.Typography.number(.caption))
+            .lineLimit(1)
+            .fixedSize()
     }
 
     // MARK: - Again
@@ -547,5 +581,54 @@ struct FounderBiographyView: View {
 
     private func topicName(_ id: String) -> String {
         engine.content.topic(id)?.name ?? id
+    }
+}
+
+/// One line of the chapter log: the number, the chapter and its teaser,
+/// and the day it opened.
+///
+/// Its own view, not a method on the page, so that it reads the reader's
+/// text size wherever it is drawn — including through the page's
+/// `biographyContent`, which is a value, not a view in the hierarchy, and
+/// so has no environment of its own.
+private struct BiographyChapterRow: View {
+    let entry: ChapterEntry
+
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+            Text("\(entry.chapter)")
+                .font(Theme.Typography.number(.caption, weight: .bold))
+                .frame(width: 18)
+                .foregroundStyle(Theme.accent)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(ChapterDef.title(for: entry.chapter))
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(ChapterDef.teaser(for: entry.chapter))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                // At the accessibility sizes the day cannot share the
+                // line: a two-word column beside a sentence turns the
+                // sentence into a stack of single words.
+                if typeSize.isAccessibilitySize { dayStamp }
+            }
+            if !typeSize.isAccessibilitySize {
+                Spacer(minLength: Theme.Spacing.sm)
+                dayStamp
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var dayStamp: some View {
+        Text(entry.day == 0 ? "Day one" : "Day \(entry.day)")
+            .font(.caption)
+            .monospacedDigit()
+            .foregroundStyle(.tertiary)
+            .lineLimit(1)
+            .fixedSize()
     }
 }

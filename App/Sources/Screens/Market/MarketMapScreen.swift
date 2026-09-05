@@ -61,23 +61,34 @@ struct MarketMapScreen: View {
 
 // MARK: - The district label
 
-/// The topic's name on its strip. A display label on a pixel plate, so it
-/// is clamped rather than scaled with Dynamic Type — the spoken summary
-/// carries everything the label cannot.
+/// The topic's name on its strip: a display label on a pixel plate, which
+/// grows with Dynamic Type as far as the strip can hold it and no further.
 private struct MarketDistrictLabel: View {
     let name: String
     let summary: String
 
+    /// The name at the reader's own size where it fits on the strip, and
+    /// clamped where it does not — rather than clamped always. A district
+    /// strip is a few sprite pixels tall, so at the accessibility sizes
+    /// the plate has to hold; at the ordinary large sizes it can grow, and
+    /// now does. The spoken summary carries what the plate cannot.
     var body: some View {
+        ViewThatFits(in: .horizontal) {
+            plate(clamped: false)
+            plate(clamped: true)
+        }
+        .accessibilityLabel(summary)
+        .accessibilityHint("Opens the market report for \(name)")
+    }
+
+    private func plate(clamped: Bool) -> some View {
         Text(name)
             .font(.system(.caption2, design: .rounded).weight(.bold))
             .foregroundStyle(Theme.onTint)
             .lineLimit(1)
-            .minimumScaleFactor(0.6)
+            .minimumScaleFactor(clamped ? 0.6 : 0.9)
             .padding(.horizontal, 2)
-            .dynamicTypeSize(...DynamicTypeSize.large)
-            .accessibilityLabel(summary)
-            .accessibilityHint("Opens the market report for \(name)")
+            .dynamicTypeSize(clamped ? ...DynamicTypeSize.large : ...DynamicTypeSize.accessibility5)
     }
 }
 
@@ -89,27 +100,22 @@ private struct MarketMapLegendCard: View {
     let heldCount: Int
     let threshold: Double
 
-    private let columns = [
-        GridItem(.flexible(), alignment: .leading),
-        GridItem(.flexible(), alignment: .leading),
-    ]
+    /// Two columns of marks, or one when the reader's text needs the
+    /// width — a legend row whose words are cut off explains nothing.
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var columns: [GridItem] {
+        typeSize.isAccessibilitySize
+            ? [GridItem(.flexible(), alignment: .leading)]
+            : [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)]
+    }
 
     var body: some View {
         CardView("Legend", systemImage: "map.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    ForEach(StandingBand.allCases, id: \.self) { band in
-                        VStack(spacing: 3) {
-                            SpriteSwatch(sprite: MarketSpriteLibrary.districtBlock(side: 9, band: band), scale: 2)
-                            Text(MarketMapSnapshot.tierName(band))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                }
+                // Five swatches across, or a column of swatch-and-name
+                // rows once five names cannot share a phone.
+                bandKey
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
                     "District colour is your standing: grey no presence, sand newcomer, light green known, green established, teal household name"
@@ -136,15 +142,46 @@ private struct MarketMapLegendCard: View {
         }
     }
 
+    @ViewBuilder
+    private var bandKey: some View {
+        if typeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                ForEach(StandingBand.allCases, id: \.self) { band in
+                    HStack(spacing: Theme.Spacing.sm) {
+                        SpriteSwatch(sprite: MarketSpriteLibrary.districtBlock(side: 9, band: band), scale: 2)
+                        Text(MarketMapSnapshot.tierName(band))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            HStack(spacing: Theme.Spacing.sm) {
+                ForEach(StandingBand.allCases, id: \.self) { band in
+                    VStack(spacing: 3) {
+                        SpriteSwatch(sprite: MarketSpriteLibrary.districtBlock(side: 9, band: band), scale: 2)
+                        Text(MarketMapSnapshot.tierName(band))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+
     private func legendRow(_ sprite: PixelSprite, _ text: String) -> some View {
-        HStack(spacing: Theme.Spacing.sm) {
+        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
             SpriteSwatch(sprite: sprite, scale: 3)
                 .frame(width: 30, height: 27, alignment: .center)
             Text(text)
                 .font(.caption)
                 .foregroundStyle(.primary)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(text)
@@ -209,7 +246,11 @@ struct MarketMapSnapshot {
                 rivalCount: rivals,
                 hasFortress: fortress,
                 underSiege: state.rivals.challenge(in: topic.id) != nil,
-                weather: weather
+                weather: weather,
+                // The studio only *has* a share where it is selling; an
+                // untouched category reads 1.0 in the engine, which would
+                // be a lie spoken out loud.
+                share: category.liveProducts.isEmpty ? nil : state.rivals.share(for: topic.id)
             )
             districts.append(district)
             summaries[topic.id] = Self.summary(district, category: category, incumbentName: incumbent?.name)
@@ -263,9 +304,11 @@ struct MarketMapSnapshot {
     private static func summary(
         _ district: MarketDistrictInfo, category: CategorySnapshot, incumbentName: String?
     ) -> String {
-        var parts = [
-            "\(district.name), \(tierName(district.standing).lowercased()), demand \(category.market.multiplierLabel)",
-        ]
+        // The rung is the *value* now (`MarketDistrictInfo.accessibilityValue`),
+        // which is where VoiceOver expects a thing's current setting; the
+        // label says what the district is and what is on it. Saying the
+        // standing in both read it out twice.
+        var parts = ["\(district.name), demand \(category.market.multiplierLabel)"]
         switch district.playerProducts {
         case 0: break
         case 1: parts.append("one of your products")

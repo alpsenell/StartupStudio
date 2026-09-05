@@ -70,9 +70,21 @@ public struct MarketMapView<DistrictLabel: View>: View {
             }
             .buttonStyle(.plain)
             .accessibilityElement(children: .combine)
+            .accessibilityValue(district.accessibilityValue)
+            .accessibilitySortPriority(Self.sortPriority(district))
         } else {
             content
                 .accessibilityElement(children: .combine)
+                .accessibilityValue(district.accessibilityValue)
+                .accessibilitySortPriority(Self.sortPriority(district))
         }
+    }
+
+    /// Districts are read biggest market first. The grid's own reading
+    /// order is left-to-right, top-to-bottom, which is the catalog's order
+    /// and says nothing; size is the thing a sighted player sees first,
+    /// because the footprint *is* the demand.
+    public static func sortPriority(_ district: MarketDistrictInfo) -> Double {
+        district.size
     }
 }

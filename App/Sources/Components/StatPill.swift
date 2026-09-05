@@ -8,13 +8,19 @@ struct StatPill: View {
     let value: String
     var tint: Color = .primary
 
+    /// A pill is a figure on one line — until the reader's text is big
+    /// enough that one line is three characters and an ellipsis, at which
+    /// point the figure matters more than the shape.
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
         HStack(spacing: Theme.Spacing.xs) {
             Image(systemName: systemImage)
                 .font(.caption.weight(.semibold))
             Text(value)
                 .font(Theme.Typography.number(.subheadline))
-                .lineLimit(1)
+                .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.numericText())
         }
         .foregroundStyle(tint)

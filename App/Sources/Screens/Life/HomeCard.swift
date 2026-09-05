@@ -12,7 +12,14 @@ import TycoonEngine
 struct HomeCard: View {
     let engine: GameEngine
 
+    // A headless pass cannot tap the "City map" row, and the map is the
+    // one screen R7 gave an accessibility overlay that has nowhere else
+    // to be opened from: `-autoRoute city` opens it.
+    #if DEBUG
+    @State private var showingCityMap = DebugLaunch.launchRoute == "city"
+    #else
     @State private var showingCityMap = false
+    #endif
 
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI
@@ -116,20 +123,41 @@ struct HomeCard: View {
     }
 
     /// The founder from the roster, the partner (once there is one), and
-    /// every child, all drawn from their appearance seeds.
+    /// every child, all drawn from their appearance seeds — and, since
+    /// iteration 7, their names, so the scene's accessibility overlay can
+    /// say who is standing where instead of "a person".
     private var occupants: HomeOccupants {
         let state = engine.state
         let family = state.life.family
         // Defensive: the founder is always on the roster.
-        let founderSeed = state.employees.first(where: \.isFounder)?.appearanceSeed ?? 1
-        let partner = family.stage == .single
-            ? nil
-            : family.partnerAppearanceSeed.map { CharacterAppearance(seed: $0) }
+        let founder = state.employees.first(where: \.isFounder)
+        let hasPartner = family.stage != .single
         return HomeOccupants(
-            founder: CharacterAppearance(seed: founderSeed),
-            partner: partner,
-            children: family.children.map { CharacterAppearance(seed: $0.appearanceSeed) }
+            founder: CharacterAppearance(seed: founder?.appearanceSeed ?? 1),
+            founderName: founder?.name,
+            partner: hasPartner ? family.partnerAppearanceSeed.map { CharacterAppearance(seed: $0) } : nil,
+            partnerName: hasPartner ? family.partnerName : nil,
+            partnerNote: hasPartner ? partnerNote(family) : nil,
+            children: family.children.map {
+                HomeOccupants.Child(
+                    id: $0.id,
+                    appearance: CharacterAppearance(seed: $0.appearanceSeed),
+                    name: $0.name
+                )
+            }
         )
+    }
+
+    /// The one thing worth saying about the partner, on the same rungs
+    /// `PartnerCard`'s status line uses — spoken over the figure the card
+    /// draws with a low bubble over their head.
+    private func partnerNote(_ family: FamilyState) -> String? {
+        switch family.affection {
+        case ..<20: "barely here any more"
+        case ..<35: "affection sliding"
+        case ..<55: "would like to see more of you"
+        default: nil
+        }
     }
 
     /// What the founder is doing at home this evening. Weekdays show the

@@ -1,3 +1,5 @@
+import Foundation
+
 /// Home tiers mirroring the game's life progression (studio flat → apartment
 /// → house → penthouse). Like `OfficeTierStyle`, a plain enum the app maps
 /// onto; raw values match the engine's `HomeTier` by design.
@@ -56,15 +58,54 @@ public enum MoodLevel: String, Sendable, Equatable, Codable, CaseIterable {
 }
 
 /// Who lives here.
+///
+/// The appearances are what the scene draws. The names and the one note
+/// are what VoiceOver says: the picture and the spoken room are the same
+/// household, so they are one type. Everything but the founder's
+/// appearance has a default, and the original initializer still takes
+/// bare appearances — a caller that only wants the picture is unchanged.
 public struct HomeOccupants: Sendable, Equatable {
+    /// One of the children: their look, the id the app knows them by, and
+    /// their name. The id is what a `HomeHitRegion.child` carries back.
+    public struct Child: Sendable, Equatable, Identifiable {
+        public var id: UUID
+        public var appearance: CharacterAppearance
+        public var name: String?
+
+        public init(id: UUID, appearance: CharacterAppearance, name: String? = nil) {
+            self.id = id
+            self.appearance = appearance
+            self.name = name
+        }
+    }
+
     public var founder: CharacterAppearance
+    /// The founder's own name, for the label over their figure.
+    public var founderName: String?
     public var partner: CharacterAppearance?
+    public var partnerName: String?
+    /// One short thing worth knowing about the partner — "affection
+    /// sliding". Spoken, never drawn.
+    public var partnerNote: String?
     /// 0...3 rendered; extras are ignored.
-    public var children: [CharacterAppearance]
+    public var childList: [Child]
 
     /// Whether a cat lives here. Cats arrive with the house.
     public var hasCat: Bool
 
+    /// The children as bare appearances, which is all the composer needs.
+    /// Setting it rebuilds the list with derived ids, so the picture-only
+    /// callers keep working and still get stable region identities.
+    public var children: [CharacterAppearance] {
+        get { childList.map(\.appearance) }
+        set {
+            childList = newValue.enumerated().map {
+                Child(id: Self.derivedChildID(index: $0.offset), appearance: $0.element)
+            }
+        }
+    }
+
+    /// The picture-only initializer: appearances, nothing spoken.
     public init(
         founder: CharacterAppearance,
         partner: CharacterAppearance? = nil,
@@ -72,9 +113,43 @@ public struct HomeOccupants: Sendable, Equatable {
         hasCat: Bool = false
     ) {
         self.founder = founder
+        self.founderName = nil
         self.partner = partner
-        self.children = children
+        self.partnerName = nil
+        self.partnerNote = nil
+        self.childList = children.enumerated().map {
+            Child(id: Self.derivedChildID(index: $0.offset), appearance: $0.element)
+        }
         self.hasCat = hasCat
+    }
+
+    /// The full initializer: the household with its names, for a scene
+    /// that is going to be read out as well as looked at.
+    public init(
+        founder: CharacterAppearance,
+        founderName: String?,
+        partner: CharacterAppearance? = nil,
+        partnerName: String? = nil,
+        partnerNote: String? = nil,
+        children: [Child] = [],
+        hasCat: Bool = false
+    ) {
+        self.founder = founder
+        self.founderName = founderName
+        self.partner = partner
+        self.partnerName = partnerName
+        self.partnerNote = partnerNote
+        self.childList = children
+        self.hasCat = hasCat
+    }
+
+    /// A stable id for a child the caller did not name one for: the same
+    /// index always produces the same UUID, so a region's identity never
+    /// changes under VoiceOver between two renders of the same room.
+    public static func derivedChildID(index: Int) -> UUID {
+        let n = UInt8(truncatingIfNeeded: index)
+        // "H" for home, then the index: recognisable in a log, and stable.
+        return UUID(uuid: (0x48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, n))
     }
 }
 
