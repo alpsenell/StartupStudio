@@ -10,6 +10,9 @@ struct RunSetup: Equatable {
     var seed: UInt64?
     var rules: GameRules = .standard
     var mode: RunMode = .standard
+    /// The one thing carried from the last company (R2), when the
+    /// Heirlooms page was shown and something was picked.
+    var heirloom: Heirloom?
 
     static let standard = RunSetup()
 }
@@ -23,6 +26,12 @@ extension GameSession {
         options.showsCustomStep = customGameRequested || pendingSeedCode != nil
         options.seedCode = pendingSeedCode
         options.endingsReached = ledger.endingsReached
+        // R2: the Heirlooms page, when the ledger offers something.
+        options.ledger = ledger
+        options.showsHeirloomsStep = !ledger.offers.isEmpty
+        #if DEBUG
+        options.startsOnHeirlooms = DebugLaunch.opensHeirloomsPage && options.showsHeirloomsStep
+        #endif
         return options
     }
 
@@ -64,7 +73,7 @@ extension GameSession {
     ) {
         startNewGame(
             profile: profile, companyName: companyName, difficulty: difficulty, origin: origin,
-            seed: setup.seed, rules: setup.rules, mode: setup.mode
+            seed: setup.seed, rules: setup.rules, heirloom: setup.heirloom, mode: setup.mode
         )
         clearCustomGameRequest()
     }

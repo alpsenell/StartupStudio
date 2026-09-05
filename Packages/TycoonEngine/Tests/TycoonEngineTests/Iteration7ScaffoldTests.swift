@@ -83,13 +83,19 @@ struct Iteration7ScaffoldTests {
         #expect(state.heirloom == .person(person))
     }
 
-    @Test("The scaffold's heirloom stub changes nothing but the record of it")
-    func heirloomStubIsNeutral() throws {
+    @Test("An heirloom changes the record of it, its one delta, and the journal line — nothing else")
+    func heirloomIsOneDelta() throws {
+        // R2 filled the stub: a perk heirloom is the perk, the log line
+        // and the record. `LegacyTests` covers the three deltas in full.
         let plain = GameState.newGame(companyName: "Same", seed: 14, balance: Self.balance)
         var heir = GameState.newGame(
-            companyName: "Same", seed: 14, balance: Self.balance, heirloom: .perk(id: "press_contacts")
+            companyName: "Same", seed: 14, balance: Self.balance, heirloom: .perk(id: "pressContacts")
         )
+        #expect(heir.progression.perks == ["pressContacts"])
+        #expect(heir.eventLog == [.heirloomApplied(kind: "perk", day: 0)])
         heir.heirloom = nil
+        heir.progression.perks = []
+        heir.eventLog = []
         #expect(heir == plain)
     }
 

@@ -1,0 +1,82 @@
+import Foundation
+import TycoonEngine
+import TycoonSave
+
+// MARK: Iteration 7 — the legacy ledger (R2)
+
+/// The session's side of the ledger: load it at launch (seeding the
+/// endings from the slots the first time), write a run the moment
+/// `gameOver` becomes non-nil, spend an heirloom when a company starts
+/// with one, and hand the new-game flow what it may offer.
+extension GameSession {
+    /// Launch. The first launch that finds no ledger seeds `endingsReached`
+    /// from every slot whose summary carries an ending, so nobody who
+    /// already finished a company is told they have not.
+    func bootstrapLegacy() {
+        ledger = legacyStore.load()
+        if !legacyStore.exists {
+            for row in slots {
+                if let ending = row.summary?.endingKind {
+                    ledger.endingsReached.insert(ending)
+                }
+            }
+            saveLedger(push: false)
+        }
+        observeEvents("legacy") { [weak self] events in
+            guard events.contains(where: { if case .gameOver = $0 { return true } else { return false } })
+            else { return }
+            self?.recordEndingIfNeeded()
+        }
+        #if DEBUG
+        if DebugLaunch.opensHeirloomsPage {
+            ledger = .sample
+            beginNewGame(inSlot: slots.first(where: \.isEmpty)?.slot ?? 0)
+        }
+        #endif
+    }
+
+    /// The live engine's ending, if it has one.
+    func recordEndingIfNeeded() {
+        recordEnding(of: engine.state, balance: engine.balance)
+    }
+
+    /// Writes a finished company into the ledger, once. A state that is
+    /// still running, or an ending already recorded (the same company on
+    /// the same day), changes nothing.
+    func recordEnding(of state: GameState, balance: BalanceConfig) {
+        guard state.gameOver != nil else { return }
+        let alreadyRecorded = ledger.runs.contains {
+            $0.seed == state.seed && $0.day == state.day && $0.companyName == state.company.name
+        }
+        guard !alreadyRecorded else { return }
+        ledger.record(state, balance: balance)
+        saveLedger()
+    }
+
+    /// An heirloom carries once.
+    func spendHeirloom(_ heirloom: Heirloom) {
+        ledger.spend(heirloom)
+        saveLedger()
+    }
+
+    /// Writes the ledger to its own directory and, by default, to iCloud.
+    /// A write failure never stops the game; the ledger is a record, not
+    /// the run.
+    func saveLedger(push: Bool = true) {
+        try? legacyStore.save(ledger, appVersion: Self.appVersion)
+        if push { pushLedger() }
+    }
+}
+
+extension DebugLaunch {
+    /// `-autoHeirlooms`: open the new-game flow on the Heirlooms page over
+    /// a sample ledger, for the screenshot pass (R2). Not a headless pass:
+    /// the door stays, the flow opens over it.
+    static var opensHeirloomsPage: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoHeirlooms")
+        #else
+        return false
+        #endif
+    }
+}

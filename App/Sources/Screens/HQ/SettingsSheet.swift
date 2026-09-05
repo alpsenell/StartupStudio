@@ -12,6 +12,8 @@ struct SettingsSheet: View {
     let onNewGame: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    /// R2: the iCloud row reads the session's sync status.
+    @Environment(\.gameSession) private var session
     @State private var confirmingNewGame = false
     @State private var soundEnabled = GameSettings.soundEnabled
     @State private var hapticsEnabled = GameSettings.hapticsEnabled
@@ -85,7 +87,12 @@ struct SettingsSheet: View {
                     Section("Services") {
                         if ServiceFlags.cloud {
                             // R2: the sync status, and "Off — saves stay on this device".
-                            LabeledContent("iCloud") { Text("—") }
+                            LabeledContent {
+                                Text((session?.cloud ?? .off).settingsLine)
+                                    .multilineTextAlignment(.trailing)
+                            } label: {
+                                Label("iCloud", systemImage: "icloud")
+                            }
                         }
                         if ServiceFlags.gameCenter {
                             // R3: presents GKGameCenterViewController.

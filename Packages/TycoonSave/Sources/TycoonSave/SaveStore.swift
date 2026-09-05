@@ -195,6 +195,33 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
         return try? Data(contentsOf: mainFileURL(slot: slot))
     }
 
+    /// Decodes a save file's bytes without touching the disk: the envelope
+    /// and the migrated state, exactly as `load` would produce them for a
+    /// file in a slot. Throws `.futureFormat` and `.corruptSave` the way
+    /// `load` does. What the cloud sync uses to merge the legacy ledger.
+    public func read(raw data: Data) throws -> (state: State, envelope: SaveEnvelope) {
+        let raw: RawSave
+        do {
+            raw = try parseRaw(data)
+        } catch let error as SaveStoreError {
+            throw error
+        } catch {
+            throw SaveStoreError.corruptSave
+        }
+        do {
+            return (state: try decodeState(raw), envelope: raw.envelope)
+        } catch {
+            throw SaveStoreError.corruptSave
+        }
+    }
+
+    /// The envelope of a save file's bytes — `nil` when they are not a
+    /// save this store could read. Cheap: the state is parsed as JSON but
+    /// never decoded. What the cloud merge policy is fed.
+    public func envelope(in data: Data) -> SaveEnvelope? {
+        (try? parseRaw(data))?.envelope
+    }
+
     /// Installs `data` — a save file another device wrote — as the slot's
     /// save, staged and rotated exactly like `save`: the previous good
     /// file becomes the backup. The bytes must parse as an envelope this
@@ -336,7 +363,11 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
     /// Parses the envelope and runs the migrations on the raw state
     /// dictionary, without decoding `State`.
     private func readRaw(at url: URL) throws -> RawSave {
-        let data = try Data(contentsOf: url)
+        try parseRaw(try Data(contentsOf: url))
+    }
+
+    /// The same, on bytes already in hand.
+    private func parseRaw(_ data: Data) throws -> RawSave {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw ReadFailure.notAJSONObject
         }

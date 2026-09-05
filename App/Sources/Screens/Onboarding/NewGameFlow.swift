@@ -47,6 +47,10 @@ struct NewGameOptions {
     /// looks (R4). Passed in rather than read from the environment: a
     /// full-screen cover does not see the presenting view's environment.
     var endingsReached: Set<EndingKind> = []
+    /// What the Heirlooms page offers from. R2.
+    var ledger: LegacyLedger = .empty
+    /// Open on the Heirlooms page (the `-autoHeirlooms` screenshot pass). R2.
+    var startsOnHeirlooms = false
 
     static let standard = NewGameOptions()
 
@@ -98,6 +102,8 @@ struct NewGameFlow: View {
     @State private var archetype: FounderArchetype = .hacker
     @State private var difficulty: Difficulty = .normal
     @State private var origin: FoundingOrigin = .garage
+    /// The one thing carried from the ledger (R2); `nil` is "carry nothing".
+    @State private var heirloom: Heirloom?
     @State private var appearanceIndex = 0
     @State private var nameShuffle = 0
     @State private var introPage = 0
@@ -160,7 +166,7 @@ struct NewGameFlow: View {
             if companyName.isEmpty { companyName = suggestedCompanyName }
             if !openedOnFirstStep, let first = steps.first {
                 openedOnFirstStep = true
-                step = first
+                step = options.startsOnHeirlooms && steps.contains(.heirlooms) ? .heirlooms : first
             }
             // R4: a code from a card or a URL fills the custom page and
             // sets the origin the Stakes page opens on.
@@ -226,13 +232,9 @@ struct NewGameFlow: View {
         CustomStepContent(choices: $custom, defaultCash: DifficultyCash.startingCash(for:))
     }
 
-    /// R2 replaces this with `HeirloomsStep` (one person, perk or deed
-    /// from the ledger, spent once).
+    /// R2: one person, perk or deed from the ledger, spent once.
     private var heirloomsStep: some View {
-        StepHeadline(
-            title: "One thing from the last company",
-            detail: "A person, a perk, or the deed. It carries once, and a company that carries one is unranked."
-        )
+        HeirloomsStep(ledger: options.ledger, content: content, selection: $heirloom)
     }
 
     // MARK: - Step 1: the founder
@@ -431,7 +433,11 @@ struct NewGameFlow: View {
             archetype: archetype,
             appearanceSeed: appearanceSeed
         )
-        onStart(profile, resolvedCompanyName, difficulty, origin, runSetup)
+        // The heirloom only counts when the page was shown (R2); it rides
+        // in the run setup beside what the custom page added (R4).
+        var setup = runSetup
+        setup.heirloom = options.showsHeirloomsStep ? heirloom : nil
+        onStart(profile, resolvedCompanyName, difficulty, origin, setup)
     }
 
     /// R4: what the custom page adds. `.standard` unless the page was

@@ -5,7 +5,7 @@
 /// touch one line each of `SettingsSheet` and never the same one.
 enum ServiceFlags {
     /// R2: the iCloud status row.
-    static let cloud = false
+    static let cloud = true
     /// R3: the Game Center row.
     static let gameCenter = true
     /// R6: Restore purchases.

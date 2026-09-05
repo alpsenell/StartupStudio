@@ -81,7 +81,11 @@ final class GameSession {
     private(set) var eventObservers: [String: @MainActor ([GameEvent]) -> Void] = [:]
 
     /// `let` constants are never observation-tracked, no annotation needed.
-    private let store: SaveStore<GameState>
+    /// Internal so the lane extensions (`+Cloud`) can move raw bytes.
+    let store: SaveStore<GameState>
+    /// The ledger's own store, beside the slots and out of `deleteAll`'s
+    /// reach (R2, `GameSession+Legacy.swift`).
+    let legacyStore: LegacyStore
 
     /// Where the slots live (`nil` for the app's own directory). R3's
     /// daily opens its own store beside them, so the directory is kept
@@ -93,7 +97,8 @@ final class GameSession {
     private let remembersSlot: Bool
 
     /// Bump alongside `MigrationStep`s when the save format changes.
-    private static let saveFormatVersion = 1
+    /// Internal: the cloud sync (R2) reads it to recognise a newer app's blob.
+    static let saveFormatVersion = 1
 
     /// - Parameters:
     ///   - saveDirectory: where the slots live; `nil` for the app's own.
@@ -106,6 +111,7 @@ final class GameSession {
         )
         self.store = store
         self.saveDirectory = saveDirectory
+        self.legacyStore = LegacyStore(directory: LegacyStore.directory(besideSaves: saveDirectory))
         self.remembersSlot = remembersSlot
 
         let headless = DebugLaunch.isHeadlessPass
@@ -139,6 +145,9 @@ final class GameSession {
         wireEngineHooks()
         applyDebugLaunchArguments()
         refreshSlots()
+        // R2: the ledger (with its first-launch migration) and iCloud.
+        bootstrapLegacy()
+        bootstrapCloud()
     }
 
     // MARK: - Iteration 7: the engine's hooks
@@ -262,6 +271,7 @@ final class GameSession {
         needsOnboarding = false
         refreshSlots()
         isAtFrontDoor = true
+        applyPendingCloudUpdates()  // R2
     }
 
     /// Opens a slot from the picker. The current game continues; another
@@ -304,6 +314,27 @@ final class GameSession {
             wireEngineHooks()
         }
         refreshSlots()
+        cloudDidDelete(slot: slot)  // R2
+    }
+
+    /// R2: a slot's file changed under the engine (a copy came in from
+    /// iCloud, or a tombstone removed it) while the door was open. The
+    /// engine behind the Continue card is rebuilt from the disk — or
+    /// becomes the placeholder when the file is gone — without leaving
+    /// the door. Any other slot only needs the picker refreshed.
+    func reloadSlotFromDisk(_ slot: Int) {
+        defer { refreshSlots() }
+        guard slot == currentSlot else { return }
+        engine.shutdown()
+        if let saved = try? store.load(slot: slot) {
+            engine = GameEngine.resume(state: saved.state)
+            hasCurrentGame = true
+            wireAutosave(slot: slot)
+        } else {
+            engine = Self.makeFreshEngine()
+            hasCurrentGame = false
+        }
+        wireEngineHooks()
     }
 
     /// Opens the new-game flow, to start into `slot` when it finishes.
@@ -361,6 +392,7 @@ final class GameSession {
                 mode: mode
             )
         }
+        if let heirloom { spendHeirloom(heirloom) }  // R2
         GameSettings.hasCompletedOnboarding = true
         needsOnboarding = false
         isAtFrontDoor = false
@@ -475,13 +507,14 @@ final class GameSession {
                 state, appVersion: Self.appVersion, summary: SaveSummary(state: state), slot: slot
             )
             lastSaveError = nil
+            cloudDidPersist(slot: slot)  // R2
         } catch {
             // A failed autosave must never crash the game.
             lastSaveError = error.localizedDescription
         }
     }
 
-    private static var appVersion: String {
+    static var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
     }
 

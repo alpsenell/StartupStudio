@@ -46,8 +46,10 @@ struct AppRootView: View {
         .fullScreenCover(isPresented: onboardingPresented) {
             NewGameFlow(
                 content: engine.content,
-                // Iteration 7 (R4): the custom page and its prefill, and
-                // the ledger's endings for the locks.
+                // Iteration 7 (R4): the custom page and its prefill, the
+                // ledger's endings for the locks; (R2): the Heirlooms page
+                // when the ledger offers something. The heirloom rides in
+                // the setup.
                 options: session.newGameOptions,
                 onStart: { profile, companyName, difficulty, origin, setup in
                     session.startNewGame(

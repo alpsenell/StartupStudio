@@ -46,7 +46,9 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
         let session = GameSession(saveDirectory: directory, slot: 0, remembersSlot: false)
 
         XCTAssertTrue(session.engine.mayAdvance, "no gate means the clock runs")
-        XCTAssertNil(session.engine.eventSink)
+        // R2's ledger observer rides every engine from launch; it is the only one.
+        XCTAssertEqual(Array(session.eventObservers.keys), ["legacy"])
+        XCTAssertNotNil(session.engine.eventSink)
 
         let closed = RefusingGate(id: "unlock", open: false)
         session.installGate(closed)
@@ -96,8 +98,9 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
         XCTAssertTrue(TitleMenu.Flags.daily && TitleMenu.Flags.custom && TitleMenu.Flags.fromCode)
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)
-        XCTAssertTrue(ServiceFlags.gameCenter)
-        XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.restore)
+        // R2 and R3 flipped theirs; R6's Restore stays off until it lands.
+        XCTAssertTrue(ServiceFlags.gameCenter && ServiceFlags.cloud)
+        XCTAssertFalse(ServiceFlags.restore)
     }
 
     func testPrivacyManifestShipsInTheBundleAndDeclaresNoTracking() throws {

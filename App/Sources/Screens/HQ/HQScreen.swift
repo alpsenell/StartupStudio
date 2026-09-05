@@ -85,6 +85,8 @@ struct HQScreen: View {
             // whichever tab the pass opened on — R5, fix 4.)
             .task {
                 if let route = DebugLaunch.launchStoryRoute { router.go(route) }
+                // R2: `-autoRoute settings` opens the sheet for the iCloud row.
+                if DebugLaunch.autoRouteName == "settings" { showingSettings = true }
             }
         }
     }
