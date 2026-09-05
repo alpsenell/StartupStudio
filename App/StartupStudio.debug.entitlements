@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Iteration 7 (R6): the Debug build's entitlements — the keys of
+	     App/StartupStudio.entitlements plus `get-task-allow`, which
+	     storekitd needs before it will serve StoreKitTest's SKTestSession
+	     to an app launched by `xcodebuild test` ("is not installed for
+	     development" otherwise). Add any new key to both files; Release
+	     signs with the other one. See project.yml. -->
+	<key>com.apple.developer.game-center</key>
+	<true/>
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+	<key>get-task-allow</key>
+	<true/>
+</dict>
+</plist>

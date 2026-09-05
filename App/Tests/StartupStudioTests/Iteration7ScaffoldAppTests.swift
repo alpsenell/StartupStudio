@@ -98,9 +98,8 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
         XCTAssertTrue(TitleMenu.Flags.daily && TitleMenu.Flags.custom && TitleMenu.Flags.fromCode)
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)
-        // R2 and R3 flipped theirs; R6's Restore stays off until it lands.
-        XCTAssertTrue(ServiceFlags.gameCenter && ServiceFlags.cloud)
-        XCTAssertFalse(ServiceFlags.restore)
+        // R2, R3 and R6 have all flipped theirs.
+        XCTAssertTrue(ServiceFlags.gameCenter && ServiceFlags.cloud && ServiceFlags.restore)
     }
 
     func testPrivacyManifestShipsInTheBundleAndDeclaresNoTracking() throws {

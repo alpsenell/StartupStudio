@@ -53,6 +53,15 @@ enum PixelFont {
             || glyphs[Character(String(character).uppercased())] != nil
     }
 
+    /// Whether every character of `string` has a real glyph — the test a
+    /// label from outside the game (a store price: "€4,99", "4,99 €",
+    /// a non-breaking space) must pass before it is drawn in the face,
+    /// or the customer sees hollow boxes. An empty string draws nothing
+    /// and passes.
+    static func canDraw(_ string: String) -> Bool {
+        string.allSatisfy(hasGlyph(for:))
+    }
+
     /// Width in pixels of `string` at scale 1, including tracking between
     /// glyphs but not after the last one.
     static func width(of string: String) -> Int {

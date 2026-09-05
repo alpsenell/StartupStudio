@@ -60,6 +60,8 @@ struct TitleScreen: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(Theme.screenBackground.ignoresSafeArea())
+        // Iteration 7 (R6): once per install, after the first biography.
+        .reviewPromptOnReturn(session: session)
         .onAppear {
             session.refreshSlots()
             withAnimation(Theme.Motion.entrance) { arrived = true }

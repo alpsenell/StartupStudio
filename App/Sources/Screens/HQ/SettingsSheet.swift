@@ -99,8 +99,8 @@ struct SettingsSheet: View {
                             GameCenterRow()
                         }
                         if ServiceFlags.restore {
-                            // R6: AppStore.sync() behind a confirmation.
-                            Button {} label: { Label("Restore purchases", systemImage: "arrow.clockwise") }
+                            // R6: AppStore.sync() and the outcome, see `Store/PaywallSheet.swift`.
+                            RestorePurchasesRow()
                         }
                     }
                 }

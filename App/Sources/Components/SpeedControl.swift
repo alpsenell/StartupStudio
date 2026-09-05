@@ -14,10 +14,25 @@ struct SpeedControl: View {
     /// the control's corner says so from every tab.
     var attention = false
 
+    /// Iteration 7 (R6): the lock's tap goes to the session, which asks
+    /// the refusing gate what it wants (the paywall, the daily's result).
+    @Environment(\.gameSession) private var session
+
+    /// Iteration 7: a gate on the clock is refusing to run it. The three
+    /// running speeds give way to one lock; pausing is always allowed.
+    private var isLocked: Bool {
+        engine.state.gameOver == nil && !engine.mayAdvance
+    }
+
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(SimSpeed.allCases, id: \.self) { speed in
-                segment(for: speed)
+            if isLocked {
+                segment(for: .paused)
+                lockSegment
+            } else {
+                ForEach(SimSpeed.allCases, id: \.self) { speed in
+                    segment(for: speed)
+                }
             }
         }
         .padding(2)
@@ -39,7 +54,29 @@ struct SpeedControl: View {
         }
         .animation(Theme.Motion.selection, value: engine.state.speed)
         .animation(Theme.Motion.selection, value: attention)
+        .animation(Theme.Motion.selection, value: isLocked)
         .accessibilityLabel("Simulation speed")
+    }
+
+    /// Iteration 7 (R6): the lock where 1×/2×/4× were. Same height, the
+    /// three chips' width, so the HUD bar lays out unchanged.
+    private var lockSegment: some View {
+        Button {
+            Haptics.tap()
+            Sounds.play(.tap)
+            session?.clockLockTapped()
+        } label: {
+            HStack(spacing: 4) {
+                PixelLockGlyph(color: Theme.pixelAccent)
+                PixelText(text: "Unlock", scale: 2, color: Theme.pixelAccent)
+            }
+            .frame(minWidth: 26 * 3 + 4, minHeight: 22)
+            .frame(minHeight: 34)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.pressable)
+        .accessibilityLabel("Locked")
+        .accessibilityHint("The clock is stopped at this chapter. Opens the unlock.")
     }
 
     @ViewBuilder
@@ -84,5 +121,40 @@ struct SpeedControl: View {
         default:
             PixelText(text: speed.label, scale: 2, color: ink)
         }
+    }
+}
+
+/// A padlock on the pixel grid, 7 wide by 9 tall at scale 2, drawn the
+/// way the bitmap font is so it sits beside it.
+struct PixelLockGlyph: View {
+    var color: Color = Theme.pixelInk
+    var scale: CGFloat = 2
+
+    /// Rows of the glyph, `#` for ink.
+    private static let rows = [
+        "..###..",
+        ".#...#.",
+        ".#...#.",
+        "#######",
+        "#######",
+        "###.###",
+        "###.###",
+        "#######",
+        "#######",
+    ]
+
+    var body: some View {
+        Canvas(rendersAsynchronously: false) { context, _ in
+            for (y, row) in Self.rows.enumerated() {
+                for (x, cell) in row.enumerated() where cell == "#" {
+                    context.fill(
+                        Path(CGRect(x: CGFloat(x) * scale, y: CGFloat(y) * scale, width: scale, height: scale)),
+                        with: .color(color)
+                    )
+                }
+            }
+        }
+        .frame(width: 7 * scale, height: 9 * scale)
+        .accessibilityHidden(true)
     }
 }
