@@ -54,6 +54,10 @@ public struct MarketDistrictInfo: Sendable, Equatable, Hashable, Identifiable {
     public var underSiege: Bool
     /// The forecast, where the studio has one.
     public var weather: MarketWeather?
+    /// The studio's share of this category, 0…1 — the number the district's
+    /// colour is a rounding of. Spoken, never drawn: `nil` where the app
+    /// has nothing to say.
+    public var share: Double?
 
     public init(
         id: String,
@@ -64,7 +68,8 @@ public struct MarketDistrictInfo: Sendable, Equatable, Hashable, Identifiable {
         rivalCount: Int = 0,
         hasFortress: Bool = false,
         underSiege: Bool = false,
-        weather: MarketWeather? = nil
+        weather: MarketWeather? = nil,
+        share: Double? = nil
     ) {
         self.id = id
         self.name = name
@@ -75,6 +80,27 @@ public struct MarketDistrictInfo: Sendable, Equatable, Hashable, Identifiable {
         self.hasFortress = hasFortress
         self.underSiege = underSiege
         self.weather = weather
+        self.share = share.map { min(1, max(0, $0)) }
+    }
+
+    /// The rung and the share as one spoken value — what a sighted player
+    /// reads off the district's colour and its buildings.
+    public var accessibilityValue: String {
+        var parts = [standingWord]
+        if let share {
+            parts.append("\(Int((share * 100).rounded())) percent share")
+        }
+        return parts.joined(separator: ", ")
+    }
+
+    private var standingWord: String {
+        switch standing {
+        case .none: "no presence"
+        case .newcomer: "newcomer"
+        case .known: "known"
+        case .established: "established"
+        case .household: "household name"
+        }
     }
 }
 

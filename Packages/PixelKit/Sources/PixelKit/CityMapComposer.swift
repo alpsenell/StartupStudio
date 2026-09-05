@@ -274,8 +274,17 @@ public enum CityMapComposer {
         }
     }
 
+    /// The rectangle the player's own office marker occupies in a
+    /// district, when that district is the one the office is in. The map's
+    /// sixth element: the flag a sighted player looks for first.
+    public static func officeMarkerFrame(for district: DistrictStyle) -> Rect {
+        let anchor = markerAnchor(for: district)
+        let sprite = CitySpriteLibrary.officeMarker()
+        return Rect(x: anchor.x, y: anchor.y, width: sprite.width, height: sprite.height)
+    }
+
     /// Where the district's flag/pin cluster sits.
-    private static func markerAnchor(for district: DistrictStyle) -> (x: Int, y: Int) {
+    static func markerAnchor(for district: DistrictStyle) -> (x: Int, y: Int) {
         switch district {
         case .suburbs: (30, 12)
         case .midtown: (84, 8)
