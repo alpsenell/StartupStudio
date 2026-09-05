@@ -8,6 +8,18 @@ import SwiftUI
 /// them. Lowercase input is folded to uppercase — the font is a display
 /// face for short labels, never for body copy (body text stays SF with
 /// Dynamic Type).
+///
+/// l10n: the face has exactly **55** glyphs — `A–Z` (26), `0–9` (10), space,
+/// `$ . , : - + / ! ? ' % ( )` and `× · ▶ ♥ ★` (19 non-alphanumerics in all).
+/// `StringsAuditTests.testPixelFontGlyphCoverageIsPinned` pins that count. There are no accented letters, no
+/// currency but the dollar, no `&`, `#`, `@`, quotes or brackets, and
+/// anything outside the table draws `missing`, a hollow box. So **every
+/// string that reaches `PixelText` must stay English-and-dollars** until the
+/// face grows a Latin-1 extension (~60 more glyphs, wave 2). Localize the
+/// string by all means — `String(localized:)` is right here — but a
+/// translator who returns "Fertigstellung" or "Café" gets boxes, which is
+/// why the comments on these keys say so. Numbers reach it through
+/// `Theme.gameLocale` (`en_US_POSIX`) for the same reason.
 enum PixelFont {
     /// Glyph cell width in pixels, excluding tracking.
     static let glyphWidth = 5
@@ -41,16 +53,32 @@ enum PixelFont {
     ]
 
     /// The glyph for `character`, folding lowercase to uppercase.
+    ///
+    /// The fold goes through a `String`, because uppercasing is not always
+    /// one-to-one: `ß` uppercases to `SS`, `ﬁ` to `FI`, and building a
+    /// `Character` from either of those traps. Before iteration 7 that made
+    /// a single German word in any label a crash rather than a row of boxes
+    /// — found by `StringsAuditTests`, which is the whole reason the audit
+    /// walks the alphabet the font cannot draw. A multi-character fold is
+    /// simply not in the face, so it draws `missing`.
     static func glyph(for character: Character) -> Glyph {
         if let exact = glyphs[character] { return exact }
-        let upper = Character(String(character).uppercased())
-        return glyphs[upper] ?? missing
+        guard let folded = uppercased(character) else { return missing }
+        return glyphs[folded] ?? missing
     }
 
     /// Whether the font has a real (non-fallback) glyph for `character`.
     static func hasGlyph(for character: Character) -> Bool {
-        glyphs[character] != nil
-            || glyphs[Character(String(character).uppercased())] != nil
+        if glyphs[character] != nil { return true }
+        guard let folded = uppercased(character) else { return false }
+        return glyphs[folded] != nil
+    }
+
+    /// `character` uppercased, when that is still one character.
+    private static func uppercased(_ character: Character) -> Character? {
+        let upper = String(character).uppercased()
+        guard upper.count == 1 else { return nil }
+        return upper.first
     }
 
     /// Whether every character of `string` has a real glyph — the test a

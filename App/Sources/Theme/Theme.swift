@@ -16,6 +16,17 @@ enum Theme {
     /// separators; anything that goes through `.formatted(...)` should pass
     /// this so "$5,100" and "×0.93" agree on what a comma means. Iteration 4
     /// seam — adopted site by site.
+    ///
+    /// l10n: this stays `en_US_POSIX` when the UI is translated, and that is
+    /// deliberate (R9, iteration 7). Two reasons. The money is the *game's*
+    /// currency, not the player's — there is no exchange rate in the
+    /// simulation, and `Int.money` hard-codes `$` and `,`. And most of these
+    /// figures are drawn by `PixelText` through `PixelFont`, a 55-glyph
+    /// bitmap face with no accents and no currency but the dollar: a locale
+    /// whose grouping separator is a space, a non-breaking space or an
+    /// apostrophe would render as hollow boxes. `MoneySnapshotTests` is the
+    /// guard. Changing this is a wave-2 decision that needs the Latin-1
+    /// glyph extension first.
     static let gameLocale = Locale(identifier: "en_US_POSIX")
 
     /// Positive cash flow / healthy values.

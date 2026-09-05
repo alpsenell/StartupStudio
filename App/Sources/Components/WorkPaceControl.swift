@@ -72,7 +72,7 @@ struct WorkPacePill: View {
         if pace != .normal {
             StatPill(
                 systemImage: pace == .crunch ? "flame.fill" : "leaf.fill",
-                value: pace == .crunch ? "Crunching" : "Relaxed",
+                value: pace == .crunch ? String(localized: "Crunching", comment: "Pill on a header: the team is on the hardest work pace") : String(localized: "Relaxed", comment: "Pill on a header: the team is on the easiest work pace"),
                 tint: pace == .crunch ? Theme.warning : Theme.positiveCash
             )
         }

@@ -94,19 +94,19 @@ struct WeeklyReportSheet: View {
     // MARK: - Cash
 
     private var cashCard: some View {
-        CardView("Cash", systemImage: "dollarsign.circle.fill") {
+        CardView(String(localized: "Cash", comment: "One word, used both for the money-sheet row showing cash on hand and for the weekly report card about money in and out"), systemImage: "dollarsign.circle.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 HStack(alignment: .top, spacing: Theme.Spacing.xl) {
-                    ReportStat(label: "In", value: report.income.money, tint: Theme.positiveCash)
-                    ReportStat(label: "Out", value: report.expenses.money, tint: Theme.negativeCash)
-                    ReportStat(label: "On hand", value: report.cash.money)
+                    ReportStat(label: String(localized: "In", comment: "Weekly report figure: money received this week"), value: report.income.money, tint: Theme.positiveCash)
+                    ReportStat(label: String(localized: "Out", comment: "Weekly report figure: money spent this week"), value: report.expenses.money, tint: Theme.negativeCash)
+                    ReportStat(label: String(localized: "On hand", comment: "Weekly report figure: cash left"), value: report.cash.money)
                 }
 
                 if !report.incomeByCategory.isEmpty {
-                    BreakdownRows(title: "Income", totals: report.incomeByCategory, tint: Theme.positiveCash)
+                    BreakdownRows(title: String(localized: "Income", comment: "Weekly report breakdown heading: money in, by category"), totals: report.incomeByCategory, tint: Theme.positiveCash)
                 }
                 if !report.expensesByCategory.isEmpty {
-                    BreakdownRows(title: "Expenses", totals: report.expensesByCategory, tint: Theme.negativeCash)
+                    BreakdownRows(title: String(localized: "Expenses", comment: "Weekly report breakdown heading: money out, by category"), totals: report.expensesByCategory, tint: Theme.negativeCash)
                 }
             }
         }
@@ -165,16 +165,16 @@ struct WeeklyReportSheet: View {
     // MARK: - Team
 
     private var teamCard: some View {
-        CardView("Team", systemImage: "person.2.fill") {
+        CardView(String(localized: "Team", comment: "Weekly report card: morale and who is unhappy"), systemImage: "person.2.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 HStack(alignment: .top, spacing: Theme.Spacing.xl) {
                     ReportStat(
-                        label: "Average morale",
+                        label: String(localized: "Average morale", comment: "Weekly report figure: the team average morale out of 100"),
                         value: report.averageMorale.formatted(.number.precision(.fractionLength(0)).locale(Theme.gameLocale)),
                         tint: moraleTint
                     )
                     ReportStat(
-                        label: "Change",
+                        label: String(localized: "Change", comment: "Weekly report figure: how much average morale moved this week"),
                         value: signed(report.moraleDelta),
                         tint: report.moraleDelta >= 0 ? Theme.positiveCash : Theme.negativeCash
                     )
@@ -212,13 +212,13 @@ struct WeeklyReportSheet: View {
     // MARK: - Founder
 
     private var founderCard: some View {
-        CardView("You", systemImage: "person.fill") {
+        CardView(String(localized: "You", comment: "Card and step heading for the founder as a person - their money, their meters, their name"), systemImage: "person.fill") {
             HStack(spacing: Theme.Spacing.lg) {
-                MeterDelta(label: "Energy", value: report.founderMeters.energy, delta: report.meterDeltas.energy)
-                MeterDelta(label: "Health", value: report.founderMeters.health, delta: report.meterDeltas.health)
-                MeterDelta(label: "Mood", value: report.founderMeters.mood, delta: report.meterDeltas.mood)
+                MeterDelta(label: String(localized: "Energy", comment: "Founder meter: how rested the founder is"), value: report.founderMeters.energy, delta: report.meterDeltas.energy)
+                MeterDelta(label: String(localized: "Health", comment: "Founder meter: physical health"), value: report.founderMeters.health, delta: report.meterDeltas.health)
+                MeterDelta(label: String(localized: "Mood", comment: "Founder meter: how the founder feels"), value: report.founderMeters.mood, delta: report.meterDeltas.mood)
                 MeterDelta(
-                    label: "People",
+                    label: String(localized: "People", comment: "Founder meter: how the relationships are holding up"),
                     value: report.founderMeters.relationships,
                     delta: report.meterDeltas.relationships
                 )
@@ -317,8 +317,8 @@ struct WeeklyReportSheet: View {
     private var runwayText: String {
         guard let weeks = report.runwayWeeks else {
             return report.cash < 0
-                ? "You are in the red — every week digs deeper"
-                : "Burn is covered"
+                ? String(localized: "You are in the red — every week digs deeper", comment: "Weekly report runway line when cash is negative")
+                : String(localized: "Burn is covered", comment: "Weekly report runway line when income covers the spend")
         }
         return "\(weeks) week\(weeks == 1 ? "" : "s") of runway at \(report.weeklyBurn.money)/wk"
     }

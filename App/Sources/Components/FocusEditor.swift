@@ -36,19 +36,19 @@ struct FocusEditor: View {
                 .accessibilityHint("Weights each phase by the points it still needs")
             }
             sliderRow(
-                label: "Design",
+                label: String(localized: "Design", comment: "Used for the design build phase, the design skill, and the founder archetype skill chip. One word, on a chip or a bar label"),
                 value: $focus.design,
                 tint: Theme.designPhase,
                 percent: split[0]
             )
             sliderRow(
-                label: "Code",
+                label: String(localized: "Code", comment: "Used both for the code build phase and for the founder coding skill. One word, on a chip or a bar label"),
                 value: $focus.code,
                 tint: Theme.codePhase,
                 percent: split[1]
             )
             sliderRow(
-                label: "Polish",
+                label: String(localized: "Polish", comment: "One of the three build phases a product goes through"),
                 value: $focus.polish,
                 tint: Theme.polishPhase,
                 percent: split[2]

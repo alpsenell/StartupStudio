@@ -11,6 +11,13 @@ enum PostMortem {
         let text: String
     }
 
+    // l10n: NOT LOCALIZED, deliberately (R9, iteration 7). Each line pairs a
+    // fact with its number and pluralises with a trailing s. The conversion is
+    // one keyed format per `Line.id` plus a plural variant per count -
+    //   "postmortem.never-shipped" = "Nothing was ever started. %lld weeks of
+    //                                 payroll and rent with no product to sell."
+    //   "postmortem.burn"          = "%1$@ out against %2$@ in over the last quarter."
+    // - because the ids are already stable and test-pinned. Wave 2.
     static func lines(for state: GameState, balance: BalanceConfig, weeklyBurn: Int) -> [Line] {
         var lines: [Line] = []
         let entries = state.ledger.entries

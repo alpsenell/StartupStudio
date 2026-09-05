@@ -36,15 +36,15 @@ extension EmployeeRole {
     /// Badge text — short enough to sit beside a name on one line.
     var shortName: String {
         switch self {
-        case .founder: "Founder"
-        case .frontend: "Frontend"
-        case .backend: "Backend"
-        case .designer: "Designer"
-        case .qa: "QA"
-        case .marketer: "Marketer"
-        case .lawyer: "Lawyer"
-        case .hr: "HR"
-        case .ops: "Ops"
+        case .founder: String(localized: "Founder", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
+        case .frontend: String(localized: "Frontend", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
+        case .backend: String(localized: "Backend", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
+        case .designer: String(localized: "Designer", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
+        case .qa: String(localized: "QA", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
+        case .marketer: String(localized: "Marketer", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
+        case .lawyer: String(localized: "Lawyer", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
+        case .hr: String(localized: "HR", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
+        case .ops: String(localized: "Ops", comment: "Job title on a badge beside a name. Keep it short - one word if possible")
         }
     }
 
@@ -70,15 +70,15 @@ extension EmployeeRole {
     /// Article for hint copy: "a lawyer", "an HR specialist".
     var hiringNoun: String {
         switch self {
-        case .founder: "a founder"
-        case .frontend: "a frontend dev"
-        case .backend: "a backend dev"
-        case .designer: "a designer"
-        case .qa: "a QA engineer"
-        case .marketer: "a marketer"
-        case .lawyer: "a lawyer"
-        case .hr: "an HR specialist"
-        case .ops: "an ops manager"
+        case .founder: String(localized: "a founder", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
+        case .frontend: String(localized: "a frontend dev", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
+        case .backend: String(localized: "a backend dev", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
+        case .designer: String(localized: "a designer", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
+        case .qa: String(localized: "a QA engineer", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
+        case .marketer: String(localized: "a marketer", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
+        case .lawyer: String(localized: "a lawyer", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
+        case .hr: String(localized: "an HR specialist", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
+        case .ops: String(localized: "an ops manager", comment: "Job title with its article, dropped into a sentence such as You need a lawyer")
         }
     }
 }

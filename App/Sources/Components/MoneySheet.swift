@@ -64,27 +64,27 @@ struct MoneySheetContent: View {
         let median = state.teamMedianSalary
 
         VStack(spacing: Theme.Spacing.lg) {
-            CardView("Company", systemImage: "building.2.fill") {
+            CardView(String(localized: "Company", comment: "Money sheet card: the company purse"), systemImage: "building.2.fill") {
                 VStack(spacing: Theme.Spacing.sm) {
-                    row("Cash", cash.money, tint: cash < 0 ? Theme.negativeCash : .primary)
-                    row("Weekly burn", "\(burn.money)/wk", tint: burn > 0 ? Theme.warning : .primary)
-                    row("Runway", runway(cash: cash, burn: burn).text, tint: runway(cash: cash, burn: burn).tint)
-                    row("Income last week", incomeLastWeek.money, tint: incomeLastWeek > 0 ? Theme.positiveCash : .secondary)
+                    row(String(localized: "Cash", comment: "One word, used both for the money-sheet row showing cash on hand and for the weekly report card about money in and out"), cash.money, tint: cash < 0 ? Theme.negativeCash : .primary)
+                    row(String(localized: "Weekly burn", comment: "Money sheet row: what the company spends a week"), String(localized: "\(burn.money)/wk", comment: "Money per week. wk is short for week"), tint: burn > 0 ? Theme.warning : .primary)
+                    row(String(localized: "Runway", comment: "Money sheet row: how long the cash lasts"), runway(cash: cash, burn: burn).text, tint: runway(cash: cash, burn: burn).tint)
+                    row(String(localized: "Income last week", comment: "Money sheet row: money in over the last week"), incomeLastWeek.money, tint: incomeLastWeek > 0 ? Theme.positiveCash : .secondary)
                     if worstDebt >= 1 {
-                        row("Technical debt", "\(Int(worstDebt.rounded()))", tint: Theme.warning)
+                        row(String(localized: "Technical debt", comment: "Money sheet row: the worst codebase debt score"), "\(Int(worstDebt.rounded()))", tint: Theme.warning)
                     }
                 }
             }
 
-            CardView("Bank", systemImage: "banknote.fill") {
+            CardView(String(localized: "Bank", comment: "Money sheet card: loans and the credit limit"), systemImage: "banknote.fill") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    row("Outstanding", outstanding.money, tint: outstanding > 0 ? Theme.negativeCash : .primary)
-                    row("Credit limit", creditLimit.money, tint: .primary)
+                    row(String(localized: "Outstanding", comment: "Money sheet row: loan principal still owed"), outstanding.money, tint: outstanding > 0 ? Theme.negativeCash : .primary)
+                    row(String(localized: "Credit limit", comment: "Money sheet row: the most the bank will lend"), creditLimit.money, tint: .primary)
                     if outstanding > 0 {
-                        row("Interest", "\(interest.money)/wk", tint: Theme.warning)
+                        row(String(localized: "Interest", comment: "Money sheet row: interest charged each week"), String(localized: "\(interest.money)/wk", comment: "Money per week. wk is short for week"), tint: Theme.warning)
                     }
                     if state.guaranteedDebt > 0 {
-                        row("Guaranteed by you", state.guaranteedDebt.money, tint: Theme.warning)
+                        row(String(localized: "Guaranteed by you", comment: "Money sheet row: debt secured against the founder home"), state.guaranteedDebt.money, tint: Theme.warning)
                     }
                     // The rule that connects the wallet, the loan and the
                     // home, drawn in one line.
@@ -99,13 +99,13 @@ struct MoneySheetContent: View {
                 }
             }
 
-            CardView("You", systemImage: "person.fill") {
+            CardView(String(localized: "You", comment: "Card and step heading for the founder as a person - their money, their meters, their name"), systemImage: "person.fill") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    row("Wallet", life.wallet.money, tint: life.wallet < 0 ? Theme.negativeCash : .primary)
-                    row("Salary", "\(life.founderSalary.money)/wk", tint: .primary)
+                    row(String(localized: "Wallet", comment: "Money sheet row: the founder own money"), life.wallet.money, tint: life.wallet < 0 ? Theme.negativeCash : .primary)
+                    row(String(localized: "Salary", comment: "Money sheet row: what the founder pays themselves"), String(localized: "\(life.founderSalary.money)/wk", comment: "Money per week. wk is short for week"), tint: .primary)
                     if let median, median > 0 {
                         let over = Double(life.founderSalary) > Double(median) * 1.5
-                        row("Team median", "\(median.money)/wk", tint: over ? Theme.warning : .secondary)
+                        row(String(localized: "Team median", comment: "Money sheet row: the median salary on the team"), String(localized: "\(median.money)/wk", comment: "Money per week. wk is short for week"), tint: over ? Theme.warning : .secondary)
                         if over {
                             Text("More than 1.5× the team's median: morale slides, and a board adds it to the pressure.")
                                 .font(.caption)
@@ -113,16 +113,16 @@ struct MoneySheetContent: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    row("Rent", "\(rent.money)/wk", tint: life.wallet < rent ? Theme.negativeCash : .primary)
+                    row(String(localized: "Rent", comment: "Used as a ledger bucket (the office rent) and as the money-sheet row for the founder home rent"), String(localized: "\(rent.money)/wk", comment: "Money per week. wk is short for week"), tint: life.wallet < rent ? Theme.negativeCash : .primary)
                     if let next = life.home.next {
-                        row("Next home", "\(next.displayName) · \(homeUpgradeCost(next, balance: balance).money)", tint: .secondary)
+                        row(String(localized: "Next home", comment: "Money sheet row: the next home up the ladder and its price"), "\(next.displayName) · \(homeUpgradeCost(next, balance: balance).money)", tint: .secondary)
                     }
                 }
             }
 
             HStack(spacing: Theme.Spacing.sm) {
-                link("Finances", systemImage: "banknote.fill", route: .finances)
-                link("Life", systemImage: "heart.fill", route: .life)
+                link(String(localized: "Finances", comment: "Money sheet link to the finance ledger"), systemImage: "banknote.fill", route: .finances)
+                link(String(localized: "Life", comment: "Money sheet link to the Life tab"), systemImage: "heart.fill", route: .life)
             }
         }
     }
@@ -157,10 +157,10 @@ struct MoneySheetContent: View {
     }
 
     private func runway(cash: Int, burn: Int) -> (text: String, tint: Color) {
-        if cash < 0 { return ("in the red", Theme.negativeCash) }
-        guard burn > 0 else { return ("no burn", Theme.positiveCash) }
+        if cash < 0 { return (String(localized: "in the red", comment: "Runway readout when cash is below zero. Lower case: it is dropped into a line, not a heading"), Theme.negativeCash) }
+        guard burn > 0 else { return (String(localized: "no burn", comment: "Runway readout when the company spends nothing. Lower case: it is dropped into a line, not a heading"), Theme.positiveCash) }
         let weeks = cash / burn
-        return ("\(weeks) wk", weeks <= 4 ? Theme.warning : .primary)
+        return (String(localized: "\(weeks) wk", comment: "Runway readout: weeks of cash left. wk is short for weeks"), weeks <= 4 ? Theme.warning : .primary)
     }
 }
 

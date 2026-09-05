@@ -128,16 +128,16 @@ extension LedgerEntry.Category {
     /// workstream shows up as a compiler warning here, not as "Other".
     var displayName: String {
         switch self {
-        case .operating: "Operating"
-        case .rent: "Rent"
-        case .payroll: "Payroll"
-        case .sales: "Sales"
-        case .contracts: "Contracts"
-        case .marketing: "Marketing"
-        case .research: "Research"
-        case .hosting: "Servers"
-        case .other: "Other"
-        @unknown default: "Other"
+        case .operating: String(localized: "Operating", comment: "Ledger bucket: day-to-day running costs")
+        case .rent: String(localized: "Rent", comment: "Used as a ledger bucket (the office rent) and as the money-sheet row for the founder home rent")
+        case .payroll: String(localized: "Payroll", comment: "Ledger bucket: wages")
+        case .sales: String(localized: "Sales", comment: "Used as a ledger bucket (money from shipped products) and as the founder selling skill on a chip")
+        case .contracts: String(localized: "Contracts", comment: "Client jobs. Used as a ledger bucket and as the button on the coach tip that opens the contracts screen")
+        case .marketing: String(localized: "Marketing", comment: "Used as a ledger bucket (campaign spend) and as the marketing skill on a bar")
+        case .research: String(localized: "Research", comment: "The tech tree. Used in the assignment menu, as the current-assignment readout, and as a ledger bucket")
+        case .hosting: String(localized: "Servers", comment: "Ledger bucket: hosting costs")
+        case .other: String(localized: "Other", comment: "Ledger bucket: everything that fits no other category, including one this build does not know")
+        @unknown default: String(localized: "Other", comment: "Ledger bucket: everything that fits no other category, including one this build does not know")
         }
     }
 

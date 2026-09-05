@@ -10,7 +10,7 @@ struct AssignmentMenu: View {
 
     var body: some View {
         Menu {
-            assignmentButton(.idle, label: "Idle", systemImage: "moon.zzz.fill")
+            assignmentButton(.idle, label: String(localized: "Idle", comment: "An employee with no work. Used in the assignment menu and as the current-assignment readout"), systemImage: "moon.zzz.fill")
             // An office runs one to five builds at a time now (WS-A's
             // concurrent dev slots), so every one of them is offered.
             ForEach(engine.state.productsInDevelopment) { product in
@@ -18,7 +18,7 @@ struct AssignmentMenu: View {
                     .product(product.id), label: product.name, systemImage: "hammer.fill"
                 )
             }
-            assignmentButton(.research, label: "Research", systemImage: "flask.fill")
+            assignmentButton(.research, label: String(localized: "Research", comment: "The tech tree. Used in the assignment menu, as the current-assignment readout, and as a ledger bucket"), systemImage: "flask.fill")
             if !supportable.isEmpty {
                 Section("Support") {
                     ForEach(supportable, id: \.product.id) { entry in
@@ -104,23 +104,23 @@ struct AssignmentMenu: View {
     private var currentLabel: String {
         switch employee.assignment {
         case .idle:
-            "Idle"
+            String(localized: "Idle", comment: "An employee with no work. Used in the assignment menu and as the current-assignment readout")
         case .research:
-            "Research"
+            String(localized: "Research", comment: "The tech tree. Used in the assignment menu, as the current-assignment readout, and as a ledger bucket")
         case .contract(let contractID):
             // Defensive: the job should always resolve while assigned.
-            engine.state.activeContract(id: contractID)?.clientName ?? "Contract"
+            engine.state.activeContract(id: contractID)?.clientName ?? String(localized: "Contract", comment: "Current assignment: a client job whose name could not be resolved")
         case .product(let productID):
             // Defensive: the product should always resolve while assigned.
-            engine.state.product(id: productID)?.name ?? "Product"
+            engine.state.product(id: productID)?.name ?? String(localized: "Product", comment: "Current assignment: a build whose name could not be resolved")
         case .support(let productID):
             // Defensive: the product should always resolve while assigned.
-            engine.state.product(id: productID).map { "Support: \($0.name)" } ?? "Support"
+            engine.state.product(id: productID).map { String(localized: "Support: \($0.name)", comment: "Current assignment: staffing a shipped product's support desk") } ?? String(localized: "Support", comment: "Current assignment: a support desk whose product could not be resolved")
         case .refactor(let codebaseID):
             // Defensive: the codebase should always resolve while assigned.
-            engine.state.codebase(id: codebaseID).map { "Refactor: \($0.name)" } ?? "Refactor"
+            engine.state.codebase(id: codebaseID).map { String(localized: "Refactor: \($0.name)", comment: "Current assignment: paying down a codebase's technical debt") } ?? String(localized: "Refactor", comment: "Current assignment: a refactor whose codebase could not be resolved")
         @unknown default:
-            "Assigned"
+            String(localized: "Assigned", comment: "Current assignment: an assignment kind this build does not know")
         }
     }
 }
@@ -133,7 +133,7 @@ struct AssignmentMenu: View {
 struct IdleAssignMenu: View {
     let engine: GameEngine
     let assignment: Assignment
-    var label = "Assign"
+    var label = String(localized: "Assign", comment: "Menu title: put an idle person on this piece of work")
 
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI

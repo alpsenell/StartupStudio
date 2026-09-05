@@ -183,20 +183,20 @@ struct TitleScreen: View {
     }
 
     private func name(of slot: Int) -> String {
-        guard let row = session.slots.first(where: { $0.slot == slot }) else { return "slot \(slot + 1)" }
+        guard let row = session.slots.first(where: { $0.slot == slot }) else { return String(localized: "slot \(slot + 1)", comment: "Stand-in name for a save slot with nothing in it, used inside a sentence") }
         switch row.contents {
         case .saved(let summary, _): return summary.companyName
-        case .corrupt: return "the damaged save"
-        case .futureFormat: return "the newer save"
-        case .empty: return "slot \(slot + 1)"
+        case .corrupt: return String(localized: "the damaged save", comment: "Stand-in name for a save file that could not be read, used inside a sentence")
+        case .futureFormat: return String(localized: "the newer save", comment: "Stand-in name for a save written by a newer app version, used inside a sentence")
+        case .empty: return String(localized: "slot \(slot + 1)", comment: "Stand-in name for a save slot with nothing in it, used inside a sentence")
         }
     }
 
     private func deleteMessage(for slot: Int) -> String {
         guard let summary = session.slots.first(where: { $0.slot == slot })?.summary else {
-            return "Slot \(slot + 1) is cleared. This can't be undone."
+            return String(localized: "Slot \(slot + 1) is cleared. This can\'t be undone.", comment: "Confirmation message for deleting an empty save slot")
         }
-        return "Slot \(slot + 1): \(summary.companyName), \(summary.founderName), day \(summary.day). This can't be undone."
+        return String(localized: "Slot \(slot + 1): \(summary.companyName), \(summary.founderName), day \(summary.day). This can\'t be undone.", comment: "Confirmation message for deleting a save: slot number, company, founder and the day reached")
     }
 }
 
@@ -405,7 +405,7 @@ private struct SlotList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            PixelSectionTitle(title: "Saves")
+            PixelSectionTitle(title: String(localized: "Saves", comment: "Bitmap section heading over the three save slots. Uppercased by the pixel face"))
             ForEach(slots) { row in
                 SlotRow(
                     row: row,
@@ -518,9 +518,9 @@ private struct SlotRow: View {
     /// "Current · Played an hour ago", or just when it was played.
     private var footnote: String? {
         var parts: [String] = []
-        if isCurrent { parts.append("Current") }
+        if isCurrent { parts.append(String(localized: "Current", comment: "Footnote on the save slot the player is in right now")) }
         if let lastPlayed = row.lastPlayed {
-            parts.append("Played \(Self.relative.localizedString(for: lastPlayed, relativeTo: Date()))")
+            parts.append(String(localized: "Played \(Self.relative.localizedString(for: lastPlayed, relativeTo: Date()))", comment: "Footnote on a save slot: when it was last opened, as a relative date"))
         }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
@@ -553,23 +553,23 @@ private struct SlotRow: View {
 
     private var title: String {
         switch row.contents {
-        case .empty: "Empty"
+        case .empty: String(localized: "Empty", comment: "Save slot title: nothing saved here")
         case .saved(let summary, _): summary.companyName
-        case .corrupt: "Damaged save"
-        case .futureFormat: "Needs a newer app"
+        case .corrupt: String(localized: "Damaged save", comment: "Save slot title: the file could not be decoded")
+        case .futureFormat: String(localized: "Needs a newer app", comment: "Save slot title: written by a newer version of the game")
         }
     }
 
     private var detail: String {
         switch row.contents {
         case .empty:
-            "Start a company here"
+            String(localized: "Start a company here", comment: "Save slot detail line for an empty slot")
         case .saved(let summary, _):
-            "\(summary.founderName) · Day \(summary.day) · \(summary.endingKind?.headline ?? "Running")"
+            String(localized: "\(summary.founderName) · Day \(summary.day) · \(summary.endingKind?.headline ?? String(localized: "Running", comment: "Save slot state: the company has not ended yet"))", comment: "Save slot detail: founder, day reached, and how the run ended or that it is still going")
         case .corrupt:
-            "The file couldn't be read. Delete it to free the slot."
+            String(localized: "The file couldn\'t be read. Delete it to free the slot.", comment: "Save slot detail for a corrupt file")
         case .futureFormat(let version):
-            "Saved by a newer version (format \(version))."
+            String(localized: "Saved by a newer version (format \(version)).", comment: "Save slot detail for a save from a newer app version")
         }
     }
 
@@ -580,8 +580,8 @@ private struct SlotRow: View {
 
     private var hint: String {
         switch row.contents {
-        case .empty: "Starts a new company in this slot"
-        case .saved: isCurrent ? "Continues this game" : "Opens this game"
+        case .empty: String(localized: "Starts a new company in this slot", comment: "Spoken hint on an empty save slot")
+        case .saved: isCurrent ? String(localized: "Continues this game", comment: "Spoken hint on the save slot the player is in") : String(localized: "Opens this game", comment: "Spoken hint on a save slot the player is not in")
         case .corrupt, .futureFormat: ""
         }
     }

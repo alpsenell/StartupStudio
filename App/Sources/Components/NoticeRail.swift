@@ -366,9 +366,9 @@ struct NoticeRail: View {
 
     private func deferredRow(title: String, daysLeft: Int, category: String?) -> some View {
         let when = switch daysLeft {
-        case 0: "answers itself today"
-        case 1: "1 day left"
-        default: "\(daysLeft) days left"
+        case 0: String(localized: "answers itself today", comment: "Notice rail: a deferred question whose deadline is today")
+        case 1: String(localized: "1 day left", comment: "Notice rail: a deferred question with one day of its deadline left")
+        default: String(localized: "\(daysLeft) days left", comment: "Notice rail: days left on a deferred question. Always 2 or more")
         }
         return HStack(spacing: Theme.Spacing.md) {
             Image(systemName: EventPresenter.icon(forCategory: category))

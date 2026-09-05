@@ -11,13 +11,13 @@ import TycoonEngine
 /// speaks in, which are presentation, not simulation.
 extension GameCalendar {
     /// The HUD label: "Mar W2 · Y1".
-    var hudLabel: String { "\(shortMonthName) W\(weekOfYear) · Y\(year)" }
+    var hudLabel: String { String(localized: "\(shortMonthName) W\(weekOfYear) · Y\(year)", comment: "HUD date: month, week of year, game year. Bitmap face - keep to A-Z, digits and the middot") }
     /// The HUD's fallback when the bar is too tight for the month:
     /// "W14 · Y1". The week and the year are what the player steers by.
-    var compactHUDLabel: String { "W\(weekOfYear) · Y\(year)" }
+    var compactHUDLabel: String { String(localized: "W\(weekOfYear) · Y\(year)", comment: "HUD date, narrow form: week of year and game year. Bitmap face") }
 
     /// The long form used in sheets: "Mar 12, Year 1".
-    var longLabel: String { "\(shortMonthName) \(dayOfMonth), Year \(year)" }
+    var longLabel: String { String(localized: "\(shortMonthName) \(dayOfMonth), Year \(year)", comment: "Long game date used in sheets and spoken labels") }
 }
 
 extension Season {

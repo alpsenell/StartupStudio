@@ -12,12 +12,12 @@ private enum OnboardingStep: Int, CaseIterable, Comparable {
 
     var title: String {
         switch self {
-        case .custom: "Custom"
-        case .founder: "You"
-        case .company: "Studio"
-        case .difficulty: "Stakes"
-        case .heirlooms: "Heirlooms"
-        case .intro: "Ready"
+        case .custom: String(localized: "Custom", comment: "Onboarding step name: set the seed and the rules yourself")
+        case .founder: String(localized: "You", comment: "Card and step heading for the founder as a person - their money, their meters, their name")
+        case .company: String(localized: "Studio", comment: "Onboarding step name: name the company")
+        case .difficulty: String(localized: "Stakes", comment: "Onboarding step name: origin and difficulty")
+        case .heirlooms: String(localized: "Heirlooms", comment: "Onboarding step name: carry one thing from the last company")
+        case .intro: String(localized: "Ready", comment: "Onboarding step name: the four-panel look at the game")
         }
     }
 
@@ -242,8 +242,8 @@ struct NewGameFlow: View {
     private var founderStep: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             StepHeadline(
-                title: "Who's starting this?",
-                detail: "Your name goes on the incorporation papers and on every review."
+                title: String(localized: "Who\'s starting this?", comment: "Onboarding page heading"),
+                detail: String(localized: "Your name goes on the incorporation papers and on every review.", comment: "Onboarding page subheading under the heading above")
             )
 
             CardView("Your name", systemImage: "person.fill") {
@@ -253,7 +253,7 @@ struct NewGameFlow: View {
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
                         .onChange(of: founderName) { _, _ in founderNameEdited = true }
-                    ShuffleButton(label: "Shuffle names") {
+                    ShuffleButton(label: String(localized: "Shuffle names", comment: "Button that rolls a new founder and company name")) {
                         nameShuffle += 1
                         if !founderNameEdited { founderName = suggestedFounderName }
                         if !companyNameEdited { companyName = suggestedCompanyName }
@@ -318,8 +318,8 @@ struct NewGameFlow: View {
     private var companyStep: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             StepHeadline(
-                title: "Name the studio",
-                detail: "Two people in a garage, one laptop, and a name you'll have to defend."
+                title: String(localized: "Name the studio", comment: "Onboarding page heading"),
+                detail: String(localized: "Two people in a garage, one laptop, and a name you\'ll have to defend.", comment: "Onboarding page subheading under the heading above")
             )
 
             CardView("Company name", systemImage: "building.2.fill") {
@@ -330,7 +330,7 @@ struct NewGameFlow: View {
                             .textInputAutocapitalization(.words)
                             .autocorrectionDisabled()
                             .onChange(of: companyName) { _, _ in companyNameEdited = true }
-                        ShuffleButton(label: "Shuffle company names") {
+                        ShuffleButton(label: String(localized: "Shuffle company names", comment: "Button that rolls a new company name")) {
                             nameShuffle += 1
                             companyName = suggestedCompanyName
                             companyNameEdited = false
@@ -367,8 +367,8 @@ struct NewGameFlow: View {
     private var introStep: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             StepHeadline(
-                title: "Here's the job",
-                detail: "Four things you'll be juggling from day one."
+                title: String(localized: "Here\'s the job", comment: "Onboarding page heading"),
+                detail: String(localized: "Four things you\'ll be juggling from day one.", comment: "Onboarding page subheading under the heading above")
             )
             TabView(selection: $introPage) {
                 ForEach(Array(IntroPanel.all.enumerated()), id: \.offset) { index, panel in
@@ -467,15 +467,15 @@ struct StakesStepContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             StepHeadline(
-                title: "How does it start?",
-                detail: "Four ways to found it. Each one costs something the others don't."
+                title: String(localized: "How does it start?", comment: "Onboarding page heading"),
+                detail: String(localized: "Four ways to found it. Each one costs something the others don\'t.", comment: "Onboarding page subheading under the heading above")
             )
             OriginPicker(origin: $origin, lockedOrigins: lockedOrigins)
 
             if showsDifficulty {
                 StepHeadline(
-                    title: "How hard should this be?",
-                    detail: "Difficulty scales starting cash, costs, and how forgiving the market is."
+                    title: String(localized: "How hard should this be?", comment: "Onboarding page heading"),
+                    detail: String(localized: "Difficulty scales starting cash, costs, and how forgiving the market is.", comment: "Onboarding page subheading under the heading above")
                 )
                 .padding(.top, Theme.Spacing.sm)
                 VStack(spacing: Theme.Spacing.sm) {
@@ -573,9 +573,9 @@ private struct ArchetypeRow: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.leading)
                     HStack(spacing: Theme.Spacing.sm) {
-                        SkillChip(label: "Code", value: spread.coding, tint: Theme.codePhase)
-                        SkillChip(label: "Design", value: spread.design, tint: Theme.designPhase)
-                        SkillChip(label: "Sales", value: spread.marketing, tint: Theme.polishPhase)
+                        SkillChip(label: String(localized: "Code", comment: "Used both for the code build phase and for the founder coding skill. One word, on a chip or a bar label"), value: spread.coding, tint: Theme.codePhase)
+                        SkillChip(label: String(localized: "Design", comment: "Used for the design build phase, the design skill, and the founder archetype skill chip. One word, on a chip or a bar label"), value: spread.design, tint: Theme.designPhase)
+                        SkillChip(label: String(localized: "Sales", comment: "Used as a ledger bucket (money from shipped products) and as the founder selling skill on a chip"), value: spread.marketing, tint: Theme.polishPhase)
                     }
                 }
                 Spacer(minLength: 0)
@@ -614,9 +614,9 @@ private struct ArchetypeRow: View {
 
     private var blurb: String {
         switch archetype {
-        case .hacker: "You can build the whole thing yourself. Getting anyone to look at it is the hard part."
-        case .designer: "Your first build will feel good. It will also be late."
-        case .hustler: "You can sell it before it exists. Then you have to make it."
+        case .hacker: String(localized: "You can build the whole thing yourself. Getting anyone to look at it is the hard part.", comment: "What the hacker archetype is like to play")
+        case .designer: String(localized: "Your first build will feel good. It will also be late.", comment: "What the designer archetype is like to play")
+        case .hustler: String(localized: "You can sell it before it exists. Then you have to make it.", comment: "What the hustler archetype is like to play")
         }
     }
 }
@@ -698,23 +698,23 @@ private struct IntroPanel {
 
     static let all: [IntroPanel] = [
         IntroPanel(
-            title: "The office",
-            body: "It starts in a garage with one desk. Hire people and it grows into a loft, a studio, a campus — every move costs rent you have to keep earning.",
+            title: String(localized: "The office", comment: "Heading of the onboarding panel about the office"),
+            body: String(localized: "It starts in a garage with one desk. Hire people and it grows into a loft, a studio, a campus — every move costs rent you have to keep earning.", comment: "Body of the onboarding panel about the office"),
             kind: .office
         ),
         IntroPanel(
-            title: "The life",
-            body: "You have energy, health, a mood, and someone waiting at home. Crunch weeks buy you output and cost you all four.",
+            title: String(localized: "The life", comment: "Heading of the onboarding panel about the life"),
+            body: String(localized: "You have energy, health, a mood, and someone waiting at home. Crunch weeks buy you output and cost you all four.", comment: "Body of the onboarding panel about the life"),
             kind: .home
         ),
         IntroPanel(
-            title: "The products",
-            body: "Design, code, polish. Ship it and the press reviews it — your first one will be rough. Then it earns, decays, and needs updates.",
+            title: String(localized: "The products", comment: "Heading of the onboarding panel about the products"),
+            body: String(localized: "Design, code, polish. Ship it and the press reviews it — your first one will be rough. Then it earns, decays, and needs updates.", comment: "Body of the onboarding panel about the products"),
             kind: .products
         ),
         IntroPanel(
-            title: "The business",
-            body: "Contracts pay the bills while products ramp. Watch the market, run campaigns, take a loan if you must — and keep an eye on the rivals.",
+            title: String(localized: "The business", comment: "Heading of the onboarding panel about the business"),
+            body: String(localized: "Contracts pay the bills while products ramp. Watch the market, run campaigns, take a loan if you must — and keep an eye on the rivals.", comment: "Body of the onboarding panel about the business"),
             kind: .business
         ),
     ]
