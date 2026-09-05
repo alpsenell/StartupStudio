@@ -11,8 +11,10 @@ struct GameWonView: View {
     let info: GameOverInfo
     let onNewGame: (Difficulty, FounderProfile, FoundingOrigin) -> Void
     var onReplay: (() -> Void)?
+    /// Iteration 7: share and keep-running, passed through to the biography.
+    var actions: BiographyActions = BiographyActions()
 
     var body: some View {
-        FounderBiographyView(engine: engine, info: info, onNewGame: onNewGame, onReplay: onReplay)
+        FounderBiographyView(engine: engine, info: info, onNewGame: onNewGame, onReplay: onReplay, actions: actions)
     }
 }

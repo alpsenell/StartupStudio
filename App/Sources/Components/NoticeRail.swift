@@ -22,6 +22,10 @@ struct RailNotice: Identifiable, Equatable {
         case event(Toast)
         /// A coach tip for the player's current goal.
         case tip(CoachTip)
+        /// Iteration 7 (R1): the tour's current beat. Priority 1 — after a
+        /// pause (a story question stops the clock and must lead), before
+        /// a deferred question.
+        case tour(TutorialStep)
     }
 
     let id: String
@@ -33,24 +37,28 @@ struct RailNotice: Identifiable, Equatable {
         RailNotice(id: "pause", kind: .pause(headline: headline, more: more), priority: 0)
     }
 
+    static func tour(_ step: TutorialStep) -> RailNotice {
+        RailNotice(id: "tour-\(step.rawValue)", kind: .tour(step), priority: 1)
+    }
+
     static func deferred(id: String, title: String, daysLeft: Int, category: String?) -> RailNotice {
         RailNotice(
             id: "deferred-\(id)",
             kind: .deferred(title: title, daysLeft: daysLeft, category: category),
-            priority: 1
+            priority: 2
         )
     }
 
     static func report(week: Int) -> RailNotice {
-        RailNotice(id: "report-\(week)", kind: .report(week: week), priority: 2)
+        RailNotice(id: "report-\(week)", kind: .report(week: week), priority: 3)
     }
 
     static func event(_ toast: Toast) -> RailNotice {
-        RailNotice(id: "toast-\(toast.id)", kind: .event(toast), priority: 3)
+        RailNotice(id: "toast-\(toast.id)", kind: .event(toast), priority: 4)
     }
 
     static func tip(_ tip: CoachTip) -> RailNotice {
-        RailNotice(id: "tip-\(tip.id)", kind: .tip(tip), priority: 4)
+        RailNotice(id: "tip-\(tip.id)", kind: .tip(tip), priority: 5)
     }
 }
 
@@ -242,7 +250,28 @@ struct NoticeRail: View {
             eventRow(toast)
         case .tip(let tip):
             tipRow(tip)
+        case .tour(let step):
+            tourRow(step)
         }
+    }
+
+    /// Iteration 7 (R1): the tour's line. The scaffold shows the beat's
+    /// name; R1 writes the lines and the card under the tab bar.
+    private func tourRow(_ step: TutorialStep) -> some View {
+        HStack(alignment: .center, spacing: Theme.Spacing.sm) {
+            Image(systemName: "hand.point.up.left.fill")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Theme.accent)
+                .frame(width: 22)
+            Text(step.title)
+                .font(.footnote)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .frame(minHeight: 34)
+        .accessibilityElement(children: .combine)
     }
 
     private func pauseRow(headline: GameEvent, more: Int) -> some View {
@@ -467,6 +496,7 @@ struct NoticeRail: View {
         case .report: Theme.accent
         case .event(let toast): toast.tint
         case .tip: Theme.accent
+        case .tour: Theme.accent
         }
     }
 

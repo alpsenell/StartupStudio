@@ -105,6 +105,16 @@ struct EventCopy {
         }
     }
 
+    /// Iteration 7 (R2): the feed line for the thing that came along.
+    private func heirloomMessage(_ kind: String) -> String {
+        switch kind {
+        case "person": "Somebody from the last company is in your address book"
+        case "perk": "A perk from the last company is yours from day one"
+        case "deed": "The last company's office is yours — deed and all"
+        default: "Something from the last company came with you"
+        }
+    }
+
     private func entry(for event: GameEvent) -> (icon: String, message: String, day: Int, tint: Color) {
         switch event {
         case .bankruptcyWarning(let day):
@@ -553,6 +563,22 @@ struct EventCopy {
                 day,
                 Theme.positiveCash
             )
+
+        // MARK: Iteration 7
+
+        // R5 — the founder kept going past an ending.
+        case .continuedAfterEnding(let ending, let day):
+            (
+                "play.circle.fill",
+                ending == .ipo
+                    ? "The bell has rung and \(state.company.name) is still running — no board, no buyers, just the work"
+                    : "\(state.company.name) is built, still yours, and still open on Monday",
+                day,
+                Theme.accent
+            )
+        // R2 — the one thing carried from the last company.
+        case .heirloomApplied(let kind, let day):
+            ("gift.fill", heirloomMessage(kind), day, Theme.accent)
         // WS-A — the category fight and the incumbent.
         case .categoryChallenged(let rivalID, let topicID, let productName, let quality, let respondByDay, let day):
             (

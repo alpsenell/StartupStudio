@@ -244,3 +244,47 @@ extension GameTab {
         #endif
     }
 }
+
+// MARK: - Iteration 7: reserved flags
+
+// Parsed here so no lane edits this file for a flag; each lane reads its
+// own. All DEBUG-only, like the rest.
+extension DebugLaunch {
+    /// `-unlocked`: the full game, for the screenshot pipeline (R6, R8).
+    static var isUnlocked: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-unlocked")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoTour <beat>`: land on a tour beat headlessly (R1). The beat
+    /// is `TutorialStep.rawValue`, 0–8.
+    static var launchTourBeat: TutorialStep? {
+        value(after: "-autoTour").flatMap(Int.init).flatMap(TutorialStep.init(rawValue:))
+    }
+
+    /// `-autoDaily <yyyymmdd>`: play that day's company (R3).
+    static var launchDailyDay: String? {
+        value(after: "-autoDaily")
+    }
+
+    /// `-autoFixture <name>`: install a bundled fixture save into slot 0
+    /// before the shell appears (R8).
+    static var launchFixtureName: String? {
+        value(after: "-autoFixture")
+    }
+
+    /// The word after `flag` on the command line, in debug builds.
+    static func value(after flag: String) -> String? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1)
+        else { return nil }
+        return arguments[index + 1]
+        #else
+        return nil
+        #endif
+    }
+}

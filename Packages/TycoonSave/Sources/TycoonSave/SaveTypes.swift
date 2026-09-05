@@ -46,6 +46,14 @@ public struct SaveSummary: Codable, Sendable, Equatable, Hashable {
     public var chapterTitle: String?
     /// The founder's appearance seed, so the picker can draw their face.
     public var founderAppearanceSeed: UInt64?
+    /// Iteration 7: the run's seed, so the cloud merge policy (R2) can tell
+    /// "the same company, further along" from "a different company in the
+    /// same slot" without decoding a state. `nil` on older summaries.
+    public var seed: UInt64?
+    /// Iteration 7 (R5): set once the founder kept running the company
+    /// past an ending — the ending's name, so the front door can say
+    /// "public since day 812, still running".
+    public var epilogue: String?
 
     public init(
         companyName: String,
@@ -54,7 +62,9 @@ public struct SaveSummary: Codable, Sendable, Equatable, Hashable {
         ending: String? = nil,
         chapter: Int? = nil,
         chapterTitle: String? = nil,
-        founderAppearanceSeed: UInt64? = nil
+        founderAppearanceSeed: UInt64? = nil,
+        seed: UInt64? = nil,
+        epilogue: String? = nil
     ) {
         self.companyName = companyName
         self.founderName = founderName
@@ -63,10 +73,13 @@ public struct SaveSummary: Codable, Sendable, Equatable, Hashable {
         self.chapter = chapter
         self.chapterTitle = chapterTitle
         self.founderAppearanceSeed = founderAppearanceSeed
+        self.seed = seed
+        self.epilogue = epilogue
     }
 
     private enum CodingKeys: String, CodingKey {
         case companyName, founderName, day, ending, chapter, chapterTitle, founderAppearanceSeed
+        case seed, epilogue
     }
 
     public init(from decoder: any Decoder) throws {
@@ -78,7 +91,9 @@ public struct SaveSummary: Codable, Sendable, Equatable, Hashable {
             ending: try container.decodeIfPresent(String.self, forKey: .ending),
             chapter: try container.decodeIfPresent(Int.self, forKey: .chapter),
             chapterTitle: try container.decodeIfPresent(String.self, forKey: .chapterTitle),
-            founderAppearanceSeed: try container.decodeIfPresent(UInt64.self, forKey: .founderAppearanceSeed)
+            founderAppearanceSeed: try container.decodeIfPresent(UInt64.self, forKey: .founderAppearanceSeed),
+            seed: try container.decodeIfPresent(UInt64.self, forKey: .seed),
+            epilogue: try container.decodeIfPresent(String.self, forKey: .epilogue)
         )
     }
 }

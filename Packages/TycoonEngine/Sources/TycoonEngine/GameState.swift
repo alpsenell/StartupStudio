@@ -376,6 +376,16 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // WS-G — two ladders.
     /// The founder declared the company built, still owning all of it.
     case stayedIndependent(day: Int)
+
+    // MARK: Iteration 7
+
+    // Appended by the scaffold; the copy lives in `EventCopy`.
+
+    /// R5: the founder kept running the company past `ending`.
+    case continuedAfterEnding(ending: EndingKind, day: Int)
+    /// R2: the one thing carried from the last company landed on day 0.
+    /// `kind` is `Heirloom.kind` — person, perk or deed.
+    case heirloomApplied(kind: String, day: Int)
 }
 
 extension GameEvent {
@@ -497,6 +507,13 @@ extension GameEvent {
         case .alumnusJoinedBook:
             .quiet
 
+        // MARK: Iteration 7
+
+        // Choosing to keep going is the player's own act; the day-0 gift
+        // is worth a line in the feed and nothing more.
+        case .continuedAfterEnding, .heirloomApplied:
+            .info
+
         default:
             .info
         }
@@ -588,6 +605,22 @@ public struct GameState: Codable, Equatable, Sendable {
     /// How the company was founded (WS-H). Saves from before origins
     /// existed decode as `.garage`, which is byte-identical to today.
     public var origin: FoundingOrigin = .garage
+
+    // MARK: Iteration 7
+
+    // Four per-run facts, every one of them absent from a standard run's
+    // save: encoded only when non-default, decoded with the default, so a
+    // save from before they existed and a pacing run's save are the same
+    // bytes they were.
+
+    /// How the run was entered (standard, custom, the daily). R3/R4.
+    public var mode: RunMode = .standard
+    /// The custom company's overrides; `.standard` is the identity. R4.
+    public var rules: GameRules = .standard
+    /// The one thing carried from the last company, if any. R2.
+    public var heirloom: Heirloom? = nil
+    /// Set once the founder keeps running the company past an ending. R5.
+    public var epilogue: Epilogue? = nil
     public var rng: SeededRNG
     /// A second RNG stream feeding the "world" systems added after launch
     /// (rivals, city, social). Kept separate so those systems' draws never
@@ -700,7 +733,10 @@ public struct GameState: Codable, Equatable, Sendable {
         difficulty: Difficulty = .normal,
         founder: FounderProfile = .default,
         origin: FoundingOrigin = .garage,
-        content: ContentCatalog? = nil
+        content: ContentCatalog? = nil,
+        heirloom: Heirloom? = nil,
+        rules: GameRules = .standard,
+        mode: RunMode = .standard
     ) -> GameState {
         var rng = SeededRNG(seed: seed)
         // The id and the appearance word are drawn in this order, always —
@@ -785,6 +821,15 @@ public struct GameState: Codable, Equatable, Sendable {
         // `applyOrigin` derives what it needs from the seed and never
         // touches `rng`, `worldRNG`, `investorRNG` or `socialRNG`.
         state.applyOrigin(origin, seed: seed, founder: founder, balance: balance, content: content)
+        // Iteration 7: the run's mode and rules are recorded (the balance
+        // was already rescaled for the rules by the engine); the heirloom
+        // lands last, after every draw, as a pure delta.
+        state.mode = mode
+        state.rules = rules
+        state.heirloom = heirloom
+        if let heirloom {
+            state.applyHeirloom(heirloom, balance: balance)
+        }
         return state
     }
 
@@ -958,6 +1003,7 @@ extension GameState {
         case socialRNG, networking
         case codebases
         case staffMemory
+        case mode, rules, heirloom, epilogue
     }
 
     public init(from decoder: any Decoder) throws {
@@ -1025,6 +1071,10 @@ extension GameState {
         )
         seed = try container.decodeIfPresent(UInt64.self, forKey: .seed) ?? 0
         origin = try container.decodeIfPresent(FoundingOrigin.self, forKey: .origin) ?? .garage
+        mode = try container.decodeIfPresent(RunMode.self, forKey: .mode) ?? .standard
+        rules = try container.decodeIfPresent(GameRules.self, forKey: .rules) ?? .standard
+        heirloom = try container.decodeIfPresent(Heirloom.self, forKey: .heirloom)
+        epilogue = try container.decodeIfPresent(Epilogue.self, forKey: .epilogue)
         lockedTopics = Dictionary(
             (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
                 .map { ($0.topicID, $0.unlockDay) },
@@ -1103,5 +1153,15 @@ extension GameState {
             try container.encode(staffMemory, forKey: .staffMemory)
         }
         try container.encodeIfPresent(gameOver, forKey: .gameOver)
+        // Iteration 7: written only when set, so a standard run's save is
+        // byte-identical to one written before the keys existed.
+        if mode != .standard {
+            try container.encode(mode, forKey: .mode)
+        }
+        if !rules.isStandard {
+            try container.encode(rules, forKey: .rules)
+        }
+        try container.encodeIfPresent(heirloom, forKey: .heirloom)
+        try container.encodeIfPresent(epilogue, forKey: .epilogue)
     }
 }

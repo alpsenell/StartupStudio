@@ -78,6 +78,26 @@ struct SettingsSheet: View {
                     Text("Sound is synthesized in-app and follows the silent switch. The weekly report can always be opened from the chip in the HUD.")
                 }
 
+                // Iteration 7: the three services, one row per lane, each
+                // behind its constant in `ServiceFlags`. Nothing is drawn
+                // while every flag is off.
+                if ServiceFlags.cloud || ServiceFlags.gameCenter || ServiceFlags.restore {
+                    Section("Services") {
+                        if ServiceFlags.cloud {
+                            // R2: the sync status, and "Off — saves stay on this device".
+                            LabeledContent("iCloud") { Text("—") }
+                        }
+                        if ServiceFlags.gameCenter {
+                            // R3: presents GKGameCenterViewController.
+                            Button {} label: { Label("Game Center", systemImage: "gamecontroller") }
+                        }
+                        if ServiceFlags.restore {
+                            // R6: AppStore.sync() behind a confirmation.
+                            Button {} label: { Label("Restore purchases", systemImage: "arrow.clockwise") }
+                        }
+                    }
+                }
+
                 Section {
                     Button {
                         GameSettings.resetTips()

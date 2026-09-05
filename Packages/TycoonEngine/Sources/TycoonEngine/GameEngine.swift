@@ -23,6 +23,20 @@ public final class GameEngine {
     /// 3. at the end of `pauseForBackground()`.
     @ObservationIgnored public var autosave: (@MainActor (GameState) -> Void)?
 
+    // MARK: Iteration 7 — the app's two hooks
+
+    /// Whether the clock may run. Consulted by `performTick` and
+    /// `setSpeed`; `nil` (every engine test) means always. The app installs
+    /// the unlock gate (R6) and the daily's horizon (R3) here: a refused
+    /// engine pauses and stays paused, but every action, screen and save
+    /// still works — the gate only ever refuses ticks.
+    @ObservationIgnored public var advanceGate: (@MainActor (GameState) -> Bool)?
+
+    /// Called with the events of every tick and every `send` that produced
+    /// any, after the state has them. The app fans it out to the tour (R1)
+    /// and Game Center (R3).
+    @ObservationIgnored public var eventSink: (@MainActor ([GameEvent]) -> Void)?
+
     /// Total weekly fixed costs: operating cost + current office rent +
     /// payroll across all employees + the founder's salary + amenity
     /// upkeep (rent and upkeep after the Operations discount).
@@ -55,13 +69,19 @@ public final class GameEngine {
         seed: UInt64,
         difficulty: Difficulty = .normal,
         founder: FounderProfile = .default,
-        origin: FoundingOrigin = .garage
+        origin: FoundingOrigin = .garage,
+        heirloom: Heirloom? = nil,
+        rules: GameRules = .standard,
+        mode: RunMode = .standard
     ) -> GameEngine {
         let (bundled, content) = loadBundledConfiguration()
-        let balance = bundled.adjusted(for: difficulty)
+        // Difficulty first, then the run's rules — `.standard` is the
+        // identity, so a standard run's balance is what it always was.
+        let balance = bundled.adjusted(for: difficulty).applying(rules)
         let state = GameState.newGame(
             companyName: companyName, seed: seed, balance: balance,
-            difficulty: difficulty, founder: founder, origin: origin, content: content
+            difficulty: difficulty, founder: founder, origin: origin, content: content,
+            heirloom: heirloom, rules: rules, mode: mode
         )
         return GameEngine(state: state, balance: balance, content: content)
     }
@@ -74,7 +94,9 @@ public final class GameEngine {
         var state = state
         state.speed = .paused
         return GameEngine(
-            state: state, balance: bundled.adjusted(for: state.difficulty), content: content
+            state: state,
+            balance: bundled.adjusted(for: state.difficulty).applying(state.rules),
+            content: content
         )
     }
 
@@ -102,12 +124,22 @@ public final class GameEngine {
         let events = Reducer.apply(action, to: &state, balance: balance, content: content)
         if !events.isEmpty {
             autosave?(state)
+            eventSink?(events)
         }
         return events
     }
 
+    /// Whether the app's gate lets the clock run right now.
+    public var mayAdvance: Bool {
+        advanceGate?(state) ?? true
+    }
+
     public func setSpeed(_ speed: SimSpeed) {
         guard state.gameOver == nil else { return }
+        // Iteration 7: a gated engine will not run; the speed control
+        // opens whatever the gate is about (the paywall, the daily's
+        // result). Pausing is always allowed.
+        guard speed == .paused || mayAdvance else { return }
         // The player answered the pause; the banner's reason goes with it.
         lastPauseEvents = []
         state.economy.pauseEvents = []
@@ -155,6 +187,16 @@ public final class GameEngine {
             cancelTickLoop()
             return
         }
+        // Iteration 7: the gate is read before every tick, so a purchase
+        // revoked or a horizon reached mid-run stops the clock on the
+        // next day rather than at the next launch. Nothing is lost: the
+        // state is exactly as the last tick left it, and it autosaves.
+        guard mayAdvance else {
+            state.speed = .paused
+            cancelTickLoop()
+            autosave?(state)
+            return
+        }
         let events = Reducer.tick(&state, balance: balance, content: content)
         tickCount += 1
         if state.gameOver != nil {
@@ -169,6 +211,9 @@ public final class GameEngine {
         }
         if !events.isEmpty || tickCount.isMultiple(of: 60) {
             autosave?(state)
+        }
+        if !events.isEmpty {
+            eventSink?(events)
         }
     }
 

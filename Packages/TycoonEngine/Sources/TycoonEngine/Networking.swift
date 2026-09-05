@@ -92,12 +92,16 @@ public enum ContactArchetype: String, Codable, Equatable, Sendable, CaseIterable
 /// at the rival's number, the other two at fair pay and a little.
 public enum DepartureReason: String, Codable, Equatable, Sendable {
     case quit, poached, fired
+    /// Iteration 7 (R2): carried over from a finished company as an
+    /// heirloom. Never set by the engine's own departures.
+    case formerCompany
 
     public var displayName: String {
         switch self {
         case .quit: "Quit"
         case .poached: "Poached"
         case .fired: "Let go"
+        case .formerCompany: "Former company"
         }
     }
 }

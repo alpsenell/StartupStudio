@@ -39,7 +39,14 @@ struct TitleScreen: View {
                     Sounds.play(.tap)
                     session.openSlot(slot)
                 },
-                onDeleteSlot: { slot in slotToDelete = slot }
+                onDeleteSlot: { slot in slotToDelete = slot },
+                // Iteration 7: each row is behind its lane's flag in
+                // `TitleMenu.Flags`; the closures are the lanes' to fill.
+                menu: .make(
+                    onDaily: { /* R3 */ },
+                    onCustom: { /* R4 */ },
+                    onFromCode: { /* R4 */ }
+                )
             )
             .padding(Theme.Spacing.lg)
             .opacity(arrived ? 1 : 0)
@@ -140,6 +147,9 @@ struct TitleScreenContent: View {
     var onNewCompany: () -> Void = {}
     var onOpenSlot: (Int) -> Void = { _ in }
     var onDeleteSlot: (Int) -> Void = { _ in }
+    /// Iteration 7: the rows under New company. Nothing is drawn while
+    /// every row is off.
+    var menu: TitleMenu = TitleMenu()
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
@@ -149,6 +159,7 @@ struct TitleScreenContent: View {
                 ContinueCard(summary: current, action: onContinue)
             }
             newCompanyButton
+            TitleMenuView(menu: menu)
             SlotList(
                 slots: slots,
                 currentSlot: current == nil ? nil : currentSlot,

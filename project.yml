@@ -43,6 +43,21 @@ targets:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        # Iteration 7 (R4): a share card's code opens the app on the custom page.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.alpsenel.startupstudio.seed
+            CFBundleURLSchemes:
+              - startupstudio
+        # Iteration 7 (R8): no encryption beyond the OS's own — answers
+        # export compliance at upload.
+        ITSAppUsesNonExemptEncryption: false
+    # Iteration 7: iCloud key-value storage (R2) and Game Center (R3).
+    # KVS needs no container; the App ID needs both capabilities ticked.
+    entitlements:
+      path: App/StartupStudio.entitlements
+      properties:
+        com.apple.developer.game-center: true
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.alpsenel.startupstudio
@@ -60,6 +75,9 @@ targets:
         SUPPORTS_MACCATALYST: NO
     scheme:
       configVariants: []
+      # Iteration 7 (R6): the one product, for simulator purchases. Never
+      # part of a release build — it is a scheme setting, not a resource.
+      storeKitConfiguration: App/StoreKit/StartupStudio.storekit
       testTargets:
         - StartupStudioTests
 

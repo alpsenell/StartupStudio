@@ -53,6 +53,31 @@ final class GameSession {
     /// this is kept around for a subtle UI indicator.
     private(set) var lastSaveError: String?
 
+    // MARK: Iteration 7 — one stored property per lane
+
+    // Each has an empty default and is owned by its lane's extension file
+    // (`GameSession+Tutorial.swift`, `+Cloud.swift`, …), so no lane edits
+    // this file for a declaration.
+
+    /// The tour, while a fresh install is on it (R1).
+    var tutorial: TutorialProgress?
+    /// What iCloud is doing (R2).
+    var cloud: CloudSyncStatus = .off
+    /// Every finished company, apart from the slots (R2).
+    var ledger: LegacyLedger = .empty
+    /// Today's company, when one is being played (R3).
+    var daily: DailyState?
+    /// A code that arrived by URL, for the custom page to pick up (R4).
+    var pendingSeedCode: SeedCode?
+    /// Whether the full game is owned (R6).
+    var unlock: UnlockState = .unknown
+
+    /// The gates composed into `engine.advanceGate`, by `installGate`.
+    private(set) var gates: [any AdvanceGate] = []
+    /// Fanned out from `engine.eventSink`, keyed by lane (`"tour"`,
+    /// `"gameCenter"`), so two lanes can observe without clobbering.
+    private(set) var eventObservers: [String: @MainActor ([GameEvent]) -> Void] = [:]
+
     /// `let` constants are never observation-tracked, no annotation needed.
     private let store: SaveStore<GameState>
 
@@ -103,8 +128,61 @@ final class GameSession {
         if !placeholder {
             wireAutosave(slot: slot)
         }
+        wireEngineHooks()
         applyDebugLaunchArguments()
         refreshSlots()
+    }
+
+    // MARK: - Iteration 7: the engine's hooks
+
+    /// Adds (or replaces, by id) a gate on the clock and re-composes.
+    func installGate(_ gate: any AdvanceGate) {
+        gates.removeAll { $0.id == gate.id }
+        gates.append(gate)
+        wireEngineHooks()
+    }
+
+    /// Removes a lane's gate; the clock runs again if nothing else refuses.
+    func removeGate(id: String) {
+        gates.removeAll { $0.id == id }
+        wireEngineHooks()
+    }
+
+    /// Registers a lane's event observer, replacing one under the same key.
+    func observeEvents(_ key: String, _ observer: @escaping @MainActor ([GameEvent]) -> Void) {
+        eventObservers[key] = observer
+        wireEngineHooks()
+    }
+
+    func stopObservingEvents(_ key: String) {
+        eventObservers[key] = nil
+        wireEngineHooks()
+    }
+
+    /// Wires the gates and the observers into whichever engine is live.
+    /// Called on every engine swap, so a lane never has to know one
+    /// happened.
+    private func wireEngineHooks() {
+        if gates.isEmpty {
+            engine.advanceGate = nil
+        } else {
+            let gate: @MainActor (GameState) -> Bool = { [weak self] state in
+                guard let self else { return true }
+                return self.gates.allSatisfy { $0.allows(state) }
+            }
+            engine.advanceGate = gate
+        }
+        if eventObservers.isEmpty {
+            engine.eventSink = nil
+        } else {
+            let sink: @MainActor ([GameEvent]) -> Void = { [weak self] events in
+                guard let self else { return }
+                for observer in self.eventObservers.values {
+                    observer(events)
+                }
+            }
+            engine.eventSink = sink
+        }
     }
 
     // MARK: - The front door
@@ -164,6 +242,7 @@ final class GameSession {
             engine.shutdown()
             engine = Self.makeFreshEngine()
             hasCurrentGame = false
+            wireEngineHooks()
         }
         refreshSlots()
     }
@@ -197,19 +276,30 @@ final class GameSession {
     /// Starts the company the new-game flow built — the founder's name,
     /// archetype and look, the studio's name, the difficulty, and how the
     /// company starts — into `newGameSlot`, replacing whatever was there.
+    ///
+    /// Iteration 7: `seed` (a typed code, R4), `rules` (the custom page,
+    /// R4), `heirloom` (R2) and `mode` (R3/R4) all default to what the
+    /// flow always did, so today's callers are untouched.
     func startNewGame(
         profile: FounderProfile,
         companyName: String,
         difficulty: Difficulty,
-        origin: FoundingOrigin = .garage
+        origin: FoundingOrigin = .garage,
+        seed: UInt64? = nil,
+        rules: GameRules = .standard,
+        heirloom: Heirloom? = nil,
+        mode: RunMode = .standard
     ) {
         replaceEngine(inSlot: newGameSlot) {
             GameEngine.newGame(
                 companyName: companyName,
-                seed: UInt64.random(in: .min ... .max),
+                seed: seed ?? UInt64.random(in: .min ... .max),
                 difficulty: difficulty,
                 founder: profile,
-                origin: origin
+                origin: origin,
+                heirloom: heirloom,
+                rules: rules,
+                mode: mode
             )
         }
         GameSettings.hasCompletedOnboarding = true
@@ -284,6 +374,7 @@ final class GameSession {
             GameSettings.currentSlot = slot
         }
         wireAutosave(slot: slot)
+        wireEngineHooks()
         applyDebugLaunchArguments()
     }
 

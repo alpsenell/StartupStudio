@@ -5,13 +5,18 @@ import TycoonEngine
 
 /// The pages of the new-game flow, in order.
 private enum OnboardingStep: Int, CaseIterable, Comparable {
-    case founder, company, difficulty, intro
+    // Iteration 7: `.custom` (R4) before You and `.heirlooms` (R2) after
+    // Stakes, each shown only when `NewGameOptions` asks; the step list
+    // is `NewGameFlow.steps`, so the flow walks the visible ones.
+    case custom, founder, company, difficulty, heirlooms, intro
 
     var title: String {
         switch self {
+        case .custom: "Custom"
         case .founder: "You"
         case .company: "Studio"
         case .difficulty: "Stakes"
+        case .heirlooms: "Heirlooms"
         case .intro: "Ready"
         }
     }
@@ -27,9 +32,26 @@ private enum OnboardingStep: Int, CaseIterable, Comparable {
 /// Shown on first launch (no save) and from Settings → "Start a new
 /// game…". It is the only place the founder and company names are set —
 /// nothing in the app is called "Founder" or "Startup Studio" any more.
+/// Iteration 7: how the flow is opened. The defaults are the flow the
+/// game always had; the title menu's rows (R3/R4) and the ledger (R2)
+/// turn pages on.
+struct NewGameOptions {
+    /// Show the Custom page (seed, difficulty, rivals, incumbent, cash). R4.
+    var showsCustomStep = false
+    /// Show the Heirlooms page — only when the ledger offers something. R2.
+    var showsHeirloomsStep = false
+    /// A code that arrived by URL or the *From a code* row, prefilling
+    /// the Custom page. R4.
+    var seedCode: SeedCode?
+
+    static let standard = NewGameOptions()
+}
+
 struct NewGameFlow: View {
     /// Content catalog, for founder-name suggestions.
     let content: ContentCatalog
+    /// Which optional pages the flow shows (iteration 7).
+    var options: NewGameOptions = .standard
     /// Called with everything the flow collected; the session builds the
     /// engine from it.
     let onStart: (FounderProfile, String, Difficulty, FoundingOrigin) -> Void
@@ -37,6 +59,28 @@ struct NewGameFlow: View {
     var onCancel: (() -> Void)?
 
     @State private var step: OnboardingStep = .founder
+    @State private var openedOnFirstStep = false
+
+    /// The pages this flow walks, in order.
+    private var steps: [OnboardingStep] {
+        OnboardingStep.allCases.filter { candidate in
+            switch candidate {
+            case .custom: options.showsCustomStep
+            case .heirlooms: options.showsHeirloomsStep
+            default: true
+            }
+        }
+    }
+
+    private var previousStep: OnboardingStep? {
+        guard let index = steps.firstIndex(of: step), index > 0 else { return nil }
+        return steps[index - 1]
+    }
+
+    private var nextStep: OnboardingStep {
+        guard let index = steps.firstIndex(of: step), index + 1 < steps.count else { return .intro }
+        return steps[index + 1]
+    }
     @State private var founderName = ""
     @State private var founderNameEdited = false
     @State private var companyName = ""
@@ -89,6 +133,10 @@ struct NewGameFlow: View {
         .onAppear {
             if founderName.isEmpty { founderName = suggestedFounderName }
             if companyName.isEmpty { companyName = suggestedCompanyName }
+            if !openedOnFirstStep, let first = steps.first {
+                openedOnFirstStep = true
+                step = first
+            }
         }
     }
 
@@ -99,7 +147,7 @@ struct NewGameFlow: View {
             PixelText(text: "Startup Studio", scale: 3, color: Theme.pixelAccent, shadow: true)
                 .padding(.top, Theme.Spacing.md)
             HStack(spacing: Theme.Spacing.xs) {
-                ForEach(OnboardingStep.allCases, id: \.self) { candidate in
+                ForEach(steps, id: \.self) { candidate in
                     Capsule()
                         .fill(candidate <= step ? Theme.pixelAccent : Theme.chipBackground)
                         .frame(height: 4)
@@ -107,7 +155,7 @@ struct NewGameFlow: View {
                 }
             }
             .padding(.horizontal, Theme.Spacing.lg)
-            .accessibilityLabel("Step \(step.rawValue + 1) of \(OnboardingStep.allCases.count): \(step.title)")
+            .accessibilityLabel("Step \((steps.firstIndex(of: step) ?? 0) + 1) of \(steps.count): \(step.title)")
         }
         .padding(.bottom, Theme.Spacing.md)
         .frame(maxWidth: .infinity)
@@ -117,11 +165,33 @@ struct NewGameFlow: View {
     @ViewBuilder
     private var stepContent: some View {
         switch step {
+        case .custom: customStep
         case .founder: founderStep
         case .company: companyStep
         case .difficulty: difficultyStep
+        case .heirlooms: heirloomsStep
         case .intro: introStep
         }
+    }
+
+    // MARK: - Iteration 7 placeholders
+
+    /// R4 replaces this with `CustomStep` (seed, difficulty, rivals,
+    /// incumbent, starting cash, and the line about leaderboards).
+    private var customStep: some View {
+        StepHeadline(
+            title: "A company on your terms",
+            detail: "Seed, stakes, rivals and cash. A custom company earns achievements but does not post to leaderboards."
+        )
+    }
+
+    /// R2 replaces this with `HeirloomsStep` (one person, perk or deed
+    /// from the ledger, spent once).
+    private var heirloomsStep: some View {
+        StepHeadline(
+            title: "One thing from the last company",
+            detail: "A person, a perk, or the deed. It carries once, and a company that carries one is unranked."
+        )
     }
 
     // MARK: - Step 1: the founder
@@ -266,7 +336,7 @@ struct NewGameFlow: View {
 
     private var bottomBar: some View {
         HStack(spacing: Theme.Spacing.md) {
-            if let previous = OnboardingStep(rawValue: step.rawValue - 1) {
+            if let previous = previousStep {
                 Button {
                     withAnimation(Theme.Motion.entrance) { step = previous }
                 } label: {
@@ -301,7 +371,7 @@ struct NewGameFlow: View {
         Sounds.play(.tap)
         guard step == .intro else {
             withAnimation(Theme.Motion.entrance) {
-                step = OnboardingStep(rawValue: step.rawValue + 1) ?? .intro
+                step = nextStep
             }
             return
         }

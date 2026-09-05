@@ -338,6 +338,12 @@ public enum Reducer {
         // MARK: WS-G (ladders)
         case .declareIndependence:
             events = InvestorSystem.declareIndependence(state: &state, balance: balance)
+
+        // MARK: Iteration 7 — R5 (endless)
+        // The scaffold refuses it; R5 handles it *before* the game-over
+        // guard above (an ended game is the only place it applies).
+        case .continueAfterEnding:
+            events = []
         }
 
         state.logEvents(events)

@@ -46,28 +46,17 @@ extension GameState {
         balance: BalanceConfig,
         content: ContentCatalog
     ) -> ShipETA? {
-        guard case .development(let progress) = product.stage,
-              let type = content.productType(product.typeID)
+        // Iteration 7: one ETA. `BuildETA` projects every pool from the
+        // same crew arithmetic; the ship gate is its `daysToShippable`,
+        // so the war room's countdown and the agenda's row can never
+        // disagree by a day.
+        guard case .development = product.stage,
+              let eta = buildETA(productID: product.id, balance: balance, content: content),
+              let days = eta.daysToShippable
         else { return nil }
-
-        let gate = balance.shipCodeThreshold * type.codePts
-        if progress.codePts >= gate {
-            return ShipETA(
-                productID: product.id, productName: product.name,
-                day: day, daysAway: 0, isReady: true
-            )
-        }
-
-        let perDay = EmployeeSystem.dailyCodeOutput(
-            productID: product.id, focus: progress.focus,
-            state: self, balance: balance, content: content
-        )
-        guard perDay > 0 else { return nil }
-
-        let days = Int((gate - progress.codePts) / perDay) + 1
         return ShipETA(
             productID: product.id, productName: product.name,
-            day: day + days, daysAway: days, isReady: false
+            day: day + days, daysAway: days, isReady: days == 0
         )
     }
 

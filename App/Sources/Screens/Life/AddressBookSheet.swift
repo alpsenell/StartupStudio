@@ -188,6 +188,8 @@ enum AlumniCopy {
         case .quit: "quit in \(when)"
         case .poached: "poached in \(when)"
         case .fired: "you let them go in \(when)"
+        // Iteration 7 (R2): carried from a finished company.
+        case .formerCompany: "from your last company, \(when)"
         }
     }
 }

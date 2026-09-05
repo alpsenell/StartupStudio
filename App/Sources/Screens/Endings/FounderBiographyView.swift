@@ -9,6 +9,19 @@ import TycoonEngine
 /// tone and the headline change, the shape does not. Chapters reached, the
 /// best thing they shipped, the person who stayed longest, the family, the
 /// money, and then a way back to the beginning with a new identity.
+/// Iteration 7: what the biography can offer beyond the two it always
+/// had. Both optional, both rendered only when set — the share button
+/// (R4) and *Keep running it* (R5, IPO and *Still yours* only).
+struct BiographyActions {
+    var onShare: (() -> Void)?
+    var onContinueRunning: (() -> Void)?
+
+    init(onShare: (() -> Void)? = nil, onContinueRunning: (() -> Void)? = nil) {
+        self.onShare = onShare
+        self.onContinueRunning = onContinueRunning
+    }
+}
+
 struct FounderBiographyView: View {
     let engine: GameEngine
     let info: GameOverInfo
@@ -17,6 +30,8 @@ struct FounderBiographyView: View {
     /// engine is deterministic, so the same events and candidates come
     /// round and the player can play them differently.
     var onReplay: (() -> Void)?
+    /// Iteration 7: share, and keep running.
+    var actions: BiographyActions = BiographyActions()
 
     @State private var startingOver = false
 
@@ -36,6 +51,24 @@ struct FounderBiographyView: View {
             ScrollView {
                 biographyContent
                     .padding(Theme.Spacing.lg)
+            }
+        }
+        // Iteration 7 (R4): the share button, only when a lane set it.
+        .overlay(alignment: .topTrailing) {
+            if let onShare = actions.onShare {
+                Button {
+                    Haptics.tap()
+                    Sounds.play(.tap)
+                    onShare()
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.body.weight(.semibold))
+                        .padding(Theme.Spacing.sm)
+                }
+                .buttonStyle(.bordered)
+                .tint(Theme.accent)
+                .padding(Theme.Spacing.lg)
+                .accessibilityLabel("Share this life")
             }
         }
         .sheet(isPresented: $startingOver) {
@@ -420,6 +453,22 @@ struct FounderBiographyView: View {
 
     private var playAgainButton: some View {
         VStack(spacing: Theme.Spacing.sm) {
+            // Iteration 7 (R5): keep the company running past an ending
+            // that allows it. Rendered only when the lane set it.
+            if let onContinueRunning = actions.onContinueRunning {
+                Button {
+                    Haptics.commit()
+                    onContinueRunning()
+                } label: {
+                    Label("Keep running it", systemImage: "play.fill")
+                        .font(.system(.headline, design: .rounded))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Theme.Spacing.sm)
+                }
+                .buttonStyle(.bordered)
+                .tint(Theme.accent)
+                .accessibilityHint("Carries on after the ending: no board, no buyers, the work continues")
+            }
             if let onReplay, state.seed != 0 {
                 Button {
                     Haptics.commit()

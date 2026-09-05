@@ -1,0 +1,41 @@
+{
+  "identifier" : "3D8B3F2E",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "6E1F0A2B",
+      "localizations" : [
+        {
+          "description" : "Every chapter after the garage, on this Apple ID, forever.",
+          "displayName" : "The full company",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.alpsenel.startupstudio.fullgame",
+      "referenceName" : "Full game",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "6S7Q8F967Q",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

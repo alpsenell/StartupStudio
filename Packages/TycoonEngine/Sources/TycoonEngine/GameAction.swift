@@ -168,6 +168,17 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// WS-G: declares the company built, still owning all of it. Gated the
     /// way `fileIPO` is; ends the run as `.independent`.
     case declareIndependence
+
+    // MARK: Iteration 7
+
+    // Appended by the scaffold; R5 implements the handler in its own
+    // `Reducer.apply` region. Heirlooms, rules and modes are `newGame`
+    // parameters or state, not actions.
+
+    /// R5: keeps running the company after an ending that allows it (IPO,
+    /// *Still yours*). Handled before the game-over guard; refused after
+    /// every other ending.
+    case continueAfterEnding
 }
 
 /// The skill a training course targets.

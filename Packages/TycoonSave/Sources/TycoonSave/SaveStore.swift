@@ -185,6 +185,52 @@ public final class SaveStore<State: Codable & Sendable>: Sendable {
         return FileManager.default.fileExists(atPath: mainFileURL(slot: slot).path)
     }
 
+    // MARK: - Raw bytes (iteration 7, R2's cloud sync)
+
+    /// The slot's save file exactly as written — envelope and state — or
+    /// `nil` when the slot is empty. The bytes are what iCloud carries, so
+    /// a cloud blob is a save file and migrations run on the way back in.
+    public func rawSave(slot: Int = 0) -> Data? {
+        checkSlot(slot)
+        return try? Data(contentsOf: mainFileURL(slot: slot))
+    }
+
+    /// Installs `data` — a save file another device wrote — as the slot's
+    /// save, staged and rotated exactly like `save`: the previous good
+    /// file becomes the backup. The bytes must parse as an envelope this
+    /// store can read (`.futureFormat` and `.corruptSave` throw before
+    /// anything on disk is touched); migrations are *not* run here, they
+    /// run on `load` as for any file.
+    public func importRaw(_ data: Data, slot: Int = 0) throws {
+        checkSlot(slot)
+        let fileManager = FileManager.default
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        let mainFileURL = mainFileURL(slot: slot)
+        let backupFileURL = backupFileURL(slot: slot)
+        let stagingURL = directory.appendingPathComponent("slot\(slot).\(UUID().uuidString).tmp")
+        try data.write(to: stagingURL, options: [.atomic])
+        do {
+            do {
+                _ = try readRaw(at: stagingURL)
+            } catch let error as SaveStoreError {
+                throw error
+            } catch {
+                throw SaveStoreError.corruptSave
+            }
+            if fileManager.fileExists(atPath: mainFileURL.path) {
+                if fileManager.fileExists(atPath: backupFileURL.path) {
+                    try fileManager.removeItem(at: backupFileURL)
+                }
+                try fileManager.moveItem(at: mainFileURL, to: backupFileURL)
+            }
+            try fileManager.moveItem(at: stagingURL, to: mainFileURL)
+        } catch {
+            try? fileManager.removeItem(at: stagingURL)
+            throw error
+        }
+    }
+
     /// Removes `slot<N>.json` and `slot<N>.backup.json` — one slot, and
     /// nothing else in the directory (new-game flow into that slot).
     public func delete(slot: Int) throws {

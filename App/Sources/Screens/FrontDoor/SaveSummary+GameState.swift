@@ -16,7 +16,11 @@ extension SaveSummary {
             ending: state.gameOver?.kind.rawValue,
             chapter: state.progression.chapter,
             chapterTitle: state.progression.chapterTitle,
-            founderAppearanceSeed: founder?.appearanceSeed ?? state.progression.founder.appearanceSeed
+            founderAppearanceSeed: founder?.appearanceSeed ?? state.progression.founder.appearanceSeed,
+            // Iteration 7: the seed for the cloud merge (R2); the ending
+            // the company is running past, for the Continue card (R5).
+            seed: state.seed,
+            epilogue: state.epilogue?.ending.rawValue
         )
     }
 
