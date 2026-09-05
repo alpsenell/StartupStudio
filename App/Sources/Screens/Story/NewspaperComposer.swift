@@ -184,6 +184,14 @@ struct NewspaperComposer {
     /// a week with nothing of its own leads with the world's news, which
     /// otherwise stays in its columns. A week with nothing worth a
     /// headline gets the quiet-week story rather than a blank.
+    // l10n: NOT LOCALIZED, deliberately (R9, iteration 7). The composer does
+    // not write copy - it selects an `EventCopy` line and compresses it into a
+    // headline (`Headline.compress`, which uppercases and drops stop words).
+    // So it localizes only after EventCopy does, and then as
+    //   "news.lead.headline" = "%@" / "news.lead.body" = "%@"
+    // over already-localized strings, plus per-column kickers
+    // ("news.kicker.company" = "THE COMPANY") - which the bitmap face can only
+    // draw in A-Z. Wave 2.
     private func leadStory(from events: [Dated], week: Int) -> NewspaperIssue.Story {
         let newsworthy = events.filter {
             !Self.isRoutine($0.event) && !Self.isDrumbeat($0.event) && $0.category != .life

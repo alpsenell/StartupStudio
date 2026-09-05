@@ -14,9 +14,9 @@ struct SkillBars: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            SkillBar(label: "Coding", value: skills.coding, tint: Theme.codePhase, reference: reference?.coding)
-            SkillBar(label: "Design", value: skills.design, tint: Theme.designPhase, reference: reference?.design)
-            SkillBar(label: "Marketing", value: skills.marketing, tint: Theme.warning, reference: reference?.marketing)
+            SkillBar(label: String(localized: "Coding", comment: "One of the three skills a person is rated 0-100 on"), value: skills.coding, tint: Theme.codePhase, reference: reference?.coding)
+            SkillBar(label: String(localized: "Design", comment: "Used for the design build phase, the design skill, and the founder archetype skill chip. One word, on a chip or a bar label"), value: skills.design, tint: Theme.designPhase, reference: reference?.design)
+            SkillBar(label: String(localized: "Marketing", comment: "Used as a ledger bucket (campaign spend) and as the marketing skill on a bar"), value: skills.marketing, tint: Theme.warning, reference: reference?.marketing)
         }
     }
 }

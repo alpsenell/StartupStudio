@@ -115,14 +115,14 @@ struct TopHUD: View {
         let text: String
         let tint: Color
         if cash < 0 {
-            text = "IN THE RED"
+            text = String(localized: "IN THE RED", comment: "HUD runway readout when cash is negative. Bitmap face: A-Z, digits and a few symbols only, uppercase")
             tint = Theme.negativeCash
         } else if burn <= 0 {
-            text = "NO BURN"
+            text = String(localized: "NO BURN", comment: "HUD runway readout when the company spends nothing. Bitmap face, uppercase")
             tint = Theme.positiveCash
         } else {
             let weeks = cash / burn
-            text = "RUNWAY \(weeks) WK"
+            text = String(localized: "RUNWAY \(weeks) WK", comment: "HUD runway readout: weeks of cash left. Bitmap face, uppercase")
             tint = weeks <= 4 ? Theme.warning : .secondary
         }
         return PixelText(text: text, scale: 1, color: tint)

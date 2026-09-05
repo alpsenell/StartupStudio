@@ -115,6 +115,17 @@ struct EventCopy {
         }
     }
 
+    // l10n: NOT LOCALIZED, deliberately (R9, iteration 7). Every arm below
+    // builds an English sentence by concatenation and interpolation, so a
+    // String(localized:) per arm would hand a translator ~200 fragments with
+    // no sentence to put them in. The conversion is one format string per
+    // GameEvent case, named after the case and keyed by it -
+    //   "event.hired"          = "%1$@ joined as %2$@ on %3$@/wk."
+    //   "event.productShipped" = "%1$@ shipped. The press has it now."
+    // - with `.stringsdict`-style plural variants for every `day/days`,
+    // `bug/bugs`, `week/weeks` ternary in here, since no other language
+    // pluralises with a trailing s. Wave 2; see docs/product/iteration-7-release.md.
+
     private func entry(for event: GameEvent) -> (icon: String, message: String, day: Int, tint: Color) {
         switch event {
         case .bankruptcyWarning(let day):

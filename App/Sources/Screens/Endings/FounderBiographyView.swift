@@ -321,6 +321,17 @@ struct FounderBiographyView: View {
         }
     }
 
+    // l10n: NOT LOCALIZED, deliberately (R9, iteration 7). `tenureLabel`,
+    // `childrenList`, `homeSummary` and `familySummary` below are the
+    // biography's four sentence builders: they join clauses with commas and
+    // "and", and pluralise with a trailing s. Converting them means one
+    // format per sentence with an explicit list format, not a wrapper per
+    // fragment -
+    //   "bio.tenure"   = "%1$@, %2$lld years" (+ plural variants)
+    //   "bio.children" = a ListFormatter over localized names
+    //   "bio.home"     = "A %1$@ in %2$@."
+    //   "bio.family"   = "Married to %1$@, %2$lld children."
+    // English word order is baked into all four today. Wave 2.
     private func tenureLabel(_ employee: Employee) -> String {
         let weeks = max(0, (info.day - employee.hiredDay) / GameState.daysPerWeek)
         return weeks >= 52

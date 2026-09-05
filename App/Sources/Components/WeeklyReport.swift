@@ -109,6 +109,11 @@ struct WeeklyReport: Equatable {
             .filter { $0.category == .sales && $0.day >= state.day - 7 }
             .reduce(0) { $0 + $1.amount }
         let detail: String
+        // l10n: the "Do this next" line is assembled from a lowercased action
+        // label and a detail clause that pluralises with a trailing `s`
+        // ("2 empty desks", "3 offers on the desk"). It converts as one format
+        // per `action` case with plural variants, not as wrapped fragments —
+        // lowercasing a label is English-only grammar. Wave 2.
         switch action.route {
         case .newProduct:
             detail = lastWeekSales > 0

@@ -43,17 +43,17 @@ enum LiveOps {
         let revenue = def.priceFactor * def.demandFactor
         let percent = Int(((revenue - 1) * 100).rounded())
         let revenueLine = percent == 0
-            ? "List price"
-            : "\(percent > 0 ? "+" : "")\(percent)% revenue per buyer reached"
+            ? String(localized: "List price", comment: "Price tier caption: this tier earns exactly the list price per buyer")
+            : String(localized: "\(percent > 0 ? "+" : "")\(percent)% revenue per buyer reached", comment: "Price tier caption: how much more or less each buyer is worth at this price")
 
         switch tier {
         case .budget:
-            return revenueLine + " · undercuts rivals for share of the topic"
+            return revenueLine + String(localized: " · undercuts rivals for share of the topic", comment: "Budget price tier: what it buys beyond revenue. Appended to the revenue line")
         case .standard:
-            return revenueLine + " · no edge either way"
+            return revenueLine + String(localized: " · no edge either way", comment: "Standard price tier: what it buys beyond revenue. Appended to the revenue line")
         case .premium:
             return revenueLine
-                + " · needs reviews of \(Int(balance.economy.premiumQualityThreshold)) or it drives buyers away"
+                + String(localized: " · needs reviews of \(Int(balance.economy.premiumQualityThreshold)) or it drives buyers away", comment: "Premium price tier: what it costs beyond revenue. Appended to the revenue line")
         }
     }
 }

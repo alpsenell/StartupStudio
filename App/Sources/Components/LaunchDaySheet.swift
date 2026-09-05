@@ -120,21 +120,21 @@ struct LaunchDaySheet: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 HStack(alignment: .top, spacing: Theme.Spacing.xl) {
                     if let firstWeek = release.weeklySales.first {
-                        LaunchStat(label: "First week", value: firstWeek.revenue.money, tint: Theme.positiveCash)
-                        LaunchStat(label: "Units", value: firstWeek.units.formatted(.number.locale(Theme.gameLocale)))
+                        LaunchStat(label: String(localized: "First week", comment: "Launch day figure: revenue in the first week"), value: firstWeek.revenue.money, tint: Theme.positiveCash)
+                        LaunchStat(label: String(localized: "Units", comment: "Launch day figure: copies sold"), value: firstWeek.units.formatted(.number.locale(Theme.gameLocale)))
                     } else {
                         LaunchStat(
-                            label: "Quality",
+                            label: String(localized: "Quality", comment: "Launch day figure: the build quality score out of 100"),
                             value: "\(Int(release.quality.rounded()))",
                             tint: Theme.scoreTint(Int(release.quality.rounded()))
                         )
                         LaunchStat(
-                            label: "Launch hype",
+                            label: String(localized: "Launch hype", comment: "Launch day figure: how much attention the launch had"),
                             value: "\(Int((release.hypeAtLaunch * 100).rounded()))%"
                         )
                     }
                     if release.isSubscription {
-                        LaunchStat(label: "Subscribers", value: release.subscribers.formatted(.number.locale(Theme.gameLocale)))
+                        LaunchStat(label: String(localized: "Subscribers", comment: "Launch day figure: subscribers on a subscription product"), value: release.subscribers.formatted(.number.locale(Theme.gameLocale)))
                     }
                 }
                 if release.liveBugs > 0 {
@@ -267,12 +267,12 @@ struct LaunchScoreStamp: View {
 enum LaunchVerdict {
     static func text(for score: Int) -> String {
         switch score {
-        case 90...: "A hit"
-        case 75..<90: "Well received"
-        case 60..<75: "Solid"
-        case 45..<60: "Mixed"
-        case 30..<45: "Rough"
-        default: "A misfire"
+        case 90...: String(localized: "A hit", comment: "One-word verdict under the average review score, best to worst")
+        case 75..<90: String(localized: "Well received", comment: "One-word verdict under the average review score, best to worst")
+        case 60..<75: String(localized: "Solid", comment: "One-word verdict under the average review score, best to worst")
+        case 45..<60: String(localized: "Mixed", comment: "One-word verdict under the average review score, best to worst")
+        case 30..<45: String(localized: "Rough", comment: "One-word verdict under the average review score, best to worst")
+        default: String(localized: "A misfire", comment: "One-word verdict under the average review score, best to worst")
         }
     }
 }
@@ -360,10 +360,10 @@ struct LaunchReasonRow: View {
 
     private var action: (label: String, route: Route)? {
         switch fix {
-        case .hiring: ("Hire", .hiring)
-        case .refactor: ("The team", .hiring)
-        case .bugs: productID.map { ("Live ops", .product($0)) }
-        case .market: ("The market", .market)
+        case .hiring: (String(localized: "Hire", comment: "Button on a launch-day reason: go to the hiring screen"), .hiring)
+        case .refactor: (String(localized: "The team", comment: "Button on a launch-day reason: go to the roster"), .hiring)
+        case .bugs: productID.map { (String(localized: "Live ops", comment: "Button on a launch-day reason: go to the shipped product"), .product($0)) }
+        case .market: (String(localized: "The market", comment: "Button on a launch-day reason: go to the market board"), .market)
         case nil: nil
         }
     }

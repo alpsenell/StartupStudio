@@ -41,7 +41,7 @@ struct PhaseProgressBar: View {
     private var pointsText: String {
         required > 0
             ? "\(Int(points.rounded()))/\(Int(required.rounded()))"
-            : "\(Int(points.rounded())) pts"
+            : String(localized: "\(Int(points.rounded())) pts", comment: "Progress bar readout when the requirement is unknown: points banked. Abbreviation of points")
     }
 
     private var track: some View {
@@ -69,21 +69,21 @@ struct TriPhaseProgress: View {
     var body: some View {
         VStack(spacing: compact ? Theme.Spacing.xs + 2 : Theme.Spacing.sm) {
             PhaseProgressBar(
-                label: "Design",
+                label: String(localized: "Design", comment: "Used for the design build phase, the design skill, and the founder archetype skill chip. One word, on a chip or a bar label"),
                 points: progress.designPts,
                 required: type?.designPts ?? 0,
                 tint: Theme.designPhase,
                 compact: compact
             )
             PhaseProgressBar(
-                label: "Code",
+                label: String(localized: "Code", comment: "Used both for the code build phase and for the founder coding skill. One word, on a chip or a bar label"),
                 points: progress.codePts,
                 required: type?.codePts ?? 0,
                 tint: Theme.codePhase,
                 compact: compact
             )
             PhaseProgressBar(
-                label: "Polish",
+                label: String(localized: "Polish", comment: "One of the three build phases a product goes through"),
                 points: progress.polishPts,
                 required: type?.polishPts ?? 0,
                 tint: Theme.polishPhase,

@@ -274,6 +274,7 @@ make gen      # generate StartupStudio.xcodeproj from project.yml
 make test     # run the TycoonEngine, TycoonContent, TycoonSave and PixelKit package tests
 make apptest  # run the App target's own unit tests (StartupStudioTests)
 make build    # build the app for the iPhone 17 simulator
+make strings  # refill App/Resources/Localizable.xcstrings from the last build
 make icon     # regenerate the app icon (AppIcon.png) from PixelKit sprites
 make clean    # remove build artifacts and the generated project
 ```
@@ -320,6 +321,56 @@ release builds see neither.
 - The app icon is generated art: `make icon` re-renders
   `App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png` from the
   game's own sprites via `Packages/IconGen`.
+
+## Language
+
+The game is in English, and the groundwork for it not always being is in
+`App/Resources/Localizable.xcstrings`. `SWIFT_EMIT_LOC_STRINGS` and
+`LOCALIZATION_PREFERS_STRING_CATALOGS` are on, so every `Text("…")`,
+`Button("…")` and `.accessibilityLabel("…")` in the app is already a
+`LocalizedStringKey` and extracts for free; the chrome's `String` sites —
+`Components/`, the HUD, the notice rail, Settings, the title screen and the
+onboarding flow — were converted by hand to `String(localized:comment:)`, so
+they carry a note for whoever translates them. The catalog holds 930 keys,
+217 of them with a comment.
+
+One catch worth knowing: **`xcodebuild` compiles the catalog but does not
+fill it.** Only Xcode's IDE writes newly extracted keys back into the
+`.xcstrings` file on a build. From the command line the compiler still emits
+a `.stringsdata` per file, so `make strings` builds and then runs
+`xcstringstool sync` over them — the same tool the IDE uses. Run it after
+adding or changing a literal and commit the result; `StringsAuditTests`
+fails if the catalog drops under 300 keys, which is what a forgotten sync
+looks like.
+
+**Pixel text is English-and-dollars only.** `PixelFont` (in
+`App/Sources/Components/PixelText.swift`) is a 5×7 bitmap face with exactly
+**55** glyphs: `A–Z` (26), `0–9` (10), space, and `$ . , : - + / ! ? ' % ( )`
+and `× · ▶ ♥ ★` — nineteen non-alphanumerics in all. There is no lowercase
+(input is uppercased), there are no accented letters, no `€ £ ¥`, no `&`,
+`#`, `@`, quotes or brackets, and anything outside the table draws a hollow
+box. So a translated string routed through `PixelText` renders as boxes, and
+a second language needs the face's Latin-1 extension (~60 glyphs) first —
+wave 2. `StringsAuditTests` pins the 55 and fails when the face grows, which
+is the signal that the pixel screens can be translated.
+
+For the same reason **numbers stay pinned to `en_US_POSIX`** through
+`Theme.gameLocale`, guarded by `MoneySnapshotTests`. The money is the game's
+currency, not the player's, and a locale whose grouping separator is a space,
+a non-breaking space or an apostrophe would draw boxes in the HUD.
+
+Two things are deliberately *not* done. The sentence-building code —
+`EventCopy`, `NewspaperComposer`, `PostMortem` and the biography's four
+sentence builders — is marked with `// l10n:` comments naming the format
+string each would become, and left: those sites concatenate clauses and
+pluralise with a trailing `s`, so converting them means one keyed format
+(and a `.stringsdict` plural) per case, not a wrapper per fragment. And the
+content JSON (`Events.json`, `LifeEvents.json`, `StaffEvents.json`,
+`News.json`, `Reviews.json`, `Dialogue.json`, `Goals.json`) is untouched;
+the path there is `ContentCatalog.load(locale:)` reading
+`Resources/<lang>.lproj/<file>.json` overlays keyed by id with per-string
+English fallback — engine-neutral, because the ids never change. Both are
+wave 2.
 
 ## Art notes
 

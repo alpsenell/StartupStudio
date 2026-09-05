@@ -50,7 +50,7 @@ struct DecisionPrompt: Identifiable {
     let options: [Option]
     /// The bitmap label over the title: "BUYOUT OFFER", "TERM SHEET",
     /// "STORY". The sheet's first word, in the game's own hand.
-    var kicker: String = "DECISION"
+    var kicker: String = String(localized: "DECISION", comment: "Bitmap kicker over a decision sheet. Uppercase, and only A-Z since the pixel face has no lowercase")
     /// Who is asking, when it is a person: a rival founder or a member of
     /// the team, drawn with the same sprite the rest of the game uses.
     var portraitSeed: UInt64?
@@ -285,11 +285,11 @@ extension DecisionPrompt {
         let after = cash + delta
         let signed = delta >= 0 ? "+" + delta.money : delta.money
         let runway: String = if after < 0 {
-            "in the red"
+            String(localized: "in the red", comment: "Runway readout when cash is below zero. Lower case: it is dropped into a line, not a heading")
         } else if burn <= 0 {
-            "no burn"
+            String(localized: "no burn", comment: "Runway readout when the company spends nothing. Lower case: it is dropped into a line, not a heading")
         } else {
-            "runway \(after / burn) wk"
+            String(localized: "runway \(after / burn) wk", comment: "Runway readout under an answer: weeks of cash left afterwards")
         }
         return "\(signed) → \(after.money) · \(runway)"
     }
@@ -367,7 +367,7 @@ extension DecisionPrompt {
         let policy = event.defID == nil && state.staffMemory.policy(for: event.kind) == nil
             ? def?.policy
             : nil
-        let supportLabel = def?.supportive?.label ?? "Be supportive"
+        let supportLabel = def?.supportive?.label ?? String(localized: "Be supportive", comment: "Default generous answer to a staff question when the catalog has none")
         var supportDetail = def?.supportive?.detail
             ?? "Costs \(social.supportCost.money) · loyalty way up"
         if policy != nil { supportDetail += " · becomes the rule" }
@@ -379,8 +379,8 @@ extension DecisionPrompt {
         } else {
             social.supportCost > 0 ? -social.supportCost : nil
         }
-        let strictLabel = def?.strict.label ?? "Business first"
-        let strictDetail = def?.strict.detail ?? "Free, but loyalty takes a hit"
+        let strictLabel = def?.strict.label ?? String(localized: "Business first", comment: "Default firm answer to a staff question when the catalog has none")
+        let strictDetail = def?.strict.detail ?? String(localized: "Free, but loyalty takes a hit", comment: "Default detail under the firm answer to a staff question")
 
         var options = [
             Option(
@@ -398,7 +398,7 @@ extension DecisionPrompt {
         ]
         if let policy {
             options.append(Option(
-                label: "…and make that the rule",
+                label: String(localized: "…and make that the rule", comment: "Third answer to a staff question: apply the firm answer to everyone from now on"),
                 detail: "\(policy.name): the same answer for everyone who asks · no sheet next time",
                 role: .destructive,
                 action: .resolveStaffEvent(choice: .strictAsPolicy)
@@ -412,11 +412,11 @@ extension DecisionPrompt {
             title: title,
             message: message,
             stats: [
-                ("Morale", "\(Int(employee.morale.rounded()))"),
-                ("Loyalty", "\(Int(employee.loyalty.rounded()))"),
+                (String(localized: "Morale", comment: "Decision sheet stat: how the person feels about the job"), "\(Int(employee.morale.rounded()))"),
+                (String(localized: "Loyalty", comment: "Decision sheet stat: how likely the person is to stay"), "\(Int(employee.loyalty.rounded()))"),
             ],
             options: options,
-            kicker: "STAFF",
+            kicker: String(localized: "STAFF", comment: "Bitmap kicker: someone on the team is asking. Uppercase A-Z only"),
             portraitSeed: employee.appearanceSeed
         )
     }
@@ -439,7 +439,7 @@ extension DecisionPrompt {
         let daysLeft = max(0, resignation.respondByDay - state.day)
         var options: [Option] = [
             Option(
-                label: "Raise them to \(raise.money)/wk",
+                label: String(localized: "Raise them to \(raise.money)/wk", comment: "Answer to a resignation: pay this much a week instead"),
                 detail: "Up from \(resignation.salaryAtNotice.money) — enough to keep them",
                 action: .adjustSalary(employeeID: employee.id, weeklySalary: raise)
             )
@@ -447,16 +447,16 @@ extension DecisionPrompt {
         if let next = employee.level.next {
             options.append(
                 Option(
-                    label: "Promote to \(next.displayName)",
-                    detail: "A title and the raise that comes with it",
+                    label: String(localized: "Promote to \(next.displayName)", comment: "Answer to a resignation: move them to the next seniority"),
+                    detail: String(localized: "A title and the raise that comes with it", comment: "Detail under the promote answer to a resignation"),
                     action: .promote(employeeID: employee.id)
                 )
             )
         }
         options.append(
             Option(
-                label: "Let them go",
-                detail: "They clear their desk today. Their friends will notice.",
+                label: String(localized: "Let them go", comment: "Answer to a resignation: accept it"),
+                detail: String(localized: "They clear their desk today. Their friends will notice.", comment: "Detail under the let-them-go answer to a resignation"),
                 role: .destructive,
                 action: .fire(employeeID: employee.id)
             )
@@ -474,11 +474,11 @@ extension DecisionPrompt {
                 + "A real raise or a promotion still turns it around — "
                 + "anything less and they walk.",
             stats: [
-                ("On", "\(resignation.salaryAtNotice.money)/wk"),
-                ("Answer within", daysLeft == 0 ? "today" : "\(daysLeft) day\(daysLeft == 1 ? "" : "s")"),
+                (String(localized: "On", comment: "Decision sheet stat label: the salary the leaver is on"), "\(resignation.salaryAtNotice.money)/wk"),
+                (String(localized: "Answer within", comment: "Decision sheet stat label: how long is left to reply"), daysLeft == 0 ? "today" : "\(daysLeft) day\(daysLeft == 1 ? "" : "s")"),
             ],
             options: options,
-            kicker: "NOTICE",
+            kicker: String(localized: "NOTICE", comment: "Bitmap kicker: somebody has handed in notice. Uppercase A-Z only"),
             portraitSeed: employee.appearanceSeed
         )
     }
@@ -508,12 +508,12 @@ extension DecisionPrompt {
                 + "\(offer.amount.money) for \(offer.equity.oneDecimal)% of \(state.company.name). "
                 + boardLine,
             stats: [
-                ("Cheque", offer.amount.money),
-                ("Equity", "\(offer.equity.oneDecimal)%"),
+                (String(localized: "Cheque", comment: "Decision sheet stat label: the money an investor is offering"), offer.amount.money),
+                (String(localized: "Equity", comment: "Decision sheet stat label: the share of the company being asked for"), "\(offer.equity.oneDecimal)%"),
             ],
             options: [
                 Option(
-                    label: "Take the money",
+                    label: String(localized: "Take the money", comment: "Answer to a term sheet: accept the investment"),
                     detail: (offer.takesBoardSeat
                         ? "Cash in, \(offer.equity.oneDecimal)% out, a board to answer to."
                         : "Cash in, \(offer.equity.oneDecimal)% out.") + oneWay,
@@ -521,12 +521,12 @@ extension DecisionPrompt {
                     action: .acceptInvestment
                 ),
                 Option(
-                    label: "Stay independent",
+                    label: String(localized: "Stay independent", comment: "Answer to a term sheet: turn the investment down"),
                     detail: "Keep all \(state.investors.equityRemaining.oneDecimal)% of it",
                     action: .declineInvestment
                 ),
             ],
-            kicker: "TERM SHEET"
+            kicker: String(localized: "TERM SHEET", comment: "Bitmap kicker: an investor is offering money. Uppercase A-Z only")
         )
     }
 
@@ -549,7 +549,7 @@ extension DecisionPrompt {
     private static func poachPrompt(_ offer: PoachOffer, state: GameState) -> DecisionPrompt? {
         guard let employee = state.employee(id: offer.employeeID) else { return nil }
         let rival = state.rivals.rival(id: offer.rivalID)
-        let rivalName = rival?.name ?? "A rival"
+        let rivalName = rival?.name ?? String(localized: "A rival", comment: "Stand-in for a rival studio whose name could not be resolved")
         return DecisionPrompt(
             id: "poach-\(offer.employeeID.uuidString)-\(offer.respondByDay)",
             systemImage: "person.fill.questionmark",
@@ -557,24 +557,24 @@ extension DecisionPrompt {
             title: "\(rivalName) wants \(employee.name)",
             message: "They're offering \(offer.offeredWeeklySalary.money)/wk (currently \(employee.weeklySalary.money)/wk). Match it, or let \(employee.name) walk — they'll stay in your address book at that number, and people come back.",
             stats: [
-                ("Offer", "\(offer.offeredWeeklySalary.money)/wk"),
-                ("Loyalty", "\(Int(employee.loyalty.rounded()))"),
-                ("Bond", "\(Int(employee.founderBond.rounded()))"),
+                (String(localized: "Offer", comment: "Decision sheet stat label: what is on the table - a rival salary offer, or a buyout price"), "\(offer.offeredWeeklySalary.money)/wk"),
+                (String(localized: "Loyalty", comment: "Decision sheet stat: how likely the person is to stay"), "\(Int(employee.loyalty.rounded()))"),
+                (String(localized: "Bond", comment: "Decision sheet stat: how close this person is to the founder"), "\(Int(employee.founderBond.rounded()))"),
             ],
             options: [
                 Option(
-                    label: "Match the offer",
+                    label: String(localized: "Match the offer", comment: "Answer to a poach: pay what the rival offered"),
                     detail: "Raise salary to \(offer.offeredWeeklySalary.money)/wk",
                     action: .matchPoachOffer
                 ),
                 Option(
-                    label: "Let them go — you'll see them again",
+                    label: String(localized: "Let them go — you\'ll see them again", comment: "Answer to a poach: let the person leave for the rival"),
                     detail: "\(employee.name) joins \(rivalName) and goes into your address book",
                     role: .destructive,
                     action: .declinePoachOffer
                 ),
             ],
-            kicker: "POACH",
+            kicker: String(localized: "POACH", comment: "Bitmap kicker: a rival is trying to hire somebody away. Uppercase A-Z only"),
             portraitSeed: rival?.appearanceSeed
         )
     }
@@ -594,7 +594,7 @@ extension DecisionPrompt {
         balance: BalanceConfig
     ) -> DecisionPrompt? {
         let rival = state.rivals.rival(id: challenge.rivalID)
-        let rivalName = rival?.name ?? "A rival"
+        let rivalName = rival?.name ?? String(localized: "A rival", comment: "Stand-in for a rival studio whose name could not be resolved")
         let topic = content.topic(challenge.topicID)?.name ?? challenge.topicID
         let depth = balance.rivals.depth
         let theirs = Int(challenge.quality.rounded())
@@ -624,7 +624,7 @@ extension DecisionPrompt {
         if let best {
             if best.info.priceTier != .budget {
                 options.append(Option(
-                    label: "Cut the price",
+                    label: String(localized: "Cut the price", comment: "Answer to a category challenge: move the product to the budget tier"),
                     detail: "\(best.product.name) goes budget — more of the market, less per sale",
                     action: .defendCategory(topicID: challenge.topicID, defense: .budgetPrice)
                 ))
@@ -651,7 +651,7 @@ extension DecisionPrompt {
                 let days = balance.socialPushDurationDays
                 let cost = balance.socialPushDailyCost * days
                 options.append(Option(
-                    label: "Run a campaign",
+                    label: String(localized: "Run a campaign", comment: "Answer to a category challenge: spend on marketing"),
                     detail: "A social push on \(best.product.name), \(cost.money) over \(days) days",
                     cashDelta: -cost,
                     action: .defendCategory(topicID: challenge.topicID, defense: .campaign)
@@ -659,7 +659,7 @@ extension DecisionPrompt {
             }
         }
         options.append(Option(
-            label: "Let it go",
+            label: String(localized: "Let it go", comment: "Answer to a category challenge: do nothing and take what comes"),
             detail: "Hold \(holdShare)% when it settles and they lose \(Int(depth.heldRivalStrengthLoss)) strength; "
                 + "lose it and your standing here drops \(Int(depth.lostStandingLoss))",
             role: .destructive,
@@ -668,7 +668,7 @@ extension DecisionPrompt {
 
         let yours = best.map { "\($0.info.averageReviewScore)" } ?? "—"
         let against = best.map { "\($0.product.name) scores \($0.info.averageReviewScore)" }
-            ?? "you have nothing on the market there"
+            ?? String(localized: "you have nothing on the market there", comment: "Fills a sentence comparing your product with a rival when you have none in that topic")
         return DecisionPrompt(
             id: "challenge-\(challenge.id)",
             systemImage: "flag.2.crossed.fill",
@@ -678,12 +678,12 @@ extension DecisionPrompt {
                 + "You hold \(share)% of \(topic) today. In \(weeksLeft) week\(weeksLeft == 1 ? "" : "s") "
                 + "whoever holds half of it keeps the category.",
             stats: [
-                ("Your share", "\(share)%"),
-                ("Them · you", "\(theirs) · \(yours)"),
-                ("Settles in", daysLeft == 0 ? "today" : "\(daysLeft)d"),
+                (String(localized: "Your share", comment: "Decision sheet stat label: the percentage of a topic you hold"), "\(share)%"),
+                (String(localized: "Them · you", comment: "Decision sheet stat label: the rival review score against yours"), "\(theirs) · \(yours)"),
+                (String(localized: "Settles in", comment: "Decision sheet stat label: when the category fight is decided"), daysLeft == 0 ? "today" : "\(daysLeft)d"),
             ],
             options: options,
-            kicker: "CHALLENGE",
+            kicker: String(localized: "CHALLENGE", comment: "Bitmap kicker: a rival has launched into one of your topics. Uppercase A-Z only"),
             portraitSeed: rival?.appearanceSeed
         )
     }
@@ -706,7 +706,7 @@ extension DecisionPrompt {
         balance: BalanceConfig
     ) -> DecisionPrompt? {
         let rival = state.rivals.rival(id: offer.rivalID)
-        let rivalName = rival?.name ?? "A rival"
+        let rivalName = rival?.name ?? String(localized: "A rival", comment: "Stand-in for a rival studio whose name could not be resolved")
         let strategic = state.rivals.lastBuyoutWasStrategic
         let message = strategic
             ? "A strategic approach: they want what you built, and \(offer.amount.money) is a premium "
@@ -738,8 +738,8 @@ extension DecisionPrompt {
             ))
         }
         options.append(Option(
-            label: "Decline",
-            detail: "Keep building",
+            label: String(localized: "Decline", comment: "Answer to a buyout offer: refuse it"),
+            detail: String(localized: "Keep building", comment: "Detail under the refuse answer to a buyout offer"),
             action: .declineBuyout
         ))
 
@@ -750,11 +750,11 @@ extension DecisionPrompt {
             title: "\(rivalName) wants to buy you out",
             message: message,
             stats: [
-                ("Offer", offer.amount.money),
-                ("Kind", strategic ? "strategic" : "distress"),
+                (String(localized: "Offer", comment: "Decision sheet stat label: what is on the table - a rival salary offer, or a buyout price"), offer.amount.money),
+                (String(localized: "Kind", comment: "Decision sheet stat label: which sort of buyout this is"), strategic ? String(localized: "strategic", comment: "Buyout kind: a buyer who wants what you built") : String(localized: "distress", comment: "Buyout kind: a lowball bid while you are failing")),
             ],
             options: options,
-            kicker: strategic ? "BUYOUT OFFER" : "DISTRESS BID",
+            kicker: strategic ? String(localized: "BUYOUT OFFER", comment: "Bitmap kicker: a rival wants to buy the company. Uppercase A-Z only") : String(localized: "DISTRESS BID", comment: "Bitmap kicker: a lowball offer while the company is failing. Uppercase A-Z only"),
             portraitSeed: rival?.appearanceSeed
         )
     }

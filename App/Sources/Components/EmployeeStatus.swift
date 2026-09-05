@@ -27,6 +27,11 @@ struct EmployeeStatus: Equatable {
         }
     }
 
+    // l10n: the two `On notice`/`Out of patience` lines below pluralise with
+    // a trailing `s` inside the interpolation, so they are left as-is rather
+    // than wrapped into a key that would read `%lld day%@`. They become a
+    // `.stringsdict` plural pair (`status.onNotice`, `status.outOfPatience`)
+    // in the sentence lane. The four fixed lines under them are localized.
     /// The status for `employee`, or `nil` when there is nothing to say.
     static func of(_ employee: Employee, in state: GameState, balance: BalanceConfig, content: ContentCatalog) -> EmployeeStatus? {
         guard !employee.isFounder else { return nil }
@@ -60,7 +65,7 @@ struct EmployeeStatus: Equatable {
         if let poach = state.rivals.pendingPoach, poach.employeeID == employee.id {
             return EmployeeStatus(
                 kind: .poachPending,
-                text: "Rival offer pending · \(poach.offeredWeeklySalary.money)/wk",
+                text: String(localized: "Rival offer pending · \(poach.offeredWeeklySalary.money)/wk", comment: "Roster status: a rival has bid for this person. The figure is money per week"),
                 systemImage: "person.fill.questionmark",
                 tint: Theme.warning
             )
@@ -70,7 +75,7 @@ struct EmployeeStatus: Equatable {
         if fair > 0, Double(employee.weeklySalary) < Double(fair) * balance.staff.underpaidThreshold {
             return EmployeeStatus(
                 kind: .underpaid,
-                text: "Underpaid · market rate \(fair.money)/wk",
+                text: String(localized: "Underpaid · market rate \(fair.money)/wk", comment: "Roster status: paid below the going rate. The figure is money per week"),
                 systemImage: "arrow.down.circle.fill",
                 tint: Theme.warning
             )
@@ -79,7 +84,7 @@ struct EmployeeStatus: Equatable {
         if employee.assignment == .idle, day - employee.hiredDay >= 14 {
             return EmployeeStatus(
                 kind: .idle,
-                text: "Idle · nothing assigned",
+                text: String(localized: "Idle · nothing assigned", comment: "Roster status: this person has no work"),
                 systemImage: "moon.zzz.fill",
                 tint: .secondary
             )
@@ -88,7 +93,7 @@ struct EmployeeStatus: Equatable {
         if employee.founderBond < 25, day - employee.hiredDay > 28 {
             return EmployeeStatus(
                 kind: .bondFading,
-                text: "Bond fading · an evening would help",
+                text: String(localized: "Bond fading · an evening would help", comment: "Roster status: the founder has not spent time with this person"),
                 systemImage: "heart.slash.fill",
                 tint: .secondary
             )
@@ -97,7 +102,7 @@ struct EmployeeStatus: Equatable {
         if let trained = employee.lastTrainedDay, day - trained < 14 {
             return EmployeeStatus(
                 kind: .training,
-                text: "Just trained · settling in",
+                text: String(localized: "Just trained · settling in", comment: "Roster status: recently sent on training"),
                 systemImage: "book.fill",
                 tint: .secondary
             )
