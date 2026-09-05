@@ -37,6 +37,9 @@ struct AppRootView: View {
         }
         .animation(Theme.Motion.entrance, value: session.isAtFrontDoor)
         .environment(\.gameSession, session)
+        // Iteration 7 (R6): the gate on the clock and the store's answer,
+        // once, for the app's life.
+        .task { session.installUnlock() }
         // The new-game flow is opened from the front door, into the slot
         // the player picked there; cancelling goes back to the door.
         .fullScreenCover(isPresented: onboardingPresented) {
@@ -81,6 +84,20 @@ struct AppRootView: View {
             }
             .onChange(of: engine.state.day) { _, _ in
                 shell.dayAdvanced(engine: engine)
+            }
+            // Iteration 7 (R6): Continue on a gated save brings the paywall
+            // back; the clock stopping (the gate refusing a tick) brings it
+            // up a beat later, after the chapter's own line has landed.
+            .onAppear { session.reconsiderPaywall() }
+            .onChange(of: engine.state.speed) { _, speed in
+                guard speed == .paused else { return }
+                Task {
+                    try? await Task.sleep(for: .seconds(1))
+                    session.reconsiderPaywall()
+                }
+            }
+            .sheet(isPresented: paywallPresented) {
+                PaywallSheet(session: session)
             }
             // The weekly report yields to a decision sheet, and its "Next
             // week" button resumes the clock before it closes. A question
@@ -200,6 +217,24 @@ struct AppRootView: View {
             get: { shell.launchDayProductID != nil && session.engine.state.gameOver == nil },
             set: { presented in
                 if !presented { shell.launchDayProductID = nil }
+            }
+        )
+    }
+
+    /// Iteration 7 (R6): the paywall yields to every other sheet — a
+    /// question, launch day, the report — and comes up when they are down.
+    /// Pulling it down is "Not now".
+    private var paywallPresented: Binding<Bool> {
+        Binding(
+            get: {
+                session.unlock.isPresentingPaywall
+                    && session.engine.state.gameOver == nil
+                    && !shell.showingWeeklyReport
+                    && shell.launchDayProductID == nil
+                    && pendingDecision.wrappedValue == nil
+            },
+            set: { presented in
+                if !presented { session.dismissPaywall() }
             }
         )
     }

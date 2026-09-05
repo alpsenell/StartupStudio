@@ -9,5 +9,5 @@ enum ServiceFlags {
     /// R3: the Game Center row.
     static let gameCenter = false
     /// R6: Restore purchases.
-    static let restore = false
+    static let restore = true
 }

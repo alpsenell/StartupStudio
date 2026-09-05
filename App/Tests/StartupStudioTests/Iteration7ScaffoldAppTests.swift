@@ -93,7 +93,9 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
         XCTAssertTrue(menu.enabledRows.isEmpty, "every row is behind a flag that ships off")
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)
-        XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.gameCenter || ServiceFlags.restore)
+        // R6 flipped `restore`; the other two stay off until their lanes.
+        XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.gameCenter)
+        XCTAssertTrue(ServiceFlags.restore)
     }
 
     func testPrivacyManifestShipsInTheBundleAndDeclaresNoTracking() throws {

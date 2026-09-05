@@ -53,13 +53,19 @@ targets:
         ITSAppUsesNonExemptEncryption: false
     # Iteration 7: iCloud key-value storage (R2) and Game Center (R3).
     # KVS needs no container; the App ID needs both capabilities ticked.
-    entitlements:
-      path: App/StartupStudio.entitlements
-      properties:
-        com.apple.developer.game-center: true
-        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+    #
+    # R6: the two entitlements files are committed, not generated. Xcode
+    # signs Debug with App/StartupStudio.debug.entitlements — the same
+    # keys plus `get-task-allow`, which storekitd needs before it serves
+    # StoreKitTest's SKTestSession to an app launched by `xcodebuild test`
+    # ("is not installed for development" otherwise; Xcode's own Run adds
+    # it another way) — and Release with App/StartupStudio.entitlements,
+    # so an archive never carries it. Add any new key to both files.
+    # (XcodeGen's `entitlements:` block writes CODE_SIGN_ENTITLEMENTS
+    # after the per-config settings, which is why it is not used here.)
     settings:
       base:
+        CODE_SIGN_ENTITLEMENTS: App/StartupStudio.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.alpsenel.startupstudio
         DEVELOPMENT_TEAM: 6S7Q8F967Q
         CODE_SIGN_STYLE: Automatic
@@ -73,6 +79,9 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
         SUPPORTS_MACCATALYST: NO
+      configs:
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: App/StartupStudio.debug.entitlements
     scheme:
       configVariants: []
       # Iteration 7 (R6): the one product, for simulator purchases. Never
@@ -91,8 +100,13 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - App/Tests
+      # Iteration 7 (R6): the StoreKit configuration rides in the test
+      # bundle so `SKTestSession` can load it; it is never in the app.
+      - path: App/StoreKit
+        buildPhase: resources
     dependencies:
       - target: StartupStudio
+      - sdk: StoreKitTest.framework
     settings:
       base:
         SWIFT_VERSION: "6.0"
