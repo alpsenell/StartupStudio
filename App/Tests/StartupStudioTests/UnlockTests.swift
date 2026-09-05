@@ -168,6 +168,20 @@ final class UnlockTests: XCTestCase {
         XCTAssertFalse(gate.allows(custom), "a custom company is gated like a standard one")
     }
 
+    // MARK: - The price
+
+    /// The bitmap face draws a US price and refuses every other
+    /// storefront's — the paywall draws those in the system number face.
+    func testThePixelFaceDrawsOnlyThePricesItHasGlyphsFor() {
+        XCTAssertTrue(PixelFont.canDraw("$4.99"), "the pixel path")
+        XCTAssertFalse(PixelFont.canDraw("€4,99"), "the euro sign is not in the face")
+        XCTAssertFalse(PixelFont.canDraw("4,99 €"))
+        XCTAssertFalse(PixelFont.canDraw("4,99\u{00A0}€"), "nor is a non-breaking space")
+        XCTAssertFalse(PixelFont.canDraw("£4.99"))
+        XCTAssertFalse(PixelFont.canDraw("¥600"))
+        XCTAssertTrue(PixelFont.canDraw(""), "nothing to draw, nothing missing")
+    }
+
     // MARK: - The order
 
     /// The chapter card comes first: while the rail is still showing

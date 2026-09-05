@@ -88,6 +88,10 @@ final class PaywallSnapshotTests: XCTestCase {
         }
     }
 
+    func testRendersThePaywallWithAPriceTheFaceCannotDraw() {
+        snapshot("paywall_euro") { paywall(price: "4,99 €") }
+    }
+
     func testRendersThePaywallAtAnAccessibilitySize() {
         snapshot("paywall_ax3", typeSize: .accessibility3) {
             paywall(price: "$4.99")

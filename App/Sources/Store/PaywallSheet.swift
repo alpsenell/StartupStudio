@@ -128,12 +128,23 @@ struct PaywallContent: View {
         }
     }
 
-    /// The price in the bitmap face, or the store still thinking.
+    /// The price in the bitmap face when the face can draw it — "$4.99"
+    /// — and in the system number face at the same weight when it cannot
+    /// ("€4,99", "4,99 €", a non-breaking space): a storefront's price
+    /// is the one string on this screen the game did not write, and a
+    /// hollow box where the currency should be is not a price.
     @ViewBuilder
     private var priceBlock: some View {
         if let price {
-            PixelText(text: price, scale: 3, color: Theme.pixelInk, shadow: true)
-                .accessibilityLabel("Price: \(price)")
+            if PixelFont.canDraw(price) {
+                PixelText(text: price, scale: 3, color: Theme.pixelInk, shadow: true)
+                    .accessibilityLabel("Price: \(price)")
+            } else {
+                Text(price)
+                    .font(Theme.Typography.number(.title, weight: .bold))
+                    .foregroundStyle(Theme.pixelInk)
+                    .accessibilityLabel("Price: \(price)")
+            }
         } else {
             Text("Asking the App Store for the price…")
                 .font(.footnote)
