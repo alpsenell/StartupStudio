@@ -270,13 +270,21 @@ seed, same game — under all of it.
 ## Commands
 
 ```sh
-make gen      # generate StartupStudio.xcodeproj from project.yml
-make test     # run the TycoonEngine, TycoonContent, TycoonSave and PixelKit package tests
-make apptest  # run the App target's own unit tests (StartupStudioTests)
-make build    # build the app for the iPhone 17 simulator
-make icon     # regenerate the app icon (AppIcon.png) from PixelKit sprites
-make clean    # remove build artifacts and the generated project
+make gen         # generate StartupStudio.xcodeproj from project.yml
+make test        # run the TycoonEngine, TycoonContent, TycoonSave and PixelKit package tests
+make apptest     # run the App target's own unit tests (StartupStudioTests)
+make build       # build the app for the iPhone 17 simulator
+make build-ipad  # build it for the iPad Pro 13-inch simulator
+make screenshots # shoot the App Store listing into docs/release/screenshots/
+make icon        # regenerate the app icon (AppIcon.png) from PixelKit sprites
+make clean       # remove build artifacts and the generated project
 ```
+
+`make gen` also rewrites `App/Config/Version.xcconfig` with the build
+number, from `git rev-list --count HEAD`. That is the only place
+`CURRENT_PROJECT_VERSION` is set — xcodegen cannot shell out, and a target
+build setting would beat an xcconfig, so `project.yml` deliberately leaves
+it unset. `MARKETING_VERSION` (1.0.0) lives in `project.yml`.
 
 The four package suites use Swift Testing — look for
 `✔ Test run with N tests … passed`, and ignore the XCTest
@@ -311,12 +319,42 @@ holds the clock until somebody presses "Next week", which is right for a
 player and a wall for a screenshot run). Both are `#if DEBUG` only —
 release builds see neither.
 
+## The iPad
+
+One target, two device families. The iPad runs the phone layout in a
+centred 640-point column on the game's own paper
+(`AppRootView.maxColumnWidth`, applied per tab by `gameColumn()`), not a
+second design: portrait only, requires full screen, no Split View. The
+pixel scenes already floor an integer scale, so they grow a step and
+letterbox; the city map, which is a full-screen cover and therefore gets
+the whole iPad rather than the column, picks its scale from the width.
+
+`IPadColumnSnapshotTests` renders every tab root and pushed pixel screen
+at 820 points in both appearances and fails if anything reaches an edge.
+It renders through a real `UIWindow` rather than `ImageRenderer`, which
+cannot draw a `NavigationStack`.
+
+## Release
+
+Everything the App Store asks for is in [`docs/release/`](docs/release/):
+the [TestFlight checklist](docs/release/testflight.md), the
+[App Privacy answers and why they are true](docs/release/app-privacy.md),
+and [the screenshot pipeline](docs/release/screenshots.md). The privacy
+manifest (`App/Resources/PrivacyInfo.xcprivacy`) says *no data
+collected*, and it is the whole app's job to keep that true: no
+analytics, no tracking, no third-party dependencies, and no network
+request of the app's own.
+
 ## Notes
 
 - `StartupStudio.xcodeproj` is **generated** and gitignored — never edit it
   by hand. `project.yml` is the source of truth.
 - Re-run `xcodegen generate` (or `make gen`) after adding, removing, or
   moving files.
+- `App/Resources/Info.plist` and `App/StartupStudio.entitlements` are
+  **generated** from `project.yml` too (`info.properties` and
+  `entitlements.properties`). Edit the yml; a hand edit to either file is
+  gone at the next `make gen`.
 - The app icon is generated art: `make icon` re-renders
   `App/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png` from the
   game's own sprites via `Packages/IconGen`.

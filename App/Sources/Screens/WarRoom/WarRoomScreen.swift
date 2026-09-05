@@ -72,7 +72,11 @@ struct WarRoomScreen: View {
                 }
             }
         }
-        .background(Theme.screenBackground)
+        // R8: a cover is presented at window level, so the game's column
+        // does not reach it — on an iPad the room was 1,024 points of
+        // stretched whiteboard. The room is still full screen; its
+        // contents are a column, like everywhere else.
+        .gameColumn()
         .onAppear {
             claimLaunchDay()
             startRevealIfNeeded()

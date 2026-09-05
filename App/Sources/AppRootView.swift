@@ -44,6 +44,20 @@ struct AppRootView: View {
         // The new-game flow is opened from the front door, into the slot
         // the player picked there; cancelling goes back to the door.
         .fullScreenCover(isPresented: onboardingPresented) {
+            newGameFlow(engine: engine)
+                .gameColumn()
+        }
+        .alert("Couldn't load your save", isPresented: loadFailurePresented) {
+            Button("OK") { session.clearLoadFailure() }
+        } message: {
+            Text(session.loadFailureMessage ?? "")
+        }
+    }
+
+    /// The onboarding flow, in its own function so the cover above can put
+    /// it in the column — a cover is presented at window level, where the
+    /// game's own frame does not reach it.
+    private func newGameFlow(engine: GameEngine) -> some View {
             NewGameFlow(
                 content: engine.content,
                 onStart: { profile, companyName, difficulty, origin in
@@ -57,11 +71,36 @@ struct AppRootView: View {
                 onCancel: { session.cancelOnboarding() }
             )
             .interactiveDismissDisabled()
-        }
-        .alert("Couldn't load your save", isPresented: loadFailurePresented) {
-            Button("OK") { session.clearLoadFailure() }
-        } message: {
-            Text(session.loadFailureMessage ?? "")
+    }
+
+    /// The ending: the founder biography, won or lost. In its own function
+    /// for the same reason as `newGameFlow` — a cover is outside the
+    /// game's frame, so it takes the column itself.
+    ///
+    /// WS-F: four endings now, graded by `EndingKind.isSuccess` rather
+    /// than one named case, and both screens are thin wrappers on the
+    /// founder biography, so they take the engine and hand back the
+    /// founder to play again as.
+    @ViewBuilder
+    private func endingCover(engine: GameEngine) -> some View {
+        if let info = engine.state.gameOver {
+            if info.kind.isSuccess {
+                GameWonView(
+                    engine: engine, info: info,
+                    onNewGame: { difficulty, founder, origin in
+                        session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
+                    },
+                    onReplay: { session.replayCurrentGame() }
+                )
+            } else {
+                GameOverView(
+                    engine: engine, info: info,
+                    onNewGame: { difficulty, founder, origin in
+                        session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
+                    },
+                    onReplay: { session.replayCurrentGame() }
+                )
+            }
         }
     }
 
@@ -112,29 +151,8 @@ struct AppRootView: View {
             // so an acknowledgement can never land across the pause
             // reason or the report chip.
             .fullScreenCover(isPresented: gameOverPresented) {
-                if let info = engine.state.gameOver {
-                    // WS-F: four endings now, graded by `EndingKind.isSuccess`
-                    // rather than one named case, and both screens are thin
-                    // wrappers on the founder biography, so they take the
-                    // engine and hand back the founder to play again as.
-                    if info.kind.isSuccess {
-                        GameWonView(
-                            engine: engine, info: info,
-                            onNewGame: { difficulty, founder, origin in
-                                session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
-                            },
-                            onReplay: { session.replayCurrentGame() }
-                        )
-                    } else {
-                        GameOverView(
-                            engine: engine, info: info,
-                            onNewGame: { difficulty, founder, origin in
-                                session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
-                            },
-                            onReplay: { session.replayCurrentGame() }
-                        )
-                    }
-                }
+                endingCover(engine: engine)
+                    .gameColumn()
             }
             // Pending rival offers surface here (not per tab) so the paused
             // timeline always has its question on screen.

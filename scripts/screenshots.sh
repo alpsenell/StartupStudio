@@ -42,24 +42,51 @@ SETTLE="${SHOT_SETTLE:-8}"
 #
 # `-unlocked` rides on every one (R6's flag: the store screenshots show
 # the whole game). The order is the order the listing tells the story in:
-# the door, the office, a life, the people, the work, the world.
+# the door, the garage you start in, the studio it becomes, a life, the
+# people, the work, launch week, the world. App Store Connect takes ten
+# per size, so the first ten are the listing and `11-campus` is the
+# alternate for shot 3 — see docs/release/screenshots.md.
+#
+# The company timeline is deliberately NOT here: its year view stacks
+# every moment's label at the same height, and a company with 35 of them
+# photographs as overlapping text. Fixing that is the timeline's own
+# work, not the pipeline's.
 SHOTS=(
   "01-title|release-studio-day400|"
-  "02-hq|release-studio-day400|-autoTab hq"
-  "03-life|release-studio-day400|-autoTab life"
-  "04-team|release-campus-day900|-autoTab team"
-  "05-products|release-studio-day400|-autoTab products"
-  "06-war-room|release-studio-day400|-autoTab products -autoRoute warroom"
-  "07-business|release-campus-day900|-autoTab business"
-  "08-market-map|release-campus-day900|-autoTab business -autoRoute marketmap"
-  "09-newspaper|release-studio-day400|-autoTab hq -autoRoute newspaper"
-  "10-timeline|release-campus-day900|-autoTab hq -autoRoute timeline"
+  "02-garage|release-garage-day40|-autoTab hq"
+  "03-hq|release-studio-day400|-autoTab hq"
+  "04-life|release-studio-day400|-autoTab life"
+  "05-team|release-campus-day900|-autoTab team"
+  "06-products|release-studio-day400|-autoTab products"
+  "07-war-room|release-studio-day400|-autoTab products -autoRoute warroom"
+  "08-business|release-campus-day900|-autoTab business"
+  "09-market-map|release-campus-day900|-autoTab business -autoRoute marketmap"
+  "10-newspaper|release-studio-day400|-autoTab hq -autoRoute newspaper"
   "11-campus|release-campus-day900|-autoTab hq"
-  "12-garage|release-garage-day40|-autoTab hq"
 )
 
 slug() {
   echo "$1" | tr '[:upper:] ' '[:lower:]-' | tr -cd 'a-z0-9-' | sed 's/--*/-/g;s/^-//;s/-$//'
+}
+
+# The output folder is named for the simulator's *device type*, not the
+# simulator: run the pipeline on a clone called "r8-max" and the
+# screenshots still land in iphone-17-pro-max/, which is what App Store
+# Connect asks for and what belongs in the repo.
+device_dir() {
+  local type
+  type=$(xcrun simctl list devices -j |
+    /usr/bin/python3 -c '
+import json, sys
+name = sys.argv[1]
+data = json.load(sys.stdin)
+for runtime, devices in data["devices"].items():
+    for device in devices:
+        if device.get("name") == name:
+            print(device.get("deviceTypeIdentifier", "").rsplit(".", 1)[-1])
+            raise SystemExit
+' "$1")
+  slug "${type:-$1}"
 }
 
 boot() {
@@ -95,7 +122,7 @@ test -d "$APP" || { echo "no app at $APP" >&2; exit 1; }
 
 rm -rf "$OUT"
 for device in "$PHONE" "$IPAD"; do
-  dir="$OUT/$(slug "$device")"
+  dir="$OUT/$(device_dir "$device")"
   echo "==> $device -> ${dir#"$ROOT"/}"
   boot "$device"
   shoot "$device" "$dir"
