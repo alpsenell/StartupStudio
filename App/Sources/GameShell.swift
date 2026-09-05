@@ -19,14 +19,31 @@ final class GameShell {
     /// a chip for it; opening the sheet clears it.
     private(set) var pendingReportWeek: Int?
     /// Set while the weekly report sheet is up.
-    var showingWeeklyReport = false
+    var showingWeeklyReport = false {
+        didSet {
+            // Iteration 7 (R1): the tour's "read the week" beat ends when
+            // the report closes.
+            if oldValue, !showingWeeklyReport { tour?.tourSaw(.reportDismissed) }
+        }
+    }
     /// The report being shown.
     private(set) var report: WeeklyReport?
     /// Speed to restore when the player taps "Next week".
     private(set) var resumeSpeed: SimSpeed = .x1
 
     /// A product that just shipped and hasn't had its launch-day moment.
-    var launchDayProductID: UUID?
+    var launchDayProductID: UUID? {
+        didSet {
+            // Iteration 7 (R1): the tour's last beat ends when the player
+            // has read the reviews and closed launch day.
+            if oldValue != nil, launchDayProductID == nil { tour?.tourSaw(.launchDayDismissed) }
+        }
+    }
+
+    /// Iteration 7 (R1): the tour, while a fresh install is on it. The
+    /// shell reports the day, the events and its own sheets closing; the
+    /// session decides what the tour does with them.
+    weak var tour: (any TutorialShellObserver)?
 
     /// Iteration 4 seam. The `DecisionPrompt.id` of a narrative choice the
     /// player deferred with "Let me think": while set, the root does not
@@ -102,6 +119,10 @@ final class GameShell {
         if engine.state.speed != .paused {
             lastRunningSpeed = engine.state.speed
         }
+        // Iteration 7 (R1): the tour reads the day before the report
+        // decision below, so "run the clock" is over by the time week 1
+        // asks whether the tour wants its report opened.
+        tour?.tourDayAdvanced(engine: engine)
         guard day > lastSeenDay, lastSeenDay >= 0 else { return }
         guard day % 7 == 0, day > 0 else { return }
 
@@ -124,7 +145,14 @@ final class GameShell {
             && GameSettings.weeklyReportManualOpens < 2
             && engine.state.speed != .paused
             && engine.lastPauseEvents.isEmpty
-        if autoOpen {
+        // Iteration 7 (R1): the tour's "read the week" beat opens week
+        // 1's report whatever the manual-opens counter says — the
+        // counter itself is untouched.
+        let tourOpen = !DebugLaunch.isHeadlessPass
+            && tour?.tourWantsReportOpened(week: week) == true
+            && engine.state.speed != .paused
+            && engine.lastPauseEvents.isEmpty
+        if autoOpen || tourOpen {
             openWeeklyReport(engine: engine, byHand: false)
         }
     }
@@ -157,6 +185,9 @@ final class GameShell {
             in: engine.state,
             copy: EventCopy(state: engine.state, content: engine.content, balance: engine.balance)
         )
+        // Iteration 7 (R1): a hire, a product, a contract — the tour's
+        // beats end on what the log just gained.
+        tour?.tourEventsChanged(engine: engine)
     }
 
     /// Picks the events that get a sheet rather than a toast.

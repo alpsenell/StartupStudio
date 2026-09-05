@@ -83,6 +83,9 @@ struct NoticeRail: View {
     /// updates this property for presented content before the
     /// environment is installed and the non-optional form traps there.
     private var shell: GameShell { injectedShell ?? .shared }
+    /// Iteration 7 (R1): the tour, when a fresh install is on it. Optional
+    /// so a snapshot renders the rail without a session behind it.
+    @Environment(\.gameSession) private var session
 
     /// Which queued notice is showing, relative to the leader; a swipe
     /// moves it and a change of leader resets it.
@@ -125,6 +128,12 @@ struct NoticeRail: View {
             )
         }
 
+        // Iteration 7 (R1): the tour's beat, after a pause and before a
+        // deferred question. Silent across the ship beat's wait.
+        if let step = session?.tutorial?.activeStep {
+            notices.append(.tour(step))
+        }
+
         if let week = shell.pendingReportWeek {
             notices.append(.report(week: week))
         }
@@ -133,10 +142,17 @@ struct NoticeRail: View {
             notices.append(.event(toast))
         }
 
-        if let tip = activeTip {
+        // Coach tips stay quiet while the tour runs: its beats say the
+        // same things, and on completion the six ids are dismissed.
+        if !tourIsRunning, let tip = activeTip {
             notices.append(.tip(tip))
         }
         return notices
+    }
+
+    private var tourIsRunning: Bool {
+        guard let tutorial = session?.tutorial else { return false }
+        return !tutorial.isComplete
     }
 
     /// The tip for the player's most recently activated goal, unless they
@@ -170,6 +186,11 @@ struct NoticeRail: View {
         }
         .animation(Theme.Motion.weighted, value: shown?.id)
         .onChange(of: queue.first?.id) { _, _ in cycle = 0 }
+        // The tour's exit dismisses the six tips in settings; the rail's
+        // copy was read before that and has to catch up.
+        .onChange(of: session?.tutorial?.isComplete) { _, complete in
+            if complete == true { dismissedTips = GameSettings.dismissedTips }
+        }
         .sheet(isPresented: $showingJournal) {
             NavigationStack {
                 JournalScreen(engine: engine)
@@ -255,23 +276,26 @@ struct NoticeRail: View {
         }
     }
 
-    /// Iteration 7 (R1): the tour's line. The scaffold shows the beat's
-    /// name; R1 writes the lines and the card under the tab bar.
+    /// Iteration 7 (R1): the tour's line — the beat's sentence, with the
+    /// card under the tab bar carrying the button. The line reads the
+    /// state, because the ship beat says something different when nothing
+    /// is building.
     private func tourRow(_ step: TutorialStep) -> some View {
-        HStack(alignment: .center, spacing: Theme.Spacing.sm) {
+        let line = TutorialScript.railLine(for: step, state: engine.state)
+        return HStack(alignment: .center, spacing: Theme.Spacing.sm) {
             Image(systemName: "hand.point.up.left.fill")
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 22)
-            Text(step.title)
+            Text(line)
                 .font(.footnote)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, Theme.Spacing.md)
         .frame(minHeight: 34)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("Tour, \(step.title): \(line)")
     }
 
     private func pauseRow(headline: GameEvent, more: Int) -> some View {

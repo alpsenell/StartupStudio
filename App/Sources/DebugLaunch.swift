@@ -156,7 +156,7 @@ enum DebugLaunch {
     #endif
 
     /// Whether this launch is a headless QA pass — `-autoSpeed`,
-    /// `-autoTab` or `-autoRoute` on the command line.
+    /// `-autoTab`, `-autoRoute` or `-autoTour` on the command line.
     ///
     /// Those two flags exist so a screenshot pass can land on a running
     /// game without tapping anything, and the front door and the
@@ -169,7 +169,7 @@ enum DebugLaunch {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         return arguments.contains("-autoSpeed") || arguments.contains("-autoTab")
-            || arguments.contains("-autoRoute")
+            || arguments.contains("-autoRoute") || arguments.contains("-autoTour")
         #else
         return false
         #endif
