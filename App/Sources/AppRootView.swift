@@ -19,6 +19,8 @@ struct AppRootView: View {
     @State private var router = AppRouter(tab: .launchTab)
     /// Toasts, the weekly-report loop, and the launch-day moment.
     @State private var shell = GameShell.shared
+    /// Iteration 7 (R4): the biography's share sheet.
+    @State private var sharingBiography = false
 
     var body: some View {
         let engine = session.engine
@@ -37,20 +39,25 @@ struct AppRootView: View {
         }
         .animation(Theme.Motion.entrance, value: session.isAtFrontDoor)
         .environment(\.gameSession, session)
+        // Iteration 7 (R4): `-autoCustom [code]` lands on the custom page.
+        .task { session.openCustomFlowFromLaunchArguments() }
         // The new-game flow is opened from the front door, into the slot
         // the player picked there; cancelling goes back to the door.
         .fullScreenCover(isPresented: onboardingPresented) {
             NewGameFlow(
                 content: engine.content,
-                onStart: { profile, companyName, difficulty, origin in
+                // Iteration 7 (R4): the custom page and its prefill, and
+                // the ledger's endings for the locks.
+                options: session.newGameOptions,
+                onStart: { profile, companyName, difficulty, origin, setup in
                     session.startNewGame(
                         profile: profile, companyName: companyName, difficulty: difficulty,
-                        origin: origin
+                        origin: origin, setup: setup
                     )
                     shell.rebase(to: session.engine)
                     router.tab = .hq
                 },
-                onCancel: { session.cancelOnboarding() }
+                onCancel: { session.cancelCustomGame() }
             )
             .interactiveDismissDisabled()
         }
@@ -102,22 +109,33 @@ struct AppRootView: View {
                     // rather than one named case, and both screens are thin
                     // wrappers on the founder biography, so they take the
                     // engine and hand back the founder to play again as.
+                    // Iteration 7 (R4): the share button opens the
+                    // biography card.
+                    let actions = BiographyActions(onShare: { sharingBiography = true })
                     if info.kind.isSuccess {
                         GameWonView(
                             engine: engine, info: info,
                             onNewGame: { difficulty, founder, origin in
                                 session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
                             },
-                            onReplay: { session.replayCurrentGame() }
+                            onReplay: { session.replayCurrentGame() },
+                            actions: actions
                         )
+                        .sheet(isPresented: $sharingBiography) {
+                            ShareCardSheet(card: .biography(engine: engine, info: info))
+                        }
                     } else {
                         GameOverView(
                             engine: engine, info: info,
                             onNewGame: { difficulty, founder, origin in
                                 session.startNewGame(difficulty: difficulty, founder: founder, origin: origin)
                             },
-                            onReplay: { session.replayCurrentGame() }
+                            onReplay: { session.replayCurrentGame() },
+                            actions: actions
                         )
+                        .sheet(isPresented: $sharingBiography) {
+                            ShareCardSheet(card: .biography(engine: engine, info: info))
+                        }
                     }
                 }
             }

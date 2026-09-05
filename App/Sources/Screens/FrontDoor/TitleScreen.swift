@@ -20,6 +20,8 @@ struct TitleScreen: View {
     @State private var choosingSlotToReplace = false
     /// The content settles in on arrival; Reduce Motion drops the drift.
     @State private var arrived = false
+    /// Iteration 7 (R4): the *From a code* sheet.
+    @State private var enteringCode = false
 
     var body: some View {
         ScrollView {
@@ -44,8 +46,8 @@ struct TitleScreen: View {
                 // `TitleMenu.Flags`; the closures are the lanes' to fill.
                 menu: .make(
                     onDaily: { /* R3 */ },
-                    onCustom: { /* R4 */ },
-                    onFromCode: { /* R4 */ }
+                    onCustom: { customCompany(code: nil) },
+                    onFromCode: { enteringCode = true }
                 )
             )
             .padding(Theme.Spacing.lg)
@@ -57,6 +59,18 @@ struct TitleScreen: View {
         .onAppear {
             session.refreshSlots()
             withAnimation(Theme.Motion.entrance) { arrived = true }
+            // A code that arrived by URL while the door was shut. Not
+            // when the flow already has it (`-autoCustom`, a row's tap).
+            if session.pendingSeedCode != nil, !session.needsOnboarding { enteringCode = true }
+        }
+        // R4: a code arriving by URL at the front door opens the sheet.
+        .onChange(of: session.pendingSeedCode) { _, code in
+            if code != nil, !session.needsOnboarding { enteringCode = true }
+        }
+        .sheet(isPresented: $enteringCode) {
+            SeedCodeEntrySheet(prefill: session.pendingSeedCode) { code in
+                customCompany(code: code)
+            }
         }
         .confirmationDialog(
             "Delete this save?",
@@ -99,9 +113,20 @@ struct TitleScreen: View {
     private func newCompany() {
         Haptics.tap()
         Sounds.play(.tap)
+        // R4: the plain path never opens on the custom page.
+        session.clearCustomGameRequest()
         if let empty = session.slots.first(where: \.isEmpty) {
             session.beginNewGame(inSlot: empty.slot)
         } else {
+            choosingSlotToReplace = true
+        }
+    }
+
+    /// R4: *Custom company*, or *From a code* with the code: the flow
+    /// opens on the custom page. With every slot taken the request stays
+    /// parked and the replace dialog's `beginNewGame` picks it up.
+    private func customCompany(code: SeedCode?) {
+        if !session.beginCustomGame(code: code) {
             choosingSlotToReplace = true
         }
     }
@@ -304,25 +329,6 @@ private struct ContinueCard: View {
     private var accessibilityLabel: String {
         "\(summary.endingKind == nil ? "Continue" : "Read the ending of") \(summary.companyName), "
             + "\(summary.founderName), \(whereItStands)"
-    }
-}
-
-/// A company name in pixel caps when it fits on one line, in the rounded
-/// face when it does not: the bitmap font is a display face for short
-/// labels and cannot wrap.
-private struct PixelCompanyName: View {
-    let name: String
-    var scale: CGFloat = 2
-
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            PixelText(text: name, scale: scale, color: Theme.pixelInk)
-            Text(name)
-                .font(.system(.headline, design: .rounded).weight(.bold))
-                .foregroundStyle(Theme.pixelInk)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-        }
     }
 }
 

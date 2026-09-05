@@ -21,6 +21,8 @@ struct NewspaperScreen: View {
     /// Which way the last page turn went, so the incoming page slides in
     /// from the right side.
     @State private var turnedForward = true
+    /// Iteration 7 (R4): the issue being shared, as a card.
+    @State private var sharing: NewspaperIssue?
 
     private var composer: NewspaperComposer {
         NewspaperComposer(state: engine.state, content: engine.content, balance: engine.balance)
@@ -48,6 +50,24 @@ struct NewspaperScreen: View {
         .background(Newsprint.paper)
         .navigationTitle("Front page")
         .navigationBarTitleDisplayMode(.inline)
+        // Iteration 7 (R4): share this issue as a 1080×1350 card.
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    guard let issue = current else { return }
+                    Haptics.tap()
+                    Sounds.play(.tap)
+                    sharing = issue
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .disabled(current == nil)
+                .accessibilityLabel("Share this front page")
+            }
+        }
+        .sheet(item: $sharing) { issue in
+            ShareCardSheet(card: .frontPage(issue: issue, companyName: engine.state.company.name))
+        }
         .safeAreaInset(edge: .top, spacing: 0) { newsstand }
         .gesture(pageTurn)
         .onChange(of: engine.state.day, initial: true) { _, _ in refresh() }
@@ -122,6 +142,10 @@ struct NewspaperScreen: View {
 /// out.
 struct NewspaperPage: View {
     let issue: NewspaperIssue
+    /// Iteration 7 (R4): the share card sets the page above the fold —
+    /// masthead, lead, photo and the two columns, without the small print
+    /// and the footer — so the fitted page keeps its type legible.
+    var aboveTheFold = false
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -134,9 +158,11 @@ struct NewspaperPage: View {
             photo
             Rule()
             columns
-            Rule()
-            smallPrint
-            footer
+            if !aboveTheFold {
+                Rule()
+                smallPrint
+                footer
+            }
         }
         .padding(Theme.Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)

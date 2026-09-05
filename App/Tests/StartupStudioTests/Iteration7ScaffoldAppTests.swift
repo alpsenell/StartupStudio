@@ -90,7 +90,8 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
     func testTitleMenuAndOnboardingPagesStayOffUntilALaneFlipsThem() {
         let menu = TitleMenu.make(onDaily: {}, onCustom: {}, onFromCode: {})
         XCTAssertEqual(menu.rows.count, 3)
-        XCTAssertTrue(menu.enabledRows.isEmpty, "every row is behind a flag that ships off")
+        // R4 flipped its two rows on; the daily's is R3's to flip.
+        XCTAssertEqual(menu.enabledRows.map(\.id), [.custom, .fromCode])
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)
         XCTAssertFalse(ServiceFlags.cloud || ServiceFlags.gameCenter || ServiceFlags.restore)
