@@ -228,7 +228,10 @@ extension HomeSceneComposer {
                 break
             }
         }
-        return people + furniture
+        // Reading order, which is also the order VoiceOver puts them in
+        // from `sortPriority`: the founder, their partner, the children,
+        // then the room.
+        return people.sorted { $0.sortPriority > $1.sortPriority } + furniture
     }
 
     /// The region under scene pixel (`x`, `y`), or `nil` when the point

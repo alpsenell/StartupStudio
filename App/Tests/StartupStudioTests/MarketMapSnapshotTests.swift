@@ -214,7 +214,15 @@ final class MarketMapSnapshotTests: XCTestCase {
         XCTAssertEqual(snapshot.heldCount, 2)
 
         let summary = try XCTUnwrap(snapshot.summaries["fitness"])
-        XCTAssertTrue(summary.contains("Fitness, household"), summary)
+        // R7: the rung moved out of the label and into the district's
+        // `accessibilityValue`, where VoiceOver expects a thing's current
+        // setting — the label used to say it twice.
+        XCTAssertTrue(summary.hasPrefix("Fitness, demand"), summary)
+        XCTAssertFalse(summary.contains("household"), "the rung is the value, not the label")
+        XCTAssertTrue(
+            try XCTUnwrap(byID["fitness"]).accessibilityValue.hasPrefix("household name"),
+            "the rung is spoken as the value"
+        )
         XCTAssertTrue(summary.contains("2 of your products"), summary)
         XCTAssertTrue(summary.contains("\(incumbent.name) is here"), summary)
         XCTAssertTrue(summary.contains("under challenge"), summary)

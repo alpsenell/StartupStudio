@@ -213,10 +213,10 @@ struct HomeHitRegionTests {
             activity: .dinner,
             mood: .low
         )
-        #expect(view.label(for: .founder) == "Mira, at dinner, worn down")
-        #expect(view.label(for: .partner) == "Sam, your partner, affection sliding")
-        #expect(view.label(for: .child(HomeOccupants.derivedChildID(index: 0))) == "Ada, your child")
-        #expect(view.label(for: .furniture(.couch)) == "The sofa")
+        #expect(view.spokenLabel(for: .founder) == "Mira, at dinner, worn down")
+        #expect(view.spokenLabel(for: .partner) == "Sam, your partner, affection sliding")
+        #expect(view.spokenLabel(for: .child(HomeOccupants.derivedChildID(index: 0))) == "Ada, your child")
+        #expect(view.spokenLabel(for: .furniture(.couch)) == "The sofa")
         #expect(view.sceneSummary.contains("house"))
         #expect(view.sceneSummary.contains("Sam is in"))
     }
@@ -228,7 +228,7 @@ struct HomeHitRegionTests {
             activity: .sleeping,
             mood: .okay
         )
-        #expect(view.label(for: .founder) == "You, asleep in bed")
+        #expect(view.spokenLabel(for: .founder) == "You, asleep in bed")
         #expect(view.sceneSummary.contains("studio flat"))
     }
 }

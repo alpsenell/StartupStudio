@@ -84,7 +84,7 @@ public struct MarketMapView<DistrictLabel: View>: View {
     /// order is left-to-right, top-to-bottom, which is the catalog's order
     /// and says nothing; size is the thing a sighted player sees first,
     /// because the footprint *is* the demand.
-    static func sortPriority(_ district: MarketDistrictInfo) -> Double {
+    public static func sortPriority(_ district: MarketDistrictInfo) -> Double {
         district.size
     }
 }

@@ -12,7 +12,14 @@ import TycoonEngine
 struct HomeCard: View {
     let engine: GameEngine
 
+    // A headless pass cannot tap the "City map" row, and the map is the
+    // one screen R7 gave an accessibility overlay that has nowhere else
+    // to be opened from: `-autoRoute city` opens it.
+    #if DEBUG
+    @State private var showingCityMap = DebugLaunch.launchRoute == "city"
+    #else
     @State private var showingCityMap = false
+    #endif
 
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI

@@ -304,9 +304,11 @@ struct MarketMapSnapshot {
     private static func summary(
         _ district: MarketDistrictInfo, category: CategorySnapshot, incumbentName: String?
     ) -> String {
-        var parts = [
-            "\(district.name), \(tierName(district.standing).lowercased()), demand \(category.market.multiplierLabel)",
-        ]
+        // The rung is the *value* now (`MarketDistrictInfo.accessibilityValue`),
+        // which is where VoiceOver expects a thing's current setting; the
+        // label says what the district is and what is on it. Saying the
+        // standing in both read it out twice.
+        var parts = ["\(district.name), demand \(category.market.multiplierLabel)"]
         switch district.playerProducts {
         case 0: break
         case 1: parts.append("one of your products")

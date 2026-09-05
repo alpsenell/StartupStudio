@@ -75,7 +75,7 @@ public struct HomeSceneView: View {
                     .frame(width: rect.width, height: rect.height)
                     .position(x: rect.midX, y: rect.midY)
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(label(for: region.kind))
+                    .accessibilityLabel(spokenLabel(for: region.kind))
                     .accessibilityHint(accessibilityHint?(region.kind) ?? "")
                     .accessibilitySortPriority(region.sortPriority)
                     .accessibilityAddTraits(onTapRegion == nil ? [] : .isButton)
@@ -108,7 +108,7 @@ public struct HomeSceneView: View {
     /// What VoiceOver says about one thing in the room. Informational —
     /// these are static text unless the app passed an action, in which
     /// case they become buttons.
-    nonisolated func label(for kind: HomeHitRegion.Kind) -> String {
+    public nonisolated func spokenLabel(for kind: HomeHitRegion.Kind) -> String {
         switch kind {
         case .founder:
             var parts = [occupants.founderName ?? "You"]
