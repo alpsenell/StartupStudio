@@ -378,3 +378,23 @@ R5 first because it fixes seams the others build on (the optional router reads, 
 - **Sentence-level localization** of `EventCopy`, the composer, the biography and the post-mortem. R9 marks them; converting them is its own lane.
 - **iPad landscape.** Requires-full-screen and portrait get the game on the iPad; a landscape layout is a redesign of the HUD and the rail.
 - **What they want / They call you / Bet the Tree / Chapters open with a question** — still on iteration 5's list; none of them is release plumbing.
+
+## Status (5 September, afternoon)
+
+All nine lanes merged onto `iteration-7` in the order R5 → R4 → R3 → R1 → R2 → R6 → R7 → R8 → R9 (lanes landed out of the planned order; every conflict was two lanes filling adjacent slots in `AppRootView`, `TitleScreen`, `NewGameFlow`, `GameSession+Legacy`, `CityMapScreen`, `FounderBiographyView`, `project.yml`, the `Makefile` and the README, resolved by keeping both). Suites on the merged tree: **app 385, engine 943, content 52, save 34, PixelKit 336**, all green.
+
+Per lane, what landed and what did not:
+
+- **R1** — the tour as specified; beat 1's "tap on the office" trigger is not wired (needs an HQ hook), the 4 s timer and *Next* end it.
+- **R2** — key-value sync, the merge policy with tombstones and an anti-ping-pong hold, the ledger in its own directory, the Heirlooms page and the three deltas. A newer-format remote blob is protected; garbage is overwritable. **Not verified live**: two devices on one account (no iCloud on the simulator).
+- **R3** — the client, the queue, the 56 ids (`docs/release/game-center-ids.md`), the daily in its own store with the horizon gate and result card. The daily's ledger is one directory down (`Daily/Ledger`). Tenure posts in every mode. **Not verified live**: authentication (no account on the simulator).
+- **R4** — `SS1-…` codes (Crockford, two checks), the three cards, the URL scheme, the custom page, the locks and the six earned looks. The heirloom rides in `RunSetup` beside seed, rules and mode.
+- **R5** — endless after IPO / *Still yours*, and the five fixes plus two more optional router reads the audit found. "Still running" lives on the Continue card, not in the biography (unreachable there by construction).
+- **R6** — the gate, the entitlements actor, the paywall (price in the pixel face only when the face can draw it), Restore, the review prompt, real `SKTestSession` tests under `xcodebuild`. That needed Debug signed with `App/StartupStudio.debug.entitlements` (get-task-allow); Release uses `App/StartupStudio.entitlements`. **Both files are hand-kept — add any entitlement to both.**
+- **R7** — home and city overlays, market values and sort order, the floor's founder, the rival studio's value line, nine layout fixes from the accessibility-size sweep. No `performAccessibilityAudit` (needs a UI-test target).
+- **R8** — the manifest, iPad, versioning (`App/Config/Version.xcconfig`, rewritten by `make gen`), three fixture saves, `make screenshots` (22 shots), `docs/release/{testflight,app-privacy,screenshots}.md`. The timeline and org chart are not in the shot list (see `screenshots.md`).
+- **R9** — the catalog (997 keys after the merge), 246 `String(localized:)` sites on the chrome, the audit test (baseline re-pinned at 37 bare pixel literals), `// l10n:` markers on the sentence builders. **Finding:** `xcodebuild` does not write extracted keys back into the catalog — `make strings` does, via `xcstringstool sync`. **Fix:** `PixelFont.glyph(for:)` trapped on characters whose uppercase form is two graphemes (`ß`, `ﬁ`); it now draws the hollow box. The face has 55 glyphs, not 62.
+
+**Rule since the merge:** the owner asked for no new tests until further notice; it is in `CLAUDE.md`.
+
+**What the owner does next** (detail in `docs/release/testflight.md`): App ID capabilities (iCloud key-value, Game Center, In-App Purchase); the non-consumable; the 48 + 8 Game Center items; App Privacy *Data Not Collected*; the age rating; privacy-policy and support URLs; two sandbox testers; then a device build with iCloud and Game Center on to verify the two paths the simulator could not.

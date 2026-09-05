@@ -250,6 +250,51 @@ Iteration 6 gave the game places it did not have:
 Plus autosave with versioned migrations, and a deterministic engine — same
 seed, same game — under all of it.
 
+### Around the run
+
+Iteration 7 built everything a run needs to reach the App Store:
+
+- **The first hour.** A fresh install gets a nine-beat tour paced by what
+  you do rather than by the calendar: the tabs appear one at a time as
+  the tour introduces them, the ship beat stays silent until the build is
+  ready, and a second company on the same install sees nothing.
+- **Saves that follow you.** The three slots and the ledger sync through
+  iCloud's key-value store. The same company further along wins; a
+  different company in the slot goes by wall clock; the loser becomes the
+  slot's backup. With iCloud off, nothing changes.
+- **The legacy ledger and heirlooms.** Every finished company goes into a
+  ledger that survives deleting every slot. A new company can carry one
+  thing from it — a person into the address book, a perk from day one, or
+  the office deed — spent once, and unranked for it. Endings unlock the
+  mortgaged origin and six extra founder looks.
+- **Game Center.** Forty-eight achievements (the goals and the six
+  endings) and eight leaderboards: fastest IPO and richest *Still yours*
+  per difficulty, longest tenure, and the daily.
+- **Today's company.** One seed, origin and difficulty for everyone on
+  each UTC day, played in its own store and scored at one game year on
+  the founder's net worth. Free, one attempt, a result card afterwards.
+- **Share a life.** The biography, the front page and an office photo as
+  1080×1350 cards, each carrying a seed code (`SS1-…`) that founds the
+  same company on another phone, by typing it or by link.
+- **A custom company.** Seed, difficulty, rivals on or off, the incumbent
+  on or off, starting cash. Earns achievements; never posts to a board.
+- **Keep running it.** After an IPO or *Still yours*, the company can
+  carry on: no board, no buyers, the work continues, bankruptcy still
+  possible.
+- **The unlock.** The garage chapter is free; chapter 2 onwards is one
+  non-consumable purchase. The gate only ever refuses to run the clock —
+  every screen, action and save keeps working, and a refund re-locks the
+  clock, never the file. The paywall is drawn on pixel paper.
+- **Reaching the rooms.** VoiceOver reaches every person and fixture in
+  the home, every district on both maps and every guest on the floor; the
+  pixel screens hold at the accessibility text sizes.
+- **The iPad.** The phone layout in a centred column, portrait only.
+- **Release plumbing.** A privacy manifest that says nothing is collected,
+  the store-listing keys, a build number from the commit count, a
+  screenshot pipeline (`make screenshots`), the TestFlight checklist and
+  the Game Center id table under `docs/release/`, and a String Catalog
+  refilled by `make strings`.
+
 ## Layout
 
 - `App/` — the SwiftUI app shell (HUD, tabs, screens, theme)
