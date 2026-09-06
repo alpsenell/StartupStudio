@@ -88,7 +88,7 @@ struct FriendRow: View {
                             .foregroundStyle(.tertiary)
                     }
                 }
-                BondBar(bond: friend.bond)
+                FriendBondBar(bond: friend.bond)
                 if let lastLine {
                     Text("“\(lastLine)”")
                         .font(.caption)
@@ -120,7 +120,7 @@ struct FriendRow: View {
 
 /// The bond, as a short bar with its word next to it. Same gauge the
 /// contact sheet uses for rapport, at row scale.
-struct BondBar: View {
+struct FriendBondBar: View {
     let bond: Double
     /// The header already prints the number beside the word, so it asks
     /// for the bar alone.

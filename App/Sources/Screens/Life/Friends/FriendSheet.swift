@@ -289,7 +289,7 @@ private struct FriendHeader: View {
                                 .font(Theme.Typography.number(.caption))
                                 .contentTransition(.numericText())
                         }
-                        BondBar(bond: friend.bond, showsValue: false)
+                        FriendBondBar(bond: friend.bond, showsValue: false)
                     }
                     Text(silenceLine)
                         .font(.caption2)
