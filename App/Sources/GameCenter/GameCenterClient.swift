@@ -63,4 +63,6 @@ extension GameCenterID {
     static let stakes = leaderboard("stakes")
     /// Iteration 8: this week's featured scenario, recurring weekly.
     static let scenario = leaderboard("scenario")
+    /// Iteration 8: the four-week season, recurring.
+    static let season = leaderboard("season")
 }

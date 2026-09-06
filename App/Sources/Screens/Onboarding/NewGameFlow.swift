@@ -51,6 +51,8 @@ struct NewGameOptions {
     var ledger: LegacyLedger = .empty
     /// Iteration 8: who the ledger offers as the next founder.
     var successors: [Successor] = []
+    /// Iteration 8: the seasons finished, each of which earned a look.
+    var seasonsFinished: [Int] = []
     /// Open on the Heirlooms page (the `-autoHeirlooms` screenshot pass). R2.
     var startsOnHeirlooms = false
 
@@ -126,6 +128,7 @@ struct NewGameFlow: View {
         (chosenSuccessor.map { [($0.appearanceSeed, nil as EndingKind?)] } ?? [])
             + Self.appearanceSeeds.map { ($0, nil) }
             + Unlocks.earnedLookSeeds(endingsReached: options.endingsReached).map { ($0.seed, $0.ending) }
+            + options.seasonsFinished.map { (GameSeason.season(number: $0).lookSeed, nil) }
     }
 
     private var appearanceSeed: UInt64 {

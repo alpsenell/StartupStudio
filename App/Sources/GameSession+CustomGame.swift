@@ -30,6 +30,7 @@ extension GameSession {
         options.endingsReached = ledger.endingsReached
         // Iteration 8: the dynasty's successors.
         options.successors = Successors.offers(from: ledger)
+        options.seasonsFinished = seasonLedger.finishedNumbers
         // R2: the Heirlooms page, when the ledger offers something.
         return heirloomOptions(over: options)
     }

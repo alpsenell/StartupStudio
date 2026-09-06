@@ -18,13 +18,15 @@ public enum RunMode: Codable, Equatable, Hashable, Sendable {
     /// Iteration 8: an authored start with an objective and a deadline
     /// (`id` names it; `startDay` is the fixture's day when it began).
     case scenario(id: String, startDay: Int)
+    /// Iteration 8: the four-week season's shared company.
+    case season(number: Int)
 
     /// Whether an ending in this mode may post to the ranked boards. An
     /// heirloom (R2) makes a standard run unranked too; that check lives
     /// with the state, see `GameState.isRanked`.
     public var isRanked: Bool {
         switch self {
-        case .standard, .daily: true
+        case .standard, .daily, .season: true
         case .custom, .scenario: false
         }
     }
@@ -36,6 +38,11 @@ public enum RunMode: Codable, Equatable, Hashable, Sendable {
 
     public var isScenario: Bool {
         if case .scenario = self { return true }
+        return false
+    }
+
+    public var isSeason: Bool {
+        if case .season = self { return true }
         return false
     }
 }
@@ -55,15 +62,18 @@ public struct GameRules: Codable, Equatable, Hashable, Sendable {
     /// Iteration 8: the stake, 0–10 (`StakeLadder`). Saves from before
     /// stakes decode as 0.
     public var stake: Int
+    /// Iteration 8: a season's twist, `nil` outside a season.
+    public var twist: SeasonTwist?
 
     public init(
         rivalsEnabled: Bool = true, incumbentEnabled: Bool = true, startingCash: Int? = nil,
-        stake: Int = 0
+        stake: Int = 0, twist: SeasonTwist? = nil
     ) {
         self.rivalsEnabled = rivalsEnabled
         self.incumbentEnabled = incumbentEnabled
         self.startingCash = startingCash
         self.stake = min(max(0, stake), StakeLadder.count)
+        self.twist = twist
     }
 
     public static let standard = GameRules()
@@ -77,7 +87,7 @@ public struct GameRules: Codable, Equatable, Hashable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case rivalsEnabled, incumbentEnabled, startingCash, stake
+        case rivalsEnabled, incumbentEnabled, startingCash, stake, twist
     }
 
     public init(from decoder: any Decoder) throws {
@@ -86,7 +96,8 @@ public struct GameRules: Codable, Equatable, Hashable, Sendable {
             rivalsEnabled: try container.decodeIfPresent(Bool.self, forKey: .rivalsEnabled) ?? true,
             incumbentEnabled: try container.decodeIfPresent(Bool.self, forKey: .incumbentEnabled) ?? true,
             startingCash: try container.decodeIfPresent(Int.self, forKey: .startingCash),
-            stake: try container.decodeIfPresent(Int.self, forKey: .stake) ?? 0
+            stake: try container.decodeIfPresent(Int.self, forKey: .stake) ?? 0,
+            twist: try container.decodeIfPresent(SeasonTwist.self, forKey: .twist)
         )
     }
 
@@ -97,6 +108,32 @@ public struct GameRules: Codable, Equatable, Hashable, Sendable {
         try container.encodeIfPresent(startingCash, forKey: .startingCash)
         if stake > 0 {
             try container.encode(stake, forKey: .stake)
+        }
+        try container.encodeIfPresent(twist, forKey: .twist)
+    }
+}
+
+/// Iteration 8: what a season does to the world for four weeks. Each is
+/// a handful of balance values; `nil` is the identity.
+public enum SeasonTwist: String, Codable, Equatable, Hashable, Sendable, CaseIterable {
+    case platformLaunch, fundingWinter, crashSeason, poachingSeason, pressYear
+
+    func apply(to balance: inout BalanceConfig) {
+        switch self {
+        case .platformLaunch:
+            balance.market.boomChance = min(1, balance.market.boomChance * 2)
+            balance.market.boomJump *= 1.5
+        case .fundingWinter:
+            balance.investors.roundValuationPremium = 0
+            balance.salaryBase = Int((Double(balance.salaryBase) * 0.8).rounded())
+        case .crashSeason:
+            balance.market.crashChance = min(1, balance.market.crashChance * 2)
+            balance.market.crashJump *= 1.5
+        case .poachingSeason:
+            balance.rivals.poachChance = min(1, balance.rivals.poachChance * 2)
+        case .pressYear:
+            balance.reviewExpectationBase -= 5
+            balance.marketSizeScale *= 1.2
         }
     }
 }
@@ -116,6 +153,7 @@ extension BalanceConfig {
             copy.startingCash = cash
         }
         StakeLadder.apply(level: rules.stake, to: &copy)
+        rules.twist?.apply(to: &copy)
         return copy
     }
 }

@@ -274,6 +274,10 @@ extension DebugLaunch {
             defaults.set(true, forKey: persistentUnlockKey)
             return true
         }
+        // A remembered unlock must never reach the test host: the gate
+        // tests run against the same defaults the simulator's launches
+        // wrote into.
+        guard NSClassFromString("XCTestCase") == nil else { return false }
         return defaults.bool(forKey: persistentUnlockKey)
         #else
         return false

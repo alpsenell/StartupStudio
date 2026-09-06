@@ -99,6 +99,11 @@ enum GameCenterCatalog {
             sort: .descending, format: .integer, isRecurring: true
         ))
         boards.append(Leaderboard(
+            id: GameCenterID.season,
+            title: "This season",
+            sort: .descending, format: .money, isRecurring: true
+        ))
+        boards.append(Leaderboard(
             id: GameCenterID.stakes,
             title: "Highest stake won",
             sort: .descending, format: .integer, isRecurring: false

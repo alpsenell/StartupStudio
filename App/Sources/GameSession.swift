@@ -77,6 +77,8 @@ final class GameSession {
     /// still has to show.
     var scenario_: ScenarioState?
     var scenarioResult: ScenarioResult?
+    /// Iteration 8: the season under way.
+    var season_: SeasonState?
 
     /// The gates composed into `engine.advanceGate`, by `installGate`.
     private(set) var gates: [any AdvanceGate] = []

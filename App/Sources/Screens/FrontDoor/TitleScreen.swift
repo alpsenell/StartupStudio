@@ -28,6 +28,7 @@ struct TitleScreen: View {
     @State private var showingScenarios = false
     @State private var showingHall = false
     @State private var showingDynasty = false
+    @State private var seasonEntry: SeasonEntry?
     @State private var scenarioResult: ScenarioResult?
 
     var body: some View {
@@ -59,7 +60,8 @@ struct TitleScreen: View {
                     onFromCode: { enteringCode = true },
                     onScenarios: { showingScenarios = true },
                     onHall: { showingHall = true },
-                    onDynasty: { showingDynasty = true }
+                    onDynasty: { showingDynasty = true },
+                    onSeason: { seasonEntry = session.seasonEntry(for: .current()) }
                 )
             )
             .padding(Theme.Spacing.lg)
@@ -89,6 +91,20 @@ struct TitleScreen: View {
                 showingHall = true
             } else if DebugLaunch.value(after: "-autoRoom") == "dynasty" {
                 showingDynasty = true
+            } else if DebugLaunch.value(after: "-autoRoom") == "season" {
+                // `-autoRoom season` opens the card; with `-autoSpeed` it
+                // plays the season through, like the daily.
+                let season = GameSeason.current()
+                if ProcessInfo.processInfo.arguments.contains("-autoSpeed") {
+                    session.playSeason(season)
+                } else {
+                    seasonEntry = session.seasonEntry(for: season)
+                }
+            }
+            // A season just scored hands itself back here too.
+            if let finished = session.season_, finished.score != nil {
+                session.season_ = nil
+                seasonEntry = session.seasonEntry(for: finished.season)
             } else if let id = DebugLaunch.launchScenarioID {
                 // `-autoScenario room` opens the room; an id plays it.
                 if let scenario = ScenarioCatalog.scenario(id) {
@@ -133,6 +149,16 @@ struct TitleScreen: View {
                     session.playScenario(scenario)
                 },
                 onClose: { showingScenarios = false }
+            )
+        }
+        .sheet(item: $seasonEntry) { entry in
+            SeasonSheet(
+                entry: entry,
+                onPlay: { season in
+                    seasonEntry = nil
+                    session.playSeason(season)
+                },
+                onClose: { seasonEntry = nil }
             )
         }
         .sheet(isPresented: $showingDynasty) {
