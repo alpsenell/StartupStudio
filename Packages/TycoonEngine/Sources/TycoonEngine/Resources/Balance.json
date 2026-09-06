@@ -1128,5 +1128,34 @@
     "spinOutLockWeeks": 52,
     "mortgagedLoan": 25000,
     "mortgagedHome": "apartment"
+  },
+  "_iteration9Blocks": "One tunables object per Life-tab lane. L2 owns lifeScore.",
+  "lifeScore": {
+    "partnerMax": 22.0,
+    "partnerStageWeight": {
+      "single": 0.0,
+      "dating": 0.5,
+      "partner": 0.8,
+      "married": 1.0
+    },
+    "childrenMax": 15.0,
+    "childrenForFullMarks": 2,
+    "missedDateFloor": 0.45,
+    "missedDateRecoveryDays": 364,
+    "bodyMax": 22.0,
+    "healthShare": 0.6,
+    "friendsMax": 12.0,
+    "friendsBondForFullMarks": 240.0,
+    "eveningsMax": 19.0,
+    "eveningsForFullMarks": 24,
+    "eveningsWindowDays": 364,
+    "homeMax": 10.0,
+    "burnoutPenalty": 4.0,
+    "hospitalPenalty": 3.0,
+    "chronicPenalty": 8.0,
+    "penaltyCap": 15.0,
+    "walkAwayMinDay": 546,
+    "walkAwayMinLifeScore": 60,
+    "walkAwayMinNetWorth": 250000
   }
 }

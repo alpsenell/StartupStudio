@@ -98,6 +98,7 @@ struct BiographyCardView: View {
         case .oustedByBoard: "person.crop.circle.badge.xmark"
         case .soldUp: "tag.fill"
         case .independent: "flag.checkered"
+        case .walkedAway: "figure.walk.departure"
         }
     }
 
@@ -315,7 +316,10 @@ struct BiographyCardView: View {
             "Married to \(family.partnerName ?? "your partner")"
                 + (family.children.isEmpty ? "" : ", \(family.children.count) \(family.children.count == 1 ? "child" : "children")")
         }
-        return "\(who) · finished in a \(home) · \(weekends) weekend\(weekends == 1 ? "" : "s") actually spent on something"
+        // Iteration 9 — L2: the life score leads the line about the life.
+        let life = LifeScore.score(state, balance: engine.balance)
+        return "Life \(life) · \(who) · finished in a \(home) · "
+            + "\(weekends) weekend\(weekends == 1 ? "" : "s") actually spent on something"
     }
 
     // MARK: - The money
@@ -325,7 +329,9 @@ struct BiographyCardView: View {
         return HStack(alignment: .lastTextBaseline, spacing: Theme.Spacing.md) {
             PixelText(text: netWorth.money, scale: 4, color: netWorth >= 0 ? ShareInk.success : ShareInk.failure)
             VStack(alignment: .leading, spacing: 2) {
-                Text("final net worth")
+                // Iteration 9 — L2: "$4.2M · Life 71", the two numbers a
+                // finished run is remembered by.
+                Text("final net worth · Life \(LifeScore.score(state, balance: engine.balance))")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(ShareInk.faint)
                 Text("Company at \(state.companyValuation(balance: engine.balance).money) · \(state.investors.equityRemaining.oneDecimal)% yours")

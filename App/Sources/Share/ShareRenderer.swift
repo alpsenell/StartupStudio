@@ -78,7 +78,9 @@ enum ShareCard {
             title: "STARTUP STUDIO · \(state.company.name)",
             strip: strip,
             scoreLine: "\(state.founderNetWorth(balance: engine.balance).money) · \(info.kind.headline) on day \(state.day)",
-            code: state.seed == 0 ? nil : code.encoded
+            code: state.seed == 0 ? nil : code.encoded,
+            // Iteration 9 — L2.
+            life: LifeScore.score(state, balance: engine.balance)
         )
     }
 

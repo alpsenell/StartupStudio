@@ -36,19 +36,21 @@ final class GameCenterDailyTests: XCTestCase {
 
     func testTheIdTableIsTheFortyEightAchievementsAndEightBoardsTheOwnerCreates() throws {
         let content = try ContentCatalog.loadBundled()
+        // Iteration 9 (L2): 48 → 49 achievements and 11 → 14 boards — the
+        // seventh ending, and the three Best life boards.
         let goals = GameCenterCatalog.goalAchievements(content: content)
         XCTAssertEqual(goals.count, 42, "one achievement per goal in Goals.json")
-        XCTAssertEqual(GameCenterCatalog.endingAchievements.count, 6)
-        XCTAssertEqual(GameCenterCatalog.achievements(content: content).count, 48)
+        XCTAssertEqual(GameCenterCatalog.endingAchievements.count, 7)
+        XCTAssertEqual(GameCenterCatalog.achievements(content: content).count, 49)
 
         XCTAssertEqual(goals.first?.id, "com.alpsenel.startupstudio.goal.g1_name_a_product")
         XCTAssertTrue(goals.contains { $0.id == "com.alpsenel.startupstudio.goal.g1_ship_it" })
         XCTAssertTrue(goals.contains { $0.id == "com.alpsenel.startupstudio.goal.g4i_marry" })
         XCTAssertTrue(goals.allSatisfy { $0.points == 10 })
         XCTAssertTrue(GameCenterCatalog.endingAchievements.allSatisfy { $0.points == 50 })
-        // The doc's budget: 420 + 300 of the 1,000 Game Center allows.
+        // The doc's budget: 420 + 350 of the 1,000 Game Center allows.
         let points = GameCenterCatalog.achievements(content: content).reduce(0) { $0 + $1.points }
-        XCTAssertEqual(points, 720)
+        XCTAssertEqual(points, 770)
 
         XCTAssertEqual(
             GameCenterCatalog.endingAchievements.map(\.id),
@@ -59,6 +61,8 @@ final class GameCenterDailyTests: XCTestCase {
                 "com.alpsenel.startupstudio.ending.oustedByBoard",
                 "com.alpsenel.startupstudio.ending.soldUp",
                 "com.alpsenel.startupstudio.ending.independent",
+                // Iteration 9 (L2): the seventh ending.
+                "com.alpsenel.startupstudio.ending.walkedAway",
             ]
         )
 
@@ -77,6 +81,10 @@ final class GameCenterDailyTests: XCTestCase {
                 "com.alpsenel.startupstudio.lb.scenario",
                 "com.alpsenel.startupstudio.lb.season",
                 "com.alpsenel.startupstudio.lb.stakes",
+                // Iteration 9 (L2): the founder's own board, per difficulty.
+                "com.alpsenel.startupstudio.lb.life_score.easy",
+                "com.alpsenel.startupstudio.lb.life_score.normal",
+                "com.alpsenel.startupstudio.lb.life_score.hard",
             ]
         )
         let daily = try XCTUnwrap(GameCenterCatalog.leaderboards.first { $0.id.hasSuffix(".daily") })
@@ -116,7 +124,17 @@ final class GameCenterDailyTests: XCTestCase {
                         boards.contains("com.alpsenel.startupstudio.lb.tenure_days"),
                         "\(kind) \(difficulty) ranked=\(ranked)"
                     )
-                    let ranking = boards.filter { $0 != "com.alpsenel.startupstudio.lb.tenure_days" }
+                    // Iteration 9 (L2): every *ranked* ending also posts the
+                    // life board, so it comes out of `ranking` the way the
+                    // tenure board does, and is asserted on its own.
+                    let lifeBoard = "com.alpsenel.startupstudio.lb.life_score.\(difficulty.rawValue)"
+                    XCTAssertEqual(
+                        boards.contains(lifeBoard), ranked,
+                        "\(kind) \(difficulty) ranked=\(ranked) posts the life board iff ranked"
+                    )
+                    let ranking = boards.filter {
+                        $0 != "com.alpsenel.startupstudio.lb.tenure_days" && $0 != lifeBoard
+                    }
                     switch (kind, ranked) {
                     case (.ipo, true):
                         XCTAssertEqual(
@@ -160,6 +178,10 @@ final class GameCenterDailyTests: XCTestCase {
         let engine = company(difficulty: .normal)
         var state = engine.state
         state.employees = state.employees.filter(\.isFounder)
+        // Iteration 9 (L2): a ranked run now always posts the life board,
+        // so this one is unranked to keep asking only what it asks —
+        // nobody stayed, so no *tenure* is posted.
+        state.mode = .custom
         state.day = 200
         state.gameOver = try endingInfo(kind: .bankruptcy, day: 200)
         let reports = GameCenterMapping.reports(

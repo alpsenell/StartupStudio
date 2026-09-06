@@ -91,10 +91,16 @@ private struct DynastyRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(run.founderName)
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                Text("\(run.companyName) · \(run.ending.headline) · day \(String(run.day))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                // Iteration 9 — L2: the second number, when the ledger has
+                // it. A run recorded before life had a score shows the
+                // line it always did.
+                Text(
+                    "\(run.companyName) · \(run.ending.headline) · day \(String(run.day))"
+                        + (run.lifeScore.map { " · Life \(String($0))" } ?? "")
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
                 if let lineage = run.lineage {
                     Text(Successors.line(for: lineage))
                         .font(.caption)

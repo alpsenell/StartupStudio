@@ -13,9 +13,11 @@ extension EndingKind {
         switch self {
         case .ipo: "Public"
         case .independent: "Yours"
-        // The other four cannot be continued (`Reducer` refuses them), so
+        // The other five cannot be continued (`Reducer` refuses them), so
         // this is only ever a fallback; the headline is the honest word.
-        case .bankruptcy, .acquired, .oustedByBoard, .soldUp: headline
+        // Iteration 9 (L2): *Walked away* is deliberately among them —
+        // the founder is not there any more.
+        case .bankruptcy, .acquired, .oustedByBoard, .soldUp, .walkedAway: headline
         }
     }
 }

@@ -190,6 +190,11 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: L2 (life score, Walked away)
 
+    /// The founder hands the company over and goes. Refused unless
+    /// `GameState.canWalkAway` — the button reads `walkAwayBlocker` and
+    /// says why before it is pressed.
+    case walkAway
+
     // MARK: L3 (children)
 
     /// One evening, one child: a stage-appropriate vignette, a bond bump

@@ -223,6 +223,7 @@ extension Route {
         // MARK: Iteration 9 — route names, one line per lane
         // MARK: L1 (phone)
         // MARK: L2 (life score)
+        case "lifescore": .lifeScore
         // MARK: L3 (children)
         case "children": .children
         // MARK: L4 (friends)

@@ -9,10 +9,14 @@ configuration, then attach the achievement and leaderboard sets to the
 version being submitted. Enable the Game Center capability on the App ID
 first (the entitlement is already in `project.yml`).
 
-- **48 achievements** — 42 goals at 10 points, 6 endings at 50: **720**
+- **49 achievements** — 42 goals at 10 points, 7 endings at 50: **770**
   points of the 1,000 a game may award.
-- **11 leaderboards** — six ranked all-time boards, one tenure board, the stakes board,
+- **14 leaderboards** — nine ranked all-time boards, one tenure board, the stakes board,
   and three recurring: the daily, the weekly scenario and the four-week season.
+
+*Iteration 9, lane L2 added the seventh ending (`walkedAway`) and the
+three **Best life** boards. Everything above it is unchanged; the new rows
+are marked below.*
 
 Every id is bundle-prefixed (`com.alpsenel.startupstudio.…`) so the
 whole table can be pasted.
@@ -74,6 +78,7 @@ whole table can be pasted.
 | 4 | `com.alpsenel.startupstudio.ending.oustedByBoard` | Replaced | Be replaced by the board you invited in. |
 | 5 | `com.alpsenel.startupstudio.ending.soldUp` | Sold up | Sell the name and the desks to get out. |
 | 6 | `com.alpsenel.startupstudio.ending.independent` | Still yours | Keep every share and build something that lasts. |
+| 7 | `com.alpsenel.startupstudio.ending.walkedAway` | Walked away | Step down on purpose, with the company standing and a life to go to. *(iteration 9)* |
 
 ## Leaderboards
 
@@ -90,6 +95,9 @@ whole table can be pasted.
 | 9 | `com.alpsenel.startupstudio.lb.stakes` | Highest stake won | Integer | High to Low | All-time (iteration 8) |
 | 10 | `com.alpsenel.startupstudio.lb.scenario` | This week's scenario | Integer | High to Low | **Recurring — 7 days, starts Monday 00:00 UTC** (iteration 8) |
 | 11 | `com.alpsenel.startupstudio.lb.season` | This season | Money (US Dollar, no decimals) | High to Low | **Recurring — 28 days, starts 2026-01-01 00:00 UTC** (iteration 8) |
+| 12 | `com.alpsenel.startupstudio.lb.life_score.easy` | Best life — Easy | Integer | High to Low | Classic (all time) (iteration 9) |
+| 13 | `com.alpsenel.startupstudio.lb.life_score.normal` | Best life — Normal | Integer | High to Low | Classic (all time) (iteration 9) |
+| 14 | `com.alpsenel.startupstudio.lb.life_score.hard` | Best life — Hard | Integer | High to Low | Classic (all time) (iteration 9) |
 
 ## What the game posts, and when
 
@@ -99,6 +107,7 @@ whole table can be pasted.
 | `GameEvent.gameOver` | `…ending.<EndingKind.rawValue>`, in every mode |
 | Ending `.ipo`, `state.isRanked` | `…lb.ipo_days.<difficulty>` — the day the run ended |
 | Ending `.independent`, `state.isRanked` | `…lb.still_yours_net_worth.<difficulty>` — `founderNetWorth` |
+| Any ending, `state.isRanked` | `…lb.life_score.<difficulty>` — `LifeScore.score`, 0…100 (iteration 9) |
 | Any ending, any mode, with at least one hire | `…lb.tenure_days` — `day − min(hiredDay)`, founder excluded |
 | The daily stopping (its ending, or day 364) | `…lb.daily` — `founderNetWorth`, only while that UTC day is still open |
 

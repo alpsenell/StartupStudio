@@ -1789,6 +1789,20 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     /// never reads it.
     public var sideProject: SideProjectBalance = .default
     // MARK: end L5 (side project)
+    // MARK: Iteration 9 — the Life tab
+
+    // Same rule again: an inline default keeps each key optional, and
+    // each lane owns the type behind its own property (see the
+    // `BalanceConfig+<lane>.swift` file named for it).
+
+    // MARK: L2 (life score)
+
+    /// What the founder's life is graded out of, and the gates on the
+    /// *Walked away* ending (`BalanceConfig+LifeScore.swift`). Read only
+    /// by `LifeScore`, which nothing in the simulation calls.
+    public var lifeScore: LifeScoreBalance = .default
+
+    // MARK: end of Iteration 9
 
     public init(
         startingCash: Int,
