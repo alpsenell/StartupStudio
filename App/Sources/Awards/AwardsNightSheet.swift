@@ -9,6 +9,12 @@ struct AwardsNightSheet: View {
     let companyName: String
     var onClose: () -> Void = {}
 
+    // MARK: Iteration 9 — L7 (furnish)
+    /// A night the company won something leaves the pennant, which hangs
+    /// on a wall at home from then on.
+    @Environment(\.gameSession) private var session
+    // MARK: end of Iteration 9 — L7
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -31,6 +37,11 @@ struct AwardsNightSheet: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .background(Theme.screenBackground.ignoresSafeArea())
+            // MARK: Iteration 9 — L7 (furnish)
+            .onAppear {
+                if !night.playerWins.isEmpty { session?.unlockAwardsPennant() }
+            }
+            // MARK: end of Iteration 9 — L7
             .navigationTitle("Awards night")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

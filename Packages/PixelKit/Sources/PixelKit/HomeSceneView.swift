@@ -15,6 +15,12 @@ public struct HomeSceneView: View {
     private let sceneSize: (width: Int, height: Int)
     private let onTapRegion: ((HomeHitRegion.Kind) -> Void)?
     private let accessibilityHint: ((HomeHitRegion.Kind) -> String?)?
+    // MARK: Iteration 9 — L7 (furnish)
+    /// What a slot is called out loud — the app knows the names, PixelKit
+    /// only knows the ids.
+    private let decorLabel: ((String) -> String)?
+    private let scale: PixelSceneView.Scale
+    // MARK: end of Iteration 9 — L7
 
     public init(
         tier: HomeTierStyle,
@@ -23,17 +29,30 @@ public struct HomeSceneView: View {
         mood: MoodLevel,
         ambience: HomeAmbience = .evening,
         signals: HomeSignals = .none,
+        // MARK: Iteration 9 — L7 (furnish)
+        decor: [String: SpriteLibrary.HomeDecorName] = [:],
+        emptyDecorSlots: Bool = false,
+        decorLabel: ((String) -> String)? = nil,
+        /// How the room maps into the view: the card's fit-to-width by
+        /// default, a fixed pixel scale for the furnish sheet, which puts
+        /// the big tiers in a horizontal scroller rather than shrinking
+        /// them to a thumbnail.
+        scale: PixelSceneView.Scale = .fitWidth,
+        // MARK: end of Iteration 9 — L7
         onTapRegion: ((HomeHitRegion.Kind) -> Void)? = nil,
         accessibilityHint: ((HomeHitRegion.Kind) -> String?)? = nil
     ) {
         self.placements = HomeSceneComposer.compose(
             tier: tier, occupants: occupants, activity: activity, mood: mood,
-            ambience: ambience, signals: signals
+            ambience: ambience, signals: signals, decor: decor
         )
         self.regions = HomeSceneComposer.hitRegions(
             tier: tier, occupants: occupants, activity: activity, mood: mood,
-            ambience: ambience, signals: signals
+            ambience: ambience, signals: signals,
+            decor: decor, emptyDecorSlots: emptyDecorSlots
         )
+        self.decorLabel = decorLabel
+        self.scale = scale
         self.occupants = occupants
         self.tier = tier
         self.activity = activity
@@ -47,16 +66,45 @@ public struct HomeSceneView: View {
         PixelSceneView(
             placements: placements,
             sceneSize: sceneSize,
+            scale: scale,
             accessibilityLabel: sceneSummary
         )
         // To VoiceOver the canvas is one picture. The regions laid over it
         // are the things *in* the picture, so the picture steps aside and
         // the container carries the summary.
         .accessibilityHidden(true)
+        // Iteration 9 — L7: a real finger layer, under the accessibility
+        // one, and only when the caller asked for taps.
+        .overlay { if onTapRegion != nil { tapRegions } }
         .overlay { accessibilityRegions }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(sceneSummary)
     }
+
+    // MARK: Iteration 9 — L7 (furnish)
+
+    /// One button per region, laid over the scene where the region is, so
+    /// a finger can land on a slot. Same geometry as the accessibility
+    /// overlay, and the same still picture underneath it.
+    private var tapRegions: some View {
+        GeometryReader { proxy in
+            let geometry = PixelSceneGeometry(sceneSize: sceneSize, viewSize: proxy.size, mode: scale)
+            ForEach(regions) { region in
+                let rect = geometry.viewRect(
+                    x: region.x, y: region.y, width: region.width, height: region.height
+                )
+                Button { onTapRegion?(region.kind) } label: {
+                    Color.clear.contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .frame(width: rect.width, height: rect.height)
+                .position(x: rect.midX, y: rect.midY)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    // MARK: end of Iteration 9 — L7
 
     /// One accessibility element per region, laid over the scene where the
     /// region is. Deliberately *not* inside a `TimelineView`: the home is
@@ -66,7 +114,7 @@ public struct HomeSceneView: View {
     /// office needs a timeline because its people walk; the home does not.
     private var accessibilityRegions: some View {
         GeometryReader { proxy in
-            let geometry = PixelSceneGeometry(sceneSize: sceneSize, viewSize: proxy.size)
+            let geometry = PixelSceneGeometry(sceneSize: sceneSize, viewSize: proxy.size, mode: scale)
             ForEach(regions) { region in
                 let rect = geometry.viewRect(
                     x: region.x, y: region.y, width: region.width, height: region.height
@@ -126,6 +174,9 @@ public struct HomeSceneView: View {
             return "\(name), your child"
         case .furniture(let fixture):
             return fixture.accessibilityName
+        // Iteration 9 — L7: the app names the slot and what is in it.
+        case .decorSlot(let id):
+            return decorLabel?(id) ?? "A place for something"
         }
     }
 }

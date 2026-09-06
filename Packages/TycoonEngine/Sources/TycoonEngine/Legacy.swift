@@ -23,18 +23,46 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
     /// or better, appended by the app when the company ends.
     public var hall: [HallEntry]
 
+    // MARK: Iteration 9 — L7 (furnish)
+
+    /// Decor ids the player has earned and may place in the pixel home
+    /// (`HomeDecor.earnedItems`). Written by the season and awards hooks;
+    /// the ending trophies are derived below rather than written, so a
+    /// ledger from before this iteration already has the ones it earned.
+    public var unlockedDecor: Set<String> = []
+
+    /// Every earned decor id available right now: what has been written,
+    /// plus a trophy for each ending ever reached, plus the plant, which
+    /// everybody gets, plus the record player once the hall has anything
+    /// in it.
+    public var availableDecor: Set<String> {
+        var out = unlockedDecor
+        out.insert("plant")
+        for ending in endingsReached { out.insert(HomeDecor.trophyID(for: ending)) }
+        if !hall.isEmpty { out.insert("recordPlayer") }
+        return out
+    }
+
+    // MARK: end of Iteration 9 — L7
+
     public init(
         runs: [LegacyRun] = [],
         endingsReached: Set<EndingKind> = [],
         spentHeirlooms: Set<String> = [],
         highestStakeWon: Int = 0,
-        hall: [HallEntry] = []
+        hall: [HallEntry] = [],
+        // MARK: Iteration 9 — L7 (furnish)
+        unlockedDecor: Set<String> = []
+        // MARK: end of Iteration 9 — L7
     ) {
         self.runs = runs
         self.endingsReached = endingsReached
         self.spentHeirlooms = spentHeirlooms
         self.highestStakeWon = highestStakeWon
         self.hall = hall
+        // MARK: Iteration 9 — L7 (furnish)
+        self.unlockedDecor = unlockedDecor
+        // MARK: end of Iteration 9 — L7
     }
 
     /// The highest stake the ladder offers right now.
@@ -46,6 +74,9 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case runs, endingsReached, spentHeirlooms, highestStakeWon, hall
+        // MARK: Iteration 9 — L7 (furnish)
+        case unlockedDecor
+        // MARK: end of Iteration 9 — L7
     }
 
     public init(from decoder: any Decoder) throws {
@@ -55,7 +86,10 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
             endingsReached: try container.decodeIfPresent(Set<EndingKind>.self, forKey: .endingsReached) ?? [],
             spentHeirlooms: try container.decodeIfPresent(Set<String>.self, forKey: .spentHeirlooms) ?? [],
             highestStakeWon: try container.decodeIfPresent(Int.self, forKey: .highestStakeWon) ?? 0,
-            hall: try container.decodeIfPresent([HallEntry].self, forKey: .hall) ?? []
+            hall: try container.decodeIfPresent([HallEntry].self, forKey: .hall) ?? [],
+            // MARK: Iteration 9 — L7 (furnish)
+            unlockedDecor: try container.decodeIfPresent(Set<String>.self, forKey: .unlockedDecor) ?? []
+            // MARK: end of Iteration 9 — L7
         )
     }
 
@@ -213,6 +247,9 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         merged.spentHeirlooms.formUnion(other.spentHeirlooms)
         merged.highestStakeWon = max(highestStakeWon, other.highestStakeWon)
         merged.induct(other.hall)
+        // MARK: Iteration 9 — L7 (furnish)
+        merged.unlockedDecor.formUnion(other.unlockedDecor)
+        // MARK: end of Iteration 9 — L7
         return merged
     }
 }

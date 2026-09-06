@@ -165,6 +165,27 @@ public enum HomeSceneComposer {
         ambience: HomeAmbience,
         signals: HomeSignals
     ) -> [PlacedSprite] {
+        compose(
+            tier: tier, occupants: occupants, activity: activity, mood: mood,
+            ambience: ambience, signals: signals, decor: [:]
+        )
+    }
+
+    // MARK: Iteration 9 — L7 (furnish)
+
+    /// The scene with the founder's own things in it: `decor` maps a slot
+    /// id from `decorSlots(for:)` onto what is standing in it. Empty — the
+    /// default every existing caller gets — draws exactly the room it
+    /// always drew.
+    public static func compose(
+        tier: HomeTierStyle,
+        occupants: HomeOccupants,
+        activity: HomeActivity,
+        mood: MoodLevel,
+        ambience: HomeAmbience,
+        signals: HomeSignals,
+        decor: [String: SpriteLibrary.HomeDecorName]
+    ) -> [PlacedSprite] {
         let l = layout(for: tier)
         let time = ambience.timeOfDay
         var scene: [PlacedSprite] = []
@@ -216,6 +237,39 @@ public enum HomeSceneComposer {
         place(.lamp, l.lamp, animation: time.needsArtificialLight ? .toggle(period: 4) : .still,
               phase: time.needsArtificialLight ? 0 : 1)
 
+        // MARK: Iteration 9 — L7: the founder's own things
+        func placeDecor(_ kinds: Set<HomeDecorSlotKind>) {
+            guard !decor.isEmpty else { return }
+            for slot in decorSlots(for: tier) where kinds.contains(slot.kind) {
+                guard let name = decor[slot.id] else { continue }
+                let sprite = SpriteLibrary.homeDecor(name)
+                let animation: SpriteAnimation = sprite.frameCount > 1 ? .toggle(period: 4) : .still
+                switch slot.kind {
+                case .wall:
+                    scene.append(PlacedSprite(
+                        sprite: sprite, x: slot.x, y: slot.y, kind: .prop, animation: animation, phase: 0
+                    ))
+                case .shelf:
+                    // The plank only exists when something is standing on
+                    // it, so an empty wall stays an empty wall.
+                    let plank = SpriteLibrary.decorShelfSprite()
+                    scene.append(PlacedSprite(
+                        sprite: plank, x: slot.x, y: slot.y, kind: .prop, animation: .still, phase: 0
+                    ))
+                    scene.append(PlacedSprite(
+                        sprite: sprite, x: slot.x + max(0, (plank.width - sprite.width) / 2),
+                        y: slot.y - sprite.height, kind: .prop, animation: animation, phase: 1
+                    ))
+                case .floor:
+                    scene.append(PlacedSprite(
+                        sprite: sprite, x: slot.x, y: slot.y - sprite.height,
+                        kind: .prop, animation: animation, phase: 0
+                    ))
+                }
+            }
+        }
+        placeDecor([.wall, .shelf])
+
         // Floor furniture, back to front.
         place(.bed, l.bed)
         if let f = l.fridge {
@@ -241,6 +295,9 @@ public enum HomeSceneComposer {
         }
         place(.couch, l.couch)
         if let a = l.armchair { place(.armchair, a) }
+        // The floor decor stands in front of the furniture and behind the
+        // people, like every other thing on the floor.
+        placeDecor([.floor])
 
         // The corner that shows how the founder is actually doing.
         switch mood {

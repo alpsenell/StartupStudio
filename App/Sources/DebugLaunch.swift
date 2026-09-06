@@ -228,6 +228,7 @@ extension Route {
         // MARK: L5 (side project)
         // MARK: L6 (sabbatical)
         // MARK: L7 (furnish)
+        case "furnish": .furnish
         // MARK: end of Iteration 9
         default: nil
         }
@@ -338,6 +339,30 @@ extension DebugLaunch {
     // MARK: L6 (sabbatical)
 
     // MARK: L7 (furnish)
+
+    /// `-autoDecor`: draws one of everything in the home, so a headless
+    /// pass photographs a furnished room at every tier without owning a
+    /// thing. Display only — nothing is written to the save.
+    static var fillsDecor: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoDecor")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoHome penthouse`: draws the home card and the furnish sheet
+    /// at that tier whatever the save says, so one pass can photograph
+    /// all four rooms. Display only — the founder has not moved.
+    static var decorTier: HomeTier? {
+        #if DEBUG
+        return value(after: "-autoHome").flatMap { name in
+            HomeTier.allCases.first { $0.rawValue.lowercased() == name.lowercased() }
+        }
+        #else
+        return nil
+        #endif
+    }
 
     // MARK: end of Iteration 9
 

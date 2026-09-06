@@ -393,6 +393,20 @@ public enum Reducer {
         // MARK: L6 (sabbatical)
 
         // MARK: L7 (furnish)
+        case .placeDecor(let slot, let itemID):
+            events = []
+            // Bought things have to be owned; earned decor is gated by the
+            // ledger, which the engine cannot see, so the app offers only
+            // what has been unlocked.
+            let isShopItem = HomeDecor.shopItems.contains { $0.id == itemID }
+            if !isShopItem || state.life.possessions.contains(itemID) {
+                HomeDecor.place(
+                    itemID: itemID, slot: slot, tier: state.life.home, decor: &state.life.decor
+                )
+            }
+        case .removeDecor(let slot):
+            events = []
+            HomeDecor.remove(slot: slot, tier: state.life.home, decor: &state.life.decor)
 
         // MARK: end of Iteration 9
         }

@@ -77,6 +77,9 @@ enum Route: Hashable {
 
     // MARK: L7 (furnish)
 
+    /// L7: the Life tab, with the furnish sheet open on the home card.
+    case furnish
+
     // MARK: end of Iteration 9
 
     /// The tab this destination lives in.
@@ -102,6 +105,7 @@ enum Route: Hashable {
         // MARK: L5 (side project)
         // MARK: L6 (sabbatical)
         // MARK: L7 (furnish)
+        case .furnish: .life
         // MARK: end of Iteration 9
         }
     }
