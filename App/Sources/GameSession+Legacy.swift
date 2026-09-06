@@ -28,8 +28,13 @@ extension GameSession {
             self?.recordEndingIfNeeded()
         }
         #if DEBUG
-        if DebugLaunch.opensHeirloomsPage {
+        // Iteration 8: `-sampleLedger` installs the sample on its own (for
+        // the Dynasty and Hall rooms); `-autoNewGame` opens the flow on the
+        // founder page, where the successors are.
+        if DebugLaunch.opensHeirloomsPage || ProcessInfo.processInfo.arguments.contains("-sampleLedger") {
             ledger = .sample
+        }
+        if DebugLaunch.opensHeirloomsPage || ProcessInfo.processInfo.arguments.contains("-autoNewGame") {
             beginNewGame(inSlot: slots.first(where: \.isEmpty)?.slot ?? 0)
         }
         #endif

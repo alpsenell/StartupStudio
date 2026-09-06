@@ -72,7 +72,8 @@ public final class GameEngine {
         origin: FoundingOrigin = .garage,
         heirloom: Heirloom? = nil,
         rules: GameRules = .standard,
-        mode: RunMode = .standard
+        mode: RunMode = .standard,
+        lineage: Lineage? = nil
     ) -> GameEngine {
         let (bundled, content) = loadBundledConfiguration()
         // Difficulty first, then the run's rules — `.standard` is the
@@ -81,7 +82,7 @@ public final class GameEngine {
         let state = GameState.newGame(
             companyName: companyName, seed: seed, balance: balance,
             difficulty: difficulty, founder: founder, origin: origin, content: content,
-            heirloom: heirloom, rules: rules, mode: mode
+            heirloom: heirloom, rules: rules, mode: mode, lineage: lineage
         )
         return GameEngine(state: state, balance: balance, content: content)
     }

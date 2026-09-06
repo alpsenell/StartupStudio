@@ -621,6 +621,9 @@ public struct GameState: Codable, Equatable, Sendable {
     public var heirloom: Heirloom? = nil
     /// Set once the founder keeps running the company past an ending. R5.
     public var epilogue: Epilogue? = nil
+    /// Iteration 8: who this founder is to the last company's, when the
+    /// founder came from the ledger. Encoded only when set.
+    public var lineage: Lineage? = nil
     public var rng: SeededRNG
     /// A second RNG stream feeding the "world" systems added after launch
     /// (rivals, city, social). Kept separate so those systems' draws never
@@ -736,7 +739,8 @@ public struct GameState: Codable, Equatable, Sendable {
         content: ContentCatalog? = nil,
         heirloom: Heirloom? = nil,
         rules: GameRules = .standard,
-        mode: RunMode = .standard
+        mode: RunMode = .standard,
+        lineage: Lineage? = nil
     ) -> GameState {
         var rng = SeededRNG(seed: seed)
         // The id and the appearance word are drawn in this order, always —
@@ -827,6 +831,7 @@ public struct GameState: Codable, Equatable, Sendable {
         state.mode = mode
         state.rules = rules
         state.heirloom = heirloom
+        state.lineage = lineage
         if let heirloom {
             state.applyHeirloom(heirloom, balance: balance)
         }
@@ -1004,6 +1009,7 @@ extension GameState {
         case codebases
         case staffMemory
         case mode, rules, heirloom, epilogue
+        case lineage
     }
 
     public init(from decoder: any Decoder) throws {
@@ -1075,6 +1081,7 @@ extension GameState {
         rules = try container.decodeIfPresent(GameRules.self, forKey: .rules) ?? .standard
         heirloom = try container.decodeIfPresent(Heirloom.self, forKey: .heirloom)
         epilogue = try container.decodeIfPresent(Epilogue.self, forKey: .epilogue)
+        lineage = try container.decodeIfPresent(Lineage.self, forKey: .lineage)
         lockedTopics = Dictionary(
             (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
                 .map { ($0.topicID, $0.unlockDay) },
@@ -1163,5 +1170,6 @@ extension GameState {
         }
         try container.encodeIfPresent(heirloom, forKey: .heirloom)
         try container.encodeIfPresent(epilogue, forKey: .epilogue)
+        try container.encodeIfPresent(lineage, forKey: .lineage)
     }
 }

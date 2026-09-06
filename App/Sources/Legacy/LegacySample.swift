@@ -42,6 +42,22 @@ extension LegacyLedger {
             ),
         ]
         ledger.endingsReached = [.ipo, .bankruptcy]
+        // Iteration 8: the dynasty's facts — Mira's face and child, her
+        // longest-serving engineer, and Dev as somebody who started out
+        // at Northgate.
+        ledger.runs[0].founderAppearanceSeed = 0x5EED_0000
+        ledger.runs[0].founderArchetype = .hacker
+        ledger.runs[0].children = [
+            LegacyChild(id: UUID(uuidString: "5A4D9E00-0000-4000-8000-00000000C001")!, name: "Ada", appearanceSeed: 0x5EED_0C01, bornDay: 610),
+        ]
+        ledger.runs[0].longestServing = ledger.runs[0].people[0]
+        ledger.runs[1].founderAppearanceSeed = 0x5EED_0000 &+ 7 &* 2_654_435_761
+        ledger.runs[1].founderArchetype = .hustler
+        ledger.runs[1].lineage = Lineage(
+            predecessorRunID: ledger.runs[0].id, predecessorFounderName: "Mira Okafor",
+            predecessorCompanyName: "Northgate Softworks", kind: .employee
+        )
+        ledger.runs[1].longestServing = ledger.runs[1].people[0]
         return ledger
     }()
 }

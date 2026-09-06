@@ -13,6 +13,8 @@ struct RunSetup: Equatable {
     /// The one thing carried from the last company (R2), when the
     /// Heirlooms page was shown and something was picked.
     var heirloom: Heirloom?
+    /// Iteration 8: the successor the founder page picked, if any.
+    var lineage: Lineage?
 
     static let standard = RunSetup()
 }
@@ -26,6 +28,8 @@ extension GameSession {
         options.showsCustomStep = customGameRequested || pendingSeedCode != nil
         options.seedCode = pendingSeedCode
         options.endingsReached = ledger.endingsReached
+        // Iteration 8: the dynasty's successors.
+        options.successors = Successors.offers(from: ledger)
         // R2: the Heirlooms page, when the ledger offers something.
         return heirloomOptions(over: options)
     }
@@ -68,7 +72,8 @@ extension GameSession {
     ) {
         startNewGame(
             profile: profile, companyName: companyName, difficulty: difficulty, origin: origin,
-            seed: setup.seed, rules: setup.rules, heirloom: setup.heirloom, mode: setup.mode
+            seed: setup.seed, rules: setup.rules, heirloom: setup.heirloom, mode: setup.mode,
+            lineage: setup.lineage
         )
         clearCustomGameRequest()
     }

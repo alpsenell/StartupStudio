@@ -18,11 +18,12 @@ struct TitleMenu {
         /// Iteration 8.
         static let scenarios = true
         static let hall = true
+        static let dynasty = true
     }
 
     struct Row: Identifiable {
         enum ID: String {
-            case daily, custom, fromCode, scenarios, hall
+            case daily, custom, fromCode, scenarios, hall, dynasty
         }
 
         let id: ID
@@ -43,7 +44,8 @@ struct TitleMenu {
         onCustom: @escaping () -> Void,
         onFromCode: @escaping () -> Void,
         onScenarios: @escaping () -> Void = {},
-        onHall: @escaping () -> Void = {}
+        onHall: @escaping () -> Void = {},
+        onDynasty: @escaping () -> Void = {}
     ) -> TitleMenu {
         TitleMenu(rows: [
             Row(id: .daily, title: "Today's company", systemImage: "calendar", isEnabled: Flags.daily, action: onDaily),
@@ -51,6 +53,7 @@ struct TitleMenu {
             Row(id: .custom, title: "Custom company", systemImage: "slider.horizontal.3", isEnabled: Flags.custom, action: onCustom),
             Row(id: .fromCode, title: "From a code", systemImage: "number", isEnabled: Flags.fromCode, action: onFromCode),
             Row(id: .hall, title: "Hall of Fame", systemImage: "trophy", isEnabled: Flags.hall, action: onHall),
+            Row(id: .dynasty, title: "Dynasty", systemImage: "person.2.crop.square.stack", isEnabled: Flags.dynasty, action: onDynasty),
         ])
     }
 

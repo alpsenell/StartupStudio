@@ -49,6 +49,8 @@ struct NewGameOptions {
     var endingsReached: Set<EndingKind> = []
     /// What the Heirlooms page offers from. R2.
     var ledger: LegacyLedger = .empty
+    /// Iteration 8: who the ledger offers as the next founder.
+    var successors: [Successor] = []
     /// Open on the Heirlooms page (the `-autoHeirlooms` screenshot pass). R2.
     var startsOnHeirlooms = false
 
@@ -110,6 +112,8 @@ struct NewGameFlow: View {
     /// Iteration 7 (R4): what the custom page collects.
     @State private var custom = CustomChoices()
     @State private var prefilledFromCode = false
+    /// Iteration 8: the successor the founder page picked.
+    @State private var chosenSuccessor: Successor?
 
     /// Appearance seeds the picker cycles through. Fixed and small so the
     /// founder you chose is the founder you get.
@@ -118,7 +122,9 @@ struct NewGameFlow: View {
     /// The 24 base looks and, after them, one per ending the ledger has
     /// reached (R4), each with the ending it was earned for.
     private var looks: [(seed: UInt64, earnedFor: EndingKind?)] {
-        Self.appearanceSeeds.map { ($0, nil) }
+        // Iteration 8: a chosen successor's own face leads the list.
+        (chosenSuccessor.map { [($0.appearanceSeed, nil as EndingKind?)] } ?? [])
+            + Self.appearanceSeeds.map { ($0, nil) }
             + Unlocks.earnedLookSeeds(endingsReached: options.endingsReached).map { ($0.seed, $0.ending) }
     }
 
@@ -248,6 +254,33 @@ struct NewGameFlow: View {
                 title: String(localized: "Who\'s starting this?", comment: "Onboarding page heading"),
                 detail: String(localized: "Your name goes on the incorporation papers and on every review.", comment: "Onboarding page subheading under the heading above")
             )
+
+            // Iteration 8: the dynasty — who takes over from the last company.
+            if !options.successors.isEmpty {
+                CardView("Who takes over?", systemImage: "person.2.crop.square.stack") {
+                    VStack(spacing: Theme.Spacing.sm) {
+                        ForEach(options.successors) { successor in
+                            SuccessorRow(successor: successor, isSelected: chosenSuccessor?.id == successor.id) {
+                                withAnimation(Theme.Motion.selection) {
+                                    if chosenSuccessor?.id == successor.id {
+                                        chosenSuccessor = nil
+                                    } else {
+                                        chosenSuccessor = successor
+                                        founderName = successor.name
+                                        founderNameEdited = true
+                                        archetype = successor.archetype
+                                        appearanceIndex = 0
+                                    }
+                                }
+                            }
+                        }
+                        Text("Or somebody new — leave them unpicked.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
 
             CardView("Your name", systemImage: "person.fill") {
                 HStack(spacing: Theme.Spacing.sm) {
@@ -440,6 +473,7 @@ struct NewGameFlow: View {
         // in the run setup beside what the custom page added (R4).
         var setup = runSetup
         setup.heirloom = options.showsHeirloomsStep ? heirloom : nil
+        setup.lineage = chosenSuccessor?.lineage
         onStart(profile, resolvedCompanyName, difficulty, origin, setup)
     }
 
@@ -788,4 +822,40 @@ private struct IntroPanelView: View {
         productTypes: [], topics: [], techTree: [], events: [],
         names: NamePools(firstNames: [], lastNames: [], clientCompanies: [])
     )) { _, _, _, _, _ in }
+}
+
+/// Iteration 8: one successor the ledger offers, with their face.
+private struct SuccessorRow: View {
+    let successor: Successor
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
+            HStack(spacing: Theme.Spacing.md) {
+                PixelPortrait(seed: successor.appearanceSeed, isFounder: true, size: 44)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(successor.name)
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(successor.relation)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? Theme.accent : Color.secondary)
+            }
+            .padding(Theme.Spacing.sm)
+            .background(isSelected ? Theme.accent.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(successor.name). \(successor.relation)")
+        .accessibilityValue(isSelected ? "selected" : "")
+    }
 }

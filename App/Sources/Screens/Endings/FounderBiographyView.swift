@@ -131,6 +131,14 @@ struct FounderBiographyView: View {
                     .multilineTextAlignment(.center)
             }
 
+            // Iteration 8: where the founder came from, when from the ledger.
+            if let lineage = state.lineage {
+                Text(Successors.line(for: lineage))
+                    .font(.system(.footnote, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
             // Iteration 8: the stake the run was played at.
             if state.rules.stake > 0, let stake = StakeLadder.stake(state.rules.stake) {
                 Label("Stake \(stake.level) · \(stake.title)", systemImage: "flag.checkered")

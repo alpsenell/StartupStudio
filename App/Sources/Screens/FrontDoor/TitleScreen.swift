@@ -27,6 +27,7 @@ struct TitleScreen: View {
     /// Iteration 8: the Scenarios room, and a finished scenario's card.
     @State private var showingScenarios = false
     @State private var showingHall = false
+    @State private var showingDynasty = false
     @State private var scenarioResult: ScenarioResult?
 
     var body: some View {
@@ -57,7 +58,8 @@ struct TitleScreen: View {
                     onCustom: { customCompany(code: nil) },
                     onFromCode: { enteringCode = true },
                     onScenarios: { showingScenarios = true },
-                    onHall: { showingHall = true }
+                    onHall: { showingHall = true },
+                    onDynasty: { showingDynasty = true }
                 )
             )
             .padding(Theme.Spacing.lg)
@@ -85,6 +87,8 @@ struct TitleScreen: View {
                 scenarioResult = result
             } else if DebugLaunch.value(after: "-autoRoom") == "hall" {
                 showingHall = true
+            } else if DebugLaunch.value(after: "-autoRoom") == "dynasty" {
+                showingDynasty = true
             } else if let id = DebugLaunch.launchScenarioID {
                 // `-autoScenario room` opens the room; an id plays it.
                 if let scenario = ScenarioCatalog.scenario(id) {
@@ -130,6 +134,9 @@ struct TitleScreen: View {
                 },
                 onClose: { showingScenarios = false }
             )
+        }
+        .sheet(isPresented: $showingDynasty) {
+            DynastySheet(ledger: session.ledger) { showingDynasty = false }
         }
         .sheet(isPresented: $showingHall) {
             HallOfFameSheet(entries: session.ledger.hall, content: session.engine.content) { showingHall = false }

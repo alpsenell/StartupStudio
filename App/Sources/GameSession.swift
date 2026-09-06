@@ -387,7 +387,8 @@ final class GameSession {
         seed: UInt64? = nil,
         rules: GameRules = .standard,
         heirloom: Heirloom? = nil,
-        mode: RunMode = .standard
+        mode: RunMode = .standard,
+        lineage: Lineage? = nil
     ) {
         replaceEngine(inSlot: newGameSlot) {
             GameEngine.newGame(
@@ -398,7 +399,8 @@ final class GameSession {
                 origin: origin,
                 heirloom: heirloom,
                 rules: rules,
-                mode: mode
+                mode: mode,
+                lineage: lineage
             )
         }
         if let heirloom { spendHeirloom(heirloom) }  // R2

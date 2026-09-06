@@ -81,7 +81,7 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
     /// office, when the company owned it outright.
     public mutating func record(_ state: GameState, balance: BalanceConfig) {
         guard let over = state.gameOver else { return }
-        let run = LegacyRun(
+        var recorded = LegacyRun(
             id: UUID(),
             companyName: state.company.name,
             founderName: state.progression.founder.name,
@@ -95,6 +95,28 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
             perks: Array(state.progression.perks).sorted(),
             deed: Self.deed(in: state)
         )
+        // Iteration 8: what a successor is built from.
+        let founder = state.employees.first { $0.isFounder }
+        recorded.founderAppearanceSeed = founder?.appearanceSeed ?? state.progression.founder.appearanceSeed
+        recorded.founderArchetype = state.progression.founder.archetype
+        recorded.children = state.life.family.children.map {
+            LegacyChild(id: $0.id, name: $0.name, appearanceSeed: $0.appearanceSeed, bornDay: $0.bornDay)
+        }
+        recorded.longestServing = state.employees
+            .filter { !$0.isFounder }
+            .min { lhs, rhs in
+                if lhs.hiredDay != rhs.hiredDay { return lhs.hiredDay < rhs.hiredDay }
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            .map { employee in
+                LegacyPerson(
+                    id: employee.id, name: employee.name, appearanceSeed: employee.appearanceSeed,
+                    skills: employee.skills, revealedTraits: employee.traits, rapport: 70, role: employee.role
+                )
+            }
+        recorded.lineage = state.lineage
+        recorded.stake = state.rules.stake > 0 ? state.rules.stake : nil
+        let run = recorded
         runs.append(run)
         endingsReached.insert(over.kind)
         // Iteration 8: a successful ending at a stake opens the next rung.
@@ -227,6 +249,16 @@ public struct LegacyRun: Codable, Equatable, Sendable, Identifiable {
     public var perks: [String]
     /// The office, if the company owned it outright.
     public var deed: LegacyDeed?
+    // Iteration 8: the founder's face and archetype, the children, the
+    // longest-serving employee, and where the founder came from — what
+    // the next company's successors are built from. All optional so a
+    // ledger from before the dynasty reads.
+    public var founderAppearanceSeed: UInt64?
+    public var founderArchetype: FounderArchetype?
+    public var children: [LegacyChild]?
+    public var longestServing: LegacyPerson?
+    public var lineage: Lineage?
+    public var stake: Int?
 
     public init(
         id: UUID, companyName: String, founderName: String, seed: UInt64,
@@ -433,5 +465,47 @@ public struct HallEntry: Codable, Equatable, Hashable, Sendable, Identifiable {
         self.score = score
         self.year = year
         self.seed = seed
+    }
+}
+
+// MARK: Iteration 8 — the dynasty
+
+/// Who the next founder is to the last one.
+public enum SuccessorKind: String, Codable, Equatable, Hashable, Sendable {
+    /// The last founder's child, grown up.
+    case child
+    /// The last company's longest-serving employee.
+    case employee
+    /// The same founder, older.
+    case founder
+}
+
+/// Where a company's founder came from, when they came from the ledger.
+public struct Lineage: Codable, Equatable, Hashable, Sendable {
+    public var predecessorRunID: UUID
+    public var predecessorFounderName: String
+    public var predecessorCompanyName: String
+    public var kind: SuccessorKind
+
+    public init(predecessorRunID: UUID, predecessorFounderName: String, predecessorCompanyName: String, kind: SuccessorKind) {
+        self.predecessorRunID = predecessorRunID
+        self.predecessorFounderName = predecessorFounderName
+        self.predecessorCompanyName = predecessorCompanyName
+        self.kind = kind
+    }
+}
+
+/// A child in the ledger, old enough to found something by the next game.
+public struct LegacyChild: Codable, Equatable, Hashable, Sendable, Identifiable {
+    public var id: UUID
+    public var name: String
+    public var appearanceSeed: UInt64
+    public var bornDay: Int
+
+    public init(id: UUID, name: String, appearanceSeed: UInt64, bornDay: Int) {
+        self.id = id
+        self.name = name
+        self.appearanceSeed = appearanceSeed
+        self.bornDay = bornDay
     }
 }
