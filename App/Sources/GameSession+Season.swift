@@ -127,6 +127,12 @@ extension GameSession {
         ))
         try? seasonStores.ledger.save(ledger, appVersion: Self.seasonAppVersion)
 
+        // MARK: Iteration 9 — L7 (furnish)
+        // A season you saw out leaves its poster on your wall, in every
+        // company you run after it.
+        unlockSeasonPoster(twist: running.season.twist)
+        // MARK: end of Iteration 9 — L7
+
         if horizonReached, state.gameOver == nil {
             returnToFrontDoor()
         }

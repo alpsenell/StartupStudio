@@ -51,7 +51,11 @@ struct ShoppingSheet: View {
                         ShopRow(
                             item: entry.item,
                             owned: life.possessions.contains(entry.id),
-                            affordable: life.wallet >= entry.item.cost
+                            affordable: life.wallet >= entry.item.cost,
+                            // Iteration 9 — L7: what it is, and where in
+                            // the home it would end up.
+                            decor: HomeDecor.item(entry.id),
+                            wallet: life.wallet
                         ) {
                             shell.toasts.send(
                                 .buyItem(itemID: entry.id),
@@ -84,6 +88,10 @@ private struct ShopRow: View {
     let item: BalanceConfig.InstantLifeBalance.ItemDef
     let owned: Bool
     let affordable: Bool
+    // MARK: Iteration 9 — L7 (furnish)
+    let decor: DecorItem?
+    let wallet: Int
+    // MARK: end of Iteration 9 — L7
     let buy: () -> Void
 
     var body: some View {
@@ -94,6 +102,12 @@ private struct ShopRow: View {
                 Text(perkSummary)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                // Iteration 9 — L7: a thing you buy has somewhere to go.
+                if let decor {
+                    Text(owned ? "It \(decor.kind.placementPhrase) at home" : "\(wallet.money) → \((wallet - item.cost).money) · it \(decor.kind.placementPhrase)")
+                        .font(Theme.Typography.number(.caption2, weight: .regular))
+                        .foregroundStyle(.tertiary)
+                }
             }
             Spacer(minLength: Theme.Spacing.sm)
             if owned {

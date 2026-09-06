@@ -690,6 +690,13 @@ enum LifeSystem {
         state.life.possessions.append(itemID)
         state.life.possessions.sort()
         state.life.meters.apply(mood: item.moodPop)
+        // MARK: Iteration 9 — L7 (furnish)
+        // A thing you just bought does not live in a box: if the home has
+        // an empty slot it fits, it goes straight in. Cosmetic only.
+        if let slot = HomeDecor.firstEmptySlot(for: itemID, tier: state.life.home, decor: state.life.decor) {
+            HomeDecor.place(itemID: itemID, slot: slot, tier: state.life.home, decor: &state.life.decor)
+        }
+        // MARK: end of Iteration 9 — L7
         return [.itemPurchased(itemID: itemID, day: state.day)]
     }
 

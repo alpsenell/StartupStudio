@@ -27,6 +27,15 @@ struct HomeCard: View {
     /// environment is installed and the non-optional form traps there.
     private var shell: GameShell { injectedShell ?? .shared }
     @State private var confirmingUpgrade = false
+    // MARK: Iteration 9 — L7 (furnish)
+    // A headless pass cannot tap either: `-autoRoute furnish` opens the
+    // sheet on launch, the way `-autoRoute city` opens the map.
+    #if DEBUG
+    @State private var showingFurnish = DebugLaunch.launchRoute == "furnish"
+    #else
+    @State private var showingFurnish = false
+    #endif
+    // MARK: end of Iteration 9 — L7
 
     var body: some View {
         let state = engine.state
@@ -47,10 +56,28 @@ struct HomeCard: View {
             }
 
             PixelPanel(contentPadding: Theme.Spacing.xs) {
-                HomeSceneView(tier: tierStyle, occupants: occupants, activity: activity, mood: mood, signals: signals)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityLabel(sceneAccessibilityLabel)
+                // Iteration 9 — L7: the founder's own things, in the room.
+                HomeSceneView(
+                    tier: tierStyle, occupants: occupants, activity: activity, mood: mood,
+                    signals: signals,
+                    decor: DecorPresentation.sceneDecor(life: life, tier: drawnTier),
+                    decorLabel: { DecorPresentation.spokenSlot($0, life: life, tier: drawnTier) }
+                )
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(sceneAccessibilityLabel)
             }
+
+            // MARK: Iteration 9 — L7 (furnish)
+            HomeFurnishRow(
+                placed: life.decor.placed(in: drawnTier).count,
+                slots: HomeDecor.slots(for: drawnTier).count
+            ) {
+                showingFurnish = true
+            }
+            .sheet(isPresented: $showingFurnish) {
+                FurnishSheet(engine: engine)
+            }
+            // MARK: end of Iteration 9 — L7
 
             if life.isAway(day: state.day) {
                 AwayBanner(reason: life.awayReason, untilDay: life.awayUntilDay, day: state.day)
@@ -119,7 +146,17 @@ struct HomeCard: View {
     /// `HomeTier` and `HomeTierStyle` share raw values by design; the
     /// fallback is defensive and should never trigger.
     private var tierStyle: HomeTierStyle {
-        HomeTierStyle(rawValue: engine.state.life.home.rawValue) ?? .studioFlat
+        HomeTierStyle(rawValue: drawnTier.rawValue) ?? .studioFlat
+    }
+
+    /// The home the card draws: the founder's, or the one `-autoHome`
+    /// asked a headless pass to photograph.
+    private var drawnTier: HomeTier {
+        #if DEBUG
+        return DebugLaunch.decorTier ?? engine.state.life.home
+        #else
+        return engine.state.life.home
+        #endif
     }
 
     /// The founder from the roster, the partner (once there is one), and
@@ -202,6 +239,49 @@ struct HomeCard: View {
             + life.family.children.count
         let presence = life.isAway(day: state.day) ? "founder away" : "founder at home"
         return "\(life.home.displayName) scene, \(presence), household of \(household)"
+    }
+}
+
+// MARK: - Iteration 9 — L7: the furnish row
+
+/// The way into the furnish sheet, with how full the home is on it.
+private struct HomeFurnishRow: View {
+    let placed: Int
+    let slots: Int
+    let open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "chair.lounge.fill")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Furnish")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(.primary)
+                    Text(summary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.pressableRow)
+        .accessibilityLabel("Furnish the home, \(summary)")
+    }
+
+    private var summary: String {
+        switch placed {
+        case 0: "\(slots) empty place\(slots == 1 ? "" : "s") for your things"
+        case slots: "Every place taken"
+        default: "\(placed) of \(slots) places taken"
+        }
     }
 }
 

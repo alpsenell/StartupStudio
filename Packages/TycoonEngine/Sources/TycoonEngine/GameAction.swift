@@ -219,6 +219,13 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: L7 (furnish)
 
+    /// L7: stands an owned possession or an earned piece of decor in one
+    /// of the home's slots, moving it out of any slot it was in and
+    /// evicting whatever was there. Cosmetic: no meter moves.
+    case placeDecor(slot: String, itemID: String)
+    /// L7: empties a slot. The thing goes back on the shelf, not away.
+    case removeDecor(slot: String)
+
     // MARK: end of Iteration 9
 }
 

@@ -21,11 +21,15 @@ public struct HomeHitRegion: Sendable, Equatable, Hashable, Identifiable {
         case child(UUID)
         /// A piece of the room.
         case furniture(HomeFixture)
+        // MARK: Iteration 9 — L7 (furnish)
+        /// A place a thing can stand, by slot id — filled or empty.
+        case decorSlot(String)
+        // MARK: end of Iteration 9 — L7
 
         public var isPerson: Bool {
             switch self {
             case .founder, .partner, .child: true
-            case .furniture: false
+            case .furniture, .decorSlot: false
             }
         }
     }
@@ -181,11 +185,19 @@ extension HomeSceneComposer {
         activity: HomeActivity,
         mood: MoodLevel,
         ambience: HomeAmbience = .evening,
-        signals: HomeSignals = .none
+        signals: HomeSignals = .none,
+        // MARK: Iteration 9 — L7 (furnish)
+        // What is standing where, and whether the empty places count as
+        // things too — they do in the furnish sheet, where an empty wall
+        // is the thing you tap, and they do not on the Life tab, where a
+        // room with nothing in it should read as a room, not a grid.
+        decor: [String: SpriteLibrary.HomeDecorName] = [:],
+        emptyDecorSlots: Bool = false
+        // MARK: end of Iteration 9 — L7
     ) -> [HomeHitRegion] {
         let placements = compose(
             tier: tier, occupants: occupants, activity: activity, mood: mood,
-            ambience: ambience, signals: signals
+            ambience: ambience, signals: signals, decor: decor
         )
         var people: [HomeHitRegion] = []
         var furniture: [HomeHitRegion] = []
@@ -228,10 +240,20 @@ extension HomeSceneComposer {
                 break
             }
         }
+        // MARK: Iteration 9 — L7: the slots, after the room they are in.
+        var slots: [HomeHitRegion] = []
+        for slot in decorSlots(for: tier) where emptyDecorSlots || decor[slot.id] != nil {
+            let box = slot.tapRect
+            slots.append(HomeHitRegion(
+                kind: .decorSlot(slot.id), x: box.x, y: box.y,
+                width: box.width, height: box.height, sortPriority: -1
+            ))
+        }
+
         // Reading order, which is also the order VoiceOver puts them in
         // from `sortPriority`: the founder, their partner, the children,
         // then the room.
-        return people.sorted { $0.sortPriority > $1.sortPriority } + furniture
+        return people.sorted { $0.sortPriority > $1.sortPriority } + furniture + slots
     }
 
     /// The region under scene pixel (`x`, `y`), or `nil` when the point
@@ -243,12 +265,17 @@ extension HomeSceneComposer {
         mood: MoodLevel,
         ambience: HomeAmbience = .evening,
         signals: HomeSignals = .none,
+        // MARK: Iteration 9 — L7 (furnish)
+        decor: [String: SpriteLibrary.HomeDecorName] = [:],
+        emptyDecorSlots: Bool = false,
+        // MARK: end of Iteration 9 — L7
         x: Int,
         y: Int
     ) -> HomeHitRegion? {
         hitRegions(
             tier: tier, occupants: occupants, activity: activity, mood: mood,
-            ambience: ambience, signals: signals
+            ambience: ambience, signals: signals,
+            decor: decor, emptyDecorSlots: emptyDecorSlots
         )
         .filter { $0.contains(x: x, y: y) }
         .max { $0.sortPriority < $1.sortPriority }
