@@ -51,7 +51,11 @@ final class StringsAuditTests: XCTestCase {
     // still "no new ones from here".
     // Re-pinned again after iteration 8: the scenario and season cards,
     // awards night, the hall, the dynasty and the stake ladder add nine.
-    static let pixelTextLiteralBaseline = 46
+    // Re-pinned by iteration 9's L2: the life score adds one site, the
+    // "/100" beside the figure, which is a glyph rather than prose. Its
+    // two words — "LIFE" and "LIFE SCORE" — went through
+    // `String(localized:comment:)` instead and are not counted here.
+    static let pixelTextLiteralBaseline = 47
 
     func testNoNewUnlocalizedPixelChrome() throws {
         let sources = try Self.appSourceFiles()

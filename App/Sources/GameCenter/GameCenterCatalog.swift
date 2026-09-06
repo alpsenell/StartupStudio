@@ -10,8 +10,8 @@ import TycoonEngine
 /// is this table written out for pasting, and `GameCenterCatalogTests`
 /// pins the strings so the doc and the app can never drift apart.
 ///
-/// 48 achievements (42 goals at 10 points + 6 endings at 50 = 720 of the
-/// 1,000 a game may award) and 8 leaderboards.
+/// 49 achievements (42 goals at 10 points + 7 endings at 50 = 770 of the
+/// 1,000 a game may award) and 14 leaderboards.
 enum GameCenterCatalog {
     struct Achievement: Equatable {
         let id: String
@@ -33,11 +33,14 @@ enum GameCenterCatalog {
         let isRecurring: Bool
     }
 
-    /// The six endings, in the order the id table lists them. `EndingKind`
+    /// The seven endings, in the order the id table lists them. `EndingKind`
     /// is not `CaseIterable` (it lives in the engine, which R3 does not
     /// edit), so the list is spelled out and pinned by a test.
     static let endings: [EndingKind] = [
         .bankruptcy, .acquired, .ipo, .oustedByBoard, .soldUp, .independent,
+        // MARK: Iteration 9 — L2 (the seventh ending)
+        .walkedAway,
+        // MARK: end of Iteration 9
     ]
 
     /// 10 points a goal: 42 goals from `Goals.json`, in file order.
@@ -52,7 +55,8 @@ enum GameCenterCatalog {
         }
     }
 
-    /// 50 points an ending, one for each way a company can finish.
+    /// 50 points an ending, one for each way a company — or a founder —
+    /// can finish.
     static let endingAchievements: [Achievement] = endings.map { kind in
         Achievement(
             id: GameCenterID.achievement(ending: kind.rawValue),
@@ -111,6 +115,16 @@ enum GameCenterCatalog {
 
         // MARK: Iteration 9 — L2 (life score boards)
 
+        // The founder's own board, one per difficulty: the best life any
+        // ranked run of theirs finished on, 0…100.
+        for difficulty in Difficulty.allCases {
+            boards.append(Leaderboard(
+                id: GameCenterID.lifeScore(difficulty.rawValue),
+                title: "Best life — \(difficulty.displayName)",
+                sort: .descending, format: .integer, isRecurring: false
+            ))
+        }
+
         // MARK: end of Iteration 9
         return boards
     }()
@@ -123,6 +137,7 @@ enum GameCenterCatalog {
         case .oustedByBoard: "Be replaced by the board you invited in."
         case .soldUp: "Sell the name and the desks to get out."
         case .independent: "Keep every share and build something that lasts."
+        case .walkedAway: "Step down on purpose, with the company standing and a life to go to."
         }
     }
 }

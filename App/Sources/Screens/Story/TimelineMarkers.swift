@@ -248,6 +248,7 @@ enum TimelineBuilder {
         case .oustedByBoard: "Ousted"
         case .soldUp: "Sold up"
         case .independent: "Still yours"
+        case .walkedAway: "Walked away"
         }
     }
 }

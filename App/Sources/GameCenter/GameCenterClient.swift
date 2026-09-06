@@ -65,4 +65,15 @@ extension GameCenterID {
     static let scenario = leaderboard("scenario")
     /// Iteration 8: the four-week season, recurring.
     static let season = leaderboard("season")
+
+    // MARK: Iteration 9 — L2 (life score)
+
+    /// The best life a ranked run ever finished with, per difficulty
+    /// (integer 0…100, descending). The second board next to the money
+    /// ones: `ipo_days` measures the company, this measures the founder.
+    static func lifeScore(_ difficulty: String) -> String {
+        leaderboard("life_score.\(difficulty)")
+    }
+
+    // MARK: end of Iteration 9
 }

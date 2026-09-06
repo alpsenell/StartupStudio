@@ -116,6 +116,9 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
             }
         recorded.lineage = state.lineage
         recorded.stake = state.rules.stake > 0 ? state.rules.stake : nil
+        // MARK: Iteration 9 — L2 (life score)
+        recorded.lifeScore = LifeScore.score(state, balance: balance)
+        // MARK: end of Iteration 9
         let run = recorded
         runs.append(run)
         endingsReached.insert(over.kind)
@@ -259,6 +262,16 @@ public struct LegacyRun: Codable, Equatable, Sendable, Identifiable {
     public var longestServing: LegacyPerson?
     public var lineage: Lineage?
     public var stake: Int?
+
+    // MARK: Iteration 9 — L2 (life score)
+
+    /// The founder's life, 0...100, at the moment the company ended —
+    /// the second number the ledger and the Dynasty room show next to
+    /// net worth. Optional, so a ledger written before life had a score
+    /// decodes and simply shows nothing.
+    public var lifeScore: Int?
+
+    // MARK: end of Iteration 9
 
     public init(
         id: UUID, companyName: String, founderName: String, seed: UInt64,

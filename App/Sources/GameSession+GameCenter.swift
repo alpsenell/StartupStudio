@@ -65,6 +65,18 @@ enum GameCenterMapping {
             if kind.isSuccess, state.rules.stake > 0 {
                 reports.append(.score(state.rules.stake, leaderboard: GameCenterID.stakes))
             }
+
+            // MARK: Iteration 9 — L2 (life score)
+
+            // The founder's own board takes *every* ranked ending, not
+            // just the good ones: a bankruptcy with a marriage and two
+            // kids intact is exactly the run this board exists to rank.
+            reports.append(.score(
+                LifeScore.score(state, balance: balance),
+                leaderboard: GameCenterID.lifeScore(difficulty)
+            ))
+
+            // MARK: end of Iteration 9
         }
         if let tenure = longestTenure(in: state) {
             reports.append(.score(tenure, leaderboard: GameCenterID.tenureDays))

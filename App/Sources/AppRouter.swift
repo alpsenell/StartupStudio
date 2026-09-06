@@ -67,6 +67,9 @@ enum Route: Hashable {
 
     // MARK: L2 (life score)
 
+    /// The founder's own number and its breakdown (L2).
+    case lifeScore
+
     // MARK: L3 (children)
 
     // MARK: L4 (friends)
@@ -97,6 +100,7 @@ enum Route: Hashable {
         // MARK: Iteration 9 — the Life tab
         // MARK: L1 (phone)
         // MARK: L2 (life score)
+        case .lifeScore: .life
         // MARK: L3 (children)
         // MARK: L4 (friends)
         // MARK: L5 (side project)

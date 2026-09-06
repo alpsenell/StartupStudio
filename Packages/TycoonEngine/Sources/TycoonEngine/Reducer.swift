@@ -384,6 +384,9 @@ public enum Reducer {
 
         // MARK: L2 (life score, Walked away)
 
+        case .walkAway:
+            events = LifeScore.walkAway(state: &state, balance: balance)
+
         // MARK: L3 (children)
 
         // MARK: L4 (friends)

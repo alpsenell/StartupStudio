@@ -218,6 +218,7 @@ struct FounderBiographyView: View {
         case .oustedByBoard: "person.crop.circle.badge.xmark"
         case .soldUp: "tag.fill"
         case .independent: "flag.checkered"
+        case .walkedAway: "figure.walk.departure"
         }
     }
 
@@ -383,6 +384,12 @@ struct FounderBiographyView: View {
         let family = state.life.family
         return CardView("The rest of your life", systemImage: "heart.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                // Iteration 9 — L2: the second number, at the top of the
+                // card that is about the person rather than the company.
+                LifeScoreSummaryRow(
+                    score: LifeScore.score(state, balance: balance),
+                    components: LifeScore.breakdown(state: state, balance: balance)
+                )
                 Text(familySummary)
                     .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
@@ -440,14 +447,16 @@ struct FounderBiographyView: View {
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .firstTextBaseline) {
                         netWorthFigure(netWorth)
-                        Text("final net worth")
+                        // Iteration 9 — L2: "$4.2M · Life 71".
+                        Text("final net worth · Life \(LifeScore.score(state, balance: balance))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer(minLength: 0)
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         netWorthFigure(netWorth)
-                        Text("final net worth")
+                        // Iteration 9 — L2: "$4.2M · Life 71".
+                        Text("final net worth · Life \(LifeScore.score(state, balance: balance))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

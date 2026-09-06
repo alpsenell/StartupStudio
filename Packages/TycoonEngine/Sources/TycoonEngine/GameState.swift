@@ -75,8 +75,10 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
 
     // MARK: Iteration 9 — L2 (Walked away)
 
-    // L2 appends the seventh ending here and updates every exhaustive
-    // switch over `EndingKind` in the engine and the app.
+    /// The founder stepped down on purpose, with the company standing and
+    /// both numbers good — the only ending nothing was going wrong for.
+    /// `LifeScore.walkAway` gates it; it cannot be played past.
+    case walkedAway
 
     // MARK: end of Iteration 9
 
@@ -84,7 +86,7 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
     /// endings screen picks its tone from this.
     public var isSuccess: Bool {
         switch self {
-        case .acquired, .ipo, .independent: true
+        case .acquired, .ipo, .independent, .walkedAway: true
         case .bankruptcy, .oustedByBoard, .soldUp: false
         }
     }
@@ -98,6 +100,7 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
         case .oustedByBoard: "Replaced"
         case .soldUp: "Sold up"
         case .independent: "Still yours"
+        case .walkedAway: "Walked away"
         }
     }
 }

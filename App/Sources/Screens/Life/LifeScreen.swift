@@ -24,6 +24,7 @@ struct LifeScreen: View {
         // MARK: Iteration 9 — one destination per lane that pushes a screen
         // MARK: L1 (phone)
         // MARK: L2 (life score)
+        case lifeScore
         // MARK: L3 (children)
         // MARK: L4 (friends)
         // MARK: L5 (side project)
@@ -79,6 +80,7 @@ struct LifeScreen: View {
                     // Iteration 9 — the founder's own sheet grows three
                     // cards, in this order.
                     // MARK: L2 (life score)
+                    LifeScoreCard(engine: engine, onOpen: { path = [.lifeScore] })
                     // MARK: L5 (side project)
                     // MARK: L6 (sabbatical)
                 }
@@ -100,6 +102,8 @@ struct LifeScreen: View {
                 // MARK: Iteration 9
                 // MARK: L1 (phone)
                 // MARK: L2 (life score)
+                case .lifeScore:
+                    LifeScoreScreen(engine: engine)
                 // MARK: L3 (children)
                 // MARK: L4 (friends)
                 // MARK: L5 (side project)
@@ -126,9 +130,19 @@ struct LifeScreen: View {
                 path = [.agenda]
                 return
             }
+            // MARK: Iteration 9 — L2 (life score)
+            if Route.launchRoute == .lifeScore {
+                path = [.lifeScore]
+                return
+            }
+            // MARK: end of Iteration 9
         }
         if router.take(.agenda) {
             path = [.agenda]
+        // MARK: Iteration 9 — L2 (life score)
+        } else if router.take(.lifeScore) {
+            path = [.lifeScore]
+        // MARK: end of Iteration 9
         } else if router.take(.life) {
             path = []
         }

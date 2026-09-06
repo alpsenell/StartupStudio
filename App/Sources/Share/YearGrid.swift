@@ -97,8 +97,16 @@ enum YearGrid {
 
     /// The text the share sheet pastes: a title line, the strip, and the
     /// score line with the code on the end.
-    static func shareText(title: String, strip: String, scoreLine: String, code: String?) -> String {
-        var lines = [title, wrapped(strip), scoreLine]
+    ///
+    /// Iteration 9 (L2): `life` appends " · Life NN" to the score line —
+    /// the second number, in the one place a reader can paste. The daily
+    /// and the season pass `nil`: their boards rank a company, and a life
+    /// score on a 364-day sprint would be a different game's number.
+    static func shareText(
+        title: String, strip: String, scoreLine: String, code: String?, life: Int? = nil
+    ) -> String {
+        let score = life.map { "\(scoreLine) · Life \($0)" } ?? scoreLine
+        var lines = [title, wrapped(strip), score]
         if let code { lines.append("Play it: \(code)") }
         return lines.joined(separator: "\n")
     }
