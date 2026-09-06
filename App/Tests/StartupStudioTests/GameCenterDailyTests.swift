@@ -73,11 +73,14 @@ final class GameCenterDailyTests: XCTestCase {
                 "com.alpsenel.startupstudio.lb.still_yours_net_worth.hard",
                 "com.alpsenel.startupstudio.lb.tenure_days",
                 "com.alpsenel.startupstudio.lb.daily",
+                // Iteration 8: the weekly scenario and the stakes ladder.
+                "com.alpsenel.startupstudio.lb.scenario",
+                "com.alpsenel.startupstudio.lb.stakes",
             ]
         )
-        let daily = try XCTUnwrap(GameCenterCatalog.leaderboards.last)
-        XCTAssertTrue(daily.isRecurring, "lb.daily is the only recurring board")
-        XCTAssertEqual(GameCenterCatalog.leaderboards.filter(\.isRecurring).count, 1)
+        let daily = try XCTUnwrap(GameCenterCatalog.leaderboards.first { $0.id.hasSuffix(".daily") })
+        XCTAssertTrue(daily.isRecurring, "lb.daily recurs")
+        XCTAssertEqual(GameCenterCatalog.leaderboards.filter(\.isRecurring).count, 2, "the daily and the weekly scenario")
         XCTAssertEqual(
             GameCenterCatalog.leaderboards.first { $0.id.hasSuffix("ipo_days.normal") }?.sort,
             .ascending

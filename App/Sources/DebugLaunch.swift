@@ -171,7 +171,8 @@ enum DebugLaunch {
         // Iteration 7 (R3): `-autoDaily` is entered *from* the front door —
         // the daily is a title-screen row — so a pass carrying it keeps the
         // door even alongside a speed, and the daily starts itself there.
-        guard !arguments.contains("-autoDaily"), !arguments.contains("-autoScenario") else { return false }
+        guard !arguments.contains("-autoDaily"), !arguments.contains("-autoScenario"),
+              !arguments.contains("-autoRoom") else { return false }
         return arguments.contains("-autoSpeed") || arguments.contains("-autoTab")
             || arguments.contains("-autoRoute") || arguments.contains("-autoTour")
         #else

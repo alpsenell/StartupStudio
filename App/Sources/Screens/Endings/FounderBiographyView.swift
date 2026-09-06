@@ -229,7 +229,8 @@ struct FounderBiographyView: View {
                 Divider()
                 HStack {
                     Label(
-                        "\(state.progression.completedGoalIDs.count) goals finished",
+                        "\(state.progression.completedGoalIDs.count) goals finished"
+                            + Self.awardsSuffix(state: state, content: engine.content),
                         systemImage: "checkmark.seal.fill"
                     )
                     .font(.caption)
@@ -649,5 +650,16 @@ private struct BiographyChapterRow: View {
             .foregroundStyle(.tertiary)
             .lineLimit(1)
             .fixedSize()
+    }
+}
+
+// MARK: - Iteration 8: the awards
+
+extension FounderBiographyView {
+    /// " · Product of the Year, year 2 — Overcast" for each ceremony won.
+    static func awardsSuffix(state: GameState, content: ContentCatalog) -> String {
+        let lines = AwardsJudge.playerWinLines(state: state, content: content)
+        guard !lines.isEmpty else { return "" }
+        return " · " + lines.joined(separator: " · ")
     }
 }

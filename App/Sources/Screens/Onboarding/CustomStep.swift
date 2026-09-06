@@ -62,9 +62,18 @@ struct CustomStepContent: View {
     /// Iteration 8: the highest rung the ledger has opened (1 on a fresh
     /// install; a successful ending at stake n opens n + 1).
     var unlockedStake: Int = 1
+    /// The ladder shows the rungs within reach; the rest fold away.
+    @State private var showsWholeLadder = false
 
     private var cash: Int {
         choices.startingCash ?? defaultCash(choices.difficulty)
+    }
+
+    /// The open rungs, the next locked one, and any the player has lit.
+    private var visibleStakes: [Stake] {
+        guard !showsWholeLadder else { return StakeLadder.all }
+        let reach = max(unlockedStake + 1, choices.stake)
+        return StakeLadder.all.filter { $0.level <= reach }
     }
 
     private var cashIsOverridden: Bool {
@@ -91,7 +100,7 @@ struct CustomStepContent: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    ForEach(StakeLadder.all) { stake in
+                    ForEach(visibleStakes) { stake in
                         StakeRow(
                             stake: stake,
                             isOn: stake.level <= choices.stake,
@@ -101,6 +110,17 @@ struct CustomStepContent: View {
                                 choices.stake = stake.level == choices.stake ? stake.level - 1 : stake.level
                             }
                         }
+                    }
+                    if visibleStakes.count < StakeLadder.count {
+                        Button {
+                            Haptics.tap()
+                            withAnimation(Theme.Motion.selection) { showsWholeLadder = true }
+                        } label: {
+                            Text("Show all \(StakeLadder.count) rungs")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .buttonStyle(.borderless)
+                        .tint(Theme.accent)
                     }
                 }
             }

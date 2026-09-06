@@ -91,10 +91,10 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
 
     func testTitleMenuAndOnboardingPagesStayOffUntilALaneFlipsThem() {
         let menu = TitleMenu.make(onDaily: {}, onCustom: {}, onFromCode: {})
-        XCTAssertEqual(menu.rows.count, 3)
+        XCTAssertEqual(menu.rows.count, 5)
         // R3 and R4 have landed: the daily and the two custom rows are on;
-        // R6's Restore is still behind its flag.
-        XCTAssertEqual(menu.enabledRows.map(\.id), [.daily, .custom, .fromCode])
+        // iteration 8 added the Scenarios room beside the daily.
+        XCTAssertEqual(menu.enabledRows.map(\.id), [.daily, .scenarios, .custom, .fromCode, .hall])
         XCTAssertTrue(TitleMenu.Flags.daily && TitleMenu.Flags.custom && TitleMenu.Flags.fromCode)
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)

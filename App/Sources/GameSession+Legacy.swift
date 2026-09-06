@@ -50,6 +50,8 @@ extension GameSession {
         }
         guard !alreadyRecorded else { return }
         ledger.record(state, balance: balance)
+        // Iteration 8: the products good enough for the hall go in with it.
+        ledger.induct(AwardsJudge.hallEntries(state: state, content: engine.content))
         saveLedger()
     }
 

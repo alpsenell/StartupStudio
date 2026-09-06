@@ -19,17 +19,22 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
     /// Iteration 8: the highest stake a company reached a successful
     /// ending at. Stake n + 1 opens when this is n.
     public var highestStakeWon: Int
+    /// Iteration 8: every product any company shipped to a review of 85
+    /// or better, appended by the app when the company ends.
+    public var hall: [HallEntry]
 
     public init(
         runs: [LegacyRun] = [],
         endingsReached: Set<EndingKind> = [],
         spentHeirlooms: Set<String> = [],
-        highestStakeWon: Int = 0
+        highestStakeWon: Int = 0,
+        hall: [HallEntry] = []
     ) {
         self.runs = runs
         self.endingsReached = endingsReached
         self.spentHeirlooms = spentHeirlooms
         self.highestStakeWon = highestStakeWon
+        self.hall = hall
     }
 
     /// The highest stake the ladder offers right now.
@@ -40,7 +45,7 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
     public var isEmpty: Bool { runs.isEmpty && endingsReached.isEmpty }
 
     private enum CodingKeys: String, CodingKey {
-        case runs, endingsReached, spentHeirlooms, highestStakeWon
+        case runs, endingsReached, spentHeirlooms, highestStakeWon, hall
     }
 
     public init(from decoder: any Decoder) throws {
@@ -49,8 +54,15 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
             runs: try container.decodeIfPresent([LegacyRun].self, forKey: .runs) ?? [],
             endingsReached: try container.decodeIfPresent(Set<EndingKind>.self, forKey: .endingsReached) ?? [],
             spentHeirlooms: try container.decodeIfPresent(Set<String>.self, forKey: .spentHeirlooms) ?? [],
-            highestStakeWon: try container.decodeIfPresent(Int.self, forKey: .highestStakeWon) ?? 0
+            highestStakeWon: try container.decodeIfPresent(Int.self, forKey: .highestStakeWon) ?? 0,
+            hall: try container.decodeIfPresent([HallEntry].self, forKey: .hall) ?? []
         )
+    }
+
+    /// Adds hall entries the ledger does not have yet (by product id).
+    public mutating func induct(_ entries: [HallEntry]) {
+        let known = Set(hall.map(\.id))
+        hall.append(contentsOf: entries.filter { !known.contains($0.id) })
     }
 
     /// How many of the address book's contacts a finished company leaves
@@ -178,6 +190,7 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         merged.endingsReached.formUnion(other.endingsReached)
         merged.spentHeirlooms.formUnion(other.spentHeirlooms)
         merged.highestStakeWon = max(highestStakeWon, other.highestStakeWon)
+        merged.induct(other.hall)
         return merged
     }
 }
@@ -391,5 +404,34 @@ extension GameState {
     /// standard-mode run with no heirloom.
     public var isRanked: Bool {
         mode.isRanked && heirloom == nil
+    }
+}
+
+/// One product in the Hall of Fame (iteration 8).
+public struct HallEntry: Codable, Equatable, Hashable, Sendable, Identifiable {
+    public var id: UUID
+    public var productName: String
+    public var companyName: String
+    public var founderName: String
+    public var topicID: String
+    public var typeID: String
+    public var score: Int
+    public var year: Int
+    /// The run's seed, so a hall entry can be replayed.
+    public var seed: UInt64
+
+    public init(
+        id: UUID, productName: String, companyName: String, founderName: String,
+        topicID: String, typeID: String, score: Int, year: Int, seed: UInt64
+    ) {
+        self.id = id
+        self.productName = productName
+        self.companyName = companyName
+        self.founderName = founderName
+        self.topicID = topicID
+        self.typeID = typeID
+        self.score = score
+        self.year = year
+        self.seed = seed
     }
 }

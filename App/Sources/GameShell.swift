@@ -113,9 +113,21 @@ final class GameShell {
 
     /// Called on every observed change of the engine's day. Detects the
     /// week boundary and offers the report.
+    /// Iteration 8: the year whose ceremony is waiting to be shown.
+    var pendingAwardsYear: Int?
+
     func dayAdvanced(engine: GameEngine) {
         let day = engine.state.day
         defer { lastSeenDay = day }
+        // Iteration 8: mid-December, the year's awards. Only on a day the
+        // clock actually crossed, never on a resumed save's first frame.
+        if lastSeenDay >= 0, day > lastSeenDay {
+            let year = AwardsJudge.year(of: day)
+            let ceremony = AwardsJudge.ceremonyDay(year: year)
+            if lastSeenDay < ceremony, day >= ceremony, pendingAwardsYear == nil {
+                pendingAwardsYear = year
+            }
+        }
         if engine.state.speed != .paused {
             lastRunningSpeed = engine.state.speed
         }

@@ -19,6 +19,8 @@ struct AppRootView: View {
     @State private var router = AppRouter(tab: .launchTab)
     /// Toasts, the weekly-report loop, and the launch-day moment.
     @State private var shell = GameShell.shared
+    /// Iteration 8: the speed to go back to after the awards.
+    @State private var awardsResumeSpeed: SimSpeed?
     /// Iteration 7 (R4): the biography's share sheet.
     @State private var sharingBiography = false
 
@@ -185,6 +187,22 @@ struct AppRootView: View {
             .sheet(isPresented: paywallPresented) {
                 PaywallSheet(session: session)
             }
+            // Iteration 8: the year's awards, mid-December. The clock
+            // pauses under the ceremony and resumes when it closes.
+            .onChange(of: shell.pendingAwardsYear) { _, year in
+                guard year != nil, engine.state.speed != .paused else { return }
+                awardsResumeSpeed = engine.state.speed
+                engine.setSpeed(.paused)
+            }
+            .sheet(item: awardsNight(engine: engine)) { night in
+                AwardsNightSheet(night: night, companyName: engine.state.company.name) {
+                    shell.pendingAwardsYear = nil
+                    if let speed = awardsResumeSpeed {
+                        awardsResumeSpeed = nil
+                        engine.setSpeed(speed)
+                    }
+                }
+            }
             // Iteration 7 (R5, fix 4): `-autoAnswer` used to start from
             // HQ's own task, so a headless pass launched with
             // `-autoTab business` never answered anything and stopped at
@@ -192,6 +210,11 @@ struct AppRootView: View {
             // tab: started here, it runs whichever tab the pass opens on.
             .task {
                 DebugLaunch.startAutoAnswering(engine: engine)
+                // Iteration 8: `-autoAwards <year>` shows that year's
+                // ceremony at once, for the screenshot pass.
+                if let year = DebugLaunch.value(after: "-autoAwards").flatMap(Int.init) {
+                    shell.pendingAwardsYear = year
+                }
             }
             // The weekly report yields to a decision sheet, and its "Next
             // week" button resumes the clock before it closes. A question
@@ -411,4 +434,25 @@ extension View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.screenBackground.ignoresSafeArea())
     }
+}
+
+// MARK: - Iteration 8: awards night
+
+extension AppRootView {
+    /// The ceremony the shell is holding, judged on the live state.
+    fileprivate func awardsNight(engine: GameEngine) -> Binding<AwardsNight?> {
+        Binding(
+            get: {
+                guard let year = shell.pendingAwardsYear else { return nil }
+                return AwardsJudge.judge(year: year, state: engine.state, content: engine.content)
+            },
+            set: { night in
+                if night == nil { shell.pendingAwardsYear = nil }
+            }
+        )
+    }
+}
+
+extension AwardsNight: Identifiable {
+    var id: Int { year }
 }

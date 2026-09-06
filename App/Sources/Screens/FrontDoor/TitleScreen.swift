@@ -26,6 +26,7 @@ struct TitleScreen: View {
     @State private var dailyEntry: DailyEntry?
     /// Iteration 8: the Scenarios room, and a finished scenario's card.
     @State private var showingScenarios = false
+    @State private var showingHall = false
     @State private var scenarioResult: ScenarioResult?
 
     var body: some View {
@@ -55,7 +56,8 @@ struct TitleScreen: View {
                     onDaily: { openDaily(DailyChallenge.today()) },
                     onCustom: { customCompany(code: nil) },
                     onFromCode: { enteringCode = true },
-                    onScenarios: { showingScenarios = true }
+                    onScenarios: { showingScenarios = true },
+                    onHall: { showingHall = true }
                 )
             )
             .padding(Theme.Spacing.lg)
@@ -81,6 +83,8 @@ struct TitleScreen: View {
             if let result = session.scenarioResult {
                 session.scenarioResult = nil
                 scenarioResult = result
+            } else if DebugLaunch.value(after: "-autoRoom") == "hall" {
+                showingHall = true
             } else if let id = DebugLaunch.launchScenarioID {
                 // `-autoScenario room` opens the room; an id plays it.
                 if let scenario = ScenarioCatalog.scenario(id) {
@@ -126,6 +130,9 @@ struct TitleScreen: View {
                 },
                 onClose: { showingScenarios = false }
             )
+        }
+        .sheet(isPresented: $showingHall) {
+            HallOfFameSheet(entries: session.ledger.hall, content: session.engine.content) { showingHall = false }
         }
         .sheet(item: $scenarioResult) { result in
             ScenarioResultSheet(result: result) { scenarioResult = nil }
