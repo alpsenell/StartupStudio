@@ -456,7 +456,11 @@ enum LifeSystem {
                 state: &state, balance: balance, content: content
             ))
             FounderSystem.practice(.conversation, multiplier: 2, state: &state, balance: balance)
-        case .rest, .gym, .dateNight, .friends, .hobby, .familyTime, .spa:
+        case .familyTime:
+            // Iteration 9 — L3: a weekend at home is worth a little to
+            // every child. No-op in a childless house.
+            ChildhoodSystem.familyWeekend(&state, balance: balance)
+        case .rest, .gym, .dateNight, .friends, .hobby, .spa:
             break
         }
         return events
@@ -629,6 +633,12 @@ enum LifeSystem {
         state.life.meters.apply(mood: config.childMoodBonus)
         // WS-E: their first birthday goes in the diary.
         FamilyCalendar.childBorn(child, &state, balance: balance, content: content)
+        // Iteration 9 — L3: the thread starts the day they do. Bookkeeping
+        // only; no meter moves because of the phone.
+        state.life.phone.post(
+            "\(name) was born today. Someone will be reading this back to them in a few years.",
+            from: .child(child.id), day: state.day
+        )
         return [.childBorn(name: name, day: state.day)]
     }
 

@@ -224,6 +224,7 @@ extension Route {
         // MARK: L1 (phone)
         // MARK: L2 (life score)
         // MARK: L3 (children)
+        case "children": .children
         // MARK: L4 (friends)
         // MARK: L5 (side project)
         // MARK: L6 (sabbatical)
@@ -330,6 +331,17 @@ extension DebugLaunch {
     // MARK: L2 (life score)
 
     // MARK: L3 (children)
+
+    /// `-autoChild`: open the first child's ledger sheet as soon as the
+    /// kids screen appears (L3). `simctl` cannot tap, and the ledger and
+    /// the evening / summer buttons are one tap past the list.
+    static var opensFirstChild: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoChild")
+        #else
+        return false
+        #endif
+    }
 
     // MARK: L4 (friends)
 

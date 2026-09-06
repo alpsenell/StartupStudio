@@ -1688,5 +1688,187 @@
         ]
       }
     ]
+  },
+  {
+    "id": "kid_first_sentence",
+    "headline": "{child} said a whole sentence today, and it was about work.",
+    "body": "“Daddy is on a call” — or the local equivalent. It came out complete, in order, and slightly weary, which is the part that lands.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "write_it_down",
+        "label": "Stop, write it in the notebook, stay on the floor an hour",
+        "detail": "An evening · mood +10 · relationships +8",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 10,
+            "relationships": 8,
+            "energy": -3
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "finish_the_call",
+        "label": "Finish the call",
+        "detail": "Mood −4 · relationships −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4,
+            "relationships": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kid_first_day",
+    "headline": "{child} starts school on Monday.",
+    "body": "The uniform is too big on purpose. Drop-off is at nine, which is the hour the week gets decided in.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "walk_them",
+        "label": "Walk them in, both of you pretending not to be nervous",
+        "detail": "An evening · relationships +12 · mood +8 · hype −3",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 8,
+            "relationships": 12,
+            "energy": -4
+          },
+          {
+            "type": "hype",
+            "amount": -3
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "someone_else",
+        "label": "Let someone else take them and ask about it that evening",
+        "detail": "Relationships −6 · mood −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4,
+            "relationships": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kid_teen_door",
+    "headline": "{child}'s door has been closed for three days.",
+    "body": "Not slammed. Just closed, in the way that means the house is now two houses. Kids grow up faster than companies, and this one got there first.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "knock",
+        "label": "Knock, sit on the floor of the hallway, wait them out",
+        "detail": "An evening · relationships +14 · mood +6",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 6,
+            "relationships": 14,
+            "energy": -5
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "leave_it",
+        "label": "Give them space — and take the evening back",
+        "detail": "Relationships −8 · mood −6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kid_moves_out",
+    "headline": "{child} found a flat.",
+    "body": "Two buses away, a deposit you offered to cover and they refused. The van is booked for Saturday morning.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "drive_them",
+        "label": "Drive the van yourself, carry the heavy end",
+        "detail": "An evening · relationships +16 · mood +10 · −$400",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 10,
+            "relationships": 16,
+            "energy": -8,
+            "wallet": -400
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "send_money",
+        "label": "Send money and a good-luck message",
+        "detail": "−$600 · relationships −8 · mood −6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -8,
+            "wallet": -600
+          }
+        ]
+      }
+    ]
   }
 ]

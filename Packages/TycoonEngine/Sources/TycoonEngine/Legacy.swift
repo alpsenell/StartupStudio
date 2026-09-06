@@ -100,7 +100,11 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         recorded.founderAppearanceSeed = founder?.appearanceSeed ?? state.progression.founder.appearanceSeed
         recorded.founderArchetype = state.progression.founder.archetype
         recorded.children = state.life.family.children.map {
-            LegacyChild(id: $0.id, name: $0.name, appearanceSeed: $0.appearanceSeed, bornDay: $0.bornDay)
+            LegacyChild(
+                id: $0.id, name: $0.name, appearanceSeed: $0.appearanceSeed, bornDay: $0.bornDay,
+                // Iteration 9 — L3: the bond and the ledger travel too.
+                bond: $0.bond, memories: $0.memories, internSummers: $0.internSummers
+            )
         }
         recorded.longestServing = state.employees
             .filter { !$0.isFounder }
@@ -502,10 +506,63 @@ public struct LegacyChild: Codable, Equatable, Hashable, Sendable, Identifiable 
     public var appearanceSeed: UInt64
     public var bornDay: Int
 
-    public init(id: UUID, name: String, appearanceSeed: UInt64, bornDay: Int) {
+    // MARK: Iteration 9 — L3 (what the child carries into the next company)
+
+    /// How close they were when the run ended, 0...100.
+    public var bond: Double
+    /// The ledger they grew up with; `Successors` reads the kinds to grow
+    /// the next founder's traits and skills.
+    public var memories: [ChildMemory]
+    /// Summers served at the studio.
+    public var internSummers: Int
+
+    public init(
+        id: UUID,
+        name: String,
+        appearanceSeed: UInt64,
+        bornDay: Int,
+        bond: Double = Child.defaultBond,
+        memories: [ChildMemory] = [],
+        internSummers: Int = 0
+    ) {
         self.id = id
         self.name = name
         self.appearanceSeed = appearanceSeed
         self.bornDay = bornDay
+        self.bond = bond
+        self.memories = memories
+        self.internSummers = internSummers
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, appearanceSeed, bornDay, bond, memories, internSummers
+    }
+
+    // Hand-written the same way `Child`'s is: every iteration-9 key
+    // decodes as its default and is written only when it has something to
+    // say, so a ledger from before this round loads unchanged and a run
+    // that never had children writes the bytes it always did.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(UUID.self, forKey: .id),
+            name: try container.decode(String.self, forKey: .name),
+            appearanceSeed: try container.decode(UInt64.self, forKey: .appearanceSeed),
+            bornDay: try container.decode(Int.self, forKey: .bornDay),
+            bond: try container.decodeIfPresent(Double.self, forKey: .bond) ?? Child.defaultBond,
+            memories: try container.decodeIfPresent([ChildMemory].self, forKey: .memories) ?? [],
+            internSummers: try container.decodeIfPresent(Int.self, forKey: .internSummers) ?? 0
+        )
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(appearanceSeed, forKey: .appearanceSeed)
+        try container.encode(bornDay, forKey: .bornDay)
+        if bond != Child.defaultBond { try container.encode(bond, forKey: .bond) }
+        if !memories.isEmpty { try container.encode(memories, forKey: .memories) }
+        if internSummers != 0 { try container.encode(internSummers, forKey: .internSummers) }
     }
 }

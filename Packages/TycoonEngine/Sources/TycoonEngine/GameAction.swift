@@ -192,6 +192,16 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: L3 (children)
 
+    /// One evening, one child: a stage-appropriate vignette, a bond bump
+    /// and a memory. Refused while away, while the child is grown, inside
+    /// the per-child cooldown, or with no evening left this week.
+    case spendTimeWithChild(childID: UUID)
+    /// A teenager with a strong enough bond spends the summer at the
+    /// studio: a temporary, unpaid seat on the roster for eight weeks.
+    case hireChildIntern(childID: UUID)
+    /// Ends that summer early. Costs bond, and they remember it.
+    case endChildInternship(childID: UUID)
+
     // MARK: L4 (friends)
 
     // MARK: L5 (side project)

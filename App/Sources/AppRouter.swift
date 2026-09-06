@@ -69,6 +69,9 @@ enum Route: Hashable {
 
     // MARK: L3 (children)
 
+    /// The kids, at whatever age they are today (L3).
+    case children
+
     // MARK: L4 (friends)
 
     // MARK: L5 (side project)
@@ -98,6 +101,7 @@ enum Route: Hashable {
         // MARK: L1 (phone)
         // MARK: L2 (life score)
         // MARK: L3 (children)
+        case .children: .life
         // MARK: L4 (friends)
         // MARK: L5 (side project)
         // MARK: L6 (sabbatical)

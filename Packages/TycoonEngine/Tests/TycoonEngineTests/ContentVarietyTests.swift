@@ -108,6 +108,9 @@ struct ContentVarietyTests {
         // WS-E: the calendar schedules the anniversary and the birthday
         // itself, and a dated beat's missed twin fires in its place.
         lifeTargets.formUnion([FamilyCalendar.anniversaryEventID, FamilyCalendar.birthdayEventID])
+        // Iteration 9 (L3): the childhood system schedules the four
+        // stage beats itself, the same way the calendar does its two.
+        lifeTargets.formUnion(ChildhoodSystem.stageBeatIDs)
         for event in content.lifeEvents {
             guard let twin = event.missedVariantID else { continue }
             #expect(lifeIDs.contains(twin), "\(event.id) -> unknown missed variant \(twin)")

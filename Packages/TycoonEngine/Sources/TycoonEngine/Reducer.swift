@@ -91,6 +91,12 @@ public enum Reducer {
 
         // MARK: L3 (children)
 
+        // The children's day: stages turned over, the memory ledger fed
+        // from yesterday's log, summers ended, bonds slid. Returns on its
+        // first line for a founder with no children, which is every
+        // pacing bot — and it draws from no stream at all.
+        ChildhoodSystem.run,
+
         // MARK: L4 (friends)
 
         // MARK: L5 (side project)
@@ -385,6 +391,18 @@ public enum Reducer {
         // MARK: L2 (life score, Walked away)
 
         // MARK: L3 (children)
+        case let .spendTimeWithChild(childID):
+            events = ChildhoodSystem.spendEvening(
+                childID: childID, state: &state, balance: balance
+            )
+        case let .hireChildIntern(childID):
+            events = ChildhoodSystem.hireIntern(
+                childID: childID, state: &state, balance: balance
+            )
+        case let .endChildInternship(childID):
+            events = ChildhoodSystem.endInternshipEarly(
+                childID: childID, state: &state, balance: balance
+            )
 
         // MARK: L4 (friends)
 
