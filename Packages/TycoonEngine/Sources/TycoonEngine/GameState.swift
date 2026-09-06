@@ -73,6 +73,13 @@ public enum EndingKind: String, Codable, Equatable, Sendable {
     /// the independent ladder's ending, "Still yours" (WS-G).
     case independent
 
+    // MARK: Iteration 9 — L2 (Walked away)
+
+    // L2 appends the seventh ending here and updates every exhaustive
+    // switch over `EndingKind` in the engine and the app.
+
+    // MARK: end of Iteration 9
+
     /// Whether the run ended somewhere the founder would call a win. The
     /// endings screen picks its tone from this.
     public var isSuccess: Bool {

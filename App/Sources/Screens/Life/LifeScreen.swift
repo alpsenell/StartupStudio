@@ -20,6 +20,16 @@ struct LifeScreen: View {
     /// `NavigationPath` so the deep link can ask "am I already there?".
     enum LifeDestination: Hashable {
         case agenda
+
+        // MARK: Iteration 9 — one destination per lane that pushes a screen
+        // MARK: L1 (phone)
+        // MARK: L2 (life score)
+        // MARK: L3 (children)
+        // MARK: L4 (friends)
+        // MARK: L5 (side project)
+        // MARK: L6 (sabbatical)
+        // MARK: L7 (furnish)
+        // MARK: end of Iteration 9
     }
 
     var body: some View {
@@ -35,6 +45,9 @@ struct LifeScreen: View {
                         onRoute: { router.go($0) }
                     )
                     ThisWeekCard(engine: engine)
+                    // Iteration 9 — L1: the phone card goes here, under the
+                    // week, because a message is the next thing to answer.
+                    // MARK: L1 (phone)
 
                     BusinessSectionHeader(title: "This week", systemImage: "calendar")
                     ActivitiesCard(engine: engine)
@@ -47,15 +60,27 @@ struct LifeScreen: View {
                     BusinessSectionHeader(title: "People", systemImage: "person.2.fill")
                     PartnerCard(engine: engine)
                     FamilyCard(engine: engine)
+                    // Iteration 9 — L3 owns FamilyCard.swift (the children
+                    // draw there); L4 adds the friends card after it.
+                    // MARK: L3 (children)
+                    // MARK: L4 (friends)
 
                     BusinessSectionHeader(title: "Money and home", systemImage: "house.fill")
                     MoneyCard(engine: engine)
                     HomeCard(engine: engine)
                     PossessionsCard(engine: engine)
+                    // Iteration 9 — L7 owns HomeCard.swift and
+                    // ShoppingSheet.swift (furnishing opens from the home).
+                    // MARK: L7 (furnish)
 
                     BusinessSectionHeader(title: "You", systemImage: "person.fill")
                     FounderSkillsCard(engine: engine)
                     LifeMetersCard(engine: engine)
+                    // Iteration 9 — the founder's own sheet grows three
+                    // cards, in this order.
+                    // MARK: L2 (life score)
+                    // MARK: L5 (side project)
+                    // MARK: L6 (sabbatical)
                 }
                 .padding(Theme.Spacing.lg)
             }
@@ -71,6 +96,16 @@ struct LifeScreen: View {
                 switch destination {
                 case .agenda:
                     AgendaScreen(engine: engine)
+
+                // MARK: Iteration 9
+                // MARK: L1 (phone)
+                // MARK: L2 (life score)
+                // MARK: L3 (children)
+                // MARK: L4 (friends)
+                // MARK: L5 (side project)
+                // MARK: L6 (sabbatical)
+                // MARK: L7 (furnish)
+                // MARK: end of Iteration 9
                 }
             }
             .onChange(of: router.pendingPush, initial: true) { _, _ in

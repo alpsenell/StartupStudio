@@ -108,6 +108,10 @@ enum GameCenterCatalog {
             title: "Highest stake won",
             sort: .descending, format: .integer, isRecurring: false
         ))
+
+        // MARK: Iteration 9 — L2 (life score boards)
+
+        // MARK: end of Iteration 9
         return boards
     }()
 

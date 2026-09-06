@@ -102,11 +102,59 @@ public struct Child: Codable, Equatable, Sendable, Identifiable {
     /// Drives the pixel-art look; derived from `GameState.rng` at birth.
     public var appearanceSeed: UInt64
 
-    public init(id: UUID, name: String, bornDay: Int, appearanceSeed: UInt64) {
+    // MARK: Iteration 9 — L3 (children who grow)
+
+    /// What the child has seen: the launch party, the burnout, the missed
+    /// birthday. L3 fills it from the systems and reads it for the
+    /// dynasty; the scaffold only reserves the slot so a save decodes.
+    public var memories: [ChildMemory]
+
+    public init(id: UUID, name: String, bornDay: Int, appearanceSeed: UInt64, memories: [ChildMemory] = []) {
         self.id = id
         self.name = name
         self.bornDay = bornDay
         self.appearanceSeed = appearanceSeed
+        self.memories = memories
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, bornDay, appearanceSeed, memories
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(UUID.self, forKey: .id),
+            name: try container.decode(String.self, forKey: .name),
+            bornDay: try container.decode(Int.self, forKey: .bornDay),
+            appearanceSeed: try container.decode(UInt64.self, forKey: .appearanceSeed),
+            memories: try container.decodeIfPresent([ChildMemory].self, forKey: .memories) ?? []
+        )
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(bornDay, forKey: .bornDay)
+        try container.encode(appearanceSeed, forKey: .appearanceSeed)
+        // Written only once there is something to remember, so an older
+        // fixture's children encode as they always did.
+        if !memories.isEmpty { try container.encode(memories, forKey: .memories) }
+    }
+}
+
+/// One thing a child remembers. `kind` is an L3-defined tag (a launch, a
+/// burnout, a missed birthday); `note` is the line the card shows.
+public struct ChildMemory: Codable, Equatable, Sendable {
+    public var day: Int
+    public var kind: String
+    public var note: String
+
+    public init(day: Int, kind: String, note: String) {
+        self.day = day
+        self.kind = kind
+        self.note = note
     }
 }
 
@@ -282,6 +330,24 @@ public struct LifeState: Codable, Equatable, Sendable {
     /// it gives crunch a cost that is not another meter.
     public var eveningsSpentThisWeek: Int
 
+    // MARK: Iteration 9 — reserved slots, one per lane
+
+    // Each lane owns the type behind its slot (see the file named for it)
+    // and may reshape that type; the slot, its default and its coding key
+    // are the scaffold's so that seven branches never touch this struct's
+    // Codable at once.
+
+    /// L1 — the founder's phone.
+    public var phone: PhoneState = .empty
+    /// L4 — named friends.
+    public var friends: FriendsState = .empty
+    /// L5 — the thing that is not the company, once started.
+    public var sideProject: SideProjectState? = nil
+    /// L6 — the founder away with a caretaker in charge.
+    public var sabbatical: SabbaticalState? = nil
+    /// L7 — what stands where in the pixel home.
+    public var decor: HomeDecorState = .empty
+
     public init(
         meters: LifeMeters,
         schedule: WorkSchedule,
@@ -392,6 +458,8 @@ extension LifeState {
         case awayUntilDay, awaySinceDay, awayReason, coldUntilDay, lowRelationshipStreakDays
         case instantCooldowns, instantActionsToday, possessions
         case skills, trainingCooldowns, trainingsToday, eveningsSpentThisWeek
+        // Iteration 9
+        case phone, friends, sideProject, sabbatical, decor
     }
 
     private struct CooldownEntry: Codable {
@@ -436,6 +504,13 @@ extension LifeState {
         eveningsSpentThisWeek = try container.decodeIfPresent(
             Int.self, forKey: .eveningsSpentThisWeek
         ) ?? 0
+        // Iteration 9: every slot is absent in an older save and reads as
+        // its default, which is "not started" for all five.
+        phone = try container.decodeIfPresent(PhoneState.self, forKey: .phone) ?? .empty
+        friends = try container.decodeIfPresent(FriendsState.self, forKey: .friends) ?? .empty
+        sideProject = try container.decodeIfPresent(SideProjectState.self, forKey: .sideProject)
+        sabbatical = try container.decodeIfPresent(SabbaticalState.self, forKey: .sabbatical)
+        decor = try container.decodeIfPresent(HomeDecorState.self, forKey: .decor) ?? .empty
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -468,6 +543,14 @@ extension LifeState {
             forKey: .trainingCooldowns
         )
         try container.encode(trainingsToday, forKey: .trainingsToday)
+        // Iteration 9: a slot at its default is not written (the `ghosts`
+        // precedent), so the byte-identical fixtures stand and an untouched
+        // feature leaves no trace in a save.
+        if phone != .empty { try container.encode(phone, forKey: .phone) }
+        if friends != .empty { try container.encode(friends, forKey: .friends) }
+        try container.encodeIfPresent(sideProject, forKey: .sideProject)
+        try container.encodeIfPresent(sabbatical, forKey: .sabbatical)
+        if decor != .empty { try container.encode(decor, forKey: .decor) }
         try container.encode(eveningsSpentThisWeek, forKey: .eveningsSpentThisWeek)
     }
 }

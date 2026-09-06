@@ -58,6 +58,27 @@ enum Route: Hashable {
     /// A product's storefront page (U6).
     case storefront(productID: UUID)
 
+    // MARK: Iteration 9 — the Life tab
+
+    // Each lane appends its route between its own markers and adds the
+    // same route to the tab switch below, inside its markers there.
+
+    // MARK: L1 (phone)
+
+    // MARK: L2 (life score)
+
+    // MARK: L3 (children)
+
+    // MARK: L4 (friends)
+
+    // MARK: L5 (side project)
+
+    // MARK: L6 (sabbatical)
+
+    // MARK: L7 (furnish)
+
+    // MARK: end of Iteration 9
+
     /// The tab this destination lives in.
     var tab: GameTab {
         switch self {
@@ -72,6 +93,16 @@ enum Route: Hashable {
         case .marketMap, .rivalProfile: .business
         case .agenda: .life
         case .orgChart: .team
+
+        // MARK: Iteration 9 — the Life tab
+        // MARK: L1 (phone)
+        // MARK: L2 (life score)
+        // MARK: L3 (children)
+        // MARK: L4 (friends)
+        // MARK: L5 (side project)
+        // MARK: L6 (sabbatical)
+        // MARK: L7 (furnish)
+        // MARK: end of Iteration 9
         }
     }
 }

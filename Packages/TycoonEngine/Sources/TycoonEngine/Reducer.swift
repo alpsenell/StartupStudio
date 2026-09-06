@@ -77,6 +77,29 @@ public enum Reducer {
         // their own stream, so their position here disturbs nothing.
         RelationshipSystem.run,
         NetworkingSystem.run,
+
+        // MARK: Iteration 9 — the Life tab
+
+        // Each lane appends its daily system between its own markers. All
+        // of them run after the company's day and the founder's, so they
+        // read a finished day; none may draw from `rng` or `worldRNG`
+        // (use `socialRNG`, and only when the feature is engaged).
+
+        // MARK: L1 (phone)
+
+        // MARK: L2 (life score, Walked away)
+
+        // MARK: L3 (children)
+
+        // MARK: L4 (friends)
+
+        // MARK: L5 (side project)
+
+        // MARK: L6 (sabbatical)
+
+        // MARK: L7 (furnish)
+
+        // MARK: end of Iteration 9
     ]
 
     /// Advances the state by one game day. No-op once the game is over.
@@ -354,6 +377,24 @@ public enum Reducer {
         // only place it applies, so this arm is unreachable.
         case .continueAfterEnding:
             events = []
+
+        // MARK: Iteration 9 — the Life tab (handlers, one region per lane)
+
+        // MARK: L1 (phone)
+
+        // MARK: L2 (life score, Walked away)
+
+        // MARK: L3 (children)
+
+        // MARK: L4 (friends)
+
+        // MARK: L5 (side project)
+
+        // MARK: L6 (sabbatical)
+
+        // MARK: L7 (furnish)
+
+        // MARK: end of Iteration 9
         }
 
         state.logEvents(events)

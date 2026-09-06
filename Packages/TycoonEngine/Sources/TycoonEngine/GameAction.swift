@@ -179,6 +179,28 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// *Still yours*). Handled before the game-over guard; refused after
     /// every other ending.
     case continueAfterEnding
+
+    // MARK: Iteration 9 — the Life tab
+
+    // Reserved regions again: each lane appends its cases between its own
+    // two markers and nowhere else, and implements the handler in the
+    // matching region of `Reducer.apply`.
+
+    // MARK: L1 (phone)
+
+    // MARK: L2 (life score, Walked away)
+
+    // MARK: L3 (children)
+
+    // MARK: L4 (friends)
+
+    // MARK: L5 (side project)
+
+    // MARK: L6 (sabbatical)
+
+    // MARK: L7 (furnish)
+
+    // MARK: end of Iteration 9
 }
 
 /// The skill a training course targets.

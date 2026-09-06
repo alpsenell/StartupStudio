@@ -220,6 +220,15 @@ extension Route {
         return switch arguments[flag + 1].lowercased() {
         case "agenda": .agenda
         case "orgchart": .orgChart
+        // MARK: Iteration 9 — route names, one line per lane
+        // MARK: L1 (phone)
+        // MARK: L2 (life score)
+        // MARK: L3 (children)
+        // MARK: L4 (friends)
+        // MARK: L5 (side project)
+        // MARK: L6 (sabbatical)
+        // MARK: L7 (furnish)
+        // MARK: end of Iteration 9
         default: nil
         }
         #else
@@ -308,6 +317,29 @@ extension DebugLaunch {
     static var launchFixtureName: String? {
         value(after: "-autoFixture")
     }
+
+    // MARK: Iteration 9 — reserved flags
+
+    // Each lane adds its own `-auto…` flag between its markers (a fixture
+    // or a route that lands a headless pass on its surface, for
+    // screenshots). Route names go in `launchRoute` inside the same lane's
+    // markers there if the surface is pushed rather than sheeted.
+
+    // MARK: L1 (phone)
+
+    // MARK: L2 (life score)
+
+    // MARK: L3 (children)
+
+    // MARK: L4 (friends)
+
+    // MARK: L5 (side project)
+
+    // MARK: L6 (sabbatical)
+
+    // MARK: L7 (furnish)
+
+    // MARK: end of Iteration 9
 
     /// The word after `flag` on the command line, in debug builds.
     static func value(after flag: String) -> String? {
