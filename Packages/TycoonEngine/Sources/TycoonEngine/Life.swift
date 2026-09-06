@@ -105,20 +105,55 @@ public struct Child: Codable, Equatable, Sendable, Identifiable {
     // MARK: Iteration 9 — L3 (children who grow)
 
     /// What the child has seen: the launch party, the burnout, the missed
-    /// birthday. L3 fills it from the systems and reads it for the
-    /// dynasty; the scaffold only reserves the slot so a save decodes.
+    /// birthday. `ChildhoodSystem` fills it from the day's events and
+    /// `Successors` reads it to grow the next founder. Capped at
+    /// `balance.childhood.memoryCap`, oldest dropped.
     public var memories: [ChildMemory]
 
-    public init(id: UUID, name: String, bornDay: Int, appearanceSeed: UInt64, memories: [ChildMemory] = []) {
+    /// 0...100: how close this child is to the founder. Starts at
+    /// `Child.defaultBond`, grown by evenings, family weekends and
+    /// birthdays kept, and slid down by silence.
+    public var bond: Double
+
+    /// The last day the founder spent an evening on this child (the
+    /// cooldown, and what the silence decay counts from).
+    public var lastTimeDay: Int?
+
+    /// The roster id of the teenager's summer at the studio, and the day
+    /// it ends. Both `nil` outside a summer; the employee is a real hire
+    /// on £0, removed by `ChildhoodSystem` when the eight weeks are up.
+    public var internEmployeeID: UUID?
+    public var internUntilDay: Int?
+    /// Summers finished, for the biography and the dynasty's traits.
+    public var internSummers: Int
+
+    public init(
+        id: UUID,
+        name: String,
+        bornDay: Int,
+        appearanceSeed: UInt64,
+        memories: [ChildMemory] = [],
+        bond: Double = Child.defaultBond,
+        lastTimeDay: Int? = nil,
+        internEmployeeID: UUID? = nil,
+        internUntilDay: Int? = nil,
+        internSummers: Int = 0
+    ) {
         self.id = id
         self.name = name
         self.bornDay = bornDay
         self.appearanceSeed = appearanceSeed
         self.memories = memories
+        self.bond = bond
+        self.lastTimeDay = lastTimeDay
+        self.internEmployeeID = internEmployeeID
+        self.internUntilDay = internUntilDay
+        self.internSummers = internSummers
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, name, bornDay, appearanceSeed, memories
+        case bond, lastTimeDay, internEmployeeID, internUntilDay, internSummers
     }
 
     public init(from decoder: any Decoder) throws {
@@ -128,7 +163,12 @@ public struct Child: Codable, Equatable, Sendable, Identifiable {
             name: try container.decode(String.self, forKey: .name),
             bornDay: try container.decode(Int.self, forKey: .bornDay),
             appearanceSeed: try container.decode(UInt64.self, forKey: .appearanceSeed),
-            memories: try container.decodeIfPresent([ChildMemory].self, forKey: .memories) ?? []
+            memories: try container.decodeIfPresent([ChildMemory].self, forKey: .memories) ?? [],
+            bond: try container.decodeIfPresent(Double.self, forKey: .bond) ?? Child.defaultBond,
+            lastTimeDay: try container.decodeIfPresent(Int.self, forKey: .lastTimeDay),
+            internEmployeeID: try container.decodeIfPresent(UUID.self, forKey: .internEmployeeID),
+            internUntilDay: try container.decodeIfPresent(Int.self, forKey: .internUntilDay),
+            internSummers: try container.decodeIfPresent(Int.self, forKey: .internSummers) ?? 0
         )
     }
 
@@ -138,15 +178,20 @@ public struct Child: Codable, Equatable, Sendable, Identifiable {
         try container.encode(name, forKey: .name)
         try container.encode(bornDay, forKey: .bornDay)
         try container.encode(appearanceSeed, forKey: .appearanceSeed)
-        // Written only once there is something to remember, so an older
-        // fixture's children encode as they always did.
+        // Every key below is written only once it has something to say, so
+        // an older fixture's children encode as they always did.
         if !memories.isEmpty { try container.encode(memories, forKey: .memories) }
+        if bond != Child.defaultBond { try container.encode(bond, forKey: .bond) }
+        try container.encodeIfPresent(lastTimeDay, forKey: .lastTimeDay)
+        try container.encodeIfPresent(internEmployeeID, forKey: .internEmployeeID)
+        try container.encodeIfPresent(internUntilDay, forKey: .internUntilDay)
+        if internSummers != 0 { try container.encode(internSummers, forKey: .internSummers) }
     }
 }
 
 /// One thing a child remembers. `kind` is an L3-defined tag (a launch, a
 /// burnout, a missed birthday); `note` is the line the card shows.
-public struct ChildMemory: Codable, Equatable, Sendable {
+public struct ChildMemory: Codable, Equatable, Hashable, Sendable {
     public var day: Int
     public var kind: String
     public var note: String

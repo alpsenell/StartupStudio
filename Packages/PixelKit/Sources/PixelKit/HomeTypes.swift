@@ -57,6 +57,22 @@ public enum MoodLevel: String, Sendable, Equatable, Codable, CaseIterable {
     case great, okay, low
 }
 
+// MARK: Iteration 9 — L3 (children who grow up)
+
+/// How old a child in the home scene is. Mirrors the engine's
+/// `ChildStage` by raw value, the way `HomeTierStyle` mirrors `HomeTier` —
+/// PixelKit never imports the engine.
+public enum ChildStageStyle: String, Sendable, Equatable, Codable, CaseIterable {
+    case baby, toddler, school, teen, grown
+
+    /// Where on the ladder, for "teen or older" rules.
+    public var rank: Int { Self.allCases.firstIndex(of: self) ?? 0 }
+
+    /// A teenager and a grown child stand at adult height; the younger
+    /// three have their own smaller bodies.
+    public var isAdultSized: Bool { self == .grown }
+}
+
 /// Who lives here.
 ///
 /// The appearances are what the scene draws. The names and the one note
@@ -71,11 +87,22 @@ public struct HomeOccupants: Sendable, Equatable {
         public var id: UUID
         public var appearance: CharacterAppearance
         public var name: String?
+        /// Iteration 9 — L3: how old they are, which is how big they are
+        /// drawn. Defaults to `.school`, the size the scene drew before
+        /// children had ages, so a caller that does not know about stages
+        /// gets exactly the picture it used to.
+        public var stage: ChildStageStyle
 
-        public init(id: UUID, appearance: CharacterAppearance, name: String? = nil) {
+        public init(
+            id: UUID,
+            appearance: CharacterAppearance,
+            name: String? = nil,
+            stage: ChildStageStyle = .school
+        ) {
             self.id = id
             self.appearance = appearance
             self.name = name
+            self.stage = stage
         }
     }
 

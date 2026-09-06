@@ -28,10 +28,23 @@ enum ReleaseFixture {
         "release-campus-day900",
     ]
 
+    // MARK: Iteration 9 — lane fixtures
+
+    /// Bundled saves a lane generated to photograph its own surface. Kept
+    /// apart from `names` because those three are the store listing's
+    /// story and are pinned as such; these are only ever reached by an
+    /// explicit `-autoFixture`.
+    ///
+    /// - `l3-family-day900`: the campus run with a married founder, a
+    ///   house, a teenager and a toddler, and their memory ledgers.
+    static let laneFixtures = [
+        "l3-family-day900",
+    ]
+
     /// The bundled JSON for `name`, or `nil` when it is not in this build
     /// (a Release build, or a name nobody generated).
     static func data(named name: String) -> Data? {
-        guard names.contains(name),
+        guard names.contains(name) || laneFixtures.contains(name),
               let url = Bundle.main.url(forResource: name, withExtension: "json")
         else { return nil }
         return try? Data(contentsOf: url)

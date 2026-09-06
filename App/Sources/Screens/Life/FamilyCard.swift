@@ -8,11 +8,15 @@ import TycoonEngine
 struct FamilyCard: View {
     let engine: GameEngine
 
+    /// Optional for the same reason `injectedShell` is: the snapshot
+    /// tests render this card on its own, with no router above it.
+    @Environment(AppRouter.self) private var injectedRouter: AppRouter?
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI
     /// updates this property for presented content before the
     /// environment is installed and the non-optional form traps there.
     private var shell: GameShell { injectedShell ?? .shared }
+    private var router: AppRouter? { injectedRouter }
     @State private var confirmingProposal = false
     @State private var confirmingChild = false
 
@@ -43,12 +47,30 @@ struct FamilyCard: View {
                     )
                 }
 
+                // Iteration 9 — L3: a child is a person with an age, a
+                // bond and a memory of what the company did, not a name
+                // and a birthday.
                 ForEach(family.children) { child in
-                    PersonRow(
-                        seed: child.appearanceSeed,
-                        name: child.name,
-                        detail: ageLabel(bornDay: child.bornDay, day: state.day)
-                    )
+                    ChildRow(
+                        child: child,
+                        day: state.day,
+                        childhood: engine.balance.childhood
+                    ) {
+                        Haptics.tap()
+                        router?.go(.children)
+                    }
+                }
+                if !family.children.isEmpty {
+                    Button {
+                        Haptics.tap()
+                        router?.go(.children)
+                    } label: {
+                        Text("The kids · ledgers and evenings")
+                            .font(.footnote.weight(.semibold))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.accent)
+                    .accessibilityHint("Opens each child's memory ledger and the evening and internship actions")
                 }
 
                 // The date in the diary (WS-E): the next thing the family
@@ -299,6 +321,58 @@ private struct PersonRow: View {
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Child row (Iteration 9 — L3)
+
+/// One child on the Family card: their sprite at the age they actually
+/// are, the stage, the bond as a small bar, and the last two things they
+/// remember. Tapping opens the ledger.
+private struct ChildRow: View {
+    let child: Child
+    let day: Int
+    let childhood: ChildhoodBalance
+    let onOpen: () -> Void
+
+    private var stage: ChildStage { child.stage(on: day, balance: childhood) }
+
+    var body: some View {
+        Button(action: onOpen) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack(alignment: .bottom, spacing: Theme.Spacing.md) {
+                    ChildSprite(seed: child.appearanceSeed, stage: stage, boxHeight: 48)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(child.name)
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        Text(child.ageLabel(on: day, balance: childhood))
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    if child.isInterning(on: day) {
+                        Image(systemName: "briefcase.fill")
+                            .font(.caption)
+                            .foregroundStyle(Theme.accent)
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                BondBar(bond: child.bond, label: child.bondLabel)
+                ForEach(Array(child.latestMemories.enumerated()), id: \.offset) { _, memory in
+                    MemoryRow(memory: memory, day: day)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(child.name), \(child.ageLabel(on: day, balance: childhood)), bond \(Int(child.bond.rounded()))")
+        .accessibilityHint("Opens their memory ledger")
     }
 }
 

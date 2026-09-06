@@ -25,6 +25,7 @@ struct LifeScreen: View {
         // MARK: L1 (phone)
         // MARK: L2 (life score)
         // MARK: L3 (children)
+        case children
         // MARK: L4 (friends)
         // MARK: L5 (side project)
         case sideProject
@@ -64,6 +65,7 @@ struct LifeScreen: View {
                     // Iteration 9 — L3 owns FamilyCard.swift (the children
                     // draw there); L4 adds the friends card after it.
                     // MARK: L3 (children)
+                    ChildrenLink(onOpen: { path = [.children] })
                     // MARK: L4 (friends)
 
                     BusinessSectionHeader(title: "Money and home", systemImage: "house.fill")
@@ -103,6 +105,8 @@ struct LifeScreen: View {
                 // MARK: L1 (phone)
                 // MARK: L2 (life score)
                 // MARK: L3 (children)
+                case .children:
+                    ChildrenScreen(engine: engine)
                 // MARK: L4 (friends)
                 // MARK: L5 (side project)
                 case .sideProject:
