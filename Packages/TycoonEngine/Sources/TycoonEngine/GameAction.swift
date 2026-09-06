@@ -209,6 +209,20 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: L4 (friends)
 
+    /// A phone call to a friend: free, once a week, a little bond.
+    case callFriend(friendID: UUID)
+    /// An evening with a friend: one evening, a small bill, bond and the
+    /// relationships meter.
+    case seeFriend(friendID: UUID)
+    /// Puts a friend on the payroll, carrying the bond they already had.
+    case hireFriend(friendID: UUID)
+    /// Backs a friend's company out of the founder's own wallet.
+    case investInFriend(friendID: UUID, amount: Int)
+    /// A personal loan from a friend: no interest, and no company money.
+    case borrowFromFriend(friendID: UUID, amount: Int)
+    /// Pays some of that loan back.
+    case repayFriend(friendID: UUID, amount: Int)
+
     // MARK: L5 (side project)
 
     /// L5: picks up one of the five tracks. Free, and refused while

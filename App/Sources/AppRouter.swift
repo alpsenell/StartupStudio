@@ -76,6 +76,8 @@ enum Route: Hashable {
     case children
 
     // MARK: L4 (friends)
+    /// The founder's three friends (L4).
+    case friends
 
     // MARK: L5 (side project)
     /// The thing the founder is building that is not the company (L5).
@@ -112,6 +114,7 @@ enum Route: Hashable {
         // MARK: L3 (children)
         case .children: .life
         // MARK: L4 (friends)
+        case .friends: .life
         // MARK: L5 (side project)
         case .sideProject: .life
         // MARK: L6 (sabbatical)

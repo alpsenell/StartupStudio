@@ -18,6 +18,10 @@ public struct NamePools: Codable, Equatable, Sendable {
     /// Words rival products are named from. Empty until WS-B writes the
     /// pool.
     public var productWords: [String]
+    /// Iteration 9 (L4): first names for the founder's three friends from
+    /// before the company. Empty catalogs fall back to `firstNames`, so a
+    /// `Names.json` written before this pool existed still loads.
+    public var friendNames: [String]
 
     public init(
         firstNames: [String],
@@ -26,7 +30,8 @@ public struct NamePools: Codable, Equatable, Sendable {
         partnerNames: [String] = [],
         childNames: [String] = [],
         rivalStudios: [String] = [],
-        productWords: [String] = []
+        productWords: [String] = [],
+        friendNames: [String] = []
     ) {
         self.firstNames = firstNames
         self.lastNames = lastNames
@@ -35,6 +40,7 @@ public struct NamePools: Codable, Equatable, Sendable {
         self.childNames = childNames
         self.rivalStudios = rivalStudios
         self.productWords = productWords
+        self.friendNames = friendNames
     }
 }
 
@@ -47,6 +53,7 @@ extension NamePools {
     private enum CodingKeys: String, CodingKey {
         case firstNames, lastNames, clientCompanies, partnerNames, childNames
         case rivalStudios, productWords
+        case friendNames
     }
 
     public init(from decoder: any Decoder) throws {
@@ -58,7 +65,8 @@ extension NamePools {
             partnerNames: try container.decodeIfPresent([String].self, forKey: .partnerNames) ?? [],
             childNames: try container.decodeIfPresent([String].self, forKey: .childNames) ?? [],
             rivalStudios: try container.decodeIfPresent([String].self, forKey: .rivalStudios) ?? [],
-            productWords: try container.decodeIfPresent([String].self, forKey: .productWords) ?? []
+            productWords: try container.decodeIfPresent([String].self, forKey: .productWords) ?? [],
+            friendNames: try container.decodeIfPresent([String].self, forKey: .friendNames) ?? []
         )
     }
 }

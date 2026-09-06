@@ -227,6 +227,7 @@ extension Route {
         // MARK: L3 (children)
         case "children": .children
         // MARK: L4 (friends)
+        case "friends", "friendsheet": .friends
         // MARK: L5 (side project)
         case "sideproject": .sideProject
         // MARK: L6 (sabbatical)
@@ -347,6 +348,28 @@ extension DebugLaunch {
     }
 
     // MARK: L4 (friends)
+
+    /// `-autoFriends warm` gives the friends room one call each and one
+    /// evening on the way in, so a screenshot pass can see a friendship
+    /// that has been worked on — and the offers that opens — without
+    /// tapping. Debug only, and it does exactly what the taps would do.
+    static var warmsFriends: Bool {
+        #if DEBUG
+        return value(after: "-autoFriends") == "warm"
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoRoute friendsheet` lands on the friends room *and* opens the
+    /// first friend's sheet, because a screenshot pass cannot tap a row.
+    static var opensFirstFriendSheet: Bool {
+        #if DEBUG
+        return autoRouteName == "friendsheet"
+        #else
+        return false
+        #endif
+    }
 
     // MARK: L5 (side project)
 

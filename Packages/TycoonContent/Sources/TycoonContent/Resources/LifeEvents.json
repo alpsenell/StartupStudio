@@ -5,21 +5,31 @@
     "weight": 3,
     "minStage": "dating",
     "cooldownDays": 200,
-    "impact": { "wallet": 300, "relationships": 6, "mood": 4 }
+    "impact": {
+      "wallet": 300,
+      "relationships": 6,
+      "mood": 4
+    }
   },
   {
     "id": "old_friend_visits",
     "headline": "An old friend drops by unannounced. You talk until 3am.",
     "weight": 4,
     "cooldownDays": 150,
-    "impact": { "mood": 10, "energy": -3 }
+    "impact": {
+      "mood": 10,
+      "energy": -3
+    }
   },
   {
     "id": "client_bonus",
     "headline": "A delighted client slips you a thank-you bonus you did not invoice for.",
     "weight": 2,
     "cooldownDays": 200,
-    "impact": { "wallet": 800, "mood": 5 }
+    "impact": {
+      "wallet": 800,
+      "mood": 5
+    }
   },
   {
     "id": "kids_first_word",
@@ -28,28 +38,40 @@
     "requiresChildren": true,
     "once": true,
     "category": "family",
-    "impact": { "mood": 12, "relationships": 8 }
+    "impact": {
+      "mood": 12,
+      "relationships": 8
+    }
   },
   {
     "id": "gym_streak",
     "headline": "Your gym buddy drags you through a four-week streak.",
     "weight": 4,
     "cooldownDays": 150,
-    "impact": { "health": 10, "energy": 4 }
+    "impact": {
+      "health": 10,
+      "energy": 4
+    }
   },
   {
     "id": "caught_cold",
     "headline": "You caught a cold. There are tissues in the keyboard.",
     "weight": 5,
     "cooldownDays": 90,
-    "impact": { "energy": -10, "coldDays": 5 }
+    "impact": {
+      "energy": -10,
+      "coldDays": 5
+    }
   },
   {
     "id": "rent_hike",
     "headline": "Your landlord \"regretfully\" raises the rent. Again.",
     "weight": 3,
     "cooldownDays": 180,
-    "impact": { "wallet": -400, "mood": -4 }
+    "impact": {
+      "wallet": -400,
+      "mood": -4
+    }
   },
   {
     "id": "partner_complains",
@@ -58,7 +80,10 @@
     "minStage": "dating",
     "maxRelationships": 40,
     "cooldownDays": 120,
-    "impact": { "mood": -8, "relationships": -4 }
+    "impact": {
+      "mood": -8,
+      "relationships": -4
+    }
   },
   {
     "id": "newborn_sleepless",
@@ -67,14 +92,22 @@
     "requiresChildren": true,
     "cooldownDays": 120,
     "category": "family",
-    "impact": { "energy": -15, "mood": -3, "relationships": 3 }
+    "impact": {
+      "energy": -15,
+      "mood": -3,
+      "relationships": 3
+    }
   },
   {
     "id": "friends_wedding",
     "headline": "A friend's wedding weekend: open bar, bad dancing, good speeches.",
     "weight": 3,
     "cooldownDays": 240,
-    "impact": { "wallet": -350, "energy": -8, "mood": 12 }
+    "impact": {
+      "wallet": -350,
+      "energy": -8,
+      "mood": 12
+    }
   },
   {
     "id": "family_emergency",
@@ -83,7 +116,10 @@
     "cooldownDays": 300,
     "category": "family",
     "impact": {
-      "wallet": -300, "mood": -6, "awayDays": 3, "awayReason": "Family emergency"
+      "wallet": -300,
+      "mood": -6,
+      "awayDays": 3,
+      "awayReason": "Family emergency"
     }
   },
   {
@@ -91,44 +127,62 @@
     "headline": "Parked for \"just five minutes\". The city disagreed.",
     "weight": 4,
     "cooldownDays": 120,
-    "impact": { "wallet": -90, "mood": -2 }
+    "impact": {
+      "wallet": -90,
+      "mood": -2
+    }
   },
   {
     "id": "food_poisoning",
     "headline": "The sushi place was not, in fact, \"probably fine\".",
     "weight": 3,
     "cooldownDays": 200,
-    "impact": { "energy": -8, "health": -4, "coldDays": 3 }
+    "impact": {
+      "energy": -8,
+      "health": -4,
+      "coldDays": 3
+    }
   },
   {
     "id": "viral_tweet",
     "headline": "A joke about your company does numbers. Your DMs are a warzone.",
     "weight": 3,
     "cooldownDays": 200,
-    "impact": { "mood": 8 }
+    "impact": {
+      "mood": 8
+    }
   },
   {
     "id": "surprise_party",
     "headline": "Your friends throw you a surprise party. You genuinely did not see it coming.",
     "weight": 3,
     "cooldownDays": 300,
-    "impact": { "mood": 10, "relationships": 5, "energy": -4 }
+    "impact": {
+      "mood": 10,
+      "relationships": 5,
+      "energy": -4
+    }
   },
   {
     "id": "tax_refund",
     "headline": "A tax refund lands. Past-you filed something right for once.",
     "weight": 2,
     "cooldownDays": 300,
-    "impact": { "wallet": 600, "mood": 3 }
+    "impact": {
+      "wallet": 600,
+      "mood": 3
+    }
   },
   {
     "id": "neighbor_drums",
     "headline": "Your upstairs neighbour takes up the drums. At night.",
     "weight": 3,
     "cooldownDays": 180,
-    "impact": { "energy": -5, "mood": -4 }
+    "impact": {
+      "energy": -5,
+      "mood": -4
+    }
   },
-
   {
     "id": "partner_asks_weekend",
     "headline": "Your partner asks you to take one weekend off. Just one.",
@@ -144,23 +198,44 @@
         "label": "Take the weekend",
         "detail": "Relationships +18 · mood +8 · nothing ships",
         "effects": [
-          { "type": "founderMeters", "relationships": 18, "mood": 8, "energy": 10 },
-          { "type": "hype", "amount": -6 }
+          {
+            "type": "founderMeters",
+            "relationships": 18,
+            "mood": 8,
+            "energy": 10
+          },
+          {
+            "type": "hype",
+            "amount": -6
+          }
         ]
       },
       {
         "id": "half",
         "label": "Promise Saturday, work Sunday",
         "detail": "Relationships +6 · they notice the pattern",
-        "effects": [{ "type": "founderMeters", "relationships": 6, "mood": -2 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 6,
+            "mood": -2
+          }
+        ]
       },
       {
         "id": "after",
         "label": "After the launch",
         "detail": "Relationships −12 · hype +5",
         "effects": [
-          { "type": "founderMeters", "relationships": -12, "mood": -6 },
-          { "type": "hype", "amount": 5 }
+          {
+            "type": "founderMeters",
+            "relationships": -12,
+            "mood": -6
+          },
+          {
+            "type": "hype",
+            "amount": 5
+          }
         ],
         "followUpEventID": "partner_weekend_after_launch",
         "followUpDelayDays": 56
@@ -181,21 +256,41 @@
         "label": "Block out the mornings",
         "detail": "Away 5 days · mood +10 · relationships +12",
         "effects": [
-          { "type": "away", "days": 5, "reason": "Family, out of town" },
-          { "type": "founderMeters", "mood": 10, "relationships": 12 }
+          {
+            "type": "away",
+            "days": 5,
+            "reason": "Family, out of town"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 10,
+            "relationships": 12
+          }
         ]
       },
       {
         "id": "hire",
         "label": "Pay for a car service",
         "detail": "−$1,200 · mood −4",
-        "effects": [{ "type": "founderMeters", "wallet": -1200, "mood": -4 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -1200,
+            "mood": -4
+          }
+        ]
       },
       {
         "id": "sibling",
         "label": "Ask your sibling again",
         "detail": "Free · mood −8 · relationships −6",
-        "effects": [{ "type": "founderMeters", "mood": -8, "relationships": -6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -8,
+            "relationships": -6
+          }
+        ]
       }
     ]
   },
@@ -212,22 +307,43 @@
         "label": "Say yes to two hours a month",
         "detail": "Energy −6 · reputation +4 · relationships +6",
         "effects": [
-          { "type": "founderMeters", "energy": -6, "relationships": 6 },
-          { "type": "reputation", "amount": 4 }
+          {
+            "type": "founderMeters",
+            "energy": -6,
+            "relationships": 6
+          },
+          {
+            "type": "reputation",
+            "amount": 4
+          }
         ]
       },
       {
         "id": "invest",
         "label": "Skip the advising and write a small cheque",
         "detail": "−$3,000 from your wallet · relationships +8",
-        "effects": [{ "type": "founderMeters", "wallet": -3000, "relationships": 8 }],
-        "requires": { "minWallet": 4000 }
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -3000,
+            "relationships": 8
+          }
+        ],
+        "requires": {
+          "minWallet": 4000
+        }
       },
       {
         "id": "no",
         "label": "Tell them you have nothing left this year",
         "detail": "Free · relationships −4 · mood +2 for the honesty",
-        "effects": [{ "type": "founderMeters", "relationships": -4, "mood": 2 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -4,
+            "mood": 2
+          }
+        ]
       }
     ]
   },
@@ -245,9 +361,21 @@
         "label": "Go to the wedding",
         "detail": "Away 3 days · relationships +20 · hype −10",
         "effects": [
-          { "type": "away", "days": 3, "reason": "A wedding you promised to attend" },
-          { "type": "founderMeters", "relationships": 20, "mood": 12, "wallet": -400 },
-          { "type": "hype", "amount": -10 }
+          {
+            "type": "away",
+            "days": 3,
+            "reason": "A wedding you promised to attend"
+          },
+          {
+            "type": "founderMeters",
+            "relationships": 20,
+            "mood": 12,
+            "wallet": -400
+          },
+          {
+            "type": "hype",
+            "amount": -10
+          }
         ]
       },
       {
@@ -255,16 +383,33 @@
         "label": "Move the launch",
         "detail": "Hype −18 · team morale −5 · relationships +20",
         "effects": [
-          { "type": "hype", "amount": -18 },
-          { "type": "moraleAll", "amount": -5 },
-          { "type": "founderMeters", "relationships": 20, "mood": 6 }
+          {
+            "type": "hype",
+            "amount": -18
+          },
+          {
+            "type": "moraleAll",
+            "amount": -5
+          },
+          {
+            "type": "founderMeters",
+            "relationships": 20,
+            "mood": 6
+          }
         ]
       },
       {
         "id": "skip",
         "label": "Send a gift and your apologies",
         "detail": "−$300 · relationships −16 · mood −10",
-        "effects": [{ "type": "founderMeters", "wallet": -300, "relationships": -16, "mood": -10 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -300,
+            "relationships": -16,
+            "mood": -10
+          }
+        ]
       }
     ]
   },
@@ -283,8 +428,15 @@
         "label": "Sit in the third row with a phone that stays in your pocket",
         "detail": "Relationships +16 · mood +10 · reputation −2",
         "effects": [
-          { "type": "founderMeters", "relationships": 16, "mood": 10 },
-          { "type": "reputation", "amount": -2 }
+          {
+            "type": "founderMeters",
+            "relationships": 16,
+            "mood": 10
+          },
+          {
+            "type": "reputation",
+            "amount": -2
+          }
         ]
       },
       {
@@ -292,8 +444,15 @@
         "label": "Go to the dinner",
         "detail": "Reputation +6 · relationships −14 · mood −10",
         "effects": [
-          { "type": "reputation", "amount": 6 },
-          { "type": "founderMeters", "relationships": -14, "mood": -10 }
+          {
+            "type": "reputation",
+            "amount": 6
+          },
+          {
+            "type": "founderMeters",
+            "relationships": -14,
+            "mood": -10
+          }
         ],
         "followUpEventID": "kid_brings_it_up",
         "followUpDelayDays": 21
@@ -306,20 +465,35 @@
     "body": "Nothing urgent. Nothing to ignore either. She writes down three things and asks you to actually do them.",
     "weight": 4,
     "cooldownDays": 240,
-    "requires": { "maxEnergy": 55 },
+    "requires": {
+      "maxEnergy": 55
+    },
     "impact": {},
     "choices": [
       {
         "id": "listen",
         "label": "Do the three things",
         "detail": "−$400 · health +18 · energy +8",
-        "effects": [{ "type": "founderMeters", "wallet": -400, "health": 18, "energy": 8 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -400,
+            "health": 18,
+            "energy": 8
+          }
+        ]
       },
       {
         "id": "later",
         "label": "After this quarter",
         "detail": "Free · health −8",
-        "effects": [{ "type": "founderMeters", "health": -8, "mood": -4 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "health": -8,
+            "mood": -4
+          }
+        ]
       }
     ]
   },
@@ -335,13 +509,26 @@
         "id": "friends",
         "label": "Ask three friends and buy pizza",
         "detail": "−$200 · energy −16 · relationships +8",
-        "effects": [{ "type": "founderMeters", "wallet": -200, "energy": -16, "relationships": 8 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -200,
+            "energy": -16,
+            "relationships": 8
+          }
+        ]
       },
       {
         "id": "movers",
         "label": "Pay movers and get it over with",
         "detail": "−$1,600 · energy −6",
-        "effects": [{ "type": "founderMeters", "wallet": -1600, "energy": -6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -1600,
+            "energy": -6
+          }
+        ]
       }
     ]
   },
@@ -358,20 +545,41 @@
         "id": "lend",
         "label": "Send it, ask nothing",
         "detail": "−$2,500 · relationships +10",
-        "effects": [{ "type": "founderMeters", "wallet": -2500, "relationships": 10 }],
-        "requires": { "minWallet": 2500 }
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -2500,
+            "relationships": 10
+          }
+        ],
+        "requires": {
+          "minWallet": 2500
+        }
       },
       {
         "id": "ask",
         "label": "Send half and ask anyway",
         "detail": "−$1,200 · relationships +2 · mood −4",
-        "effects": [{ "type": "founderMeters", "wallet": -1200, "relationships": 2, "mood": -4 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -1200,
+            "relationships": 2,
+            "mood": -4
+          }
+        ]
       },
       {
         "id": "no",
         "label": "Say you cannot right now",
         "detail": "Free · relationships −10 · mood −6",
-        "effects": [{ "type": "founderMeters", "relationships": -10, "mood": -6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -10,
+            "mood": -6
+          }
+        ]
       }
     ]
   },
@@ -390,13 +598,26 @@
         "id": "support",
         "label": "Tell them to take it and work out the rest",
         "detail": "Relationships +22 · energy −10 for the commuting",
-        "effects": [{ "type": "founderMeters", "relationships": 22, "mood": 6, "energy": -10 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 22,
+            "mood": 6,
+            "energy": -10
+          }
+        ]
       },
       {
         "id": "ask_stay",
         "label": "Ask them to stay one more year",
         "detail": "Relationships −16 · they stay",
-        "effects": [{ "type": "founderMeters", "relationships": -16, "mood": -6 }],
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -16,
+            "mood": -6
+          }
+        ],
         "followUpEventID": "partner_year_ends",
         "followUpDelayDays": 365
       }
@@ -417,15 +638,29 @@
         "label": "Do the pickup yourself",
         "detail": "Relationships +12 · your afternoons are gone",
         "effects": [
-          { "type": "founderMeters", "relationships": 12, "mood": 6, "energy": -6 },
-          { "type": "hype", "amount": -4 }
+          {
+            "type": "founderMeters",
+            "relationships": 12,
+            "mood": 6,
+            "energy": -6
+          },
+          {
+            "type": "hype",
+            "amount": -4
+          }
         ]
       },
       {
         "id": "sitter",
         "label": "Hire someone",
         "detail": "−$900 · relationships −4",
-        "effects": [{ "type": "founderMeters", "wallet": -900, "relationships": -4 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -900,
+            "relationships": -4
+          }
+        ]
       }
     ]
   },
@@ -441,13 +676,25 @@
         "id": "go",
         "label": "Go and answer \"so what do you do\" forty times",
         "detail": "Energy −8 · mood +6 · relationships +6",
-        "effects": [{ "type": "founderMeters", "energy": -8, "mood": 6, "relationships": 6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -8,
+            "mood": 6,
+            "relationships": 6
+          }
+        ]
       },
       {
         "id": "skip",
         "label": "Leave it unanswered",
         "detail": "Free · mood −2",
-        "effects": [{ "type": "founderMeters", "mood": -2 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
       }
     ]
   },
@@ -463,13 +710,26 @@
         "id": "listen",
         "label": "Stay on the phone until 2am",
         "detail": "Energy −8 · relationships +10 · mood +4",
-        "effects": [{ "type": "founderMeters", "energy": -8, "relationships": 10, "mood": 4 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -8,
+            "relationships": 10,
+            "mood": 4
+          }
+        ]
       },
       {
         "id": "tomorrow",
         "label": "Say you'll call tomorrow",
         "detail": "Free · mood −5",
-        "effects": [{ "type": "founderMeters", "mood": -5, "relationships": -3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5,
+            "relationships": -3
+          }
+        ]
       }
     ]
   },
@@ -485,13 +745,25 @@
         "id": "fix",
         "label": "Fix it",
         "detail": "−$1,400",
-        "effects": [{ "type": "founderMeters", "wallet": -1400 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -1400
+          }
+        ]
       },
       {
         "id": "transit",
         "label": "Sell it and take the bus",
         "detail": "+$900 · energy −4 daily",
-        "effects": [{ "type": "founderMeters", "wallet": 900, "energy": -4, "mood": -3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": 900,
+            "energy": -4,
+            "mood": -3
+          }
+        ]
       }
     ]
   },
@@ -501,20 +773,34 @@
     "body": "They have clearly been working up to saying it for a while. They also have a name and a number written down already.",
     "weight": 3,
     "cooldownDays": 300,
-    "requires": { "maxMood": 45 },
+    "requires": {
+      "maxMood": 45
+    },
     "impact": {},
     "choices": [
       {
         "id": "book",
         "label": "Book the appointment",
         "detail": "−$600 · mood +16 · health +6",
-        "effects": [{ "type": "founderMeters", "wallet": -600, "mood": 16, "health": 6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -600,
+            "mood": 16,
+            "health": 6
+          }
+        ]
       },
       {
         "id": "fine",
         "label": "Say you are fine",
         "detail": "Free · mood −6",
-        "effects": [{ "type": "founderMeters", "mood": -6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6
+          }
+        ]
       }
     ]
   },
@@ -525,20 +811,35 @@
     "weight": 3,
     "cooldownDays": 400,
     "once": true,
-    "requires": { "minHome": "apartment" },
+    "requires": {
+      "minHome": "apartment"
+    },
     "impact": {},
     "choices": [
       {
         "id": "adopt",
         "label": "Adopt the dog",
         "detail": "−$800 · mood +14 · energy −4 forever",
-        "effects": [{ "type": "founderMeters", "wallet": -800, "mood": 14, "energy": -4, "health": 5 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -800,
+            "mood": 14,
+            "energy": -4,
+            "health": 5
+          }
+        ]
       },
       {
         "id": "walk",
         "label": "Walk away, think about it for a year",
         "detail": "Free · mood −3",
-        "effects": [{ "type": "founderMeters", "mood": -3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
       }
     ]
   },
@@ -548,7 +849,9 @@
     "body": "You have been paying yourself the minimum for long enough that it stopped feeling like a decision you were making.",
     "weight": 4,
     "cooldownDays": 200,
-    "requires": { "maxWallet": 1500 },
+    "requires": {
+      "maxWallet": 1500
+    },
     "impact": {},
     "choices": [
       {
@@ -556,15 +859,27 @@
         "label": "Pay yourself properly this quarter",
         "detail": "Mood +8 · the company feels it",
         "effects": [
-          { "type": "founderMeters", "wallet": 2000, "mood": 8 },
-          { "type": "cash", "amount": -2000 }
+          {
+            "type": "founderMeters",
+            "wallet": 2000,
+            "mood": 8
+          },
+          {
+            "type": "cash",
+            "amount": -2000
+          }
         ]
       },
       {
         "id": "wait",
         "label": "The company needs it more",
         "detail": "Free · mood −7",
-        "effects": [{ "type": "founderMeters", "mood": -7 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -7
+          }
+        ]
       }
     ]
   },
@@ -581,13 +896,25 @@
         "id": "go",
         "label": "Turn up unannounced",
         "detail": "Relationships +12 · mood +8",
-        "effects": [{ "type": "founderMeters", "relationships": 12, "mood": 8, "energy": -3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 12,
+            "mood": 8,
+            "energy": -3
+          }
+        ]
       },
       {
         "id": "call",
         "label": "Call instead",
         "detail": "Relationships +3",
-        "effects": [{ "type": "founderMeters", "relationships": 3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 3
+          }
+        ]
       }
     ]
   },
@@ -596,22 +923,35 @@
     "headline": "Your ceiling develops an opinion about the flat upstairs.",
     "weight": 2,
     "cooldownDays": 400,
-    "impact": { "wallet": -900, "mood": -8, "energy": -5 }
+    "impact": {
+      "wallet": -900,
+      "mood": -8,
+      "energy": -5
+    }
   },
   {
     "id": "old_hobby",
     "headline": "You find the guitar behind the door. It needs new strings and forty minutes.",
     "weight": 4,
     "cooldownDays": 150,
-    "impact": { "mood": 9, "energy": 3 }
+    "impact": {
+      "mood": 9,
+      "energy": 3
+    }
   },
   {
     "id": "sleep_debt",
     "headline": "You have slept less than five hours for nine days and it shows in the standup.",
     "weight": 4,
     "cooldownDays": 120,
-    "requires": { "maxEnergy": 40 },
-    "impact": { "energy": -4, "health": -3, "mood": -4 }
+    "requires": {
+      "maxEnergy": 40
+    },
+    "impact": {
+      "energy": -4,
+      "health": -3,
+      "mood": -4
+    }
   },
   {
     "id": "partner_cooks",
@@ -619,7 +959,11 @@
     "weight": 4,
     "minStage": "dating",
     "cooldownDays": 120,
-    "impact": { "mood": 9, "relationships": 8, "energy": 3 }
+    "impact": {
+      "mood": 9,
+      "relationships": 8,
+      "energy": 3
+    }
   },
   {
     "id": "kid_drawing",
@@ -628,14 +972,19 @@
     "requiresChildren": true,
     "cooldownDays": 180,
     "category": "family",
-    "impact": { "mood": 6, "relationships": -4 }
+    "impact": {
+      "mood": 6,
+      "relationships": -4
+    }
   },
   {
     "id": "birthday_forgotten",
     "headline": "It was your birthday yesterday and you found out from a bank email.",
     "weight": 3,
     "cooldownDays": 364,
-    "impact": { "mood": -9 }
+    "impact": {
+      "mood": -9
+    }
   },
   {
     "id": "neighbour_dinner",
@@ -649,13 +998,25 @@
         "id": "go",
         "label": "Go, bring wine, learn the names",
         "detail": "−$40 · mood +7 · relationships +6",
-        "effects": [{ "type": "founderMeters", "wallet": -40, "mood": 7, "relationships": 6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -40,
+            "mood": 7,
+            "relationships": 6
+          }
+        ]
       },
       {
         "id": "decline",
         "label": "Say you have a deadline",
         "detail": "Free · mood −3",
-        "effects": [{ "type": "founderMeters", "mood": -3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
       }
     ]
   },
@@ -672,13 +1033,26 @@
         "id": "write",
         "label": "Write it properly",
         "detail": "Energy −6 · relationships +14",
-        "effects": [{ "type": "founderMeters", "energy": -6, "relationships": 14, "mood": 6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -6,
+            "relationships": 14,
+            "mood": 6
+          }
+        ]
       },
       {
         "id": "wing",
         "label": "Wing it on the night",
         "detail": "Free · relationships −6 · mood −5",
-        "effects": [{ "type": "founderMeters", "relationships": -6, "mood": -5 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -6,
+            "mood": -5
+          }
+        ]
       }
     ]
   },
@@ -687,8 +1061,13 @@
     "headline": "You are awake at 4am doing arithmetic about runway.",
     "weight": 4,
     "cooldownDays": 120,
-    "requires": { "maxCash": 15000 },
-    "impact": { "energy": -4, "mood": -5 }
+    "requires": {
+      "maxCash": 15000
+    },
+    "impact": {
+      "energy": -4,
+      "mood": -5
+    }
   },
   {
     "id": "unexpected_inheritance",
@@ -696,7 +1075,10 @@
     "weight": 1,
     "cooldownDays": 500,
     "once": true,
-    "impact": { "wallet": 6000, "mood": -2 }
+    "impact": {
+      "wallet": 6000,
+      "mood": -2
+    }
   },
   {
     "id": "run_a_race",
@@ -710,19 +1092,39 @@
         "id": "train",
         "label": "Actually train for it",
         "detail": "Health +16 · energy −4 · eight weeks of mornings",
-        "effects": [{ "type": "founderMeters", "health": 16, "energy": -4, "mood": 8 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "health": 16,
+            "energy": -4,
+            "mood": 8
+          }
+        ]
       },
       {
         "id": "wing",
         "label": "Turn up untrained",
         "detail": "Health −6 · mood +4 · you finish",
-        "effects": [{ "type": "founderMeters", "health": -6, "energy": -10, "mood": 4 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "health": -6,
+            "energy": -10,
+            "mood": 4
+          }
+        ]
       },
       {
         "id": "skip",
         "label": "Quietly not go",
         "detail": "−$45 entry fee · mood −3",
-        "effects": [{ "type": "founderMeters", "wallet": -45, "mood": -3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -45,
+            "mood": -3
+          }
+        ]
       }
     ]
   },
@@ -739,13 +1141,25 @@
         "id": "kind",
         "label": "Ask questions instead of giving verdicts",
         "detail": "Relationships +12 · mood +5",
-        "effects": [{ "type": "founderMeters", "relationships": 12, "mood": 5 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 12,
+            "mood": 5
+          }
+        ]
       },
       {
         "id": "honest",
         "label": "Tell them what is wrong with it",
         "detail": "Relationships −10 · they stop asking",
-        "effects": [{ "type": "founderMeters", "relationships": -10, "mood": -4 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -10,
+            "mood": -4
+          }
+        ]
       }
     ]
   },
@@ -754,7 +1168,10 @@
     "headline": "They are digging up your road for eight weeks.",
     "weight": 4,
     "cooldownDays": 200,
-    "impact": { "energy": -6, "mood": -4 }
+    "impact": {
+      "energy": -6,
+      "mood": -4
+    }
   },
   {
     "id": "old_boss_reference",
@@ -769,15 +1186,27 @@
         "label": "Give them a glowing one anyway",
         "detail": "Reputation +3 · mood +5",
         "effects": [
-          { "type": "reputation", "amount": 3 },
-          { "type": "founderMeters", "mood": 5 }
+          {
+            "type": "reputation",
+            "amount": 3
+          },
+          {
+            "type": "founderMeters",
+            "mood": 5
+          }
         ]
       },
       {
         "id": "honest",
         "label": "Be accurate",
         "detail": "Mood −3 · relationships −4",
-        "effects": [{ "type": "founderMeters", "mood": -3, "relationships": -4 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3,
+            "relationships": -4
+          }
+        ]
       }
     ]
   },
@@ -787,7 +1216,9 @@
     "body": "The office is empty, the flat is quiet, and the group chat is full of other people's photographs.",
     "weight": 4,
     "cooldownDays": 180,
-    "requires": { "maxStage": "single" },
+    "requires": {
+      "maxStage": "single"
+    },
     "impact": {},
     "choices": [
       {
@@ -795,15 +1226,29 @@
         "label": "Work through it",
         "detail": "Hype +8 · mood −8 · relationships −6",
         "effects": [
-          { "type": "hype", "amount": 8 },
-          { "type": "founderMeters", "mood": -8, "relationships": -6 }
+          {
+            "type": "hype",
+            "amount": 8
+          },
+          {
+            "type": "founderMeters",
+            "mood": -8,
+            "relationships": -6
+          }
         ]
       },
       {
         "id": "reach_out",
         "label": "Text six people and see who answers",
         "detail": "Relationships +12 · mood +6",
-        "effects": [{ "type": "founderMeters", "relationships": 12, "mood": 6, "wallet": -120 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 12,
+            "mood": 6,
+            "wallet": -120
+          }
+        ]
       }
     ]
   },
@@ -813,20 +1258,34 @@
     "body": "They asked something you actually want to answer. You have been leaving messages four days out of habit rather than strategy.",
     "weight": 4,
     "cooldownDays": 120,
-    "requires": { "maxStage": "single" },
+    "requires": {
+      "maxStage": "single"
+    },
     "impact": {},
     "choices": [
       {
         "id": "meet",
         "label": "Suggest Thursday",
         "detail": "−$90 · relationships +10 · mood +6",
-        "effects": [{ "type": "founderMeters", "wallet": -90, "relationships": 10, "mood": 6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -90,
+            "relationships": 10,
+            "mood": 6
+          }
+        ]
       },
       {
         "id": "later",
         "label": "Answer in four days",
         "detail": "Free · relationships −3",
-        "effects": [{ "type": "founderMeters", "relationships": -3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -3
+          }
+        ]
       }
     ]
   },
@@ -844,7 +1303,14 @@
         "id": "go",
         "label": "Go in on two hours of sleep",
         "detail": "Energy −16 · health −5 · relationships −6",
-        "effects": [{ "type": "founderMeters", "energy": -16, "health": -5, "relationships": -6 }],
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -16,
+            "health": -5,
+            "relationships": -6
+          }
+        ],
         "followUpEventID": "kid_sick_second_night",
         "followUpDelayDays": 1
       },
@@ -853,8 +1319,15 @@
         "label": "Move the meeting",
         "detail": "Relationships +12 · reputation −1",
         "effects": [
-          { "type": "founderMeters", "relationships": 12, "energy": -10 },
-          { "type": "reputation", "amount": -1 }
+          {
+            "type": "founderMeters",
+            "relationships": 12,
+            "energy": -10
+          },
+          {
+            "type": "reputation",
+            "amount": -1
+          }
         ]
       }
     ]
@@ -864,15 +1337,22 @@
     "headline": "The friend you get lunch with every month is moving abroad.",
     "weight": 3,
     "cooldownDays": 400,
-    "impact": { "mood": -8, "relationships": -6 }
+    "impact": {
+      "mood": -8,
+      "relationships": -6
+    }
   },
   {
     "id": "home_upgrade_temptation",
     "headline": "An estate agent sends you a listing you would have laughed at three years ago.",
     "weight": 3,
     "cooldownDays": 300,
-    "requires": { "minWallet": 15000 },
-    "impact": { "mood": 4 }
+    "requires": {
+      "minWallet": 15000
+    },
+    "impact": {
+      "mood": 4
+    }
   },
   {
     "id": "vacation_never_taken",
@@ -887,15 +1367,30 @@
         "label": "Book five days somewhere with bad wifi",
         "detail": "Away 5 days · energy +25 · mood +15",
         "effects": [
-          { "type": "away", "days": 5, "reason": "On a beach, badly connected" },
-          { "type": "founderMeters", "energy": 25, "health": 8, "mood": 15, "relationships": 8 }
+          {
+            "type": "away",
+            "days": 5,
+            "reason": "On a beach, badly connected"
+          },
+          {
+            "type": "founderMeters",
+            "energy": 25,
+            "health": 8,
+            "mood": 15,
+            "relationships": 8
+          }
         ]
       },
       {
         "id": "lose",
         "label": "Let it expire",
         "detail": "Free · mood −6",
-        "effects": [{ "type": "founderMeters", "mood": -6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6
+          }
+        ]
       }
     ]
   },
@@ -904,14 +1399,19 @@
     "headline": "The drummer upstairs moves out. The silence is startling.",
     "weight": 3,
     "cooldownDays": 300,
-    "impact": { "energy": 8, "mood": 6 }
+    "impact": {
+      "energy": 8,
+      "mood": 6
+    }
   },
   {
     "id": "old_code_email",
     "headline": "Someone emails about code you wrote eight years ago that still runs somewhere.",
     "weight": 3,
     "cooldownDays": 300,
-    "impact": { "mood": 7 }
+    "impact": {
+      "mood": 7
+    }
   },
   {
     "id": "gym_membership_lapse",
@@ -925,13 +1425,26 @@
         "id": "cancel",
         "label": "Cancel it",
         "detail": "+$60/week back · mood +3",
-        "effects": [{ "type": "founderMeters", "wallet": 400, "mood": 3 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": 400,
+            "mood": 3
+          }
+        ]
       },
       {
         "id": "go",
         "label": "Go tomorrow, genuinely",
         "detail": "Health +10 · energy −3",
-        "effects": [{ "type": "founderMeters", "health": 10, "energy": -3, "mood": 5 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "health": 10,
+            "energy": -3,
+            "mood": 5
+          }
+        ]
       }
     ]
   },
@@ -949,7 +1462,13 @@
         "id": "honest",
         "label": "Give them a real answer with a date in it",
         "detail": "Relationships +16 · you have to keep it",
-        "effects": [{ "type": "founderMeters", "relationships": 16, "mood": 6 }],
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 16,
+            "mood": 6
+          }
+        ],
         "followUpEventID": "partner_promise_date",
         "followUpDelayDays": 90
       },
@@ -957,7 +1476,13 @@
         "id": "deflect",
         "label": "Say it depends on the next launch",
         "detail": "Relationships −10 · mood −6",
-        "effects": [{ "type": "founderMeters", "relationships": -10, "mood": -6 }]
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -10,
+            "mood": -6
+          }
+        ]
       }
     ]
   },
@@ -1870,5 +2395,136 @@
         ]
       }
     ]
+  },
+  {
+    "id": "friend_wedding_invite",
+    "headline": "One of your oldest friends is getting married, and the date is a Saturday.",
+    "body": "The invitation has been on the fridge for a month. It is a two-hour drive, it is the whole weekend, and they asked you to say something at the dinner.",
+    "weight": 3,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "friends_in_your_life"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "go",
+        "label": "Go, and write the speech",
+        "detail": "An evening · −$400 · mood +12 · relationships +10",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "wallet": -400,
+            "mood": 12,
+            "relationships": 10,
+            "energy": -6
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1,
+          "minWallet": 400
+        }
+      },
+      {
+        "id": "gift",
+        "label": "Send the gift and your apologies",
+        "detail": "−$200 · mood −4 · relationships −6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -200,
+            "mood": -4,
+            "relationships": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "friend_started_something",
+    "headline": "A friend quit their job and started something of their own.",
+    "weight": 3,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "friends_in_your_life"
+      ]
+    },
+    "impact": {
+      "mood": 4,
+      "relationships": 3
+    }
+  },
+  {
+    "id": "friend_hit_the_wall",
+    "headline": "A friend has stopped answering anybody, including you.",
+    "body": "Three unread messages and a voicemail. You know exactly what this is, because you were here eighteen months ago and somebody drove over.",
+    "weight": 3,
+    "cooldownDays": 220,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "friends_in_your_life"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "drive_over",
+        "label": "Drive over tonight",
+        "detail": "An evening · energy −8 · relationships +12 · mood +4",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -8,
+            "relationships": 12,
+            "mood": 4
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "text_back",
+        "label": "Text back and hope",
+        "detail": "Free · mood −6 · relationships −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "friend_leaving_town",
+    "headline": "A friend is taking a job on the other side of the world.",
+    "weight": 2,
+    "cooldownDays": 400,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "friends_in_your_life"
+      ]
+    },
+    "impact": {
+      "mood": -6,
+      "relationships": -4
+    }
   }
 ]

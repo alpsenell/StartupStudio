@@ -28,6 +28,7 @@ struct LifeScreen: View {
         // MARK: L3 (children)
         case children
         // MARK: L4 (friends)
+        case friends
         // MARK: L5 (side project)
         case sideProject
         // MARK: L6 (sabbatical)
@@ -68,6 +69,7 @@ struct LifeScreen: View {
                     // MARK: L3 (children)
                     ChildrenLink(onOpen: { path = [.children] })
                     // MARK: L4 (friends)
+                    FriendsCard(engine: engine) { path = [.friends] }
 
                     BusinessSectionHeader(title: "Money and home", systemImage: "house.fill")
                     MoneyCard(engine: engine)
@@ -112,6 +114,8 @@ struct LifeScreen: View {
                 case .children:
                     ChildrenScreen(engine: engine)
                 // MARK: L4 (friends)
+                case .friends:
+                    FriendsScreen(engine: engine)
                 // MARK: L5 (side project)
                 case .sideProject:
                     SideProjectScreen(engine: engine)
@@ -150,6 +154,16 @@ struct LifeScreen: View {
                 return
             }
             // MARK: end of Iteration 9
+            // MARK: Iteration 9 — L4 (friends)
+            // The scaffold marked the cards, the destinations and the
+            // destination switch but not this function, and a route that
+            // nothing consumes is a route that does not work. One line
+            // per lane, in its own region.
+            if Route.launchRoute == .friends {
+                path = [.friends]
+                return
+            }
+            // MARK: end of Iteration 9 — L4
         }
         // MARK: L5 (side project)
         if router.take(.sideProject) {
@@ -165,6 +179,10 @@ struct LifeScreen: View {
         // MARK: end of Iteration 9
         } else if router.take(.life) {
             path = []
+        // MARK: Iteration 9 — L4 (friends)
+        } else if router.take(.friends) {
+            path = [.friends]
+        // MARK: end of Iteration 9 — L4
         }
     }
 }

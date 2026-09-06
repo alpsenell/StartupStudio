@@ -460,7 +460,14 @@ enum LifeSystem {
             // Iteration 9 — L3: a weekend at home is worth a little to
             // every child. No-op in a childless house.
             ChildhoodSystem.familyWeekend(&state, balance: balance)
-        case .rest, .gym, .dateNight, .friends, .hobby, .spa:
+        // MARK: Iteration 9 — L4 (friends)
+        case .friends:
+            // The weekend goes to whoever the founder has seen least, and
+            // the other two hear about it. No company effect: this is the
+            // founder's own Saturday.
+            FriendSystem.spendWeekend(&state, content)
+        // MARK: end of Iteration 9 — L4
+        case .rest, .gym, .dateNight, .hobby, .spa:
             break
         }
         return events
