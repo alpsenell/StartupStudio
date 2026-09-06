@@ -21,6 +21,11 @@ enum GameCenterHub {
     /// Whether `start()` has run this launch.
     private(set) static var isStarted = false
 
+    /// Iteration 8: the signed-in player's display name, for their ghost.
+    static var displayName: String? {
+        live?.isAuthenticated == true ? live?.displayName : nil
+    }
+
     /// Builds the live client, queues behind it, and asks GameKit to
     /// authenticate. Idempotent: the second call is a no-op, so it can be
     /// hung off a view's `onAppear`.

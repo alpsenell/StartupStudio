@@ -80,7 +80,7 @@ struct SeasonCard: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("GameSeason \(season.number), \(season.dateRangeText). \(season.twist.title): \(season.twist.detail)")
+        .accessibilityLabel("Season \(season.number), \(season.dateRangeText). \(season.twist.title): \(season.twist.detail)")
     }
 }
 
@@ -108,7 +108,7 @@ struct SeasonResultCard: View {
                         .lineSpacing(2)
                         .accessibilityLabel(YearGrid.spoken(grid))
                     ShareLink(item: YearGrid.shareText(
-                        title: "STARTUP STUDIO · GameSeason \(season.number) · \(season.twist.title)",
+                        title: "STARTUP STUDIO · Season \(season.number) · \(season.twist.title)",
                         strip: grid,
                         scoreLine: "\(entry.score.money) · \(entry.endingKind?.headline ?? "the year ran out") on day \(entry.gameDay)",
                         code: SeedCode(seed: season.seed, origin: season.origin, difficulty: season.difficulty).encoded

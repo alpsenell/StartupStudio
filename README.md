@@ -295,6 +295,37 @@ Iteration 7 built everything a run needs to reach the App Store:
   the Game Center id table under `docs/release/`, and a String Catalog
   refilled by `make strings`.
 
+### Pull and rivalry
+
+Iteration 8 gave a run a reason to come back to, and somebody to beat:
+
+- **Stakes.** Ten stacking rungs on the custom page — thin press, no
+  credit, hungry rivals, short patience, no crunch, jumpy market,
+  poachers, the giant, cold rooms, mortal — each opened by a successful
+  ending at the one below. A stake alone stays ranked; the biography
+  and the share card carry the pennant.
+- **Scenarios.** Ten authored starts with an objective, a deadline and
+  three stars: the turnaround, launch week, empty chairs, the crash, and
+  six more, each built on a fixture save with day-one changes. One is
+  featured every week with its own board.
+- **Awards night.** Every December the trade press judges the year over
+  you and every rival: Product and Studio of the Year, Best Newcomer,
+  Best in each topic. Products reviewed at 85 or better enter a Hall of
+  Fame that outlives the company.
+- **Seasons.** Four weeks of one shared world with a twist — the platform
+  launch, the funding winter, the crash season, the poaching season, the
+  press year — a season board, and a founder look to earn.
+- **The dynasty.** The next founder can be a child from any company you
+  ran, the last company's longest-serving employee, or you again; the
+  Dynasty room draws the tree.
+- **Rival ghosts.** In the daily, the rival studios are real companies
+  that played the same seed before you, their launches replayed on the
+  days they happened; the result card says where you finished against
+  them. Your own past dailies stand in until the cloud store is on.
+- **The share grid.** A year as fifty-two squares — up, down, a launch, a
+  crash, a round — with the seed code, as text from the daily, the season
+  and the biography.
+
 ## Layout
 
 - `App/` — the SwiftUI app shell (HUD, tabs, screens, theme)

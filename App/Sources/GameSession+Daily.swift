@@ -77,9 +77,11 @@ extension GameSession {
     /// exactly the way the unlock stops it at chapter 2.
     func playDaily(_ challenge: DailyChallenge) {
         guard dailyResult(forDay: challenge.day) == nil else { return }
+        // Iteration 8: today's field is yesterday's best players, from the
+        // ghost cache (the front door refreshes it from the cloud first).
         let engine = storedDailyRun(forDay: challenge.day)
             .map(GameEngine.resume(state:))
-            ?? Self.makeDailyEngine(challenge)
+            ?? Self.makeDailyEngine(challenge, ghosts: ghostScripts(forDailyDay: challenge.day))
         daily = DailyState(challenge: challenge)
         installGate(DailyHorizonGate())
         startDetachedGame(engine) { [weak self] state in
@@ -93,7 +95,7 @@ extension GameSession {
 
     /// The company the day's seed founds: same seed, same origin, same
     /// difficulty, same founder and same name on every phone.
-    private static func makeDailyEngine(_ challenge: DailyChallenge) -> GameEngine {
+    private static func makeDailyEngine(_ challenge: DailyChallenge, ghosts: [GhostScript] = []) -> GameEngine {
         let index = Int(challenge.seed % 64)
         let names = (try? ContentCatalog.loadBundled())?.names
             ?? NamePools(firstNames: [], lastNames: [], clientCompanies: [])
@@ -112,7 +114,8 @@ extension GameSession {
             difficulty: challenge.difficulty,
             founder: founder,
             origin: challenge.origin,
-            mode: .daily(day: challenge.day)
+            mode: .daily(day: challenge.day),
+            ghosts: ghosts
         )
     }
 
@@ -150,13 +153,19 @@ extension GameSession {
         self.daily = daily
 
         var ledger = dailyLedger
+        var lines = DailyResultLines.lines(for: state, balance: engine.balance)
+        // Iteration 8: where the player finished against the ghosts.
+        if let rank = Self.ghostRank(score: score, ghosts: state.ghosts) {
+            lines.append("Finished \(rank) against \(state.ghosts.map(\.name).joined(separator: ", ")).")
+        }
+        recordGhost(from: state, day: day, score: score, now: now)
         ledger.record(DailyLedger.Entry(
             day: day,
             score: score,
             submitted: periodIsOpen,
             ending: state.gameOver?.kind.rawValue,
             gameDay: state.day,
-            lines: DailyResultLines.lines(for: state, balance: engine.balance),
+            lines: lines,
             finishedAt: now,
             grid: YearGrid.strip(YearGrid.squares(state: state))
         ))

@@ -22,6 +22,11 @@ import UIKit
 final class LiveGameCenter: GameCenterClient {
     private(set) var isAuthenticated = false
 
+    /// Iteration 8: the player's Game Center display name.
+    var displayName: String? {
+        GKLocalPlayer.local.isAuthenticated ? GKLocalPlayer.local.displayName : nil
+    }
+
     /// Called when authentication lands, so the queue can flush.
     var onAuthenticated: (@MainActor () -> Void)?
 

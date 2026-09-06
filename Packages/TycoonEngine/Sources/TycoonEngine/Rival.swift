@@ -181,6 +181,11 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
     /// a save written before it existed and is written only once it has
     /// something in it, so such a save keeps its bytes.
     public var strengthHistory: [Double]
+    /// Iteration 8: which of `GameState.ghosts` this rival replays, or
+    /// `nil` for a rival the world rolled.
+    public var ghostIndex: Int?
+
+    public var isGhost: Bool { ghostIndex != nil }
 
     /// A year of weekly samples.
     public static let strengthHistoryWeeks = 52
@@ -201,7 +206,8 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
         priceWarUntilDay: Int? = nil,
         priceWarTopicID: String? = nil,
         isIncumbent: Bool = false,
-        strengthHistory: [Double] = []
+        strengthHistory: [Double] = [],
+        ghostIndex: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -219,6 +225,7 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
         self.priceWarTopicID = priceWarTopicID
         self.isIncumbent = isIncumbent
         self.strengthHistory = strengthHistory
+        self.ghostIndex = ghostIndex
     }
 
     /// Appends this week's strength to the history, dropping the oldest
@@ -272,6 +279,7 @@ extension Rival {
         case products, personality, weeksBeaten, priceWarUntilDay, priceWarTopicID
         case isIncumbent
         case strengthHistory
+        case ghostIndex
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -294,6 +302,7 @@ extension Rival {
         if !strengthHistory.isEmpty {
             try container.encode(strengthHistory, forKey: .strengthHistory)
         }
+        try container.encodeIfPresent(ghostIndex, forKey: .ghostIndex)
     }
 
     public init(from decoder: any Decoder) throws {
@@ -315,7 +324,8 @@ extension Rival {
             priceWarUntilDay: try container.decodeIfPresent(Int.self, forKey: .priceWarUntilDay),
             priceWarTopicID: try container.decodeIfPresent(String.self, forKey: .priceWarTopicID),
             isIncumbent: try container.decodeIfPresent(Bool.self, forKey: .isIncumbent) ?? false,
-            strengthHistory: try container.decodeIfPresent([Double].self, forKey: .strengthHistory) ?? []
+            strengthHistory: try container.decodeIfPresent([Double].self, forKey: .strengthHistory) ?? [],
+            ghostIndex: try container.decodeIfPresent(Int.self, forKey: .ghostIndex)
         )
     }
 }

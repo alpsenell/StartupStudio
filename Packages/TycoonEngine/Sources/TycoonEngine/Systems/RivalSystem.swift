@@ -47,6 +47,27 @@ enum RivalSystem {
         events.append(contentsOf: resolveExpiredPoach(&state, balance))
         resolveExpiredBuyout(&state, &events)
 
+        // Iteration 8: real players' companies take the first slots. A
+        // ghost draws nothing — its id, face and strength are its facts —
+        // so the field is the same on every phone given the same scripts.
+        if !state.ghosts.isEmpty, !state.rivals.rivals.contains(where: \.isGhost) {
+            for (index, script) in state.ghosts.prefix(config.rivalCount).enumerated() {
+                let rival = Rival(
+                    id: script.rivalID,
+                    name: script.name,
+                    strength: clamp(script.strength, min: 5, max: 100),
+                    reputation: 50,
+                    focusTopicIDs: script.focusTopicIDs,
+                    foundedDay: state.day,
+                    appearanceSeed: script.appearanceSeed,
+                    personality: .deepPockets,
+                    ghostIndex: index
+                )
+                state.rivals.rivals.append(rival)
+                events.append(.rivalFounded(rivalID: rival.id, name: rival.name, day: state.day))
+            }
+        }
+
         while state.rivals.rivals.count < config.rivalCount {
             let rival = found(&state, config, content)
             state.rivals.rivals.append(rival)
@@ -169,6 +190,35 @@ enum RivalSystem {
         var events: [GameEvent] = []
 
         for index in state.rivals.rivals.indices {
+            // Iteration 8: a ghost replays its launches for the days since
+            // the last pass and never rolls.
+            if let ghostIndex = state.rivals.rivals[index].ghostIndex {
+                guard state.ghosts.indices.contains(ghostIndex) else { continue }
+                let rival = state.rivals.rivals[index]
+                let due = state.ghosts[ghostIndex].launches.filter {
+                    $0.day <= state.day && $0.day > state.day - config.evolveIntervalDays
+                }
+                for launch in due {
+                    var seed = SeededRNG(seed: rival.appearanceSeed ^ UInt64(launch.day))
+                    let product = RivalProduct(
+                        id: UUID(from: &seed),
+                        name: launch.name,
+                        topicID: launch.topicID,
+                        typeID: launch.typeID,
+                        quality: clamp(launch.quality, min: RivalDepthTuning.qualityMin, max: RivalDepthTuning.qualityMax),
+                        launchDay: state.day,
+                        weeklyUnits: Int((rival.strength * 40 * (0.5 + launch.quality / 200)).rounded())
+                    )
+                    appendProduct(product, to: index, in: &state)
+                    state.rivals.rivals[index].lastShippedDay = state.day
+                    events.append(.rivalShipped(rivalID: rival.id, topicID: launch.topicID, day: state.day))
+                    events.append(.rivalProductLaunched(
+                        rivalID: rival.id, productName: launch.name, topicID: launch.topicID,
+                        quality: Int(launch.quality.rounded()), day: state.day
+                    ))
+                }
+                continue
+            }
             let drift = state.worldRNG.nextGaussian(sigma: config.strengthDriftSigma)
             state.rivals.rivals[index].strength = clamp(
                 state.rivals.rivals[index].strength + drift, min: 1, max: 100
@@ -215,8 +265,8 @@ enum RivalSystem {
         var folded: [Rival] = []
         state.rivals.rivals.removeAll { rival in
             // Somebody rich is patient about the deep-pockets studio: it
-            // takes its beatings and keeps coming.
-            guard rival.personality != .deepPockets,
+            // takes its beatings and keeps coming. A ghost never folds.
+            guard rival.personality != .deepPockets, !rival.isGhost,
                   rival.strength < config.foldThreshold
             else { return false }
             folded.append(rival)

@@ -82,6 +82,8 @@ struct TitleScreen: View {
             // from the one screen every launch passes through, and starts
             // mapping the run's events onto achievements. Idempotent.
             session.startGameCenter()
+            // Iteration 8: yesterday's ghosts, ahead of today's Play.
+            Task { await session.refreshGhosts(forDailyDay: DailyChallenge.today().day) }
             // Iteration 8: a scenario just decided shows its card once;
             // `-autoScenario <id>` starts one from here.
             if let result = session.scenarioResult {
