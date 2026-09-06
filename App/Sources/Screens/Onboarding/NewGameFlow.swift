@@ -229,7 +229,10 @@ struct NewGameFlow: View {
     /// R4: seed, difficulty, rivals, incumbent, starting cash, and the
     /// line about leaderboards.
     private var customStep: some View {
-        CustomStepContent(choices: $custom, defaultCash: DifficultyCash.startingCash(for:))
+        CustomStepContent(
+            choices: $custom, defaultCash: DifficultyCash.startingCash(for:),
+            unlockedStake: options.ledger.unlockedStake
+        )
     }
 
     /// R2: one person, perk or deed from the ledger, spent once.

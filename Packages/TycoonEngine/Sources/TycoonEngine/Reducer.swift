@@ -128,6 +128,8 @@ public enum Reducer {
             return events
         }
         guard state.gameOver == nil else { return [] }
+        // Iteration 8: a stake can forbid an action (no credit, no crunch).
+        guard !StakeLadder.refuses(action, at: state.rules.stake) else { return [] }
 
         let events: [GameEvent]
         switch action {

@@ -15,6 +15,8 @@ struct CustomChoices: Equatable {
     var rivalsEnabled = true
     var incumbentEnabled = true
     var startingCash: Int?
+    /// Iteration 8: the stake, 0–10.
+    var stake = 0
 
     static let cashRange = 10_000 ... 500_000
     static let cashStep = 10_000
@@ -26,7 +28,8 @@ struct CustomChoices: Equatable {
         GameRules(
             rivalsEnabled: rivalsEnabled,
             incumbentEnabled: incumbentEnabled,
-            startingCash: startingCash.flatMap { $0 == defaultCash ? nil : $0 }
+            startingCash: startingCash.flatMap { $0 == defaultCash ? nil : $0 },
+            stake: stake
         )
     }
 
@@ -34,7 +37,10 @@ struct CustomChoices: Equatable {
     /// typed; a custom page left at its defaults founds a standard,
     /// ranked company.
     func mode(defaultCash: Int) -> RunMode {
-        !rules(defaultCash: defaultCash).isStandard || entry.isTyped ? .custom : .standard
+        // Iteration 8: a stake on its own stays ranked, the way a harder
+        // difficulty does.
+        let rules = rules(defaultCash: defaultCash)
+        return (!rules.isStandard && !rules.isStakeOnly) || entry.isTyped ? .custom : .standard
     }
 
     /// Fills the page from a code: its seed, origin (returned for the
@@ -53,6 +59,9 @@ struct CustomStepContent: View {
     /// The difficulty's own starting cash, for the stepper's default and
     /// the reset line.
     let defaultCash: (Difficulty) -> Int
+    /// Iteration 8: the highest rung the ledger has opened (1 on a fresh
+    /// install; a successful ending at stake n opens n + 1).
+    var unlockedStake: Int = 1
 
     private var cash: Int {
         choices.startingCash ?? defaultCash(choices.difficulty)
@@ -71,6 +80,29 @@ struct CustomStepContent: View {
 
             CardView("Seed", systemImage: "number") {
                 SeedCodeField(text: $choices.seedText)
+            }
+
+            // Iteration 8: the ladder. Each rung keeps every rung below it.
+            CardView("Stakes", systemImage: "flag.checkered") {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    Text(choices.stake == 0
+                         ? "The same seed, one notch harder. A stake alone stays ranked."
+                         : "Stake \(choices.stake): \(StakeLadder.stakes(upTo: choices.stake).map(\.title).joined(separator: ", ")).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ForEach(StakeLadder.all) { stake in
+                        StakeRow(
+                            stake: stake,
+                            isOn: stake.level <= choices.stake,
+                            isLocked: stake.level > unlockedStake
+                        ) {
+                            withAnimation(Theme.Motion.selection) {
+                                choices.stake = stake.level == choices.stake ? stake.level - 1 : stake.level
+                            }
+                        }
+                    }
+                }
             }
 
             CardView("How hard should this be?", systemImage: "dial.medium.fill") {
@@ -154,7 +186,7 @@ struct CustomStepContent: View {
                 Image(systemName: "rosette")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Theme.accent)
-                Text("A custom company earns achievements but does not post to leaderboards.")
+                Text("A stake alone stays ranked. Any other change earns achievements but does not post to leaderboards.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -173,5 +205,50 @@ enum DifficultyCash {
 
     static func startingCash(for difficulty: Difficulty) -> Int {
         bundled?.adjusted(for: difficulty).startingCash ?? 50_000
+    }
+}
+
+/// One rung of the ladder: on, off, or padlocked until the rung below is
+/// won. Tapping the highest lit rung turns it off; tapping a rung above
+/// lights everything up to it.
+private struct StakeRow: View {
+    let stake: Stake
+    let isOn: Bool
+    let isLocked: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            guard !isLocked else { return }
+            Haptics.tap()
+            action()
+        } label: {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                PixelText(text: "\(stake.level)", scale: 2, color: isOn ? Theme.pixelAccent : Theme.pixelInk.opacity(0.4))
+                    .frame(width: 22, alignment: .center)
+                    .padding(.top, 2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(stake.title)
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(isLocked ? .secondary : .primary)
+                    Text(isLocked ? "Reach an ending at stake \(stake.level - 1)." : stake.detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: isLocked ? "lock.fill" : (isOn ? "checkmark.circle.fill" : "circle"))
+                    .font(.body)
+                    .foregroundStyle(isLocked ? Color.secondary : (isOn ? Theme.accent : Color.secondary))
+                    .padding(.top, 2)
+            }
+            .padding(.vertical, Theme.Spacing.xs)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isLocked)
+        .accessibilityLabel("Stake \(stake.level), \(stake.title)")
+        .accessibilityValue(isLocked ? "locked" : (isOn ? "on" : "off"))
+        .accessibilityHint(isLocked ? "Reach an ending at stake \(stake.level - 1) to open it" : stake.detail)
     }
 }

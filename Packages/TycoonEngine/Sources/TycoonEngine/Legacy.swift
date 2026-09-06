@@ -16,23 +16,31 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
     /// Heirlooms already carried into a company, by `Heirloom.id`. An
     /// heirloom carries once.
     public var spentHeirlooms: Set<String>
+    /// Iteration 8: the highest stake a company reached a successful
+    /// ending at. Stake n + 1 opens when this is n.
+    public var highestStakeWon: Int
 
     public init(
         runs: [LegacyRun] = [],
         endingsReached: Set<EndingKind> = [],
-        spentHeirlooms: Set<String> = []
+        spentHeirlooms: Set<String> = [],
+        highestStakeWon: Int = 0
     ) {
         self.runs = runs
         self.endingsReached = endingsReached
         self.spentHeirlooms = spentHeirlooms
+        self.highestStakeWon = highestStakeWon
     }
+
+    /// The highest stake the ladder offers right now.
+    public var unlockedStake: Int { min(StakeLadder.count, highestStakeWon + 1) }
 
     public static let empty = LegacyLedger()
 
     public var isEmpty: Bool { runs.isEmpty && endingsReached.isEmpty }
 
     private enum CodingKeys: String, CodingKey {
-        case runs, endingsReached, spentHeirlooms
+        case runs, endingsReached, spentHeirlooms, highestStakeWon
     }
 
     public init(from decoder: any Decoder) throws {
@@ -40,7 +48,8 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         self.init(
             runs: try container.decodeIfPresent([LegacyRun].self, forKey: .runs) ?? [],
             endingsReached: try container.decodeIfPresent(Set<EndingKind>.self, forKey: .endingsReached) ?? [],
-            spentHeirlooms: try container.decodeIfPresent(Set<String>.self, forKey: .spentHeirlooms) ?? []
+            spentHeirlooms: try container.decodeIfPresent(Set<String>.self, forKey: .spentHeirlooms) ?? [],
+            highestStakeWon: try container.decodeIfPresent(Int.self, forKey: .highestStakeWon) ?? 0
         )
     }
 
@@ -76,6 +85,10 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         )
         runs.append(run)
         endingsReached.insert(over.kind)
+        // Iteration 8: a successful ending at a stake opens the next rung.
+        if over.kind.isSuccess, state.rules.stake > highestStakeWon {
+            highestStakeWon = state.rules.stake
+        }
     }
 
     /// The address book's best `peopleCarried` contacts by rapport, ties
@@ -164,6 +177,7 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         merged.runs.append(contentsOf: other.runs.filter { !known.contains($0.id) })
         merged.endingsReached.formUnion(other.endingsReached)
         merged.spentHeirlooms.formUnion(other.spentHeirlooms)
+        merged.highestStakeWon = max(highestStakeWon, other.highestStakeWon)
         return merged
     }
 }

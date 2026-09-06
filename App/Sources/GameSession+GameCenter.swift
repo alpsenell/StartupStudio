@@ -61,6 +61,10 @@ enum GameCenterMapping {
             default:
                 break
             }
+            // Iteration 8: a successful ending at a stake posts the stake.
+            if kind.isSuccess, state.rules.stake > 0 {
+                reports.append(.score(state.rules.stake, leaderboard: GameCenterID.stakes))
+            }
         }
         if let tenure = longestTenure(in: state) {
             reports.append(.score(tenure, leaderboard: GameCenterID.tenureDays))

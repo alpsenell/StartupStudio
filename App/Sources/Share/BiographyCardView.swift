@@ -56,7 +56,7 @@ struct BiographyCardView: View {
             .padding(.top, 24)
             .padding(.bottom, 16)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            ShareFooter(line: "Replay this life", code: seedCode)
+            ShareFooter(line: state.rules.stake > 0 ? "Stake \(state.rules.stake)" : "Replay this life", code: seedCode)
         }
         .background(ShareInk.paper)
         .overlay {

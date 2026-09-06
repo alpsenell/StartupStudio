@@ -107,10 +107,9 @@ targets:
         Debug:
           CODE_SIGN_ENTITLEMENTS: App/StartupStudio.debug.entitlements
         Release:
-          # R8: the screenshot fixtures (App/Resources/Fixtures) are DEBUG
-          # data for `-autoFixture`. This keeps them out of the shipped
-          # bundle — Xcode filters build-phase inputs by these globs.
-          EXCLUDED_SOURCE_FILE_NAMES: "release-*.json"
+          # R8 kept the fixtures (App/Resources/Fixtures) out of Release;
+          # iteration 8's scenarios start from them, so they ship now.
+          EXCLUDED_SOURCE_FILE_NAMES: ""
     # The build number, rewritten by `make gen` from the commit count.
     # An xcconfig because xcodegen cannot shell out and the number must
     # not be hand-edited before every upload.

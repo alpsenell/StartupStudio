@@ -131,6 +131,14 @@ struct FounderBiographyView: View {
                     .multilineTextAlignment(.center)
             }
 
+            // Iteration 8: the stake the run was played at.
+            if state.rules.stake > 0, let stake = StakeLadder.stake(state.rules.stake) {
+                Label("Stake \(stake.level) · \(stake.title)", systemImage: "flag.checkered")
+                    .font(.system(.footnote, design: .rounded).weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .accessibilityLabel("Played at stake \(stake.level), \(stake.title)")
+            }
+
             // The portrait sits beside the name until the name needs the
             // width, and then above it.
             let headerLayout = typeSize.isAccessibilitySize

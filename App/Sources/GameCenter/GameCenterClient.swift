@@ -58,4 +58,9 @@ extension GameCenterID {
 
     /// Today's company (recurring, daily, UTC, money, descending).
     static let daily = leaderboard("daily")
+    /// Iteration 8: the highest stake a ranked company reached a
+    /// successful ending at.
+    static let stakes = leaderboard("stakes")
+    /// Iteration 8: this week's featured scenario, recurring weekly.
+    static let scenario = leaderboard("scenario")
 }

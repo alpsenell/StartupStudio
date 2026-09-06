@@ -15,6 +15,9 @@ public enum RunMode: Codable, Equatable, Hashable, Sendable {
     case standard
     case custom
     case daily(day: Int)
+    /// Iteration 8: an authored start with an objective and a deadline
+    /// (`id` names it; `startDay` is the fixture's day when it began).
+    case scenario(id: String, startDay: Int)
 
     /// Whether an ending in this mode may post to the ranked boards. An
     /// heirloom (R2) makes a standard run unranked too; that check lives
@@ -22,12 +25,17 @@ public enum RunMode: Codable, Equatable, Hashable, Sendable {
     public var isRanked: Bool {
         switch self {
         case .standard, .daily: true
-        case .custom: false
+        case .custom, .scenario: false
         }
     }
 
     public var isDaily: Bool {
         if case .daily = self { return true }
+        return false
+    }
+
+    public var isScenario: Bool {
+        if case .scenario = self { return true }
         return false
     }
 }
@@ -44,16 +52,53 @@ public struct GameRules: Codable, Equatable, Hashable, Sendable {
     public var incumbentEnabled: Bool
     /// A starting balance instead of the difficulty's own. `nil` keeps it.
     public var startingCash: Int?
+    /// Iteration 8: the stake, 0–10 (`StakeLadder`). Saves from before
+    /// stakes decode as 0.
+    public var stake: Int
 
-    public init(rivalsEnabled: Bool = true, incumbentEnabled: Bool = true, startingCash: Int? = nil) {
+    public init(
+        rivalsEnabled: Bool = true, incumbentEnabled: Bool = true, startingCash: Int? = nil,
+        stake: Int = 0
+    ) {
         self.rivalsEnabled = rivalsEnabled
         self.incumbentEnabled = incumbentEnabled
         self.startingCash = startingCash
+        self.stake = min(max(0, stake), StakeLadder.count)
     }
 
     public static let standard = GameRules()
 
     public var isStandard: Bool { self == .standard }
+
+    /// Standard in everything but the stake: still ranked, the way a
+    /// harder difficulty is.
+    public var isStakeOnly: Bool {
+        stake > 0 && GameRules(stake: stake) == self
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case rivalsEnabled, incumbentEnabled, startingCash, stake
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            rivalsEnabled: try container.decodeIfPresent(Bool.self, forKey: .rivalsEnabled) ?? true,
+            incumbentEnabled: try container.decodeIfPresent(Bool.self, forKey: .incumbentEnabled) ?? true,
+            startingCash: try container.decodeIfPresent(Int.self, forKey: .startingCash),
+            stake: try container.decodeIfPresent(Int.self, forKey: .stake) ?? 0
+        )
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(rivalsEnabled, forKey: .rivalsEnabled)
+        try container.encode(incumbentEnabled, forKey: .incumbentEnabled)
+        try container.encodeIfPresent(startingCash, forKey: .startingCash)
+        if stake > 0 {
+            try container.encode(stake, forKey: .stake)
+        }
+    }
 }
 
 extension BalanceConfig {
@@ -70,6 +115,7 @@ extension BalanceConfig {
         if let cash = rules.startingCash {
             copy.startingCash = cash
         }
+        StakeLadder.apply(level: rules.stake, to: &copy)
         return copy
     }
 }

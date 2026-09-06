@@ -73,6 +73,10 @@ final class GameSession {
     var customGameRequested = false
     /// Whether the full game is owned (R6).
     var unlock: UnlockState = .unknown
+    /// Iteration 8: the scenario under way, and the result the front door
+    /// still has to show.
+    var scenario_: ScenarioState?
+    var scenarioResult: ScenarioResult?
 
     /// The gates composed into `engine.advanceGate`, by `installGate`.
     private(set) var gates: [any AdvanceGate] = []

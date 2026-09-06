@@ -93,6 +93,16 @@ enum GameCenterCatalog {
             title: "Today's company",
             sort: .descending, format: .money, isRecurring: true
         ))
+        boards.append(Leaderboard(
+            id: GameCenterID.scenario,
+            title: "This week's scenario",
+            sort: .descending, format: .integer, isRecurring: true
+        ))
+        boards.append(Leaderboard(
+            id: GameCenterID.stakes,
+            title: "Highest stake won",
+            sort: .descending, format: .integer, isRecurring: false
+        ))
         return boards
     }()
 

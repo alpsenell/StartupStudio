@@ -15,11 +15,13 @@ struct TitleMenu {
         static let custom = true
         /// R4.
         static let fromCode = true
+        /// Iteration 8.
+        static let scenarios = true
     }
 
     struct Row: Identifiable {
         enum ID: String {
-            case daily, custom, fromCode
+            case daily, custom, fromCode, scenarios
         }
 
         let id: ID
@@ -38,10 +40,12 @@ struct TitleMenu {
     static func make(
         onDaily: @escaping () -> Void,
         onCustom: @escaping () -> Void,
-        onFromCode: @escaping () -> Void
+        onFromCode: @escaping () -> Void,
+        onScenarios: @escaping () -> Void = {}
     ) -> TitleMenu {
         TitleMenu(rows: [
             Row(id: .daily, title: "Today's company", systemImage: "calendar", isEnabled: Flags.daily, action: onDaily),
+            Row(id: .scenarios, title: "Scenarios", systemImage: "star.circle", isEnabled: Flags.scenarios, action: onScenarios),
             Row(id: .custom, title: "Custom company", systemImage: "slider.horizontal.3", isEnabled: Flags.custom, action: onCustom),
             Row(id: .fromCode, title: "From a code", systemImage: "number", isEnabled: Flags.fromCode, action: onFromCode),
         ])
@@ -57,7 +61,9 @@ struct TitleMenuView: View {
 
     var body: some View {
         if !menu.enabledRows.isEmpty {
-            HStack(spacing: Theme.Spacing.sm) {
+            // Four rows read as two pairs; three or fewer as one line.
+            let columns = Array(repeating: GridItem(.flexible(), spacing: Theme.Spacing.sm), count: menu.enabledRows.count > 3 ? 2 : menu.enabledRows.count)
+            LazyVGrid(columns: columns, spacing: Theme.Spacing.sm) {
                 ForEach(menu.enabledRows) { row in
                     Button {
                         Haptics.tap()

@@ -11,8 +11,8 @@ first (the entitlement is already in `project.yml`).
 
 - **48 achievements** — 42 goals at 10 points, 6 endings at 50: **720**
   points of the 1,000 a game may award.
-- **8 leaderboards** — six ranked all-time boards, one tenure board, and
-  the recurring daily.
+- **10 leaderboards** — six ranked all-time boards, one tenure board, the stakes board,
+  the recurring daily and the recurring weekly scenario.
 
 Every id is bundle-prefixed (`com.alpsenel.startupstudio.…`) so the
 whole table can be pasted.
@@ -87,6 +87,8 @@ whole table can be pasted.
 | 6 | `com.alpsenel.startupstudio.lb.still_yours_net_worth.hard` | Still yours — Hard | Money (US Dollar, no decimals) | High to Low | Classic (all time) |
 | 7 | `com.alpsenel.startupstudio.lb.tenure_days` | Longest anyone stayed | Integer | High to Low | Classic (all time) |
 | 8 | `com.alpsenel.startupstudio.lb.daily` | Today's company | Money (US Dollar, no decimals) | High to Low | **Recurring — 1 day, starts 00:00 UTC** |
+| 9 | `com.alpsenel.startupstudio.lb.stakes` | Highest stake won | Integer | High to Low | All-time (iteration 8) |
+| 10 | `com.alpsenel.startupstudio.lb.scenario` | This week's scenario | Integer | High to Low | **Recurring — 7 days, starts Monday 00:00 UTC** (iteration 8) |
 
 ## What the game posts, and when
 

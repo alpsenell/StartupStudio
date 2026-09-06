@@ -171,7 +171,7 @@ enum DebugLaunch {
         // Iteration 7 (R3): `-autoDaily` is entered *from* the front door —
         // the daily is a title-screen row — so a pass carrying it keeps the
         // door even alongside a speed, and the daily starts itself there.
-        guard !arguments.contains("-autoDaily") else { return false }
+        guard !arguments.contains("-autoDaily"), !arguments.contains("-autoScenario") else { return false }
         return arguments.contains("-autoSpeed") || arguments.contains("-autoTab")
             || arguments.contains("-autoRoute") || arguments.contains("-autoTour")
         #else
@@ -285,6 +285,12 @@ extension DebugLaunch {
     /// is `TutorialStep.rawValue`, 0–8.
     static var launchTourBeat: TutorialStep? {
         value(after: "-autoTour").flatMap(Int.init).flatMap(TutorialStep.init(rawValue:))
+    }
+
+    /// `-autoScenario <id>`: play that scenario from the front door
+    /// (iteration 8); with `-autoSpeed` it plays through.
+    static var launchScenarioID: String? {
+        value(after: "-autoScenario")
     }
 
     /// `-autoDaily <yyyymmdd>`: play that day's company (R3).

@@ -24,6 +24,9 @@ struct TitleScreen: View {
     @State private var enteringCode = false
     /// Iteration 7 (R3): today's company, while its sheet is up.
     @State private var dailyEntry: DailyEntry?
+    /// Iteration 8: the Scenarios room, and a finished scenario's card.
+    @State private var showingScenarios = false
+    @State private var scenarioResult: ScenarioResult?
 
     var body: some View {
         ScrollView {
@@ -51,7 +54,8 @@ struct TitleScreen: View {
                 menu: .make(
                     onDaily: { openDaily(DailyChallenge.today()) },
                     onCustom: { customCompany(code: nil) },
-                    onFromCode: { enteringCode = true }
+                    onFromCode: { enteringCode = true },
+                    onScenarios: { showingScenarios = true }
                 )
             )
             .padding(Theme.Spacing.lg)
@@ -72,6 +76,19 @@ struct TitleScreen: View {
             // from the one screen every launch passes through, and starts
             // mapping the run's events onto achievements. Idempotent.
             session.startGameCenter()
+            // Iteration 8: a scenario just decided shows its card once;
+            // `-autoScenario <id>` starts one from here.
+            if let result = session.scenarioResult {
+                session.scenarioResult = nil
+                scenarioResult = result
+            } else if let id = DebugLaunch.launchScenarioID {
+                // `-autoScenario room` opens the room; an id plays it.
+                if let scenario = ScenarioCatalog.scenario(id) {
+                    session.playScenario(scenario)
+                } else {
+                    showingScenarios = true
+                }
+            }
             // A daily that has just been scored — the year ran out, or the
             // company ended — hands itself back here, and the result card
             // is the only thing that says so. Shown once.
@@ -97,6 +114,21 @@ struct TitleScreen: View {
             SeedCodeEntrySheet(prefill: session.pendingSeedCode) { code in
                 customCompany(code: code)
             }
+        }
+        // Iteration 8: the Scenarios room and a finished scenario's card.
+        .sheet(isPresented: $showingScenarios) {
+            ScenariosSheet(
+                entries: session.scenarioEntries(),
+                totalStars: session.scenarioLedger.totalStars,
+                onPlay: { scenario in
+                    showingScenarios = false
+                    session.playScenario(scenario)
+                },
+                onClose: { showingScenarios = false }
+            )
+        }
+        .sheet(item: $scenarioResult) { result in
+            ScenarioResultSheet(result: result) { scenarioResult = nil }
         }
         // Iteration 7 (R3): today's company — the challenge, the attempt
         // under way, or the result once the day is recorded.
