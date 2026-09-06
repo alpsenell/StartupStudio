@@ -270,6 +270,8 @@ public enum HomeDecor {
         case .soldUp: "The paperweight"
         case .oustedByBoard: "The board's gift"
         case .bankruptcy: "The last invoice"
+        // Iteration 9 — L2's seventh ending, the one L7 left room for.
+        case .walkedAway: "The house keys"
         }
     }
 
@@ -281,6 +283,7 @@ public enum HomeDecor {
         case .soldUp: "It holds paper down. It is good at that."
         case .oustedByBoard: "They had it made before the vote."
         case .bankruptcy: "Framed. Everyone should have one."
+        case .walkedAway: "Still on the hook by the door. You never gave them back."
         }
     }
 
