@@ -330,9 +330,11 @@ extension GameState {
         if gameOver != nil { return "This company already had its ending." }
         if let epilogue { return "This company had its ending on day \(epilogue.day)." }
         if day < config.walkAwayMinDay {
-            let years = Swift.max(1, config.walkAwayMinDay / Self.daysPerYear)
-            return "Too soon. Walking out before \(years) year"
-                + (years == 1 ? "" : "s") + " in is quitting, not leaving."
+            // Weeks, not years: the default gate is a year and a half,
+            // and integer division would call that "1 year".
+            let weeks = Swift.max(1, (config.walkAwayMinDay - day) / Self.daysPerWeek)
+            return "Too soon. \(weeks) more week" + (weeks == 1 ? "" : "s")
+                + " — walking out this early is quitting, not leaving."
         }
         if company.cash < 0 || loanBalance > 0 {
             return loanBalance > 0

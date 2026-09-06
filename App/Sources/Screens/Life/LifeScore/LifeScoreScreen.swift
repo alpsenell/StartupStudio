@@ -63,9 +63,9 @@ struct WalkAwayTerms: Equatable {
 
     var ready: Bool { blocker == nil }
 
-    /// A game year is 52 weeks of 7 days, the way the rest of the app
-    /// counts one.
-    var minYears: Int { max(1, minDay / (GameState.daysPerWeek * 52)) }
+    /// The gate in weeks, not years: the default is a year and a half,
+    /// and "1 years in" is what integer division does to that.
+    var minWeeks: Int { max(1, minDay / GameState.daysPerWeek) }
 }
 
 /// The screen's content without the scroll view, so it can be rendered
@@ -173,7 +173,7 @@ struct LifeScoreContent: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     gateRow(
-                        "\(walkAway.minYears) years in (day \(walkAway.day) of \(walkAway.minDay))",
+                        "\(walkAway.minWeeks) weeks in (day \(walkAway.day) of \(walkAway.minDay))",
                         met: walkAway.day >= walkAway.minDay
                     )
                     gateRow("No debt, nothing overdrawn", met: walkAway.debtFree)
