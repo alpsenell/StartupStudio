@@ -456,7 +456,14 @@ enum LifeSystem {
                 state: &state, balance: balance, content: content
             ))
             FounderSystem.practice(.conversation, multiplier: 2, state: &state, balance: balance)
-        case .rest, .gym, .dateNight, .friends, .hobby, .familyTime, .spa:
+        // MARK: Iteration 9 — L4 (friends)
+        case .friends:
+            // The weekend goes to whoever the founder has seen least, and
+            // the other two hear about it. No company effect: this is the
+            // founder's own Saturday.
+            FriendSystem.spendWeekend(&state, content)
+        // MARK: end of Iteration 9 — L4
+        case .rest, .gym, .dateNight, .hobby, .familyTime, .spa:
             break
         }
         return events

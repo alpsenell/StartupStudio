@@ -1688,5 +1688,136 @@
         ]
       }
     ]
+  },
+  {
+    "id": "friend_wedding_invite",
+    "headline": "One of your oldest friends is getting married, and the date is a Saturday.",
+    "body": "The invitation has been on the fridge for a month. It is a two-hour drive, it is the whole weekend, and they asked you to say something at the dinner.",
+    "weight": 3,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "friends_in_your_life"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "go",
+        "label": "Go, and write the speech",
+        "detail": "An evening · −$400 · mood +12 · relationships +10",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "wallet": -400,
+            "mood": 12,
+            "relationships": 10,
+            "energy": -6
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1,
+          "minWallet": 400
+        }
+      },
+      {
+        "id": "gift",
+        "label": "Send the gift and your apologies",
+        "detail": "−$200 · mood −4 · relationships −6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -200,
+            "mood": -4,
+            "relationships": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "friend_started_something",
+    "headline": "A friend quit their job and started something of their own.",
+    "weight": 3,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "friends_in_your_life"
+      ]
+    },
+    "impact": {
+      "mood": 4,
+      "relationships": 3
+    }
+  },
+  {
+    "id": "friend_hit_the_wall",
+    "headline": "A friend has stopped answering anybody, including you.",
+    "body": "Three unread messages and a voicemail. You know exactly what this is, because you were here eighteen months ago and somebody drove over.",
+    "weight": 3,
+    "cooldownDays": 220,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "friends_in_your_life"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "drive_over",
+        "label": "Drive over tonight",
+        "detail": "An evening · energy −8 · relationships +12 · mood +4",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -8,
+            "relationships": 12,
+            "mood": 4
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "text_back",
+        "label": "Text back and hope",
+        "detail": "Free · mood −6 · relationships −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "friend_leaving_town",
+    "headline": "A friend is taking a job on the other side of the world.",
+    "weight": 2,
+    "cooldownDays": 400,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "friends_in_your_life"
+      ]
+    },
+    "impact": {
+      "mood": -6,
+      "relationships": -4
+    }
   }
 ]

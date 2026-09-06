@@ -92,6 +92,7 @@ public enum Reducer {
         // MARK: L3 (children)
 
         // MARK: L4 (friends)
+        FriendSystem.run,
 
         // MARK: L5 (side project)
 
@@ -387,6 +388,30 @@ public enum Reducer {
         // MARK: L3 (children)
 
         // MARK: L4 (friends)
+        case let .callFriend(friendID):
+            events = FriendSystem.call(
+                friendID: friendID, state: &state, balance: balance, content: content
+            )
+        case let .seeFriend(friendID):
+            events = FriendSystem.see(
+                friendID: friendID, state: &state, balance: balance, content: content
+            )
+        case let .hireFriend(friendID):
+            events = FriendSystem.hire(
+                friendID: friendID, state: &state, balance: balance, content: content
+            )
+        case let .investInFriend(friendID, amount):
+            events = FriendSystem.invest(
+                friendID: friendID, amount: amount, state: &state, balance: balance, content: content
+            )
+        case let .borrowFromFriend(friendID, amount):
+            events = FriendSystem.borrow(
+                friendID: friendID, amount: amount, state: &state, balance: balance, content: content
+            )
+        case let .repayFriend(friendID, amount):
+            events = FriendSystem.repay(
+                friendID: friendID, amount: amount, state: &state, balance: balance, content: content
+            )
 
         // MARK: L5 (side project)
 
