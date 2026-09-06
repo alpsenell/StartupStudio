@@ -1780,6 +1780,16 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     /// The four founding origins' day-0 deltas (WS-H).
     public var origins: OriginBalance = .default
 
+    // MARK: Iteration 9 blocks
+
+    // MARK: L5 (side project)
+    /// The five side-project tracks and their chapters. Inline default,
+    /// like `codebase` above, so `"sideProject"` stays an optional key —
+    /// and behind `.startSideProject`, so a run that never starts one
+    /// never reads it.
+    public var sideProject: SideProjectBalance = .default
+    // MARK: end L5 (side project)
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

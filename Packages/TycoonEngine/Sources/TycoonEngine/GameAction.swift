@@ -196,6 +196,15 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: L5 (side project)
 
+    /// L5: picks up one of the five tracks. Free, and refused while
+    /// another one is under way.
+    case startSideProject(track: String)
+    /// L5: one evening on the current project.
+    case workOnSideProject
+    /// L5: puts it down. Finished chapters stay finished; the current one
+    /// does not.
+    case abandonSideProject
+
     // MARK: L6 (sabbatical)
 
     // MARK: L7 (furnish)

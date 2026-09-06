@@ -395,9 +395,25 @@ struct FounderBiographyView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                // MARK: L5 (side project)
+                // One line per track the founder actually finished. The
+                // copy is L5's, in the engine catalog; this is the call.
+                ForEach(sideProjectLines, id: \.self) { line in
+                    Text(line)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.accent)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                // MARK: end L5 (side project)
             }
         }
     }
+
+    // MARK: L5 (side project)
+    private var sideProjectLines: [String] {
+        state.life.sideProject?.biographyLines(balance: balance) ?? []
+    }
+    // MARK: end L5 (side project)
 
     /// "Mika", "Mika and Sam", "Mika, Sam and Noor".
     private func childrenList(_ children: [Child]) -> String {

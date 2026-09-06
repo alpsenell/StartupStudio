@@ -94,6 +94,9 @@ public enum Reducer {
         // MARK: L4 (friends)
 
         // MARK: L5 (side project)
+        // Returns on its first line unless a project is under way, and
+        // only the marathon has anything to do daily at all.
+        SideProjectSystem.run,
 
         // MARK: L6 (sabbatical)
 
@@ -389,6 +392,12 @@ public enum Reducer {
         // MARK: L4 (friends)
 
         // MARK: L5 (side project)
+        case let .startSideProject(track):
+            events = SideProjectSystem.start(track: track, state: &state, balance: balance)
+        case .workOnSideProject:
+            events = SideProjectSystem.work(state: &state, balance: balance)
+        case .abandonSideProject:
+            events = SideProjectSystem.abandon(state: &state, balance: balance)
 
         // MARK: L6 (sabbatical)
 

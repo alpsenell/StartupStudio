@@ -226,6 +226,7 @@ extension Route {
         // MARK: L3 (children)
         // MARK: L4 (friends)
         // MARK: L5 (side project)
+        case "sideproject": .sideProject
         // MARK: L6 (sabbatical)
         // MARK: L7 (furnish)
         // MARK: end of Iteration 9
@@ -334,6 +335,12 @@ extension DebugLaunch {
     // MARK: L4 (friends)
 
     // MARK: L5 (side project)
+
+    /// `-autoSideProject <track>`: the track a headless pass starts and
+    /// then feeds its evenings to. See `SideProjectDebug`.
+    static var launchSideProjectTrack: String? {
+        value(after: "-autoSideProject")?.lowercased()
+    }
 
     // MARK: L6 (sabbatical)
 
