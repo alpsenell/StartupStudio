@@ -130,6 +130,26 @@ struct DailyResultCard: View {
                     }
                 }
 
+                // Iteration 8: the year as squares, and the text that
+                // pastes anywhere with the code on the end.
+                if let grid = entry.grid, !grid.isEmpty {
+                    Text(YearGrid.wrapped(grid))
+                        .font(.system(.caption, design: .monospaced))
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityLabel(YearGrid.spoken(grid))
+                    ShareLink(item: shareText(grid)) {
+                        Label("Share the year", systemImage: "square.and.arrow.up")
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    }
+                    .buttonStyle(PixelButtonStyle())
+                    .simultaneousGesture(TapGesture().onEnded {
+                        Haptics.tap()
+                        Sounds.play(.tap)
+                    })
+                    .accessibilityHint("Shares the squares, the score and the day's code as text")
+                }
+
                 Label(boardNote, systemImage: entry.submitted ? "checkmark.seal.fill" : "clock.badge.xmark")
                     .font(.caption)
                     .foregroundStyle(entry.submitted ? Theme.positiveCash : Theme.pixelInk.opacity(0.7))
@@ -149,6 +169,16 @@ struct DailyResultCard: View {
 
     private var scoreTint: Color {
         entry.score >= 0 ? Theme.pixelAccent : Theme.negativeCash
+    }
+
+    private func shareText(_ grid: String) -> String {
+        let code = SeedCode(seed: challenge.seed, origin: challenge.origin, difficulty: challenge.difficulty)
+        return YearGrid.shareText(
+            title: "STARTUP STUDIO · \(challenge.dateText)",
+            strip: grid,
+            scoreLine: "\(entry.score.money) · \(entry.headline) on day \(entry.gameDay)",
+            code: code.encoded
+        )
     }
 
     private var boardNote: String {

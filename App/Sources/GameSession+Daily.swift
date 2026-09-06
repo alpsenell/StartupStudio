@@ -157,7 +157,8 @@ extension GameSession {
             ending: state.gameOver?.kind.rawValue,
             gameDay: state.day,
             lines: DailyResultLines.lines(for: state, balance: engine.balance),
-            finishedAt: now
+            finishedAt: now,
+            grid: YearGrid.strip(YearGrid.squares(state: state))
         ))
         try? dailyStores.ledger.save(ledger, appVersion: Self.dailyAppVersion)
 

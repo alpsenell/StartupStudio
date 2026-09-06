@@ -66,6 +66,22 @@ enum ShareCard {
     case officePhoto(engine: GameEngine)
 
     /// The share sheet's title and the preview's caption.
+    /// Iteration 8: the year as squares plus the score and the code, for
+    /// the biography — the strip a reader pastes without the picture.
+    var shareText: String? {
+        guard case .biography(let engine, let info) = self else { return nil }
+        let state = engine.state
+        let strip = YearGrid.strip(YearGrid.squares(state: state))
+        guard !strip.isEmpty else { return nil }
+        let code = SeedCode(seed: state.seed, origin: state.origin, difficulty: state.difficulty)
+        return YearGrid.shareText(
+            title: "STARTUP STUDIO · \(state.company.name)",
+            strip: strip,
+            scoreLine: "\(state.founderNetWorth(balance: engine.balance).money) · \(info.kind.headline) on day \(state.day)",
+            code: state.seed == 0 ? nil : code.encoded
+        )
+    }
+
     var title: String {
         switch self {
         case .biography(let engine, let info):
@@ -191,6 +207,20 @@ struct ShareCardSheet: View {
                         Sounds.play(.tap)
                     })
                     .accessibilityHint("Opens the system share sheet with the card as a 1080 by 1350 image")
+                }
+
+                if let text = card.shareText {
+                    ShareLink(item: text) {
+                        Label("Share the year as text", systemImage: "square.grid.3x3")
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Theme.accent)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        Haptics.tap()
+                        Sounds.play(.tap)
+                    })
+                    .accessibilityHint("Shares the year as coloured squares with the score and the code")
                 }
 
                 Text("A 1080 × 1350 image, the size a story wants.")

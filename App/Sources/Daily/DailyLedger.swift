@@ -30,6 +30,9 @@ struct DailyLedger: Codable, Equatable, Sendable {
         /// the card never needs the state back.
         var lines: [String]
         var finishedAt: Date
+        /// Iteration 8: the year as squares (`YearGrid.strip`), composed at
+        /// the stop like the lines. `nil` on entries from before the grid.
+        var grid: String?
 
         var endingKind: EndingKind? {
             ending.flatMap(EndingKind.init(rawValue:))
