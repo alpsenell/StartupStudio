@@ -152,6 +152,9 @@
     "%@ focus" : {
 
     },
+    "%@ has the keys" : {
+
+    },
     "%@ is running, ends day %lld" : {
       "localizations" : {
         "en" : {
@@ -268,6 +271,9 @@
     "%@ will be deleted for good." : {
 
     },
+    "%@ works here now. They're on the team sheet." : {
+
+    },
     "%@ · %@" : {
       "localizations" : {
         "en" : {
@@ -284,6 +290,36 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ · %2$@ · %3$@"
+          }
+        }
+      }
+    },
+    "%@ · %@ · year %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@ · year %3$lld"
+          }
+        }
+      }
+    },
+    "%@ · %@. One attempt, one game year, everyone on the same seed. Finish it and the season's face is yours to found with." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@. One attempt, one game year, everyone on the same seed. Finish it and the season's face is yours to found with."
+          }
+        }
+      }
+    },
+    "%@ · %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld"
           }
         }
       }
@@ -342,6 +378,16 @@
     "%@ · white-label" : {
 
     },
+    "%@ → %@ · it %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ → %2$@ · it %3$@"
+          }
+        }
+      }
+    },
     "%@%%" : {
 
     },
@@ -371,6 +417,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@%2$@, fit %3$@ %4$@"
+          }
+        }
+      }
+    },
+    "%@%@. %@ %@ %lld of 3 stars." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@%2$@. %3$@ %4$@ %5$lld of 3 stars."
           }
         }
       }
@@ -406,12 +462,42 @@
         }
       }
     },
+    "%@, %@ points. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@ points. %3$@"
+          }
+        }
+      }
+    },
     "%@, %@ this week" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@, %2$@ this week"
+          }
+        }
+      }
+    },
+    "%@, %@, %@, bond %lld of 100" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, %3$@, bond %4$lld of 100"
+          }
+        }
+      }
+    },
+    "%@, %@, bond %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, bond %3$lld"
           }
         }
       }
@@ -436,6 +522,16 @@
         }
       }
     },
+    "%@, %@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@. %3$@"
+          }
+        }
+      }
+    },
     "%@, %@. Rapport %lld of 100." : {
       "localizations" : {
         "en" : {
@@ -452,6 +548,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@, %2$lld people"
+          }
+        }
+      }
+    },
+    "%@, %lld, %@, %@, year %lld, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$lld, %3$@, %4$@, year %5$lld, %6$@"
           }
         }
       }
@@ -569,6 +675,16 @@
         }
       }
     },
+    "%@. %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@. %2$@ %3$@"
+          }
+        }
+      }
+    },
     "%@. %@. %@" : {
       "localizations" : {
         "en" : {
@@ -604,6 +720,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@, was %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@, was %3$@"
           }
         }
       }
@@ -653,6 +779,16 @@
         }
       }
     },
+    "%lld compan%@, %lld generation%@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld compan%2$@, %3$lld generation%4$@."
+          }
+        }
+      }
+    },
     "%lld conversation%@ left" : {
       "localizations" : {
         "en" : {
@@ -669,6 +805,46 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld conversation%2$@ left tonight."
+          }
+        }
+      }
+    },
+    "%lld day%@ ago" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld day%2$@ ago"
+          }
+        }
+      }
+    },
+    "%lld day%@ before the friendship starts paying for it." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld day%2$@ before the friendship starts paying for it."
+          }
+        }
+      }
+    },
+    "%lld day%@ left" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld day%2$@ left"
+          }
+        }
+      }
+    },
+    "%lld day%@ left · %@ is running it" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld day%2$@ left · %3$@ is running it"
           }
         }
       }
@@ -701,6 +877,19 @@
           }
         }
       }
+    },
+    "%lld evening%@ in" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld evening%2$@ in"
+          }
+        }
+      }
+    },
+    "%lld evenings" : {
+
     },
     "%lld goals finished" : {
 
@@ -785,6 +974,19 @@
         }
       }
     },
+    "%lld of %lld stars" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld stars"
+          }
+        }
+      }
+    },
+    "%lld of 3 stars" : {
+
+    },
     "%lld people · %lld conversation%@ left" : {
       "localizations" : {
         "en" : {
@@ -818,6 +1020,16 @@
         }
       }
     },
+    "%lld product%@, from every company you ever ran." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld product%2$@, from every company you ever ran."
+          }
+        }
+      }
+    },
     "%lld pts" : {
       "comment" : "Progress bar readout when the requirement is unknown: points banked. Abbreviation of points"
     },
@@ -833,6 +1045,39 @@
     },
     "%lld staff" : {
 
+    },
+    "%lld summer%@ at the studio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld summer%2$@ at the studio"
+          }
+        }
+      }
+    },
+    "%lld week%@ with %@%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld week%2$@ with %3$@%4$@"
+          }
+        }
+      }
+    },
+    "%lld weeks" : {
+
+    },
+    "%lld weeks here · bond %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld weeks here · bond %2$lld"
+          }
+        }
+      }
     },
     "%lld wk" : {
       "comment" : "Runway readout: weeks of cash left. wk is short for weeks"
@@ -927,13 +1172,23 @@
     "A 1080 × 1350 image, the size a story wants." : {
 
     },
+    "A caretaker needs %lld weeks on the payroll and a bond of %lld. Coffees, one-on-ones and evenings out are how you get there." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A caretaker needs %1$lld weeks on the payroll and a bond of %2$lld. Coffees, one-on-ones and evenings out are how you get there."
+          }
+        }
+      }
+    },
     "A code off a share card founds the same company on this phone: the same seed, the same start, the same stakes — and everything that comes with them." : {
 
     },
-    "A company from a code earns achievements but does not post to leaderboards." : {
+    "A company already in a situation, an objective, and a clock. Three stars for doing it fast, or for the money left over. The featured one has a board this week." : {
 
     },
-    "A custom company earns achievements but does not post to leaderboards." : {
+    "A company from a code earns achievements but does not post to leaderboards." : {
 
     },
     "A deep-pocketed giant that founds into your two best markets once you are worth the trouble." : {
@@ -960,13 +1215,35 @@
     "A premium for what you built: taking it ends the run as an acquisition." : {
 
     },
+    "A product reviewed at %lld or better goes in here, from any company you ever ran, when that company ends." : {
+
+    },
     "A rival" : {
       "comment" : "Stand-in for a rival studio whose name could not be resolved"
+    },
+    "A stake alone stays ranked. Any other change earns achievements but does not post to leaderboards." : {
+
     },
     "A title and the raise that comes with it" : {
       "comment" : "Detail under the promote answer to a resignation"
     },
+    "AWAY" : {
+      "comment" : "Pixel-font headline on the sabbatical screen while the founder is away. Uppercase A-Z, digits and $ . , : - + / ! ? ' % ( ) only — the bitmap font has no accents."
+    },
     "About" : {
+
+    },
+    "About %lld more evening%@ to finish this chapter, at how good you are right now." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "About %1$lld more evening%2$@ to finish this chapter, at how good you are right now."
+          }
+        }
+      }
+    },
+    "Abroad since day %lld — the bond stopped moving" : {
 
     },
     "Accept" : {
@@ -1001,6 +1278,9 @@
 
     },
     "All quiet. Time to build something." : {
+
+    },
+    "Already where it goes" : {
 
     },
     "Amenities" : {
@@ -1048,6 +1328,12 @@
     "Assignment for %@" : {
 
     },
+    "At the studio for %lld more days" : {
+
+    },
+    "At the studio for %lld more days, on no salary, sitting in the corner nearest the coffee." : {
+
+    },
     "Attention on a product that's already out: it lifts sales while it lasts, and decays daily. The reviews are already written." : {
 
     },
@@ -1067,8 +1353,14 @@
         }
       }
     },
+    "Awards night" : {
+
+    },
     "Away from the office — no output today." : {
 
+    },
+    "BACK" : {
+      "comment" : "Pixel-font headline on the sabbatical return sheet: the founder is home. Uppercase A-Z only — the bitmap font has no accents."
     },
     "BOARD" : {
 
@@ -1128,6 +1420,16 @@
     },
     "Bond" : {
       "comment" : "Decision sheet stat: how close this person is to the founder"
+    },
+    "Bond %lld of 100, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bond %1$lld of 100, %2$@"
+          }
+        }
+      }
     },
     "Bond fading · an evening would help" : {
       "comment" : "Roster status: the founder has not spent time with this person"
@@ -1271,8 +1573,21 @@
     "Chapter %lld flag" : {
 
     },
+    "Chapter %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chapter %1$lld of %2$lld"
+          }
+        }
+      }
+    },
     "Cheque" : {
       "comment" : "Decision sheet stat label: the money an investor is offering"
+    },
+    "Children: %@" : {
+
     },
     "Choose a difficulty" : {
 
@@ -1341,6 +1656,29 @@
     },
     "Come back tomorrow for a new one." : {
 
+    },
+    "Come home" : {
+
+    },
+    "Come home now · −%lld bond with %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Come home now · −%1$lld bond with %2$@"
+          }
+        }
+      }
+    },
+    "Coming home early costs %lld bond with %@, and the weeks are already paid for." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Coming home early costs %1$lld bond with %2$@, and the weeks are already paid for."
+          }
+        }
+      }
     },
     "Coming soon" : {
 
@@ -1611,6 +1949,9 @@
     "Due in %lld days once accepted" : {
 
     },
+    "Dynasty" : {
+
+    },
     "ETA %@" : {
 
     },
@@ -1636,6 +1977,15 @@
     "Empty" : {
       "comment" : "Save slot title: nothing saved here"
     },
+    "End it" : {
+
+    },
+    "End the summer early (bond %lld)" : {
+
+    },
+    "End the summer early?" : {
+
+    },
     "Ends the tour and opens every tab" : {
 
     },
@@ -1654,6 +2004,9 @@
     "Every chapter after the garage — the loft, the studio, the scale-up and whatever it was all for — on this Apple ID, forever." : {
 
     },
+    "Every company you finish goes in here. When the next one is founded by a child, an old employee, or you again, it hangs under the last." : {
+
+    },
     "Every development slot is busy. Ship something, or move to a bigger office for more." : {
 
     },
@@ -1670,6 +2023,9 @@
 
     },
     "Everyone's gone home." : {
+
+    },
+    "Everything you do is for the company. This is the one thing that isn't." : {
 
     },
     "Expenses" : {
@@ -1696,6 +2052,9 @@
     "Finances" : {
       "comment" : "Money sheet link to the finance ledger"
     },
+    "Finishes with: %@" : {
+
+    },
     "Fire" : {
 
     },
@@ -1709,6 +2068,9 @@
       "comment" : "Launch day figure: revenue in the first week"
     },
     "Fit multiplies launch quality. Locked types need research first." : {
+
+    },
+    "Flying home means telling %@ you did not think they could do it." : {
 
     },
     "Folds" : {
@@ -1739,8 +2101,14 @@
     "Founder salary" : {
 
     },
+    "Four chapters, a season of your evenings, and a line in your biography that is not about the company." : {
+
+    },
     "Four things you'll be juggling from day one." : {
       "comment" : "Onboarding page subheading under the heading above"
+    },
+    "Four to twelve weeks. The company keeps running without you — which is either the proof it works, or the way you find out it doesn't." : {
+
     },
     "Four ways to found it. Each one costs something the others don't." : {
       "comment" : "Onboarding page subheading under the heading above"
@@ -1748,8 +2116,14 @@
     "Free" : {
 
     },
+    "Free to begin · costs evenings from here" : {
+
+    },
     "Free, but loyalty takes a hit" : {
       "comment" : "Default detail under the firm answer to a staff question"
+    },
+    "Friends" : {
+
     },
     "Friends with %@" : {
 
@@ -1786,6 +2160,12 @@
     "Frontend" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
     },
+    "Furnish" : {
+
+    },
+    "Furnish the home, %@" : {
+
+    },
     "Game" : {
 
     },
@@ -1796,6 +2176,9 @@
 
     },
     "Give a gift (%@)" : {
+
+    },
+    "Go again" : {
 
     },
     "Go to HQ" : {
@@ -1821,6 +2204,15 @@
     },
     "HR" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
+    },
+    "Hall of Fame" : {
+
+    },
+    "Hand over the keys" : {
+
+    },
+    "Hand the company to somebody you trust and disappear for a month. You come back rested; you come back to whatever they did." : {
+
     },
     "Hang out (%@ of your own)" : {
 
@@ -1942,6 +2334,15 @@
     "Issue" : {
 
     },
+    "It %@ at home" : {
+
+    },
+    "It burned %@ while you were gone." : {
+
+    },
+    "It made money without you in the building." : {
+
+    },
     "It starts in a garage with one desk. Hire people and it grows into a loft, a studio, a campus — every move costs rent you have to keep earning." : {
       "comment" : "Body of the onboarding panel about the office"
     },
@@ -1963,6 +2364,9 @@
     "Keep building" : {
       "comment" : "Detail under the refuse answer to a buyout offer"
     },
+    "Keep going" : {
+
+    },
     "Keep it" : {
 
     },
@@ -1978,8 +2382,20 @@
     "Keep working" : {
 
     },
+    "Kids grow up faster than companies here — a child born in the garage is a teenager by the campus. There is nobody in the spare room yet." : {
+
+    },
+    "Kids grow up faster than companies. A child born in the garage is a teenager by the campus." : {
+
+    },
     "Kind" : {
       "comment" : "Decision sheet stat label: which sort of buyout this is"
+    },
+    "LIFE" : {
+      "comment" : "Kicker under the life score on the biography's life card. Drawn in the pixel bitmap font: uppercase ASCII only, no accents, keep it short."
+    },
+    "LIFE SCORE" : {
+      "comment" : "Kicker over the founder's life score on its own screen. Drawn in the pixel bitmap font: uppercase ASCII only, no accents, keep it short."
     },
     "LOCKED" : {
 
@@ -2005,8 +2421,14 @@
     "Lawyer" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
     },
+    "Leave %@?" : {
+
+    },
     "Let it go" : {
       "comment" : "Answer to a category challenge: do nothing and take what comes"
+    },
+    "Let it run" : {
+
     },
     "Let me think" : {
 
@@ -2022,6 +2444,9 @@
     },
     "Life" : {
       "comment" : "Money sheet link to the Life tab"
+    },
+    "Life score %lld of 100" : {
+
     },
     "List price" : {
       "comment" : "Price tier caption: this tier earns exactly the list price per buyer"
@@ -2091,6 +2516,9 @@
     "Mentor them" : {
 
     },
+    "Messages" : {
+      "comment" : "Bitmap title over the phone: the status bar and the share card. Uppercase A-Z only: the pixel face has no lowercase and no accents"
+    },
     "Miss the deadline and pay %@." : {
 
     },
@@ -2115,7 +2543,20 @@
     "More than 1.5× the team's median: morale slides, and a board adds it to the pressure." : {
 
     },
+    "Most on the table: %@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Most on the table: %1$@. %2$@"
+          }
+        }
+      }
+    },
     "Move" : {
+
+    },
+    "Move house and the boxes come with you — the walls do not. You put it all back where you want it." : {
 
     },
     "Move into the %@?" : {
@@ -2156,6 +2597,16 @@
     },
     "Needs a newer app" : {
       "comment" : "Save slot title: written by a newer version of the game"
+    },
+    "Net worth %@, life score %lld of 100" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Net worth %1$@, life score %2$lld of 100"
+          }
+        }
+      }
     },
     "New company" : {
 
@@ -2262,6 +2713,9 @@
     "Nobody can buy this any more." : {
 
     },
+    "Nobody has texted you. That is either peace or a warning." : {
+
+    },
     "Nobody is close to walking out." : {
 
     },
@@ -2278,6 +2732,9 @@
 
     },
     "Nobody on payroll yet." : {
+
+    },
+    "Nobody shipped." : {
 
     },
     "Nobody yet" : {
@@ -2301,6 +2758,9 @@
     "Not that desperate" : {
 
     },
+    "Not this week's scenario, so no board — the stars are yours." : {
+
+    },
     "Not yet" : {
 
     },
@@ -2308,6 +2768,9 @@
 
     },
     "Nothing here yet" : {
+
+    },
+    "Nothing here yet." : {
 
     },
     "Nothing in this filter matches “%@”." : {
@@ -2320,6 +2783,9 @@
 
     },
     "Nothing on the desk." : {
+
+    },
+    "Nothing on the ledger yet." : {
 
     },
     "Nothing on the market yet." : {
@@ -2335,6 +2801,18 @@
 
     },
     "Nothing to watch" : {
+
+    },
+    "Nothing yet. Babies remember nothing; everybody older keeps a ledger, and the last %lld entries stay on it." : {
+
+    },
+    "Nothing yet. That is the best possible news." : {
+
+    },
+    "Nothing yet. The shop sells the first few; seasons, endings and awards hand over the rest." : {
+
+    },
+    "Nothing. They kept the lights on and left the big calls to you, which is its own kind of answer." : {
 
     },
     "Now" : {
@@ -2361,7 +2839,16 @@
     "On hand" : {
       "comment" : "Weekly report figure: cash left"
     },
+    "On show: %@" : {
+
+    },
     "On the market" : {
+
+    },
+    "On the side" : {
+
+    },
+    "One at a time. Put it down and the chapter you are in goes with it — the ones you finished stay finished." : {
 
     },
     "One purchase. No subscription, and nothing else in the game is for sale. Your save is exactly where you left it either way." : {
@@ -2369,6 +2856,9 @@
     },
     "One thing from the last company" : {
       "comment" : "Onboarding page heading"
+    },
+    "Open %@'s ledger" : {
+
     },
     "Open Market Report" : {
 
@@ -2380,6 +2870,9 @@
 
     },
     "Open the fortnight" : {
+
+    },
+    "Open the life score breakdown" : {
 
     },
     "Open the team" : {
@@ -2395,6 +2888,9 @@
 
     },
     "Opens details and the focus editor" : {
+
+    },
+    "Opens each child's memory ledger and the evening and internship actions" : {
 
     },
     "Opens the amenities sheet" : {
@@ -2436,6 +2932,9 @@
     "Opens the weekly report" : {
 
     },
+    "Opens their memory ledger" : {
+
+    },
     "Opens this game" : {
       "comment" : "Spoken hint on a save slot the player is not in"
     },
@@ -2450,6 +2949,9 @@
     },
     "Ops" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
+    },
+    "Or somebody new — leave them unpicked." : {
+
     },
     "Org chart, %lld people" : {
 
@@ -2467,6 +2969,9 @@
       "comment" : "Money sheet row: loan principal still owed"
     },
     "Overdrawn by %@" : {
+
+    },
+    "Overdue. The bond is bleeding %@ a day." : {
 
     },
     "Owned" : {
@@ -2527,6 +3032,9 @@
     "Personality: %@" : {
 
     },
+    "Phone" : {
+
+    },
     "Pick a type, pick a topic, and get building." : {
 
     },
@@ -2536,7 +3044,13 @@
     "Pick the slot the new company takes. Its save goes when the new one starts, not before." : {
 
     },
+    "Places it in %@" : {
+
+    },
     "Plan a networking weekend and go and meet some people." : {
+
+    },
+    "Plan a sabbatical" : {
 
     },
     "Plan another networking weekend to get back out there." : {
@@ -2550,6 +3064,16 @@
     },
     "Played %@" : {
       "comment" : "Footnote on a save slot: when it was last opened, as a relative date"
+    },
+    "Played at stake %lld, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Played at stake %1$lld, %2$@"
+          }
+        }
+      }
     },
     "Plays out on days 6–7 of the week; costs come from your wallet." : {
 
@@ -2621,6 +3145,15 @@
     "Propose?" : {
 
     },
+    "Put %@ away" : {
+
+    },
+    "Put it down" : {
+
+    },
+    "Put it down?" : {
+
+    },
     "Put your home up?" : {
 
     },
@@ -2649,6 +3182,9 @@
 
     },
     "Read the ending" : {
+
+    },
+    "Read the report" : {
 
     },
     "Ready" : {
@@ -2713,6 +3249,9 @@
           }
         }
       }
+    },
+    "Reply" : {
+      "comment" : "Bitmap heading over the answer buttons inside a phone thread. Uppercase A-Z only: the pixel face has no lowercase and no accents"
     },
     "Reputation" : {
 
@@ -2868,6 +3407,9 @@
     "STAFF" : {
       "comment" : "Bitmap kicker: someone on the team is asking. Uppercase A-Z only"
     },
+    "STEP AWAY" : {
+      "comment" : "Pixel-font headline on the sabbatical screen: plan a sabbatical. Uppercase A-Z only — the bitmap font has no accents."
+    },
     "Salary" : {
       "comment" : "Money sheet row: what the founder pays themselves"
     },
@@ -2883,6 +3425,15 @@
     "Saves" : {
       "comment" : "Bitmap section heading over the three save slots. Uppercased by the pixel face"
     },
+    "Say nothing and the thread keeps that too." : {
+
+    },
+    "Scenario" : {
+
+    },
+    "Scenarios" : {
+
+    },
     "Schedule × wellbeing × health." : {
 
     },
@@ -2894,6 +3445,16 @@
     },
     "Search the team" : {
 
+    },
+    "Season %lld, %@. %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Season %1$lld, %2$@. %3$@: %4$@"
+          }
+        }
+      }
     },
     "Section" : {
 
@@ -2911,6 +3472,12 @@
 
     },
     "Sell for %@" : {
+
+    },
+    "Sent to the season's board." : {
+
+    },
+    "Sent to this week's board." : {
 
     },
     "Servers" : {
@@ -2934,10 +3501,28 @@
     "Share a photo of the office" : {
 
     },
+    "Share the season" : {
+
+    },
+    "Share the year" : {
+
+    },
+    "Share the year as text" : {
+
+    },
     "Share this front page" : {
 
     },
     "Share this life" : {
+
+    },
+    "Share this thread" : {
+
+    },
+    "Shares the squares, the score and the day's code as text" : {
+
+    },
+    "Shares the year as coloured squares with the score and the code" : {
 
     },
     "Ship %@" : {
@@ -2962,6 +3547,9 @@
 
     },
     "Shopping" : {
+
+    },
+    "Show all %lld rungs" : {
 
     },
     "Show coach tips again" : {
@@ -3051,6 +3639,39 @@
     "Sponsored by a rival, %@ white-label" : {
 
     },
+    "Stake %lld" : {
+
+    },
+    "Stake %lld · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stake %1$lld · %2$@"
+          }
+        }
+      }
+    },
+    "Stake %lld, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stake %1$lld, %2$@"
+          }
+        }
+      }
+    },
+    "Stake %lld: %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stake %1$lld: %2$@."
+          }
+        }
+      }
+    },
     "Stakes" : {
       "comment" : "Onboarding step name: origin and difficulty"
     },
@@ -3100,7 +3721,16 @@
     "Start over?" : {
 
     },
+    "Start something" : {
+
+    },
+    "Start something else" : {
+
+    },
     "Start the company" : {
+
+    },
+    "Start this" : {
 
     },
     "Start week %lld" : {
@@ -3139,6 +3769,9 @@
           }
         }
       }
+    },
+    "Stepping away" : {
+
     },
     "Still yours" : {
 
@@ -3187,6 +3820,9 @@
       "comment" : "Bitmap kicker: an investor is offering money. Uppercase A-Z only"
     },
     "THE INCUMBENT" : {
+
+    },
+    "THIS WEEK" : {
 
     },
     "Take %@ public?" : {
@@ -3254,6 +3890,9 @@
     "The card: %@" : {
 
     },
+    "The chapter you are in is lost. Anything you already finished stays on your record." : {
+
+    },
     "The clock is stopped at this chapter. Opens the unlock." : {
 
     },
@@ -3284,6 +3923,15 @@
     "The journal fills in as the weeks go by." : {
 
     },
+    "The kids" : {
+
+    },
+    "The kids · ledgers and evenings" : {
+
+    },
+    "The last %lld go with them into the next company." : {
+
+    },
     "The life" : {
       "comment" : "Heading of the onboarding panel about the life"
     },
@@ -3291,6 +3939,9 @@
 
     },
     "The line fills in as the company does: every launch, every hire, every chapter." : {
+
+    },
+    "The log" : {
 
     },
     "The market" : {
@@ -3344,7 +3995,16 @@
     "The room's empty" : {
 
     },
+    "The same seed, one notch harder. A stake alone stays ranked." : {
+
+    },
     "The same seed, the same company, everywhere. One attempt, one game year." : {
+
+    },
+    "The season had closed — not on the board." : {
+
+    },
+    "The season's face is in your looks." : {
 
     },
     "The team" : {
@@ -3362,10 +4022,19 @@
     "The weekly report will open on its own at the end of each week again." : {
 
     },
+    "The whole score" : {
+
+    },
     "Them · you" : {
       "comment" : "Decision sheet stat label: the rival review score against yours"
     },
     "There is nobody on the payroll to draw." : {
+
+    },
+    "There is nobody to leave it with. Hire somebody, then get to know them." : {
+
+    },
+    "They are not here." : {
 
     },
     "They clear their desk today. Their friends will notice." : {
@@ -3375,6 +4044,9 @@
 
     },
     "They leave the pool. A new batch shows up every two weeks." : {
+
+    },
+    "They lose the rest of the summer and %lld points of bond, and they remember this one." : {
 
     },
     "They retreat this week." : {
@@ -3423,10 +4095,16 @@
     "This one is still being built. The store page goes live the day it ships." : {
 
     },
+    "This one isn't in your life any more." : {
+
+    },
     "This person has left the company." : {
 
     },
     "This product is no longer in the save." : {
+
+    },
+    "This season" : {
 
     },
     "This studio folded, was bought, or never existed." : {
@@ -3562,6 +4240,25 @@
         }
       }
     },
+    "WAITING" : {
+
+    },
+    "Walk away — %@ · Life %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Walk away — %1$@ · Life %2$lld"
+          }
+        }
+      }
+    },
+    "Walk away. Ends the run with the company standing." : {
+
+    },
+    "Walk away. Not available: %@" : {
+
+    },
     "Wallet" : {
       "comment" : "Money sheet row: the founder own money"
     },
@@ -3667,6 +4364,12 @@
     "Works this market too" : {
 
     },
+    "Would raise it most: %@" : {
+
+    },
+    "YOU" : {
+
+    },
     "YOU LEAD" : {
 
     },
@@ -3682,6 +4385,9 @@
     "You are in the red — every week digs deeper" : {
       "comment" : "Weekly report runway line when cash is negative"
     },
+    "You are the whole company. There is nobody to hand it to." : {
+
+    },
     "You can build the whole thing yourself. Getting anyone to look at it is the hard part." : {
       "comment" : "What the hacker archetype is like to play"
     },
@@ -3692,6 +4398,9 @@
       "comment" : "Coach tip shown on the rail while the matching chapter-1 goal is open"
     },
     "You can't change this once the game has started." : {
+
+    },
+    "You could walk away" : {
 
     },
     "You don't know anybody yet. Plan a networking weekend and go and meet some people." : {
@@ -3716,7 +4425,16 @@
     "You let it go." : {
 
     },
+    "You never replied." : {
+
+    },
+    "You owe %@ between them. Nothing happens for six months — after that the friendship pays the interest." : {
+
+    },
     "You're at the %@" : {
+
+    },
+    "You're back" : {
 
     },
     "You're holding it." : {
@@ -3729,6 +4447,9 @@
 
     },
     "You've done your studying for today." : {
+
+    },
+    "You've lost touch" : {
 
     },
     "You've spent time together recently — give it a few days." : {
@@ -3746,6 +4467,9 @@
     },
     "Your first build will feel good. It will also be late." : {
       "comment" : "What the designer archetype is like to play"
+    },
+    "Your life" : {
+
     },
     "Your name goes on the incorporation papers and on every review." : {
       "comment" : "Onboarding page subheading under the heading above"
@@ -3787,6 +4511,9 @@
           }
         }
       }
+    },
+    "Your things" : {
+
     },
     "Your things add %@ mood a day." : {
 
@@ -3836,7 +4563,7 @@
     "faded" : {
 
     },
-    "final net worth" : {
+    "final net worth · Life %lld" : {
 
     },
     "iCloud" : {
@@ -3866,10 +4593,16 @@
     "lifetime" : {
 
     },
+    "locked" : {
+
+    },
     "n/a" : {
 
     },
     "net worth" : {
+
+    },
+    "net worth · Life %lld" : {
 
     },
     "no burn" : {
@@ -3894,6 +4627,12 @@
         }
       }
     },
+    "off" : {
+
+    },
+    "on" : {
+
+    },
     "projected quality" : {
 
     },
@@ -3903,6 +4642,9 @@
     "runway %lld wk" : {
       "comment" : "Runway readout under an answer: weeks of cash left afterwards"
     },
+    "selected" : {
+
+    },
     "settles in %lldd" : {
 
     },
@@ -3911,6 +4653,9 @@
     },
     "slot %lld" : {
       "comment" : "Stand-in name for a save slot with nothing in it, used inside a sentence"
+    },
+    "stars" : {
+
     },
     "strategic" : {
       "comment" : "Buyout kind: a buyer who wants what you built"
@@ -3934,6 +4679,9 @@
 
     },
     "today" : {
+
+    },
+    "was %@" : {
 
     },
     "what you walked away with" : {
@@ -3994,6 +4742,16 @@
     },
     "−%@ morale across the team" : {
 
+    },
+    "−%@ → %@ in your wallet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "−%1$@ → %2$@ in your wallet"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
