@@ -200,7 +200,7 @@ struct CaretakerRow: View {
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
-                BondBar(bond: employee.founderBond, minBond: minBond)
+                CaretakerBondBar(bond: employee.founderBond, minBond: minBond)
             }
             Spacer(minLength: 0)
             if isSelected {
@@ -214,7 +214,7 @@ struct CaretakerRow: View {
 }
 
 /// Bond, with a notch where the gate is.
-struct BondBar: View {
+struct CaretakerBondBar: View {
     let bond: Double
     let minBond: Double
 
