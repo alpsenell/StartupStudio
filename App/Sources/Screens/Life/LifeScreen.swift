@@ -23,6 +23,8 @@ struct LifeScreen: View {
 
         // MARK: Iteration 9 — one destination per lane that pushes a screen
         // MARK: L1 (phone)
+        case phone
+        case phoneThread(PhoneCounterpart)
         // MARK: L2 (life score)
         // MARK: L3 (children)
         // MARK: L4 (friends)
@@ -48,6 +50,11 @@ struct LifeScreen: View {
                     // Iteration 9 — L1: the phone card goes here, under the
                     // week, because a message is the next thing to answer.
                     // MARK: L1 (phone)
+                    PhoneCard(
+                        engine: engine,
+                        onOpen: { path = [.phone] },
+                        onOpenThread: { path = [.phone, .phoneThread($0)] }
+                    )
 
                     BusinessSectionHeader(title: "This week", systemImage: "calendar")
                     ActivitiesCard(engine: engine)
@@ -99,6 +106,10 @@ struct LifeScreen: View {
 
                 // MARK: Iteration 9
                 // MARK: L1 (phone)
+                case .phone:
+                    PhoneScreen(engine: engine) { path.append(.phoneThread($0)) }
+                case .phoneThread(let counterpart):
+                    ThreadView(engine: engine, counterpart: counterpart)
                 // MARK: L2 (life score)
                 // MARK: L3 (children)
                 // MARK: L4 (friends)
@@ -126,7 +137,31 @@ struct LifeScreen: View {
                 path = [.agenda]
                 return
             }
+            // MARK: Iteration 9 — L1 (phone)
+            if Route.launchRoute == .phone {
+                path = [.phone]
+                if DebugLaunch.opensNewestPhoneThread {
+                    let threads = engine.state.life.phone.byRecency
+                    let index = max(0, DebugLaunch.phoneThreadIndex)
+                    if threads.indices.contains(index) {
+                        path.append(.phoneThread(threads[index].counterpart))
+                    }
+                }
+                return
+            }
+            // MARK: end L1
         }
+        // MARK: Iteration 9 — L1 (phone)
+        if router.take(.phone) {
+            path = [.phone]
+            return
+        }
+        if let route = router.take(where: { if case .phoneThread = $0 { true } else { false } }),
+           case .phoneThread(let counterpart) = route {
+            path = [.phone, .phoneThread(counterpart)]
+            return
+        }
+        // MARK: end L1
         if router.take(.agenda) {
             path = [.agenda]
         } else if router.take(.life) {

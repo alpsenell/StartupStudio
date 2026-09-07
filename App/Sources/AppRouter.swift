@@ -1,5 +1,7 @@
 import Observation
 import SwiftUI
+// Iteration 9 — L1: `Route.phoneThread` names a `PhoneCounterpart`.
+import TycoonEngine
 
 /// The five tabs of the game.
 enum GameTab: Hashable {
@@ -64,6 +66,10 @@ enum Route: Hashable {
     // same route to the tab switch below, inside its markers there.
 
     // MARK: L1 (phone)
+    /// The founder's phone: every thread.
+    case phone
+    /// One conversation.
+    case phoneThread(counterpart: PhoneCounterpart)
 
     // MARK: L2 (life score)
 
@@ -96,6 +102,7 @@ enum Route: Hashable {
 
         // MARK: Iteration 9 — the Life tab
         // MARK: L1 (phone)
+        case .phone, .phoneThread: .life
         // MARK: L2 (life score)
         // MARK: L3 (children)
         // MARK: L4 (friends)

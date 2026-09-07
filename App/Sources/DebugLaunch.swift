@@ -129,6 +129,12 @@ enum DebugLaunch {
                 // a pass that sells the company on day 68 photographs
                 // nothing.
                 if let prompt = DecisionPrompt.pending(in: engine.state, content: engine.content, balance: engine.balance),
+                   // MARK: Iteration 9 — L1 (phone)
+                   // With `-autoDeferBeats` the pass leaves the questions
+                   // the phone can answer alone, so the thread can be
+                   // photographed with its reply buttons up.
+                   !(arguments.contains("-autoDeferBeats") && prompt.id.hasPrefix("staff-")),
+                   // MARK: end L1
                    let option = prompt.options.first(where: { option in
                        guard option.disabledReason == nil else { return false }
                        switch option.action {
@@ -222,6 +228,7 @@ extension Route {
         case "orgchart": .orgChart
         // MARK: Iteration 9 — route names, one line per lane
         // MARK: L1 (phone)
+        case "phone": .phone
         // MARK: L2 (life score)
         // MARK: L3 (children)
         // MARK: L4 (friends)
@@ -326,6 +333,43 @@ extension DebugLaunch {
     // markers there if the surface is pushed rather than sheeted.
 
     // MARK: L1 (phone)
+
+    /// `-autoThread`: with `-autoRoute phone`, open the newest thread as
+    /// well. A headless pass cannot tap a row, and the thread is the
+    /// surface this lane exists to draw.
+    static var opensNewestPhoneThread: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoThread")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoThread <n>`: which thread in the recency list to open, when
+    /// the newest is not the interesting one. Defaults to the newest.
+    static var phoneThreadIndex: Int {
+        value(after: "-autoThread").flatMap(Int.init) ?? 0
+    }
+
+    /// `-autoShareThread`: open the share card over the thread, so the
+    /// 1080x1350 picture can be photographed headlessly.
+    static var opensPhoneThreadShareCard: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoShareThread")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoThreadAsking`: open whichever thread is waiting on an answer,
+    /// so a headless pass can photograph the reply buttons.
+    static var opensAskingPhoneThread: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoThreadAsking")
+        #else
+        return false
+        #endif
+    }
 
     // MARK: L2 (life score)
 

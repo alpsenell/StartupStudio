@@ -73,6 +73,10 @@ enum RelationshipSystem {
         // crossing: a partner tells you before they leave.
         let warningLine = balance.life.breakupThreshold + 15
         if before >= warningLine, state.life.family.affection < warningLine {
+            // MARK: Iteration 9 — L1 (phone)
+            // The warning arrives as a text, because that is how it would.
+            PhoneMirror.partnerWarning(state: &state)
+            // MARK: end L1
             return [.partnerDrifting(affection: state.life.family.affection, day: state.day)]
         }
         return []

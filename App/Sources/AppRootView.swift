@@ -277,6 +277,11 @@ struct AppRootView: View {
                     .tutorialCardInset(session: session, engine: engine)
                     .gameColumn()
                     .tabItem { Label("Life", systemImage: "heart.fill") }
+                    // MARK: Iteration 9 — L1 (phone)
+                    // Unread texts, the same badge the Team tab wears for
+                    // people who need answering.
+                    .badge(engine.state.life.phone.unreadCount)
+                    // MARK: end L1
                     .tag(GameTab.life)
             }
 
@@ -385,6 +390,10 @@ struct AppRootView: View {
                 guard session.engine.state.gameOver == nil else { return nil }
                 guard shell.launchDayProductID == nil, !shell.showingWeeklyReport else { return nil }
                 guard let prompt = currentPrompt() else { return nil }
+                // MARK: Iteration 9 — L1 (phone)
+                shell.deferBeatIfHeadless(prompt, engine: session.engine)
+                if GameShell.headlessPassAnswersOnThePhone { return nil }
+                // MARK: end L1
                 return prompt.id == shell.deferredChoiceID ? nil : prompt
             },
             set: { newValue in

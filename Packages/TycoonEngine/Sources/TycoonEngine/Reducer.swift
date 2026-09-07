@@ -86,6 +86,10 @@ public enum Reducer {
         // (use `socialRNG`, and only when the feature is engaged).
 
         // MARK: L1 (phone)
+        // The phone is a mirror: the only thing it does on its own is the
+        // office's Sunday numbers. Every other message is posted from the
+        // system that caused it.
+        PhoneSystem.run,
 
         // MARK: L2 (life score, Walked away)
 
@@ -381,6 +385,9 @@ public enum Reducer {
         // MARK: Iteration 9 — the Life tab (handlers, one region per lane)
 
         // MARK: L1 (phone)
+        case let .markPhoneThreadRead(counterpart):
+            state.life.phone.markRead(counterpart, day: state.day)
+            events = []
 
         // MARK: L2 (life score, Walked away)
 

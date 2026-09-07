@@ -249,6 +249,9 @@ enum SocialSystem {
             respondByDay: state.day + config.staffEventResponseDays
         )
         state.pendingStaffEvent = event
+        // MARK: Iteration 9 — L1 (phone)
+        PhoneMirror.staffRaised(event, state: &state, content: content)
+        // MARK: end L1
         return [.staffEventOccurred(
             employeeID: target.id, kind: kind, respondByDay: event.respondByDay, day: state.day
         )]
@@ -361,6 +364,11 @@ enum SocialSystem {
         let resolved: GameEvent = .staffEventResolved(
             employeeID: event.employeeID, choice: choice, day: state.day
         )
+        // MARK: Iteration 9 — L1 (phone)
+        PhoneMirror.staffAnswered(
+            event, choice: choice, automatic: automatic, state: &state, content: content
+        )
+        // MARK: end L1
         guard let def = content.staffEvent(event.definitionID) else {
             applyGenericStaffChoice(
                 choice, kind: event.kind, index: index, state: &state, config: balance.social
@@ -580,6 +588,9 @@ enum SocialSystem {
             defID: def.id
         )
         state.pendingStaffEvent = event
+        // MARK: Iteration 9 — L1 (phone)
+        PhoneMirror.staffRaised(event, state: &state, content: content)
+        // MARK: end L1
         return [.staffEventOccurred(
             employeeID: employee.id, kind: kind, respondByDay: event.respondByDay, day: state.day
         )]
