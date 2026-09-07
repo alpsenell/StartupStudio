@@ -1091,7 +1091,7 @@
     "carryFraction": 0.35,
     "debtCeilingPenaltyPerPoint": 0.004,
     "ceilingFloor": 0.55,
-    "debtBugRatePerPoint": 0.010,
+    "debtBugRatePerPoint": 0.01,
     "debtCap": 100.0,
     "crunchDebtPerDay": 0.15,
     "shipBugDebt": 0.5,
@@ -1157,5 +1157,29 @@
     "walkAwayMinDay": 546,
     "walkAwayMinLifeScore": 60,
     "walkAwayMinNetWorth": 250000
+  },
+  "sabbatical": {
+    "minTenureWeeks": 26,
+    "minBond": 50.0,
+    "minHeadcount": 2,
+    "minWeeks": 4,
+    "maxWeeks": 12,
+    "shipLockoutDays": 14,
+    "weeklyCost": 500,
+    "healthPerDay": 0.7,
+    "energyPerDay": 1.0,
+    "moodPerDay": 0.5,
+    "affectionPerDay": 0.4,
+    "decisionIntervalDays": 7,
+    "shipFactor": 1.15,
+    "speedsterShipFactor": 1.0,
+    "hireChance": 0.2,
+    "hireRunwayWeeks": 26,
+    "grumblerMoralePerDay": -0.15,
+    "mentorSkillGain": 2.5,
+    "flightRiskLeaveChance": 0.12,
+    "boardPatienceFactor": 0.5,
+    "poachChanceFactor": 1.5,
+    "earlyEndBondPenalty": 25.0
   }
 }

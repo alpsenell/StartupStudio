@@ -240,6 +240,14 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: L6 (sabbatical)
 
+    /// Hand the company to `caretakerID` and go away for `weeks`.
+    /// Refused with a reason from `GameState.sabbaticalBlocker` /
+    /// `caretakerBlocker` — tenure, bond, a build about to land, and a
+    /// wallet that has to cover the whole trip up front.
+    case startSabbatical(caretakerID: UUID, weeks: Int)
+    /// Fly home early. Costs the caretaker's bond; refunds nothing.
+    case endSabbaticalEarly
+
     // MARK: L7 (furnish)
 
     /// L7: stands an owned possession or an earned piece of decor in one

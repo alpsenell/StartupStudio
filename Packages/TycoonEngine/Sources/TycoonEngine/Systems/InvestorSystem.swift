@@ -195,8 +195,18 @@ enum InvestorSystem {
             // than a countdown.
             // The newest seat sets the temperature of the room, and an
             // acquirer on an earn-out is the newest seat there is.
-            let patience = state.investors.earnOut?.patienceWeeks
+            var patience = state.investors.earnOut?.patienceWeeks
                 ?? state.investors.rounds.last { $0.takesBoardSeat }?.patienceWeeks
+            // MARK: Iteration 9 — L6 (sabbatical)
+            // A board grades the caretaker's quarter harder than the
+            // founder's: while somebody is away, the fund's patience reads
+            // as `balance.sabbatical.boardPatienceFactor` of itself.
+            // Unchanged — the same Int, the same harshness — whenever
+            // nobody is away, which is every run that takes no sabbatical.
+            patience = patience.map {
+                SabbaticalEffects.boardPatienceWeeks($0, state: state, balance: balance)
+            }
+            // MARK: end Iteration 9 — L6
             let harshness = min(2.5, max(0.5, config.patienceReferenceWeeks / Double(max(1, patience ?? 26))))
             let step = -config.pressurePerHit * metShare
                 + config.pressurePerMiss * (1 - metShare)

@@ -6,4 +6,4 @@
 //
 // MARKETING_VERSION lives in project.yml. A target-level build setting
 // beats an xcconfig, so CURRENT_PROJECT_VERSION must NOT be set there.
-CURRENT_PROJECT_VERSION = 258
+CURRENT_PROJECT_VERSION = 260

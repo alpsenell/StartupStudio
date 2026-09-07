@@ -974,8 +974,14 @@ enum RivalSystem {
         let appetite = poacher.personality == .poacher
             ? RivalDepthTuning.poacherChanceFactor
             : 1
+        // MARK: Iteration 9 — L6 (sabbatical)
+        // Recruiters read the trade press: an absent founder raises the
+        // odds. Exactly 1 whenever nobody is away, and the draw itself is
+        // unchanged either way, so the `worldRNG` stream never moves.
+        let awayFactor = SabbaticalEffects.poachChanceFactor(state, balance: balance)
+        // MARK: end Iteration 9 — L6
         let roll = state.worldRNG.nextUniform()
-        guard roll < config.poachChance * resistance * appetite else { return [] }
+        guard roll < config.poachChance * resistance * appetite * awayFactor else { return [] }
 
         let fairPay = EmployeeSystem.fairWeeklyPay(for: target, balance: balance)
         let premium = config.poachPremiumMin

@@ -1803,6 +1803,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     public var lifeScore: LifeScoreBalance = .default
 
     // MARK: end of Iteration 9
+    // MARK: Iteration 9 — L6 (sabbatical)
+
+    /// Handing the company to somebody else for a summer. Inline default,
+    /// like `codebase` above, so `"sabbatical"` is an optional key.
+    public var sabbatical: SabbaticalBalance = .default
+
+    // MARK: end Iteration 9 — L6
 
     public init(
         startingCash: Int,

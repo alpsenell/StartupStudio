@@ -111,6 +111,12 @@ public enum Reducer {
 
         // MARK: L6 (sabbatical)
 
+        // The caretaker's week. Runs after everything else because it
+        // reads a finished day and, on a decision day, plays a player
+        // action back into the same day through `Reducer.apply`. Draws
+        // only from `socialRNG`, and only while the founder is away.
+        SabbaticalSystem.run,
+
         // MARK: L7 (furnish)
 
         // MARK: end of Iteration 9
@@ -453,6 +459,13 @@ public enum Reducer {
             events = SideProjectSystem.abandon(state: &state, balance: balance)
 
         // MARK: L6 (sabbatical)
+        case let .startSabbatical(caretakerID, weeks):
+            events = SabbaticalSystem.start(
+                caretakerID: caretakerID, weeks: weeks,
+                state: &state, balance: balance, content: content
+            )
+        case .endSabbaticalEarly:
+            events = SabbaticalSystem.endEarly(state: &state, balance: balance)
 
         // MARK: L7 (furnish)
         case .placeDecor(let slot, let itemID):

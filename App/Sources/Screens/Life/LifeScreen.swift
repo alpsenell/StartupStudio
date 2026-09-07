@@ -34,6 +34,7 @@ struct LifeScreen: View {
         // MARK: L5 (side project)
         case sideProject
         // MARK: L6 (sabbatical)
+        case sabbatical
         // MARK: L7 (furnish)
         // MARK: end of Iteration 9
     }
@@ -96,6 +97,7 @@ struct LifeScreen: View {
                     // MARK: L5 (side project)
                     SideProjectCard(engine: engine) { path = [.sideProject] }
                     // MARK: L6 (sabbatical)
+                    SabbaticalCard(engine: engine, onOpen: { path = [.sabbatical] })
                 }
                 .padding(Theme.Spacing.lg)
             }
@@ -131,6 +133,8 @@ struct LifeScreen: View {
                 case .sideProject:
                     SideProjectScreen(engine: engine)
                 // MARK: L6 (sabbatical)
+                case .sabbatical:
+                    SabbaticalScreen(engine: engine)
                 // MARK: L7 (furnish)
                 // MARK: end of Iteration 9
                 }
@@ -188,6 +192,12 @@ struct LifeScreen: View {
                 return
             }
             // MARK: end L1
+            // MARK: L6 (sabbatical)
+            if Route.launchRoute == .sabbatical {
+                path = [.sabbatical]
+                return
+            }
+            // MARK: end L6
         }
         // MARK: L5 (side project)
         if router.take(.sideProject) {
@@ -218,6 +228,10 @@ struct LifeScreen: View {
         } else if router.take(.friends) {
             path = [.friends]
         // MARK: end of Iteration 9 — L4
+        // MARK: L6 (sabbatical)
+        } else if router.take(.sabbatical) {
+            path = [.sabbatical]
+        // MARK: end L6
         }
     }
 }
