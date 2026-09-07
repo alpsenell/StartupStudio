@@ -126,6 +126,18 @@ extension NetworkingSystem {
 
             if away % AlumniTuning.quarterDays == 0 {
                 state.networking.contacts[index].skills = grown(contact.skills, role: contact.leftRole)
+                // MARK: Iteration 9 — L1 (phone)
+                // The boomerang: every quarter away, they check in. Text
+                // only — nothing about the address book moves because of it.
+                PhoneMirror.alumnusCheckedIn(
+                    contact,
+                    line: away == AlumniTuning.quarterDays
+                        ? "Three months out and I still open the standup doc "
+                            + "on a Monday. How's it going over there?"
+                        : "Been a while. Still at it?",
+                    state: &state
+                )
+                // MARK: end L1
             }
             if away >= AlumniTuning.foundingDays,
                contact.companyValuation == 0,
@@ -137,6 +149,15 @@ extension NetworkingSystem {
                     max(range.lowerBound,
                         Int(contact.skills.total) * AlumniTuning.foundingValuationPerSkillPoint)
                 )
+                // MARK: Iteration 9 — L1 (phone)
+                PhoneMirror.alumnusCheckedIn(
+                    contact,
+                    line: "Didn't want you to hear it from somebody else: "
+                        + "I started \(state.networking.contacts[index].companyName ?? "something"). "
+                        + "Two of us and a laptop, so far.",
+                    state: &state
+                )
+                // MARK: end L1
             }
         }
     }

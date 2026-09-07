@@ -188,6 +188,10 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: L1 (phone)
 
+    /// Opening a thread on the phone: everything in it counts as seen, and
+    /// the Life tab's unread badge drops by that much. Bookkeeping only.
+    case markPhoneThreadRead(counterpart: PhoneCounterpart)
+
     // MARK: L2 (life score, Walked away)
 
     /// The founder hands the company over and goes. Refused unless

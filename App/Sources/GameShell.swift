@@ -58,6 +58,34 @@ final class GameShell {
         deferredChoiceID = nil
     }
 
+    // MARK: Iteration 9 — L1 (phone)
+
+    /// `-autoDeferBeats`: a headless pass defers every deferrable story
+    /// beat instead of showing its sheet, so the question can be
+    /// photographed where the phone answers it. Debug only; no release
+    /// build has the flag.
+    /// `-autoDeferBeats` also keeps the modal off a screenshot pass
+    /// entirely, so the thread's own reply buttons are what gets
+    /// photographed. Debug only.
+    static var headlessPassAnswersOnThePhone: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoDeferBeats")
+        #else
+        return false
+        #endif
+    }
+
+    func deferBeatIfHeadless(_ prompt: DecisionPrompt, engine: GameEngine) {
+        #if DEBUG
+        guard prompt.isDeferrable, deferredChoiceID != prompt.id,
+              ProcessInfo.processInfo.arguments.contains("-autoDeferBeats")
+        else { return }
+        postpone(prompt, engine: engine)
+        #endif
+    }
+
+    // MARK: end L1
+
     /// The speed the clock was last running at, so a deferred question
     /// resumes the game at the pace the player had set — the engine
     /// forgets it when an event pauses the tick.

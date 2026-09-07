@@ -54,6 +54,10 @@ enum ShareRenderer {
             FrontPageCardView.render(issue: issue, companyName: companyName)
         case .officePhoto(let engine):
             render(OfficePhotoCardView(engine: engine))
+        // MARK: Iteration 9 — L1 (the phone)
+        case .phoneThread(let engine, let counterpart):
+            render(PhoneThreadCardView(engine: engine, counterpart: counterpart))
+        // MARK: end L1
         }
     }
 }
@@ -64,6 +68,10 @@ enum ShareCard {
     case biography(engine: GameEngine, info: GameOverInfo)
     case frontPage(issue: NewspaperIssue, companyName: String)
     case officePhoto(engine: GameEngine)
+    // MARK: Iteration 9 — L1 (the phone)
+    /// One conversation, as a card.
+    case phoneThread(engine: GameEngine, counterpart: PhoneCounterpart)
+    // MARK: end L1
 
     /// The share sheet's title and the preview's caption.
     /// Iteration 8: the year as squares plus the score and the code, for
@@ -92,6 +100,10 @@ enum ShareCard {
             "\(issue.masthead) · Week \(issue.week)"
         case .officePhoto(let engine):
             "\(engine.state.company.name) · \(engine.state.calendar.longLabel)"
+        // MARK: Iteration 9 — L1 (the phone)
+        case .phoneThread(let engine, let counterpart):
+            "\(engine.state.phoneName(for: counterpart)) · day \(engine.state.day)"
+        // MARK: end L1
         }
     }
 
@@ -101,6 +113,9 @@ enum ShareCard {
         case .biography: "founder-biography"
         case .frontPage(let issue, _): "front-page-week-\(issue.week)"
         case .officePhoto: "office-photo"
+        // MARK: Iteration 9 — L1 (the phone)
+        case .phoneThread: "phone-thread"
+        // MARK: end L1
         }
     }
 }

@@ -100,10 +100,23 @@ enum NarrativeSystem {
                 category: def.category.rawValue,
                 raisedDay: state.day
             )
+            // MARK: Iteration 9 — L1 (phone)
+            // The office texts the founder whatever the company just
+            // asked them. Bookkeeping only: no meter moves here.
+            if let pending = state.narrative.pendingChoice {
+                PhoneMirror.raised(pending, state: &state)
+            }
+            // MARK: end L1
             return [.narrativeChoice(eventID: def.id, respondByDay: respondBy, day: state.day)]
         }
 
         var events: [GameEvent] = [.randomEvent(eventID: def.id, day: state.day)]
+        // MARK: Iteration 9 — L1 (phone)
+        PhoneMirror.landed(
+            source: .company, eventID: def.id, headline: def.headline,
+            childID: nil, state: &state
+        )
+        // MARK: end L1
         events.append(contentsOf: apply(
             def.unconditionalEffects, label: def.headline, state: &state, balance: balance
         ))
@@ -203,10 +216,23 @@ enum NarrativeSystem {
                 raisedDay: state.day,
                 childID: childID
             )
+            // MARK: Iteration 9 — L1 (phone)
+            // The person the beat is about texts it, in the words the
+            // sheet uses; their answer buttons appear in the thread.
+            if let pending = state.narrative.pendingChoice {
+                PhoneMirror.raised(pending, state: &state)
+            }
+            // MARK: end L1
             return [.narrativeChoice(eventID: def.id, respondByDay: respondBy, day: state.day)]
         }
 
         var events: [GameEvent] = [.lifeEvent(eventID: def.id, day: state.day)]
+        // MARK: Iteration 9 — L1 (phone)
+        PhoneMirror.landed(
+            source: .life, eventID: def.id, headline: fill(def.headline),
+            childID: childID, state: &state
+        )
+        // MARK: end L1
         events.append(contentsOf: apply(
             def.unconditionalEffects, label: def.headline, state: &state, balance: balance
         ))
@@ -306,6 +332,19 @@ enum NarrativeSystem {
                 eventID: pending.id, optionID: "", automatic: automatic, day: state.day
             )]
         }
+
+        // MARK: Iteration 9 — L1 (phone)
+        // The founder's reply, in their own words — or, when the deadline
+        // answered for them, the marker that stays there forever. Posted
+        // before the effects so the bubble carries the day the answer was
+        // given, whatever the effects do to the calendar.
+        PhoneMirror.answered(
+            pending,
+            label: pending.options.first { $0.index == optionIndex }?.label ?? choice.label,
+            automatic: automatic,
+            state: &state
+        )
+        // MARK: end L1
 
         var events: [GameEvent] = [
             pending.source == .company
