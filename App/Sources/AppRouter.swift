@@ -75,6 +75,9 @@ enum Route: Hashable {
 
     // MARK: L6 (sabbatical)
 
+    /// Handing the company over and going away (L6).
+    case sabbatical
+
     // MARK: L7 (furnish)
 
     // MARK: end of Iteration 9
@@ -101,6 +104,7 @@ enum Route: Hashable {
         // MARK: L4 (friends)
         // MARK: L5 (side project)
         // MARK: L6 (sabbatical)
+        case .sabbatical: .life
         // MARK: L7 (furnish)
         // MARK: end of Iteration 9
         }

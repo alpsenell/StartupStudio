@@ -1780,6 +1780,14 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     /// The four founding origins' day-0 deltas (WS-H).
     public var origins: OriginBalance = .default
 
+    // MARK: Iteration 9 — L6 (sabbatical)
+
+    /// Handing the company to somebody else for a summer. Inline default,
+    /// like `codebase` above, so `"sabbatical"` is an optional key.
+    public var sabbatical: SabbaticalBalance = .default
+
+    // MARK: end Iteration 9 — L6
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

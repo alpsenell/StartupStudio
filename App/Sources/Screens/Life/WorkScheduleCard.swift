@@ -15,6 +15,9 @@ struct WorkScheduleCard: View {
     let engine: GameEngine
 
     @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// Iteration 9 — L6: optional for the same reason the shell is, and
+    /// because this card is also presented from a sheet on HQ.
+    @Environment(AppRouter.self) private var router: AppRouter?
     /// See `GameShell.shared`: read optionally, because SwiftUI
     /// updates this property for presented content before the
     /// environment is installed and the non-optional form traps there.
@@ -57,6 +60,17 @@ struct WorkScheduleCard: View {
                     }
                 }
 
+                // MARK: Iteration 9 — L6 (sabbatical)
+                // The third setting on this card: not working at all. It
+                // belongs next to chill/normal/crunch because it is the
+                // same decision taken further — how much of the founder
+                // the company gets this month.
+                if !state.employees.filter({ !$0.isFounder }).isEmpty {
+                    Divider()
+                    stepAway(state)
+                }
+                // MARK: end Iteration 9 — L6
+
                 if !state.employees.filter({ !$0.isFounder }).isEmpty {
                     Divider()
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -75,6 +89,63 @@ struct WorkScheduleCard: View {
             }
         }
     }
+
+    // MARK: Iteration 9 — L6 (sabbatical)
+
+    /// The "step away" entry: what the sabbatical would be right now, and
+    /// the way through to the screen that sets one up.
+    @ViewBuilder
+    private func stepAway(_ state: GameState) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            SwitchLabel("Not here at all")
+            Button {
+                router?.go(.sabbatical)
+            } label: {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "airplane.departure")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                    Text(stepAwaySummary(state))
+                        .font(.footnote.weight(.semibold))
+                        .multilineTextAlignment(.leading)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.pressableRow)
+            .disabled(router == nil)
+
+            Text(stepAwayConsequence(state))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func stepAwaySummary(_ state: GameState) -> String {
+        if let sabbatical = state.life.sabbatical, sabbatical.isActive {
+            let left = sabbatical.daysLeft(from: state.day)
+            return "Away · \(left) day\(left == 1 ? "" : "s") left"
+        }
+        return "Take a sabbatical"
+    }
+
+    private func stepAwayConsequence(_ state: GameState) -> String {
+        let config = engine.balance.sabbatical
+        if let sabbatical = state.life.sabbatical, sabbatical.isActive {
+            return "\(sabbatical.caretakerName) is running the company. You produce nothing until you land."
+        }
+        let eligible = state.sabbaticalCandidates(balance: engine.balance)
+            .contains { state.caretakerBlocker($0, balance: engine.balance) == nil }
+        return eligible
+            ? "\(config.minWeeks)–\(config.maxWeeks) weeks off, \(config.weeklyCost.money) a week from your wallet. You produce nothing; somebody you trust runs it."
+            : "Nobody has been here \(config.minTenureWeeks) weeks with a bond of \(Int(config.minBond)) yet."
+    }
+
+    // MARK: end Iteration 9 — L6
 
     /// Which of the two hooks is doing the damage — the founder's mood, or
     /// their hours during somebody else's crunch. The engine sums them;

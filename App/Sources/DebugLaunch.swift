@@ -227,6 +227,7 @@ extension Route {
         // MARK: L4 (friends)
         // MARK: L5 (side project)
         // MARK: L6 (sabbatical)
+        case "sabbatical", "sabbaticalreport": .sabbatical
         // MARK: L7 (furnish)
         // MARK: end of Iteration 9
         default: nil
@@ -336,6 +337,103 @@ extension DebugLaunch {
     // MARK: L5 (side project)
 
     // MARK: L6 (sabbatical)
+
+    /// `-autoSabbatical [weeks]`: a headless pass gets the founder out of
+    /// the building.
+    ///
+    /// The gates on a caretaker are a tenure *and a bond*, and a bond is
+    /// something a player builds by hand over months — which is exactly
+    /// what a simulator pass cannot do, because it cannot tap. So this
+    /// flag spends the founder's evenings on the longest-serving person on
+    /// the roster (hang-outs, mentoring, coffees — every one of them a real
+    /// `GameAction` through the ordinary reducer, no back door into state)
+    /// until the engine says they qualify, then hands them the keys.
+    /// Requires `-autoSpeed`, since every one of those actions is on a
+    /// cooldown measured in game days. DEBUG only, like every flag here.
+    static var autoSabbaticalWeeks: Int? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard arguments.contains("-autoSabbatical") else { return nil }
+        return value(after: "-autoSabbatical").flatMap(Int.init) ?? 6
+        #else
+        return nil
+        #endif
+    }
+
+    /// Starts that loop, once per launch. Called from the sabbatical card
+    /// and screen (both live on the Life tab, which is where the flag's
+    /// pass lands); the task outlives either view.
+    @MainActor
+    static func startAutoSabbatical(engine: GameEngine) {
+        #if DEBUG
+        guard let weeks = autoSabbaticalWeeks, autoSabbaticalTask == nil else { return }
+        autoSabbaticalTask = Task { @MainActor in
+            while !Task.isCancelled, engine.state.gameOver == nil {
+                try? await Task.sleep(for: .milliseconds(250))
+                // A pass that runs for game-months walks into the awards
+                // night and the launch-day sheet, neither of which a
+                // simulator can tap away; clear them the way
+                // `startAutoAnswering` clears its own.
+                GameShell.shared.pendingAwardsYear = nil
+                GameShell.shared.launchDayProductID = nil
+                // Anything that pauses the timeline stops the pass dead.
+                if engine.state.speed == .paused { engine.setSpeed(.x4) }
+                // `startAutoAnswering` runs from HQ's root, which a pass
+                // that lands on Life never shows: answer the questions
+                // here too, or the first poach offer stops the clock.
+                if let prompt = DecisionPrompt.pending(
+                    in: engine.state, content: engine.content, balance: engine.balance
+                ), let option = prompt.options.first(where: { option in
+                    guard option.disabledReason == nil else { return false }
+                    switch option.action {
+                    case .acceptBuyout, .acceptBuyoutEarnOut: return false
+                    default: return true
+                    }
+                }) {
+                    _ = engine.send(option.action)
+                }
+                let state = engine.state
+                // Once the founder has been away once, the loop stops
+                // acting and just keeps the modals off the screen — except
+                // under `-autoRoute sabbaticalreport`, which wants the
+                // return sheet and so flies home after a fortnight.
+                if let sabbatical = state.life.sabbatical {
+                    if sabbatical.isActive, autoRouteName == "sabbaticalreport",
+                       state.day - sabbatical.sinceDay >= 14 {
+                        _ = engine.send(.endSabbaticalEarly)
+                    }
+                    continue
+                }
+                guard let target = state.employees
+                    .filter({ !$0.isFounder })
+                    .min(by: { $0.hiredDay < $1.hiredDay })
+                else { continue }
+                // A company nobody is playing runs out of money in about a
+                // quarter, which is shorter than the months of coffees a
+                // caretaker needs. Borrow, the way a player would.
+                if state.company.cash < 60_000 {
+                    _ = engine.send(.takeLoan(amount: 60_000))
+                }
+                // The trip is the founder's own money, so keep the wallet
+                // fed the way a player would — with a salary, not a cheat.
+                if state.life.founderSalary < 2000 {
+                    _ = engine.send(.setFounderSalary(min(2000, engine.balance.life.founderSalaryMax)))
+                }
+                if state.caretakerBlocker(target, balance: engine.balance) != nil {
+                    _ = engine.send(.oneOnOne(employeeID: target.id))
+                    _ = engine.send(.mentorEmployee(employeeID: target.id, skill: .coding))
+                    _ = engine.send(.grabCoffee(employeeID: target.id))
+                    continue
+                }
+                _ = engine.send(.startSabbatical(caretakerID: target.id, weeks: weeks))
+            }
+        }
+        #endif
+    }
+
+    #if DEBUG
+    @MainActor private static var autoSabbaticalTask: Task<Void, Never>?
+    #endif
 
     // MARK: L7 (furnish)
 
