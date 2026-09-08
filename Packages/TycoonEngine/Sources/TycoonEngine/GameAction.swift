@@ -328,6 +328,20 @@ public enum GameAction: Codable, Equatable, Sendable {
     case squashBug(productID: UUID)
 
     // MARK: end of Iteration 10
+
+    // MARK: Iteration 11 — the founder's darker life
+
+    // MARK: N1 (crime and the courtroom)
+
+    // MARK: N2 (people menus)
+
+    // MARK: N3 (assets, vices and the doctor)
+
+    // MARK: N4 (fame and the feed)
+
+    // MARK: N5 (office secrets)
+
+    // MARK: end of Iteration 11
 }
 
 /// The skill a training course targets.

@@ -87,6 +87,10 @@ struct TeamScreen: View {
                 // `-autoRoute orgChart` opens the chart, once.
                 if !tookLaunchRoute {
                     tookLaunchRoute = true
+                    // MARK: Iteration 11 — a launch route per lane, consumed first
+                    // MARK: N2 (people menus)
+                    // MARK: N5 (office secrets)
+                    // MARK: end of Iteration 11
                     if Route.launchRoute == .orgChart {
                         teamView = .chart
                         return

@@ -130,6 +130,20 @@ enum Route: Hashable {
 
     // MARK: end of Iteration 10
 
+    // MARK: Iteration 11 — the founder's darker life
+
+    // MARK: N1 (crime and the courtroom)
+
+    // MARK: N2 (people menus)
+
+    // MARK: N3 (assets, vices and the doctor)
+
+    // MARK: N4 (fame and the feed)
+
+    // MARK: N5 (office secrets)
+
+    // MARK: end of Iteration 11
+
     /// The tab this destination lives in.
     var tab: GameTab {
         switch self {
@@ -173,6 +187,14 @@ enum Route: Hashable {
         // MARK: M5 (morning desk)
         // MARK: M6 (bug hunt)
         // MARK: end of Iteration 10
+
+        // MARK: Iteration 11
+        // MARK: N1 (crime and the courtroom)
+        // MARK: N2 (people menus)
+        // MARK: N3 (assets, vices and the doctor)
+        // MARK: N4 (fame and the feed)
+        // MARK: N5 (office secrets)
+        // MARK: end of Iteration 11
         }
     }
 }

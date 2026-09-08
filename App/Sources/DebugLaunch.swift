@@ -257,6 +257,13 @@ extension Route {
         // MARK: M5 (morning desk)
         // MARK: M6 (bug hunt)
         // MARK: end of Iteration 10
+        // MARK: Iteration 11 — route names
+        // MARK: N1 (crime and the courtroom)
+        // MARK: N2 (people menus)
+        // MARK: N3 (assets, vices and the doctor)
+        // MARK: N4 (fame and the feed)
+        // MARK: N5 (office secrets)
+        // MARK: end of Iteration 11
         default: nil
         }
         #else
@@ -843,6 +850,20 @@ extension DebugLaunch {
     #endif
 
     // MARK: end of Iteration 10
+
+    // MARK: Iteration 11 — reserved flags
+
+    // MARK: N1 (crime and the courtroom)
+
+    // MARK: N2 (people menus)
+
+    // MARK: N3 (assets, vices and the doctor)
+
+    // MARK: N4 (fame and the feed)
+
+    // MARK: N5 (office secrets)
+
+    // MARK: end of Iteration 11
 
     /// The word after `flag` on the command line, in debug builds.
     static func value(after flag: String) -> String? {

@@ -146,6 +146,20 @@ public enum Reducer {
         // MARK: M6 (bug hunt)
 
         // MARK: end of Iteration 10
+
+        // MARK: Iteration 11 — after everything, no `rng`/`worldRNG` draws
+
+        // MARK: N1 (crime and the courtroom)
+
+        // MARK: N2 (people menus)
+
+        // MARK: N3 (assets, vices and the doctor)
+
+        // MARK: N4 (fame and the feed)
+
+        // MARK: N5 (office secrets)
+
+        // MARK: end of Iteration 11
     ]
 
     /// Advances the state by one game day. No-op once the game is over.
@@ -576,6 +590,20 @@ public enum Reducer {
             events = ProductSystem.squash(productID: productID, state: &state, balance: balance)
 
         // MARK: end of Iteration 10
+
+        // MARK: Iteration 11 — handlers, one region per lane
+
+        // MARK: N1 (crime and the courtroom)
+
+        // MARK: N2 (people menus)
+
+        // MARK: N3 (assets, vices and the doctor)
+
+        // MARK: N4 (fame and the feed)
+
+        // MARK: N5 (office secrets)
+
+        // MARK: end of Iteration 11
         }
 
         state.logEvents(events)

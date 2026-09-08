@@ -37,6 +37,12 @@ struct LifeScreen: View {
         case sabbatical
         // MARK: L7 (furnish)
         // MARK: end of Iteration 9
+        // MARK: Iteration 11
+        // MARK: N1 (crime and the courtroom)
+        // MARK: N2 (people menus)
+        // MARK: N3 (assets, vices and the doctor)
+        // MARK: N4 (fame and the feed)
+        // MARK: end of Iteration 11
     }
 
     var body: some View {
@@ -98,6 +104,11 @@ struct LifeScreen: View {
                     SideProjectCard(engine: engine) { path = [.sideProject] }
                     // MARK: L6 (sabbatical)
                     SabbaticalCard(engine: engine, onOpen: { path = [.sabbatical] })
+                    // MARK: Iteration 11 — new cards, in this order
+                    // MARK: N1 (crime and the courtroom)
+                    // MARK: N3 (assets, vices and the doctor)
+                    // MARK: N4 (fame and the feed)
+                    // MARK: end of Iteration 11
                 }
                 .padding(Theme.Spacing.lg)
             }
@@ -137,6 +148,12 @@ struct LifeScreen: View {
                     SabbaticalScreen(engine: engine)
                 // MARK: L7 (furnish)
                 // MARK: end of Iteration 9
+                // MARK: Iteration 11
+                // MARK: N1 (crime and the courtroom)
+                // MARK: N2 (people menus)
+                // MARK: N3 (assets, vices and the doctor)
+                // MARK: N4 (fame and the feed)
+                // MARK: end of Iteration 11
                 }
             }
             .onChange(of: router.pendingPush, initial: true) { _, _ in
@@ -149,6 +166,12 @@ struct LifeScreen: View {
     /// `.life` — which the agenda's own diary rows send — means "the Life
     /// tab itself", so it pops back to the root.
     private func consumeRoute() {
+        // MARK: Iteration 11 — a launch route per lane, consumed first
+        // MARK: N1 (crime and the courtroom)
+        // MARK: N2 (people menus)
+        // MARK: N3 (assets, vices and the doctor)
+        // MARK: N4 (fame and the feed)
+        // MARK: end of Iteration 11
         // A headless screenshot pass cannot tap: `-autoRoute agenda` lands
         // on the fortnight, once.
         if !tookLaunchRoute {

@@ -433,6 +433,21 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case bugSquashed(productID: UUID, remaining: Int, day: Int)
 
     // MARK: end of Iteration 10
+
+    // MARK: Iteration 11 — one region per lane; copy in `EventCopy`, and
+    // every exhaustive switch over `GameEvent` learns a new case
+
+    // MARK: N1 (crime and the courtroom)
+
+    // MARK: N2 (people menus)
+
+    // MARK: N3 (assets, vices and the doctor)
+
+    // MARK: N4 (fame and the feed)
+
+    // MARK: N5 (office secrets)
+
+    // MARK: end of Iteration 11
 }
 
 extension GameEvent {
@@ -798,6 +813,20 @@ public struct GameState: Codable, Equatable, Sendable {
     public var incident: IncidentState? = nil
     /// M5 — the days this run's desk was cleared.
     public var desk: DeskState = .empty
+
+    // MARK: Iteration 11 — reserved slots (the scaffold owns these lines;
+    // each lane owns the type behind its slot, see the file named for it)
+
+    /// N1 — notoriety, the record, the cases.
+    public var crime: CrimeState = .empty
+    /// N2 — per-person interaction cooldowns.
+    public var interactions: InteractionState = .empty
+    /// N3 — assets, ailments, vices.
+    public var assets: AssetsState = .empty
+    /// N4 — the feed and the fame.
+    public var fame: FameState = .empty
+    /// N5 — the office's slow-burn threads.
+    public var secrets: OfficeSecretsState = .empty
     /// What the staff remember about the founder's answers: the rules
     /// they became and who was told no (WS-D). Empty until somebody asks.
     public var staffMemory: StaffMemory = .initial
@@ -1097,6 +1126,8 @@ extension GameState {
         case ghosts
         // Iteration 10
         case pitch, incident, desk
+        // Iteration 11
+        case crime, interactions, assets, fame, secrets
     }
 
     public init(from decoder: any Decoder) throws {
@@ -1174,6 +1205,12 @@ extension GameState {
         pitch = try container.decodeIfPresent(PitchState.self, forKey: .pitch)
         incident = try container.decodeIfPresent(IncidentState.self, forKey: .incident)
         desk = try container.decodeIfPresent(DeskState.self, forKey: .desk) ?? .empty
+        // Iteration 11
+        crime = try container.decodeIfPresent(CrimeState.self, forKey: .crime) ?? .empty
+        interactions = try container.decodeIfPresent(InteractionState.self, forKey: .interactions) ?? .empty
+        assets = try container.decodeIfPresent(AssetsState.self, forKey: .assets) ?? .empty
+        fame = try container.decodeIfPresent(FameState.self, forKey: .fame) ?? .empty
+        secrets = try container.decodeIfPresent(OfficeSecretsState.self, forKey: .secrets) ?? .empty
         lockedTopics = Dictionary(
             (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
                 .map { ($0.topicID, $0.unlockDay) },
@@ -1270,5 +1307,11 @@ extension GameState {
         try container.encodeIfPresent(pitch, forKey: .pitch)
         try container.encodeIfPresent(incident, forKey: .incident)
         if desk != .empty { try container.encode(desk, forKey: .desk) }
+        // Iteration 11: a slot at its default is not written.
+        if crime != .empty { try container.encode(crime, forKey: .crime) }
+        if interactions != .empty { try container.encode(interactions, forKey: .interactions) }
+        if assets != .empty { try container.encode(assets, forKey: .assets) }
+        if fame != .empty { try container.encode(fame, forKey: .fame) }
+        if secrets != .empty { try container.encode(secrets, forKey: .secrets) }
     }
 }
