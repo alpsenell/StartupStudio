@@ -6,6 +6,13 @@ import Foundation
 /// a shelf to stand it on, and the floor.
 public enum HomeDecorSlotKind: String, Sendable, Equatable, Hashable, CaseIterable {
     case wall, shelf, floor
+    // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+    /// The strip below the room, outside the window, where a car stands;
+    /// and the spot on the floor the animal has claimed. Both are drawn
+    /// only when something is in them, so a home with no car and no dog
+    /// is the room it always was.
+    case driveway, basket
+    // MARK: end of Iteration 11 — N3
 }
 
 /// One slot in one tier's room, with its pixel anchor.
@@ -37,6 +44,10 @@ public struct HomeDecorSlotFrame: Sendable, Equatable, Hashable, Identifiable {
         case .wall: (x, y, 14, 18)
         case .shelf: (x, y - 14, 16, 17)
         case .floor: (x, y - 14, 20, 14)
+        // MARK: Iteration 11 — N3
+        case .driveway: (x, y - 10, 24, 12)
+        case .basket: (x, y - 10, 16, 11)
+        // MARK: end of Iteration 11 — N3
         }
     }
 }
@@ -55,6 +66,10 @@ extension HomeSceneComposer {
                 HomeDecorSlotFrame("wallA", .wall, 60, 2),
                 HomeDecorSlotFrame("shelfA", .shelf, 60, 31),
                 HomeDecorSlotFrame("floorA", .floor, 84, 69),
+                // MARK: Iteration 11 — N3
+                HomeDecorSlotFrame("drivewayA", .driveway, 2, 69),
+                HomeDecorSlotFrame("basketA", .basket, 40, 69),
+                // MARK: end of Iteration 11 — N3
             ]
         case .apartment:
             [
@@ -64,6 +79,10 @@ extension HomeSceneComposer {
                 HomeDecorSlotFrame("shelfB", .shelf, 46, 25),
                 HomeDecorSlotFrame("floorA", .floor, 8, 79),
                 HomeDecorSlotFrame("floorB", .floor, 120, 79),
+                // MARK: Iteration 11 — N3
+                HomeDecorSlotFrame("drivewayA", .driveway, 2, 79),
+                HomeDecorSlotFrame("basketA", .basket, 96, 79),
+                // MARK: end of Iteration 11 — N3
             ]
         case .house:
             [
@@ -76,6 +95,10 @@ extension HomeSceneComposer {
                 HomeDecorSlotFrame("floorA", .floor, 6, 87),
                 HomeDecorSlotFrame("floorB", .floor, 30, 87),
                 HomeDecorSlotFrame("floorC", .floor, 60, 87),
+                // MARK: Iteration 11 — N3
+                HomeDecorSlotFrame("drivewayA", .driveway, 150, 87),
+                HomeDecorSlotFrame("basketA", .basket, 120, 87),
+                // MARK: end of Iteration 11 — N3
             ]
         case .penthouse:
             [
@@ -91,6 +114,10 @@ extension HomeSceneComposer {
                 HomeDecorSlotFrame("floorB", .floor, 36, 88),
                 HomeDecorSlotFrame("floorC", .floor, 62, 88),
                 HomeDecorSlotFrame("floorD", .floor, 180, 88),
+                // MARK: Iteration 11 — N3
+                HomeDecorSlotFrame("drivewayA", .driveway, 172, 89),
+                HomeDecorSlotFrame("basketA", .basket, 140, 89),
+                // MARK: end of Iteration 11 — N3
             ]
         }
     }

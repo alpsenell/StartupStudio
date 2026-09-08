@@ -337,6 +337,37 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: N3 (assets, vices and the doctor)
 
+    /// N3: the app's one flag — the player has opened the Assets screen in
+    /// this run, so the vices, the ailments and the weekly upkeep may
+    /// start. Nothing else sets it, which is what keeps the pacing bots
+    /// and the byte-identical fixtures where they are.
+    case noticeAssetsOpened
+    /// Buys a car, a second property or a pet from
+    /// `balance.assets` with the founder's own wallet.
+    case buyAsset(assetID: String)
+    /// Sells it back at the catalog's resale fraction.
+    case sellAsset(assetID: String)
+    /// Pays the garage, the plumber or the roofer.
+    case repairAsset(assetID: String)
+    /// Starts a course of treatment at the doctor's: the bill now, the
+    /// clearance in the ailment's `treatmentDays`. One evening.
+    case treatAilment(ailmentID: String)
+    /// An hour on the couch: every dependency down, the mood up. One
+    /// evening, once a week.
+    case attendTherapy
+    /// One evening off a vice. The first starts the run; the rest roll
+    /// against a relapse.
+    case quitVice(viceID: String)
+    /// Gives up on giving up.
+    case abandonQuit(viceID: String)
+    /// One hand at one of the casino's three tables.
+    case playCasinoGame(gameID: String, stake: Int)
+    /// One ticket, drawn at the weekend.
+    case buyLotteryTicket
+    /// Dollars in (positive) or out (negative) of the crypto wallet, at
+    /// today's price less the spread.
+    case tradeCrypto(dollars: Int)
+
     // MARK: N4 (fame and the feed)
 
     // MARK: N5 (office secrets)

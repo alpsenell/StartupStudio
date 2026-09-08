@@ -2526,5 +2526,841 @@
       "mood": -6,
       "relationships": -4
     }
+  },
+  {
+    "id": "asset_parking_ticket",
+    "headline": "A parking ticket, for a bay you have paid for since March.",
+    "weight": 4,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_garage"
+      ]
+    },
+    "impact": {
+      "wallet": -90,
+      "mood": -3
+    }
+  },
+  {
+    "id": "asset_wing_mirror",
+    "headline": "Somebody took the wing mirror off in the night and left the rest.",
+    "weight": 3,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_garage"
+      ]
+    },
+    "impact": {
+      "wallet": -240,
+      "mood": -4
+    }
+  },
+  {
+    "id": "asset_service_due",
+    "headline": "The service light comes on, and it is not the kind you can ignore.",
+    "weight": 4,
+    "cooldownDays": 180,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_garage"
+      ]
+    },
+    "impact": {},
+    "body": "The garage can fit you in Thursday. Thursday is the board meeting, which the garage does not know.",
+    "choices": [
+      {
+        "id": "book",
+        "label": "Book it in",
+        "detail": "−$520 · one evening",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -520,
+            "mood": 2
+          }
+        ]
+      },
+      {
+        "id": "later",
+        "label": "Drive it and see",
+        "detail": "Free · it gets worse",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -2,
+            "mood": -2
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "asset_valet_recognises",
+    "headline": "The valet at the venue recognises the car before he recognises you.",
+    "weight": 2,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_garage"
+      ]
+    },
+    "impact": {
+      "mood": 4,
+      "relationships": 2
+    }
+  },
+  {
+    "id": "asset_speeding",
+    "headline": "A camera on the ring road has your number plate and an opinion.",
+    "weight": 3,
+    "cooldownDays": 240,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_garage"
+      ]
+    },
+    "impact": {
+      "wallet": -180,
+      "mood": -4
+    }
+  },
+  {
+    "id": "asset_someone_asks",
+    "headline": "Somebody at the office asks what you paid for it. You round down.",
+    "weight": 3,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_garage"
+      ]
+    },
+    "impact": {
+      "mood": -2,
+      "relationships": -2
+    }
+  },
+  {
+    "id": "asset_long_drive",
+    "headline": "You take the long way home for no reason and arrive in a better mood.",
+    "weight": 4,
+    "cooldownDays": 90,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_garage"
+      ]
+    },
+    "impact": {
+      "mood": 6,
+      "energy": -2
+    }
+  },
+  {
+    "id": "asset_dead_battery",
+    "headline": "Dead battery on a Monday. Everything about that sentence is true.",
+    "weight": 3,
+    "cooldownDays": 150,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_garage"
+      ]
+    },
+    "impact": {
+      "wallet": -140,
+      "energy": -4,
+      "mood": -3
+    }
+  },
+  {
+    "id": "asset_tenant_late",
+    "headline": "The tenant's rent is nine days late and their phone goes to voicemail.",
+    "weight": 3,
+    "cooldownDays": 180,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_property"
+      ]
+    },
+    "impact": {},
+    "body": "They have never been late before. There is a version of this where you are the villain and a version where you are $520 down.",
+    "choices": [
+      {
+        "id": "wait",
+        "label": "Give them a fortnight",
+        "detail": "Free · they remember it",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 1,
+            "relationships": 2
+          }
+        ]
+      },
+      {
+        "id": "chase",
+        "label": "Have the agent chase it",
+        "detail": "+$520 · a bad taste",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": 520,
+            "mood": -3
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 0
+  },
+  {
+    "id": "asset_boiler",
+    "headline": "The boiler in the flat has gone. In February, obviously.",
+    "weight": 3,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_property"
+      ]
+    },
+    "impact": {
+      "wallet": -1100,
+      "mood": -4
+    }
+  },
+  {
+    "id": "asset_valuation_up",
+    "headline": "A letter from an agent says the flat is worth more than you paid.",
+    "weight": 3,
+    "cooldownDays": 250,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_property"
+      ]
+    },
+    "impact": {
+      "mood": 6
+    }
+  },
+  {
+    "id": "asset_cabin_weekend",
+    "headline": "You go to the cabin for two nights and answer nothing.",
+    "weight": 3,
+    "cooldownDays": 160,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_property"
+      ]
+    },
+    "impact": {
+      "energy": 10,
+      "mood": 8,
+      "health": 4
+    }
+  },
+  {
+    "id": "asset_neighbour_letter",
+    "headline": "A neighbour has written to you about a hedge. Two pages, both sides.",
+    "weight": 2,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_property"
+      ]
+    },
+    "impact": {
+      "mood": -3
+    }
+  },
+  {
+    "id": "asset_pet_at_the_door",
+    "headline": "Whatever kind of day it was, something was waiting by the door.",
+    "weight": 5,
+    "cooldownDays": 60,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_pet"
+      ]
+    },
+    "impact": {
+      "mood": 7
+    }
+  },
+  {
+    "id": "asset_pet_on_the_call",
+    "headline": "The animal walks across the keyboard mid-board-call. Nobody minds.",
+    "weight": 4,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_pet"
+      ]
+    },
+    "impact": {
+      "mood": 5,
+      "relationships": 3
+    }
+  },
+  {
+    "id": "asset_pet_chewed",
+    "headline": "Something has been chewed. It was expensive and it was yours.",
+    "weight": 3,
+    "cooldownDays": 180,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_pet"
+      ]
+    },
+    "impact": {
+      "wallet": -260,
+      "mood": -3
+    }
+  },
+  {
+    "id": "asset_pet_walk",
+    "headline": "You take it out at six and the street is empty and the air is cold.",
+    "weight": 4,
+    "cooldownDays": 70,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_pet"
+      ]
+    },
+    "impact": {
+      "health": 5,
+      "mood": 5,
+      "energy": -2
+    }
+  },
+  {
+    "id": "asset_pet_vet_scare",
+    "headline": "The vet says the words 'we'll keep an eye on it', which do not help.",
+    "weight": 2,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_pet"
+      ]
+    },
+    "impact": {},
+    "body": "Nothing is wrong. Nothing is confirmed to be right, either. She wants to see it again in a month.",
+    "choices": [
+      {
+        "id": "scan",
+        "label": "Pay for the scan now",
+        "detail": "−$680 · it is nothing",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -680,
+            "mood": 4
+          }
+        ]
+      },
+      {
+        "id": "wait",
+        "label": "Wait the month out",
+        "detail": "Free · a month of it",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "asset_crypto_screenshot",
+    "headline": "You screenshot the number at its high and send it to nobody.",
+    "weight": 3,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_crypto"
+      ]
+    },
+    "impact": {
+      "mood": 3
+    }
+  },
+  {
+    "id": "asset_crypto_overnight",
+    "headline": "It moved thirty per cent overnight. You are not sure which way yet.",
+    "weight": 4,
+    "cooldownDays": 90,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_crypto"
+      ]
+    },
+    "impact": {
+      "energy": -4,
+      "mood": -2
+    }
+  },
+  {
+    "id": "asset_crypto_advice",
+    "headline": "Somebody at a party asks you what to buy. You tell them not to.",
+    "weight": 2,
+    "cooldownDays": 250,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_crypto"
+      ]
+    },
+    "impact": {
+      "mood": 2,
+      "relationships": 2
+    }
+  },
+  {
+    "id": "asset_casino_comped",
+    "headline": "The casino sends a car. That is how they say they know your name.",
+    "weight": 3,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_casino"
+      ]
+    },
+    "impact": {},
+    "body": "A room, a dinner, and a marker if you want one. They have done the arithmetic on you and it came out in their favour.",
+    "choices": [
+      {
+        "id": "dinner",
+        "label": "Take the dinner, skip the tables",
+        "detail": "Free · +mood",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 5
+          }
+        ]
+      },
+      {
+        "id": "marker",
+        "label": "Take the marker",
+        "detail": "−$1,200 · and the habit",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -1200,
+            "mood": -4
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 0
+  },
+  {
+    "id": "asset_lottery_almost",
+    "headline": "Four numbers. The fifth one was on the ticket you did not buy.",
+    "weight": 3,
+    "cooldownDays": 140,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_casino"
+      ]
+    },
+    "impact": {
+      "mood": -4
+    }
+  },
+  {
+    "id": "asset_net_worth_printed",
+    "headline": "A trade site prints an estimate of what you are worth. It is wrong.",
+    "weight": 3,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_engaged"
+      ]
+    },
+    "impact": {
+      "mood": -2,
+      "relationships": 3
+    }
+  },
+  {
+    "id": "asset_insurance_review",
+    "headline": "Your insurer would like to review everything you own. All of it.",
+    "weight": 2,
+    "cooldownDays": 280,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_engaged"
+      ]
+    },
+    "impact": {
+      "wallet": -320,
+      "energy": -3
+    }
+  },
+  {
+    "id": "vice_one_after_the_launch",
+    "headline": "The one after the launch turns into the four after the launch.",
+    "weight": 4,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_engaged"
+      ]
+    },
+    "impact": {
+      "health": -4,
+      "energy": -5,
+      "mood": 2
+    }
+  },
+  {
+    "id": "vice_third_coffee",
+    "headline": "You have had three coffees and it is not yet ten in the morning.",
+    "weight": 5,
+    "cooldownDays": 60,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_engaged"
+      ]
+    },
+    "impact": {
+      "energy": 4,
+      "health": -3
+    }
+  },
+  {
+    "id": "vice_phone_at_the_table",
+    "headline": "You checked it under the table at dinner and everyone saw you.",
+    "weight": 4,
+    "cooldownDays": 90,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_engaged"
+      ]
+    },
+    "impact": {
+      "relationships": -5,
+      "mood": -2
+    }
+  },
+  {
+    "id": "vice_two_am_scroll",
+    "headline": "It is ten past two and you are still holding the phone.",
+    "weight": 4,
+    "cooldownDays": 80,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_engaged"
+      ]
+    },
+    "impact": {
+      "energy": -6,
+      "mood": -3
+    }
+  },
+  {
+    "id": "vice_counting_units",
+    "headline": "You count the units for the week and then stop counting them.",
+    "weight": 3,
+    "cooldownDays": 160,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "vice_intervention"
+      ]
+    },
+    "impact": {},
+    "body": "The number was not catastrophic. It was just higher than the number you would have said out loud if somebody had asked.",
+    "choices": [
+      {
+        "id": "dry",
+        "label": "A dry fortnight, starting tonight",
+        "detail": "One evening · health +10 · mood −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 3,
+            "health": 10,
+            "mood": -4
+          }
+        ]
+      },
+      {
+        "id": "normal",
+        "label": "It is a normal amount",
+        "detail": "Free · nothing changes",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "health": -3,
+            "mood": 1
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "vice_hidden_receipt",
+    "headline": "You put a receipt in your own pocket rather than the shared drawer.",
+    "weight": 3,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "vice_intervention"
+      ]
+    },
+    "impact": {
+      "relationships": -6,
+      "mood": -4
+    }
+  },
+  {
+    "id": "vice_partner_asks",
+    "headline": "They ask, kindly, and you answer the question they did not ask.",
+    "weight": 3,
+    "cooldownDays": 180,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "vice_intervention"
+      ]
+    },
+    "impact": {
+      "relationships": -4,
+      "mood": -3
+    }
+  },
+  {
+    "id": "vice_office_notices",
+    "headline": "Somebody on the team makes a joke about it and nobody laughs.",
+    "weight": 3,
+    "cooldownDays": 220,
+    "category": "team",
+    "requires": {
+      "flagsAll": [
+        "vice_intervention"
+      ]
+    },
+    "impact": {
+      "mood": -6,
+      "relationships": -3
+    }
+  },
+  {
+    "id": "vice_the_good_week",
+    "headline": "A week goes by where you did not think about it once.",
+    "weight": 4,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_engaged"
+      ]
+    },
+    "impact": {
+      "mood": 8,
+      "health": 4
+    }
+  },
+  {
+    "id": "vice_replacement_habit",
+    "headline": "You have replaced it with running, which is its own kind of odd.",
+    "weight": 3,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_engaged"
+      ]
+    },
+    "impact": {
+      "health": 8,
+      "energy": -3,
+      "mood": 4
+    }
+  },
+  {
+    "id": "vice_the_group",
+    "headline": "There is a room above a pub on Tuesdays. You have the address.",
+    "weight": 3,
+    "cooldownDays": 240,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "vice_intervention"
+      ]
+    },
+    "impact": {},
+    "body": "Nobody there is famous and nobody there cares that you are. That is most of the point of it.",
+    "choices": [
+      {
+        "id": "go",
+        "label": "Go on Tuesday",
+        "detail": "One evening · mood +7",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 7,
+            "relationships": 4
+          }
+        ]
+      },
+      {
+        "id": "keep",
+        "label": "Keep the address",
+        "detail": "Free · nothing yet",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -1
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "vice_relapse_quiet",
+    "headline": "You are back where you were in March and nobody has noticed yet.",
+    "weight": 2,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "vice_intervention"
+      ]
+    },
+    "impact": {
+      "mood": -7,
+      "health": -4
+    }
+  },
+  {
+    "id": "vice_doctor_mentions",
+    "headline": "Your doctor mentions it before you do, which is the awkward order.",
+    "weight": 3,
+    "cooldownDays": 220,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_doctor"
+      ]
+    },
+    "impact": {
+      "mood": -4,
+      "health": 2
+    }
+  },
+  {
+    "id": "vice_sleep_study",
+    "headline": "The sleep clinic can see you in six weeks. You write it down.",
+    "weight": 3,
+    "cooldownDays": 260,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_doctor"
+      ]
+    },
+    "impact": {
+      "energy": 3,
+      "wallet": -400
+    }
+  },
+  {
+    "id": "vice_prescription",
+    "headline": "A prescription, a leaflet, and a sentence about 'lifestyle factors'.",
+    "weight": 3,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_doctor"
+      ]
+    },
+    "impact": {
+      "wallet": -160,
+      "health": 5,
+      "mood": -2
+    }
+  },
+  {
+    "id": "vice_second_opinion",
+    "headline": "You get a second opinion. It is the same opinion, said more slowly.",
+    "weight": 2,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_doctor"
+      ]
+    },
+    "impact": {
+      "wallet": -600,
+      "mood": -3
+    }
+  },
+  {
+    "id": "vice_the_photo",
+    "headline": "A photo from three years ago comes up. You look at it for a while.",
+    "weight": 3,
+    "cooldownDays": 280,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "assets_doctor"
+      ]
+    },
+    "impact": {
+      "mood": -5,
+      "health": 2
+    }
+  },
+  {
+    "id": "vice_walked_past",
+    "headline": "You walked past the place tonight and kept walking.",
+    "weight": 4,
+    "cooldownDays": 100,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "vice_intervention"
+      ]
+    },
+    "impact": {
+      "mood": 6
+    }
   }
 ]

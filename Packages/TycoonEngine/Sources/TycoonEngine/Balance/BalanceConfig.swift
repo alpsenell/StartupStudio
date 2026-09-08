@@ -1854,6 +1854,17 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 10 — M6
 
+    // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+
+    /// The catalog of everything the founder can own, catch, treat or
+    /// become dependent on (`BalanceConfig+Assets.swift`). Inline default,
+    /// so `"assets"` is an optional key — and read only from
+    /// `AssetsSystem`, which stands down entirely until the player opens
+    /// the Assets screen.
+    public var assets: AssetsBalance = .default
+
+    // MARK: end Iteration 11 — N3
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,
