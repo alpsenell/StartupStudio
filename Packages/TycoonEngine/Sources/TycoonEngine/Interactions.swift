@@ -224,6 +224,32 @@ public struct InteractionState: Codable, Equatable, Sendable {
 
     public func isDisowned(_ childID: UUID) -> Bool { disownedChildIDs.contains(childID) }
 
+    // MARK: Iteration 11, wave two — W2 (family drama): discovery
+
+    /// How long the affair has been running, in weeks. W2's weekly
+    /// discovery roll scales on it: a fortnight is a secret, a year is a
+    /// habit.
+    public func affairWeeksRunning(day: Int) -> Double {
+        guard let affairSinceDay else { return 0 }
+        return Double(max(0, day - affairSinceDay)) / Double(GameState.daysPerWeek)
+    }
+
+    /// The one place `affairDiscoveredDay` is written. N2 starts the
+    /// affair; W2 ends the secret, and does it through a named seam so the
+    /// field is never set from three places.
+    public mutating func markAffairDiscovered(day: Int) {
+        guard affairContactID != nil, affairDiscoveredDay == nil else { return }
+        affairDiscoveredDay = day
+    }
+
+    /// The affair is over, discovered or not — the founder ended it.
+    public mutating func endAffair() {
+        affairContactID = nil
+        affairSinceDay = nil
+    }
+
+    // MARK: end of Iteration 11, wave two — W2
+
     public func wasFiredWithCause(_ employeeID: UUID) -> Bool {
         firedWithCauseIDs.contains(employeeID)
     }

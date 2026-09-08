@@ -89,6 +89,25 @@ struct FamilyCard: View {
                 }
                 // MARK: end of Iteration 11 — N2
 
+                // MARK: Iteration 11, wave two — W2 (family drama)
+                // What the court said, where the children are listed. The
+                // rest of W2 lives in its own card and its own room.
+                if let custody = state.familyDrama.custody {
+                    Divider()
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Image(systemName: "building.columns.fill")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(
+                                custody.keepsTheHouse ? Theme.positiveCash : Theme.warning
+                            )
+                        Text(custody.displayName)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 0)
+                    }
+                }
+                // MARK: end of Iteration 11, wave two — W2
+
                 if let step = advanceStep(life: life, day: state.day) {
                     Divider()
                     GatedAction(title: step.title, reason: step.reason) {

@@ -1916,6 +1916,18 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 11, wave two — W3
 
+    // MARK: Iteration 11, wave two — W2 (family drama)
+
+    /// The odds an affair surfaces, what a settlement owes, what a
+    /// childhood is worth in a family court, and what a care home costs
+    /// (`BalanceConfig+FamilyDrama.swift`). Inline default, so
+    /// `"familyDrama"` is an optional key, and every number is read only
+    /// from `FamilyDramaSystem`, which stands down until the founder opens
+    /// the room or starts an affair.
+    public var familyDrama: FamilyDramaBalance = .default
+
+    // MARK: end Iteration 11, wave two — W2
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

@@ -111,6 +111,9 @@ struct ContentVarietyTests {
         // Iteration 9 (L3): the childhood system schedules the four
         // stage beats itself, the same way the calendar does its two.
         lifeTargets.formUnion(ChildhoodSystem.stageBeatIDs)
+        // Iteration 11, wave two (W2): the family calendar schedules the
+        // parents' birthdays and swaps in the anniversary after the affair.
+        lifeTargets.formUnion(FamilyCalendar.familyDramaScheduledEventIDs)
         for event in content.lifeEvents {
             guard let twin = event.missedVariantID else { continue }
             #expect(lifeIDs.contains(twin), "\(event.id) -> unknown missed variant \(twin)")

@@ -279,6 +279,8 @@ extension Route {
         // MARK: W1 (dirty money)
         case "dirtymoney", "backer", "facility": .dirtyMoney
         // MARK: W2 (family drama)
+        case "family": .family
+        case "divorce", "settlement": .divorce
         // MARK: W3 (espionage)
         case "spy", "espionage": .spy
         // MARK: W4 (inside)
@@ -1092,6 +1094,10 @@ extension DebugLaunch {
     // lists every one.
 
     // MARK: W2 (family drama)
+
+    // `-autoFamily <stage>` lives with the lane, in
+    // `Screens/Life/Family/FamilyDramaDebug.swift`, because it sends a real
+    // action and needs the engine.
 
     // MARK: W3 (espionage)
 

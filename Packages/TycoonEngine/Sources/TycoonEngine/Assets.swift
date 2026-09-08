@@ -329,6 +329,40 @@ extension GameState {
         } + (assets.crypto?.value ?? 0)
     }
 
+    // MARK: Iteration 11, wave two — W2 (family drama): the split
+
+    /// What one owned thing would fetch today — the single row of
+    /// `assetResaleValue`, exposed so the divorce sheet can print a price
+    /// next to every line it asks the player to drag.
+    public func assetResaleValue(of owned: AssetOwned, balance: BalanceConfig) -> Int {
+        guard let def = balance.assets.asset(owned.catalogID) else { return 0 }
+        let base = Double(def.price) * def.resaleFraction
+        let docked = owned.needsRepair ? base * balance.assets.brokenResaleFactor : base
+        return Int(docked.rounded())
+    }
+
+    /// What a proposed settlement is worth to each side, before the roof
+    /// and before the cheque: pure, so the sheet's running total and the
+    /// engine's arithmetic can never disagree.
+    public func assetSplitValue(
+        keeping ids: Set<String>, balance: BalanceConfig
+    ) -> (mine: Int, theirs: Int) {
+        var mine = 0
+        var theirs = 0
+        for owned in assets.owned {
+            let value = assetResaleValue(of: owned, balance: balance)
+            let kept = ids.contains(owned.catalogID)
+                || (ids.contains("pet") && !owned.petName.isEmpty)
+            if kept { mine += value } else { theirs += value }
+        }
+        let crypto = assets.crypto?.value ?? 0
+        mine += crypto / 2
+        theirs += crypto - crypto / 2
+        return (mine, theirs)
+    }
+
+    // MARK: end of Iteration 11, wave two — W2
+
     /// What the founder's things cost them every week, net of any rent
     /// coming the other way. Positive means the wallet is lighter.
     public func assetWeeklyCosts(balance: BalanceConfig) -> Int {

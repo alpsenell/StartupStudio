@@ -5702,5 +5702,1002 @@
       "mood": 12
     },
     "cooldownDays": 200
+  },
+  {
+    "id": "family_two_toothbrushes",
+    "headline": "There are two toothbrushes in the bathroom and one of them is new.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_affair_found"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "family_the_spare_room",
+    "headline": "You have been in the spare room eleven days. Nobody has said so out loud.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_affair_found"
+      ]
+    },
+    "impact": {
+      "mood": -8,
+      "energy": -4
+    }
+  },
+  {
+    "id": "family_counselling_leaflet",
+    "headline": "A leaflet appears on the counter. It is not addressed to anybody.",
+    "weight": 4,
+    "body": "It is for a place on the high street with a sofa in the photograph. It has been there two days and neither of you has moved it.",
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_affair_found"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "book",
+        "label": "Book the appointment",
+        "detail": "An evening · affection +14 · −$180",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 14
+          },
+          {
+            "type": "founderMeters",
+            "mood": 4,
+            "wallet": -180
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "later",
+        "label": "After the quarter",
+        "detail": "Affection −10 · the leaflet stays where it is",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -10
+          },
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "family_friends_choosing",
+    "headline": "Your friends have started answering slower. They have been asked to pick a side.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_affair_found"
+      ]
+    },
+    "impact": {
+      "mood": -7,
+      "relationships": -8
+    }
+  },
+  {
+    "id": "family_the_group_chat",
+    "headline": "You were removed from a group chat named after a holiday you all took.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_affair_found"
+      ]
+    },
+    "impact": {
+      "mood": -5
+    }
+  },
+  {
+    "id": "family_kids_noticed",
+    "headline": "Your eldest asked why you sleep with the door shut now.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_affair_found"
+      ],
+      "requiresChildren": true
+    },
+    "impact": {
+      "mood": -10
+    }
+  },
+  {
+    "id": "family_the_forms",
+    "headline": "The forms arrive as a PDF with somebody else's initials on every page.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_divorced"
+      ]
+    },
+    "impact": {
+      "mood": -6,
+      "wallet": -400
+    }
+  },
+  {
+    "id": "family_half_the_shelf",
+    "headline": "Half the bookshelf is gone and the half that is left leans.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_divorced"
+      ]
+    },
+    "impact": {
+      "mood": -5
+    }
+  },
+  {
+    "id": "family_wrong_supermarket",
+    "headline": "You drove to the old supermarket on autopilot and sat in the car park a while.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_divorced"
+      ]
+    },
+    "impact": {
+      "mood": -4,
+      "energy": -3
+    }
+  },
+  {
+    "id": "family_their_lawyer_calls",
+    "headline": "Their solicitor calls the office line, which somebody answers cheerfully.",
+    "weight": 4,
+    "body": "They want the cabin question settled by Friday. Your CFO is standing in the doorway holding a payroll run and pretending to read it.",
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_divorced"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "settle",
+        "label": "Settle it on the call",
+        "detail": "−$3,000 · it stops",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -3000,
+            "mood": 3
+          }
+        ]
+      },
+      {
+        "id": "fight",
+        "label": "Tell them to put it in writing",
+        "detail": "Mood −6 · it does not stop",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "energy": -4
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "family_first_handover",
+    "headline": "The first handover is in a retail park because it is exactly halfway.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_divorced"
+      ],
+      "requiresChildren": true
+    },
+    "impact": {
+      "mood": -8
+    }
+  },
+  {
+    "id": "family_ring_drawer",
+    "headline": "You found the ring in a drawer, in an envelope, in a box, which is three decisions.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_divorced"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "family_someone_asks",
+    "headline": "A journalist asks, on the record, whether the divorce affected the roadmap.",
+    "weight": 4,
+    "body": "They have the dates. They are not being unkind about it; they are being thorough, which in print is the same thing.",
+    "cooldownDays": 140,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "family_divorced"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "no",
+        "label": "\"It did not.\"",
+        "detail": "Reputation +2 · mood −4",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 2
+          },
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      },
+      {
+        "id": "yes",
+        "label": "\"Obviously it did.\"",
+        "detail": "Mood +6 · reputation −3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 6
+          },
+          {
+            "type": "reputation",
+            "amount": -3
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 0
+  },
+  {
+    "id": "family_the_dog_misses_them",
+    "headline": "The dog waits by the door at six every evening for somebody who is not coming.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_divorced"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "family_school_forms",
+    "headline": "The school needs one emergency contact and there is a box for a reason.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "requiresChildren": true,
+      "flagsAll": [
+        "family_divorced"
+      ]
+    },
+    "impact": {
+      "mood": -4
+    }
+  },
+  {
+    "id": "family_welfare_officer",
+    "headline": "A welfare officer would like forty minutes on a Tuesday, at your convenience.",
+    "weight": 4,
+    "body": "They are polite about it in a way that is worse than being unpleasant. The forty minutes is not really forty minutes.",
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "requiresChildren": true,
+      "flagsAll": [
+        "family_affair_found"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "clear",
+        "label": "Clear the afternoon",
+        "detail": "An evening · mood −4 · it goes well",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "reschedule",
+        "label": "Ask them to rebook",
+        "detail": "Mood −8 · they write that down",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -8
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "family_diary_subpoena",
+    "headline": "Your calendar has been printed out by somebody else and it is long.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "requiresChildren": true,
+      "flagsAll": [
+        "family_affair_found"
+      ]
+    },
+    "impact": {
+      "mood": -7
+    }
+  },
+  {
+    "id": "family_the_home_calls",
+    "headline": "The home calls at eleven in the morning, which is never good news at eleven.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_care"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "family_care_invoice",
+    "headline": "The care invoice has a line item called “enhanced supervision”.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_care"
+      ]
+    },
+    "impact": {
+      "wallet": -600,
+      "mood": -3
+    }
+  },
+  {
+    "id": "family_they_asked_who",
+    "headline": "They asked who you were, and then, two minutes later, how the company was doing.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_care"
+      ]
+    },
+    "impact": {
+      "mood": -9
+    }
+  },
+  {
+    "id": "family_sunday_visit",
+    "headline": "Sunday visiting hours are two till four and the traffic is ninety minutes each way.",
+    "weight": 4,
+    "body": "The last hour is the television. You have been twice this quarter and one of those was a Saturday.",
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_care"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "go",
+        "label": "Go",
+        "detail": "An evening · mood +7",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 7,
+            "energy": -6
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "call",
+        "label": "Phone instead",
+        "detail": "Mood −5",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "family_the_good_home",
+    "headline": "There is a better home. It is forty per cent more and has a garden.",
+    "weight": 4,
+    "body": "The garden has a bench with a plaque on it. The person showing you round says “many families find” twice in four minutes.",
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_care"
+      ],
+      "minWallet": 20000
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "move",
+        "label": "Move them",
+        "detail": "−$9,000 · mood +8",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -9000,
+            "mood": 8
+          }
+        ]
+      },
+      {
+        "id": "stay",
+        "label": "Leave it as it is",
+        "detail": "Mood −6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "family_the_admin_of_death",
+    "headline": "Somebody has to cancel a phone contract and it turns out to be you.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_bereaved"
+      ]
+    },
+    "impact": {
+      "mood": -5,
+      "energy": -4
+    }
+  },
+  {
+    "id": "family_boxes_in_the_hall",
+    "headline": "Four boxes came back from the home and three of them are photographs.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_bereaved"
+      ]
+    },
+    "impact": {
+      "mood": -7
+    }
+  },
+  {
+    "id": "family_their_handwriting",
+    "headline": "You found their handwriting on the back of an envelope and had to sit down.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_bereaved"
+      ]
+    },
+    "impact": {
+      "mood": -8
+    }
+  },
+  {
+    "id": "family_would_have_been_proud",
+    "headline": "Somebody at the funeral said they used to tell everyone what you did for a living.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_bereaved"
+      ]
+    },
+    "impact": {
+      "mood": 6
+    }
+  },
+  {
+    "id": "family_the_house_sells",
+    "headline": "The house sold. It went for less than the road, and quickly.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "once": true,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_bereaved"
+      ]
+    },
+    "impact": {
+      "wallet": 18000,
+      "mood": -4
+    }
+  },
+  {
+    "id": "family_inlaws_opinion",
+    "headline": "Your father-in-law has read one article about your industry and has questions.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "minStage": "married",
+      "flagsAll": [
+        "family_room"
+      ]
+    },
+    "impact": {
+      "mood": -3
+    }
+  },
+  {
+    "id": "family_inlaws_spare_room",
+    "headline": "Your in-laws mention, twice, that the spare room is standing empty.",
+    "weight": 4,
+    "body": "It is standing empty. It has been standing empty since the box room became an office and the office became a company.",
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "minStage": "married",
+      "flagsAll": [
+        "family_room"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "offer",
+        "label": "Offer it to them",
+        "detail": "Affection +12 · mood −6",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": 12
+          },
+          {
+            "type": "founderMeters",
+            "mood": -6
+          }
+        ]
+      },
+      {
+        "id": "no",
+        "label": "Say the office needs it",
+        "detail": "Affection −8",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -8
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "family_inlaws_sunday",
+    "headline": "Sunday lunch at the in-laws runs from one o'clock until it is dark.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "minStage": "married",
+      "flagsAll": [
+        "family_room"
+      ]
+    },
+    "impact": {
+      "mood": -4,
+      "relationships": 6
+    }
+  },
+  {
+    "id": "family_inlaws_business_idea",
+    "headline": "Your mother-in-law has a business idea and she has printed it.",
+    "weight": 4,
+    "body": "It is six pages, ring-bound, and page four is a market the company already lost money in. She has printed two copies.",
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "minStage": "married",
+      "flagsAll": [
+        "family_room"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "read",
+        "label": "Read all six pages",
+        "detail": "Affection +8 · an evening",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 8
+          },
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "skim",
+        "label": "Say it's interesting",
+        "detail": "Affection −4 · she knows",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -4
+          }
+        ]
+      }
+    ],
+    "autoChoiceIndex": 1
+  },
+  {
+    "id": "family_sibling_linkedin",
+    "headline": "Your sibling has updated their profile to say “advisor” at your company.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_room"
+      ]
+    },
+    "impact": {
+      "mood": -4
+    }
+  },
+  {
+    "id": "family_sibling_at_christmas",
+    "headline": "It came up at Christmas, in front of everybody, in the form of a joke.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_room"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "family_sibling_pays_back",
+    "headline": "An envelope arrives with four hundred dollars in it and no note.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_room"
+      ]
+    },
+    "impact": {
+      "wallet": 400,
+      "mood": 5
+    }
+  },
+  {
+    "id": "family_solicitor_letter",
+    "headline": "The solicitor confirms the will is lodged, in a sentence with a semicolon in it.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "once": true,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_will"
+      ]
+    },
+    "impact": {
+      "mood": 3
+    }
+  },
+  {
+    "id": "family_they_found_out",
+    "headline": "Somebody in the family has found out who is named, and it is not going well.",
+    "weight": 4,
+    "cooldownDays": 140,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "family_will"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "family_mother_birthday",
+    "headline": "It is your mother's birthday this week.",
+    "body": "She will say not to make a fuss and then mention it in March. The week is what it is.",
+    "weight": 1,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 2,
+    "diaryLabel": "Your mother's birthday",
+    "impact": {},
+    "choices": [
+      {
+        "id": "go",
+        "label": "Drive over with a cake",
+        "detail": "An evening · mood +9",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 9,
+            "relationships": 5,
+            "wallet": -40
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "call",
+        "label": "Phone her from the office",
+        "detail": "Mood +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 2
+          }
+        ]
+      },
+      {
+        "id": "miss",
+        "label": "It is launch week",
+        "detail": "Mood −7 · affection −20 · she says it's fine",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -20
+          },
+          {
+            "type": "founderMeters",
+            "mood": -7
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "family_father_birthday",
+    "headline": "It is your father's birthday this week.",
+    "body": "He wants nothing, has always wanted nothing, and will be in the kitchen at seven either way.",
+    "weight": 1,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 2,
+    "diaryLabel": "Your father's birthday",
+    "impact": {},
+    "choices": [
+      {
+        "id": "go",
+        "label": "Take the afternoon",
+        "detail": "An evening · mood +9",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 9,
+            "relationships": 5,
+            "wallet": -40
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "call",
+        "label": "Phone him between meetings",
+        "detail": "Mood +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 2
+          }
+        ]
+      },
+      {
+        "id": "miss",
+        "label": "Next week, properly",
+        "detail": "Mood −7 · affection −20 · there is no next week for this",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -20
+          },
+          {
+            "type": "founderMeters",
+            "mood": -7
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "family_anniversary_after",
+    "headline": "Your anniversary with {partner} is this week. The first one since.",
+    "body": "The table is booked because it is booked every year and nobody cancelled it. Both of you know the date.",
+    "weight": 1,
+    "minStage": "dating",
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 2,
+    "diaryLabel": "Your anniversary with {partner}",
+    "impact": {},
+    "choices": [
+      {
+        "id": "go",
+        "label": "Go, and say nothing clever",
+        "detail": "An evening · affection +18 · −$140",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "affection",
+            "amount": 18
+          },
+          {
+            "type": "founderMeters",
+            "mood": 4,
+            "wallet": -140
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "talk",
+        "label": "Cancel it and talk at home",
+        "detail": "Affection +8 · mood −6",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": 8
+          },
+          {
+            "type": "founderMeters",
+            "mood": -6
+          }
+        ]
+      },
+      {
+        "id": "work",
+        "label": "Let it pass",
+        "detail": "Affection −22 · neither of you mentions it",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -22
+          },
+          {
+            "type": "founderMeters",
+            "mood": -8
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ]
+      }
+    ]
   }
 ]

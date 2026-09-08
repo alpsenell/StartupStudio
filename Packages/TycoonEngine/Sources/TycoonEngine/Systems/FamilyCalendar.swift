@@ -27,6 +27,71 @@ enum FamilyCalendar {
     /// variants and the second acts, cleared by making it up.
     static let missedFlag = "family_date_missed"
 
+    // MARK: Iteration 11, wave two — W2 (family drama)
+
+    /// The parents' birthdays, one each, put in the diary the first time
+    /// the founder opens the family room and recurring a year on like
+    /// every other date here.
+    static let motherBirthdayEventID = "family_mother_birthday"
+    static let fatherBirthdayEventID = "family_father_birthday"
+    /// The anniversary the founder now dreads: the same date, the same
+    /// evening, fired in the anniversary's place while the affair is on
+    /// the record.
+    static let dreadedAnniversaryEventID = "family_anniversary_after"
+    /// Dates that belong to the founder's own parents, not the partner's,
+    /// so a breakup does not take them away.
+    static let parentDateIDs: Set<String> = [
+        "family_mother_birthday", "family_father_birthday",
+    ]
+
+    /// Every `followUpOnly` life beat this lane fires itself: the two
+    /// parents' birthdays, which `parentsArrived` schedules, and the
+    /// dreaded anniversary, which `anniversaryVariant` swaps in. The same
+    /// shape as `ChildhoodSystem.stageBeatIDs` and
+    /// `OfficeSecretsSystem.scheduledEventIDs` — the roll never draws one,
+    /// which is not the same as nothing being able to reach it.
+    static let familyDramaScheduledEventIDs: Set<String> = parentDateIDs.union([
+        "family_anniversary_after",
+    ])
+
+    /// Puts the parents' birthdays in the diary, once. Called only from
+    /// `FamilyDramaSystem`, which itself only runs once the founder has
+    /// opened the room — so a run that never does keeps an unchanged
+    /// diary, and the beats are ordinary dated `family_` events with a
+    /// `diaryLabel`, not a new save field.
+    static func parentsArrived(
+        _ state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) {
+        let year = balance.relationships.diary.yearDays
+        let ids = [motherBirthdayEventID, fatherBirthdayEventID]
+        for (offset, id) in ids.enumerated() {
+            let already = state.narrative.scheduled.contains { entry in entry.eventID == id }
+            guard !already else { continue }
+            schedule(
+                id,
+                day: state.day + year / 4 + offset * year / 3,
+                childID: nil, state: &state, balance: balance, content: content
+            )
+        }
+    }
+
+    /// The anniversary's twin while the affair is on the record.
+    static func anniversaryVariant(
+        of def: LifeEventDef,
+        state: GameState,
+        content: ContentCatalog
+    ) -> LifeEventDef {
+        guard def.id == anniversaryEventID,
+              state.narrative.hasFlag(FamilyDrama.discoveredFlag),
+              let twin = content.lifeEvent(dreadedAnniversaryEventID)
+        else { return def }
+        return twin
+    }
+
+    // MARK: end of Iteration 11, wave two — W2
+
     // MARK: - Scheduling
 
     /// The relationship reached a new stage, or started: the old
@@ -93,8 +158,14 @@ enum FamilyCalendar {
     }
 
     private static func removePartnerDates(_ state: inout GameState, content: ContentCatalog) {
-        state.narrative.scheduled.removeAll {
-            $0.source == .life && $0.childID == nil && content.lifeEvent($0.eventID)?.isDated == true
+        state.narrative.scheduled.removeAll { entry in
+            // MARK: Iteration 11, wave two — W2 (family drama)
+            // Your own parents' birthdays are not your partner's dates and
+            // do not leave with them.
+            guard !parentDateIDs.contains(entry.eventID) else { return false }
+            // MARK: end of Iteration 11, wave two — W2
+            return entry.source == .life && entry.childID == nil
+                && content.lifeEvent(entry.eventID)?.isDated == true
         }
     }
 
@@ -152,6 +223,10 @@ enum FamilyCalendar {
         state: GameState,
         content: ContentCatalog
     ) -> LifeEventDef {
+        // MARK: Iteration 11, wave two — W2 (family drama)
+        // The anniversary after the affair is a different evening.
+        let def = anniversaryVariant(of: def, state: state, content: content)
+        // MARK: end of Iteration 11, wave two — W2
         guard state.narrative.hasFlag(missedFlag),
               let id = def.missedVariantID,
               let twin = content.lifeEvent(id)
@@ -179,6 +254,13 @@ enum FamilyCalendar {
                 anniversaryEventID, day: next(after: state.life.family.stageSinceDay),
                 childID: nil, state: &state, balance: balance, content: content
             )
+        // MARK: Iteration 11, wave two — W2 (family drama)
+        case motherBirthdayEventID, fatherBirthdayEventID:
+            schedule(
+                entry.eventID, day: entry.day + year,
+                childID: nil, state: &state, balance: balance, content: content
+            )
+        // MARK: end of Iteration 11, wave two — W2
         case birthdayEventID:
             guard let childID = entry.childID,
                   let child = state.life.family.children.first(where: { $0.id == childID })

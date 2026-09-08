@@ -13,7 +13,9 @@ struct Successor: Identifiable {
     let appearanceSeed: UInt64
     let archetype: FounderArchetype
     /// "Child of Mira Okafor, who ran Northgate."
-    let relation: String
+    // Iteration 11, wave two (W2): a `var`, so the will can append the one
+    // sentence that says it was named.
+    var relation: String
 
     // MARK: Iteration 9 — L3 (a childhood, carried)
 
@@ -75,6 +77,13 @@ enum Successors {
                 relation: "\(last.companyName)'s longest-serving \(employee.resolvedRole.displayName.lowercased())."
             ))
         }
+        // MARK: Iteration 11, wave two — W2 (family drama)
+        // A will names one of them. The named person keeps their own offer
+        // and moves to the front of the list, with the reason said out
+        // loud — nothing here is a new kind of successor, only an order
+        // and a sentence.
+        offers = FamilyWillSuccessors.namedFirst(offers, in: last)
+        // MARK: end of Iteration 11, wave two — W2
         if let seed = last.founderAppearanceSeed, let archetype = last.founderArchetype {
             offers.append(Successor(
                 run: last, kind: .founder,
@@ -203,3 +212,39 @@ enum Successors {
         }
     }
 }
+
+// MARK: Iteration 11, wave two — W2 (family drama)
+
+/// The will's half of the dynasty: whoever the founder named is offered
+/// first, and the relation line says the will did it.
+enum FamilyWillSuccessors {
+    static func namedFirst(_ offers: [Successor], in run: LegacyRun) -> [Successor] {
+        guard let heir = run.willHeir.flatMap(FamilyHeir.init(rawValue:)), heir != .nobody
+        else { return offers }
+        let namedChild = (run.children ?? []).first { $0.id == run.willHeirChildID }
+        func isNamed(_ successor: Successor) -> Bool {
+            switch heir {
+            case .child:
+                // Matched by the child's own name rather than the offer's,
+                // because an offer carries the founder's surname and the
+                // will does not.
+                guard let namedChild else { return false }
+                return successor.kind == .child && successor.name.hasPrefix(namedChild.name)
+            case .employee:
+                return successor.kind == .employee
+            case .partner, .sibling, .nobody:
+                // Neither is a successor the ledger carries; the will is
+                // recorded and the biography says so, and that is all.
+                return false
+            }
+        }
+        guard let index = offers.firstIndex(where: isNamed) else { return offers }
+        var reordered = offers
+        var chosen = reordered.remove(at: index)
+        chosen.relation += " Named in \(run.founderName)'s will."
+        reordered.insert(chosen, at: 0)
+        return reordered
+    }
+}
+
+// MARK: end of Iteration 11, wave two — W2
