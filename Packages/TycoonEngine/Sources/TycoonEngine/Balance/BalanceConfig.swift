@@ -2180,6 +2180,39 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
             ])
         }
         let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(BalanceConfig.self, from: data)
+        return try decode(data)
+    }
+
+    // MARK: Decoding on a wide stack (iteration 11)
+
+    /// Decodes a `BalanceConfig` from JSON on a thread with a 64 MB stack.
+    ///
+    /// The synthesized decoder for a struct with close to four hundred
+    /// stored properties builds, in a debug build, a frame far larger
+    /// than a cooperative thread's 512 KB stack and within reach of iOS's
+    /// 1 MB main thread — and it grows with every balance block a lane
+    /// adds. The four-lane merge of iteration 11 was the one that crossed
+    /// the line (`swiftpm-testing-helper` died with a bus error inside
+    /// `BalanceConfig.init(from:)`). Running the decode on its own thread
+    /// makes the frame size irrelevant, whoever calls it and from where.
+    public static func decode(_ data: Data) throws -> BalanceConfig {
+        final class Box: @unchecked Sendable {
+            var result: Result<BalanceConfig, any Error>?
+        }
+        let box = Box()
+        let done = DispatchSemaphore(value: 0)
+        let thread = Thread {
+            box.result = Result { try JSONDecoder().decode(BalanceConfig.self, from: data) }
+            done.signal()
+        }
+        thread.stackSize = 64 << 20
+        thread.start()
+        done.wait()
+        guard let result = box.result else {
+            throw CocoaError(.coderReadCorrupt, userInfo: [
+                NSLocalizedDescriptionKey: "Balance decoding produced no result"
+            ])
+        }
+        return try result.get()
     }
 }

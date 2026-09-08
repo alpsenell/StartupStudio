@@ -50,6 +50,14 @@ struct FullLoopDeterminismTests {
         // script tests what it is for; being applied on both runs, it keeps
         // them byte-identical.
         state.company.cash += 1_000_000
+        // Debug-build frames: every call site that passes `balance` and
+        // `content` by value costs this function a stack copy of each,
+        // and with sixty of them the frame crossed a cooperative thread's
+        // 512 KB stack once iteration 11's five balance blocks landed
+        // (`swiftpm-testing-helper` died with a bus error). Two nested
+        // functions keep one copy; the script is unchanged.
+        func tick() { Reducer.tick(&state, balance: balance, content: content) }
+        func apply(_ action: GameAction) { Reducer.apply(action, to: &state, balance: balance, content: content) }
         var productID: UUID?
         var secondProductID: UUID?
         var hiredID: UUID?
@@ -59,7 +67,7 @@ struct FullLoopDeterminismTests {
         var abandonedContractID: UUID?
 
         for _ in 0..<400 {
-            Reducer.tick(&state, balance: balance, content: content)
+            tick()
 
             // The weekend rotation, planned the day after each weekend.
             if state.day >= 62, state.day % 7 == 1 {
@@ -68,7 +76,7 @@ struct FullLoopDeterminismTests {
                 case 0: .dateNight
                 default: (23...34).contains(week) ? .gym : .rest
                 }
-                Reducer.apply(.planWeekend(plan), to: &state, balance: balance, content: content)
+                apply(.planWeekend(plan))
             }
 
             // A founder who answers a resignation notice. WS-A's notice
@@ -83,139 +91,85 @@ struct FullLoopDeterminismTests {
                     (Double(pending.salaryAtNotice)
                         * balance.economy.counterOfferRaiseFactor).rounded(.up)
                 )
-                Reducer.apply(
-                    .adjustSalary(employeeID: pending.employeeID, weeklySalary: raised),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.adjustSalary(employeeID: pending.employeeID, weeklySalary: raised))
             }
 
             // Scripted candidate picks once the loft is in: the first
             // lawyer and the first QA engineer on any sheet.
             if state.day >= 131 {
                 if lawyerID == nil, let lawyer = state.candidatePool.first(where: { $0.role == .lawyer }) {
-                    Reducer.apply(.hire(candidateID: lawyer.id), to: &state, balance: balance, content: content)
+                    apply(.hire(candidateID: lawyer.id))
                     lawyerID = lawyer.id
                 }
                 if qaID == nil, let qa = state.candidatePool.first(where: { $0.role == .qa }) {
-                    Reducer.apply(.hire(candidateID: qa.id), to: &state, balance: balance, content: content)
+                    apply(.hire(candidateID: qa.id))
                     qaID = qa.id
                 }
             }
 
             switch state.day {
             case 2:
-                Reducer.apply(.advanceRelationship, to: &state, balance: balance, content: content)
-                Reducer.apply(.planWeekend(.dateNight), to: &state, balance: balance, content: content)
+                apply(.advanceRelationship)
+                apply(.planWeekend(.dateNight))
             case 3:
-                Reducer.apply(
-                    .startProduct(typeID: "mobile_app", topicID: "fitness", name: "FitTrack", focus: .balanced),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.startProduct(typeID: "mobile_app", topicID: "fitness", name: "FitTrack", focus: .balanced))
                 productID = state.productInDevelopment?.id
             case 15:
                 let candidateID = try #require(state.candidatePool.first).id
-                Reducer.apply(
-                    .hire(candidateID: candidateID),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.hire(candidateID: candidateID))
                 hiredID = candidateID
             case 20:
                 let id = try #require(productID)
-                Reducer.apply(
-                    .setPhaseFocus(productID: id, focus: PhaseFocus(design: 1, code: 3, polish: 1)),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.setPhaseFocus(productID: id, focus: PhaseFocus(design: 1, code: 3, polish: 1)))
             case 30:
-                Reducer.apply(
-                    .assign(employeeID: try #require(hiredID), to: .research),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.assign(employeeID: try #require(hiredID), to: .research))
             case 40:
-                Reducer.apply(
-                    .assign(employeeID: try #require(hiredID), to: .product(try #require(productID))),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.assign(employeeID: try #require(hiredID), to: .product(try #require(productID))))
             case 60:
                 let id = try #require(productID)
-                Reducer.apply(.ship(productID: id), to: &state, balance: balance, content: content)
+                apply(.ship(productID: id))
             case 61:
-                Reducer.apply(.advanceRelationship, to: &state, balance: balance, content: content)
+                apply(.advanceRelationship)
             case 70:
                 let founderID = try #require(state.employees.first).id
-                Reducer.apply(
-                    .assign(employeeID: founderID, to: .research),
-                    to: &state, balance: balance, content: content
-                )
-                Reducer.apply(
-                    .assign(employeeID: try #require(hiredID), to: .research),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.assign(employeeID: founderID, to: .research))
+                apply(.assign(employeeID: try #require(hiredID), to: .research))
             case 71:
-                Reducer.apply(
-                    .startResearch(nodeID: "code_reviews"),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.startResearch(nodeID: "code_reviews"))
             case 73:
-                Reducer.apply(
-                    .startResearch(nodeID: "press_kit"),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.startResearch(nodeID: "press_kit"))
             case 90:
-                Reducer.apply(
-                    .startProduct(typeID: "web_app", topicID: "social", name: "Buzzly", focus: .balanced),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.startProduct(typeID: "web_app", topicID: "social", name: "Buzzly", focus: .balanced))
                 secondProductID = state.productInDevelopment?.id
             case 91:
-                Reducer.apply(
-                    .startCampaign(kindID: "social_push", productID: try #require(secondProductID)),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.startCampaign(kindID: "social_push", productID: try #require(secondProductID)))
             case 92:
-                Reducer.apply(
-                    .startCampaign(kindID: "press_release", productID: try #require(secondProductID)),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.startCampaign(kindID: "press_release", productID: try #require(secondProductID)))
             case 100:
-                Reducer.apply(.setWorkSchedule(.crunch), to: &state, balance: balance, content: content)
+                apply(.setWorkSchedule(.crunch))
             case 130:
-                Reducer.apply(.upgradeOffice, to: &state, balance: balance, content: content)
+                apply(.upgradeOffice)
             case 131:
-                Reducer.apply(.setWorkSchedule(.normal), to: &state, balance: balance, content: content)
-                Reducer.apply(.setFounderSalary(500), to: &state, balance: balance, content: content)
+                apply(.setWorkSchedule(.normal))
+                apply(.setFounderSalary(500))
             case 132:
-                Reducer.apply(.buildAmenity(.gameRoom), to: &state, balance: balance, content: content)
+                apply(.buildAmenity(.gameRoom))
             case 142:
-                Reducer.apply(.planWeekend(.vacation), to: &state, balance: balance, content: content)
+                apply(.planWeekend(.vacation))
             case 390:
-                Reducer.apply(.upgradeHome, to: &state, balance: balance, content: content)
+                apply(.upgradeHome)
             case 105:
                 let offerID = try #require(state.contractOffers.first).id
-                Reducer.apply(
-                    .acceptContract(offerID: offerID),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.acceptContract(offerID: offerID))
                 workedContractID = offerID
                 let founderID = try #require(state.employees.first).id
-                Reducer.apply(
-                    .assign(employeeID: founderID, to: .contract(offerID)),
-                    to: &state, balance: balance, content: content
-                )
-                Reducer.apply(
-                    .assign(employeeID: try #require(hiredID), to: .contract(offerID)),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.assign(employeeID: founderID, to: .contract(offerID)))
+                apply(.assign(employeeID: try #require(hiredID), to: .contract(offerID)))
             case 200:
-                Reducer.apply(
-                    .startResearch(nodeID: "version_control"),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.startResearch(nodeID: "version_control"))
             case 210:
                 let offerID = try #require(state.contractOffers.first).id
-                Reducer.apply(
-                    .acceptContract(offerID: offerID),
-                    to: &state, balance: balance, content: content
-                )
+                apply(.acceptContract(offerID: offerID))
                 abandonedContractID = offerID
             default:
                 break

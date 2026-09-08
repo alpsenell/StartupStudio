@@ -94,7 +94,7 @@ struct ScaffoldContractTests {
             object.removeValue(forKey: key)
         }
         let stripped = try JSONSerialization.data(withJSONObject: object)
-        let reloaded = try JSONDecoder().decode(BalanceConfig.self, from: stripped)
+        let reloaded = try BalanceConfig.decode(stripped)
 
         // Every workstream block falls back to `.default`; everything else
         // survives the round trip untouched. (The scaffold could compare
