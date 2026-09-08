@@ -571,6 +571,32 @@ extension DebugLaunch {
 
     // MARK: M5 (morning desk)
 
+    /// `-autoDesk`: open the morning desk over the front door, on
+    /// whatever slot 0 holds. Not a headless pass — the door stays and
+    /// the desk opens on top of it, which is how it is photographed.
+    /// Pair it with `-autoFixture <name>` for a company to have a
+    /// morning about.
+    static var opensMorningDesk: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoDesk")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoDesk cleared`: mark today's three the moment the desk opens,
+    /// so the cleared desk — the stamp, the streak, the rewards and the
+    /// reminder — can be photographed without a thumb. The papers'own
+    /// actions are not sent; this is the screenshot pass, not a shortcut
+    /// in the game.
+    static var clearsMorningDesk: Bool {
+        #if DEBUG
+        return opensMorningDesk && value(after: "-autoDesk") == "cleared"
+        #else
+        return false
+        #endif
+    }
+
     // MARK: M6 (bug hunt)
 
     // MARK: end of Iteration 10

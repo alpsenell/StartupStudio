@@ -60,6 +60,10 @@ public enum DecorSource: Equatable, Sendable {
     case award
     /// The record from the first product good enough for the hall.
     case hall
+    // MARK: Iteration 10 — M5 (morning desk)
+    /// Earned by a run of mornings at the desk.
+    case streak
+    // MARK: end of Iteration 10 — M5
 
     public var caption: String {
         switch self {
@@ -69,6 +73,9 @@ public enum DecorSource: Equatable, Sendable {
         case .ending: "Earned by an ending"
         case .award: "Earned at the awards"
         case .hall: "Earned by the Hall of Fame"
+        // MARK: Iteration 10 — M5 (morning desk)
+        case .streak: "Earned at the morning desk"
+        // MARK: end of Iteration 10 — M5
         }
     }
 }
@@ -221,7 +228,32 @@ public enum HomeDecor {
             id: "pennant", name: "Awards pennant", kind: .wall, source: .award,
             note: "You went up for it in a borrowed jacket."
         ),
-    ] + seasonPosters + endingTrophies
+    ] + seasonPosters + endingTrophies + deskItems
+
+    // MARK: Iteration 10 — M5 (morning desk)
+
+    /// The three things a streak of mornings puts on the wall and the
+    /// shelf. The ids are `DeskRewards`' own, so the table in
+    /// `MorningDesk.swift` is the only place a rung is written down; a
+    /// ledger that has not earned one simply does not carry the id, and
+    /// an id from a build that no longer knows it is ignored the way
+    /// every other unknown decor id is.
+    public static let deskItems: [DecorItem] = [
+        DecorItem(
+            id: "deskSunrise", name: "Sunrise over the desk", kind: .wall, source: .streak,
+            note: "Three mornings running. The sun is doing its best."
+        ),
+        DecorItem(
+            id: "deskPlaque", name: "The morning plaque", kind: .shelf, source: .streak,
+            note: "Brass, small, and nobody has ever asked about it."
+        ),
+        DecorItem(
+            id: "deskCentury", name: "One hundred mornings", kind: .wall, source: .streak,
+            note: "A hundred of them. Nobody has to know what it means."
+        ),
+    ]
+
+    // MARK: end of Iteration 10 — M5
 
     /// One poster per season twist — the season you lived through, on
     /// your wall.

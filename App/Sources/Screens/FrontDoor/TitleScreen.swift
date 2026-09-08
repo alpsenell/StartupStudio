@@ -30,6 +30,10 @@ struct TitleScreen: View {
     @State private var showingDynasty = false
     @State private var seasonEntry: SeasonEntry?
     @State private var scenarioResult: ScenarioResult?
+    // MARK: Iteration 10 — M5 (morning desk)
+    /// The desk, while it is up.
+    @State private var showingDesk = false
+    // MARK: end of Iteration 10 — M5
 
     var body: some View {
         ScrollView {
@@ -61,8 +65,18 @@ struct TitleScreen: View {
                     onScenarios: { showingScenarios = true },
                     onHall: { showingHall = true },
                     onDynasty: { showingDynasty = true },
-                    onSeason: { seasonEntry = session.seasonEntry(for: .current()) }
-                )
+                    onSeason: { seasonEntry = session.seasonEntry(for: .current()) },
+                    // MARK: Iteration 10 — M5 (morning desk)
+                    onDesk: { showingDesk = true }
+                    // MARK: end of Iteration 10 — M5
+                ),
+                // MARK: Iteration 10 — M5 (morning desk)
+                // The desk card over the slots, and the sunrise a long
+                // streak earns under the masthead. Both absent until
+                // there is a company to have a morning about.
+                desk: MorningDeskCard.make(session: session) { showingDesk = true },
+                deskFlourish: DeskRewards.hasFlourish(bestStreak: session.ledger.deskBestStreak)
+                // MARK: end of Iteration 10 — M5
             )
             .padding(Theme.Spacing.lg)
             .opacity(arrived ? 1 : 0)
@@ -89,6 +103,10 @@ struct TitleScreen: View {
             if let result = session.scenarioResult {
                 session.scenarioResult = nil
                 scenarioResult = result
+            } else if DebugLaunch.opensMorningDesk {
+                // MARK: Iteration 10 — M5: `-autoDesk` opens the desk over
+                // the door, on whatever slot 0 holds.
+                showingDesk = true
             } else if DebugLaunch.value(after: "-autoRoom") == "hall" {
                 showingHall = true
             } else if DebugLaunch.value(after: "-autoRoom") == "dynasty" {
@@ -136,6 +154,21 @@ struct TitleScreen: View {
         .onChange(of: session.pendingSeedCode) { _, code in
             if code != nil, !session.needsOnboarding { enteringCode = true }
         }
+        // MARK: Iteration 10 — M5 (morning desk)
+        .sheet(isPresented: $showingDesk) {
+            MorningDeskSheet(
+                session: session,
+                // From the door, the decision's *Open it* goes back into
+                // the company; the section it points at is the HUD's job.
+                onOpen: { _ in
+                    showingDesk = false
+                    session.continueGame()
+                },
+                isAtFrontDoor: true,
+                onClose: { showingDesk = false }
+            )
+        }
+        // MARK: end of Iteration 10 — M5
         .sheet(isPresented: $enteringCode) {
             SeedCodeEntrySheet(prefill: session.pendingSeedCode) { code in
                 customCompany(code: code)
@@ -296,6 +329,12 @@ struct TitleScreenContent: View {
     /// Iteration 7: the rows under New company. Nothing is drawn while
     /// every row is off.
     var menu: TitleMenu = TitleMenu()
+    // MARK: Iteration 10 — M5 (morning desk)
+    /// The desk card, over the slots; nothing when there is no game.
+    var desk: MorningDeskCard? = nil
+    /// Whether a 30-day streak has earned the sunrise under the masthead.
+    var deskFlourish: Bool = false
+    // MARK: end of Iteration 10 — M5
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
@@ -312,6 +351,9 @@ struct TitleScreenContent: View {
             if let current {
                 ContinueCard(summary: current, action: onContinue)
             }
+            // MARK: Iteration 10 — M5 (morning desk)
+            if let desk { desk }
+            // MARK: end of Iteration 10 — M5
             newCompanyButton
             TitleMenuView(menu: menu)
             SlotList(
@@ -345,6 +387,17 @@ struct TitleScreenContent: View {
                 PixelText(text: "Startup Studio", scale: 4, color: Theme.pixelAccent)
                 PixelText(text: "Startup Studio", scale: 3, color: Theme.pixelAccent)
             }
+            // MARK: Iteration 10 — M5 (morning desk): the sunrise a
+            // month of mornings earns. Cosmetic, and only ever here.
+            if deskFlourish {
+                PixelText(
+                    text: String(localized: "- SUNRISE -", comment: "Bitmap flourish under the game's name on the title screen, earned by a month of morning-desk streaks. Uppercase: the pixel face has no lowercase"),
+                    scale: 1,
+                    color: Theme.pixelAccent.opacity(0.8)
+                )
+                    .accessibilityLabel("Sunrise masthead, earned at the morning desk")
+            }
+            // MARK: end of Iteration 10 — M5
             Text(current == nil
                  ? "Two people in a garage, one laptop, and a name to defend."
                  : "The lights are still on.")

@@ -26,6 +26,9 @@ extension SpriteLibrary {
         case trophySoldUp = "trophy_soldUp"
         case trophyOusted = "trophy_oustedByBoard"
         case trophyBankruptcy = "trophy_bankruptcy"
+        // MARK: Iteration 10 — M5 (morning desk): the streak's three
+        case deskSunrise, deskPlaque, deskCentury
+        // MARK: end of Iteration 10 — M5
     }
 
     public static func homeDecor(_ name: HomeDecorName) -> PixelSprite {
@@ -49,6 +52,11 @@ extension SpriteLibrary {
         case .trophySoldUp: trophySprite(metal: Palettes.teal[3], shine: Palettes.teal[2])
         case .trophyOusted: trophySprite(metal: Palettes.plum[2], shine: Palettes.plum[1])
         case .trophyBankruptcy: trophySprite(metal: Palettes.clay[2], shine: Palettes.clay[1])
+        // MARK: Iteration 10 — M5 (morning desk)
+        case .deskSunrise: posterSprite(.rising, ink: Palettes.gold[2], paper: Palettes.sand[1])
+        case .deskPlaque: trophySprite(metal: Palettes.gold[3], shine: Palettes.sand[0])
+        case .deskCentury: posterSprite(.star, ink: Palettes.ember[2], paper: Palettes.sand[0])
+        // MARK: end of Iteration 10 — M5
         }
     }
 

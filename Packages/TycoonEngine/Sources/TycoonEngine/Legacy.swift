@@ -34,6 +34,17 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
     // MARK: Iteration 10 — ledger fields, decode-if-present, one region per lane
     // MARK: M4 (leagues)
     // MARK: M5 (morning desk)
+
+    /// The morning desk's streak: consecutive days the desk was cleared,
+    /// the best run of them, the last day (`yyyymmdd`) it was cleared,
+    /// and the month (`yyyymm`) whose one free sick day has been spent.
+    /// All four decode as 0 when absent, so a ledger from before the desk
+    /// existed reads as a player who has never opened it.
+    public var deskStreak: Int = 0
+    public var deskBestStreak: Int = 0
+    public var deskLastDay: Int = 0
+    public var deskSickDayMonth: Int = 0
+
     // MARK: end of Iteration 10
 
     /// Every earned decor id available right now: what has been written,
@@ -85,6 +96,7 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         // MARK: Iteration 10
         // MARK: M4 (leagues)
         // MARK: M5 (morning desk)
+        case deskStreak, deskBestStreak, deskLastDay, deskSickDayMonth
         // MARK: end of Iteration 10
     }
 
@@ -103,6 +115,10 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         // MARK: Iteration 10 — assign your field here after `self.init`
         // MARK: M4 (leagues)
         // MARK: M5 (morning desk)
+        deskStreak = try container.decodeIfPresent(Int.self, forKey: .deskStreak) ?? 0
+        deskBestStreak = try container.decodeIfPresent(Int.self, forKey: .deskBestStreak) ?? 0
+        deskLastDay = try container.decodeIfPresent(Int.self, forKey: .deskLastDay) ?? 0
+        deskSickDayMonth = try container.decodeIfPresent(Int.self, forKey: .deskSickDayMonth) ?? 0
         // MARK: end of Iteration 10
     }
 

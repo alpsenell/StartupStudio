@@ -512,6 +512,12 @@ public enum Reducer {
         // MARK: M4 (leagues)
 
         // MARK: M5 (morning desk)
+        case let .clearDeskCard(part, today):
+            events = []
+            // Clearing the third paper marks the day; the streak itself
+            // lives in the ledger, which the app writes when it sees
+            // `desk.isCleared(on:)` become true.
+            state.desk.mark(part, on: today)
 
         // MARK: M6 (bug hunt)
 

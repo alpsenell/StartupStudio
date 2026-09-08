@@ -129,6 +129,11 @@ struct NewGameFlow: View {
             + Self.appearanceSeeds.map { ($0, nil) }
             + Unlocks.earnedLookSeeds(endingsReached: options.endingsReached).map { ($0.seed, $0.ending) }
             + options.seasonsFinished.map { (GameSeason.season(number: $0).lookSeed, nil) }
+            // MARK: Iteration 10 — M5 (morning desk): the streak's faces,
+            // off the ledger the flow already carries.
+            + Unlocks.earnedDeskLookSeeds(bestStreak: options.ledger.deskBestStreak)
+                .map { ($0, nil as EndingKind?) }
+            // MARK: end of Iteration 10 — M5
     }
 
     private var appearanceSeed: UInt64 {

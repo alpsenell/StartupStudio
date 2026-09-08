@@ -271,6 +271,18 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: M5 (morning desk)
 
+    /// M5: records one of the morning desk's three papers as done on the
+    /// wall-clock day `today` (`yyyymmdd`). The day is passed in because
+    /// the desk is the one part of the game that lives on the player's
+    /// calendar rather than the simulation's — the engine is told what
+    /// day it is and never asks.
+    ///
+    /// Bookkeeping only: it moves no meter, spends nothing and never
+    /// advances the clock. The three papers dispatch ordinary actions of
+    /// their own (`.markPhoneThreadRead`, `.praise`, `.grabCoffee`)
+    /// alongside this one.
+    case clearDeskCard(part: DeskPart, today: Int)
+
     // MARK: M6 (bug hunt)
 
     // MARK: end of Iteration 10

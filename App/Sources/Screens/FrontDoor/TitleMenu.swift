@@ -20,11 +20,17 @@ struct TitleMenu {
         static let hall = true
         static let dynasty = true
         static let season = true
+        // MARK: Iteration 10 — M5 (morning desk)
+        static let desk = true
+        // MARK: end of Iteration 10 — M5
     }
 
     struct Row: Identifiable {
         enum ID: String {
             case daily, custom, fromCode, scenarios, hall, dynasty, season
+            // MARK: Iteration 10 — M5 (morning desk)
+            case desk
+            // MARK: end of Iteration 10 — M5
         }
 
         let id: ID
@@ -47,7 +53,10 @@ struct TitleMenu {
         onScenarios: @escaping () -> Void = {},
         onHall: @escaping () -> Void = {},
         onDynasty: @escaping () -> Void = {},
-        onSeason: @escaping () -> Void = {}
+        onSeason: @escaping () -> Void = {},
+        // MARK: Iteration 10 — M5 (morning desk)
+        onDesk: @escaping () -> Void = {}
+        // MARK: end of Iteration 10 — M5
     ) -> TitleMenu {
         TitleMenu(rows: [
             Row(id: .daily, title: "Today's company", systemImage: "calendar", isEnabled: Flags.daily, action: onDaily),
@@ -60,6 +69,7 @@ struct TitleMenu {
             // MARK: Iteration 10 — one row per lane (add the id, the flag and the action in your own marked regions)
             // MARK: M4 (leagues)
             // MARK: M5 (morning desk)
+            Row(id: .desk, title: "The desk", systemImage: "tray.full", isEnabled: Flags.desk, action: onDesk),
             // MARK: end of Iteration 10
         ])
     }

@@ -39,4 +39,16 @@ enum Unlocks {
     static func ribbon(for ending: EndingKind) -> String {
         "Earned · \(ending.headline)"
     }
+
+    // MARK: Iteration 10 — M5 (morning desk)
+
+    /// The faces a run of mornings earns. The rungs themselves live in
+    /// `DeskRewards`, so the desk's table is the only place a streak
+    /// length is written down; this only turns them into seeds the
+    /// founder picker can append, exactly the way a finished season does.
+    static func earnedDeskLookSeeds(bestStreak: Int) -> [UInt64] {
+        DeskRewards.looks.filter { $0.days <= bestStreak }.map(\.seed)
+    }
+
+    // MARK: end of Iteration 10 — M5
 }

@@ -23,6 +23,10 @@ struct TopHUD: View {
     /// direction reads even when the delta's digits are not.
     @State private var cashFlash: Color?
     @State private var showingMoney = false
+    // MARK: Iteration 10 — M5 (morning desk)
+    @State private var showingDesk = false
+    @Environment(\.gameSession) private var session
+    // MARK: end of Iteration 10 — M5
 
     private var calendar: GameCalendar { engine.state.gameCalendar }
 
@@ -80,6 +84,35 @@ struct TopHUD: View {
     /// "Mar W2 · Y1" with a weekend badge, or "W2 · Y1" when the row is
     /// too tight for the month — the badge folds into the compact form.
     private var dateLabel: some View {
+        // MARK: Iteration 10 — M5 (morning desk): the date is the way back
+        // to the desk from inside a run. A tap, a sheet, nothing else
+        // about the HUD changes — and the desk never advances the clock.
+        Button {
+            Haptics.tap()
+            showingDesk = true
+        } label: {
+            dateReadout
+        }
+        .buttonStyle(.pressable)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("Opens the morning desk")
+        .sheet(isPresented: $showingDesk) {
+            if let session {
+                MorningDeskSheet(
+                    session: session,
+                    onOpen: { route in
+                        showingDesk = false
+                        router.go(route)
+                    },
+                    isAtFrontDoor: false,
+                    onClose: { showingDesk = false }
+                )
+            }
+        }
+    }
+
+    /// The date itself, as it has always been drawn.
+    private var dateReadout: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: Theme.Spacing.xs) {
                 PixelText(text: calendar.hudLabel, scale: 2, color: .secondary)

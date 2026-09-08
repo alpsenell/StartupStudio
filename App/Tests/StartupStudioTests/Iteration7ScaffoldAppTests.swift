@@ -91,10 +91,15 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
 
     func testTitleMenuAndOnboardingPagesStayOffUntilALaneFlipsThem() {
         let menu = TitleMenu.make(onDaily: {}, onCustom: {}, onFromCode: {})
-        XCTAssertEqual(menu.rows.count, 7)
+        // Re-pinned by iteration 10's M5: the morning desk adds the eighth
+        // row (7 → 8), and it ships on, so it is in the enabled list too.
+        XCTAssertEqual(menu.rows.count, 8)
         // R3 and R4 have landed: the daily and the two custom rows are on;
         // iteration 8 added the Scenarios room beside the daily.
-        XCTAssertEqual(menu.enabledRows.map(\.id), [.daily, .season, .scenarios, .custom, .fromCode, .hall, .dynasty])
+        XCTAssertEqual(
+            menu.enabledRows.map(\.id),
+            [.daily, .season, .scenarios, .custom, .fromCode, .hall, .dynasty, .desk]
+        )
         XCTAssertTrue(TitleMenu.Flags.daily && TitleMenu.Flags.custom && TitleMenu.Flags.fromCode)
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)
