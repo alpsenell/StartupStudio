@@ -182,6 +182,12 @@ enum Route: Hashable {
 
     // MARK: W2 (family drama)
 
+    /// W2: the rest of the family, on the Life tab. `.divorce` is the same
+    /// room with the settlement open over it — one door rather than two,
+    /// because the table is only ever reachable through the room.
+    case family
+    case divorce
+
     // MARK: W3 (espionage)
 
     // MARK: W4 (inside)
@@ -250,6 +256,7 @@ enum Route: Hashable {
         // MARK: Iteration 11, wave two
         // MARK: W1 (dirty money)
         // MARK: W2 (family drama)
+        case .family, .divorce: .life
         // MARK: W3 (espionage)
         // MARK: W4 (inside)
         // MARK: end of Iteration 11, wave two

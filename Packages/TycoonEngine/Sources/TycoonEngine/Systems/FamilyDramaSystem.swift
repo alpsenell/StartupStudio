@@ -48,8 +48,8 @@ enum FamilyDramaSystem {
         state.familyDrama.lastSweepDay = state.day
         var events: [GameEvent] = []
         events.append(contentsOf: discoveryRoll(&state, balance))
-        events.append(contentsOf: parentsAge(&state, balance))
-        events.append(contentsOf: siblingAsks(&state, balance))
+        events.append(contentsOf: parentsAge(&state, balance, content))
+        events.append(contentsOf: siblingAsks(&state, balance, content))
         inLawsWeek(&state, balance)
         silence(&state, balance)
         return events
@@ -96,14 +96,15 @@ enum FamilyDramaSystem {
     /// already engaged with the room — the gate at the top of `run` — and
     /// only from the balance's third year.
     private static func parentsAge(
-        _ state: inout GameState, _ balance: BalanceConfig
+        _ state: inout GameState, _ balance: BalanceConfig, _ content: ContentCatalog
     ) -> [GameEvent] {
         let config = balance.familyDrama
         guard state.familyDrama.openedDay != nil,
               state.day / FamilyKin.daysPerYear + 1 >= config.careMinYear
         else { return [] }
         var events: [GameEvent] = []
-        for relative in state.familyRelatives where relative.relation.isParent {
+        let relatives = state.familyRelatives(names: content.names)
+        for relative in relatives where relative.relation.isParent {
             let record = state.familyDrama.record(relative.relation)
             guard record?.isAlive != false else { continue }
 
@@ -174,7 +175,7 @@ enum FamilyDramaSystem {
     /// A job, then a stake, then a loan — each one asked once, each one
     /// waiting for an answer on the card.
     private static func siblingAsks(
-        _ state: inout GameState, _ balance: BalanceConfig
+        _ state: inout GameState, _ balance: BalanceConfig, _ content: ContentCatalog
     ) -> [GameEvent] {
         let config = balance.familyDrama
         guard state.familyDrama.openedDay != nil,
@@ -193,7 +194,7 @@ enum FamilyDramaSystem {
             $0.askStage = stage
             $0.askOpenDay = state.day
         }
-        let name = state.familyRelatives.first { $0.relation == .sibling }?.name ?? "Your sibling"
+        let name = state.familyRelativeName(.sibling, content: content)
         state.life.phone.post(
             FamilyAsk(rawValue: stage)?.askLine(name: state.company.name) ?? "Are you about?",
             from: .partner, day: state.day
@@ -564,7 +565,7 @@ enum FamilyDramaSystem {
         guard let record = state.familyDrama.record(.sibling), record.hasOpenAsk,
               let ask = FamilyAsk(rawValue: record.askStage)
         else { return [] }
-        let name = state.familyRelatives.first { $0.relation == .sibling }?.name ?? "Your sibling"
+        let name = state.familyRelativeName(.sibling, content: content)
         state.familyDrama.upsert(.sibling) {
             $0.askOpenDay = nil
             $0.lastSeenDay = state.day
@@ -626,9 +627,10 @@ enum FamilyDramaSystem {
         heir: FamilyHeir,
         childID: UUID?,
         state: inout GameState,
-        balance: BalanceConfig
+        balance: BalanceConfig,
+        content: ContentCatalog
     ) -> [GameEvent] {
-        let name = heirName(heir, childID: childID, state: state)
+        let name = heirName(heir, childID: childID, state: state, content: content)
         guard heir != .child || childID != nil else { return [] }
         state.familyDrama.heir = heir.rawValue
         state.familyDrama.heirChildID = heir == .child ? childID : nil
@@ -639,7 +641,9 @@ enum FamilyDramaSystem {
     }
 
     /// Who the will actually names, resolved against the live state.
-    static func heirName(_ heir: FamilyHeir, childID: UUID?, state: GameState) -> String {
+    static func heirName(
+        _ heir: FamilyHeir, childID: UUID?, state: GameState, content: ContentCatalog
+    ) -> String {
         switch heir {
         case .partner:
             state.life.family.partnerName ?? "Your partner"
@@ -651,7 +655,7 @@ enum FamilyDramaSystem {
                 .min { ($0.hiredDay, $0.name) < ($1.hiredDay, $1.name) }?
                 .name ?? "The longest-serving"
         case .sibling:
-            state.familyRelatives.first { $0.relation == .sibling }?.name ?? "Your sibling"
+            state.familyRelativeName(.sibling, content: content)
         case .nobody:
             "Nobody"
         }
@@ -679,6 +683,91 @@ enum FamilyDramaSystem {
         state.life.meters.apply(mood: mood)
         return [.familyFuneralSettled(choice: answer.rawValue, day: state.day)]
     }
+
+    // MARK: - The screenshot pass
+
+    #if DEBUG
+    /// `-autoFamily <stage>`: puts the lane in a state worth a picture.
+    /// Debug only, and every step goes through the lane's own functions so
+    /// a screenshot is of the real thing.
+    static func seed(
+        _ stage: String,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        var events = openRoom(state: &state, balance: balance, content: content)
+        guard stage != "room" else { return events }
+
+        // An affair with the warmest contact in the book, started a season
+        // ago — N2's fields, written the way N2 writes them.
+        if state.interactions.affairContactID == nil {
+            let contact = state.networking.contacts.max { $0.rapport < $1.rapport }
+            state.interactions.affairContactID = contact?.id ?? UUID(from: &state.socialRNG)
+            state.interactions.affairSinceDay = max(0, state.day - 90)
+        }
+        guard stage != "affair" else { return events }
+
+        events.append(contentsOf: discover(state: &state, balance: balance))
+        guard stage != "discovered" else { return events }
+
+        if stage == "will" { return events }
+        if stage == "table" {
+            // A table with something on it: the wallet is topped up and
+            // every thing is bought through `AssetsSystem.buy`, so the
+            // resale values the sheet prints are the catalog's own.
+            state.life.wallet += 120_000
+            for id in ["coupe", "hatchback", "flatToLet", "dog"] {
+                _ = AssetsSystem.buy(id, state: &state, balance: balance)
+            }
+            return events
+        }
+        if stage == "ask" {
+            state.familyDrama.upsert(.sibling) {
+                $0.askStage = FamilyAsk.stake.rawValue
+                $0.askOpenDay = state.day
+            }
+            return events
+        }
+        if stage == "funeral" {
+            state.familyDrama.upsert(.mother) { $0.diedDay = state.day }
+            state.familyDrama.funeralDay = state.day
+            state.familyDrama.funeralRelation = FamilyRelation.mother.rawValue
+            state.familyDrama.funeralAnswer = nil
+            return events
+        }
+        if stage == "custody" {
+            events.append(contentsOf: confront(
+                .leave, state: &state, balance: balance, content: content
+            ))
+            events.append(contentsOf: fileCustody(state: &state, balance: balance))
+            if let pending = state.crime.pendingCase {
+                state.crime.cases[state.crime.cases.count - 1].hearingDay = state.day
+                _ = pending
+            }
+        }
+        return events
+    }
+
+    /// The discovery roll's consequence without the roll — the sheet the
+    /// screenshot pass wants open.
+    private static func discover(
+        state: inout GameState, balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard state.interactions.affairIsSecret else { return [] }
+        state.interactions.markAffairDiscovered(day: state.day)
+        state.familyDrama.confrontedDay = state.day
+        state.familyDrama.confessionAnswer = nil
+        state.life.family.affection = max(
+            0, state.life.family.affection - balance.familyDrama.discoveryAffectionHit
+        )
+        state.narrative.flags.insert(FamilyDrama.discoveredFlag)
+        state.life.phone.post(
+            "We need to talk tonight. Not on here.", from: .partner, day: state.day
+        )
+        return [.familyAffairDiscovered(day: state.day)]
+    }
+    #endif
 }
 
 // MARK: - Gates and derived facts the app reads
@@ -696,15 +785,12 @@ extension GameState {
         )
     }
 
-    /// The same, with the engine's fallback pool — for the systems, which
-    /// do not carry a catalog everywhere.
-    var familyRelatives: [FamilyRelative] {
-        FamilyKin.derive(
-            seed: seed,
-            partnerSeed: life.family.partnerAppearanceSeed,
-            names: FamilyDramaSystem.fallbackNames,
-            day: day
-        )
+    /// One relative's name, for a phone line or a card.
+    public func familyRelativeName(
+        _ relation: FamilyRelation, content: ContentCatalog
+    ) -> String {
+        familyRelatives(names: content.names)
+            .first { $0.relation == relation }?.name ?? relation.displayName
     }
 
     /// Why a divorce would be refused today, or `nil` when it would land.
@@ -734,28 +820,6 @@ extension GameState {
             balance: balance.familyDrama
         )
     }
-}
-
-extension FamilyDramaSystem {
-    /// The engine's own name pool, for the rare call that has no catalog.
-    /// Same names, same order, so a derived relative is the same person
-    /// whichever door asked.
-    static let fallbackNames = NamePools(
-        firstNames: [
-            "Alex", "Sam", "Jordan", "Riley", "Casey", "Morgan", "Rowan", "Nadia",
-            "Priya", "Tomas", "Ines", "Yusuf", "Hana", "Ola", "Mira", "Dev",
-        ],
-        lastNames: [
-            "Okafor", "Lindqvist", "Marchetti", "Bhatt", "Ferreira", "Novak",
-            "Sandoval", "Aitken",
-        ],
-        clientCompanies: [],
-        partnerNames: [],
-        childNames: [],
-        rivalStudios: [],
-        productWords: [],
-        friendNames: []
-    )
 }
 
 extension FamilyAsk {

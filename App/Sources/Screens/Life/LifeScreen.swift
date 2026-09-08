@@ -20,6 +20,12 @@ struct LifeScreen: View {
     /// in `CrimeScreen` so `-autoRoute courtroom` can set it as it pushes.
     @State private var showingCourtroom = false
     // MARK: end of Iteration 11 — N1
+    // MARK: Iteration 11, wave two — W2 (family drama)
+    /// Whether the settlement is open over the family room. Held here for
+    /// the same reason the courtroom is: `-autoRoute divorce` sets it as
+    /// it pushes.
+    @State private var showingDivorce = false
+    // MARK: end of Iteration 11, wave two — W2
 
     /// What Life can push. One case today; an enum rather than a
     /// `NavigationPath` so the deep link can ask "am I already there?".
@@ -56,6 +62,7 @@ struct LifeScreen: View {
         // MARK: Iteration 11, wave two
         // MARK: W1 (dirty money)
         // MARK: W2 (family drama)
+        case family
         // MARK: W3 (espionage)
         // MARK: W4 (inside)
         // MARK: end of Iteration 11, wave two
@@ -134,6 +141,9 @@ struct LifeScreen: View {
                     FameCard(engine: engine) { path = [.feed] }
                     // MARK: Iteration 11, wave two — new cards
                     // MARK: W2 (family drama)
+                    // The half of the family the Family card does not show:
+                    // the people you did not choose, and the paperwork.
+                    FamilyDramaCard(engine: engine) { path = [.family] }
                     // MARK: W4 (inside)
                     // MARK: end of Iteration 11, wave two
                     // MARK: end of Iteration 11
@@ -192,6 +202,8 @@ struct LifeScreen: View {
                 // MARK: Iteration 11, wave two
                 // MARK: W1 (dirty money)
                 // MARK: W2 (family drama)
+                case .family:
+                    FamilyDramaScreen(engine: engine, showingDivorce: $showingDivorce)
                 // MARK: W3 (espionage)
                 // MARK: W4 (inside)
                 // MARK: end of Iteration 11, wave two
@@ -303,6 +315,21 @@ struct LifeScreen: View {
         // MARK: Iteration 11, wave two — launch routes
         // MARK: W1 (dirty money)
         // MARK: W2 (family drama)
+        // Both of W2's routes land on the family room; `.divorce` opens the
+        // settlement over it, which is the only way to the table.
+        if router.pendingPush == .family || router.pendingPush == .divorce {
+            let wantsTable = router.pendingPush == .divorce
+            path = [.family]
+            showingDivorce = wantsTable
+            router.take(wantsTable ? .divorce : .family)
+            return
+        }
+        if !tookLaunchRoute, Route.launchRoute == .family || Route.launchRoute == .divorce {
+            tookLaunchRoute = true
+            path = [.family]
+            showingDivorce = Route.launchRoute == .divorce
+            return
+        }
         // MARK: W3 (espionage)
         // MARK: W4 (inside)
         // MARK: end of Iteration 11, wave two

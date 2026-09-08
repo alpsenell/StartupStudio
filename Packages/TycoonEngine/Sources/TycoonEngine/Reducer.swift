@@ -768,13 +768,23 @@ public enum Reducer {
 
         case let .signWill(heir, childID):
             events = FamilyDramaSystem.signWill(
-                heir: heir, childID: childID, state: &state, balance: balance
+                heir: heir, childID: childID, state: &state, balance: balance,
+                content: content
             )
 
         case let .settleFuneral(answer):
             events = FamilyDramaSystem.settleFuneral(
                 answer, state: &state, balance: balance
             )
+
+        case let .seedFamilyDrama(stage):
+            #if DEBUG
+            events = FamilyDramaSystem.seed(
+                stage, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
 
         // MARK: W3 (espionage)
 

@@ -278,6 +278,8 @@ extension Route {
         // MARK: Iteration 11, wave two — route names
         // MARK: W1 (dirty money)
         // MARK: W2 (family drama)
+        case "family": .family
+        case "divorce", "settlement": .divorce
         // MARK: W3 (espionage)
         // MARK: W4 (inside)
         // MARK: end of Iteration 11, wave two
@@ -1085,6 +1087,10 @@ extension DebugLaunch {
     // MARK: W1 (dirty money)
 
     // MARK: W2 (family drama)
+
+    // `-autoFamily <stage>` lives with the lane, in
+    // `Screens/Life/Family/FamilyDramaDebug.swift`, because it sends a real
+    // action and needs the engine.
 
     // MARK: W3 (espionage)
 

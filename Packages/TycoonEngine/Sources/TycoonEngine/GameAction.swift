@@ -484,6 +484,9 @@ public enum GameAction: Codable, Equatable, Sendable {
     case signWill(heir: FamilyHeir, childID: UUID?)
     /// The one argument at the funeral.
     case settleFuneral(FamilyDrama.FuneralArgument)
+    /// `-autoFamily <stage>`: puts the lane in a state worth a screenshot.
+    /// Applied only in debug builds; nothing in the game sends it.
+    case seedFamilyDrama(stage: String)
 
     // MARK: W3 (espionage)
 

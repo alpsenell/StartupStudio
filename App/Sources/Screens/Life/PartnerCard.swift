@@ -65,6 +65,14 @@ struct PartnerCard: View {
                     PeopleMenuButton(engine: engine, target: .partner)
                     // MARK: end of Iteration 11 — N2
 
+                    // MARK: Iteration 11, wave two — W2 (family drama)
+                    // One line when somebody knows, because a card that
+                    // says "affection 12" and nothing else is a lie.
+                    if engine.state.familyDrama.confrontedDay != nil {
+                        FamilyPartnerNote(engine: engine)
+                    }
+                    // MARK: end of Iteration 11, wave two — W2
+
                     LazyVGrid(columns: columns, spacing: Theme.Spacing.md) {
                         ForEach(PartnerActivity.allCases, id: \.self) { activity in
                             if let def = engine.balance.relationships.partnerActivity(activity) {
@@ -214,3 +222,39 @@ extension PartnerActivity {
         }
     }
 }
+
+// MARK: Iteration 11, wave two — W2 (family drama)
+
+/// The one line the partner's card carries once the affair is on the
+/// table: what was said, or that nothing has been.
+struct FamilyPartnerNote: View {
+    let engine: GameEngine
+
+    var body: some View {
+        let drama = engine.state.familyDrama
+        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+            Image(systemName: "exclamationmark.bubble.fill")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.negativeCash)
+                .frame(width: 16)
+            Text(note(drama))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func note(_ drama: FamilyDramaState) -> String {
+        if drama.isConfrontationOpen { return "They know. Nothing has been said back yet." }
+        return switch drama.confessionAnswer.flatMap(FamilyConfession.init(rawValue:)) {
+        case .confess: "They know all of it. They have not decided anything."
+        case .deny: "They know, and they know you said otherwise."
+        case .endIt: "It is over. It is still in the room."
+        case .leave: "You left."
+        case nil: "They know."
+        }
+    }
+}
+
+// MARK: end of Iteration 11, wave two — W2

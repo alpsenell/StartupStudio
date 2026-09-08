@@ -83,6 +83,15 @@ struct EventCopy {
              .casinoHandPlayed, .lotteryTicketBought, .lotteryDrawn, .cryptoTraded:
             .life
         // MARK: end of Iteration 11 — N3
+        // MARK: Iteration 11, wave two — W2 (family drama)
+        // Every one of these happens to the person, not the company —
+        // including the two that happen in a courtroom.
+        case .familyAffairDiscovered, .familyConfronted, .familyDivorced,
+             .familyCustodyFiled, .familyCustodyDecided, .familyKinAsk,
+             .familyKinAnswered, .familyCareStarted, .familyParentDied,
+             .familyFuneralSettled, .familyInLawsMoved, .familyWillSigned:
+            .life
+        // MARK: end of Iteration 11, wave two — W2
         // The founder as a person: what they're learning, who they've met,
         // the money that is theirs rather than the company's, and how the
         // person they go home to is doing.
@@ -886,6 +895,82 @@ struct EventCopy {
 
         // MARK: W2 (family drama)
 
+        case let .familyAffairDiscovered(day):
+            ("exclamationmark.bubble.fill", "They know.", day, Theme.negativeCash)
+        case let .familyConfronted(answer, day):
+            (
+                "bubble.left.and.bubble.right.fill",
+                familyConfessionMessage(answer),
+                day,
+                Theme.warning
+            )
+        case let .familyDivorced(exName, cashTransfer, keptHome, equityGiven, day):
+            (
+                "heart.slash.fill",
+                familyDivorceMessage(
+                    exName: exName, cash: cashTransfer,
+                    keptHome: keptHome, equity: equityGiven
+                ),
+                day,
+                Theme.negativeCash
+            )
+        case let .familyCustodyFiled(hearingDay, day):
+            (
+                "building.columns.fill",
+                "The custody hearing is listed for day \(hearingDay)",
+                day,
+                Theme.warning
+            )
+        case let .familyCustodyDecided(verdict, day):
+            (
+                "building.columns.fill",
+                FamilyCustody(rawValue: verdict)?.displayName ?? "The court decided",
+                day,
+                FamilyCustody(rawValue: verdict)?.keepsTheHouse == true
+                    ? Theme.positiveCash : Theme.negativeCash
+            )
+        case let .familyKinAsk(_, name, stage, day):
+            (
+                "hand.raised.fill",
+                "\(name): \(FamilyAsk(rawValue: stage)?.title.lowercased() ?? "wants a word")",
+                day,
+                Theme.warning
+            )
+        case let .familyKinAnswered(_, accepted, day):
+            (
+                accepted ? "checkmark.circle.fill" : "xmark.circle.fill",
+                accepted ? "You said yes to your sibling" : "You said no to your sibling",
+                day,
+                accepted ? Theme.accent : Theme.warning
+            )
+        case let .familyCareStarted(_, name, weekly, day):
+            (
+                "cross.case.fill",
+                "\(name) is in a home — \(weekly.money) a week, from your wallet",
+                day,
+                Theme.warning
+            )
+        case let .familyParentDied(_, name, day):
+            ("leaf.fill", "\(name) died", day, Theme.negativeCash)
+        case let .familyFuneralSettled(choice, day):
+            (
+                "leaf.fill",
+                FamilyDrama.FuneralArgument(rawValue: choice)?.label ?? "The funeral",
+                day,
+                Theme.warning
+            )
+        case let .familyInLawsMoved(movedIn, day):
+            (
+                "bed.double.fill",
+                movedIn ? "The in-laws are in the spare room" : "The spare room is empty again",
+                day,
+                Theme.accent
+            )
+        case let .familyWillSigned(_, name, day):
+            ("signature", "The will names \(name)", day, Theme.accent)
+
+        // MARK: end of Iteration 11, wave two — W2
+
         // MARK: W3 (espionage)
 
         // MARK: W4 (inside)
@@ -1147,3 +1232,31 @@ struct EventCopy {
         content.tech(id)?.name ?? "a technology"
     }
 }
+
+// MARK: Iteration 11, wave two — W2 (family drama)
+
+/// One line for what was said the night it came out.
+private func familyConfessionMessage(_ answer: String) -> String {
+    switch FamilyConfession(rawValue: answer) {
+    case .confess: "You told them everything"
+    case .deny: "You denied it"
+    case .endIt: "You ended it, with them in the room"
+    case .leave: "You packed a bag"
+    case nil: "You said something"
+    }
+}
+
+/// The settlement in one sentence: the roof, the cheque, the slice.
+private func familyDivorceMessage(
+    exName: String, cash: Int, keptHome: Bool, equity: Double
+) -> String {
+    var parts = ["Divorced from \(exName)"]
+    parts.append(keptHome ? "you kept the house" : "they kept the house")
+    if cash != 0 {
+        parts.append(cash > 0 ? "\(cash.money) to you" : "\((-cash).money) to them")
+    }
+    if equity > 0 { parts.append("\(Int(equity.rounded()))% of the company theirs") }
+    return parts.joined(separator: " · ")
+}
+
+// MARK: end of Iteration 11, wave two — W2
