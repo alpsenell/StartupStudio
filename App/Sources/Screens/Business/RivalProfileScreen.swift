@@ -61,6 +61,13 @@ struct RivalProfileContent: View {
                 // number live where that person does.
                 CrimeRivalCard(engine: engine, rival: rival)
                 // MARK: end of Iteration 11 — N1
+                // MARK: Iteration 11, wave two — W3 (espionage)
+                // The five operations, the folder once there is one, and
+                // the mole's countdown. Below the crime card on purpose:
+                // the ledger's two offences are the ones a court has a
+                // word for, and these are the ones it does not, yet.
+                EspionageCard(engine: engine, rivalID: rivalID)
+                // MARK: end of Iteration 11, wave two — W3
             }
         } else {
             ContentUnavailableView(

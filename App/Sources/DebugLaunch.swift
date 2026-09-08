@@ -279,6 +279,7 @@ extension Route {
         // MARK: W1 (dirty money)
         // MARK: W2 (family drama)
         // MARK: W3 (espionage)
+        case "spy", "espionage": .spy
         // MARK: W4 (inside)
         // MARK: end of Iteration 11, wave two
         default: nil
@@ -1087,6 +1088,42 @@ extension DebugLaunch {
     // MARK: W2 (family drama)
 
     // MARK: W3 (espionage)
+
+    /// `-autoSpy <operation>`: the operation a headless pass wants a
+    /// picture of, by `EspionageOperation` raw value, case-insensitively
+    /// ("tailfounder", "placemole", "poachwithdirt", "buyroadmap",
+    /// "hackstorefront").
+    @MainActor
+    static var requestedEspionage: EspionageOperation? {
+        guard let name = value(after: "-autoSpy")?.lowercased() else { return nil }
+        return EspionageOperation.allCases.first { $0.rawValue.lowercased() == name }
+    }
+
+    /// Consumed once per launch, so a redraw does not run a second one.
+    @MainActor private static var tookEspionage = false
+
+    /// Runs the asked-for operation, once, against the studio whose page
+    /// is open — the same `.runEspionageOperation` a thumb sends, through
+    /// the ordinary reducer, so a screenshot is of the real thing.
+    @MainActor
+    static func takeAutoEspionage(engine: GameEngine, rivalID: UUID) {
+        #if DEBUG
+        guard !tookEspionage, let operation = requestedEspionage else { return }
+        tookEspionage = true
+        engine.send(.runEspionageOperation(operation: operation, rivalID: rivalID))
+        #endif
+    }
+
+    /// `-autoSpyCard`: lift the espionage card onto a sheet, because it
+    /// sits below the fold of a long profile and a headless pass cannot
+    /// scroll. Debug only.
+    static var liftsEspionageCard: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoSpyCard")
+        #else
+        return false
+        #endif
+    }
 
     // MARK: W4 (inside)
 

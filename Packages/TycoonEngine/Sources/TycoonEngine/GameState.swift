@@ -551,6 +551,30 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: W3 (espionage)
 
+    /// An operation was run against a studio, and whether it worked.
+    /// `operation` is an `EspionageOperation` raw value.
+    case espionageOperationRun(operation: String, rival: String, landed: Bool, day: Int)
+    /// Somebody worked out who did it.
+    case espionageTraced(operation: String, rival: String, day: Int)
+    /// The investigator's folder came back.
+    case espionageDossierOpened(rival: String, facts: Int, day: Int)
+    /// The mole reported what they are shipping, and roughly when.
+    case espionageIntelReceived(
+        rival: String, codename: String, topicID: String, expectedDay: Int, day: Int
+    )
+    /// The day the mole named arrived, and whether the founder was ready.
+    case espionageIntelClosed(rival: String, topicID: String, intercepted: Bool, day: Int)
+    /// The poach the dossier made possible landed.
+    case espionagePoachLanded(name: String, rival: String, day: Int)
+    /// Their plan is on your wall now.
+    case espionageRoadmapBought(rival: String, topicID: String, hype: Int, day: Int)
+    /// Their shop spent a week showing an error page.
+    case espionageStorefrontHacked(rival: String, unitsLost: Int, day: Int)
+    /// Counterintelligence: a sweep, an audit or a set of false plans, on
+    /// a thread a rival was running here. `kind` is a `SecretKind` raw
+    /// value and `response` a `SecretResponse` one.
+    case counterEspionageAnswered(kind: String, response: String, day: Int)
+
     // MARK: W4 (inside)
 
     // MARK: end of Iteration 11, wave two
@@ -745,6 +769,23 @@ extension GameEvent {
             .notable
 
         // MARK: end N4
+
+        // MARK: Iteration 11, wave two — W3 (espionage)
+
+        // Running an operation is the founder's own act a moment ago; the
+        // card already told them how it went. Being traced is a letter
+        // from somebody's lawyers and a hearing on the books, which is the
+        // one thing here that has to stop the clock.
+        case .espionageTraced:
+            .critical
+        case .espionageIntelReceived, .espionageIntelClosed, .espionageStorefrontHacked,
+             .counterEspionageAnswered:
+            .notable
+        case .espionageOperationRun, .espionageDossierOpened, .espionagePoachLanded,
+             .espionageRoadmapBought:
+            .info
+
+        // MARK: end W3
 
         default:
             .info

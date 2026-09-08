@@ -46,6 +46,21 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
     /// A story about a rival, placed with somebody who owed you.
     case plantStory
 
+    // MARK: W3 (espionage)
+
+    /// A private investigator, a mole, a bought roadmap or a storefront
+    /// taken down: everything W3's rival page can have done. It is one
+    /// offence rather than five because a court does not care which of
+    /// them it was — `EspionageOpRecord` keeps that, and the record
+    /// entry's note names it.
+    ///
+    /// It is never committed from the ledger: `CrimeSystem.refusal`
+    /// refuses it there, and `EspionageSystem` writes its record entry
+    /// itself when the founder presses a button on a studio's page.
+    case corporateEspionage
+
+    // MARK: end W3
+
     public var displayName: String {
         switch self {
         case .cookBooks: "Cook the books"
@@ -54,6 +69,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "Bribe a journalist"
         case .fakeDemo: "Fake the demo"
         case .plantStory: "Plant a story"
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "Industrial espionage"
+        // MARK: end W3
         }
     }
 
@@ -66,6 +84,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "Buy the reviewer a very good lunch, and a car."
         case .fakeDemo: "Record the demo. Nobody has to know it was recorded."
         case .plantStory: "Give a friendly desk a document you shouldn't have."
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "Open a rival's page. It starts there, with a name on it."
+        // MARK: end W3
         }
     }
 
@@ -78,6 +99,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "You paid for a review and got one."
         case .fakeDemo: "You showed a demo that did not exist."
         case .plantStory: "You put a story about a rival where it would be found."
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "You had something done to a competitor, quietly."
+        // MARK: end W3
         }
     }
 
@@ -90,6 +114,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "commercial bribery"
         case .fakeDemo: "misrepresentation"
         case .plantStory: "malicious falsehood"
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "industrial espionage"
+        // MARK: end W3
         }
     }
 
@@ -102,6 +129,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "The outlet's own editor"
         case .fakeDemo: "A customer, and then forty of them"
         case .plantStory: "The studio you wrote about"
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "A studio with a photograph of your contractor"
+        // MARK: end W3
         }
     }
 
@@ -114,6 +144,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "envelope.badge.fill"
         case .fakeDemo: "play.rectangle.fill"
         case .plantStory: "newspaper.fill"
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "binoculars.fill"
+        // MARK: end W3
         }
     }
 
@@ -127,6 +160,11 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: 0.5
         case .fakeDemo: 0.65
         case .plantStory: 0.6
+        // MARK: W3 (espionage)
+        // The gravest of them: a court reads a mole and a taken-down
+        // storefront as the theft of somebody's whole quarter.
+        case .corporateEspionage: 0.95
+        // MARK: end W3
         }
     }
 }
@@ -151,6 +189,10 @@ public enum CrimeRefusal: String, Sendable, Equatable, CaseIterable {
     case alreadyRunning
     /// Once a quarter is once a quarter.
     case tooSoon
+    // MARK: W3 (espionage)
+    /// The espionage offence is not committed from the ledger.
+    case elsewhere
+    // MARK: end W3
 
     public var sentence: String {
         switch self {
@@ -162,6 +204,9 @@ public enum CrimeRefusal: String, Sendable, Equatable, CaseIterable {
         case .noBuild: "Nothing in development to put in front of a camera."
         case .alreadyRunning: "That one's already running. Let it land first."
         case .tooSoon: "You did this last quarter. Doing it again this soon is not clever, it's a pattern."
+        // MARK: W3 (espionage)
+        case .elsewhere: "Not from here. This one starts on a studio's own page, with a name on it."
+        // MARK: end W3
         }
     }
 }
@@ -711,6 +756,12 @@ public enum Crime {
         case .bribeJournalist: balance.bribeNotoriety
         case .fakeDemo: balance.fakeDemoNotoriety
         case .plantStory: balance.plantStoryNotoriety
+        // MARK: W3 (espionage)
+        // W3 adds its own, per operation, at the moment it runs one —
+        // `Espionage.notorietyCost` — so the ledger's flat figure here is
+        // never the one that lands.
+        case .corporateEspionage: 0
+        // MARK: end W3
         }
     }
 
@@ -748,6 +799,12 @@ public enum Crime {
         case .bribeJournalist: balance.bribeDiscovery
         case .fakeDemo: balance.fakeDemoDiscovery
         case .plantStory: balance.plantStoryDiscovery
+        // MARK: W3 (espionage)
+        // The weekly exposure of an operation nobody traced on the day.
+        // The same rate as a planted story: it is the same kind of paper
+        // in the same kind of drawer.
+        case .corporateEspionage: balance.plantStoryDiscovery
+        // MARK: end W3
         }
         let heat = 1 + notoriety / 100 * balance.notorietyDiscoveryFactor
         let weeksOld = Double(max(0, day - entry.day)) / Double(GameState.daysPerWeek)

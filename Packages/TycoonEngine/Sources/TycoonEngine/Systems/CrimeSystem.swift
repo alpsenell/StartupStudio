@@ -88,7 +88,14 @@ enum CrimeSystem {
     /// A discovery becomes a case: a hearing four to eight weeks out, a
     /// settlement price, the newspaper's lead, and two people who read it
     /// before you told them.
-    private static func raiseCase(
+    ///
+    /// Internal rather than private since iteration 11's wave two: W3's
+    /// espionage traces a fresh record entry the moment an operation is
+    /// run and hands it straight to this, which is the one place a case is
+    /// raised. (Marked because it is another lane that needed the door
+    /// opened — nothing else about it moved.)
+    // MARK: W3 (espionage) — visibility only
+    static func raiseCase(
         against entry: CrimeRecordEntry,
         state: inout GameState,
         balance: BalanceConfig
@@ -356,6 +363,13 @@ enum CrimeSystem {
                 return .noBuild
             }
             if state.crime.fakedDemos[target.uuidString] != nil { return .alreadyRunning }
+        // MARK: W3 (espionage)
+        // The ledger lists it so the founder knows the court has a word
+        // for it, and refuses it so the only way to do it is to stand on
+        // somebody's page and pick them.
+        case .corporateEspionage:
+            return .elsewhere
+        // MARK: end W3
         }
         return nil
     }
@@ -436,6 +450,14 @@ enum CrimeSystem {
             note = placed.traced
                 ? "\(placed.name) took the hit, and worked out who threw it."
                 : "\(placed.name) took the hit and never looked up."
+
+        // MARK: W3 (espionage)
+        // Unreachable: `refusal` returns `.elsewhere` above, and
+        // `EspionageSystem` writes its own record entry. The arm is here
+        // so the switch stays exhaustive.
+        case .corporateEspionage:
+            return []
+        // MARK: end W3
         }
 
         state.crime.notoriety = min(100,
@@ -915,6 +937,10 @@ extension GameState {
         case .plantStory:
             return "\(config.plantStoryFee.crimeMoney) for "
                 + "−\(Int(config.plantStoryReputationHit)) on their reputation"
+        // MARK: W3 (espionage)
+        case .corporateEspionage:
+            return "Five operations, priced one at a time, on a studio's own page"
+        // MARK: end W3
         }
     }
 }

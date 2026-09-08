@@ -4288,5 +4288,703 @@
       ]
     },
     "cooldownDays": 230
+  },
+  {
+    "id": "spy_rivalmole_s1",
+    "headline": "A competitor's job ad quotes a sentence from your own internal deck.",
+    "body": "Word for word, including the typo you never got round to fixing.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivalmole_s2",
+    "headline": "Somebody here takes every call in the stairwell now.",
+    "body": "It is a nice stairwell. It is not that nice.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivalmole_s3",
+    "headline": "The roadmap was exported on a Sunday, to an address nobody recognises.",
+    "body": "There is a log of it, which suggests they were not worried about the log.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivalmole_end",
+    "headline": "A competitor shipped your roadmap, in your order, with better screenshots.",
+    "body": "You had four months of notice and spent them hoping.",
+    "weight": 1,
+    "category": "team",
+    "severity": "critical",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -4
+      },
+      {
+        "type": "hype",
+        "amount": -12
+      }
+    ]
+  },
+  {
+    "id": "spy_rivalmole_hr",
+    "headline": "People and HR walked them out before lunch, with a letter and no scene.",
+    "body": "By the book, on paper, and finished before the floor heard about it.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "spy_rivalmole_deal",
+    "headline": "They are staying, on more money, and everybody knows why.",
+    "body": "It works. It works the way paying a ransom works.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "spy_rivalmole_faced",
+    "headline": "You said the other studio's name out loud and watched them decide what to be.",
+    "body": "There is a version of this conversation where somebody keeps their job.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivaltail_s1",
+    "headline": "The same estate car has been at the end of your street four evenings running.",
+    "body": "You have started noticing which way the mirrors are pointed.",
+    "weight": 1,
+    "category": "personal",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivaltail_s2",
+    "headline": "A researcher rang your old landlord, politely, about the year you left.",
+    "body": "They knew which year to ask about, which is the part that stays with you.",
+    "weight": 1,
+    "category": "personal",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivaltail_s3",
+    "headline": "A journalist you have never met has three dates from your calendar.",
+    "body": "And one photograph, taken from a car, of you doing nothing at all.",
+    "weight": 1,
+    "category": "press",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivaltail_end",
+    "headline": "The piece ran. It is not wrong, which is the problem with it.",
+    "body": "Somebody paid for six weeks of a man's attention and got two paragraphs.",
+    "weight": 1,
+    "category": "press",
+    "severity": "critical",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -5
+      },
+      {
+        "type": "founderMeters",
+        "mood": -6
+      }
+    ]
+  },
+  {
+    "id": "spy_rivaltail_hr",
+    "headline": "Your own lawyers wrote to theirs, and the car stopped coming.",
+    "body": "Four pages, of which one sentence mattered, at nine hundred dollars a page.",
+    "weight": 1,
+    "category": "legal",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivaltail_deal",
+    "headline": "Two founders had a drink neither of them enjoyed, and it stopped.",
+    "body": "Nothing was admitted, which is how these things are agreed.",
+    "weight": 1,
+    "category": "legal",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivaltail_faced",
+    "headline": "You knocked on the car window. There was a very calm man inside it.",
+    "body": "He gave you a card. The card had somebody else's name on it.",
+    "weight": 1,
+    "category": "personal",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivalhack_s1",
+    "headline": "The storefront logged four thousand failed sign-ins overnight, from one address.",
+    "body": "Support filed it as noise. Support files most things as noise.",
+    "weight": 1,
+    "category": "tech",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivalhack_s2",
+    "headline": "Somebody's account signed in from a city nobody here has ever been to.",
+    "body": "At four in the morning, and then again, politely, at four the next morning.",
+    "weight": 1,
+    "category": "tech",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivalhack_s3",
+    "headline": "Somebody has been in the payments dashboard, reading and changing nothing.",
+    "body": "Which is worse than changing something, when you think about it for a while.",
+    "weight": 1,
+    "category": "tech",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivalhack_end",
+    "headline": "The storefront spent a week showing an error page in three languages.",
+    "body": "Your launch week, spent apologising to people who could not give you money.",
+    "weight": 1,
+    "category": "tech",
+    "severity": "critical",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -6
+      },
+      {
+        "type": "hype",
+        "amount": -14
+      }
+    ]
+  },
+  {
+    "id": "spy_rivalhack_hr",
+    "headline": "Every key rotated, every session killed, and a fortnight of new passwords.",
+    "body": "Nobody thanked you for it, which is the correct outcome for security.",
+    "weight": 1,
+    "category": "tech",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "spy_rivalhack_deal",
+    "headline": "A security firm is on retainer now, and the doors stopped rattling.",
+    "body": "They found two things you knew about and one you very much did not.",
+    "weight": 1,
+    "category": "tech",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_rivalhack_faced",
+    "headline": "You told the room whose credentials it was, with them standing in it.",
+    "body": "They had reused the password from a forum they joined when they were fifteen.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "spy_invoice_question",
+    "headline": "Finance would like a word about an invoice for professional services.",
+    "body": "It is a large number attached to a very small description of itself.",
+    "weight": 3,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "spy_record"
+      ]
+    },
+    "cooldownDays": 150,
+    "choices": [
+      {
+        "id": "recode",
+        "label": "Have it recoded as research",
+        "detail": "Nothing changes except a word in a spreadsheet",
+        "effects": [
+          {
+            "type": "flag",
+            "flag": "spy_books_tidied"
+          }
+        ]
+      },
+      {
+        "id": "explain",
+        "label": "Explain it, at length",
+        "detail": "Reputation +1 · they stop asking",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_investigator_dinner",
+    "headline": "Your investigator would like to buy you dinner and tell you about their year.",
+    "body": "They are, it turns out, extremely good company, which is presumably the job.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "spy_record"
+      ]
+    },
+    "cooldownDays": 200,
+    "choices": [
+      {
+        "id": "go",
+        "label": "Go",
+        "detail": "An evening · mood +4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "Say you are busy",
+        "detail": "Nothing happens, which is the point",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_conference_handshake",
+    "headline": "A founder you have had followed shakes your hand at a conference.",
+    "body": "They hold it for slightly too long and ask how the quarter is going.",
+    "weight": 3,
+    "category": "market",
+    "requires": {
+      "flagsAll": [
+        "spy_record"
+      ]
+    },
+    "cooldownDays": 180,
+    "choices": [
+      {
+        "id": "warm",
+        "label": "Be warm about it",
+        "detail": "Reputation +1 · mood −2",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          },
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      },
+      {
+        "id": "short",
+        "label": "Keep it short",
+        "detail": "Nothing said · nothing given away",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_contractor_raise",
+    "headline": "The contractor who does your quiet work has raised their day rate.",
+    "body": "They mention, in passing, how much of their work is repeat business.",
+    "weight": 3,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "spy_record"
+      ]
+    },
+    "cooldownDays": 160,
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay the new rate",
+        "detail": "−$2,000 · they stay yours",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2000
+          }
+        ]
+      },
+      {
+        "id": "haggle",
+        "label": "Haggle",
+        "detail": "They remember it · mood −3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_burner_phone",
+    "headline": "There is a phone in your desk drawer that is not on any plan.",
+    "body": "It has one number in it and a charge of forty per cent, which is somehow the worst part.",
+    "weight": 2,
+    "category": "office",
+    "requires": {
+      "flagsAll": [
+        "spy_record"
+      ]
+    },
+    "cooldownDays": 240,
+    "choices": [
+      {
+        "id": "keep",
+        "label": "Keep it in the drawer",
+        "detail": "Mood −3 · you know it is there now",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      },
+      {
+        "id": "bin",
+        "label": "Put it in the river",
+        "detail": "Energy −3 · a long walk",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_ex_employee_offer",
+    "headline": "Somebody who left last year offers to sell you what they remember.",
+    "body": "They are not asking for very much, which tells you what it is worth.",
+    "weight": 3,
+    "category": "team",
+    "requires": {
+      "flagsAll": [
+        "spy_record"
+      ]
+    },
+    "cooldownDays": 200,
+    "choices": [
+      {
+        "id": "buy",
+        "label": "Buy the coffee and the memory",
+        "detail": "−$1,200 · hype +6",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1200
+          },
+          {
+            "type": "hype",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "pass",
+        "label": "Pass",
+        "detail": "Reputation +1 · somebody notices you said no",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_security_audit",
+    "headline": "An insurer asks whether your office has ever been swept.",
+    "body": "It is question fourteen of thirty and it is not, apparently, unusual.",
+    "weight": 3,
+    "category": "office",
+    "requires": {
+      "flagsAll": [
+        "spy_record"
+      ]
+    },
+    "cooldownDays": 210,
+    "choices": [
+      {
+        "id": "tick",
+        "label": "Tick yes",
+        "detail": "−$900 · a sweep, so that it is true",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -900
+          }
+        ]
+      },
+      {
+        "id": "skip",
+        "label": "Leave it blank",
+        "detail": "Nothing, for now",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_junior_question",
+    "headline": "A junior asks, in all seriousness, whether the competitor stories are true.",
+    "body": "They are twenty-three and they would like to work somewhere that does not do that.",
+    "weight": 3,
+    "category": "team",
+    "requires": {
+      "flagsAll": [
+        "spy_record"
+      ]
+    },
+    "cooldownDays": 190,
+    "choices": [
+      {
+        "id": "honest",
+        "label": "Tell them the truth",
+        "detail": "Team morale −3 · they believe you afterwards",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -3
+          }
+        ]
+      },
+      {
+        "id": "deflect",
+        "label": "Say it is all noise",
+        "detail": "Team morale +2 · you hear yourself say it",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 2
+          },
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_lawyer_retainer",
+    "headline": "A firm that specialises in this offers you a standing retainer.",
+    "body": "Their brochure is four pages of photographs of glass and one paragraph of law.",
+    "weight": 3,
+    "category": "legal",
+    "requires": {
+      "flagsAll": [
+        "spy_traced"
+      ]
+    },
+    "cooldownDays": 220,
+    "choices": [
+      {
+        "id": "sign",
+        "label": "Sign it",
+        "detail": "−$3,000 · somebody answers the phone at midnight",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -3000
+          }
+        ]
+      },
+      {
+        "id": "wait",
+        "label": "Wait until you need them",
+        "detail": "Mood −2 · you will need them",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_press_call",
+    "headline": "A trade desk calls to ask, on the record, whether you have ever hired an investigator.",
+    "body": "They already know. The question is what you would like printed next to it.",
+    "weight": 3,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "spy_traced"
+      ]
+    },
+    "cooldownDays": 200,
+    "choices": [
+      {
+        "id": "own",
+        "label": "Own it in one sentence",
+        "detail": "Reputation −2 · it is a small piece",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      },
+      {
+        "id": "nocomment",
+        "label": "No comment",
+        "detail": "Reputation −4 · it is a bigger piece",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_rival_truce",
+    "headline": "The studio you have been running things at proposes a truce, in writing.",
+    "body": "One page, no lawyers, and a line about how neither of you can afford this.",
+    "weight": 3,
+    "category": "market",
+    "requires": {
+      "flagsAll": [
+        "spy_traced"
+      ]
+    },
+    "cooldownDays": 240,
+    "choices": [
+      {
+        "id": "sign",
+        "label": "Sign it",
+        "detail": "Reputation +2 · it is over, for now",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 2
+          },
+          {
+            "type": "flag",
+            "flag": "spy_truce_signed"
+          }
+        ]
+      },
+      {
+        "id": "refuse",
+        "label": "Do not sign it",
+        "detail": "Mood +2 · they keep the letter",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spy_conscience_night",
+    "headline": "You are awake at three, working out who else knows.",
+    "body": "The list is longer than it was last time you did this, which was Tuesday.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "spy_traced"
+      ]
+    },
+    "cooldownDays": 170,
+    "choices": [
+      {
+        "id": "sleep",
+        "label": "Try to sleep",
+        "detail": "Energy −3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -3
+          }
+        ]
+      },
+      {
+        "id": "work",
+        "label": "Get up and work",
+        "detail": "Energy −5 · mood +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -5,
+            "mood": 2
+          }
+        ]
+      }
+    ]
   }
 ]

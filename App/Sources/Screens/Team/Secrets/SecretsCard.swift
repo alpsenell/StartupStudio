@@ -138,6 +138,18 @@ struct SecretsCard: View {
                 : "No cash up front · it stops, on terms"
         case .ignore:
             return "Free · it ends this week, and you chose that"
+        // MARK: Iteration 11, wave two — W3 (espionage)
+        // The three counterintelligence answers. They only apply to a
+        // thread somebody outside is running, and on any other thread the
+        // refusal above says so rather than the row disappearing.
+        case .sweepOffice:
+            return "\(engine.balance.espionage.sweepCost.money) of the company's · "
+                + "whatever they left is in a bag by five"
+        case .auditRoster:
+            return "An evening · the badge log, the payroll, and a name"
+        case .feedFalsePlans:
+            return "Free · they keep reporting, and you write what they report"
+        // MARK: end W3
         }
     }
 
@@ -149,6 +161,11 @@ struct SecretsCard: View {
         case .callHR: "Hand it to People and HR?"
         case .makeDeal: "Make the problem go away?"
         case .ignore: "Leave it alone?"
+        // MARK: W3 (espionage)
+        case .sweepOffice: "Have the office swept?"
+        case .auditRoster: "Spend an evening on the roster?"
+        case .feedFalsePlans: "Write them a quarter of nonsense?"
+        // MARK: end W3
         }
     }
 
@@ -168,6 +185,17 @@ struct SecretsCard: View {
             "Money, a title or a line on an org chart. Nothing about it is a secret afterwards."
         case .ignore:
             "You know what it is and you are letting it finish. It will finish this week."
+        // MARK: W3 (espionage)
+        case .sweepOffice:
+            "A van, two people and an afternoon of holding things near the walls. "
+                + "Whoever put it there will know it is gone."
+        case .auditRoster:
+            "The badge log against the payroll against the roster, until one line "
+                + "does not sit right. It will be somebody you like."
+        case .feedFalsePlans:
+            "Leave their mole exactly where they are and give them a quarter's "
+                + "work in a category that is on its way down."
+        // MARK: end W3
         }
     }
 

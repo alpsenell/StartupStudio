@@ -192,6 +192,12 @@ public enum Reducer {
 
         // MARK: W3 (espionage)
 
+        // The mole's report coming due, and what being ready for it is
+        // worth. Returns on its first line while `state.espionage` is
+        // empty, which is every run that has never opened a rival's page
+        // and pressed one of five buttons.
+        EspionageSystem.run,
+
         // MARK: W4 (inside)
 
         // MARK: end of Iteration 11, wave two
@@ -731,6 +737,11 @@ public enum Reducer {
         // MARK: W2 (family drama)
 
         // MARK: W3 (espionage)
+        case let .runEspionageOperation(operation, rivalID):
+            events = EspionageSystem.operate(
+                operation, against: rivalID,
+                state: &state, balance: balance, content: content
+            )
 
         // MARK: W4 (inside)
 

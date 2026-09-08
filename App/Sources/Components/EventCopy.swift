@@ -65,7 +65,13 @@ struct EventCopy {
              .employeePoached, .buyoutOffered, .buyoutWithdrawn, .companySold, .rivalAcquired,
              .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .sponsoredContractDelivered,
              // WS-A: the category fight and the incumbent.
-             .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived, .incumbentRetreated:
+             .categoryChallenged, .categoryHeld, .categoryLost, .incumbentArrived, .incumbentRetreated,
+             // MARK: Iteration 11, wave two — W3 (espionage)
+             // Everything done to a studio, and everything a studio does
+             // back, is news about them rather than about the company.
+             .espionageOperationRun, .espionageTraced, .espionageDossierOpened,
+             .espionageIntelReceived, .espionageIntelClosed, .espionagePoachLanded,
+             .espionageRoadmapBought, .espionageStorefrontHacked, .counterEspionageAnswered:
             .rivals
         // WS-A's founder consequences are life, not company: the landlord,
         // the diagnosis and the meltdown all happen to the person.
@@ -888,6 +894,79 @@ struct EventCopy {
 
         // MARK: W3 (espionage)
 
+        // The founder pressed a button on a studio's page a moment ago and
+        // the card already told them how it went, so the journal keeps the
+        // sentence rather than the number — except for the two that are
+        // news: a folder that came back, and a letter from lawyers.
+        case .espionageOperationRun(let operation, let rival, let landed, let day):
+            (
+                espionageIcon(operation),
+                landed
+                    ? "\(espionageName(operation)): \(rival) never noticed"
+                    : "\(espionageName(operation)) came to nothing at \(rival)",
+                day,
+                landed ? Theme.accent : Color.secondary
+            )
+        case .espionageTraced(let operation, let rival, let day):
+            (
+                "exclamationmark.triangle.fill",
+                "\(rival) worked out who was behind \(espionageName(operation).lowercased())",
+                day,
+                Theme.negativeCash
+            )
+        case .espionageDossierOpened(let rival, let facts, let day):
+            (
+                "folder.fill",
+                "\(facts) things about \(rival)'s founder, in a folder on your desk",
+                day,
+                Theme.warning
+            )
+        case .espionageIntelReceived(let rival, let codename, _, let expectedDay, let day):
+            (
+                "shippingbox.fill",
+                "\(rival) is shipping \(codename) in \(max(0, expectedDay - day)) days, "
+                    + "and nobody there knows you know",
+                day,
+                Theme.accent
+            )
+        case .espionageIntelClosed(let rival, _, let intercepted, let day):
+            (
+                intercepted ? "checkmark.seal.fill" : "shippingbox",
+                intercepted
+                    ? "\(rival) shipped into a shelf you were already on"
+                    : "\(rival) shipped exactly when your mole said they would",
+                day,
+                intercepted ? Theme.positiveCash : Color.secondary
+            )
+        case .espionagePoachLanded(let name, let rival, let day):
+            (
+                "person.crop.circle.badge.exclamationmark.fill",
+                "\(name) left \(rival) after a conversation about photographs",
+                day,
+                Theme.accent
+            )
+        case .espionageRoadmapBought(let rival, _, let hype, let day):
+            (
+                "map.fill",
+                "\(rival)'s roadmap is on your wall — +\(hype) hype on the build",
+                day,
+                Theme.accent
+            )
+        case .espionageStorefrontHacked(let rival, let unitsLost, let day):
+            (
+                "bolt.horizontal.circle.fill",
+                "\(rival)'s storefront was down for a week — \(unitsLost) units a week, gone",
+                day,
+                Theme.warning
+            )
+        case .counterEspionageAnswered(let kind, let response, let day):
+            (
+                SecretResponse(rawValue: response)?.systemImageName ?? "shield.fill",
+                counterEspionageMessage(kind: kind, response: response),
+                day,
+                Theme.positiveCash
+            )
+
         // MARK: W4 (inside)
 
         // MARK: end of Iteration 11, wave two
@@ -916,6 +995,30 @@ struct EventCopy {
     }
 
     // MARK: end Iteration 11 — N5
+
+    // MARK: Iteration 11, wave two — W3 (espionage)
+
+    private func espionageName(_ operation: String) -> String {
+        EspionageOperation(rawValue: operation)?.displayName ?? "The operation"
+    }
+
+    private func espionageIcon(_ operation: String) -> String {
+        EspionageOperation(rawValue: operation)?.systemImageName ?? "binoculars.fill"
+    }
+
+    /// "Their mole: swept." — one line for what the founder did about
+    /// somebody else's operation.
+    private func counterEspionageMessage(kind: String, response: String) -> String {
+        let name = SecretKind(rawValue: kind)?.displayName ?? "It"
+        switch SecretResponse(rawValue: response) {
+        case .sweepOffice: return "\(name): the office was swept, and something was in it"
+        case .auditRoster: return "\(name): the roster, the badge log and one name"
+        case .feedFalsePlans: return "\(name): they are reading what you wrote for them"
+        default: return "\(name): answered"
+        }
+    }
+
+    // MARK: end Iteration 11, wave two — W3
 
     // MARK: Iteration 11 — N4 (fame and the feed)
 

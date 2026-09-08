@@ -1032,6 +1032,117 @@ enum RivalSystem {
 
     // MARK: end of Iteration 11 — N1
 
+    // MARK: Iteration 11, wave two — W3 (espionage)
+
+    /// The grudge an operation earns, whether or not it was traced. Never
+    /// downwards: a studio that has been done to does not forget because
+    /// the next one went better.
+    static func espionageGrudge(_ rivalID: UUID, to value: Double, state: inout GameState) {
+        guard let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return }
+        state.rivals.rivals[index].grudge = min(
+            100, max(state.rivals.rivals[index].grudge, value)
+        )
+    }
+
+    /// A sweep of your own office takes some of it back: they pulled the
+    /// operation, and pulling an operation costs them something to be
+    /// angry with.
+    static func espionageCoolGrudge(_ rivalID: UUID, by relief: Double, state: inout GameState) {
+        guard let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return }
+        state.rivals.rivals[index].grudge = max(0, state.rivals.rivals[index].grudge - relief)
+    }
+
+    /// The dirty poach landed: the studio it came out of is measurably
+    /// smaller, and it was their best person, not a spare one.
+    static func espionageLostTheirBest(
+        _ rivalID: UUID, state: inout GameState, balance: BalanceConfig
+    ) {
+        guard let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return }
+        state.rivals.rivals[index].strength = max(
+            5, state.rivals.rivals[index].strength - balance.espionage.poachStrengthHit
+        )
+    }
+
+    /// Their roadmap walked out of the building: what is left is a year of
+    /// work somebody else now also has.
+    static func espionageRoadmapWalked(
+        _ rivalID: UUID, state: inout GameState, balance: BalanceConfig
+    ) {
+        guard let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return }
+        state.rivals.rivals[index].strength = max(
+            5, state.rivals.rivals[index].strength - balance.espionage.roadmapStrengthHit
+        )
+    }
+
+    /// A week of error pages: their newest competing product sells a
+    /// fraction of what it was selling, and the shop's name takes the
+    /// reputation for it. Returns the weekly units that stopped, for the
+    /// journal line.
+    @discardableResult
+    static func espionageHackStorefront(
+        _ rivalID: UUID, state: inout GameState, balance: BalanceConfig
+    ) -> Int {
+        guard let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return 0 }
+        let config = balance.espionage
+        let day = state.day
+        guard let productIndex = state.rivals.rivals[index].products.lastIndex(where: {
+            $0.isCompeting(on: day)
+        }) else { return 0 }
+        let before = state.rivals.rivals[index].products[productIndex].weeklyUnits
+        let after = Int((Double(before) * (1 - config.hackUnitsFraction)).rounded())
+        state.rivals.rivals[index].products[productIndex].weeklyUnits = after
+        state.rivals.rivals[index].reputation = max(
+            0, state.rivals.rivals[index].reputation - config.hackReputationHit
+        )
+        return before - after
+    }
+
+    /// The founder was waiting for the launch the mole reported: it lands
+    /// into a market that already had somebody in it.
+    static func espionageIntercepted(
+        _ rivalID: UUID, state: inout GameState, balance: BalanceConfig
+    ) {
+        guard let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return }
+        let penalty = balance.espionage.interceptQualityPenalty
+        state.rivals.rivals[index].strength = max(
+            5, state.rivals.rivals[index].strength - penalty / 4
+        )
+        if let productIndex = state.rivals.rivals[index].products.indices.last {
+            state.rivals.rivals[index].products[productIndex].quality = max(
+                10, state.rivals.rivals[index].products[productIndex].quality - penalty
+            )
+        }
+    }
+
+    /// The mole was fed the wrong plan: the studio spends its next quarter
+    /// on the topic with the weakest demand on the board, and comes out of
+    /// it smaller.
+    @discardableResult
+    static func espionageFalsePlans(
+        _ rivalID: UUID, state: inout GameState, balance: BalanceConfig
+    ) -> String? {
+        guard let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return nil }
+        let worst = state.market.topics
+            .sorted { ($0.value.multiplier, $0.key) < ($1.value.multiplier, $1.key) }
+            .first?.key
+        if let worst {
+            state.rivals.rivals[index].focusTopicIDs = [worst]
+        }
+        state.rivals.rivals[index].strength = max(
+            5, state.rivals.rivals[index].strength - balance.espionage.falsePlansStrengthHit
+        )
+        return worst
+    }
+
+    // MARK: end of Iteration 11, wave two — W3
+
     // MARK: - Poaching
 
     /// On poach-check days (interval + offset, cooldown elapsed, no offer

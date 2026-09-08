@@ -631,5 +631,140 @@
       "loyalty": -20,
       "moraleAll": -6
     }
+  },
+  {
+    "id": "spy_confront_rivalmole",
+    "kind": "officeMole",
+    "title": "{name} does not ask which studio you mean",
+    "body": "You say a competitor's name and they look at the floor rather than at you. They say the money was not the reason, and then do not say what the reason was.",
+    "headline": "{name} was asked who else they work for, and did not argue.",
+    "weight": 1,
+    "supportive": {
+      "label": "Keep them, and pay them properly",
+      "detail": "−$1,800 · loyalty +14 · morale −5",
+      "cash": -1800,
+      "loyalty": 14,
+      "morale": -5,
+      "followUpEventID": "spy_rivalmole_after",
+      "followUpDelayDays": 12
+    },
+    "strict": {
+      "label": "They hand back the laptop today",
+      "detail": "They hand in notice · team morale −5",
+      "moraleAll": -5,
+      "noticeReason": "They were asked who else was paying them and stopped pretending."
+    }
+  },
+  {
+    "id": "spy_rivalmole_after",
+    "kind": "officeMole",
+    "title": "{name} says the other studio got back in touch",
+    "body": "They are telling you, which is either the whole point of keeping them or the beginning of the same conversation with better manners.",
+    "headline": "{name} says the other studio called again.",
+    "weight": 1,
+    "supportive": {
+      "label": "Ask them to keep answering",
+      "detail": "Loyalty +10 · morale −3 · you now have a source",
+      "loyalty": 10,
+      "morale": -3,
+      "setFlag": "spy_double_agent"
+    },
+    "strict": {
+      "label": "Tell them to block the number",
+      "detail": "Loyalty −8 · it does not always take",
+      "loyalty": -8,
+      "followUpEventID": "spy_confront_rivalmole",
+      "followUpDelayDays": 21
+    }
+  },
+  {
+    "id": "spy_confront_rivaltail",
+    "kind": "officeMole",
+    "title": "{name} has been keeping a note of the car",
+    "body": "Registration, evenings, the two times it moved. They did not say anything because they did not want to be the person who was wrong about something like this.",
+    "headline": "{name} had a page of registration numbers and nobody to give it to.",
+    "weight": 1,
+    "supportive": {
+      "label": "Thank them, and take it to a lawyer",
+      "detail": "−$1,200 · loyalty +12 · team morale +2",
+      "cash": -1200,
+      "loyalty": 12,
+      "moraleAll": 2,
+      "followUpEventID": "spy_rivaltail_after",
+      "followUpDelayDays": 14
+    },
+    "strict": {
+      "label": "Tell them to stop watching the street",
+      "detail": "Loyalty −10 · morale −6",
+      "loyalty": -10,
+      "morale": -6
+    }
+  },
+  {
+    "id": "spy_rivaltail_after",
+    "kind": "officeMole",
+    "title": "{name} would like to know whether it worked",
+    "body": "The car has not been back. They have checked, every evening, which is not a thing you can ask somebody to stop doing once they have started.",
+    "headline": "{name} asked whether the car was ever coming back.",
+    "weight": 1,
+    "supportive": {
+      "label": "Tell them the truth",
+      "detail": "Loyalty +8 · team morale +2",
+      "loyalty": 8,
+      "moraleAll": 2
+    },
+    "strict": {
+      "label": "Say it is handled",
+      "detail": "Morale −4 · it is not entirely handled",
+      "morale": -4,
+      "followUpEventID": "spy_confront_rivaltail",
+      "followUpDelayDays": 25
+    }
+  },
+  {
+    "id": "spy_confront_rivalhack",
+    "kind": "officeMole",
+    "title": "{name} reused a password from 2011",
+    "body": "They know. They have known since the fourth alert. They would like to say, for the record, that the forum in question was about trains.",
+    "headline": "{name} owned up to the password before anybody asked.",
+    "weight": 1,
+    "supportive": {
+      "label": "Buy the whole team a password manager",
+      "detail": "−$700 · team morale +3 · loyalty +10",
+      "cash": -700,
+      "moraleAll": 3,
+      "loyalty": 10,
+      "followUpEventID": "spy_rivalhack_after",
+      "followUpDelayDays": 16
+    },
+    "strict": {
+      "label": "Take the keys off them",
+      "detail": "Loyalty −12 · morale −8 · clears their assignment",
+      "loyalty": -12,
+      "morale": -8,
+      "clearsAssignment": true
+    }
+  },
+  {
+    "id": "spy_rivalhack_after",
+    "kind": "officeMole",
+    "title": "{name} has found the same address in the logs again",
+    "body": "Same city, same hour, and this time it did not get in. They are telling you before support files it as noise, which is the whole of the improvement.",
+    "headline": "{name} caught the same address in the logs, and it did not get in.",
+    "weight": 1,
+    "supportive": {
+      "label": "Put them on it properly",
+      "detail": "−$900 · loyalty +10 · team morale +2",
+      "cash": -900,
+      "loyalty": 10,
+      "moraleAll": 2
+    },
+    "strict": {
+      "label": "Tell them to leave it to the vendor",
+      "detail": "Morale −5 · the vendor is asleep",
+      "morale": -5,
+      "followUpEventID": "spy_confront_rivalhack",
+      "followUpDelayDays": 28
+    }
   }
 ]
