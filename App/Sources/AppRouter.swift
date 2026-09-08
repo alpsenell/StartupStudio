@@ -101,6 +101,22 @@ enum Route: Hashable {
 
     // MARK: end of Iteration 9
 
+    // MARK: Iteration 10 — interactive rooms
+
+    // MARK: M1 (feature board)
+
+    // MARK: M2 (pitch room)
+
+    // MARK: M3 (incident room)
+
+    // MARK: M4 (leagues)
+
+    // MARK: M5 (morning desk)
+
+    // MARK: M6 (bug hunt)
+
+    // MARK: end of Iteration 10
+
     /// The tab this destination lives in.
     var tab: GameTab {
         switch self {
@@ -132,6 +148,15 @@ enum Route: Hashable {
         // MARK: L7 (furnish)
         case .furnish: .life
         // MARK: end of Iteration 9
+
+        // MARK: Iteration 10
+        // MARK: M1 (feature board)
+        // MARK: M2 (pitch room)
+        // MARK: M3 (incident room)
+        // MARK: M4 (leagues)
+        // MARK: M5 (morning desk)
+        // MARK: M6 (bug hunt)
+        // MARK: end of Iteration 10
         }
     }
 }

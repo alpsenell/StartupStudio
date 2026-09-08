@@ -396,6 +396,24 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// R2: the one thing carried from the last company landed on day 0.
     /// `kind` is `Heirloom.kind` — person, perk or deed.
     case heirloomApplied(kind: String, day: Int)
+
+    // MARK: Iteration 10 — one region per lane; copy lives in `EventCopy`
+    // and every exhaustive switch over `GameEvent` must learn a new case
+    // (grep `case .heirloomApplied` to find them).
+
+    // MARK: M1 (feature board)
+
+    // MARK: M2 (pitch room)
+
+    // MARK: M3 (incident room)
+
+    // MARK: M4 (leagues)
+
+    // MARK: M5 (morning desk)
+
+    // MARK: M6 (bug hunt)
+
+    // MARK: end of Iteration 10
 }
 
 extension GameEvent {
@@ -730,6 +748,16 @@ public struct GameState: Codable, Equatable, Sendable {
     /// refuses a locked topic; the flow greys it with the date. Empty for
     /// every other origin and for every save from before origins.
     public var lockedTopics: [String: Int] = [:]
+
+    // MARK: Iteration 10 — reserved slots (the scaffold owns these lines;
+    // each lane owns the type behind its slot, see the file named for it)
+
+    /// M2 — the conversation in progress, `nil` when nobody is across the table.
+    public var pitch: PitchState? = nil
+    /// M3 — the live product on fire, `nil` when nothing is.
+    public var incident: IncidentState? = nil
+    /// M5 — the days this run's desk was cleared.
+    public var desk: DeskState = .empty
     /// What the staff remember about the founder's answers: the rules
     /// they became and who was told no (WS-D). Empty until somebody asks.
     public var staffMemory: StaffMemory = .initial
@@ -1027,6 +1055,8 @@ extension GameState {
         case mode, rules, heirloom, epilogue
         case lineage
         case ghosts
+        // Iteration 10
+        case pitch, incident, desk
     }
 
     public init(from decoder: any Decoder) throws {
@@ -1100,6 +1130,10 @@ extension GameState {
         epilogue = try container.decodeIfPresent(Epilogue.self, forKey: .epilogue)
         lineage = try container.decodeIfPresent(Lineage.self, forKey: .lineage)
         ghosts = try container.decodeIfPresent([GhostScript].self, forKey: .ghosts) ?? []
+        // Iteration 10: absent in an older save, so every slot reads as "not started".
+        pitch = try container.decodeIfPresent(PitchState.self, forKey: .pitch)
+        incident = try container.decodeIfPresent(IncidentState.self, forKey: .incident)
+        desk = try container.decodeIfPresent(DeskState.self, forKey: .desk) ?? .empty
         lockedTopics = Dictionary(
             (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
                 .map { ($0.topicID, $0.unlockDay) },
@@ -1192,5 +1226,9 @@ extension GameState {
         if !ghosts.isEmpty {
             try container.encode(ghosts, forKey: .ghosts)
         }
+        // Iteration 10: a slot at its default is not written.
+        try container.encodeIfPresent(pitch, forKey: .pitch)
+        try container.encodeIfPresent(incident, forKey: .incident)
+        if desk != .empty { try container.encode(desk, forKey: .desk) }
     }
 }

@@ -108,6 +108,10 @@ struct ProductsScreen: View {
     /// Deep links into this tab: R&D picks the segment, a product id
     /// pushes its detail screen, and `.newProduct` opens the flow.
     private func consumeRoute() {
+        // MARK: Iteration 10 — a route per lane, consumed before the rest
+        // MARK: M1 (feature board)
+        // MARK: M6 (bug hunt)
+        // MARK: end of Iteration 10
         #if DEBUG
         // `-autoRoute warRoom`: a headless pass lands in the room.
         if warRoom == nil, let request = WarRoomRequest.debugLaunch() {

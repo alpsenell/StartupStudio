@@ -31,6 +31,11 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
     /// ledger from before this iteration already has the ones it earned.
     public var unlockedDecor: Set<String> = []
 
+    // MARK: Iteration 10 — ledger fields, decode-if-present, one region per lane
+    // MARK: M4 (leagues)
+    // MARK: M5 (morning desk)
+    // MARK: end of Iteration 10
+
     /// Every earned decor id available right now: what has been written,
     /// plus a trophy for each ending ever reached, plus the plant, which
     /// everybody gets, plus the record player once the hall has anything
@@ -77,6 +82,10 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         // MARK: Iteration 9 — L7 (furnish)
         case unlockedDecor
         // MARK: end of Iteration 9 — L7
+        // MARK: Iteration 10
+        // MARK: M4 (leagues)
+        // MARK: M5 (morning desk)
+        // MARK: end of Iteration 10
     }
 
     public init(from decoder: any Decoder) throws {
@@ -91,6 +100,10 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
             unlockedDecor: try container.decodeIfPresent(Set<String>.self, forKey: .unlockedDecor) ?? []
             // MARK: end of Iteration 9 — L7
         )
+        // MARK: Iteration 10 — assign your field here after `self.init`
+        // MARK: M4 (leagues)
+        // MARK: M5 (morning desk)
+        // MARK: end of Iteration 10
     }
 
     /// Adds hall entries the ledger does not have yet (by product id).

@@ -184,6 +184,9 @@ struct BusinessScreen: View {
     /// picks the segment and the map; `.rivalProfile` picks Rivals and
     /// pushes the profile.
     private func consumeRoute() {
+        // MARK: Iteration 10
+        // MARK: M2 (pitch room)
+        // MARK: end of Iteration 10
         switch router.pendingPush {
         case .marketMap:
             section = .market

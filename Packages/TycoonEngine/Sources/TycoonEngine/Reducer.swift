@@ -120,6 +120,22 @@ public enum Reducer {
         // MARK: L7 (furnish)
 
         // MARK: end of Iteration 9
+
+        // MARK: Iteration 10 — after everything, no `rng`/`worldRNG` draws
+
+        // MARK: M1 (feature board)
+
+        // MARK: M2 (pitch room)
+
+        // MARK: M3 (incident room)
+
+        // MARK: M4 (leagues)
+
+        // MARK: M5 (morning desk)
+
+        // MARK: M6 (bug hunt)
+
+        // MARK: end of Iteration 10
     ]
 
     /// Advances the state by one game day. No-op once the game is over.
@@ -484,6 +500,22 @@ public enum Reducer {
             HomeDecor.remove(slot: slot, tier: state.life.home, decor: &state.life.decor)
 
         // MARK: end of Iteration 9
+
+        // MARK: Iteration 10 — handlers, one region per lane
+
+        // MARK: M1 (feature board)
+
+        // MARK: M2 (pitch room)
+
+        // MARK: M3 (incident room)
+
+        // MARK: M4 (leagues)
+
+        // MARK: M5 (morning desk)
+
+        // MARK: M6 (bug hunt)
+
+        // MARK: end of Iteration 10
         }
 
         state.logEvents(events)

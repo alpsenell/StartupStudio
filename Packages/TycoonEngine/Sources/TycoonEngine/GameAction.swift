@@ -258,6 +258,22 @@ public enum GameAction: Codable, Equatable, Sendable {
     case removeDecor(slot: String)
 
     // MARK: end of Iteration 9
+
+    // MARK: Iteration 10 — interactive rooms
+
+    // MARK: M1 (feature board)
+
+    // MARK: M2 (pitch room)
+
+    // MARK: M3 (incident room)
+
+    // MARK: M4 (leagues)
+
+    // MARK: M5 (morning desk)
+
+    // MARK: M6 (bug hunt)
+
+    // MARK: end of Iteration 10
 }
 
 /// The skill a training course targets.

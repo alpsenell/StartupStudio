@@ -93,6 +93,10 @@ struct HQScreen: View {
 
     /// Deep links into this tab: the week's front page and the timeline.
     private func consumeRoute() {
+        // MARK: Iteration 10
+        // MARK: M3 (incident room)
+        // MARK: M6 (bug hunt)
+        // MARK: end of Iteration 10
         if router.take(.newspaper) {
             path.append(StoryDestination.newspaper)
         } else if router.take(.timeline) {

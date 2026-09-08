@@ -21,6 +21,13 @@ public enum RunMode: Codable, Equatable, Hashable, Sendable {
     /// Iteration 8: the four-week season's shared company.
     case season(number: Int)
 
+    // MARK: Iteration 10 — M4 (leagues)
+
+    // M4 appends `league(week:)` here and teaches every switch over
+    // `RunMode` (grep `case .season`) the new case.
+
+    // MARK: end of Iteration 10
+
     /// Whether an ending in this mode may post to the ranked boards. An
     /// heirloom (R2) makes a standard run unranked too; that check lives
     /// with the state, see `GameState.isRanked`.

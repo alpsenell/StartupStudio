@@ -57,6 +57,10 @@ struct TitleMenu {
             Row(id: .fromCode, title: "From a code", systemImage: "number", isEnabled: Flags.fromCode, action: onFromCode),
             Row(id: .hall, title: "Hall of Fame", systemImage: "trophy", isEnabled: Flags.hall, action: onHall),
             Row(id: .dynasty, title: "Dynasty", systemImage: "person.2.crop.square.stack", isEnabled: Flags.dynasty, action: onDynasty),
+            // MARK: Iteration 10 — one row per lane (add the id, the flag and the action in your own marked regions)
+            // MARK: M4 (leagues)
+            // MARK: M5 (morning desk)
+            // MARK: end of Iteration 10
         ])
     }
 
