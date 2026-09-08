@@ -190,6 +190,11 @@ public enum Reducer {
 
         // MARK: W2 (family drama)
 
+        // The affair's weekly discovery roll, the parents ageing, the
+        // sibling escalating. Returns on its first line until the founder
+        // has opened the room or started an affair.
+        FamilyDramaSystem.run,
+
         // MARK: W3 (espionage)
 
         // MARK: W4 (inside)
@@ -729,6 +734,47 @@ public enum Reducer {
         // MARK: W1 (dirty money)
 
         // MARK: W2 (family drama)
+
+        case .openFamilyRoom:
+            events = FamilyDramaSystem.openRoom(
+                state: &state, balance: balance, content: content
+            )
+
+        case let .confrontFamily(answer):
+            events = FamilyDramaSystem.confront(
+                answer, state: &state, balance: balance, content: content
+            )
+
+        case let .divorceSettlement(keep, lawyer):
+            events = FamilyDramaSystem.divorce(
+                keep: keep, lawyer: lawyer, state: &state, balance: balance, content: content
+            )
+
+        case .fileCustody:
+            events = FamilyDramaSystem.fileCustody(state: &state, balance: balance)
+
+        case let .answerFamilyAsk(accept):
+            events = FamilyDramaSystem.answerAsk(
+                accept: accept, state: &state, balance: balance, content: content
+            )
+
+        case let .familySpareRoom(accept):
+            events = FamilyDramaSystem.spareRoom(
+                accept: accept, state: &state, balance: balance
+            )
+
+        case let .seeRelative(relation):
+            events = FamilyDramaSystem.visit(relation, state: &state, balance: balance)
+
+        case let .signWill(heir, childID):
+            events = FamilyDramaSystem.signWill(
+                heir: heir, childID: childID, state: &state, balance: balance
+            )
+
+        case let .settleFuneral(answer):
+            events = FamilyDramaSystem.settleFuneral(
+                answer, state: &state, balance: balance
+            )
 
         // MARK: W3 (espionage)
 

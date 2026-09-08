@@ -196,6 +196,12 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         // MARK: Iteration 9 — L2 (life score)
         recorded.lifeScore = LifeScore.score(state, balance: balance)
         // MARK: end of Iteration 9
+        // MARK: Iteration 11, wave two — W2 (family drama)
+        // The will decides who the dynasty offers first.
+        recorded.willHeir = state.familyDrama.heir
+        recorded.willHeirName = state.familyDrama.heirName
+        recorded.willHeirChildID = state.familyDrama.heirChildID
+        // MARK: end of Iteration 11, wave two — W2
         let run = recorded
         runs.append(run)
         endingsReached.insert(over.kind)
@@ -342,6 +348,20 @@ public struct LegacyRun: Codable, Equatable, Sendable, Identifiable {
     public var longestServing: LegacyPerson?
     public var lineage: Lineage?
     public var stake: Int?
+
+    // MARK: Iteration 11, wave two — W2 (family drama)
+
+    /// The will, if the founder signed one: the `FamilyHeir` raw value and
+    /// the name it landed on. `Successors` puts that person at the top of
+    /// the next company's list and says why. Optional, so every ledger
+    /// written before the will existed decodes and simply shows nothing.
+    public var willHeir: String?
+    public var willHeirName: String?
+    /// The child the will named, when it named one — so a child heir is
+    /// matched by id rather than by a name that may have a surname on it.
+    public var willHeirChildID: UUID?
+
+    // MARK: end of Iteration 11, wave two — W2
 
     // MARK: Iteration 9 — L2 (life score)
 

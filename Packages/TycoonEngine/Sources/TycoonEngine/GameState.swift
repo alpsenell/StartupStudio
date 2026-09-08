@@ -549,6 +549,33 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: W2 (family drama)
 
+    /// The partner found out. The confrontation is on screen.
+    case familyAffairDiscovered(day: Int)
+    /// What was said back.
+    case familyConfronted(answer: String, day: Int)
+    /// The estate is divided.
+    case familyDivorced(
+        exName: String, cashTransfer: Int, keptHome: Bool, equityGiven: Double, day: Int
+    )
+    /// A custody hearing is listed.
+    case familyCustodyFiled(hearingDay: Int, day: Int)
+    /// And decided.
+    case familyCustodyDecided(verdict: String, day: Int)
+    /// The sibling wants something.
+    case familyKinAsk(relation: String, name: String, stage: Int, day: Int)
+    /// And got it, or did not.
+    case familyKinAnswered(relation: String, accepted: Bool, day: Int)
+    /// A parent is in a home and somebody is paying for it.
+    case familyCareStarted(relation: String, name: String, weekly: Int, day: Int)
+    /// The phone call.
+    case familyParentDied(relation: String, name: String, day: Int)
+    /// The argument in the car park.
+    case familyFuneralSettled(choice: String, day: Int)
+    /// The in-laws are in the spare room, or are not.
+    case familyInLawsMoved(movedIn: Bool, day: Int)
+    /// The will names somebody.
+    case familyWillSigned(heir: String, name: String, day: Int)
+
     // MARK: W3 (espionage)
 
     // MARK: W4 (inside)
@@ -633,6 +660,25 @@ extension GameEvent {
             .quiet
 
         // MARK: end of Iteration 11 — N1
+
+        // MARK: Iteration 11, wave two — W2 (family drama)
+
+        // Being found out, losing the marriage, losing the children and
+        // losing a parent are the four days a founder would remember, and
+        // three of them put a sheet on the screen. Everything else in this
+        // lane is a card that can wait for the next pause.
+        case .familyAffairDiscovered, .familyDivorced, .familyCustodyDecided,
+             .familyParentDied:
+            .critical
+        case .familyCustodyFiled, .familyKinAsk, .familyCareStarted:
+            .notable
+        case .familyConfronted, .familyKinAnswered, .familyFuneralSettled,
+             .familyWillSigned:
+            .info
+        case .familyInLawsMoved:
+            .quiet
+
+        // MARK: end of Iteration 11, wave two — W2
 
         // MARK: WS-B
 

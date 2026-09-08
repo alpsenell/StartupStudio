@@ -366,6 +366,18 @@ public struct InvestorState: Codable, Equatable, Sendable {
         max(0, 100 - equityRemaining)
     }
 
+    // MARK: Iteration 11, wave two — W2 (family drama)
+
+    /// Whether some of what is gone went to somebody who is not a fund —
+    /// a co-founder, or (W2) an ex. The number itself is a fact about a
+    /// divorce rather than about a cap table, so it lives on the
+    /// settlement: see `GameState.exPartnerEquity`.
+    public var hasNonRoundHolder: Bool {
+        equitySold > rounds.reduce(0) { $0 + $1.equity } + 0.001
+    }
+
+    // MARK: end of Iteration 11, wave two — W2
+
     /// What the board is watching, if anyone is: the expectation of the
     /// most recent seat — an acquirer on an earn-out is the newest seat
     /// there is, otherwise the most recent round that took one.
@@ -638,3 +650,22 @@ extension Int {
         return sign + "$" + String(grouped.reversed())
     }
 }
+
+// MARK: Iteration 11, wave two — W2 (family drama)
+
+extension GameState {
+    /// Points of the company an ex-partner holds after a settlement, and
+    /// the name to print beside them on a cap table.
+    ///
+    /// Like the co-founder's 30% in `Origin`, this is *not* a round: no
+    /// `RaisedRound`, no board seat, no ask. It came off `equityRemaining`
+    /// the day the estate was divided, and every valuation, exit and
+    /// net-worth line already reads that number.
+    public var exPartnerEquity: (name: String, points: Double)? {
+        guard let settlement = familyDrama.settlement, settlement.equityGiven > 0
+        else { return nil }
+        return (settlement.exName, settlement.equityGiven)
+    }
+}
+
+// MARK: end of Iteration 11, wave two — W2

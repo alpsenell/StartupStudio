@@ -604,6 +604,14 @@ enum CrimeSystem {
             ),
             lastLine: opener(for: pending)
         )
+        // MARK: Iteration 11, wave two — W2 (family drama)
+        // A custody hearing is the same room with a different first line.
+        if pending.kind == FamilyDrama.custodyCaseKind {
+            state.crime.hearing?.lastLine = FamilyDrama.custodyOpener(
+                childCount: state.life.family.children.count
+            )
+        }
+        // MARK: end of Iteration 11, wave two — W2
         state.speed = .paused
         return [.crimeHearingOpened(offence: pending.kind, day: state.day)]
     }
@@ -647,6 +655,12 @@ enum CrimeSystem {
         ))
         hearing.lastLanded = landed
         hearing.lastLine = Crime.reply(exchange, landed: landed, offence: offence, roll: roll)
+        // MARK: Iteration 11, wave two — W2 (family drama)
+        // The family court says its own things back.
+        if legalCase.kind == FamilyDrama.custodyCaseKind {
+            hearing.lastLine = FamilyDrama.custodyReply(exchange, landed: landed, roll: roll)
+        }
+        // MARK: end of Iteration 11, wave two — W2
         hearing.exchangesLeft -= 1
         hearing.exchangesTaken += 1
         if exchange == .objection { hearing.objectionsLeft -= 1 }
@@ -702,6 +716,16 @@ enum CrimeSystem {
 
         state.crime.hearing = nil
         state.narrative.flags.remove(caseFlag)
+
+        // MARK: Iteration 11, wave two — W2 (family drama)
+        // A custody case is heard here and settled there: the bands are
+        // the family court's, and no money changes hands in this room.
+        if legalCase.kind == FamilyDrama.custodyCaseKind {
+            return FamilyDramaSystem.deliverCustody(
+                standing: standing, index: index, state: &state, balance: balance
+            )
+        }
+        // MARK: end of Iteration 11, wave two — W2
 
         if legalCase.isFounderSuing {
             return deliverSuit(

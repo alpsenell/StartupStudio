@@ -463,6 +463,28 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: W2 (family drama)
 
+    /// The family room was opened. The identity gate: nothing in this lane
+    /// costs a byte until this lands, and only the player can send it.
+    case openFamilyRoom
+    /// What the founder says the night the affair comes out.
+    case confrontFamily(FamilyConfession)
+    /// Divide the estate. `keep` is what the player dragged into their own
+    /// column: catalog ids plus `"home"` and `"pet"`.
+    case divorceSettlement(keep: [String], lawyer: CrimeLawyer)
+    /// File for the children. The hearing is N1's room with a family
+    /// opener and a family verdict.
+    case fileCustody
+    /// Yes or no to whatever the sibling wants this time.
+    case answerFamilyAsk(accept: Bool)
+    /// The in-laws and the spare room.
+    case familySpareRoom(accept: Bool)
+    /// An evening with somebody who is not the company.
+    case seeRelative(FamilyRelation)
+    /// Name an heir. The dynasty reads it when the run ends.
+    case signWill(heir: FamilyHeir, childID: UUID?)
+    /// The one argument at the funeral.
+    case settleFuneral(FamilyDrama.FuneralArgument)
+
     // MARK: W3 (espionage)
 
     // MARK: W4 (inside)
