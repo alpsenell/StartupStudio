@@ -842,6 +842,24 @@ public enum Reducer {
             )
 
         // MARK: W4 (inside)
+        case let .chooseInsideDay(choice):
+            events = PrisonSystem.choose(choice, state: &state)
+        case let .answerPrisonGang(joining):
+            events = PrisonSystem.answerGang(joining: joining, state: &state, balance: balance)
+        case .attemptEscape:
+            events = PrisonSystem.attemptEscape(state: &state, balance: balance)
+        case .openParole:
+            events = PrisonSystem.openParole(state: &state, balance: balance)
+        case let .sayAtParole(exchange):
+            events = PrisonSystem.say(exchange, state: &state, balance: balance)
+        case .decideParole:
+            events = PrisonSystem.decideParole(state: &state, balance: balance)
+        case let .serveSentence(weeks):
+            #if DEBUG
+            events = PrisonSystem.beginSentence(weeks: weeks, state: &state, balance: balance)
+            #else
+            events = []
+            #endif
 
         // MARK: end of Iteration 11, wave two
         }

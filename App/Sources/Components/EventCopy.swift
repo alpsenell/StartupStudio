@@ -1116,6 +1116,12 @@ struct EventCopy {
 
         // MARK: W4 (inside)
 
+        // Every line is `InsideEventPresenter`'s, in the lane's own file.
+        case .insideArrived, .insideDayChosen, .insideTrouble, .insideGangAnswered,
+             .insideParoleListed, .insideParoleOpened, .insideParoleSaid,
+             .insideParoleDecided, .insideEscape, .insideReleased:
+            InsideEventPresenter.entry(for: event) ?? fallbackEntry(for: event)
+
         // MARK: end of Iteration 11, wave two
 
         // Events added after this file land here instead of breaking the

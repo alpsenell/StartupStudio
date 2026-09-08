@@ -234,7 +234,13 @@ enum NetworkingSystem {
         let last = pick(names.lastNames, &state.socialRNG)
         let appearanceSeed = state.socialRNG.next()
 
-        let kinds = ContactArchetype.allCases
+        // MARK: Iteration 11, wave two — W4 (inside)
+        // `partyKinds`, not `allCases`: W4 added a seventh archetype for
+        // somebody met in a cell, and rolling over `allCases` here would
+        // have changed the roster of every party in every run ever
+        // recorded. The six the rooms have always drawn from, in order.
+        let kinds = ContactArchetype.partyKinds
+        // MARK: end of Iteration 11, wave two — W4
         let kind = archetype ?? kinds[state.socialRNG.nextInt(in: 0...(kinds.count - 1))]
 
         // Everybody at these things is at least competent, and the thing

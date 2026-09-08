@@ -201,6 +201,9 @@ enum Route: Hashable {
     case spy
 
     // MARK: W4 (inside)
+    /// What the weeks came to, read after the gate. The sentence itself is
+    /// a full-screen mode, not a route.
+    case inside
 
     // MARK: end of Iteration 11, wave two
 
@@ -271,6 +274,7 @@ enum Route: Hashable {
         // MARK: W3 (espionage)
         case .spy: .business
         // MARK: W4 (inside)
+        case .inside: .life
         // MARK: end of Iteration 11, wave two
         }
     }

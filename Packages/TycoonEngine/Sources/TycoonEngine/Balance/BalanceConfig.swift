@@ -1928,6 +1928,17 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 11, wave two — W2
 
+    // MARK: Iteration 11, wave two — W4 (inside)
+
+    /// What a day inside is worth: the five ways to spend one, the gang,
+    /// the parole board and the wall (`BalanceConfig+Prison.swift`).
+    /// Inline default, so `"prison"` is an optional key — and read only
+    /// from `PrisonSystem`, which is reached only once a court has handed
+    /// down a sentence.
+    public var prison: PrisonBalance = .default
+
+    // MARK: end Iteration 11, wave two — W4
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

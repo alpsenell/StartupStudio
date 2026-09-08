@@ -65,6 +65,7 @@ struct LifeScreen: View {
         case family
         // MARK: W3 (espionage)
         // MARK: W4 (inside)
+        case inside
         // MARK: end of Iteration 11, wave two
         // MARK: end of Iteration 11
     }
@@ -145,6 +146,10 @@ struct LifeScreen: View {
                     // the people you did not choose, and the paperwork.
                     FamilyDramaCard(engine: engine) { path = [.family] }
                     // MARK: W4 (inside)
+                    // Nothing at all until a court has sent the founder
+                    // down; the card draws itself only while
+                    // `state.prison` is non-nil.
+                    InsideCard(engine: engine) { path = [.inside] }
                     // MARK: end of Iteration 11, wave two
                     // MARK: end of Iteration 11
                 }
@@ -206,6 +211,8 @@ struct LifeScreen: View {
                     FamilyDramaScreen(engine: engine, showingDivorce: $showingDivorce)
                 // MARK: W3 (espionage)
                 // MARK: W4 (inside)
+                case .inside:
+                    InsideReleaseScreen(engine: engine)
                 // MARK: end of Iteration 11, wave two
                 // MARK: end of Iteration 11
                 }
@@ -332,6 +339,10 @@ struct LifeScreen: View {
         }
         // MARK: W3 (espionage)
         // MARK: W4 (inside)
+        if router.take(.inside) {
+            path = [.inside]
+            return
+        }
         // MARK: end of Iteration 11, wave two
         // MARK: end of Iteration 11
         // A headless screenshot pass cannot tap: `-autoRoute agenda` lands
@@ -342,6 +353,12 @@ struct LifeScreen: View {
                 path = [.agenda]
                 return
             }
+            // MARK: Iteration 11, wave two — W4 (inside)
+            if Route.launchRoute == .inside {
+                path = [.inside]
+                return
+            }
+            // MARK: end of Iteration 11, wave two — W4
             // MARK: L5 (side project)
             if Route.launchRoute == .sideProject {
                 path = [.sideProject]

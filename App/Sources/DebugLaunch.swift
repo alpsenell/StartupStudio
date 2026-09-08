@@ -284,6 +284,7 @@ extension Route {
         // MARK: W3 (espionage)
         case "spy", "espionage": .spy
         // MARK: W4 (inside)
+        case "inside", "prison", "released": .inside
         // MARK: end of Iteration 11, wave two
         default: nil
         }
@@ -1138,6 +1139,11 @@ extension DebugLaunch {
     }
 
     // MARK: W4 (inside)
+    // Parsed in `InsideDebug`, next to the screens that read them:
+    // `-autoInside <weeks>`, `-autoInsideDay <choice>`,
+    // `-autoInsideGang join|refuse`, `-autoParole`,
+    // `-autoParoleSay <exchange,exchange>` and `-autoEscape`. Nothing to
+    // add here.
 
     // MARK: end of Iteration 11, wave two
 

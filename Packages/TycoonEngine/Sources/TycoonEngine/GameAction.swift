@@ -529,6 +529,22 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: W4 (inside)
 
+    /// What today inside is spent on. One a day; sending it again before
+    /// the day ticks replaces it, because nothing has been spent yet.
+    case chooseInsideDay(choice: PrisonDayChoice)
+    /// In with the wing, or out. Offered once, answered once.
+    case answerPrisonGang(joining: Bool)
+    /// Over the wall. One attempt, ever.
+    case attemptEscape
+    /// The parole board: open it, say one of five things, and let it rule.
+    case openParole
+    case sayAtParole(exchange: PrisonParoleExchange)
+    case decideParole
+    /// Serve a sentence of `weeks`, for `-autoInside <weeks>`.
+    /// Applied only in debug builds; nothing in the game sends it — a real
+    /// sentence comes from a verdict.
+    case serveSentence(weeks: Int)
+
     // MARK: end of Iteration 11, wave two
 }
 

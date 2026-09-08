@@ -378,6 +378,9 @@ extension ContactArchetype {
         case .ops: "gearshape.2.fill"
         case .investor: "dollarsign.circle.fill"
         case .founder: "flag.2.crossed.fill"
+        // MARK: Iteration 11, wave two — W4 (inside)
+        case .inmate: "building.columns.fill"
+        // MARK: end of Iteration 11, wave two — W4
         }
     }
 }

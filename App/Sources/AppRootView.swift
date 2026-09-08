@@ -265,6 +265,22 @@ struct AppRootView: View {
                 #endif
             }
             // MARK: end M3
+            // MARK: Iteration 11, wave two — W4 (inside)
+            // A sentence is a place, and the place covers the game: full
+            // screen, at window level, over whichever tab the player was
+            // on, the way the incident room is presented. Unlike that room
+            // this one cannot be put aside — the door is locked from the
+            // outside and the way out is time — so the cover has no setter
+            // and no close button.
+            .fullScreenCover(isPresented: insidePresented) {
+                InsideScreen(engine: engine)
+            }
+            .task {
+                #if DEBUG
+                await InsideDebug.startIfAsked(current: { session.engine })
+                #endif
+            }
+            // MARK: end of Iteration 11, wave two — W4
             // Pending rival offers surface here (not per tab) so the paused
             // timeline always has its question on screen.
             .sheet(item: pendingDecision) { prompt in
@@ -416,6 +432,24 @@ struct AppRootView: View {
     }
 
     // MARK: end M3
+
+    // MARK: Iteration 11, wave two — W4 (inside)
+
+    /// Open for as long as the founder is in a cell. The setter is a
+    /// no-op: nothing on the screen dismisses it, and the engine closes it
+    /// on the day of the release, the parole or the wall.
+    private var insidePresented: Binding<Bool> {
+        Binding(
+            get: {
+                guard !session.needsOnboarding, session.engine.state.gameOver == nil
+                else { return false }
+                return session.engine.state.prison?.isInside == true
+            },
+            set: { _ in }
+        )
+    }
+
+    // MARK: end of Iteration 11, wave two — W4
 
     private var gameOverPresented: Binding<Bool> {
         Binding(
