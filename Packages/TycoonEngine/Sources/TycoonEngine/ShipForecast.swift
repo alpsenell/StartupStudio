@@ -55,6 +55,13 @@ public struct ShipForecast: Equatable, Sendable {
     public var marketScale: Double
     /// Whether the code pool has passed `shipCodeThreshold`.
     public var canShip: Bool
+    /// M1: what the feature board multiplies the score by. Exactly 1 for a
+    /// product nobody placed a card on, which is what the term reads as
+    /// for every build before the board existed.
+    public var featureMultiplier: Double = 1
+    /// M1: the board in one line ("4 of 5 slots, 2 synergies"), or `nil`
+    /// when there is no board to talk about.
+    public var featureSummary: String?
 
     /// The biggest thing standing between this product and a better score,
     /// in the player's words — or `nil` when it is as good as it will get.
@@ -75,6 +82,12 @@ public struct ShipForecast: Equatable, Sendable {
         }
         if bugFactor < 0.95 {
             return "Open bugs are costing \(Int(((1 - bugFactor) * 100).rounded()))% of the score."
+        }
+        // M1: a board actively costing the product is worth saying before
+        // the generic "keep working" — it is the one thing here the player
+        // can fix in ten seconds.
+        if featureMultiplier < 0.99 {
+            return "The feature board is costing \(Int(((1 - featureMultiplier) * 100).rounded()))% of the score."
         }
         if topicFit < 0.95 {
             return "This type and topic are a poor match (×\(topicFit.formatted(.number.precision(.fractionLength(2)))))."
@@ -113,11 +126,18 @@ extension GameState {
         let codebase = self.codebase(id: product.codebaseID)
         let codebaseDebt = codebase?.debt ?? 0
         let codebaseCeiling = balance.codebase.debtCeiling(codebaseDebt)
+        // M1: the board's contribution, shown before the player commits.
+        // Exactly 1 and `nil` on an empty board, so the card says nothing
+        // new to a player who never opened it.
+        let board = FeatureBoard.reading(
+            for: product, state: self, content: content, balance: balance
+        )
+        let boardMultiplier = product.features.isEmpty ? 1 : board.qualityMultiplier
 
         return ShipForecast(
             quality: min(100, max(0,
                 100 * completion * topicFit * bugFactor * techMultiplier * ceiling
-                    * codebaseCeiling
+                    * codebaseCeiling * boardMultiplier
             )),
             crewCeiling: min(1, topicFit * techMultiplier * ceiling * codebaseCeiling),
             skillCeiling: ceiling,
@@ -129,7 +149,9 @@ extension GameState {
             marketScale: ProductSystem.launchMarketScale(
                 for: product, state: self, balance: balance
             ),
-            canShip: dev.codePts >= balance.shipCodeThreshold * type.codePts
+            canShip: dev.codePts >= balance.shipCodeThreshold * type.codePts,
+            featureMultiplier: boardMultiplier,
+            featureSummary: product.features.isEmpty ? nil : board.summary
         )
     }
 }

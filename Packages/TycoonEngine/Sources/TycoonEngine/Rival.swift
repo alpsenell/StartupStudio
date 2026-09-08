@@ -64,6 +64,11 @@ public struct RivalProduct: Codable, Equatable, Sendable, Identifiable {
     public var launchDay: Int
     /// A rough weekly unit figure for the head-to-head panel.
     public var weeklyUnits: Int
+    /// Iteration 10 (M1): the name of the feature card this product lifted
+    /// off the player's board, `nil` when it copied nothing — which is
+    /// every rival product before boards existed, and every one launched
+    /// against a player who never placed a card.
+    public var copiedFeature: String?
 
     public init(
         id: UUID,
@@ -72,7 +77,8 @@ public struct RivalProduct: Codable, Equatable, Sendable, Identifiable {
         typeID: String,
         quality: Double,
         launchDay: Int,
-        weeklyUnits: Int
+        weeklyUnits: Int,
+        copiedFeature: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -81,6 +87,29 @@ public struct RivalProduct: Codable, Equatable, Sendable, Identifiable {
         self.quality = quality
         self.launchDay = launchDay
         self.weeklyUnits = weeklyUnits
+        self.copiedFeature = copiedFeature
+    }
+
+    // Hand-written decode so a rival product from a save written before
+    // feature boards existed keeps loading — having copied nothing, which
+    // is what it did.
+    private enum CodingKeys: String, CodingKey {
+        case id, name, topicID, typeID, quality, launchDay, weeklyUnits
+        case copiedFeature
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(UUID.self, forKey: .id),
+            name: try container.decode(String.self, forKey: .name),
+            topicID: try container.decode(String.self, forKey: .topicID),
+            typeID: try container.decode(String.self, forKey: .typeID),
+            quality: try container.decode(Double.self, forKey: .quality),
+            launchDay: try container.decode(Int.self, forKey: .launchDay),
+            weeklyUnits: try container.decode(Int.self, forKey: .weeklyUnits),
+            copiedFeature: try container.decodeIfPresent(String.self, forKey: .copiedFeature)
+        )
     }
 
     /// Whether the product is still fighting for share on a given day.

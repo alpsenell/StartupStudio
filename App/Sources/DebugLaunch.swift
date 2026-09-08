@@ -246,6 +246,9 @@ extension Route {
         // MARK: end of Iteration 9
         // MARK: Iteration 10 — route names
         // MARK: M1 (feature board)
+        // Handled by `featureBoardAutoRoute`, which needs a product id no
+        // command line can supply.
+        case "featureboard", "features", "featuredetail", "featurestore": nil
         // MARK: M2 (pitch room)
         // MARK: M3 (incident room)
         // MARK: M4 (leagues)
@@ -564,6 +567,34 @@ extension DebugLaunch {
     // MARK: Iteration 10 — reserved flags
 
     // MARK: M1 (feature board)
+
+    /// `-autoRoute featureboard` (or `-autoFeatureBoard`): a headless pass
+    /// starts a build if the generated game has none, places a card or two
+    /// so the board has something on it, and pushes the board screen. The
+    /// simulator can be launched and photographed from the command line
+    /// but not tapped, and the board is three taps deep.
+    static var opensFeatureBoard: Bool { featureBoardDestination != nil }
+
+    /// Which of M1's three screens a headless pass wants: the board
+    /// itself, the product detail that links to it, or the store page that
+    /// lists what the board put in the product.
+    enum FeatureBoardDestination: String {
+        case board, detail, storefront
+    }
+
+    static var featureBoardDestination: FeatureBoardDestination? {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-autoFeatureBoard") { return .board }
+        return switch launchRoute ?? "" {
+        case "featureboard", "features": .board
+        case "featuredetail": .detail
+        case "featurestore": .storefront
+        default: nil
+        }
+        #else
+        return nil
+        #endif
+    }
 
     // MARK: M2 (pitch room)
 

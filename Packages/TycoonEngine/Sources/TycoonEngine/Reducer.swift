@@ -195,12 +195,12 @@ public enum Reducer {
         case let .startProduct(typeID, topicID, name, focus):
             events = ProductSystem.startProduct(
                 typeID: typeID, topicID: topicID, name: name, focus: focus,
-                state: &state, content: content
+                state: &state, balance: balance, content: content
             )
         case let .startProductOnCodebase(typeID, topicID, name, focus, codebaseID):
             events = ProductSystem.startProduct(
                 typeID: typeID, topicID: topicID, name: name, focus: focus,
-                codebaseID: codebaseID, state: &state, content: content
+                codebaseID: codebaseID, state: &state, balance: balance, content: content
             )
         case let .setPhaseFocus(productID, focus):
             events = ProductSystem.setPhaseFocus(productID: productID, focus: focus, state: &state)
@@ -504,6 +504,22 @@ public enum Reducer {
         // MARK: Iteration 10 — handlers, one region per lane
 
         // MARK: M1 (feature board)
+
+        // The board is a plan, not news: placing a card moves no meter,
+        // draws nothing and posts no event. It changes what the thing
+        // being designed *is*, and the press finds out at launch.
+        case let .placeFeature(productID, cardID, slot):
+            events = []
+            _ = FeatureBoard.place(
+                productID: productID, cardID: cardID, slot: slot,
+                state: &state, content: content, balance: balance
+            )
+        case let .removeFeature(productID, slot):
+            events = []
+            _ = FeatureBoard.remove(
+                productID: productID, slot: slot,
+                state: &state, content: content, balance: balance
+            )
 
         // MARK: M2 (pitch room)
 

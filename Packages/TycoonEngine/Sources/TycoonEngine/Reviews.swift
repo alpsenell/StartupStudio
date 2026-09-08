@@ -5,7 +5,8 @@ import TycoonContent
 /// Built at ship time from the product and its development record, so the
 /// blurb can name the app, the type and the topic, and the callout can
 /// mention the thing that actually stood out — crashes, polish, an
-/// over-promise, an unnoticed launch, a crowded shelf.
+/// over-promise, an unnoticed launch, a crowded shelf, or (iteration 10)
+/// the feature on the board the launch was really about.
 struct ReviewContext: Equatable, Sendable {
     var productName: String
     var typeName: String
@@ -18,6 +19,12 @@ struct ReviewContext: Equatable, Sendable {
     var hype: Double
     /// The launch's market scale — below 1 means a saturated shelf.
     var marketScale: Double
+    /// M1: the best card on the feature board, by name. Empty when the
+    /// board is empty, which is when no feature callout can fire.
+    var bestFeature: String = ""
+    /// M1: the card on the board that should not have been there. Empty
+    /// unless something on it actually costs the product.
+    var worstFeature: String = ""
 
     static let unknown = ReviewContext(
         productName: "the app", typeName: "app", topicName: "software",
@@ -125,6 +132,11 @@ enum ReviewBlurbs {
         if context.bugRatio >= 0.20 { return "buggy" }
         if context.hype >= 45, score < 55 { return "overpromised" }
         if context.marketScale <= 0.65 { return "crowded" }
+        // M1's two, placed *after* every callout that existed before them
+        // so a launch with no board still earns exactly the callout it
+        // earned before boards existed. Both are `nil` on an empty board.
+        if !context.worstFeature.isEmpty, score < 60 { return "featureMisfit" }
+        if !context.bestFeature.isEmpty, score >= 55 { return "featureLed" }
         if context.polishRatio >= 0.95, score >= 55 { return "polished" }
         if context.hype <= 8, score >= 60 { return "unnoticed" }
         return nil
@@ -136,5 +148,11 @@ enum ReviewBlurbs {
             .replacingOccurrences(of: "{name}", with: context.productName)
             .replacingOccurrences(of: "{type}", with: context.typeName.lowercased())
             .replacingOccurrences(of: "{topic}", with: context.topicName.lowercased())
+            // M1: `{feature}` is the board's best card, `{misfit}` the one
+            // that should not have been on it. Both are empty strings on
+            // an empty board, and no line that uses them is reachable
+            // then — see `callout(for:context:)`.
+            .replacingOccurrences(of: "{feature}", with: context.bestFeature)
+            .replacingOccurrences(of: "{misfit}", with: context.worstFeature)
     }
 }

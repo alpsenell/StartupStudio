@@ -105,6 +105,10 @@ enum Route: Hashable {
 
     // MARK: M1 (feature board)
 
+    /// M1: the board a product is assembled from, for a product still in
+    /// development.
+    case featureBoard(productID: UUID)
+
     // MARK: M2 (pitch room)
 
     // MARK: M3 (incident room)
@@ -151,6 +155,7 @@ enum Route: Hashable {
 
         // MARK: Iteration 10
         // MARK: M1 (feature board)
+        case .featureBoard: .products
         // MARK: M2 (pitch room)
         // MARK: M3 (incident room)
         // MARK: M4 (leagues)

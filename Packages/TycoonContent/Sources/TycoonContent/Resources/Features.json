@@ -1,0 +1,539 @@
+[
+  {
+    "id": "guided_onboarding",
+    "name": "Guided Onboarding",
+    "blurb": "Nobody is left staring at an empty screen on day one.",
+    "leansOn": "design",
+    "appetiteTag": "design",
+    "synergies": ["empty_states", "daily_digest"]
+  },
+  {
+    "id": "empty_states",
+    "name": "Empty States",
+    "blurb": "The screen with nothing on it still says something.",
+    "leansOn": "polish",
+    "appetiteTag": "design",
+    "synergies": ["micro_animations"]
+  },
+  {
+    "id": "dark_mode",
+    "name": "Dark Mode",
+    "blurb": "The one request every review mentions.",
+    "leansOn": "polish",
+    "appetiteTag": "design",
+    "synergies": ["theme_engine"]
+  },
+  {
+    "id": "theme_engine",
+    "name": "Theme Engine",
+    "blurb": "Let people make it look like theirs.",
+    "fitsTypes": ["mobile_app", "web_app", "desktop_tool"],
+    "leansOn": "polish",
+    "appetiteTag": "design",
+    "synergies": ["dark_mode", "plugin_system"]
+  },
+  {
+    "id": "micro_animations",
+    "name": "Micro-animations",
+    "blurb": "Everything moves the way a hand expects it to.",
+    "leansOn": "polish",
+    "appetiteTag": "design",
+    "synergies": ["haptics", "theme_engine"]
+  },
+  {
+    "id": "haptics",
+    "name": "Haptic Feedback",
+    "blurb": "The thumb feels the thing it just did.",
+    "fitsTypes": ["mobile_app", "game"],
+    "leansOn": "polish",
+    "appetiteTag": "design",
+    "synergies": ["micro_animations", "sound_design"]
+  },
+  {
+    "id": "accessibility_pass",
+    "name": "Accessibility Pass",
+    "blurb": "Large type, real labels, and contrast that survives sunlight.",
+    "unlockedBy": "ui_toolkit",
+    "leansOn": "polish",
+    "appetiteTag": "design",
+    "synergies": ["localization"]
+  },
+  {
+    "id": "localization",
+    "name": "Localization",
+    "blurb": "Eleven languages, none of them machine-translated.",
+    "unlockedBy": "ui_toolkit",
+    "leansOn": "polish",
+    "synergies": ["accessibility_pass"]
+  },
+  {
+    "id": "offline_mode",
+    "name": "Offline Mode",
+    "blurb": "Works in a tunnel, on a plane, in a basement.",
+    "fitsTypes": ["mobile_app", "desktop_tool"],
+    "fitsTopics": ["travel", "music", "education", "productivity"],
+    "leansOn": "code",
+    "appetiteTag": "offline",
+    "synergies": ["local_cache", "trip_planner"]
+  },
+  {
+    "id": "local_cache",
+    "name": "Local Cache",
+    "blurb": "Opens instantly because it never asked the server.",
+    "leansOn": "code",
+    "appetiteTag": "speed",
+    "synergies": ["offline_mode", "instant_search"]
+  },
+  {
+    "id": "instant_search",
+    "name": "Instant Search",
+    "blurb": "Results before the third keystroke.",
+    "fitsTopics": ["productivity", "education", "logistics", "food_delivery", "music"],
+    "leansOn": "code",
+    "appetiteTag": "speed",
+    "synergies": ["local_cache", "kanban_board"]
+  },
+  {
+    "id": "push_notifications",
+    "name": "Push Notifications",
+    "blurb": "A reason to come back, used sparingly.",
+    "fitsTypes": ["mobile_app", "web_app"],
+    "leansOn": "code",
+    "appetiteTag": "social",
+    "synergies": ["streaks", "daily_digest", "price_alerts"]
+  },
+  {
+    "id": "daily_digest",
+    "name": "Daily Digest",
+    "blurb": "One message a day that is actually worth reading.",
+    "leansOn": "design",
+    "appetiteTag": "social",
+    "synergies": ["push_notifications", "guided_onboarding"]
+  },
+  {
+    "id": "streaks",
+    "name": "Streaks and Badges",
+    "blurb": "The counter nobody wants to be the one to break.",
+    "fitsTopics": ["fitness", "education", "health", "music", "productivity"],
+    "leansOn": "design",
+    "appetiteTag": "wellness",
+    "synergies": ["push_notifications", "leaderboards", "focus_timer"]
+  },
+  {
+    "id": "leaderboards",
+    "name": "Leaderboards",
+    "blurb": "Everyone claims not to look. Everyone looks.",
+    "fitsTypes": ["mobile_app", "game", "web_app"],
+    "fitsTopics": ["gaming", "fitness", "education"],
+    "leansOn": "design",
+    "appetiteTag": "play",
+    "synergies": ["streaks", "friend_graph", "multiplayer"]
+  },
+  {
+    "id": "friend_graph",
+    "name": "Friend Graph",
+    "blurb": "The people you know, in the shape you know them.",
+    "fitsTopics": ["social", "dating", "gaming", "fitness"],
+    "leansOn": "code",
+    "appetiteTag": "social",
+    "synergies": ["leaderboards", "chat_inbox", "matchmaking"]
+  },
+  {
+    "id": "chat_inbox",
+    "name": "Chat Inbox",
+    "blurb": "Messages that arrive once, in order, and stay read.",
+    "fitsTopics": ["social", "dating", "travel", "logistics"],
+    "leansOn": "code",
+    "appetiteTag": "social",
+    "synergies": ["friend_graph", "push_notifications", "video_calls"]
+  },
+  {
+    "id": "video_calls",
+    "name": "Video Calls",
+    "blurb": "Faces, at a frame rate that does not embarrass anyone.",
+    "fitsTopics": ["dating", "social", "education"],
+    "unlockedBy": "cloud_infrastructure",
+    "leansOn": "code",
+    "appetiteTag": "social",
+    "synergies": ["chat_inbox"]
+  },
+  {
+    "id": "ai_assistant",
+    "name": "AI Assistant",
+    "blurb": "It reads the screen and offers the next move.",
+    "unlockedBy": "ai_pair_programmer",
+    "leansOn": "code",
+    "appetiteTag": "ai",
+    "synergies": ["smart_recommendations", "instant_search"]
+  },
+  {
+    "id": "smart_recommendations",
+    "name": "Smart Recommendations",
+    "blurb": "The next thing, chosen by what you already liked.",
+    "fitsTopics": ["music", "gaming", "food_delivery", "travel", "education"],
+    "unlockedBy": "telemetry",
+    "leansOn": "code",
+    "appetiteTag": "ai",
+    "synergies": ["ai_assistant", "taste_profile"]
+  },
+  {
+    "id": "taste_profile",
+    "name": "Taste Profile",
+    "blurb": "A page that says who you are here, and lets you argue.",
+    "fitsTopics": ["music", "food_delivery", "dating", "gaming"],
+    "leansOn": "design",
+    "appetiteTag": "ai",
+    "synergies": ["smart_recommendations", "playlist_engine"]
+  },
+  {
+    "id": "privacy_vault",
+    "name": "Privacy Vault",
+    "blurb": "The sensitive half of the data never leaves the device.",
+    "fitsTopics": ["finance", "health", "dating"],
+    "unlockedBy": "security_compliance",
+    "leansOn": "code",
+    "appetiteTag": "privacy",
+    "synergies": ["end_to_end_encryption", "bank_sync"]
+  },
+  {
+    "id": "end_to_end_encryption",
+    "name": "End-to-End Encryption",
+    "blurb": "You could not read it either, and you say so.",
+    "fitsTopics": ["social", "finance", "health", "dating"],
+    "unlockedBy": "security_compliance",
+    "leansOn": "code",
+    "appetiteTag": "privacy",
+    "synergies": ["privacy_vault", "audit_log"]
+  },
+  {
+    "id": "audit_log",
+    "name": "Audit Log",
+    "blurb": "Who did what, when, and from where.",
+    "fitsTypes": ["enterprise_tool", "saas_platform"],
+    "leansOn": "code",
+    "appetiteTag": "privacy",
+    "synergies": ["end_to_end_encryption", "role_permissions"]
+  },
+  {
+    "id": "role_permissions",
+    "name": "Roles and Permissions",
+    "blurb": "The org chart, enforced.",
+    "fitsTypes": ["enterprise_tool", "saas_platform"],
+    "leansOn": "code",
+    "appetiteTag": "privacy",
+    "synergies": ["audit_log", "single_sign_on"]
+  },
+  {
+    "id": "single_sign_on",
+    "name": "Single Sign-On",
+    "blurb": "The thing IT asks about before anything else.",
+    "fitsTypes": ["enterprise_tool", "saas_platform", "web_app"],
+    "leansOn": "code",
+    "appetiteTag": "privacy",
+    "synergies": ["role_permissions"]
+  },
+  {
+    "id": "public_api",
+    "name": "Public API",
+    "blurb": "Other people build the features you never got to.",
+    "fitsTypes": ["saas_platform", "web_app", "desktop_tool"],
+    "unlockedBy": "internal_tooling",
+    "leansOn": "code",
+    "synergies": ["webhooks", "plugin_system"]
+  },
+  {
+    "id": "webhooks",
+    "name": "Webhooks",
+    "blurb": "It tells the rest of their stack what just happened.",
+    "fitsTypes": ["saas_platform", "enterprise_tool"],
+    "leansOn": "code",
+    "synergies": ["public_api", "csv_export"]
+  },
+  {
+    "id": "plugin_system",
+    "name": "Plugin System",
+    "blurb": "A small community turns up and never leaves.",
+    "fitsTypes": ["desktop_tool", "saas_platform", "game"],
+    "leansOn": "code",
+    "appetiteTag": "design",
+    "synergies": ["public_api", "theme_engine", "level_editor"]
+  },
+  {
+    "id": "crash_reporting",
+    "name": "Crash Reporting",
+    "blurb": "You hear about the bug before the review does.",
+    "unlockedBy": "telemetry",
+    "leansOn": "code",
+    "appetiteTag": "speed",
+    "synergies": ["ab_testing"]
+  },
+  {
+    "id": "ab_testing",
+    "name": "A/B Testing",
+    "blurb": "Two versions ship, the numbers pick one.",
+    "fitsTypes": ["web_app", "saas_platform", "mobile_app"],
+    "unlockedBy": "telemetry",
+    "leansOn": "code",
+    "appetiteTag": "ai",
+    "synergies": ["crash_reporting", "analytics_dashboard"]
+  },
+  {
+    "id": "analytics_dashboard",
+    "name": "Analytics Dashboard",
+    "blurb": "The numbers their boss asks for, on one page.",
+    "fitsTypes": ["saas_platform", "enterprise_tool", "web_app"],
+    "leansOn": "design",
+    "appetiteTag": "money",
+    "synergies": ["ab_testing", "report_builder"]
+  },
+  {
+    "id": "report_builder",
+    "name": "Report Builder",
+    "blurb": "They build the report you would have got wrong.",
+    "fitsTypes": ["enterprise_tool", "saas_platform"],
+    "fitsTopics": ["finance", "logistics", "productivity"],
+    "leansOn": "design",
+    "appetiteTag": "money",
+    "synergies": ["analytics_dashboard", "csv_export"]
+  },
+  {
+    "id": "csv_export",
+    "name": "CSV Export",
+    "blurb": "Unglamorous, and the reason the deal closed.",
+    "fitsTypes": ["enterprise_tool", "desktop_tool", "saas_platform"],
+    "leansOn": "code",
+    "synergies": ["report_builder", "webhooks"]
+  },
+  {
+    "id": "budget_planner",
+    "name": "Budget Planner",
+    "blurb": "Where the money went, and where it is going.",
+    "fitsTopics": ["finance"],
+    "leansOn": "design",
+    "appetiteTag": "money",
+    "synergies": ["bank_sync", "csv_export"]
+  },
+  {
+    "id": "bank_sync",
+    "name": "Bank Sync",
+    "blurb": "Every account, refreshed while they sleep.",
+    "fitsTopics": ["finance"],
+    "unlockedBy": "security_compliance",
+    "leansOn": "code",
+    "appetiteTag": "money",
+    "synergies": ["budget_planner", "privacy_vault"]
+  },
+  {
+    "id": "price_alerts",
+    "name": "Price Alerts",
+    "blurb": "It watches the number so they do not have to.",
+    "fitsTopics": ["travel", "finance", "food_delivery", "logistics"],
+    "leansOn": "code",
+    "appetiteTag": "money",
+    "synergies": ["push_notifications"]
+  },
+  {
+    "id": "route_optimizer",
+    "name": "Route Optimizer",
+    "blurb": "Fewer miles, less fuel, same drops.",
+    "fitsTopics": ["logistics", "travel", "food_delivery"],
+    "leansOn": "code",
+    "appetiteTag": "green",
+    "synergies": ["live_map", "live_tracking"]
+  },
+  {
+    "id": "live_map",
+    "name": "Live Map",
+    "blurb": "Everything moving, on one honest map.",
+    "fitsTopics": ["travel", "logistics", "food_delivery"],
+    "leansOn": "design",
+    "appetiteTag": "green",
+    "synergies": ["route_optimizer", "live_tracking", "trip_planner"]
+  },
+  {
+    "id": "live_tracking",
+    "name": "Live Tracking",
+    "blurb": "The dot that stops people phoning to ask.",
+    "fitsTopics": ["logistics", "food_delivery", "fitness"],
+    "leansOn": "code",
+    "appetiteTag": "speed",
+    "synergies": ["live_map"]
+  },
+  {
+    "id": "trip_planner",
+    "name": "Trip Planner",
+    "blurb": "Eleven tabs and a spreadsheet, replaced.",
+    "fitsTopics": ["travel"],
+    "leansOn": "design",
+    "appetiteTag": "offline",
+    "synergies": ["live_map", "offline_mode"]
+  },
+  {
+    "id": "workout_builder",
+    "name": "Workout Builder",
+    "blurb": "Their programme, not a magazine's.",
+    "fitsTopics": ["fitness", "health"],
+    "leansOn": "design",
+    "appetiteTag": "wellness",
+    "synergies": ["streaks", "wearable_sync"]
+  },
+  {
+    "id": "wearable_sync",
+    "name": "Wearable Sync",
+    "blurb": "The watch on their wrist finally talks to you.",
+    "fitsTopics": ["fitness", "health"],
+    "leansOn": "code",
+    "appetiteTag": "wellness",
+    "synergies": ["workout_builder", "live_tracking"]
+  },
+  {
+    "id": "meal_log",
+    "name": "Meal Log",
+    "blurb": "Three taps, not a food diary.",
+    "fitsTopics": ["health", "fitness", "food_delivery"],
+    "leansOn": "design",
+    "appetiteTag": "wellness",
+    "synergies": ["streaks"]
+  },
+  {
+    "id": "symptom_journal",
+    "name": "Symptom Journal",
+    "blurb": "Something to hand the doctor that is not a memory.",
+    "fitsTopics": ["health"],
+    "leansOn": "design",
+    "appetiteTag": "privacy",
+    "synergies": ["privacy_vault", "meal_log"]
+  },
+  {
+    "id": "lesson_paths",
+    "name": "Lesson Paths",
+    "blurb": "A route through the subject, not a pile of videos.",
+    "fitsTopics": ["education"],
+    "leansOn": "design",
+    "appetiteTag": "ai",
+    "synergies": ["quiz_engine", "streaks"]
+  },
+  {
+    "id": "quiz_engine",
+    "name": "Quiz Engine",
+    "blurb": "It asks again, later, on purpose.",
+    "fitsTopics": ["education", "gaming"],
+    "leansOn": "code",
+    "synergies": ["lesson_paths"]
+  },
+  {
+    "id": "focus_timer",
+    "name": "Focus Timer",
+    "blurb": "Twenty-five minutes and a locked door.",
+    "fitsTopics": ["productivity", "education"],
+    "leansOn": "design",
+    "appetiteTag": "wellness",
+    "synergies": ["streaks", "kanban_board"]
+  },
+  {
+    "id": "kanban_board",
+    "name": "Kanban Board",
+    "blurb": "Columns, cards, and a satisfying drag.",
+    "fitsTopics": ["productivity", "logistics"],
+    "leansOn": "design",
+    "appetiteTag": "design",
+    "synergies": ["instant_search", "focus_timer"]
+  },
+  {
+    "id": "playlist_engine",
+    "name": "Playlist Engine",
+    "blurb": "An hour that goes somewhere.",
+    "fitsTopics": ["music"],
+    "leansOn": "code",
+    "appetiteTag": "ai",
+    "synergies": ["taste_profile", "offline_mode"]
+  },
+  {
+    "id": "lyrics_view",
+    "name": "Lyrics View",
+    "blurb": "In time, in the right language, in big type.",
+    "fitsTopics": ["music"],
+    "leansOn": "polish",
+    "appetiteTag": "play",
+    "synergies": ["playlist_engine"]
+  },
+  {
+    "id": "sound_design",
+    "name": "Sound Design",
+    "blurb": "Every tap has a note, and none of them grate.",
+    "fitsTypes": ["game", "mobile_app"],
+    "fitsTopics": ["gaming", "music"],
+    "leansOn": "polish",
+    "appetiteTag": "play",
+    "synergies": ["haptics"]
+  },
+  {
+    "id": "multiplayer",
+    "name": "Multiplayer",
+    "blurb": "The reason they tell somebody about it.",
+    "fitsTypes": ["game"],
+    "fitsTopics": ["gaming"],
+    "unlockedBy": "game_engine",
+    "leansOn": "code",
+    "appetiteTag": "play",
+    "synergies": ["leaderboards", "matchmaking"]
+  },
+  {
+    "id": "matchmaking",
+    "name": "Matchmaking",
+    "blurb": "Someone at your level, in under ten seconds.",
+    "fitsTypes": ["game", "mobile_app"],
+    "fitsTopics": ["gaming", "dating"],
+    "unlockedBy": "game_engine",
+    "leansOn": "code",
+    "appetiteTag": "play",
+    "synergies": ["multiplayer", "friend_graph"]
+  },
+  {
+    "id": "level_editor",
+    "name": "Level Editor",
+    "blurb": "They make the content you cannot afford to.",
+    "fitsTypes": ["game"],
+    "fitsTopics": ["gaming"],
+    "unlockedBy": "game_engine",
+    "leansOn": "design",
+    "appetiteTag": "play",
+    "synergies": ["plugin_system"]
+  },
+  {
+    "id": "profile_verification",
+    "name": "Profile Verification",
+    "blurb": "The people on it are the people they say they are.",
+    "fitsTopics": ["dating", "social"],
+    "leansOn": "code",
+    "appetiteTag": "privacy",
+    "synergies": ["privacy_vault", "friend_graph"]
+  },
+  {
+    "id": "carbon_receipt",
+    "name": "Carbon Receipt",
+    "blurb": "What the journey cost the sky, per order.",
+    "fitsTopics": ["logistics", "travel", "food_delivery"],
+    "leansOn": "design",
+    "appetiteTag": "green",
+    "synergies": ["route_optimizer"]
+  },
+  {
+    "id": "widget_suite",
+    "name": "Home Screen Widgets",
+    "blurb": "The one number they wanted, without opening it.",
+    "fitsTypes": ["mobile_app"],
+    "leansOn": "polish",
+    "appetiteTag": "speed",
+    "synergies": ["daily_digest", "local_cache"]
+  },
+  {
+    "id": "keyboard_shortcuts",
+    "name": "Keyboard Shortcuts",
+    "blurb": "The power users write the good reviews.",
+    "fitsTypes": ["desktop_tool", "web_app"],
+    "leansOn": "polish",
+    "appetiteTag": "speed",
+    "synergies": ["instant_search"]
+  }
+]

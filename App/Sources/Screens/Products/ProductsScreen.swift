@@ -88,6 +88,12 @@ struct ProductsScreen: View {
             .navigationDestination(for: StorefrontLink.self) { link in
                 StorefrontScreen(engine: engine, productID: link.productID)
             }
+            // M1: the board, on its own value type for the same reason the
+            // storefront has one — a bare `UUID` is already the detail
+            // screen's destination.
+            .navigationDestination(for: FeatureBoardLink.self) { link in
+                FeatureBoardScreen(engine: engine, productID: link.productID)
+            }
             .onChange(of: router.pendingPush, initial: true) { _, _ in
                 consumeRoute()
             }
@@ -103,6 +109,9 @@ struct ProductsScreen: View {
         // stack, not on its root content: the root goes away when a
         // destination is pushed, and its `task` with it.
         .storefrontAutoRoute(engine: engine, router: router)
+        // M1: `-autoRoute featureboard` lands a headless pass on a board
+        // with cards on it.
+        .featureBoardAutoRoute(engine: engine, router: router)
     }
 
     /// Deep links into this tab: R&D picks the segment, a product id
@@ -110,6 +119,14 @@ struct ProductsScreen: View {
     private func consumeRoute() {
         // MARK: Iteration 10 — a route per lane, consumed before the rest
         // MARK: M1 (feature board)
+        if case .featureBoard(let boardProductID) = router.pendingPush {
+            section = .products
+            router.take(.featureBoard(productID: boardProductID))
+            if engine.state.product(id: boardProductID) != nil {
+                path.append(FeatureBoardLink(productID: boardProductID))
+            }
+            return
+        }
         // MARK: M6 (bug hunt)
         // MARK: end of Iteration 10
         #if DEBUG
