@@ -66,6 +66,19 @@ enum LifeSystem {
         //     meltdown that makes the press, loneliness, and the landlord.
         events.append(contentsOf: applyConsequences(&state, balance))
 
+        // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+        // 3c. The founder's things, the founder's habits and the founder's
+        //     body, on the same meters the schedule just moved: the mood a
+        //     dog is worth, the mood a dependency costs, the drift of
+        //     whatever the doctor has named, and the counters the next
+        //     diagnosis reads. The existing `chronicCondition`,
+        //     `hospitalizationDays` and `burnoutDays` above are *read* by
+        //     it and never moved. Draws nothing, and returns on its first
+        //     line until the player has opened the Assets screen — so
+        //     every bot and every fixture is untouched.
+        events.append(contentsOf: AssetsSystem.applyLife(&state, balance))
+        // MARK: end of Iteration 11 — N3
+
         // 4. Life events.
         events.append(contentsOf: LifeEventSystem.roll(&state, balance, content))
 

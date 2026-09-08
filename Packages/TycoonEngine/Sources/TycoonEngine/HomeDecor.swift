@@ -7,6 +7,14 @@ import Foundation
 /// things on, and the floor.
 public enum DecorSlotKind: String, Codable, Equatable, Sendable, CaseIterable {
     case wall, shelf, floor
+    // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+    /// The space outside the window that a car stands in, and the corner
+    /// of the room the animal has decided is theirs. Neither can be
+    /// bought in the shop — only N3's catalog fills them — so a run that
+    /// never opens the Assets screen sees two slots that are always
+    /// empty, which is exactly what an empty driveway looks like.
+    case driveway, basket
+    // MARK: end of Iteration 11 — N3
 
     /// How the sheet names an empty one.
     public var emptyName: String {
@@ -14,6 +22,10 @@ public enum DecorSlotKind: String, Codable, Equatable, Sendable, CaseIterable {
         case .wall: "Empty wall"
         case .shelf: "Empty shelf"
         case .floor: "Empty corner"
+        // MARK: Iteration 11 — N3
+        case .driveway: "Empty driveway"
+        case .basket: "No animal"
+        // MARK: end of Iteration 11 — N3
         }
     }
 
@@ -23,6 +35,10 @@ public enum DecorSlotKind: String, Codable, Equatable, Sendable, CaseIterable {
         case .wall: "hangs on the wall"
         case .shelf: "stands on a shelf"
         case .floor: "stands on the floor"
+        // MARK: Iteration 11 — N3
+        case .driveway: "sits on the drive"
+        case .basket: "lives here now"
+        // MARK: end of Iteration 11 — N3
         }
     }
 }
@@ -64,6 +80,10 @@ public enum DecorSource: Equatable, Sendable {
     /// Earned by a run of mornings at the desk.
     case streak
     // MARK: end of Iteration 10 — M5
+    // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+    /// Bought with the founder's own money, off the Assets screen.
+    case asset
+    // MARK: end of Iteration 11 — N3
 
     public var caption: String {
         switch self {
@@ -76,6 +96,9 @@ public enum DecorSource: Equatable, Sendable {
         // MARK: Iteration 10 — M5 (morning desk)
         case .streak: "Earned at the morning desk"
         // MARK: end of Iteration 10 — M5
+        // MARK: Iteration 11 — N3
+        case .asset: "Yours, and insured"
+        // MARK: end of Iteration 11 — N3
         }
     }
 }
@@ -176,6 +199,14 @@ public enum HomeDecor {
         (DecorSlot(id: "wallD", kind: .wall, name: "The long wall"), 3),
         (DecorSlot(id: "shelfD", kind: .shelf, name: "The display shelf"), 3),
         (DecorSlot(id: "floorD", kind: .floor, name: "By the glass"), 3),
+        // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+        // Every home has somewhere to park and somewhere for the animal,
+        // including the studio flat — which parks on the street and puts
+        // the basket by the radiator, but the founder would not put it
+        // that way.
+        (DecorSlot(id: "drivewayA", kind: .driveway, name: "The space outside"), 0),
+        (DecorSlot(id: "basketA", kind: .basket, name: "The corner by the radiator"), 0),
+        // MARK: end of Iteration 11 — N3
     ]
 
     /// The slots a home tier has, in reading order.
@@ -274,8 +305,50 @@ public enum HomeDecor {
         )
     }
 
+    // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+
+    /// The id a bought asset takes in the decor catalog: `asset_coupe`,
+    /// `asset_dog`. Prefixed so it can never collide with a shop
+    /// possession's id (`sportsCar` is the model on the shelf; the real
+    /// one is `asset_coupe` on the drive).
+    public static func assetDecorID(_ catalogID: String) -> String { "asset_\(catalogID)" }
+
+    /// The one slot each kind of asset stands in, or `nil` for the ones
+    /// that stand nowhere (a second property is not in the room).
+    public static func assetSlotID(for kind: AssetKind) -> String? {
+        switch kind {
+        case .car: "drivewayA"
+        case .pet: "basketA"
+        case .property: nil
+        }
+    }
+
+    /// The driveway, by name, for the day the car is not there any more.
+    public static let drivewaySlotID = "drivewayA"
+
+    /// The cars and the pets as things that stand somewhere. Built off
+    /// N3's shipped catalog ids so the two lists cannot drift apart; a
+    /// balance file that renames a car simply leaves an unknown decor id,
+    /// which is ignored the way every other unknown one is.
+    public static let assetItems: [DecorItem] = [
+        (id: "hatchback", name: "The hatchback", note: "Parked at an angle. It has always been parked at an angle."),
+        (id: "estate", name: "The estate", note: "Boot full of things that live in the boot."),
+        (id: "coupe", name: "The coupé", note: "Washed more often than the flat is cleaned."),
+        (id: "supercar", name: "The one with the doors", note: "Takes up two spaces and knows it."),
+    ].map {
+        DecorItem(id: assetDecorID($0.id), name: $0.name, kind: .driveway, source: .asset, note: $0.note)
+    } + [
+        (id: "dog", name: "The dog", note: "Asleep in the one patch of sun."),
+        (id: "cat", name: "The cat", note: "Awake. Watching. Unimpressed."),
+        (id: "tortoise", name: "The tortoise", note: "Has moved four inches since Tuesday."),
+    ].map {
+        DecorItem(id: assetDecorID($0.id), name: $0.name, kind: .basket, source: .asset, note: $0.note)
+    }
+
+    // MARK: end of Iteration 11 — N3
+
     /// Everything, shop and earned.
-    public static let catalog: [DecorItem] = shopItems + earnedItems
+    public static let catalog: [DecorItem] = shopItems + earnedItems + assetItems
 
     public static func item(_ id: String) -> DecorItem? {
         catalog.first { $0.id == id }

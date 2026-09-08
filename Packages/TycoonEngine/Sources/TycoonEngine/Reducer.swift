@@ -158,6 +158,14 @@ public enum Reducer {
 
         // MARK: N3 (assets, vices and the doctor)
 
+        // The founder's own balance sheet, weekly: the bills, the
+        // breakdowns, the vet, the wallet that moves on its own, and the
+        // vices' week. A no-op in every run whose `state.assets` is
+        // `.empty`, which is every run in which nobody opened the Assets
+        // screen. (The *daily* half — the drift and the doctor — runs
+        // from `LifeSystem`'s N3 region, where the meters are.)
+        AssetsSystem.run,
+
         // MARK: N4 (fame and the feed)
 
         // The feed's day: the fame curve, the steps it crosses, a beef
@@ -647,6 +655,28 @@ public enum Reducer {
             )
 
         // MARK: N3 (assets, vices and the doctor)
+        case .noticeAssetsOpened:
+            events = AssetsSystem.noticeOpened(&state)
+        case let .buyAsset(assetID):
+            events = AssetsSystem.buy(assetID, state: &state, balance: balance)
+        case let .sellAsset(assetID):
+            events = AssetsSystem.sell(assetID, state: &state, balance: balance)
+        case let .repairAsset(assetID):
+            events = AssetsSystem.repair(assetID, state: &state, balance: balance)
+        case let .treatAilment(ailmentID):
+            events = AssetsSystem.treat(ailmentID, state: &state, balance: balance)
+        case .attendTherapy:
+            events = AssetsSystem.therapy(state: &state, balance: balance)
+        case let .quitVice(viceID):
+            events = AssetsSystem.quit(viceID, state: &state, balance: balance)
+        case let .abandonQuit(viceID):
+            events = AssetsSystem.abandonQuit(viceID, state: &state)
+        case let .playCasinoGame(gameID, stake):
+            events = AssetsSystem.gamble(gameID, stake: stake, state: &state, balance: balance)
+        case .buyLotteryTicket:
+            events = AssetsSystem.buyTicket(state: &state, balance: balance)
+        case let .tradeCrypto(dollars):
+            events = AssetsSystem.trade(dollars: dollars, state: &state, balance: balance)
 
         // MARK: N4 (fame and the feed)
         case let .postToFeed(kind, subject):

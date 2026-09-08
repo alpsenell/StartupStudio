@@ -265,6 +265,17 @@ public enum HomeSceneComposer {
                         sprite: sprite, x: slot.x, y: slot.y - sprite.height,
                         kind: .prop, animation: animation, phase: 0
                     ))
+                // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+                // The car and the animal both stand on a line, like every
+                // other thing on the floor, and are drawn only when
+                // something is in the slot — so a home with no car and no
+                // dog is pixel-for-pixel the room it always was.
+                case .driveway, .basket:
+                    scene.append(PlacedSprite(
+                        sprite: sprite, x: slot.x, y: slot.y - sprite.height,
+                        kind: .prop, animation: animation, phase: 0
+                    ))
+                // MARK: end of Iteration 11 — N3
                 }
             }
         }
@@ -297,7 +308,9 @@ public enum HomeSceneComposer {
         if let a = l.armchair { place(.armchair, a) }
         // The floor decor stands in front of the furniture and behind the
         // people, like every other thing on the floor.
-        placeDecor([.floor])
+        // MARK: Iteration 11 — N3: the car and the animal stand on the
+        // same line as the floor decor.
+        placeDecor([.floor, .driveway, .basket])
 
         // The corner that shows how the founder is actually doing.
         switch mood {

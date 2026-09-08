@@ -1230,6 +1230,125 @@ extension SpriteLibrary {
         ]
         return PixelSprite(frames: [a, b], palette: palette)
     }
+
+    // MARK: - Iteration 11 — N3 (assets, vices and the doctor)
+
+    /// The four cars the founder can put on the drive. One 22×10 body,
+    /// four paint jobs and two silhouettes — a hatch, an estate with a
+    /// longer roof, a coupé with a low one, and the one with the doors
+    /// (which are up, because they are always up).
+    ///
+    /// Palette-only, like everything else here: the paint is a master
+    /// ramp step, never a hand-mixed colour.
+    public enum AssetCarName: String, Sendable, CaseIterable, Equatable {
+        case hatchback, estate, coupe, supercar
+    }
+
+    public static func assetCar(_ name: AssetCarName) -> PixelSprite {
+        let roof: [String]
+        switch name {
+        case .hatchback:
+            roof = [
+                "      OOOOOOO         ",
+                "     OOgggggOO        ",
+                "    OOggggggg OO      ",
+            ]
+        case .estate:
+            roof = [
+                "     OOOOOOOOOOO      ",
+                "    OOgggOgggggOO     ",
+                "   OOggggOggggg OO    ",
+            ]
+        case .coupe:
+            roof = [
+                "        OOOOOO        ",
+                "      OOOgggggOO      ",
+                "    OOOgggggggg OO    ",
+            ]
+        case .supercar:
+            roof = [
+                "   O        OOOOO     ",
+                "    OO    OOgggggO    ",
+                "     OOOOOggggggg OO  ",
+            ]
+        }
+        let body = [
+            "  OOOOOOOOOOOOOOOOOOO ",
+            " OPPPPPPPPPPPPPPPPPPPO",
+            " OPPPPPPPPPPPPPPPPPPPO",
+            " OPpPPPPPPPPPPPPPPPpPO",
+            "  OOOKKOOOOOOOOOKKOOO ",
+            "   OKtKO       OKtKO  ",
+            "    OKO         OKO   ",
+        ]
+        let paint: RGBA
+        let trim: RGBA
+        switch name {
+        case .hatchback: paint = Palettes.moss[2]; trim = Palettes.moss[3]
+        case .estate: paint = Palettes.sky[2]; trim = Palettes.sky[3]
+        case .coupe: paint = Palettes.ink[2]; trim = Palettes.ink[3]
+        case .supercar: paint = Palettes.ember[2]; trim = Palettes.ember[3]
+        }
+        return PixelSprite(frames: [roof + body], palette: [
+            "O": Palettes.outline,
+            "P": paint,
+            "p": trim,
+            "g": Palettes.sky[0],
+            "K": Palettes.ink[3],
+            "t": Palettes.stone[2],
+        ])
+    }
+
+    /// The dog: 14×10, asleep in the one patch of sun, two frames so the
+    /// ribs go up and down.
+    public static func assetDog() -> PixelSprite {
+        func frame(_ back: String) -> [String] {
+            [
+                "              ",
+                "              ",
+                "   OOO        ",
+                "  OFFFOO      ",
+                " OFkFFFFOOO   ",
+                " OFFFFFFFFFOO ",
+                " O\(back)O",
+                " OFfFFFFFFFFO ",
+                "  OOOOOOOOOO  ",
+                "     OO  OO   ",
+            ]
+        }
+        return PixelSprite(
+            frames: [frame("FFFFFFFFFFF"), frame("FFFfFFFfFFF")],
+            palette: [
+                "O": Palettes.outline,
+                "F": Palettes.sand[2],
+                "f": Palettes.sand[3],
+                "k": Palettes.ink[4],
+            ]
+        )
+    }
+
+    /// The tortoise: 12×7, and it has moved four inches since Tuesday, so
+    /// one frame is plenty.
+    public static func assetTortoise() -> PixelSprite {
+        let grid = [
+            "            ",
+            "     OOOO   ",
+            "   OOSSSSOO ",
+            "  OSSsSSsSSO",
+            " OOSSSSSSSSO",
+            "OkGOOOOOOOO ",
+            " OO  OO  OO ",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "S": Palettes.moss[2],
+            "s": Palettes.moss[3],
+            "G": Palettes.moss[1],
+            "k": Palettes.ink[3],
+        ])
+    }
+
+    // MARK: end of Iteration 11 — N3
 }
 
 /// The home scenes' named tones. Every one is a master-palette color, so

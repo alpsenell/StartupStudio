@@ -159,6 +159,11 @@ enum Route: Hashable {
 
     // MARK: N3 (assets, vices and the doctor)
 
+    /// N3: the Life tab, with the founder's own balance sheet — the
+    /// garage, the deeds, the household, the wallet games, the doctor and
+    /// the habits — pushed over it.
+    case assets
+
     // MARK: N4 (fame and the feed)
 
     /// N4: the founder's public feed, on the Life tab.
@@ -223,6 +228,7 @@ enum Route: Hashable {
         case .peopleMenu: .life
         case .peopleTeamMenu: .team
         // MARK: N3 (assets, vices and the doctor)
+        case .assets: .life
         // MARK: N4 (fame and the feed)
         case .feed: .life
         // MARK: N5 (office secrets)

@@ -298,6 +298,14 @@ private struct SlotChip: View {
         case .wall: "photo"
         case .shelf: "books.vertical"
         case .floor: "square.grid.2x2"
+        // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+        // Two slots nothing in the shop fits: only a car bought on the
+        // Assets screen goes on the drive, and only an animal takes the
+        // corner. Both read as empty here until one is bought, which is
+        // what an empty driveway looks like.
+        case .driveway: "car"
+        case .basket: "pawprint"
+        // MARK: end of Iteration 11 — N3
         }
     }
 }

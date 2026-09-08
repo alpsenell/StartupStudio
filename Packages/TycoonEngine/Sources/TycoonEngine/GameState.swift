@@ -475,6 +475,45 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: N3 (assets, vices and the doctor)
 
+    /// The founder bought a car, a second property or a pet with their own
+    /// money.
+    case assetBought(assetID: String, price: Int, day: Int)
+    /// And sold it again.
+    case assetSold(assetID: String, price: Int, day: Int)
+    /// A car is off the road until somebody pays the garage.
+    case assetBrokeDown(assetID: String, bill: Int, day: Int)
+    /// A bill paid, a thing back on the road.
+    case assetRepaired(assetID: String, cost: Int, day: Int)
+    /// Gone off the drive overnight.
+    case assetStolen(assetID: String, day: Int)
+    /// The flat, or the cabin, has water where it should not be.
+    case assetFlooded(assetID: String, bill: Int, day: Int)
+    /// The vet has been, the animal is fine, the bill is not.
+    case petVetBill(assetID: String, name: String, bill: Int, day: Int)
+    /// The doctor put a name to it.
+    case ailmentDiagnosed(ailmentID: String, day: Int)
+    /// A course of treatment started (and paid for).
+    case ailmentTreated(ailmentID: String, cost: Int, day: Int)
+    /// The course finished and the thing is gone.
+    case ailmentCleared(ailmentID: String, day: Int)
+    /// An hour on the couch.
+    case therapyAttended(day: Int)
+    /// Somebody who loves the founder said something about it.
+    case viceIntervention(viceID: String, from: String, day: Int)
+    /// Another evening off it, `evenings` into the run.
+    case viceQuitProgressed(viceID: String, evenings: Int, day: Int)
+    /// The run finished; the dependency is zero.
+    case viceQuit(viceID: String, day: Int)
+    /// The run did not finish.
+    case viceRelapsed(viceID: String, day: Int)
+    /// One hand at the casino: what went down, and what came back.
+    case casinoHandPlayed(gameID: String, stake: Int, returned: Int, day: Int)
+    case lotteryTicketBought(day: Int)
+    /// The weekend draw. `prize` is 0 far more often than not.
+    case lotteryDrawn(prize: Int, day: Int)
+    /// Dollars into (or out of) the wallet that moves on its own.
+    case cryptoTraded(dollars: Int, price: Double, day: Int)
+
     // MARK: N4 (fame and the feed)
 
     /// N4: the founder posted. `kind` is a `FamePostKind` raw value;

@@ -489,7 +489,15 @@ extension GameState {
     /// remaining slice of what the company is worth.
     public func founderNetWorth(balance: BalanceConfig) -> Int {
         let slice = Double(companyValuation(balance: balance)) * investors.equityRemaining / 100
-        return life.wallet + Int(slice.rounded())
+        // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+        // The car on the drive, the flat somebody else lives in, and
+        // whatever the wallet that moves on its own is worth this week,
+        // all at what they would actually fetch. Exactly zero in a run
+        // that owns none of it, so the number the rest of the game reads
+        // is the number it always read.
+        let things = assetResaleValue(balance: balance)
+        // MARK: end of Iteration 11 — N3
+        return life.wallet + things + Int(slice.rounded())
     }
 
     /// Products currently on the market that bill monthly — the third IPO

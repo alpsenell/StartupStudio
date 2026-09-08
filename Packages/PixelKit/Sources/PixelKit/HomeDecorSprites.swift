@@ -29,6 +29,20 @@ extension SpriteLibrary {
         // MARK: Iteration 10 — M5 (morning desk): the streak's three
         case deskSunrise, deskPlaque, deskCentury
         // MARK: end of Iteration 10 — M5
+        // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+        // The four cars on the drive and the three animals in the room.
+        // Raw values are `TycoonEngine.HomeDecor.assetDecorID(_:)`, which
+        // is N3's catalog id with an `asset_` in front of it — so the
+        // model car on the shelf (`sportsCar`) and the real one outside
+        // (`asset_coupe`) can never be the same thing.
+        case carHatchback = "asset_hatchback"
+        case carEstate = "asset_estate"
+        case carCoupe = "asset_coupe"
+        case carSupercar = "asset_supercar"
+        case petDog = "asset_dog"
+        case petCat = "asset_cat"
+        case petTortoise = "asset_tortoise"
+        // MARK: end of Iteration 11 — N3
     }
 
     public static func homeDecor(_ name: HomeDecorName) -> PixelSprite {
@@ -57,6 +71,17 @@ extension SpriteLibrary {
         case .deskPlaque: trophySprite(metal: Palettes.gold[3], shine: Palettes.sand[0])
         case .deskCentury: posterSprite(.star, ink: Palettes.ember[2], paper: Palettes.sand[0])
         // MARK: end of Iteration 10 — M5
+        // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+        case .carHatchback: assetCar(.hatchback)
+        case .carEstate: assetCar(.estate)
+        case .carCoupe: assetCar(.coupe)
+        case .carSupercar: assetCar(.supercar)
+        case .petDog: assetDog()
+        // The house cat has been in the room since iteration 9; adopting
+        // one is the founder finally admitting it lives here.
+        case .petCat: cat(.sleeping)
+        case .petTortoise: assetTortoise()
+        // MARK: end of Iteration 11 — N3
         }
     }
 

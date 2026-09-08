@@ -50,6 +50,7 @@ struct LifeScreen: View {
         /// (`PeopleMenuButton` on each card); this is the deep link's.
         case people(InteractionTarget)
         // MARK: N3 (assets, vices and the doctor)
+        case assets
         // MARK: N4 (fame and the feed)
         case feed
         // MARK: end of Iteration 11
@@ -118,6 +119,11 @@ struct LifeScreen: View {
                     // MARK: N1 (crime and the courtroom)
                     CrimeCard(engine: engine) { path = [.crime] }
                     // MARK: N3 (assets, vices and the doctor)
+                    // The founder's own balance sheet. It is money, but
+                    // it is also the doctor and the habits, so it sits in
+                    // *You* — under the meters it moves — with the
+                    // wallet's own card linking across to it.
+                    AssetsCard(engine: engine, onOpen: { path = [.assets] })
                     // MARK: N4 (fame and the feed)
                     FameCard(engine: engine) { path = [.feed] }
                     // MARK: end of Iteration 11
@@ -168,6 +174,8 @@ struct LifeScreen: View {
                 case .people(let target):
                     PeopleMenuScreen(engine: engine, target: target)
                 // MARK: N3 (assets, vices and the doctor)
+                case .assets:
+                    AssetsScreen(engine: engine)
                 // MARK: N4 (fame and the feed)
                 case .feed:
                     FeedScreen(engine: engine)
@@ -248,6 +256,19 @@ struct LifeScreen: View {
             return
         }
         // MARK: N3 (assets, vices and the doctor)
+        // `-autoRoute assets` (and `doctor` / `casino`, which land on the
+        // same screen and open a sheet from there) push the founder's own
+        // balance sheet, once. Taken before the launch-route block below
+        // so the lane's own flag is read in its own region.
+        if !tookLaunchRoute, Route.launchRoute == .assets {
+            tookLaunchRoute = true
+            path = [.assets]
+            return
+        }
+        if router.take(.assets) {
+            path = [.assets]
+            return
+        }
         // MARK: N4 (fame and the feed)
         // `-autoRoute feed` lands on the founder's feed, once. It is
         // consumed before the shared landing below so `-autoFame`'s
