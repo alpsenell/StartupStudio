@@ -57,6 +57,15 @@ public struct ContentCatalog: Sendable {
 
     // MARK: end of Iteration 10 — M2
 
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// What the founder posts, what the world replies, and what the paper
+    /// prints about it (`Feed.json`). `nil` without the file; the engine
+    /// falls back to `FeedCatalog.fallback`, so the feed still works.
+    public let feed: FeedCatalog?
+
+    // MARK: end of Iteration 11 — N4
+
     private let productTypesByID: [String: ProductTypeDef]
     private let topicsByID: [String: TopicDef]
     private let techByID: [String: TechNode]
@@ -81,8 +90,11 @@ public struct ContentCatalog: Sendable {
         staffEvents: [StaffEventDef] = [],
         features: [FeatureCardDef] = [],
         // MARK: Iteration 10 — M2 (pitch room)
-        pitches: PitchCatalog? = nil
+        pitches: PitchCatalog? = nil,
         // MARK: end of Iteration 10 — M2
+        // MARK: Iteration 11 — N4 (fame and the feed)
+        feed: FeedCatalog? = nil
+        // MARK: end of Iteration 11 — N4
     ) {
         self.productTypes = productTypes
         self.topics = topics
@@ -101,6 +113,9 @@ public struct ContentCatalog: Sendable {
         // MARK: Iteration 10 — M2 (pitch room)
         self.pitches = pitches
         // MARK: end of Iteration 10 — M2
+        // MARK: Iteration 11 — N4 (fame and the feed)
+        self.feed = feed
+        // MARK: end of Iteration 11 — N4
         self.productTypesByID = Dictionary(
             productTypes.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
@@ -154,8 +169,11 @@ public struct ContentCatalog: Sendable {
             staffEvents: try decodeResourceIfPresent("StaffEvents", using: decoder) ?? [],
             features: try decodeResourceIfPresent("Features", using: decoder) ?? [],
             // MARK: Iteration 10 — M2 (pitch room)
-            pitches: try decodeResourceIfPresent("Pitches", using: decoder)
+            pitches: try decodeResourceIfPresent("Pitches", using: decoder),
             // MARK: end of Iteration 10 — M2
+            // MARK: Iteration 11 — N4 (fame and the feed)
+            feed: try decodeResourceIfPresent("Feed", using: decoder)
+            // MARK: end of Iteration 11 — N4
         )
     }
 
@@ -204,6 +222,18 @@ public struct ContentCatalog: Sendable {
     }
 
     // MARK: end of Iteration 10 — M2
+
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// The feed's copy, from `Feed.json` when it is bundled and from the
+    /// terse fallback when it is not — so a caller never has to handle
+    /// "no catalog" itself, and an empty file never posts empty strings.
+    public var feedCatalog: FeedCatalog {
+        guard let feed, !feed.templates.isEmpty else { return .fallback }
+        return feed
+    }
+
+    // MARK: end of Iteration 11 — N4
 
     private static func decodeResource<T: Decodable>(
         _ name: String,

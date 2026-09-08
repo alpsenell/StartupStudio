@@ -1854,6 +1854,16 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 10 — M6
 
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// What a post reaches, what reach is worth, and what fame buys
+    /// (`BalanceConfig+Fame.swift`). Inline default, so `"fame"` is an
+    /// optional key; every number in it is read only once the founder has
+    /// posted at least once.
+    public var fame: FameBalance = .default
+
+    // MARK: end Iteration 11 — N4
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

@@ -18,6 +18,16 @@ enum MarketingSystem {
         _ content: ContentCatalog
     ) -> [GameEvent] {
         decayHype(&state, balance)
+        // MARK: Iteration 11 — N4 (fame and the feed)
+        //
+        // Fame is a campaign nobody bills you for. It lands after the
+        // decay and before the pushes, so a famous founder's build holds
+        // a floor of hype rather than sliding to nothing between
+        // campaigns. `Fame.dailyHype` is exactly zero at fame zero, and
+        // the guard means a run that never posted does not even walk the
+        // product array a second time.
+        addFameHype(&state, balance)
+        // MARK: end of Iteration 11 — N4
         runSocialPushes(&state, balance, content)
         return []
     }
@@ -41,6 +51,23 @@ enum MarketingSystem {
             }
         }
     }
+
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// The hype a founder's own audience is worth, every day, on every
+    /// build in development. A launch already on the market does not get
+    /// it: `liveHype` is what a campaign buys, and fame is not a campaign.
+    private static func addFameHype(_ state: inout GameState, _ balance: BalanceConfig) {
+        let daily = Fame.dailyHype(state.fame.fame, balance: balance.fame)
+        guard daily > 0 else { return }
+        for index in state.products.indices {
+            guard case .development(var dev) = state.products[index].stage else { continue }
+            dev.hype += daily
+            state.products[index].stage = .development(dev)
+        }
+    }
+
+    // MARK: end of Iteration 11 — N4
 
     /// Bills each social push still attached to an in-development product
     /// and adds its daily hype, scaled by the marketing team's personalities

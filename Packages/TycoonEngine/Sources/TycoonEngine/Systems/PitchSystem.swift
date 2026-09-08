@@ -90,6 +90,18 @@ enum PitchSystem {
             wantID: wantID,
             lastLine: opener
         )
+        // MARK: Iteration 11 — N4 (fame and the feed)
+        //
+        // A journalist who already reads the founder sits down warm. One
+        // line, and `Fame.journalistWarmth` is exactly zero at fame zero,
+        // so the pitch room's own invariant — warmth zero is the paper as
+        // written — holds for every run that never posted.
+        if counterpart == .journalist {
+            pitch.session?.warmth = Fame.journalistWarmth(
+                state.fame.fame, balance: balance.fame
+            )
+        }
+        // MARK: end of Iteration 11 — N4
         state.pitch = pitch
         return [.pitchOpened(counterpart: counterpart.rawValue, day: state.day)]
     }

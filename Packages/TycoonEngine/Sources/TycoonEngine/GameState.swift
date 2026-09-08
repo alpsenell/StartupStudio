@@ -445,6 +445,21 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: N4 (fame and the feed)
 
+    /// N4: the founder posted. `kind` is a `FamePostKind` raw value;
+    /// `followers` is the count *after* the post landed.
+    case famePosted(kind: String, reach: Int, viral: Bool, followers: Int, day: Int)
+    /// N4: fame crossed a step. `level` is a `FameLevel` raw value.
+    case fameLevelReached(level: Int, followers: Int, day: Int)
+    /// N4: a rival founder answered a subtweet in public.
+    case fameBeefOpened(rival: String, line: String, day: Int)
+    /// N4: the beef ended — escalated to the last round, or let go.
+    case fameBeefSettled(rival: String, escalated: Bool, followerDelta: Int, day: Int)
+    /// N4: an old post surfaced. Stops the clock: the room is waiting.
+    case fameCancellationRaised(quote: String, day: Int)
+    /// N4: what the founder said about it. `response` is a
+    /// `FameCancelResponse` raw value.
+    case fameCancellationAnswered(response: String, day: Int)
+
     // MARK: N5 (office secrets)
 
     // MARK: end of Iteration 11
@@ -596,6 +611,30 @@ extension GameEvent {
         // into the journal's routine week.
         case .bugSquashed:
             .quiet
+
+        // MARK: end M6
+
+        // MARK: Iteration 11 — N4 (fame and the feed)
+
+        // A post is a thing the founder did on purpose a moment ago; the
+        // feed already showed them the number. Quiet keeps a daily habit
+        // out of the toast layer — until one gets away from them, which is
+        // news in the founder's life whether they wanted it or not.
+        case .famePosted(_, _, let viral, _, _):
+            viral ? .notable : .quiet
+        case .fameLevelReached:
+            .notable
+        case .fameBeefOpened, .fameBeefSettled:
+            .notable
+        // The one thing in this lane that stops the clock: an old post has
+        // surfaced and the answer cannot wait for the player to scroll
+        // past it.
+        case .fameCancellationRaised:
+            .critical
+        case .fameCancellationAnswered:
+            .notable
+
+        // MARK: end N4
 
         default:
             .info

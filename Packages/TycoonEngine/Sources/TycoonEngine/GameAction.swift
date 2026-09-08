@@ -339,6 +339,20 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: N4 (fame and the feed)
 
+    /// N4: puts something on the founder's public feed. Free, one a day.
+    /// `subject` names the rival a subtweet is about; `nil` takes the
+    /// strongest studio on the board. `FameSystem.postBlocker` says why a
+    /// post is refused before the button is tapped.
+    case postToFeed(kind: FamePostKind, subject: String? = nil)
+    /// N4: the rival answered. Escalating buys followers and costs the
+    /// company reputation and the founder a night's sleep; letting it go
+    /// costs the last word and nothing else.
+    case answerFeedBeef(escalate: Bool)
+    /// N4: an old post surfaced. Apologise, double down, or delete it —
+    /// every answer costs followers, fame, reputation and mood, and the
+    /// button says how much of each.
+    case answerFameCancellation(response: FameCancelResponse)
+
     // MARK: N5 (office secrets)
 
     // MARK: end of Iteration 11

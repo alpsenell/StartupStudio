@@ -700,6 +700,42 @@ struct EventCopy {
                 Theme.accent
             )
 
+        // MARK: Iteration 11 — N4 (fame and the feed)
+
+        case .famePosted(let kind, let reach, let viral, let followers, let day):
+            (
+                viral ? "flame.fill" : "at",
+                viral
+                    ? "A \(FamePostKind(rawValue: kind)?.displayName.lowercased() ?? "post") got away from you — \(reach) reached"
+                    : "Posted a \(FamePostKind(rawValue: kind)?.displayName.lowercased() ?? "line") — \(followers) following",
+                day,
+                viral ? Theme.warning : Theme.accent
+            )
+        case .fameLevelReached(let level, let followers, let day):
+            (
+                "megaphone.fill",
+                "\(FameLevel(rawValue: level)?.displayName ?? "Known") now — \(followers) people follow you",
+                day,
+                Theme.accent
+            )
+        case .fameBeefOpened(let rival, _, let day):
+            ("flame.fill", "\(rival) answered you in public", day, Theme.warning)
+        case .fameBeefSettled(let rival, let escalated, let followerDelta, let day):
+            (
+                escalated ? "flame.fill" : "hand.raised.fill",
+                escalated
+                    ? "The \(rival) business ran its course — \(followerDelta) followers out of it"
+                    : "Let the \(rival) business go",
+                day,
+                escalated ? Theme.warning : Theme.accent
+            )
+        case .fameCancellationRaised(_, let day):
+            ("exclamationmark.bubble.fill", "An old post of yours surfaced", day, Theme.negativeCash)
+        case .fameCancellationAnswered(let response, let day):
+            ("bubble.left.fill", cancellationAnswerMessage(response), day, Theme.warning)
+
+        // MARK: end of Iteration 11 — N4
+
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a
         // warning naming the new case) when a workstream appends one.
@@ -709,6 +745,19 @@ struct EventCopy {
             fallbackEntry(for: event)
         }
     }
+
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// What the diary says the founder did about the old post.
+    private func cancellationAnswerMessage(_ response: String) -> String {
+        switch FameCancelResponse(rawValue: response) {
+        case .apologise: "Apologised for the old post"
+        case .doubleDown: "Doubled down on the old post"
+        case .delete, nil: "Deleted the old post, which everybody had screenshotted"
+        }
+    }
+
+    // MARK: end of Iteration 11 — N4
 
     // MARK: Iteration 10 — M2 (pitch room)
 

@@ -157,6 +157,13 @@ public enum Reducer {
 
         // MARK: N4 (fame and the feed)
 
+        // The feed's day: the fame curve, the steps it crosses, a beef
+        // going cold, the applicants fame brings, and the weekly roll for
+        // an old post surfacing. Returns on its first line for every run
+        // whose `state.fame` is still `.empty` — which is every run in
+        // which nobody has pressed *Post*.
+        FameSystem.run,
+
         // MARK: N5 (office secrets)
 
         // MARK: end of Iteration 11
@@ -600,6 +607,18 @@ public enum Reducer {
         // MARK: N3 (assets, vices and the doctor)
 
         // MARK: N4 (fame and the feed)
+        case let .postToFeed(kind, subject):
+            events = FameSystem.post(
+                kind: kind, subject: subject, state: &state, balance: balance, content: content
+            )
+        case let .answerFeedBeef(escalate):
+            events = FameSystem.answerBeef(
+                escalate: escalate, state: &state, balance: balance, content: content
+            )
+        case let .answerFameCancellation(response):
+            events = FameSystem.answerCancellation(
+                response: response, state: &state, balance: balance, content: content
+            )
 
         // MARK: N5 (office secrets)
 

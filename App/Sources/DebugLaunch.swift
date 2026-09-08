@@ -262,6 +262,7 @@ extension Route {
         // MARK: N2 (people menus)
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
+        case "feed", "fame": .feed
         // MARK: N5 (office secrets)
         // MARK: end of Iteration 11
         default: nil
@@ -860,6 +861,33 @@ extension DebugLaunch {
     // MARK: N3 (assets, vices and the doctor)
 
     // MARK: N4 (fame and the feed)
+
+    /// `-autoFame`: the founder posts once a day for as long as the feed
+    /// is on screen, so a headless pass has a feed to photograph and a
+    /// follower count that means something.
+    ///
+    /// Debug only, and it drives the same `.postToFeed` action a thumb
+    /// does — nothing here fabricates state the game could not reach on
+    /// its own, so the screenshots are of the real curve.
+    static var seedsFame: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoFame")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoCompose`: opens the compose sheet as soon as the feed is on
+    /// screen. A headless pass cannot tap *Say something*, and the sheet —
+    /// four kinds, each with its reach and its refusal — is half of what
+    /// this lane looks like.
+    static var opensFeedCompose: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoCompose")
+        #else
+        return false
+        #endif
+    }
 
     // MARK: N5 (office secrets)
 

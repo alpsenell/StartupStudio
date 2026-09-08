@@ -36,6 +36,16 @@ struct NewspaperIssue: Identifiable, Equatable {
     let marketColumn: Column
     /// The quiet events, one strip along the bottom.
     let smallPrint: [String]
+
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// The beef column: what the founder said in public this week and who
+    /// answered. `nil` in every week nothing was posted, which is every
+    /// week of every run that never opened the feed — so the page is
+    /// exactly the page it was.
+    let beefColumn: Column?
+
+    // MARK: end of Iteration 11 — N4
     /// The office, as it stood that week.
     let photo: Photo
 
@@ -145,6 +155,9 @@ struct NewspaperComposer {
             rivalColumn: rivalColumn(from: events),
             marketColumn: marketColumn(from: events, includeForecast: isLatest),
             smallPrint: smallPrint(from: events, excluding: leadSource),
+            // MARK: Iteration 11 — N4 (fame and the feed)
+            beefColumn: beefColumn(in: range),
+            // MARK: end of Iteration 11 — N4
             photo: photo(endingDay: end, lead: lead, isLatest: isLatest)
         )
     }
@@ -377,6 +390,73 @@ struct NewspaperComposer {
         }
         return NewspaperIssue.Column(title: "Market", lines: lines)
     }
+
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// The beef column. Everything the founder put in public inside the
+    /// week — the posts that travelled, the rival who answered, the old
+    /// line somebody dug up — plus one headline from `Feed.json` that
+    /// says what the trade made of it.
+    ///
+    /// Returns `nil` when nothing was posted in the week, and the page
+    /// simply has no such column. So a run that never opened the feed
+    /// prints the paper it printed before this lane existed, byte for
+    /// byte, and a run that did gets a column that is only ever about
+    /// things the player chose to say.
+    private func beefColumn(in range: ClosedRange<Int>) -> NewspaperIssue.Column? {
+        let posts = state.fame.posts
+            .filter { range.contains($0.day) }
+            .sorted { ($0.day, $0.id) > ($1.day, $1.id) }
+        guard !posts.isEmpty else { return nil }
+
+        var lines: [String] = []
+        // The week's loudest post, quoted.
+        if let loudest = posts.max(by: { $0.reach < $1.reach }) {
+            let reach = FeedFormat.count(loudest.reach)
+            lines.append(loudest.viral
+                ? "“\(loudest.text)” — \(reach) saw it, which nobody planned."
+                : "“\(loudest.text)” — \(reach) reached.")
+        }
+        // Who answered.
+        if let beef = state.fame.beef {
+            lines.append(beef.waitingOnYou
+                ? "\(beef.rivalName) answered, at round \(beef.rounds), and is waiting."
+                : "\(beef.rivalName) and \(state.company.name) are at round \(beef.rounds).")
+        } else if let subtweet = posts.first(where: { !$0.subject.isEmpty }) {
+            lines.append("\(subtweet.subject) has not replied, which is its own reply.")
+        }
+        // The archive, if it opened this week.
+        if let cancellation = state.fame.cancellation, range.contains(cancellation.raisedDay) {
+            lines.append("An older line resurfaced: “\(cancellation.quote)”")
+        }
+        // And what the trade made of it.
+        if let headline = fameHeadline(hasBeef: state.fame.beef != nil) {
+            lines.append(headline)
+        }
+        return NewspaperIssue.Column(title: "The feed", lines: Array(lines.prefix(4)))
+    }
+
+    /// One `Feed.json` headline for the week, picked without a draw: the
+    /// beef strand while there is a beef, otherwise the highest fame
+    /// headline the founder has earned. Deterministic, because the paper
+    /// is composed fresh every time it is opened.
+    private func fameHeadline(hasBeef: Bool) -> String? {
+        let catalog = content.feedCatalog
+        let level = Fame.level(state.fame.fame, balance: balance.fame)
+        let strand = hasBeef ? "beef" : "fame"
+        let pool = catalog.headlines.filter {
+            $0.strand == strand && $0.minLevel <= level.rawValue
+        }
+        guard let def = pool.max(by: { $0.minLevel < $1.minLevel }) else { return nil }
+        return Fame.fill(
+            def.text, state: state, rival: state.fame.beef?.rivalName ?? ""
+        )
+        .replacingOccurrences(
+            of: "{followers}", with: FeedFormat.count(state.fame.followers)
+        )
+    }
+
+    // MARK: end of Iteration 11 — N4
 
     // MARK: - Small print
 

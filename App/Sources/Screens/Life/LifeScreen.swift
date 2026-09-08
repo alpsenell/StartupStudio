@@ -42,6 +42,7 @@ struct LifeScreen: View {
         // MARK: N2 (people menus)
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
+        case feed
         // MARK: end of Iteration 11
     }
 
@@ -108,6 +109,7 @@ struct LifeScreen: View {
                     // MARK: N1 (crime and the courtroom)
                     // MARK: N3 (assets, vices and the doctor)
                     // MARK: N4 (fame and the feed)
+                    FameCard(engine: engine) { path = [.feed] }
                     // MARK: end of Iteration 11
                 }
                 .padding(Theme.Spacing.lg)
@@ -153,6 +155,8 @@ struct LifeScreen: View {
                 // MARK: N2 (people menus)
                 // MARK: N3 (assets, vices and the doctor)
                 // MARK: N4 (fame and the feed)
+                case .feed:
+                    FeedScreen(engine: engine)
                 // MARK: end of Iteration 11
                 }
             }
@@ -171,6 +175,20 @@ struct LifeScreen: View {
         // MARK: N2 (people menus)
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
+        // `-autoRoute feed` lands on the founder's feed, once. It is
+        // consumed before the shared landing below so `-autoFame`'s
+        // posting loop has its screen from the first frame.
+        if !tookLaunchRoute, Route.launchRoute == .feed {
+            tookLaunchRoute = true
+            path = [.feed]
+            return
+        }
+        // The router's own pushes, from the fame card's toast and from
+        // anywhere else that says "go and look at the feed".
+        if router.take(.feed) {
+            path = [.feed]
+            return
+        }
         // MARK: end of Iteration 11
         // A headless screenshot pass cannot tap: `-autoRoute agenda` lands
         // on the fortnight, once.
