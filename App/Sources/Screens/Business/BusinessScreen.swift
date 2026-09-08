@@ -227,6 +227,16 @@ struct BusinessScreen: View {
         // MARK: end of Iteration 11
         // MARK: Iteration 11, wave two
         // MARK: W1 (dirty money)
+        // The card and its sheets live in the Finances segment, so the
+        // route only has to pick that segment; `DirtyMoneyCard`'s own
+        // task opens the sheet once there is something in it.
+        if router.pendingPush == .dirtyMoney
+            || (router.pendingPush == nil && !landed && Route.launchRoute == .dirtyMoney) {
+            section = .finances
+            landed = true
+            router.take(.dirtyMoney)
+            return
+        }
         // MARK: W3 (espionage)
         // MARK: end of Iteration 11, wave two
         switch router.pendingPush {

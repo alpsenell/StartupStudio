@@ -547,6 +547,23 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: W1 (dirty money)
 
+    /// Somebody with money nobody wants to trace has made an offer.
+    case dirtyMoneyOffered(backer: String, cheque: Int, respondByDay: Int, day: Int)
+    /// The offer was turned down.
+    case dirtyMoneyDeclined(backer: String, day: Int)
+    /// The cheque was banked.
+    case dirtyMoneyTaken(backer: String, cheque: Int, day: Int)
+    /// A string was pulled, with a day on it.
+    case dirtyMoneyDemanded(kind: String, amount: Int, dueDay: Int, day: Int)
+    /// The founder answered one — or the deadline answered for them.
+    case dirtyMoneyAnswered(kind: String, answer: String, heat: Double, day: Int)
+    /// The heat became a thing that happened.
+    case dirtyMoneyReprisal(kind: String, heat: Double, day: Int)
+    /// Money went through them and came back clean.
+    case dirtyMoneyLaundered(amount: Int, total: Int, day: Int)
+    /// It ended: paid off, turned witness, or sold to them.
+    case dirtyMoneyExited(how: String, amount: Int, day: Int)
+
     // MARK: W2 (family drama)
 
     // MARK: W3 (espionage)
@@ -633,6 +650,24 @@ extension GameEvent {
             .quiet
 
         // MARK: end of Iteration 11 — N1
+
+        // MARK: Iteration 11, wave two — W1 (dirty money)
+
+        // An offer with a week on it, a string with a clock on it and a
+        // window coming in are all decisions or consequences a founder
+        // must be told about now. Taking the cheque and answering a
+        // string are the player's own acts, and the laundering line is
+        // bookkeeping they can read in the ledger.
+        case .dirtyMoneyOffered, .dirtyMoneyDemanded, .dirtyMoneyReprisal, .dirtyMoneyExited:
+            .critical
+        case .dirtyMoneyTaken:
+            .notable
+        case .dirtyMoneyAnswered, .dirtyMoneyDeclined:
+            .info
+        case .dirtyMoneyLaundered:
+            .quiet
+
+        // MARK: end of Iteration 11, wave two — W1
 
         // MARK: WS-B
 

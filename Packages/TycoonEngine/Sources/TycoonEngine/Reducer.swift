@@ -188,6 +188,11 @@ public enum Reducer {
 
         // MARK: W1 (dirty money)
 
+        // Last, after the week's money has posted: the offer reads the
+        // cash position the day left behind, and the strings read the
+        // payments the day already made.
+        DirtyMoneySystem.run,
+
         // MARK: W2 (family drama)
 
         // MARK: W3 (espionage)
@@ -727,6 +732,43 @@ public enum Reducer {
         // MARK: Iteration 11, wave two — handlers
 
         // MARK: W1 (dirty money)
+
+        case .noticeFinancesOpened:
+            // The identity gate. Nothing else in the lane can happen
+            // until a player has looked at their own finances, and this
+            // is the only thing that makes `state.dirtyMoney` non-empty.
+            if !state.dirtyMoney.noticed {
+                state.dirtyMoney.noticed = true
+            }
+            events = []
+        case .takeDirtyMoney:
+            events = DirtyMoneySystem.take(state: &state, balance: balance)
+        case .declineDirtyMoney:
+            events = DirtyMoneySystem.declineOffer(state: &state)
+        case let .answerDirtyMoneyDemand(answer):
+            events = DirtyMoneySystem.answer(answer, state: &state, balance: balance)
+        case .payOffBacker:
+            events = DirtyMoneySystem.payOff(state: &state, balance: balance)
+        case .turnWitnessOnBacker:
+            events = DirtyMoneySystem.turnWitness(state: &state, balance: balance)
+        case .sellUpToBacker:
+            events = DirtyMoneySystem.sellUp(state: &state, balance: balance)
+        case let .seedDirtyMoneyOffer(backer):
+            #if DEBUG
+            events = DirtyMoneySystem.debugSeedOffer(
+                backer: backer, state: &state, balance: balance
+            )
+            #else
+            events = []
+            #endif
+        case let .seedDirtyMoneyDemand(kind):
+            #if DEBUG
+            events = DirtyMoneySystem.debugSeedDemand(
+                kind: kind, state: &state, balance: balance
+            )
+            #else
+            events = []
+            #endif
 
         // MARK: W2 (family drama)
 

@@ -1894,6 +1894,16 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     public var assets: AssetsBalance = .default
 
     // MARK: end Iteration 11 — N3
+    // MARK: Iteration 11, wave two — W1 (dirty money)
+
+    /// The three backers, their cheques, the strings with their clocks and
+    /// what heat costs (`BalanceConfig+DirtyMoney.swift`). Inline default,
+    /// so `"dirtyMoney"` is an optional key — and read only from
+    /// `DirtyMoneySystem`, which stands down entirely until the player
+    /// opens the Business tab's finances.
+    public var dirtyMoney: DirtyMoneyBalance = .default
+
+    // MARK: end Iteration 11, wave two — W1
 
     public init(
         startingCash: Int,

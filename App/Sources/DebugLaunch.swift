@@ -277,6 +277,7 @@ extension Route {
         // MARK: end of Iteration 11
         // MARK: Iteration 11, wave two — route names
         // MARK: W1 (dirty money)
+        case "dirtymoney", "backer", "facility": .dirtyMoney
         // MARK: W2 (family drama)
         // MARK: W3 (espionage)
         // MARK: W4 (inside)
@@ -1083,6 +1084,11 @@ extension DebugLaunch {
     // MARK: Iteration 11, wave two — reserved flags
 
     // MARK: W1 (dirty money)
+
+    // `-autoDirtyMoney <backer>` and `-autoDirtyMoneyTake` are read by
+    // `DirtyMoneyDebug`, in the lane's own folder, the way `CrimeDebug`
+    // carries N1's — the flags are here in name only so this file still
+    // lists every one.
 
     // MARK: W2 (family drama)
 

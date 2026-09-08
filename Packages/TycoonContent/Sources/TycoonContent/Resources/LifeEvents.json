@@ -5408,5 +5408,299 @@
     "impact": {
       "mood": 6
     }
+  },
+  {
+    "id": "money_cannot_sleep",
+    "headline": "You lay awake doing arithmetic you already know the answer to.",
+    "weight": 4,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "impact": {
+      "energy": -10,
+      "mood": -6
+    },
+    "cooldownDays": 60
+  },
+  {
+    "id": "money_partner_asks",
+    "headline": "Your partner asked where the money came from, in the kitchen, not looking at you.",
+    "weight": 4,
+    "category": "personal",
+    "impact": {},
+    "body": "They have asked once before and let it go. They are not going to let it go twice.",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "choices": [
+      {
+        "id": "tell",
+        "label": "Tell them the truth",
+        "detail": "Affection −10 now · they stop asking",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -10
+          },
+          {
+            "type": "flag",
+            "flag": "money_partner_knows"
+          }
+        ]
+      },
+      {
+        "id": "lie",
+        "label": "Say it's a family office",
+        "detail": "Free · which is true, and is not an answer",
+        "effects": [
+          {
+            "type": "affection",
+            "amount": -3
+          }
+        ],
+        "followUpEventID": "money_partner_found_out",
+        "followUpDelayDays": 50
+      }
+    ],
+    "respondByDays": 4,
+    "cooldownDays": 200
+  },
+  {
+    "id": "money_partner_found_out",
+    "headline": "Your partner has read something about your investors that you did not tell them.",
+    "weight": 2,
+    "category": "personal",
+    "followUpOnly": true,
+    "impact": {
+      "relationships": -8,
+      "mood": -10
+    },
+    "effects": [
+      {
+        "type": "affection",
+        "amount": -18
+      },
+      {
+        "type": "flag",
+        "flag": "money_partner_knows"
+      }
+    ]
+  },
+  {
+    "id": "money_locks_changed",
+    "headline": "You changed the locks at home, and did not say why.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "impact": {
+      "wallet": -300,
+      "mood": -4
+    },
+    "cooldownDays": 180
+  },
+  {
+    "id": "money_car_route",
+    "headline": "You took a different route home for the fourth night running.",
+    "weight": 4,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "impact": {
+      "energy": -6,
+      "mood": -3
+    },
+    "cooldownDays": 70
+  },
+  {
+    "id": "money_friend_stops_calling",
+    "headline": "A friend has stopped replying, and you know exactly which week it started.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ]
+    },
+    "impact": {
+      "relationships": -6,
+      "mood": -6
+    },
+    "cooldownDays": 200
+  },
+  {
+    "id": "money_dinner_with_them",
+    "headline": "You have been invited to dinner by people you would rather not eat with.",
+    "weight": 3,
+    "category": "personal",
+    "impact": {},
+    "body": "It is not phrased as an invitation and there is a car coming at eight.",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "choices": [
+      {
+        "id": "go",
+        "label": "Go to the dinner",
+        "detail": "An evening · it is a good restaurant and a long night",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -12
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "excuse",
+        "label": "Send an excuse",
+        "detail": "Free · the excuse is accepted, and filed",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5
+          }
+        ]
+      }
+    ],
+    "respondByDays": 3,
+    "cooldownDays": 140
+  },
+  {
+    "id": "money_child_asks",
+    "headline": "One of the children asked why a man was outside the school.",
+    "weight": 2,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ],
+      "requiresChildren": true
+    },
+    "impact": {
+      "mood": -14,
+      "relationships": -4
+    },
+    "cooldownDays": 260
+  },
+  {
+    "id": "money_wallet_thick",
+    "headline": "You paid for a round in cash and enjoyed it more than you should have.",
+    "weight": 4,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "impact": {
+      "wallet": -200,
+      "mood": 7
+    },
+    "cooldownDays": 90
+  },
+  {
+    "id": "money_statement_shredded",
+    "headline": "You spent an hour at home feeding paper into a shredder you bought for this.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "impact": {
+      "energy": -8,
+      "mood": -4
+    },
+    "cooldownDays": 110
+  },
+  {
+    "id": "money_slept_through",
+    "headline": "You slept eight hours for the first time since the wire cleared.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ],
+      "flagsNone": [
+        "money_backed"
+      ]
+    },
+    "impact": {
+      "energy": 14,
+      "mood": 10
+    },
+    "cooldownDays": 150
+  },
+  {
+    "id": "money_witness_room",
+    "headline": "You spent the day in a room with two officers and a jug of water.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_witness"
+      ]
+    },
+    "impact": {
+      "energy": -18,
+      "mood": -8
+    },
+    "cooldownDays": 120
+  },
+  {
+    "id": "money_new_number",
+    "headline": "You changed your number and gave it to eleven people.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_witness"
+      ]
+    },
+    "impact": {
+      "relationships": -5,
+      "mood": -3
+    },
+    "cooldownDays": 180
+  },
+  {
+    "id": "money_paid_it_off",
+    "headline": "You caught yourself whistling on the way in, which has not happened for a while.",
+    "weight": 3,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ],
+      "flagsNone": [
+        "money_backed",
+        "money_witness"
+      ]
+    },
+    "impact": {
+      "mood": 12
+    },
+    "cooldownDays": 200
   }
 ]

@@ -45,6 +45,11 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
     case fakeDemo
     /// A story about a rival, placed with somebody who owed you.
     case plantStory
+    // MARK: W1 (dirty money) — the seventh
+    /// Money that went out through a backer and came back clean.
+    /// Committed by `DirtyMoneySystem`, never by a button of N1's.
+    case launderMoney
+    // MARK: end of W1
 
     public var displayName: String {
         switch self {
@@ -54,6 +59,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "Bribe a journalist"
         case .fakeDemo: "Fake the demo"
         case .plantStory: "Plant a story"
+        // MARK: W1
+        case .launderMoney: "Wash it"
+        // MARK: end of W1
         }
     }
 
@@ -66,6 +74,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "Buy the reviewer a very good lunch, and a car."
         case .fakeDemo: "Record the demo. Nobody has to know it was recorded."
         case .plantStory: "Give a friendly desk a document you shouldn't have."
+        // MARK: W1
+        case .launderMoney: "Put it through them. It comes back the right colour."
+        // MARK: end of W1
         }
     }
 
@@ -78,6 +89,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "You paid for a review and got one."
         case .fakeDemo: "You showed a demo that did not exist."
         case .plantStory: "You put a story about a rival where it would be found."
+        // MARK: W1
+        case .launderMoney: "You moved money through people who move money."
+        // MARK: end of W1
         }
     }
 
@@ -90,6 +104,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "commercial bribery"
         case .fakeDemo: "misrepresentation"
         case .plantStory: "malicious falsehood"
+        // MARK: W1
+        case .launderMoney: "money laundering"
+        // MARK: end of W1
         }
     }
 
@@ -102,6 +119,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "The outlet's own editor"
         case .fakeDemo: "A customer, and then forty of them"
         case .plantStory: "The studio you wrote about"
+        // MARK: W1
+        case .launderMoney: "A bank's compliance desk"
+        // MARK: end of W1
         }
     }
 
@@ -114,6 +134,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: "envelope.badge.fill"
         case .fakeDemo: "play.rectangle.fill"
         case .plantStory: "newspaper.fill"
+        // MARK: W1
+        case .launderMoney: "arrow.triangle.2.circlepath.circle.fill"
+        // MARK: end of W1
         }
     }
 
@@ -127,6 +150,10 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         case .bribeJournalist: 0.5
         case .fakeDemo: 0.65
         case .plantStory: 0.6
+        // MARK: W1 — the gravest of the seven: it is the one with a
+        // counterparty who will also be standing in the room.
+        case .launderMoney: 1.0
+        // MARK: end of W1
         }
     }
 }
@@ -697,6 +724,17 @@ public enum Crime {
     /// Standing is clamped to this either way.
     public static let standingLimit: Double = 100
 
+    // MARK: W1 (dirty money)
+
+    /// The weekly base rate at which a payment through a backer is found.
+    ///
+    /// A constant rather than a balance key: `discoveryChance` is handed
+    /// `BalanceConfig.CrimeBalance` and nothing else, and that block is
+    /// N1's — a seventh field in it is not W1's to add.
+    public static let launderDiscovery: Double = 0.035
+
+    // MARK: end of W1
+
     // MARK: The offences
 
     /// The notoriety an offence adds. Read straight off the balance so a
@@ -711,6 +749,12 @@ public enum Crime {
         case .bribeJournalist: balance.bribeNotoriety
         case .fakeDemo: balance.fakeDemoNotoriety
         case .plantStory: balance.plantStoryNotoriety
+        // MARK: W1 — the notoriety of a payment is a fraction of the
+        // payment, so W1 adds it itself when it writes the entry, out of
+        // its own balance block. Nothing is added twice: this offence is
+        // never committed through `CrimeSystem.commit`.
+        case .launderMoney: 0
+        // MARK: end of W1
         }
     }
 
@@ -748,6 +792,13 @@ public enum Crime {
         case .bribeJournalist: balance.bribeDiscovery
         case .fakeDemo: balance.fakeDemoDiscovery
         case .plantStory: balance.plantStoryDiscovery
+        // MARK: W1 — the crime block has no field for the seventh
+        // offence, and `discoveryChance` takes that block alone, so the
+        // rate is a constant of this file rather than a balance key that
+        // could not reach here. Deliberately low: a laundered payment
+        // surfaces when somebody else's file is opened, not when yours is.
+        case .launderMoney: Crime.launderDiscovery
+        // MARK: end of W1
         }
         let heat = 1 + notoriety / 100 * balance.notorietyDiscoveryFactor
         let weeksOld = Double(max(0, day - entry.day)) / Double(GameState.daysPerWeek)

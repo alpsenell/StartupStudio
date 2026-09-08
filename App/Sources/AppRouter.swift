@@ -180,6 +180,9 @@ enum Route: Hashable {
 
     // MARK: W1 (dirty money)
 
+    /// The Business tab's finances, on whatever the other money is doing.
+    case dirtyMoney
+
     // MARK: W2 (family drama)
 
     // MARK: W3 (espionage)
@@ -249,6 +252,7 @@ enum Route: Hashable {
 
         // MARK: Iteration 11, wave two
         // MARK: W1 (dirty money)
+        case .dirtyMoney: .business
         // MARK: W2 (family drama)
         // MARK: W3 (espionage)
         // MARK: W4 (inside)

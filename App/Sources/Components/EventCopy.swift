@@ -884,6 +884,68 @@ struct EventCopy {
 
         // MARK: W1 (dirty money)
 
+        // The other money. The offer and the strings are the loud ones;
+        // the laundering line is bookkeeping, and reads like bookkeeping,
+        // which is exactly the joke.
+        case let .dirtyMoneyOffered(backer, cheque, _, day):
+            (
+                dirtyMoneyIcon(backer),
+                "\(dirtyMoneyName(backer)) will put \(cheque.money) in the account, against nothing",
+                day,
+                Theme.warning
+            )
+        case let .dirtyMoneyDeclined(backer, day):
+            (
+                "hand.wave.fill",
+                "You told \(dirtyMoneyName(backer)) no, and they were lovely about it",
+                day,
+                Color.secondary
+            )
+        case let .dirtyMoneyTaken(backer, cheque, day):
+            (
+                dirtyMoneyIcon(backer),
+                "You banked \(cheque.money) of \(dirtyMoneyName(backer))'s money",
+                day,
+                Theme.warning
+            )
+        case let .dirtyMoneyDemanded(kind, amount, _, day):
+            (
+                DirtyMoneyDemandKind(rawValue: kind)?.symbol ?? "envelope.fill",
+                amount > 0
+                    ? "\(dirtyMoneyDemandName(kind)): \(amount.money), and a date"
+                    : "\(dirtyMoneyDemandName(kind)), and a date",
+                day,
+                Theme.negativeCash
+            )
+        case let .dirtyMoneyAnswered(kind, answer, heat, day):
+            (
+                DirtyMoneyAnswer(rawValue: answer)?.symbol ?? "bubble.left.fill",
+                dirtyMoneyAnswerMessage(kind: kind, answer: answer, heat: heat),
+                day,
+                answer == DirtyMoneyAnswer.comply.rawValue ? Color.secondary : Theme.warning
+            )
+        case let .dirtyMoneyReprisal(kind, _, day):
+            (
+                DirtyMoneyReprisal(rawValue: kind)?.symbol ?? "exclamationmark.triangle.fill",
+                DirtyMoneyReprisal(rawValue: kind)?.line ?? "Something happened, and nobody saw it",
+                day,
+                Theme.negativeCash
+            )
+        case let .dirtyMoneyLaundered(amount, total, day):
+            (
+                "arrow.triangle.2.circlepath.circle.fill",
+                "\(amount.money) through them — \(total.money) all in, and all of it on your record",
+                day,
+                Theme.warning
+            )
+        case let .dirtyMoneyExited(how, amount, day):
+            (
+                "door.left.hand.open",
+                dirtyMoneyExitMessage(how, amount: amount),
+                day,
+                how == DirtyMoneyExit.paidOff.rawValue ? Theme.positiveCash : Theme.negativeCash
+            )
+
         // MARK: W2 (family drama)
 
         // MARK: W3 (espionage)
@@ -903,6 +965,42 @@ struct EventCopy {
     }
 
     // MARK: Iteration 11 — N5 (office secrets)
+
+    // MARK: Iteration 11, wave two — W1 (dirty money)
+
+    private func dirtyMoneyName(_ backer: String) -> String {
+        DirtyMoneyBacker(rawValue: backer)?.displayName ?? "somebody"
+    }
+
+    private func dirtyMoneyIcon(_ backer: String) -> String {
+        DirtyMoneyBacker(rawValue: backer)?.symbol ?? "banknote.fill"
+    }
+
+    private func dirtyMoneyDemandName(_ kind: String) -> String {
+        DirtyMoneyDemandKind(rawValue: kind)?.title ?? "They want something"
+    }
+
+    private func dirtyMoneyAnswerMessage(kind: String, answer: String, heat: Double) -> String {
+        let name = dirtyMoneyDemandName(kind).lowercased()
+        let degrees = "heat at \(Int(heat.rounded()))"
+        switch DirtyMoneyAnswer(rawValue: answer) {
+        case .comply: return "You did it — \(name) — and \(degrees)"
+        case .stall: return "You asked them to wait on \(name); \(degrees)"
+        case .refuse: return "You said no to \(name), and \(degrees)"
+        case nil: return "You answered them, and \(degrees)"
+        }
+    }
+
+    private func dirtyMoneyExitMessage(_ how: String, amount: Int) -> String {
+        switch DirtyMoneyExit(rawValue: how) {
+        case .paidOff: return "You bought your way out for \(amount.money)"
+        case .turnedWitness: return "You gave a statement, and it does not end when the case does"
+        case .soldUp: return "They bought the company for \(amount.money)"
+        case nil: return "It is over, one way or another"
+        }
+    }
+
+    // MARK: end of Iteration 11, wave two — W1
 
     private func secretIcon(_ kind: String) -> String {
         SecretKind(rawValue: kind)?.systemImageName ?? "eye.trianglebadge.exclamationmark.fill"

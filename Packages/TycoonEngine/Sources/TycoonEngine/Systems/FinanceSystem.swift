@@ -43,6 +43,12 @@ enum FinanceSystem {
                     post(amount: -interest, category: .other, label: "Loan interest", to: &state)
                 }
             }
+
+            // MARK: Iteration 11, wave two — W1 (dirty money)
+            // The vig and the invoice to nowhere. Returns on its first
+            // line unless a backer's money is in the account.
+            events.append(contentsOf: dirtyMoneyWeekly(&state, balance))
+            // MARK: end of Iteration 11, wave two — W1
         }
 
         // Debt / bankruptcy check, daily, after postings.
@@ -352,6 +358,60 @@ enum FinanceSystem {
     }
 
     // MARK: end of Iteration 11 — N1
+
+    // MARK: Iteration 11, wave two — W1 (dirty money: the vig and the
+    // people on the payroll who are not on the team)
+
+    /// What a backer costs the company every week: the shark's vig, and
+    /// the wages of everybody the strings put on the payroll.
+    ///
+    /// Both are real ledger lines, in the categories a reader would
+    /// expect, so the invoice to nowhere sits in the same list as the
+    /// operating costs and an auditor has something to find. Nothing here
+    /// runs unless `state.dirtyMoney.backer` is set, which it cannot be
+    /// until the player has opened this very screen.
+    static func dirtyMoneyWeekly(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard let backer = state.dirtyMoney.backerKind else { return [] }
+        let config = balance.dirtyMoney
+        var events: [GameEvent] = []
+
+        let passengers = state.dirtyMoney.passengerWeeklyCost
+        if passengers > 0 {
+            post(
+                amount: -passengers, category: .payroll,
+                label: "Payroll — advisers", to: &state
+            )
+            // The people doing the work can read a payroll run.
+            for index in state.employees.indices where !state.employees[index].isFounder {
+                state.employees[index].morale = max(
+                    0, state.employees[index].morale - config.passengerMoralePerWeek
+                )
+            }
+        }
+
+        guard backer == .theShark else { return events }
+        let vig = DirtyMoney.vig(cheque: state.dirtyMoney.cheque, balance: config)
+        guard vig > 0, state.dirtyMoney.lastVigDay != state.day else { return events }
+        state.dirtyMoney.lastVigDay = state.day
+
+        if state.company.cash >= vig {
+            post(amount: -vig, category: .other, label: "Facility interest", to: &state)
+            events.append(contentsOf: DirtyMoneySystem.launder(
+                vig, backer: backer, state: &state, balance: balance
+            ))
+        } else {
+            // He does not do instalments and he does not do email.
+            events.append(contentsOf: DirtyMoneySystem.raiseLateVisit(
+                amount: vig, state: &state, balance: balance
+            ))
+        }
+        return events
+    }
+
+    // MARK: end of Iteration 11, wave two — W1
 
     private static func post(
         amount: Int,

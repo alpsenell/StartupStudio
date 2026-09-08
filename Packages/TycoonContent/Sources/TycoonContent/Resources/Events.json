@@ -4288,5 +4288,560 @@
       ]
     },
     "cooldownDays": 230
+  },
+  {
+    "id": "money_bank_letter",
+    "headline": "The bank would like to understand a recent deposit.",
+    "weight": 3,
+    "category": "legal",
+    "body": "It is a very polite letter. It uses the word 'origin' four times and asks nothing directly.",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "choices": [
+      {
+        "id": "answer",
+        "label": "Answer it properly",
+        "detail": "$3,000 to the accountant · they stop writing, for now",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -3000
+          }
+        ]
+      },
+      {
+        "id": "drawer",
+        "label": "Put it in the drawer",
+        "detail": "Free · the drawer is getting full",
+        "effects": [
+          {
+            "type": "flag",
+            "flag": "money_bank_curious"
+          }
+        ],
+        "followUpEventID": "money_bank_second_letter",
+        "followUpDelayDays": 40
+      }
+    ],
+    "respondByDays": 6,
+    "cooldownDays": 160
+  },
+  {
+    "id": "money_bank_second_letter",
+    "headline": "The bank has written again, and this one is not polite.",
+    "weight": 2,
+    "category": "legal",
+    "followUpOnly": true,
+    "body": "The account will be reviewed. There is a date on it and the date is soon.",
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -2
+      },
+      {
+        "type": "founderMeters",
+        "mood": -6
+      }
+    ],
+    "choices": [
+      {
+        "id": "lawyer",
+        "label": "Put a lawyer on it",
+        "detail": "$6,000 · the review goes quiet",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -6000
+          },
+          {
+            "type": "clearFlag",
+            "flag": "money_bank_curious"
+          }
+        ]
+      },
+      {
+        "id": "move",
+        "label": "Move the account",
+        "detail": "Free · a new bank, a new form, the same money",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      }
+    ],
+    "respondByDays": 5
+  },
+  {
+    "id": "money_auditor_flags_invoice",
+    "headline": "Your accountant has circled one invoice and left it on your chair.",
+    "weight": 3,
+    "category": "legal",
+    "body": "No note. Just the circle, and the fact that she went home early.",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "effects": [
+      {
+        "type": "founderMeters",
+        "mood": -5
+      }
+    ],
+    "cooldownDays": 120
+  },
+  {
+    "id": "money_consultant_expenses",
+    "headline": "Anton has filed expenses.",
+    "weight": 3,
+    "category": "office",
+    "body": "Two dinners in a city where you have no customers, and a car you have not seen.",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "impact": {
+      "type": "cashDelta",
+      "amount": -2400
+    },
+    "cooldownDays": 90
+  },
+  {
+    "id": "money_wire_bounced",
+    "headline": "A transfer has been returned by the receiving bank with no reason given.",
+    "weight": 2,
+    "category": "legal",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "effects": [
+      {
+        "type": "founderMeters",
+        "mood": -4
+      }
+    ],
+    "cooldownDays": 140
+  },
+  {
+    "id": "money_journalist_asks",
+    "headline": "A reporter wants ten minutes about your cap table.",
+    "weight": 3,
+    "category": "press",
+    "body": "She has been extremely specific about which ten minutes she wants.",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ]
+    },
+    "choices": [
+      {
+        "id": "talk",
+        "label": "Give her the ten minutes",
+        "detail": "Reputation +2 · she will write it either way",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "Decline through the comms person",
+        "detail": "Reputation −2 · the piece runs anyway",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      }
+    ],
+    "respondByDays": 4,
+    "cooldownDays": 200
+  },
+  {
+    "id": "money_diligence_stalls",
+    "headline": "A term sheet has gone quiet at the diligence stage.",
+    "weight": 3,
+    "category": "money",
+    "body": "Their analyst asked one question about a prior round and then stopped emailing.",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ]
+    },
+    "effects": [
+      {
+        "type": "founderMeters",
+        "mood": -6
+      }
+    ],
+    "cooldownDays": 180
+  },
+  {
+    "id": "money_landlord_asks",
+    "headline": "The landlord has asked, conversationally, who your investors are.",
+    "weight": 3,
+    "category": "office",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "cooldownDays": 150
+  },
+  {
+    "id": "money_office_visitors",
+    "headline": "Two men waited in reception for forty minutes and then left without asking for anybody.",
+    "weight": 3,
+    "category": "office",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -4
+      }
+    ],
+    "cooldownDays": 100
+  },
+  {
+    "id": "money_cfo_asks",
+    "headline": "Somebody in finance has asked what a facility fee is.",
+    "weight": 3,
+    "category": "office",
+    "body": "They asked in the kitchen, loudly, which is the worst place anybody has ever asked you anything.",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "choices": [
+      {
+        "id": "explain",
+        "label": "Explain it in the kitchen",
+        "detail": "Morale −2 · nobody believes it and everybody nods",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -2
+          }
+        ]
+      },
+      {
+        "id": "office",
+        "label": "Take them into your office",
+        "detail": "An evening · they stop asking, and stop something else too",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "loyalty",
+            "amount": -6,
+            "pick": "random"
+          }
+        ]
+      }
+    ],
+    "respondByDays": 4,
+    "cooldownDays": 130
+  },
+  {
+    "id": "money_insurer_declines",
+    "headline": "The insurer has declined to renew the office policy.",
+    "weight": 2,
+    "category": "office",
+    "body": "The letter mentions a claim history that is one claim long.",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ]
+    },
+    "impact": {
+      "type": "cashDelta",
+      "amount": -2000
+    },
+    "cooldownDays": 220
+  },
+  {
+    "id": "money_nephew_ships",
+    "headline": "The nephew has shipped something.",
+    "weight": 2,
+    "category": "office",
+    "body": "It works. Nobody is more surprised than the nephew, except everybody.",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 3
+      }
+    ],
+    "cooldownDays": 200
+  },
+  {
+    "id": "money_their_market_note",
+    "headline": "A one-page note has arrived about which market you should be in.",
+    "weight": 3,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "cooldownDays": 120
+  },
+  {
+    "id": "money_supplier_prepay",
+    "headline": "A supplier you have never used has invoiced you for a year in advance.",
+    "weight": 3,
+    "category": "money",
+    "body": "The bank details are in a country your product does not ship to.",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay it",
+        "detail": "$8,000 · nobody asks a second time",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -8000
+          }
+        ]
+      },
+      {
+        "id": "query",
+        "label": "Query it",
+        "detail": "Free · the invoice is withdrawn and remembered",
+        "effects": [
+          {
+            "type": "flag",
+            "flag": "money_queried_invoice"
+          }
+        ]
+      }
+    ],
+    "respondByDays": 5,
+    "cooldownDays": 150
+  },
+  {
+    "id": "money_compliance_call",
+    "headline": "A payments provider has frozen your merchant account pending review.",
+    "weight": 2,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "impact": {
+      "type": "cashDelta",
+      "amount": -5000
+    },
+    "cooldownDays": 200
+  },
+  {
+    "id": "money_rival_same_fund",
+    "headline": "A rival announced a round from a fund with your fund's address.",
+    "weight": 3,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "effects": [
+      {
+        "type": "founderMeters",
+        "mood": -5
+      }
+    ],
+    "cooldownDays": 160
+  },
+  {
+    "id": "money_investor_walks",
+    "headline": "An angel has asked to be bought out of the cap table 'for personal reasons'.",
+    "weight": 2,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ]
+    },
+    "impact": {
+      "type": "cashDelta",
+      "amount": -12000
+    },
+    "cooldownDays": 260
+  },
+  {
+    "id": "money_statement_leak",
+    "headline": "Somebody has sent a page of your bank statement to a group chat.",
+    "weight": 2,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ]
+    },
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -3
+      },
+      {
+        "type": "moraleAll",
+        "amount": -3
+      }
+    ],
+    "cooldownDays": 240
+  },
+  {
+    "id": "money_prosecutor_letter",
+    "headline": "A prosecutor's office has written to say you are a witness and not a suspect.",
+    "weight": 3,
+    "category": "legal",
+    "body": "They have underlined 'not a suspect', which is the sort of thing people underline.",
+    "requires": {
+      "flagsAll": [
+        "money_witness"
+      ]
+    },
+    "effects": [
+      {
+        "type": "founderMeters",
+        "mood": -4
+      }
+    ],
+    "cooldownDays": 120
+  },
+  {
+    "id": "money_protection_offer",
+    "headline": "Somebody has offered to keep an eye on the building.",
+    "weight": 2,
+    "category": "office",
+    "body": "He does not say who from, and does not need to.",
+    "requires": {
+      "flagsAll": [
+        "money_witness"
+      ]
+    },
+    "choices": [
+      {
+        "id": "accept",
+        "label": "Accept the arrangement",
+        "detail": "$1,500 a month, notionally · the street goes quiet",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -6000
+          }
+        ]
+      },
+      {
+        "id": "police",
+        "label": "Tell the police instead",
+        "detail": "Free · they write it down carefully",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ],
+    "respondByDays": 4,
+    "cooldownDays": 220
+  },
+  {
+    "id": "money_accountant_resigns",
+    "headline": "Your accountant has resigned, effective immediately, by email, at eleven at night.",
+    "weight": 2,
+    "category": "office",
+    "requires": {
+      "flagsAll": [
+        "money_backed"
+      ]
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -5
+      }
+    ],
+    "cooldownDays": 300,
+    "once": true
+  },
+  {
+    "id": "money_clean_quarter",
+    "headline": "A whole quarter has gone by with nothing in it that needs explaining.",
+    "weight": 3,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ],
+      "flagsNone": [
+        "money_backed"
+      ]
+    },
+    "effects": [
+      {
+        "type": "founderMeters",
+        "mood": 8
+      }
+    ],
+    "cooldownDays": 200
+  },
+  {
+    "id": "money_grant_refused",
+    "headline": "A government innovation grant has been refused without an appeal route.",
+    "weight": 2,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ]
+    },
+    "cooldownDays": 260
+  },
+  {
+    "id": "money_conference_sponsor",
+    "headline": "A conference has quietly returned your sponsorship money.",
+    "weight": 2,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "money_history"
+      ]
+    },
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -1
+      }
+    ],
+    "cooldownDays": 240
   }
 ]

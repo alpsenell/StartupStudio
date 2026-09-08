@@ -461,6 +461,32 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: W1 (dirty money)
 
+    /// The founder opened the Business tab's finances. The one flag
+    /// `DirtyMoneySystem` reads before anything else: an offer may arrive
+    /// from here, and never in a run that never looks at its own money.
+    case noticeFinancesOpened
+    /// Banks the cheque on the table. Refused with `DirtyMoneyRefusal`,
+    /// which the card puts on the button.
+    case takeDirtyMoney
+    /// Turns the offer down. They keep the number.
+    case declineDirtyMoney
+    /// Comply, stall or refuse the string they are pulling this week.
+    case answerDirtyMoneyDemand(DirtyMoneyAnswer)
+    /// The cheque back, times a multiple, plus a surcharge for the heat.
+    case payOffBacker
+    /// A statement, and N1's courtroom on the laundering.
+    case turnWitnessOnBacker
+    /// Sells them the company. A `.soldUp` ending.
+    case sellUpToBacker
+    /// `-autoDirtyMoney <backer>`: puts an offer on the table for a
+    /// screenshot. Applied only in debug builds; nothing in the game
+    /// sends it.
+    case seedDirtyMoneyOffer(backer: String)
+    /// `-autoDirtyMoneyDemand <kind>`: pulls one of the strings today, so
+    /// a headless pass can photograph the sheet without waiting a quarter
+    /// for the calendar to pull it. Debug builds only.
+    case seedDirtyMoneyDemand(kind: String)
+
     // MARK: W2 (family drama)
 
     // MARK: W3 (espionage)

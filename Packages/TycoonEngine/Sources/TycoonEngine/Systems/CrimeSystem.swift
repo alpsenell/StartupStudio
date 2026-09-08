@@ -356,6 +356,11 @@ enum CrimeSystem {
                 return .noBuild
             }
             if state.crime.fakedDemos[target.uuidString] != nil { return .alreadyRunning }
+        // MARK: W1 — the seventh offence has no button here: it is
+        // committed by paying a backer, and this gate refuses it always.
+        case .launderMoney:
+            return .alreadyRunning
+        // MARK: end of W1
         }
         return nil
     }
@@ -436,6 +441,13 @@ enum CrimeSystem {
             note = placed.traced
                 ? "\(placed.name) took the hit, and worked out who threw it."
                 : "\(placed.name) took the hit and never looked up."
+
+        // MARK: W1 — unreachable: `refusal` above refuses the seventh
+        // offence for every caller, and `dirtyMoneyLaunder` is the only
+        // thing that ever writes one.
+        case .launderMoney:
+            return []
+        // MARK: end of W1
         }
 
         state.crime.notoriety = min(100,
@@ -488,6 +500,50 @@ enum CrimeSystem {
         events.append(.crimeConfessed(offence: entry.offence.rawValue, day: state.day))
         return events
     }
+
+    // MARK: Iteration 11, wave two — W1 (dirty money: the seventh offence)
+
+    /// Writes a payment made through a backer onto the record as the
+    /// seventh offence.
+    ///
+    /// This is the whole of W1's reach into N1: no button, no gate, no
+    /// courtroom of its own. The entry is an ordinary `CrimeRecordEntry`,
+    /// so the weekly sweep rolls for it exactly as it rolls for the other
+    /// six, the case it raises is heard in the same room, and
+    /// `CrimeSystem.confess` turns the founder witness on it. The
+    /// notoriety comes in as a number because it is W1's balance block
+    /// that owns it — `Crime.notorietyCost` returns zero for this offence
+    /// so nothing is added twice.
+    static func dirtyMoneyLaunder(
+        amount: Int,
+        note: String,
+        notoriety: Double,
+        state: inout GameState
+    ) -> [GameEvent] {
+        guard amount > 0 else { return [] }
+        let entry = CrimeRecordEntry(
+            id: "launderMoney-\(state.day)",
+            offence: .launderMoney,
+            day: state.day,
+            gain: amount,
+            note: note
+        )
+        guard !state.crime.record.contains(where: { $0.id == entry.id }) else { return [] }
+        state.crime.record.append(entry)
+        if state.crime.record.count > CrimeState.maxRecord {
+            state.crime.record.removeFirst(state.crime.record.count - CrimeState.maxRecord)
+        }
+        state.crime.notoriety = min(100, state.crime.notoriety + notoriety)
+        state.narrative.flags.insert(recordFlag)
+        return [.crimeCommitted(
+            offence: CrimeOffence.launderMoney.rawValue,
+            gain: amount,
+            notoriety: state.crime.notoriety,
+            day: state.day
+        )]
+    }
+
+    // MARK: end of Iteration 11, wave two — W1
 
     // MARK: The NDA poach
 
@@ -915,6 +971,11 @@ extension GameState {
         case .plantStory:
             return "\(config.plantStoryFee.crimeMoney) for "
                 + "−\(Int(config.plantStoryReputationHit)) on their reputation"
+        // MARK: W1 — never on a button of N1's; the ledger is where this
+        // one is committed, and the sentence is there.
+        case .launderMoney:
+            return "Money through a backer. It is not offered here."
+        // MARK: end of W1
         }
     }
 }

@@ -9,12 +9,34 @@ struct FinancesView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
+            // MARK: Iteration 11, wave two — W1 (dirty money)
+            // First on the page, above the run rate and the bank, because
+            // an approach has a week on it and a string has a date on it —
+            // and because the two things a founder reads underneath it
+            // (the runway, the credit limit) are the reasons they are
+            // reading this at all. Draws nothing whatsoever until
+            // somebody has called.
+            DirtyMoneyCard(engine: engine)
+            // MARK: end of Iteration 11, wave two — W1
             RunRateCard(engine: engine)
             LoanCard(engine: engine)
             CashflowCard(state: engine.state)
             CategoryBreakdownCard(state: engine.state)
             RecentLedgerCard(state: engine.state)
         }
+        // MARK: Iteration 11, wave two — W1 (the identity gate)
+        // The one flag W1's engine gate reads: an offer may only be made
+        // once the player has looked at their own finances in this run. A
+        // pacing bot opens no screens, so it never sets this and is never
+        // offered anything.
+        .onAppear {
+            engine.send(.noticeFinancesOpened)
+            // The lane's screenshot pass starts here rather than on the
+            // card, because until it has run there is no card to hang a
+            // task on.
+            DirtyMoneyDebug.startIfAsked(engine: engine)
+        }
+        // MARK: end of Iteration 11, wave two — W1
     }
 }
 

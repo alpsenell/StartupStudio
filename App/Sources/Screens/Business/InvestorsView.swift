@@ -26,6 +26,13 @@ struct InvestorsView: View {
             TermSheetCard(engine: engine, offer: offer)
         }
 
+        // MARK: Iteration 11, wave two — W1 (dirty money)
+        // The other money sits where money is asked for: a founder who
+        // has just turned a term sheet down, or had none to turn down, is
+        // looking at this page when the other phone rings.
+        DirtyMoneyApproachNote(engine: engine)
+        // MARK: end of Iteration 11, wave two — W1
+
         netWorthCard
 
         if investors.rounds.isEmpty {
