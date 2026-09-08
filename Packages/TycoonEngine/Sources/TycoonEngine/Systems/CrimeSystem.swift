@@ -88,7 +88,14 @@ enum CrimeSystem {
     /// A discovery becomes a case: a hearing four to eight weeks out, a
     /// settlement price, the newspaper's lead, and two people who read it
     /// before you told them.
-    private static func raiseCase(
+    ///
+    /// Internal rather than private since iteration 11's wave two: W3's
+    /// espionage traces a fresh record entry the moment an operation is
+    /// run and hands it straight to this, which is the one place a case is
+    /// raised. (Marked because it is another lane that needed the door
+    /// opened — nothing else about it moved.)
+    // MARK: W3 (espionage) — visibility only
+    static func raiseCase(
         against entry: CrimeRecordEntry,
         state: inout GameState,
         balance: BalanceConfig
@@ -361,6 +368,13 @@ enum CrimeSystem {
         case .launderMoney:
             return .alreadyRunning
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        // The ledger lists it so the founder knows the court has a word
+        // for it, and refuses it so the only way to do it is to stand on
+        // somebody's page and pick them.
+        case .corporateEspionage:
+            return .elsewhere
+        // MARK: end W3
         }
         return nil
     }
@@ -448,6 +462,13 @@ enum CrimeSystem {
         case .launderMoney:
             return []
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        // Unreachable: `refusal` returns `.elsewhere` above, and
+        // `EspionageSystem` writes its own record entry. The arm is here
+        // so the switch stays exhaustive.
+        case .corporateEspionage:
+            return []
+        // MARK: end W3
         }
 
         state.crime.notoriety = min(100,
@@ -976,6 +997,10 @@ extension GameState {
         case .launderMoney:
             return "Money through a backer. It is not offered here."
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        case .corporateEspionage:
+            return "Five operations, priced one at a time, on a studio's own page"
+        // MARK: end W3
         }
     }
 }

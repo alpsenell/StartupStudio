@@ -29,6 +29,17 @@ public enum SecretKind: String, Codable, Equatable, Sendable, CaseIterable {
     /// The co-founder is counting votes.
     case coup
 
+    // MARK: W3 (espionage) — the three a rival runs against you
+
+    /// Somebody here is on a competitor's payroll as well as yours.
+    case rivalMole
+    /// A competitor has put an investigator on the founder.
+    case rivalTail
+    /// A competitor's contractor is inside the storefront.
+    case rivalHack
+
+    // MARK: end W3
+
     public var displayName: String {
         switch self {
         case .mole: "The mole"
@@ -37,6 +48,11 @@ public enum SecretKind: String, Codable, Equatable, Sendable, CaseIterable {
         case .clique: "The clique"
         case .unionDrive: "The union drive"
         case .coup: "The count"
+        // MARK: W3 (espionage)
+        case .rivalMole: "Their mole"
+        case .rivalTail: "The car outside"
+        case .rivalHack: "Somebody in the storefront"
+        // MARK: end W3
         }
     }
 
@@ -49,6 +65,11 @@ public enum SecretKind: String, Codable, Equatable, Sendable, CaseIterable {
         case .clique: "Four people have a table, and the newest hire is not at it."
         case .unionDrive: "There is a meeting you were not invited to."
         case .coup: "Somebody is asking the board what a vote would look like."
+        // MARK: W3 (espionage)
+        case .rivalMole: "One of yours is being paid twice, and not by you."
+        case .rivalTail: "The same car has been on your street four evenings running."
+        case .rivalHack: "Somebody who is not a customer has been trying the doors."
+        // MARK: end W3
         }
     }
 
@@ -60,6 +81,11 @@ public enum SecretKind: String, Codable, Equatable, Sendable, CaseIterable {
         case .clique: "person.3.sequence.fill"
         case .unionDrive: "figure.stand.line.dotted.figure.stand"
         case .coup: "hand.raised.slash.fill"
+        // MARK: W3 (espionage)
+        case .rivalMole: "person.badge.key.fill"
+        case .rivalTail: "car.fill"
+        case .rivalHack: "bolt.horizontal.circle.fill"
+        // MARK: end W3
         }
     }
 
@@ -72,6 +98,14 @@ public enum SecretKind: String, Codable, Equatable, Sendable, CaseIterable {
         case .clique: .officeClique
         case .unionDrive: .officeUnion
         case .coup: .officeCoup
+        // MARK: W3 (espionage)
+        // A rival's operation still ends in a conversation with somebody
+        // on your own payroll — the person they got to, the person whose
+        // laptop it was — so it reuses the leak's staff moment rather than
+        // widening `StaffEventKind`, which is another lane's file. The
+        // *def* it resolves against is W3's own (`confrontDefID`).
+        case .rivalMole, .rivalTail, .rivalHack: .officeMole
+        // MARK: end W3
         }
     }
 
@@ -81,12 +115,45 @@ public enum SecretKind: String, Codable, Equatable, Sendable, CaseIterable {
     /// `office_confrontation` gate that nothing ever raises, so the weekly
     /// staff roll can never pick one. These arrive when the founder says
     /// something, and only then.
-    public var confrontDefID: String { staffEventKind.rawValue }
+    public var confrontDefID: String {
+        // MARK: W3 (espionage)
+        // W3's three resolve against their own `spy_` defs, behind their
+        // own never-raised gate, so the confrontation reads as what it is:
+        // somebody else's operation, run through your own people.
+        switch self {
+        case .rivalMole, .rivalTail, .rivalHack: return "spy_confront_\(rawValue.lowercased())"
+        default: return staffEventKind.rawValue
+        }
+        // MARK: end W3
+    }
 
     /// The `Events.json` id for a stage's beat, an ending, or a response.
     public func eventID(_ suffix: String) -> String {
-        "office_\(rawValue.lowercased())_\(suffix)"
+        // MARK: W3 (espionage)
+        // A thread a rival is running is W3's content, so it takes W3's
+        // prefix — and `scheduledEventIDs`, which is built from this, keeps
+        // covering every kind without a second list.
+        if isRivalRun { return "spy_\(rawValue.lowercased())_\(suffix)" }
+        // MARK: end W3
+        return "office_\(rawValue.lowercased())_\(suffix)"
     }
+
+    // MARK: W3 (espionage)
+
+    /// Whether this thread is somebody else's operation rather than the
+    /// office's own weather. The counterintelligence answers are the only
+    /// ones that apply to these, and only to these.
+    public var isRivalRun: Bool {
+        switch self {
+        case .rivalMole, .rivalTail, .rivalHack: true
+        default: false
+        }
+    }
+
+    /// The three, in the order the card offers them.
+    public static let rivalRunCases: [SecretKind] = [.rivalMole, .rivalTail, .rivalHack]
+
+    // MARK: end W3
 }
 
 /// Where a clue turned up. The card groups by it, so the founder can see
@@ -314,6 +381,18 @@ public enum SecretResponse: String, Codable, Equatable, Sendable, CaseIterable {
     /// Let it run. The ending comes early and the founder chose it.
     case ignore
 
+    // MARK: W3 (espionage) — counterintelligence
+
+    /// A firm with a van and a spectrum analyser goes over the office.
+    /// Only for a thread somebody outside is running.
+    case sweepOffice
+    /// A quiet evening with the roster, the badge log and the payroll.
+    case auditRoster
+    /// Let their mole keep reporting, and give them something to report.
+    case feedFalsePlans
+
+    // MARK: end W3
+
     public var displayName: String {
         switch self {
         case .investigate: "Ask around"
@@ -322,6 +401,11 @@ public enum SecretResponse: String, Codable, Equatable, Sendable, CaseIterable {
         case .callHR: "Take it to HR"
         case .makeDeal: "Make a deal"
         case .ignore: "Leave it alone"
+        // MARK: W3 (espionage)
+        case .sweepOffice: "Sweep the office"
+        case .auditRoster: "Audit the roster"
+        case .feedFalsePlans: "Feed them false plans"
+        // MARK: end W3
         }
     }
 
@@ -333,6 +417,11 @@ public enum SecretResponse: String, Codable, Equatable, Sendable, CaseIterable {
         case .callHR: "person.badge.shield.checkmark.fill"
         case .makeDeal: "hands.and.sparkles.fill"
         case .ignore: "hand.raised.slash"
+        // MARK: W3 (espionage)
+        case .sweepOffice: "antenna.radiowaves.left.and.right.slash"
+        case .auditRoster: "list.clipboard.fill"
+        case .feedFalsePlans: "theatermasks.fill"
+        // MARK: end W3
         }
     }
 }
@@ -340,6 +429,13 @@ public enum SecretResponse: String, Codable, Equatable, Sendable, CaseIterable {
 /// Why a response cannot be taken right now, in the player's words.
 public enum SecretRefusal: String, Equatable, Sendable {
     case noThread, alreadyUsed, noEvening, noWallet, noCompanyCash, noHR, notNamed, closed
+    // MARK: W3 (espionage)
+    /// The three counterintelligence answers only apply to a thread
+    /// somebody outside the building is running.
+    case notRivalRun
+    /// And feeding false plans needs somebody to feed them to.
+    case noMoleToFeed
+    // MARK: end W3
 
     public func message(_ balance: BalanceConfig) -> String {
         switch self {
@@ -351,6 +447,10 @@ public enum SecretRefusal: String, Equatable, Sendable {
         case .noHR: "Nobody here does People & HR."
         case .notNamed: "You do not know who yet — ask around first."
         case .closed: "That one is over."
+        // MARK: W3 (espionage)
+        case .notRivalRun: "This one is coming from inside the building. There is nothing to sweep."
+        case .noMoleToFeed: "Nobody is carrying anything out of here to be lied to."
+        // MARK: end W3
         }
     }
 }

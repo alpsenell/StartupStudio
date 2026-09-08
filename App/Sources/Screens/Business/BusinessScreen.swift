@@ -238,6 +238,20 @@ struct BusinessScreen: View {
             return
         }
         // MARK: W3 (espionage)
+        // The five operations live on a studio's page, so the route lands
+        // on Rivals with the first studio pushed — the same shape N1's
+        // suit takes above, for the same reason: a command line cannot
+        // name a UUID.
+        if router.pendingPush == .spy
+            || (router.pendingPush == nil && !landed && Route.launchRoute == .spy) {
+            section = .rivals
+            landed = true
+            router.take(.spy)
+            if let rival = engine.state.rivals.rivals.first {
+                path.append(RivalRoute(rivalID: rival.id))
+            }
+            return
+        }
         // MARK: end of Iteration 11, wave two
         switch router.pendingPush {
         case .marketMap:

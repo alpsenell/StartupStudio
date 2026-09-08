@@ -111,8 +111,42 @@ public enum OfficeSecretsSystem {
             }
             return hired.count >= 5
                 && (state.investors.boardPressure >= 30 || cofounder.founderBond <= 45)
+
+        // MARK: W3 (espionage) — the three a rival runs against you
+        //
+        // None of them can start until a studio actually has a reason:
+        // `Rival.grudge` past the balance's line, which only ever gets
+        // there because the founder did something to them (N2's taunts,
+        // W3's own operations). A run that has never touched a rival never
+        // sees one.
+        case .rivalMole:
+            return angryRival(state, balance) != nil && !hired.isEmpty && leakableTopic(state) != nil
+        case .rivalTail:
+            // They are looking for something, so there has to be something
+            // to find: a record, or an operation of the founder's own.
+            return angryRival(state, balance) != nil
+                && (!state.crime.record.isEmpty || state.espionage != .empty)
+        case .rivalHack:
+            return angryRival(state, balance) != nil && state.products.contains { product in
+                if case .released(let info) = product.stage { return !info.offMarket }
+                return false
+            }
+        // MARK: end W3
         }
     }
+
+    // MARK: W3 (espionage)
+
+    /// The studio angry enough to be running something here: the highest
+    /// grudge past the line. Pure — no draws, no writes.
+    static func angryRival(_ state: GameState, _ balance: BalanceConfig) -> Rival? {
+        state.rivals.rivals
+            .filter { $0.grudge >= balance.espionage.rivalGrudgeToAct }
+            .sorted { ($0.grudge, $0.id.uuidString) > ($1.grudge, $1.id.uuidString) }
+            .first
+    }
+
+    // MARK: end W3
 
     /// The topic a mole would have something worth selling in: the newest
     /// build in development, else the newest thing on the market.
@@ -185,6 +219,9 @@ public enum OfficeSecretsSystem {
             nextStageDay: state.day + balance.officeSecrets.stageDays
         )
         if kind == .mole { thread.topicID = leakableTopic(state) }
+        // MARK: W3 (espionage) — their mole is selling the same roadmap
+        if kind == .rivalMole { thread.topicID = leakableTopic(state) }
+        // MARK: end W3
 
         state.secrets.threads.append(thread)
         trim(&state)
@@ -231,6 +268,27 @@ public enum OfficeSecretsSystem {
         case .coup:
             guard let cofounder = state.cofounder else { return [] }
             return [cofounder.id]
+
+        // MARK: W3 (espionage)
+        case .rivalMole:
+            // The one who would take the second salary.
+            let lowest = hired.sorted {
+                ($0.loyalty, $0.id.uuidString) < ($1.loyalty, $1.id.uuidString)
+            }
+            return [lowest[0].id]
+        case .rivalTail:
+            // Whoever is around late enough to notice the car.
+            let longest = hired.sorted {
+                ($0.hiredDay, $0.id.uuidString) < ($1.hiredDay, $1.id.uuidString)
+            }
+            return [longest[0].id]
+        case .rivalHack:
+            // Whoever's credentials it was.
+            let senior = hired.sorted {
+                ($0.level.rank, $0.id.uuidString) > ($1.level.rank, $1.id.uuidString)
+            }
+            return [senior[0].id]
+        // MARK: end W3
         }
     }
 
@@ -462,6 +520,71 @@ public enum OfficeSecretsSystem {
                 clue: "\(first) has counted the votes twice and started rounding up.",
                 source: .journal
             )
+
+        // MARK: W3 (espionage)
+
+        case (.rivalMole, 0):
+            return Beat(
+                clue: "A competitor's job ad quotes a sentence from your own internal deck.",
+                source: .journal
+            )
+        case (.rivalMole, 1):
+            return Beat(
+                clue: "\(first) has a second phone, and it only ever rings outside.",
+                source: .office,
+                prop: .sharedDesk,
+                message: "This is probably nothing. \(first) took a call in the stairwell again.",
+                speaker: witness?.id
+            )
+        case (.rivalMole, _):
+            return Beat(
+                clue: "Somebody exported the roadmap on a Sunday and it went to a personal address.",
+                source: .ledger,
+                prop: .shredder,
+                ledger: (0, "Storage export, out of hours")
+            )
+
+        case (.rivalTail, 0):
+            return Beat(
+                clue: "The same estate car has been at the end of your street four evenings running.",
+                source: .office
+            )
+        case (.rivalTail, 1):
+            return Beat(
+                clue: "Somebody rang your old landlord asking, politely, about the year you left.",
+                source: .phone,
+                message: "A researcher called about you. They knew which years to ask about.",
+                speaker: witness?.id
+            )
+        case (.rivalTail, _):
+            return Beat(
+                clue: "A journalist you have never met has three dates from your calendar and one photograph.",
+                source: .journal,
+                prop: .closedDoor
+            )
+
+        case (.rivalHack, 0):
+            return Beat(
+                clue: "The storefront logged four thousand failed sign-ins from one address overnight.",
+                source: .journal
+            )
+        case (.rivalHack, 1):
+            return Beat(
+                clue: "\(first)'s account signed in from a city nobody here has been to.",
+                source: .office,
+                prop: .closedDoor,
+                message: "I did not log in at four in the morning. I would like that on the record.",
+                speaker: thread.employeeIDs.first
+            )
+        case (.rivalHack, _):
+            return Beat(
+                clue: "Somebody has been in the payments dashboard, reading and changing nothing.",
+                source: .ledger,
+                prop: .shredder,
+                ledger: (0, "Security review, unbudgeted")
+            )
+
+        // MARK: end W3
         }
     }
 
@@ -537,6 +660,46 @@ public enum OfficeSecretsSystem {
             events.append(contentsOf: recogniseUnion(state: &state, balance: balance))
         case .coup:
             events.append(contentsOf: theVote(thread, state: &state, balance: balance))
+
+        // MARK: W3 (espionage) — what somebody else's operation does when
+        // nobody answers it.
+        case .rivalMole:
+            // Exactly what your own mole does to somebody else: the
+            // roadmap ships, in somebody else's colours.
+            events.append(contentsOf: leakRoadmap(
+                thread, state: &state, balance: balance, content: content
+            ))
+            if let id = thread.employeeIDs.first {
+                events.append(contentsOf: walkOut(id, state: &state, balance: balance))
+            }
+        case .rivalTail:
+            // They found something, and gave it to somebody who prints.
+            state.company.reputation = clamp(
+                state.company.reputation - balance.espionage.rivalOperationReputationHit
+            )
+            if let entry = state.crime.openRecord.last, state.crime.pendingCase == nil {
+                events.append(contentsOf: CrimeSystem.raiseCase(
+                    against: entry, state: &state, balance: balance
+                ))
+            } else {
+                state.life.phone.post(
+                    "There is a piece about you. It is not wrong, which is the problem.",
+                    from: .office, day: state.day
+                )
+            }
+        case .rivalHack:
+            // A week of error pages, on your side of it this time.
+            state.company.reputation = clamp(
+                state.company.reputation - balance.espionage.rivalOperationReputationHit
+            )
+            for index in state.products.indices {
+                guard case .released(var info) = state.products[index].stage, !info.offMarket
+                else { continue }
+                info.liveHype = max(0, info.liveHype * (1 - balance.espionage.hackUnitsFraction))
+                info.liveBugs += 2
+                state.products[index].stage = .released(info)
+            }
+        // MARK: end W3
         }
 
         events.append(contentsOf: close(
@@ -727,6 +890,23 @@ public enum OfficeSecretsSystem {
             return state.company.cash >= cost ? nil : .noCompanyCash
         case .ignore:
             return nil
+
+        // MARK: W3 (espionage) — counterintelligence
+        //
+        // Three answers that only exist for a thread somebody outside is
+        // running, each refused in the founder's own words when it does
+        // not apply.
+        case .sweepOffice:
+            guard thread.secretKind?.isRivalRun == true else { return .notRivalRun }
+            return state.company.cash >= balance.espionage.sweepCost ? nil : .noCompanyCash
+        case .auditRoster:
+            guard thread.secretKind?.isRivalRun == true else { return .notRivalRun }
+            return state.hasEveningFree(balance) ? nil : .noEvening
+        case .feedFalsePlans:
+            guard thread.secretKind?.isRivalRun == true else { return .notRivalRun }
+            guard thread.secretKind == .rivalMole else { return .noMoleToFeed }
+            return thread.named ? nil : .notNamed
+        // MARK: end W3
         }
     }
 
@@ -812,6 +992,81 @@ public enum OfficeSecretsSystem {
                 thread.nextStageDay = today + 3
             }
             return []
+
+        // MARK: W3 (espionage) — counterintelligence
+
+        case .sweepOffice:
+            // A van, two people and an afternoon. Whatever they left is
+            // in a bag by five, and the studio that put it there has
+            // something else to be annoyed about.
+            let cost = balance.espionage.sweepCost
+            state.company.cash -= cost
+            state.ledger.post(LedgerEntry(
+                day: state.day, amount: -cost, category: .other,
+                label: "Counter-surveillance sweep"
+            ))
+            if let rival = angryRival(state, balance) {
+                RivalSystem.espionageCoolGrudge(
+                    rival.id, by: balance.espionage.sweepGrudgeRelief, state: &state
+                )
+            }
+            var swept: [GameEvent] = [.counterEspionageAnswered(
+                kind: kind.rawValue, response: response.rawValue, day: state.day
+            )]
+            swept.append(contentsOf: close(
+                kind, ending: .handled, state: &state, balance: balance, content: content
+            ))
+            return swept
+
+        case .auditRoster:
+            // An evening with the badge log, the payroll and the roster.
+            // It names them; on a mole it also ends them.
+            state.spendEvening(balance)
+            update(kind, in: &state) { $0.named = true }
+            addClue(kind, text: namesLine(kind, thread, state), source: .ledger, state: &state)
+            var audited: [GameEvent] = [
+                .secretClueFound(
+                    kind: kind.rawValue, text: namesLine(kind, thread, state), day: state.day
+                ),
+                .counterEspionageAnswered(
+                    kind: kind.rawValue, response: response.rawValue, day: state.day
+                ),
+            ]
+            if kind == .rivalMole, let id = thread.employeeIDs.first {
+                audited.append(contentsOf: walkOut(id, state: &state, balance: balance))
+                audited.append(contentsOf: close(
+                    kind, ending: .departed, state: &state, balance: balance, content: content
+                ))
+            } else {
+                let today = state.day
+                update(kind, in: &state) { thread in
+                    thread.nextStageDay = min(thread.nextStageDay, today + 2)
+                }
+            }
+            return audited
+
+        case .feedFalsePlans:
+            // Leave the mole exactly where they are and give them a
+            // quarter's work in a category that is on its way down.
+            var fed: [GameEvent] = [.counterEspionageAnswered(
+                kind: kind.rawValue, response: response.rawValue, day: state.day
+            )]
+            if let rival = angryRival(state, balance) {
+                let topicID = RivalSystem.espionageFalsePlans(
+                    rival.id, state: &state, balance: balance
+                )
+                state.life.phone.post(
+                    topicID.map {
+                        "They have gone all in on \($0). We wrote that page for them."
+                    } ?? "They have gone all in on the wrong thing. We wrote it for them.",
+                    from: .office, day: state.day
+                )
+            }
+            fed.append(contentsOf: close(
+                kind, ending: .dealt, state: &state, balance: balance, content: content
+            ))
+            return fed
+        // MARK: end W3
         }
     }
 
@@ -833,6 +1088,14 @@ public enum OfficeSecretsSystem {
             return "\(names.first ?? "The organiser") is the one booking the room."
         case .coup:
             return "\(names.first ?? "Your co-founder") has three of the five votes."
+        // MARK: W3 (espionage)
+        case .rivalMole:
+            return "It is \(names.first ?? "somebody"), and the second salary is bigger than yours."
+        case .rivalTail:
+            return "The car is hired, and the invoice goes to a studio you have annoyed."
+        case .rivalHack:
+            return "They came in on \(names.first ?? "somebody")'s credentials, from a coffee shop abroad."
+        // MARK: end W3
         }
     }
 
@@ -946,6 +1209,31 @@ public enum OfficeSecretsSystem {
                 state.employees[index].founderBond = clamp(state.employees[index].founderBond + 25)
                 state.employees[index].loyalty = clamp(state.employees[index].loyalty + 20)
             }
+
+        // MARK: W3 (espionage)
+        case .rivalMole:
+            // Pay the person more than the studio paying them is paying
+            // them. It works, and everyone knows what it was.
+            if let id = thread.employeeIDs.first,
+               let index = state.employees.firstIndex(where: { $0.id == id }) {
+                state.employees[index].weeklySalary = Int(
+                    (Double(state.employees[index].weeklySalary) * 1.15).rounded()
+                )
+                state.employees[index].loyalty = clamp(state.employees[index].loyalty + 18)
+                state.employees[index].morale = clamp(state.employees[index].morale - 4)
+            }
+        case .rivalTail:
+            // Lawyers write to lawyers and the car stops coming.
+            if let rival = angryRival(state, balance) {
+                RivalSystem.espionageCoolGrudge(
+                    rival.id, by: balance.espionage.sweepGrudgeRelief, state: &state
+                )
+            }
+        case .rivalHack:
+            // A retainer, a rotation of every key, and a fortnight of
+            // everybody typing new passwords.
+            moraleAll(-2, state: &state)
+        // MARK: end W3
         }
         return close(kind, ending: .dealt, state: &state, balance: balance, content: content)
     }
@@ -959,6 +1247,11 @@ public enum OfficeSecretsSystem {
         case .clique: return "A table big enough for everyone"
         case .unionDrive: return "Voluntary recognition"
         case .coup: return "Equity settlement: \(name)"
+        // MARK: W3 (espionage)
+        case .rivalMole: return "Retention counter-offer: \(name)"
+        case .rivalTail: return "A quiet word, through lawyers"
+        case .rivalHack: return "Security retainer"
+        // MARK: end W3
         }
     }
 

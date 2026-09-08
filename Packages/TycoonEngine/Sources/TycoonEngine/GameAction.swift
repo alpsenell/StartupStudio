@@ -491,6 +491,17 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: W3 (espionage)
 
+    /// Has one of the five things done to a studio: a private
+    /// investigator on their founder, a mole in their office, the poach
+    /// the dossier makes possible, their roadmap bought, or their
+    /// storefront taken down for the week they launch.
+    ///
+    /// Costs are taken once, the odds are the ones the card printed, and
+    /// the operation goes on N1's record whatever happens —
+    /// `EspionageSystem.refusal` says why a refused one is refused, on the
+    /// button, before it is pressed.
+    case runEspionageOperation(operation: EspionageOperation, rivalID: UUID)
+
     // MARK: W4 (inside)
 
     // MARK: end of Iteration 11, wave two

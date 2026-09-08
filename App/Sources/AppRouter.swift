@@ -187,6 +187,13 @@ enum Route: Hashable {
 
     // MARK: W3 (espionage)
 
+    /// W3: a studio's own page, opened for the five things that belong
+    /// there. Carries no id — it means "the studio the founder is most
+    /// likely to want something done to", which is the first on the board
+    /// — so that `-autoRoute spy` can reach a page no command line can
+    /// name a UUID for. The in-game link is `.rivalProfile`.
+    case spy
+
     // MARK: W4 (inside)
 
     // MARK: end of Iteration 11, wave two
@@ -255,6 +262,7 @@ enum Route: Hashable {
         case .dirtyMoney: .business
         // MARK: W2 (family drama)
         // MARK: W3 (espionage)
+        case .spy: .business
         // MARK: W4 (inside)
         // MARK: end of Iteration 11, wave two
         }

@@ -1905,6 +1905,17 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 11, wave two — W1
 
+    // MARK: Iteration 11, wave two — W3 (espionage)
+
+    /// What it costs to have something done to a rival, how likely it is
+    /// to land and how likely it is to come back
+    /// (`BalanceConfig+Espionage.swift`). Inline default, so `"espionage"`
+    /// is an optional key; every field is read from behind a button on a
+    /// rival's page, or from behind the Team tab's own gate.
+    public var espionage: EspionageBalance = .default
+
+    // MARK: end Iteration 11, wave two — W3
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

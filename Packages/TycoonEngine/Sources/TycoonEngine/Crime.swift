@@ -51,6 +51,21 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
     case launderMoney
     // MARK: end of W1
 
+    // MARK: W3 (espionage)
+
+    /// A private investigator, a mole, a bought roadmap or a storefront
+    /// taken down: everything W3's rival page can have done. It is one
+    /// offence rather than five because a court does not care which of
+    /// them it was — `EspionageOpRecord` keeps that, and the record
+    /// entry's note names it.
+    ///
+    /// It is never committed from the ledger: `CrimeSystem.refusal`
+    /// refuses it there, and `EspionageSystem` writes its record entry
+    /// itself when the founder presses a button on a studio's page.
+    case corporateEspionage
+
+    // MARK: end W3
+
     public var displayName: String {
         switch self {
         case .cookBooks: "Cook the books"
@@ -62,6 +77,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         // MARK: W1
         case .launderMoney: "Wash it"
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "Industrial espionage"
+        // MARK: end W3
         }
     }
 
@@ -77,6 +95,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         // MARK: W1
         case .launderMoney: "Put it through them. It comes back the right colour."
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "Open a rival's page. It starts there, with a name on it."
+        // MARK: end W3
         }
     }
 
@@ -92,6 +113,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         // MARK: W1
         case .launderMoney: "You moved money through people who move money."
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "You had something done to a competitor, quietly."
+        // MARK: end W3
         }
     }
 
@@ -107,6 +131,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         // MARK: W1
         case .launderMoney: "money laundering"
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "industrial espionage"
+        // MARK: end W3
         }
     }
 
@@ -122,6 +149,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         // MARK: W1
         case .launderMoney: "A bank's compliance desk"
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "A studio with a photograph of your contractor"
+        // MARK: end W3
         }
     }
 
@@ -137,6 +167,9 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         // MARK: W1
         case .launderMoney: "arrow.triangle.2.circlepath.circle.fill"
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        case .corporateEspionage: "binoculars.fill"
+        // MARK: end W3
         }
     }
 
@@ -154,6 +187,11 @@ public enum CrimeOffence: String, Codable, Equatable, Sendable, CaseIterable {
         // counterparty who will also be standing in the room.
         case .launderMoney: 1.0
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        // The gravest of them: a court reads a mole and a taken-down
+        // storefront as the theft of somebody's whole quarter.
+        case .corporateEspionage: 0.95
+        // MARK: end W3
         }
     }
 }
@@ -178,6 +216,10 @@ public enum CrimeRefusal: String, Sendable, Equatable, CaseIterable {
     case alreadyRunning
     /// Once a quarter is once a quarter.
     case tooSoon
+    // MARK: W3 (espionage)
+    /// The espionage offence is not committed from the ledger.
+    case elsewhere
+    // MARK: end W3
 
     public var sentence: String {
         switch self {
@@ -189,6 +231,9 @@ public enum CrimeRefusal: String, Sendable, Equatable, CaseIterable {
         case .noBuild: "Nothing in development to put in front of a camera."
         case .alreadyRunning: "That one's already running. Let it land first."
         case .tooSoon: "You did this last quarter. Doing it again this soon is not clever, it's a pattern."
+        // MARK: W3 (espionage)
+        case .elsewhere: "Not from here. This one starts on a studio's own page, with a name on it."
+        // MARK: end W3
         }
     }
 }
@@ -755,6 +800,12 @@ public enum Crime {
         // never committed through `CrimeSystem.commit`.
         case .launderMoney: 0
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        // W3 adds its own, per operation, at the moment it runs one —
+        // `Espionage.notorietyCost` — so the ledger's flat figure here is
+        // never the one that lands.
+        case .corporateEspionage: 0
+        // MARK: end W3
         }
     }
 
@@ -799,6 +850,12 @@ public enum Crime {
         // surfaces when somebody else's file is opened, not when yours is.
         case .launderMoney: Crime.launderDiscovery
         // MARK: end of W1
+        // MARK: W3 (espionage)
+        // The weekly exposure of an operation nobody traced on the day.
+        // The same rate as a planted story: it is the same kind of paper
+        // in the same kind of drawer.
+        case .corporateEspionage: balance.plantStoryDiscovery
+        // MARK: end W3
         }
         let heat = 1 + notoriety / 100 * balance.notorietyDiscoveryFactor
         let weeksOld = Double(max(0, day - entry.day)) / Double(GameState.daysPerWeek)
