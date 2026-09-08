@@ -24,6 +24,18 @@ struct OfficeCard: View {
     /// Iteration 7 (R4): the office photo, as a share card.
     @State private var sharingPhoto = false
 
+    // MARK: Iteration 10 — M6 (the bug hunt)
+
+    /// What is crawling on the floor right now, live and just squashed.
+    @State private var bugs: [BugHuntBug] = []
+    /// The next bug's id. Monotonic for the life of the card, so a bug is
+    /// never confused with the one that was squashed a moment ago.
+    @State private var nextBugID = 0
+    /// Draws these bugs whatever the state says, for a snapshot.
+    var bugsForPreview: [BugHuntBug] = []
+
+    // MARK: end Iteration 10 — M6
+
     /// Draws the scene with this pressed, for a snapshot of the pressed
     /// state; the live card leaves it to the scene's own gesture.
     var pressedForPreview: OfficeHitRegion.Kind?
@@ -169,6 +181,11 @@ struct OfficeCard: View {
                 showingCityMap = true
             }
         }
+        // MARK: Iteration 10 — M6 (the bug hunt)
+        .task {
+            DebugLaunch.startAutoBugs(engine: engine)
+            await huntBugs()
+        }
         .sheet(isPresented: $showingAmenities) {
             AmenitiesSheet(engine: engine)
         }
@@ -202,6 +219,12 @@ struct OfficeCard: View {
     /// that means; this opens it. Every tap that lands gets a haptic, and
     /// the first one retires the hint — the tap is the proof it was read.
     private func handleTap(_ kind: OfficeHitRegion.Kind) {
+        // MARK: Iteration 10 — M6 (the bug hunt)
+        if case .bug(let id) = kind {
+            squash(bugID: id)
+            if !tapHintDismissed { dismissTapHint() }
+            return
+        }
         guard let target = OfficeTapDestination.destination(for: kind, state: engine.state) else { return }
         Haptics.tap()
         destination = target
@@ -217,11 +240,81 @@ struct OfficeCard: View {
         GameSettings.dismissedTips.insert(OfficeTapHint.tipID)
     }
 
+    // MARK: - Iteration 10 — M6 (the bug hunt)
+
+    /// A thumb landed on a bug.
+    ///
+    /// The engine decides whether it counts; the splat, the chirp and the
+    /// knock are the answer either way that something was hit, and a
+    /// refusal says in words why the bug got up again. The bug is only
+    /// marked squashed when the engine actually took one off the build —
+    /// otherwise it keeps crawling, which is the truthful picture: that bug
+    /// is still in there.
+    private func squash(bugID: Int) {
+        guard let index = bugs.firstIndex(where: { $0.id == bugID }), !bugs[index].isSquashed else { return }
+        let productID = bugs[index].productID
+        if let refusal = BugHunt.refusal(
+            productID: productID, in: engine.state, balance: engine.balance
+        ) {
+            Haptics.warning()
+            shell.toasts.show(
+                refusal.sentence,
+                icon: "hand.raised.fill",
+                tint: Theme.warning,
+                severity: .notable
+            )
+            return
+        }
+        Haptics.squash()
+        Sounds.play(.squash)
+        engine.send(.squashBug(productID: productID))
+        bugs[index].squashedAt = Date()
+    }
+
+    /// Keeps the floor honest: sweeps the splats up, drops bugs off builds
+    /// that shipped or went clean, and lets one more in while a build in
+    /// flight still has an open bug on it.
+    ///
+    /// Runs only while HQ is on screen. Nothing here touches the
+    /// simulation, and nothing spawns unless `openBugs` is already above
+    /// zero — the room is reporting, not deciding.
+    private func huntBugs() async {
+        guard bugsForPreview.isEmpty else { return }
+        // `-autoBugs splat`: the frame after a tap, held, because a
+        // simulator cannot tap. Display only — nothing is sent.
+        let holdingSplats = DebugLaunch.showsBugSplat
+        while !Task.isCancelled {
+            var next = BugHuntSpawner.advance(
+                bugs, state: engine.state, balance: engine.balance,
+                input: baseSceneInput, nextID: &nextBugID,
+                splatLifetime: holdingSplats ? .infinity : BugHuntSpawner.splatLifetime,
+                countingSplats: holdingSplats
+            )
+            if holdingSplats {
+                for index in next.indices where next[index].squashedAt == nil {
+                    next[index].squashedAt = Date()
+                }
+            }
+            if next != bugs { bugs = next }
+            try? await Task.sleep(for: BugHuntSpawner.tick)
+        }
+    }
+
     /// Everything the scene needs, as one `Hashable` value: who is in the
     /// room and what mood they are in, who their friends are, what they
     /// would say if tapped, the weather and whether it is the weekend, and
     /// the celebration the last day or two earned.
     private var sceneInput: OfficeSceneInput {
+        var input = baseSceneInput
+        // MARK: Iteration 10 — M6 (the bug hunt)
+        input.bugs = (bugsForPreview.isEmpty ? bugs : bugsForPreview).map(\.officeBug)
+        return input
+    }
+
+    /// The same input without the bugs, which is what the spawner needs to
+    /// ask PixelKit who is sitting where without asking about the bugs it
+    /// is in the middle of deciding.
+    private var baseSceneInput: OfficeSceneInput {
         var input = OfficeSceneInput(
             tier: tierStyle,
             occupants: occupants,

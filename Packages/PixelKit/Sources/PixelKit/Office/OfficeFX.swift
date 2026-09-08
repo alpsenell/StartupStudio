@@ -156,4 +156,174 @@ enum OfficeFX {
             animation: .still, phase: 0, zIndex: 80_000
         )]
     }
+
+    // MARK: - Iteration 10 — M6 (the bug hunt)
+
+    /// How long one lap of a bug's patrol takes, and how the lap is cut up.
+    ///
+    /// Whole seconds, deliberately: the director hands the view one list of
+    /// placements a second, so a leg that changed halfway through a second
+    /// would draw a stale motion until the next bucket. Legs that begin on
+    /// second boundaries never can.
+    static let bugLegSeconds: [TimeInterval] = [2, 1, 2, 1]
+    static var bugLapSeconds: TimeInterval { bugLegSeconds.reduce(0, +) }
+
+    /// The four corners of the floor strip a bug patrols, in front of the
+    /// desk it belongs to: along the front, one step down, back along the
+    /// front, one step up.
+    ///
+    /// The strip is *in front of* the desk rather than on the desktop, and
+    /// that is the whole reason the hunt is playable: the desktop is under
+    /// a monitor and behind whoever is sitting at it, and a bug you cannot
+    /// see is a bug you cannot squash. It still reads as their desk — it is
+    /// two pixels from the drawers.
+    static func bugLoop(seat: Int, tier: OfficeTierStyle) -> [ScenePoint] {
+        let cell = SceneComposer.cellOrigin(tier: tier, index: seat)
+        let left = Double(cell.x + 9)
+        let right = Double(cell.x + 22)
+        let near = Double(cell.y + 18)
+        let far = Double(cell.y + 20)
+        return [
+            ScenePoint(x: left, y: near),
+            ScenePoint(x: right, y: near),
+            ScenePoint(x: right, y: far),
+            ScenePoint(x: left, y: far),
+        ]
+    }
+
+    /// Where a bug is at scene time `t`, and which way it is facing: the
+    /// leg of the lap it is on, as an absolute `Motion` so the 12 fps
+    /// renderer interpolates it without the director recomposing.
+    ///
+    /// Pure in `(bug, tier, t)` — the same bug is in the same place every
+    /// time the scene is evaluated, which is what lets the hit region and
+    /// the drawing agree to the pixel.
+    static func bugFrame(
+        _ bug: OfficeBug, tier: OfficeTierStyle, at t: TimeInterval
+    ) -> (motion: Motion, flipX: Bool, legIndex: Int) {
+        let loop = bugLoop(seat: bug.seat, tier: tier)
+        let lap = bugLapSeconds
+        // Each bug starts a different distance round the lap, so two of
+        // them on one desk never march in step.
+        let offset = TimeInterval((bug.id &* 2) % Int(lap))
+        let phase = (max(0, t) + offset).truncatingRemainder(dividingBy: lap)
+        var cursor: TimeInterval = 0
+        var index = 0
+        for (leg, seconds) in bugLegSeconds.enumerated() {
+            if phase < cursor + seconds {
+                index = leg
+                break
+            }
+            cursor += seconds
+        }
+        let legStart = max(0, t) - phase + cursor
+        let from = loop[index]
+        let to = loop[(index + 1) % loop.count]
+        return (
+            Motion(from: from, to: to, start: legStart, duration: bugLegSeconds[index]),
+            // Legs 2 and 3 run right to left; the sprite is drawn facing
+            // right, so those two are mirrored.
+            index >= 2,
+            index
+        )
+    }
+
+    /// The bugs on the floor at scene time `t` — the live ones crawling,
+    /// the squashed ones as a splat where they stopped.
+    static func bugs(
+        _ bugs: [OfficeBug], tier: OfficeTierStyle, at t: TimeInterval
+    ) -> [PlacedSprite] {
+        guard !bugs.isEmpty else { return [] }
+        var placements: [PlacedSprite] = []
+        for bug in bugs {
+            let frame = bugFrame(bug, tier: tier, at: t)
+            let anchor = frame.motion.position(at: t).rounded
+            if bug.isSquashed {
+                let splat = SpriteCache.shared("fx.bugsplat", make: OfficeFXSprites.bugSplat)
+                placements.append(PlacedSprite(
+                    sprite: splat,
+                    x: anchor.x - 1, y: anchor.y + 1,
+                    kind: .prop,
+                    animation: .toggle(period: 2),
+                    phase: 0,
+                    zIndex: anchor.y + splat.height + 2_000
+                ))
+                continue
+            }
+            let sprite = SpriteCache.shared("fx.bug", make: OfficeFXSprites.bug)
+            placements.append(PlacedSprite(
+                sprite: sprite,
+                x: anchor.x, y: anchor.y,
+                kind: .prop,
+                // The two walking frames on the long legs, the two standing
+                // frames on the short ones: a bug that has turned a corner
+                // stops and thinks about it.
+                animation: frame.legIndex % 2 == 0
+                    ? .sequence(frames: [0, 1], fps: 8, loop: true)
+                    : .sequence(frames: [2, 3], fps: 3, loop: true),
+                phase: bug.id % 2,
+                start: frame.motion.start,
+                motion: frame.motion,
+                // Well clear of the furniture. A bug half behind a stack
+                // of boxes is a bug the player will not find, and unlike
+                // every other thing in this room it is gone in a few
+                // seconds — so it is drawn over the room and under the
+                // hour's colour wash.
+                zIndex: anchor.y + sprite.height + 2_000,
+                flipX: frame.flipX
+            ))
+        }
+        return placements
+    }
+
+    /// A composed scene with the bugs merged into it at their own depth,
+    /// rather than dropped on top of the lighting wash.
+    ///
+    /// `OfficeDirector.compose` returns its placements sorted back to
+    /// front; this keeps that order and slots each bug in where its depth
+    /// says it belongs, so a bug is drawn over the desk it is in front of
+    /// and still under the evening light.
+    static func merging(
+        bugs: [OfficeBug], into scene: [PlacedSprite], tier: OfficeTierStyle, at t: TimeInterval
+    ) -> [PlacedSprite] {
+        let extra = Self.bugs(bugs, tier: tier, at: t)
+        guard !extra.isEmpty else { return scene }
+        var merged = scene
+        for placement in extra {
+            let index = merged.firstIndex { $0.zIndex > placement.zIndex } ?? merged.count
+            merged.insert(placement, at: index)
+        }
+        return merged
+    }
+}
+
+// MARK: - Iteration 10 — M6
+
+/// One bug in the room, as the app knows it.
+///
+/// PixelKit knows where a bug is and what it looks like; the app knows
+/// which build it belongs to and what a thumb on it means. The id is the
+/// identity on both sides of that line — it is what a tap comes back as —
+/// and it also seeds the bug's place in its lap, so two bugs on one desk
+/// never march in step.
+///
+/// A squashed bug stays in the list for as long as the app leaves it there
+/// (about half a second) and is drawn as the splat. Keeping the splat's
+/// lifetime on the app's side is what lets PixelKit stay a pure function of
+/// `(input, t)`: there is no "when was it squashed" for the scene to
+/// remember.
+public struct OfficeBug: Sendable, Equatable, Hashable, Identifiable {
+    /// Stable for the life of this bug, and unique within the list.
+    public var id: Int
+    /// The desk cell it patrols, in `SceneComposer`'s indexing — the
+    /// founder's own desk is `tier.deskCapacity`.
+    public var seat: Int
+    /// Drawn as a splat rather than a beetle, and no longer tappable.
+    public var isSquashed: Bool
+
+    public init(id: Int, seat: Int, isSquashed: Bool = false) {
+        self.id = id
+        self.seat = seat
+        self.isSquashed = isSquashed
+    }
 }

@@ -685,6 +685,21 @@ struct EventCopy {
                 reputationDelta >= 0 ? Theme.positiveCash : Theme.warning
             )
 
+        // MARK: Iteration 10 — M6 (the bug hunt)
+
+        // The line the routine fold collapses. It says what is left rather
+        // than what was taken, because "nine to go" is the sentence a
+        // founder would actually write down.
+        case .bugSquashed(let productID, let remaining, let day):
+            (
+                "ladybug.fill",
+                remaining == 0
+                    ? "Caught the last bug in \(productName(productID)) yourself"
+                    : "Squashed a bug in \(productName(productID)) — \(remaining) to go",
+                day,
+                Theme.accent
+            )
+
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a
         // warning naming the new case) when a workstream appends one.

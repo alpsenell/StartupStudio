@@ -572,6 +572,8 @@ public enum Reducer {
             state.desk.mark(part, on: today)
 
         // MARK: M6 (bug hunt)
+        case let .squashBug(productID):
+            events = ProductSystem.squash(productID: productID, state: &state, balance: balance)
 
         // MARK: end of Iteration 10
         }

@@ -428,6 +428,10 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: M6 (bug hunt)
 
+    /// The founder caught one by hand. `remaining` is what is left open on
+    /// that build afterwards, so the journal line can say it.
+    case bugSquashed(productID: UUID, remaining: Int, day: Int)
+
     // MARK: end of Iteration 10
 }
 
@@ -568,6 +572,15 @@ extension GameEvent {
             .notable
 
         // MARK: end M3
+
+        // MARK: Iteration 10 — M6
+
+        // A bug the founder squashed with their own thumb needs no toast
+        // to tell them they did it: the splat, the chirp and the haptic
+        // already did. Quiet keeps it out of the toast layer and folds it
+        // into the journal's routine week.
+        case .bugSquashed:
+            .quiet
 
         default:
             .info

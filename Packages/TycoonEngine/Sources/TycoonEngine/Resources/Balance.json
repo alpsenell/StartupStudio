@@ -1249,5 +1249,9 @@
     "credibilityFloor": 0.4,
     "brokenPromisePenalty": 6.0,
     "hypePerUserLost": 0.02
+  },
+  "bugHunt": {
+    "perDay": 3,
+    "maxOnScreen": 3
   }
 }

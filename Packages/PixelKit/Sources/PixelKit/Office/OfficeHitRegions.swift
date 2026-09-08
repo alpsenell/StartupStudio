@@ -17,6 +17,11 @@ public struct OfficeHitRegion: Sendable, Equatable, Hashable, Identifiable {
         case whiteboard
         case door
         case founderDesk
+        // MARK: Iteration 10 — M6 (the bug hunt)
+        /// A bug crawling in front of a desk, by `OfficeBug.id`. The only
+        /// region that is not part of the furniture — it moves, it can be
+        /// squashed, and it is gone a second later.
+        case bug(Int)
 
         public var isPerson: Bool {
             if case .person = self { return true }
@@ -76,7 +81,44 @@ extension OfficeDirector {
                 zIndex: actor.zIndex
             ))
         }
+        // MARK: Iteration 10 — M6 (the bug hunt)
+        regions += bugRegions(input: input, at: t)
         return regions
+    }
+
+    /// Where the bugs are this instant, padded out to something a thumb can
+    /// actually land on.
+    ///
+    /// The sprite is nine pixels by seven, which on a campus scene is nine
+    /// points by seven — under half of Apple's 44-point target. So the
+    /// region is grown around the sprite to at least 16×14 scene pixels and
+    /// given the top priority: while a bug is out, the bug is what your
+    /// finger meant, not the desk behind it. It is also the only region
+    /// that disappears on its own, which is why it is worth over-reaching
+    /// for: miss it and you have lost the moment, not opened the wrong
+    /// sheet.
+    static func bugRegions(input: OfficeSceneInput, at t: TimeInterval) -> [OfficeHitRegion] {
+        guard !input.bugs.isEmpty else { return [] }
+        let sprite = SpriteCache.shared("fx.bug", make: OfficeFXSprites.bug)
+        let minWidth = 16
+        let minHeight = 14
+        return input.bugs.compactMap { bug in
+            // A splat is scenery. Nothing to squash twice.
+            guard !bug.isSquashed else { return nil }
+            let frame = OfficeFX.bugFrame(bug, tier: input.tier, at: t)
+            let anchor = frame.motion.position(at: t).rounded
+            let padX = max(0, minWidth - sprite.width) / 2
+            let padY = max(0, minHeight - sprite.height) / 2
+            return OfficeHitRegion(
+                kind: .bug(bug.id),
+                x: anchor.x - padX,
+                y: anchor.y - padY,
+                width: sprite.width + padX * 2,
+                height: sprite.height + padY * 2,
+                zIndex: anchor.y + sprite.height,
+                priority: 3
+            )
+        }
     }
 
     /// The region under scene pixel (`x`, `y`) at time `t`, or `nil` when

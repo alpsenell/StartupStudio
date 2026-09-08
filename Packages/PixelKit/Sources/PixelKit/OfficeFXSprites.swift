@@ -706,4 +706,82 @@ extension OfficeFXSprites {
             ]
         )
     }
+
+    // MARK: - Iteration 10 — M6 (the bug hunt)
+
+    /// A bug, 10×9, crawling right along the floor in front of a desk.
+    ///
+    /// Four frames: two of it walking and two of it stopped with its feet
+    /// under it, so a bug that has reached the end of a leg reads as
+    /// pausing rather than sliding. The scene mirrors the sprite for the
+    /// return trip, so there is only one heading here.
+    ///
+    /// Reading at phone size is the whole design brief, and a solid green
+    /// lozenge does not: the shape has to have *parts*. So the shell is a
+    /// light moss with the dark seam of the wing cases down the middle, the
+    /// head end carries one warm dot, and six legs stick out below the
+    /// outline in two rows. The seam is what makes it a beetle rather than
+    /// a bean, and the warm dot is what the eye finds against a dark floor
+    /// at night.
+    static func bug() -> PixelSprite {
+        func frame(_ legs: (String, String), antennae: Bool) -> [String] {
+            [
+                antennae ? "      A A " : "       A A",
+                "  OOOOOO  ",
+                " OSSSSSSO ",
+                "OSSDDDDSSO",
+                "OSSDDDDSSE",
+                "OSSSSSSSSO",
+                " OOOOOOOO ",
+                legs.0,
+                legs.1,
+            ]
+        }
+        return PixelSprite(
+            frames: [
+                frame(("L  L  L  L", " L  L   L "), antennae: true),
+                frame((" L  L  L  ", "L  L   L  "), antennae: false),
+                frame((" L L  L L ", "  L  L L  "), antennae: true),
+                frame((" L L  L L ", "  L L  L  "), antennae: false),
+            ],
+            palette: [
+                "O": Palettes.outline,
+                "L": Palettes.ink[3],
+                "A": Palettes.ink[3],
+                "S": Palettes.moss[2],
+                "D": Palettes.moss[4],
+                "E": Palettes.ember[1],
+            ]
+        )
+    }
+
+    /// The splat, 11×6: what is left for the half second after a thumb
+    /// lands. Two frames — the burst, then the bits settling — so the
+    /// squash has a beat to it rather than a swap.
+    static func bugSplat() -> PixelSprite {
+        let burst = [
+            "  s  s  s  ",
+            " s SSSSS s ",
+            "s SSGGGSS s",
+            " sSSGGGSSs ",
+            "  s SSS s  ",
+            "  s  s  s  ",
+        ]
+        let settled = [
+            "     s     ",
+            "   sSSSs   ",
+            "  sSGGGSs  ",
+            "   sSSSs   ",
+            "    s s    ",
+            "           ",
+        ]
+        return PixelSprite(
+            frames: [burst, settled],
+            palette: [
+                "G": Palettes.moss[1],
+                "S": Palettes.moss[2],
+                "s": Palettes.moss[3],
+            ]
+        )
+    }
 }

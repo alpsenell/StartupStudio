@@ -133,6 +133,15 @@ public struct OfficeSceneInput: Sendable, Equatable, Hashable {
     /// state on demand (a snapshot). Defaults to nothing pressed.
     public var pressed: OfficeHitRegion.Kind?
 
+    // MARK: Iteration 10 — M6 (the bug hunt)
+
+    /// The bugs crawling in front of the desks right now, live and just
+    /// squashed. Defaults to none, so every existing caller, preview and
+    /// frame sheet draws exactly the room it always drew.
+    public var bugs: [OfficeBug] = []
+
+    // MARK: end Iteration 10 — M6
+
     /// A celebration plus the token that makes it fire once.
     public struct Celebration: Sendable, Equatable, Hashable {
         public var kind: SceneCelebration
@@ -269,10 +278,20 @@ public struct OfficeSceneView: View {
             onTapScenePoint: { x, y, t in handleTap(x: x, y: y, at: t) },
             onPress: { press in handlePress(press) }
         ) { t in
-            OfficeDirector.compose(
+            let room = OfficeDirector.compose(
                 input: resolved.withHourOfDay(at: t),
                 timing: timing,
                 at: t
+            )
+            // MARK: Iteration 10 — M6 (the bug hunt)
+            //
+            // Merged rather than composed: the director memoizes the room
+            // once a second, and a bug moves twelve times in that second.
+            // `merging` slots each one in at its own depth, so an empty
+            // list returns the director's list untouched — identity for
+            // every caller that has never seen a bug.
+            return OfficeFX.merging(
+                bugs: resolved.bugs, into: room, tier: resolved.tier, at: t
             )
         }
         // To VoiceOver the canvas is one picture. The regions laid over it
@@ -337,6 +356,8 @@ public struct OfficeSceneView: View {
         case .whiteboard: "Whiteboard"
         case .door: "Door"
         case .founderDesk: "Founder's desk"
+        // MARK: Iteration 10 — M6 (the bug hunt)
+        case .bug: "A bug, crawling"
         }
     }
 
