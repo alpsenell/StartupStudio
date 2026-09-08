@@ -45,6 +45,15 @@ public struct ContentCatalog: Sendable {
     /// Empty falls back to the engine's balance numbers.
     public let staffEvents: [StaffEventDef]
 
+    // MARK: Iteration 10 — M2 (pitch room)
+
+    /// What the four people across the pitch table say (`Pitches.json`).
+    /// `nil` without the file; the engine falls back to
+    /// `PitchCatalog.fallback`, so the room still works.
+    public let pitches: PitchCatalog?
+
+    // MARK: end of Iteration 10 — M2
+
     private let productTypesByID: [String: ProductTypeDef]
     private let topicsByID: [String: TopicDef]
     private let techByID: [String: TechNode]
@@ -65,7 +74,10 @@ public struct ContentCatalog: Sendable {
         reviews: ReviewCatalog? = nil,
         goals: [GoalDef] = [],
         investors: [InvestorDef] = [],
-        staffEvents: [StaffEventDef] = []
+        staffEvents: [StaffEventDef] = [],
+        // MARK: Iteration 10 — M2 (pitch room)
+        pitches: PitchCatalog? = nil
+        // MARK: end of Iteration 10 — M2
     ) {
         self.productTypes = productTypes
         self.topics = topics
@@ -80,6 +92,9 @@ public struct ContentCatalog: Sendable {
         self.goals = goals
         self.investors = investors
         self.staffEvents = staffEvents
+        // MARK: Iteration 10 — M2 (pitch room)
+        self.pitches = pitches
+        // MARK: end of Iteration 10 — M2
         self.productTypesByID = Dictionary(
             productTypes.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
@@ -126,7 +141,10 @@ public struct ContentCatalog: Sendable {
             reviews: try decodeResourceIfPresent("Reviews", using: decoder),
             goals: try decodeResourceIfPresent("Goals", using: decoder) ?? [],
             investors: try decodeResourceIfPresent("Investors", using: decoder) ?? [],
-            staffEvents: try decodeResourceIfPresent("StaffEvents", using: decoder) ?? []
+            staffEvents: try decodeResourceIfPresent("StaffEvents", using: decoder) ?? [],
+            // MARK: Iteration 10 — M2 (pitch room)
+            pitches: try decodeResourceIfPresent("Pitches", using: decoder)
+            // MARK: end of Iteration 10 — M2
         )
     }
 
@@ -159,6 +177,17 @@ public struct ContentCatalog: Sendable {
     public func staffEvent(_ id: String) -> StaffEventDef? {
         staffEventsByID[id]
     }
+
+    // MARK: Iteration 10 — M2 (pitch room)
+
+    /// The lines for one side of the pitch table, from `Pitches.json` when
+    /// it is bundled and from the terse fallback when it is not — so a
+    /// caller never has to handle "no catalog" itself.
+    public func pitchCounterpart(_ id: String) -> PitchCounterpartDef? {
+        pitches?.counterpart(id) ?? PitchCatalog.fallback.counterpart(id)
+    }
+
+    // MARK: end of Iteration 10 — M2
 
     private static func decodeResource<T: Decodable>(
         _ name: String,

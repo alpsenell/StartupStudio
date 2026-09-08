@@ -252,6 +252,12 @@ struct StableHash {
 /// swaps the lines instead of sliding them.
 struct PressStripView: View {
     let lines: [PressStrip.Line]
+    // MARK: Iteration 10 — M2 (pitch room)
+    /// The engine, when the caller has one: the strip then offers the
+    /// interview under it. Defaulted, so every existing call site (and
+    /// every snapshot) draws exactly the strip it drew before.
+    var engine: GameEngine?
+    // MARK: end of Iteration 10 — M2
 
     /// Which line is up. Advanced by the task below; a snapshot renders
     /// the first.
@@ -266,6 +272,21 @@ struct PressStripView: View {
     }
 
     var body: some View {
+        // MARK: Iteration 10 — M2 (pitch room)
+        // Reading about yourself is passive; twenty minutes with one of
+        // these outlets is not. The invitation sits under the panel
+        // rather than inside it, because the panel's own accessibility
+        // element ignores its children.
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            strip
+            if let engine {
+                PitchInviteButton(engine: engine, counterpart: .journalist)
+            }
+        }
+    }
+
+    private var strip: some View {
+        // MARK: end of Iteration 10 — M2
         PixelPanel {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 HStack(alignment: .firstTextBaseline) {

@@ -253,6 +253,12 @@ struct InvestorsView: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Board pressure \(Int(pressure.rounded())) out of 100")
 
+                // MARK: Iteration 10 — M2 (pitch room)
+                // A quarterly verdict used to be something that happened
+                // to the founder. Now there is a room to walk into.
+                PitchInviteButton(engine: engine, counterpart: .board, prominent: true)
+                // MARK: end of Iteration 10 — M2
+
                 if pressure >= config.boardWarningPressure {
                     Label(
                         "They've asked for a plan. Another bad quarter and they'll bring in a CEO.",
@@ -482,6 +488,15 @@ private struct TermSheetCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+
+                // MARK: Iteration 10 — M2 (pitch room)
+                // The sheet is negotiable before it is answerable: three
+                // exchanges with the person who wrote it move the cheque,
+                // the slice and their patience. Both answers below are
+                // untouched — the room changes what you are answering,
+                // never whether you can.
+                PitchInviteButton(engine: engine, counterpart: .investor, prominent: true)
+                // MARK: end of Iteration 10 — M2
 
                 HStack(spacing: Theme.Spacing.sm) {
                     Button {

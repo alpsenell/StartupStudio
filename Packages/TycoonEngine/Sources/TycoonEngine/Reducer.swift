@@ -127,6 +127,10 @@ public enum Reducer {
 
         // MARK: M2 (pitch room)
 
+        // The pitch room. A no-op in every run whose `state.pitch` is
+        // `nil`, which is every run in which nobody pressed *Talk first*.
+        PitchSystem.run,
+
         // MARK: M3 (incident room)
 
         // MARK: M4 (leagues)
@@ -506,6 +510,18 @@ public enum Reducer {
         // MARK: M1 (feature board)
 
         // MARK: M2 (pitch room)
+
+        case let .openPitch(counterpart, subjectID):
+            events = PitchSystem.open(
+                counterpart: counterpart, subjectID: subjectID,
+                state: &state, balance: balance, content: content
+            )
+        case let .sayInPitch(topic):
+            events = PitchSystem.say(
+                topic: topic, state: &state, balance: balance, content: content
+            )
+        case .leavePitch:
+            events = PitchSystem.leave(state: &state, balance: balance, content: content)
 
         // MARK: M3 (incident room)
 

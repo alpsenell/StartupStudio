@@ -1181,5 +1181,32 @@
     "boardPatienceFactor": 0.5,
     "poachChanceFactor": 1.5,
     "earlyEndBondPenalty": 25.0
+  },
+  "pitch": {
+    "exchangesBase": 3,
+    "exchangesPerConversationPoint": 40.0,
+    "exchangesMax": 5,
+    "warmthPerLandedTurn": 16.0,
+    "smallTalkFactor": 0.55,
+    "listenFactor": 0.45,
+    "shopTalkFactor": 1.2,
+    "pitchFactor": 2.0,
+    "missFactor": 0.85,
+    "wantFactor": 2.0,
+    "landBase": 0.5,
+    "landSkillDivisor": 200.0,
+    "landCeiling": 0.95,
+    "energyPerTurn": 1.5,
+    "moodPerGoodTurn": 1.0,
+    "investorAmountSpan": 0.25,
+    "investorEquitySpan": 0.2,
+    "investorPatienceSpan": 0.3,
+    "clientPayoutSpan": 0.2,
+    "clientDeadlineSpan": 0.25,
+    "clientSkillBarSpan": 0.25,
+    "pressNotchWarmth": 40.0,
+    "pressNotchPoints": 20,
+    "pressHypeSwing": 12.0,
+    "boardPressureSwing": 12.0
   }
 }

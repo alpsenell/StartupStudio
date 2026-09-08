@@ -1811,6 +1811,19 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 9 — L6
 
+    // MARK: Iteration 10 — one property per lane; the type behind it lives
+    // in the `BalanceConfig+<lane>.swift` file named for it.
+
+    // MARK: M2 (pitch room)
+
+    /// What a conversation with an investor, a client, a journalist or
+    /// the board can move (`BalanceConfig+Pitch.swift`). Every span is a
+    /// swing around zero warmth, so this block cannot change a run that
+    /// never opens the room. Inline default, so `"pitch"` is optional.
+    public var pitch: PitchBalance = .default
+
+    // MARK: end of Iteration 10
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

@@ -74,6 +74,30 @@ enum Desk {
             )
         }
 
+        // MARK: Iteration 10 — M2 (pitch room)
+        // The press want twenty minutes before a launch. This is the only
+        // one of the four conversations with no card of its own to sit
+        // on, so the desk is where it is offered.
+        if state.pitchBlocker(
+            for: .journalist, balance: balance, content: content
+        ) == nil {
+            items.append(
+                DeskItem(
+                    id: "pitch-journalist",
+                    systemImage: "mic.fill",
+                    text: "A reporter wants twenty minutes before the launch",
+                    daysLeft: nil,
+                    tint: Theme.accent,
+                    // The interview is offered under the war room's press
+                    // strip, which is where the outlet's name is; the row
+                    // is the pointer, not the room.
+                    route: .warRoom,
+                    section: .contracts
+                )
+            )
+        }
+        // MARK: end of Iteration 10 — M2
+
         // Campaigns about to end.
         for campaign in state.campaigns where campaign.endDay >= day && campaign.endDay - day <= 7 {
             let product = state.product(id: campaign.productID)?.name ?? "A"

@@ -1,0 +1,400 @@
+{
+  "counterparts": [
+    {
+      "id": "investor",
+      "title": "The term sheet",
+      "openers": [
+        "So. Convince me this is the round I should be in.",
+        "I've read the deck twice. Tell me what isn't in it.",
+        "We can sign this week. Or we can not. Talk to me.",
+        "Before the numbers — why you, and why now?"
+      ],
+      "wants": [
+        {
+          "id": "traction",
+          "name": "Traction",
+          "tell": "They keep glancing back at your weekly numbers.",
+          "reveal": "They want one line going up and to the right. Everything else is decoration.",
+          "favors": "pitch",
+          "hit": "“That's the line I came to see. Say the number again.”"
+        },
+        {
+          "id": "moat",
+          "name": "A moat",
+          "tell": "Every question they ask ends with “and what stops anyone else?”",
+          "reveal": "They aren't worried you'll fail. They're worried you'll be copied by Christmas.",
+          "favors": "shopTalk",
+          "hit": "“Okay. That's actually hard to copy. Go on.”"
+        },
+        {
+          "id": "founder",
+          "name": "You",
+          "tell": "They keep steering the conversation away from the product and back to you.",
+          "reveal": "They've decided the market's fine. They're underwriting the founder.",
+          "favors": "listen",
+          "hit": "“I back people. You just made that easy.”"
+        },
+        {
+          "id": "discipline",
+          "name": "Discipline",
+          "tell": "They asked what you burned last month before they asked what you built.",
+          "reveal": "They've been burned by founders who spend a round in a year.",
+          "favors": "shopTalk",
+          "hit": "“Good. I hate paying for other people's optimism.”"
+        }
+      ],
+      "lines": {
+        "smallTalk": {
+          "land": [
+            "They laugh, properly, and put the phone face down.",
+            "“I came through your part of town this morning. It's changed.”",
+            "The small talk goes on a minute longer than it needed to. That's good.",
+            "“You're the third meeting today and the first one I've enjoyed.”"
+          ],
+          "miss": []
+        },
+        "shopTalk": {
+          "land": [
+            "“Right — so you already know where the hard part is.”",
+            "They stop taking notes and start arguing with you, which is better.",
+            "“Most people in that chair can't answer that.”",
+            "They redraw your architecture on the napkin and get it right."
+          ],
+          "miss": [
+            "“Hm.” They write one word down and underline it.",
+            "“I don't think that's how that market works.”",
+            "You hear yourself over-explaining. So do they.",
+            "“Let's come back to that.” They don't come back to it."
+          ]
+        },
+        "listen": {
+          "land": [
+            "They talk about the fund for four minutes. You learn more than in the deck.",
+            "“Honestly? I'm bored of the last six companies I saw.”",
+            "They tell you about the one they passed on. It still stings.",
+            "“Nobody asks me that.” They sit back."
+          ],
+          "miss": []
+        },
+        "pitch": {
+          "land": [
+            "“Okay. Okay. Say that to my partners on Thursday.”",
+            "They're doing arithmetic in the margin and it's coming out well.",
+            "“I think I want more of this than the paper says.”",
+            "They pick the term sheet up. That's the first time they've touched it."
+          ],
+          "miss": [
+            "“That's a slide, not an answer.”",
+            "They check the time in a way you're supposed to see.",
+            "“Everyone says that. What do you say?”",
+            "The number you led with is now the number they're negotiating down."
+          ]
+        }
+      },
+      "closings": {
+        "hostile": "They leave the paper on the table like it's already withdrawn.",
+        "cool": "They'll sign it, but they've taken a red pen to it.",
+        "even": "The terms are the terms. Nobody moved.",
+        "warm": "They've marked the sheet up in your favour and initialled it.",
+        "sold": "“I'll take less of it and pay more for it. Don't make me regret this.”"
+      }
+    },
+    {
+      "id": "client",
+      "title": "The client meeting",
+      "openers": [
+        "We've read the brief. Talk us through the work.",
+        "Two other studios quoted us. Why are we still sitting here?",
+        "Be honest about the date and we'll be honest about the budget.",
+        "Last agency shipped us a demo and called it a product. Convince us."
+      ],
+      "wants": [
+        {
+          "id": "certainty",
+          "name": "Certainty",
+          "tell": "They asked twice about the date before they asked about the money.",
+          "reveal": "They've been burned by a late delivery and will not be burned twice.",
+          "favors": "shopTalk",
+          "hit": "“Good. Put that date in writing and we're done.”"
+        },
+        {
+          "id": "craft",
+          "name": "Craft",
+          "tell": "They keep pulling up screenshots of things they think are beautiful.",
+          "reveal": "Their board judges them on how it looks. It has to look expensive.",
+          "favors": "pitch",
+          "hit": "“That's the standard. That's exactly the standard.”"
+        },
+        {
+          "id": "budget",
+          "name": "Their budget",
+          "tell": "Every number you say, they repeat back slightly smaller.",
+          "reveal": "The money is fixed and the person who fixed it isn't in the room.",
+          "favors": "listen",
+          "hit": "“If you can live inside that, we can sign today.”"
+        },
+        {
+          "id": "partner",
+          "name": "A partner",
+          "tell": "They keep saying “we” about work you haven't started.",
+          "reveal": "They don't want a supplier. They want somebody who'll still take the call in a year.",
+          "favors": "smallTalk",
+          "hit": "“I'd rather work with people than vendors.”"
+        }
+      ],
+      "lines": {
+        "smallTalk": {
+          "land": [
+            "The room warms up by about a degree, which is a lot for a room like this.",
+            "“We drove past your office. Smaller than we expected — in a good way.”",
+            "Somebody makes a joke about procurement and everybody means it.",
+            "The coffee arrives and nobody looks at their laptop for a while."
+          ],
+          "miss": []
+        },
+        "shopTalk": {
+          "land": [
+            "“You've clearly done this before.”",
+            "They ask a technical question to catch you out. You answer it.",
+            "“That's the first time anyone's explained that to us properly.”",
+            "Their engineer stops taking notes and starts nodding."
+          ],
+          "miss": [
+            "“That sounds like a lot of maybe.”",
+            "Their engineer writes something down and shows it to their boss.",
+            "You quote a number and immediately hedge it. They noticed.",
+            "“We've heard that estimate before, from the last people.”"
+          ]
+        },
+        "listen": {
+          "land": [
+            "They tell you what actually went wrong last time. It's worse than the brief said.",
+            "“Off the record — this project is somebody's job.”",
+            "Ten minutes about their real problem, and none of it was in the brief.",
+            "“Nobody's asked us what we want since we started this.”"
+          ],
+          "miss": []
+        },
+        "pitch": {
+          "land": [
+            "“That's the version we wanted and couldn't describe.”",
+            "They start talking about phase two, which means there's a phase one.",
+            "“Okay — what would it take to start Monday?”",
+            "Somebody quietly moves the meeting's end time back."
+          ],
+          "miss": [
+            "“That's more than we asked for and more than we'll pay for.”",
+            "They look at each other. Nobody looks at you.",
+            "“We're not sure that's the same project any more.”",
+            "The word “scope” gets said twice and it isn't a compliment."
+          ]
+        }
+      },
+      "closings": {
+        "hostile": "They'll take the quote to a competitor, and they'll say so.",
+        "cool": "They'll sign, but they've shaved the fee and moved the date in.",
+        "even": "The job is the job as written.",
+        "warm": "They've found a little more money and a little more time.",
+        "sold": "“We'll pay properly for people who talk like that.”"
+      }
+    },
+    {
+      "id": "journalist",
+      "title": "The interview",
+      "openers": [
+        "Twenty minutes, on the record. Why does this exist?",
+        "I've got a slot on Friday. Give me a reason to fill it with you.",
+        "Everyone's shipping this week. What makes yours the one I write about?",
+        "I'm going to ask you the mean question at the end. Fair warning."
+      ],
+      "wants": [
+        {
+          "id": "story",
+          "name": "A story",
+          "tell": "They stopped taking notes and started listening.",
+          "reveal": "They don't want the feature list. They want the reason you started.",
+          "favors": "listen",
+          "hit": "“Say that again — slower. That's the opening paragraph.”"
+        },
+        {
+          "id": "angle",
+          "name": "An angle",
+          "tell": "They keep asking about everybody else's product, not yours.",
+          "reveal": "They're writing about the category. You're either the example or the footnote.",
+          "favors": "shopTalk",
+          "hit": "“That's the trend piece. You just gave me the trend piece.”"
+        },
+        {
+          "id": "candour",
+          "name": "Candour",
+          "tell": "They wince, very slightly, every time you say “excited to announce”.",
+          "reveal": "They've heard four launch pitches today and can smell a press release.",
+          "favors": "smallTalk",
+          "hit": "“Finally. An actual human sentence.”"
+        },
+        {
+          "id": "scoop",
+          "name": "Something first",
+          "tell": "They ask, twice, who else you've spoken to.",
+          "reveal": "They want a number nobody else has printed yet.",
+          "favors": "pitch",
+          "hit": "“Is that on the record? Say yes. Say yes.”"
+        }
+      ],
+      "lines": {
+        "smallTalk": {
+          "land": [
+            "They put the recorder down for a second, which is when the good quotes happen.",
+            "“God, this industry. Sorry — go on.”",
+            "You get four minutes of them complaining about embargoes. It's a good sign.",
+            "“You're the only founder today who hasn't said ‘disrupt’.”"
+          ],
+          "miss": []
+        },
+        "shopTalk": {
+          "land": [
+            "“How do you spell that? I'm using it.”",
+            "They ask a follow-up that means they understood the first answer.",
+            "“That's the bit nobody else in this category will say out loud.”",
+            "The recorder gets nudged an inch closer to you."
+          ],
+          "miss": [
+            "“That's the same line as everyone else's press release.”",
+            "They stop writing. They don't start again.",
+            "“I'll be honest, my readers won't care about that.”",
+            "“So it's a feature, then, not a product.”"
+          ]
+        },
+        "listen": {
+          "land": [
+            "They tell you the piece they actually want to write. It's better than the one you pitched.",
+            "“I've been on this beat six years. It's mostly noise.”",
+            "They tell you who else is launching this week. That's a gift.",
+            "“Off the record, I already know how this story ends. Prove me wrong.”"
+          ],
+          "miss": []
+        },
+        "pitch": {
+          "land": [
+            "“That's the headline. I'm not even going to rewrite it.”",
+            "They read the quote back to you to check they've got it exactly.",
+            "“I'll move you up the page for that.”",
+            "“Okay, that's a story. That's a real story.”"
+          ],
+          "miss": [
+            "“That's marketing. I don't print marketing.”",
+            "They circle something on the page. It's not a compliment.",
+            "“You realise I have to write what actually shipped.”",
+            "“I'll put it in the round-up.” The round-up is where things go to die."
+          ]
+        }
+      },
+      "closings": {
+        "hostile": "They've got their angle now, and it isn't yours.",
+        "cool": "You'll get a paragraph. A cautious one.",
+        "even": "They'll write what they were always going to write.",
+        "warm": "They're writing the good version, with your quote in it.",
+        "sold": "“This is the lead. Don't talk to anyone else before Friday.”"
+      }
+    },
+    {
+      "id": "board",
+      "title": "The board room",
+      "openers": [
+        "The quarter's in front of us. Explain it.",
+        "We've all read the pack. Let's talk about what isn't in it.",
+        "Nobody's here to shout. We're here to decide whether to keep waiting.",
+        "You've had our patience for a while now. Where has it gone?"
+      ],
+      "wants": [
+        {
+          "id": "aplan",
+          "name": "A plan",
+          "tell": "They keep steering you off this quarter and onto next one.",
+          "reveal": "They aren't angry about the miss. They're angry about the silence after it.",
+          "favors": "shopTalk",
+          "hit": "“Fine. Hold yourself to that and we'll hold off.”"
+        },
+        {
+          "id": "ownership",
+          "name": "Ownership",
+          "tell": "Every time you say “the market” somebody's pen stops.",
+          "reveal": "They want to hear you say it was your call and it was wrong.",
+          "favors": "listen",
+          "hit": "“Thank you. That's the first straight answer this year.”"
+        },
+        {
+          "id": "focus",
+          "name": "Focus",
+          "tell": "They list your projects back to you, slowly, one by one.",
+          "reveal": "They think you're doing four things badly instead of one thing well.",
+          "favors": "pitch",
+          "hit": "“One thing. Say it again so it's in the minutes.”"
+        },
+        {
+          "id": "respect",
+          "name": "To be in the room",
+          "tell": "They mention, twice, that they found out about the last decision by email.",
+          "reveal": "They don't want control. They want to not be surprised.",
+          "favors": "smallTalk",
+          "hit": "“We just want to hear it from you first. That's all.”"
+        }
+      ],
+      "lines": {
+        "smallTalk": {
+          "land": [
+            "The temperature in the room drops a couple of degrees, which is the right direction.",
+            "Somebody asks about your holiday. It is not a trap.",
+            "“How are you, actually?” It's the first honest question of the meeting.",
+            "The chair closes the pack. That's the good version of closing the pack."
+          ],
+          "miss": []
+        },
+        "shopTalk": {
+          "land": [
+            "“That's the first number in this pack that means anything.”",
+            "You walk them through the mechanism and two of them start nodding.",
+            "“Okay. So you do know where the money went.”",
+            "Somebody writes down your date and reads it back."
+          ],
+          "miss": [
+            "“That's an explanation, not an answer.”",
+            "“You said something similar last quarter.” Somebody finds the minutes.",
+            "The chair takes off their glasses. Nothing good follows that.",
+            "“I'm not sure you know why that happened either.”"
+          ]
+        },
+        "listen": {
+          "land": [
+            "They tell you what they're actually worried about. It isn't what they've been asking about.",
+            "“We've all run companies. We know what this feels like.”",
+            "One of them talks for five minutes about their own bad year.",
+            "“We'd rather hear the problem early than the excuse late.”"
+          ],
+          "miss": []
+        },
+        "pitch": {
+          "land": [
+            "“That's a company. Go and run it.”",
+            "The chair looks around the table and nobody objects.",
+            "“We'll give you the two quarters. Don't come back with this again.”",
+            "Somebody moves that the item is closed. It carries."
+          ],
+          "miss": [
+            "“We've heard the vision. We wanted the numbers.”",
+            "“You're pitching us. We're already in.”",
+            "The chair writes a single word and turns the page over.",
+            "“That's what you said in March.”"
+          ]
+        }
+      },
+      "closings": {
+        "hostile": "They've moved from disappointed to organised, which is worse.",
+        "cool": "The item stays open. They'll want a plan in writing.",
+        "even": "The minutes will say the board noted it.",
+        "warm": "They've given you room. Not much, but room.",
+        "sold": "“We're behind you. Go and prove us right.”"
+      }
+    }
+  ]
+}

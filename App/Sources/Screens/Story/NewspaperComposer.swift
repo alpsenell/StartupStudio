@@ -281,6 +281,17 @@ struct NewspaperComposer {
         case .team: 1
         case .market, .rivals, .life: 0
         }
+        // MARK: Iteration 10 — M2 (pitch room)
+        // An interview the founder actually gave is the week's lead: it
+        // is the one event on this page they sat in a room and earned.
+        // A conversation that went nowhere gets no boost, which keeps a
+        // week the player did not engage with ranked exactly as before.
+        if case let .pitchClosed(counterpart, band, _, _) = dated.event,
+           counterpart == PitchCounterpart.journalist.rawValue,
+           PitchBand(rawValue: band)?.isGood == true {
+            return severity * 10 + strand + 25
+        }
+        // MARK: end of Iteration 10 — M2
         return severity * 10 + strand
     }
 

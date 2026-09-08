@@ -405,6 +405,13 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: M2 (pitch room)
 
+    /// M2: the founder sat down with somebody. `counterpart` is a
+    /// `PitchCounterpart` raw value.
+    case pitchOpened(counterpart: String, day: Int)
+    /// M2: the conversation ended. `band` is a `PitchBand` raw value and
+    /// `summary` says what it did to the paperwork.
+    case pitchClosed(counterpart: String, band: String, summary: String, day: Int)
+
     // MARK: M3 (incident room)
 
     // MARK: M4 (leagues)

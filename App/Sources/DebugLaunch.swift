@@ -245,6 +245,7 @@ extension Route {
         // MARK: Iteration 10 — route names
         // MARK: M1 (feature board)
         // MARK: M2 (pitch room)
+        case "pitch": .pitch
         // MARK: M3 (incident room)
         // MARK: M4 (leagues)
         // MARK: M5 (morning desk)
@@ -564,6 +565,33 @@ extension DebugLaunch {
     // MARK: M1 (feature board)
 
     // MARK: M2 (pitch room)
+
+    /// `-autoPitch <investor|client|journalist|board>`: the chair a
+    /// headless pass sits down in. A simulator cannot tap a button, and
+    /// the room is the surface this lane exists to draw, so the matching
+    /// *Talk first* button opens its own sheet once when it appears.
+    /// Everything after that is the ordinary reducer.
+    static var launchPitchCounterpart: String? {
+        #if DEBUG
+        return value(after: "-autoPitch")?.lowercased()
+        #else
+        return nil
+        #endif
+    }
+
+    /// `-autoPitchSay <topic,topic,…>`: the exchanges a headless pass
+    /// makes once the room is open, so a screenshot can be of a
+    /// conversation in progress rather than an opener. Topic names are
+    /// `ConversationTopic` raw values.
+    static var launchPitchScript: [String] {
+        #if DEBUG
+        return value(after: "-autoPitchSay")?
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) } ?? []
+        #else
+        return []
+        #endif
+    }
 
     // MARK: M3 (incident room)
 
