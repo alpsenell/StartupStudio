@@ -5408,5 +5408,1125 @@
     "impact": {
       "mood": 6
     }
+  },
+  {
+    "id": "inside_lights_out",
+    "headline": "Lights out at nine, and the landing takes an hour to go quiet.",
+    "weight": 5,
+    "impact": {
+      "mood": -4,
+      "energy": 3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 40
+  },
+  {
+    "id": "inside_the_riot",
+    "headline": "Something goes up on the far landing and the wing is locked down for two days.",
+    "weight": 3,
+    "impact": {
+      "mood": -8,
+      "health": -4
+    },
+    "category": "personal",
+    "body": "You can hear it more than see it. Then it is quiet, and then it is quiet for a long time.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "door",
+        "label": "Stay behind your door",
+        "detail": "Nothing happens to you",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      },
+      {
+        "id": "landing",
+        "label": "Go out on the landing",
+        "detail": "Mood +4 \u00b7 health \u22126 \u00b7 the wing notices",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4,
+            "health": -6
+          },
+          {
+            "type": "flag",
+            "flag": "inside_stood_up"
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 200
+  },
+  {
+    "id": "inside_shakedown",
+    "headline": "They turn the cell over at six in the morning and leave it turned over.",
+    "weight": 4,
+    "impact": {
+      "mood": -6
+    },
+    "category": "personal",
+    "body": "Your letters are on the floor. Nothing is missing, which is somehow worse.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "tidy",
+        "label": "Put it all back",
+        "detail": "Mood +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 2
+          }
+        ]
+      },
+      {
+        "id": "complain",
+        "label": "Fill in the form",
+        "detail": "Mood \u22122 \u00b7 it goes in a drawer",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          },
+          {
+            "type": "flag",
+            "flag": "inside_paperwork"
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 90
+  },
+  {
+    "id": "inside_visit",
+    "headline": "A visit. Twenty minutes at a table bolted to the floor.",
+    "weight": 4,
+    "impact": {
+      "mood": 8,
+      "relationships": 6
+    },
+    "category": "personal",
+    "body": "They bring change for the machine and news you already read in the paper.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "listen",
+        "label": "Ask about the house",
+        "detail": "Relationships +5 \u00b7 affection +4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 5
+          },
+          {
+            "type": "affection",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "company",
+        "label": "Ask about the company",
+        "detail": "Mood +4 \u00b7 relationships \u22123",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4,
+            "relationships": -3
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 45
+  },
+  {
+    "id": "inside_letter_from_a_kid",
+    "headline": "A letter arrives in handwriting you have watched get worse.",
+    "weight": 4,
+    "impact": {
+      "mood": 10,
+      "relationships": 4
+    },
+    "category": "personal",
+    "body": "Four lines and a drawing of a building with too many windows.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "write",
+        "label": "Write back the same day",
+        "detail": "Relationships +6 \u00b7 mood +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 6,
+            "mood": 2
+          },
+          {
+            "type": "affection",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "later",
+        "label": "Leave it until you know what to say",
+        "detail": "Mood \u22124",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 60
+  },
+  {
+    "id": "inside_rival_next_cell",
+    "headline": "The founder who sued you in the spring is two doors down.",
+    "weight": 2,
+    "impact": {
+      "mood": -5
+    },
+    "category": "personal",
+    "body": "He does not look up. He has been here longer and it shows in the way he walks.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "talk",
+        "label": "Sit with him at lunch",
+        "detail": "Mood +6 \u00b7 you learn what he did",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 6
+          },
+          {
+            "type": "flag",
+            "flag": "inside_knows_the_rival"
+          }
+        ]
+      },
+      {
+        "id": "avoid",
+        "label": "Take the other table",
+        "detail": "Mood \u22122",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 300,
+    "once": true
+  },
+  {
+    "id": "inside_the_kitchen_job",
+    "headline": "They offer you the kitchen: five in the morning, and a bigger portion.",
+    "body": "Bread, tea urns and two hundred plates. The man showing you round has done it for nine years.",
+    "weight": 3,
+    "impact": {
+      "energy": -4,
+      "mood": 5
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "take",
+        "label": "Take it",
+        "detail": "Energy \u22125 \u00b7 mood +6 \u00b7 wallet +90",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -5,
+            "mood": 6,
+            "wallet": 90
+          }
+        ]
+      },
+      {
+        "id": "leave",
+        "label": "Stay on the landing",
+        "detail": "Energy +3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": 3
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 120
+  },
+  {
+    "id": "inside_education_officer",
+    "headline": "The education officer has a form and a course starting Tuesday.",
+    "weight": 3,
+    "impact": {
+      "mood": 4
+    },
+    "category": "personal",
+    "body": "Business studies. You do not say what you did for a living.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "enrol",
+        "label": "Put your name down",
+        "detail": "Mood +5 \u00b7 the board reads it",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 5
+          },
+          {
+            "type": "flag",
+            "flag": "inside_course"
+          }
+        ]
+      },
+      {
+        "id": "no",
+        "label": "Say you already know it",
+        "detail": "Mood \u22123",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 200
+  },
+  {
+    "id": "inside_the_phone_queue",
+    "headline": "You lose your place in the phone queue and the evening with it.",
+    "weight": 5,
+    "impact": {
+      "mood": -5,
+      "relationships": -3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 50
+  },
+  {
+    "id": "inside_canteen_politics",
+    "headline": "Somebody has an opinion about where you sit.",
+    "body": "He does not raise his voice. He does not have to; everybody has stopped eating.",
+    "weight": 4,
+    "impact": {
+      "mood": -3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "move",
+        "label": "Move",
+        "detail": "Mood \u22122 \u00b7 no trouble",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      },
+      {
+        "id": "stay",
+        "label": "Finish your food where you are",
+        "detail": "Mood +3 \u00b7 health \u22123",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 3,
+            "health": -3
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 70
+  },
+  {
+    "id": "inside_the_paper",
+    "headline": "Yesterday's paper comes round the landing and your company is in it.",
+    "weight": 3,
+    "impact": {
+      "mood": -6
+    },
+    "category": "personal",
+    "body": "Four paragraphs, and the photograph is the one from the website.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 80
+  },
+  {
+    "id": "inside_gym",
+    "headline": "There is a weights room, an hour a week, and a list.",
+    "weight": 4,
+    "impact": {
+      "health": 6,
+      "energy": -3,
+      "mood": 3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 40
+  },
+  {
+    "id": "inside_bad_night",
+    "headline": "You are awake at three and the landing is not.",
+    "weight": 5,
+    "impact": {
+      "energy": -6,
+      "mood": -4
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 35
+  },
+  {
+    "id": "inside_chaplain",
+    "headline": "The chaplain sits down without being asked and does not talk about God.",
+    "weight": 3,
+    "impact": {
+      "mood": 7
+    },
+    "category": "personal",
+    "body": "He asks what you built. You tell him, and he asks what it was for.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 110
+  },
+  {
+    "id": "inside_cellmate_story",
+    "headline": "Your cellmate tells you what he is in for. It takes the whole evening.",
+    "body": "It is longer than it needs to be, and he has clearly told it before.",
+    "weight": 4,
+    "impact": {
+      "mood": 4,
+      "relationships": 2
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "listen",
+        "label": "Let him finish",
+        "detail": "Mood +4 \u00b7 he remembers it",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4
+          },
+          {
+            "type": "flag",
+            "flag": "inside_cellmate_close"
+          }
+        ]
+      },
+      {
+        "id": "sleep",
+        "label": "Say you are tired",
+        "detail": "Mood \u22123",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 90
+  },
+  {
+    "id": "inside_commissary",
+    "headline": "Commissary day. The list is short and the prices are not.",
+    "weight": 4,
+    "impact": {
+      "wallet": -40,
+      "mood": 3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 30
+  },
+  {
+    "id": "inside_lawyer_visit",
+    "headline": "Your solicitor comes with a folder and forty minutes.",
+    "weight": 3,
+    "impact": {
+      "mood": -2,
+      "wallet": -300
+    },
+    "category": "personal",
+    "body": "Most of it is about a form. The rest is about a date that has not moved.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 100
+  },
+  {
+    "id": "inside_missed_birthday_inside",
+    "headline": "A birthday happens at home without you in the room.",
+    "weight": 3,
+    "impact": {
+      "mood": -12,
+      "relationships": -6
+    },
+    "category": "personal",
+    "body": "They put the phone on speaker and everybody says hello at the same time.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "sing",
+        "label": "Sing down the phone anyway",
+        "detail": "Relationships +5 \u00b7 mood +3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 5,
+            "mood": 3
+          },
+          {
+            "type": "affection",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "short",
+        "label": "Keep it short",
+        "detail": "Mood \u22124",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 200
+  },
+  {
+    "id": "inside_the_new_arrival",
+    "headline": "Somebody arrives on the landing who read about you.",
+    "weight": 3,
+    "impact": {
+      "mood": -2
+    },
+    "category": "personal",
+    "body": "He wants to know how much you had. You say less than they printed.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 90
+  },
+  {
+    "id": "inside_debt_offered",
+    "headline": "You are offered a phone card you did not ask for.",
+    "weight": 3,
+    "impact": {
+      "mood": 2
+    },
+    "category": "personal",
+    "body": "Nothing is free on this landing, and everybody says everything is.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "choices": [
+      {
+        "id": "refuse",
+        "label": "Hand it back",
+        "detail": "Mood \u22123 \u00b7 nothing owed",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      },
+      {
+        "id": "take",
+        "label": "Take it",
+        "detail": "Mood +5 \u00b7 you owe somebody",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 5
+          },
+          {
+            "type": "flag",
+            "flag": "inside_owes"
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 120
+  },
+  {
+    "id": "inside_governor",
+    "headline": "The governor's office wants a word about your file.",
+    "weight": 2,
+    "impact": {
+      "mood": -3
+    },
+    "category": "personal",
+    "body": "Nothing is wrong. They wanted to look at the man from the newspaper.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving"
+      ]
+    },
+    "cooldownDays": 180
+  },
+  {
+    "id": "inside_gang_favour",
+    "headline": "Somebody from the wing asks you to make a phone call for them.",
+    "weight": 3,
+    "impact": {
+      "mood": -4
+    },
+    "category": "personal",
+    "body": "It is a number outside and a sentence to repeat. Neither is explained.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving",
+        "inside_gang"
+      ]
+    },
+    "choices": [
+      {
+        "id": "call",
+        "label": "Make the call",
+        "detail": "Mood \u22125 \u00b7 nothing comes back",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5
+          },
+          {
+            "type": "flag",
+            "flag": "inside_made_the_call"
+          }
+        ]
+      },
+      {
+        "id": "refuse",
+        "label": "Say you cannot",
+        "detail": "Mood \u22122 \u00b7 the yard gets wider",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          },
+          {
+            "type": "clearFlag",
+            "flag": "inside_gang"
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 150
+  },
+  {
+    "id": "inside_gang_protection",
+    "headline": "Nobody has said anything to you in a fortnight, and that is the arrangement.",
+    "weight": 4,
+    "impact": {
+      "mood": 5
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_serving",
+        "inside_gang"
+      ]
+    },
+    "cooldownDays": 60
+  },
+  {
+    "id": "inside_gang_business_plan",
+    "headline": "Two of them want to know how a company actually gets money.",
+    "weight": 3,
+    "impact": {
+      "mood": 6
+    },
+    "category": "personal",
+    "body": "You draw a cap table on the back of a canteen menu. They ask good questions.",
+    "requires": {
+      "flagsAll": [
+        "inside_serving",
+        "inside_gang"
+      ]
+    },
+    "cooldownDays": 140
+  },
+  {
+    "id": "inside_first_morning_out",
+    "headline": "The first morning out, you wake at six for no reason at all.",
+    "weight": 4,
+    "impact": {
+      "mood": 4,
+      "energy": -2
+    },
+    "category": "personal",
+    "body": "Nobody is going to unlock anything. It takes a while to be a fact.",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "cooldownDays": 200
+  },
+  {
+    "id": "inside_the_form",
+    "headline": "There is a form that asks where you live and who employs you.",
+    "body": "Twelve boxes, and a space at the bottom for anything else the officer should know.",
+    "weight": 4,
+    "impact": {
+      "mood": -4
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "choices": [
+      {
+        "id": "own",
+        "label": "Write your own company down",
+        "detail": "Mood +4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4
+          }
+        ]
+      },
+      {
+        "id": "blank",
+        "label": "Leave the employer line blank",
+        "detail": "Mood \u22124",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 180
+  },
+  {
+    "id": "inside_bank_letter",
+    "headline": "The bank writes to say your account is under review.",
+    "weight": 4,
+    "impact": {
+      "mood": -6,
+      "wallet": -200
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "cooldownDays": 150
+  },
+  {
+    "id": "inside_school_gate_after",
+    "headline": "Somebody at the school gate knows, and is very careful about it.",
+    "weight": 4,
+    "impact": {
+      "mood": -7,
+      "relationships": -3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "cooldownDays": 140
+  },
+  {
+    "id": "inside_old_cellmate_calls",
+    "headline": "Your old cellmate calls. He is out, and he is asking about work.",
+    "weight": 3,
+    "impact": {
+      "mood": 2
+    },
+    "category": "personal",
+    "body": "He is good on a phone and honest about why he is ringing you and not somebody else.",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "choices": [
+      {
+        "id": "meet",
+        "label": "Meet him for a coffee",
+        "detail": "Mood +6 \u00b7 relationships +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 6,
+            "relationships": 2
+          },
+          {
+            "type": "flag",
+            "flag": "inside_cellmate_out"
+          }
+        ]
+      },
+      {
+        "id": "not_now",
+        "label": "Say the timing is bad",
+        "detail": "Mood \u22125",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 200
+  },
+  {
+    "id": "inside_interview_question",
+    "headline": "An interview goes well until the gap in the dates comes up.",
+    "body": "\"And what were you doing between the March and the following spring?\"",
+    "weight": 3,
+    "impact": {
+      "mood": -6
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "choices": [
+      {
+        "id": "straight",
+        "label": "Say it straight",
+        "detail": "Mood +5 \u00b7 reputation \u22122",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 5
+          },
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      },
+      {
+        "id": "vague",
+        "label": "Call it a sabbatical",
+        "detail": "Mood \u22124",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 170
+  },
+  {
+    "id": "inside_insurance",
+    "headline": "The insurance renewal has a new question on it, and you answer it truthfully.",
+    "weight": 3,
+    "impact": {
+      "wallet": -450,
+      "mood": -3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "cooldownDays": 200
+  },
+  {
+    "id": "inside_kid_asks_after",
+    "headline": "One of the children asks, at dinner, what prison is like.",
+    "weight": 3,
+    "impact": {
+      "mood": -8
+    },
+    "category": "personal",
+    "body": "The table stops. The question is not unkind; it is just a question.",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "choices": [
+      {
+        "id": "true",
+        "label": "Tell them the true, dull version",
+        "detail": "Relationships +7 \u00b7 mood +3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 7,
+            "mood": 3
+          }
+        ]
+      },
+      {
+        "id": "change",
+        "label": "Change the subject",
+        "detail": "Relationships \u22125",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -5
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 220
+  },
+  {
+    "id": "inside_sleep_pattern",
+    "headline": "You still eat at the times they fed you. It has been four months.",
+    "weight": 3,
+    "impact": {
+      "mood": -4,
+      "health": -2
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "cooldownDays": 160
+  },
+  {
+    "id": "inside_the_anniversary",
+    "headline": "A year to the day since the gate, and nobody mentions it, including you.",
+    "weight": 2,
+    "impact": {
+      "mood": -5
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_out"
+      ]
+    },
+    "cooldownDays": 360
+  },
+  {
+    "id": "inside_run_hotel",
+    "headline": "Another town, another hotel that takes cash.",
+    "weight": 4,
+    "impact": {
+      "wallet": -300,
+      "mood": -5,
+      "energy": -3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_run"
+      ]
+    },
+    "cooldownDays": 40
+  },
+  {
+    "id": "inside_run_recognised",
+    "headline": "The man behind the counter looks at you twice.",
+    "body": "He looks at you, then at the small television behind the till, then at you.",
+    "weight": 4,
+    "impact": {
+      "mood": -8
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "inside_run"
+      ]
+    },
+    "choices": [
+      {
+        "id": "leave",
+        "label": "Leave the shop",
+        "detail": "Mood \u22123 \u00b7 energy \u22124",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3,
+            "energy": -4
+          }
+        ]
+      },
+      {
+        "id": "stay",
+        "label": "Buy the milk anyway",
+        "detail": "Mood +4 \u00b7 it might have been nothing",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 60
+  },
+  {
+    "id": "inside_run_call_home",
+    "headline": "You call from a phone box and let it ring twice.",
+    "weight": 4,
+    "impact": {
+      "mood": 3,
+      "relationships": -4
+    },
+    "category": "personal",
+    "body": "They know it is you. Nobody says a name.",
+    "requires": {
+      "flagsAll": [
+        "inside_run"
+      ]
+    },
+    "cooldownDays": 50
+  },
+  {
+    "id": "inside_run_the_offer",
+    "headline": "Somebody who knows what you are can get you a passport.",
+    "weight": 2,
+    "impact": {
+      "mood": -3
+    },
+    "category": "personal",
+    "body": "The price is high and the photograph is the easy part.",
+    "requires": {
+      "flagsAll": [
+        "inside_run"
+      ]
+    },
+    "choices": [
+      {
+        "id": "buy",
+        "label": "Pay for it",
+        "detail": "Wallet \u22128,000 \u00b7 mood +6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -8000,
+            "mood": 6
+          },
+          {
+            "type": "flag",
+            "flag": "inside_papers"
+          }
+        ]
+      },
+      {
+        "id": "walk",
+        "label": "Walk away from it",
+        "detail": "Mood \u22124",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 200
   }
 ]

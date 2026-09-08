@@ -287,6 +287,23 @@ enum CrimeSystem {
         _ state: inout GameState,
         _ balance: BalanceConfig
     ) -> [GameEvent] {
+        // MARK: Iteration 11, wave two — W4 (inside)
+        // A sentence is a place now. `PrisonSystem.serve` opens it on the
+        // first morning, runs the day the founder chose, and closes it on
+        // release; what N1 wrote the sentence costs — the relationships
+        // meter every day, the board's patience every week — is applied
+        // inside that day rather than under it, so nothing is charged
+        // twice. `serve` returns `nil` only when there is no sentence at
+        // all, in which case the original body below runs unchanged.
+        if let inside = PrisonSystem.serve(&state, balance) {
+            if state.day % GameState.daysPerWeek == 0, state.investors.hasBoard {
+                state.investors.boardPressure = min(100,
+                    state.investors.boardPressure + balance.crime.insideBoardPressurePerWeek
+                )
+            }
+            return inside
+        }
+        // MARK: end of Iteration 11, wave two — W4
         guard let until = state.crime.sentenceUntilDay else { return [] }
         guard state.day < until else {
             state.crime.sentenceUntilDay = nil

@@ -43,6 +43,13 @@ public enum NetworkingVenue: String, Codable, Equatable, Sendable, CaseIterable 
 /// What the person at the party actually does.
 public enum ContactArchetype: String, Codable, Equatable, Sendable, CaseIterable {
     case engineer, designer, marketer, ops, investor, founder
+    // MARK: Iteration 11, wave two — W4 (inside)
+    /// Somebody the founder shared a cell with. They are in the address
+    /// book because the weeks put them there, not because anybody was
+    /// networking: `partyKinds` below is what a room at a demo day can
+    /// hold, and this is not in it.
+    case inmate
+    // MARK: end of Iteration 11, wave two — W4
 
     public var displayName: String {
         switch self {
@@ -52,6 +59,8 @@ public enum ContactArchetype: String, Codable, Equatable, Sendable, CaseIterable
         case .ops: "Operator"
         case .investor: "Investor"
         case .founder: "Founder"
+        // MARK: W4 (inside)
+        case .inmate: "Did time with you"
         }
     }
 
@@ -66,6 +75,8 @@ public enum ContactArchetype: String, Codable, Equatable, Sendable, CaseIterable
         // join at all — the point of them is their money and their
         // company, not a seat on the build.
         case .investor, .founder: .ops
+        // MARK: W4 (inside) — a job is a job, and it is the one they ask for
+        case .inmate: .ops
         }
     }
 
@@ -73,7 +84,8 @@ public enum ContactArchetype: String, Codable, Equatable, Sendable, CaseIterable
     public var hasCompany: Bool {
         switch self {
         case .founder, .investor: true
-        case .engineer, .designer, .marketer, .ops: false
+        // MARK: W4 (inside) — whatever they ran, they are not running it now
+        case .engineer, .designer, .marketer, .ops, .inmate: false
         }
     }
 
@@ -81,10 +93,29 @@ public enum ContactArchetype: String, Codable, Equatable, Sendable, CaseIterable
     public var isBacker: Bool {
         switch self {
         case .investor: true
-        case .engineer, .designer, .marketer, .ops, .founder: false
+        // MARK: W4 (inside)
+        case .engineer, .designer, .marketer, .ops, .founder, .inmate: false
         }
     }
 }
+
+// MARK: Iteration 11, wave two — W4 (inside)
+
+extension ContactArchetype {
+    /// The archetypes a room at a party can hold, in the order they have
+    /// always been in.
+    ///
+    /// `NetworkingSystem` used to roll over `allCases`, and adding a
+    /// seventh case to that enum would have moved every venue roster every
+    /// run has ever drawn. The rooms roll over this instead, which is the
+    /// six that were always there; `inmate` is not somebody you meet at a
+    /// demo day.
+    public static let partyKinds: [ContactArchetype] = [
+        .engineer, .designer, .marketer, .ops, .investor, .founder,
+    ]
+}
+
+// MARK: end of Iteration 11, wave two — W4
 
 /// Why somebody stopped being on payroll. Carried on the contact they
 /// become, because the address book should be able to say it, and because

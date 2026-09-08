@@ -553,6 +553,24 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: W4 (inside)
 
+    /// The gate closes. Weeks handed down, and the person on the top bunk.
+    case insideArrived(weeks: Int, cellmate: String, day: Int)
+    /// Today is spoken for.
+    case insideDayChosen(choice: String, day: Int)
+    /// A day went wrong, and it is on the record now.
+    case insideTrouble(kind: String, infractions: Int, day: Int)
+    /// In with the wing, or out.
+    case insideGangAnswered(joined: Bool, day: Int)
+    /// The board is listed, sitting, hearing, and finished.
+    case insideParoleListed(day: Int)
+    case insideParoleOpened(day: Int)
+    case insideParoleSaid(exchange: String, landed: Bool, day: Int)
+    case insideParoleDecided(granted: Bool, day: Int)
+    /// The wall.
+    case insideEscape(succeeded: Bool, day: Int)
+    /// Out, and how.
+    case insideReleased(weeksServed: Int, paroled: Bool, day: Int)
+
     // MARK: end of Iteration 11, wave two
 }
 
@@ -745,6 +763,23 @@ extension GameEvent {
             .notable
 
         // MARK: end N4
+
+        // MARK: Iteration 11, wave two — W4 (inside)
+
+        // The gate closing, the board's ruling and the wall are the three
+        // moments of a sentence a player has to be in the room for. A day
+        // that went wrong is worth looking up for; the day's own choice
+        // and the board's individual answers are the player's own taps.
+        case .insideArrived, .insideParoleDecided, .insideEscape:
+            .critical
+        case .insideTrouble, .insideParoleListed, .insideReleased:
+            .notable
+        case .insideGangAnswered, .insideParoleOpened:
+            .info
+        case .insideDayChosen, .insideParoleSaid:
+            .quiet
+
+        // MARK: end of Iteration 11, wave two — W4
 
         default:
             .info

@@ -83,6 +83,16 @@ enum SabbaticalSystem {
 
         var events: [GameEvent] = []
 
+        // MARK: Iteration 11, wave two — W4 (inside)
+        // A sabbatical the founder did not book is not a holiday: while a
+        // sentence is running, the beach's meters (and the partner's
+        // affection climbing) are `PrisonSystem`'s to write, and it writes
+        // them the other way. Everything else the caretaker does — the
+        // week's call, the log, the report — is the same machinery, which
+        // is the point of reusing it.
+        if !prisonHoliday(state) {
+        // MARK: end of Iteration 11, wave two — W4
+
         // 1. What a month off actually does.
         state.life.meters.apply(
             energy: config.energyPerDay,
@@ -94,6 +104,10 @@ enum SabbaticalSystem {
                 100, state.life.family.affection + config.affectionPerDay
             )
         }
+
+        // MARK: Iteration 11, wave two — W4 (inside)
+        }
+        // MARK: end of Iteration 11, wave two — W4
 
         // 2. A Grumbler in charge is a room nobody is tidying.
         if caretaker.traits.contains("grumbler"), config.grumblerMoralePerDay != 0 {
@@ -428,6 +442,33 @@ enum SabbaticalSystem {
     }
 
     // MARK: end of Iteration 11 — N1
+
+    // MARK: Iteration 11, wave two — W4 (inside)
+
+    /// Whether the away window running right now is a sentence rather than
+    /// a holiday. The one fact the trip's own meters have to know.
+    static func prisonHoliday(_ state: GameState) -> Bool {
+        state.prison?.isInside == true || state.crime.sentenceUntilDay != nil
+    }
+
+    /// The caretaker's report, headed the way a release is headed rather
+    /// than the way a holiday is. Same numbers, same log, different door:
+    /// what the founder wants to know on the way out of a gate is what
+    /// held and what did not, and nobody sent a postcard.
+    ///
+    /// Pure. `PrisonState.report` holds the report itself; this is the two
+    /// lines the release sheet puts over it.
+    /// The words themselves are `Prison.releaseHeading`, which is public
+    /// because the sheet that reads them is in the app and this type is
+    /// not; this is the name the sabbatical's own side of the seam calls
+    /// them by.
+    static func prisonReportHeading(
+        _ report: SabbaticalReport?, weeksServed: Int
+    ) -> (String, String) {
+        Prison.releaseHeading(report, weeksServed: weeksServed)
+    }
+
+    // MARK: end of Iteration 11, wave two — W4
 
     /// The founder cuts it short. Costs the caretaker's bond — being
     /// trusted and then checked on is worse than not being trusted — and
