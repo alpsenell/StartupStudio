@@ -55,7 +55,11 @@ final class StringsAuditTests: XCTestCase {
     // "/100" beside the figure, which is a glyph rather than prose. Its
     // two words — "LIFE" and "LIFE SCORE" — went through
     // `String(localized:comment:)` instead and are not counted here.
-    static let pixelTextLiteralBaseline = 47
+    // Re-pinned by iteration 10's M3: the incident room adds one site, the
+    // count of users who have walked out, which is a pure number. Its two
+    // prose strings — "INCIDENT ROOM" and "<product> STATUS" — went
+    // through `String(localized:comment:)` instead and are not counted.
+    static let pixelTextLiteralBaseline = 48
 
     func testNoNewUnlocalizedPixelChrome() throws {
         let sources = try Self.appSourceFiles()

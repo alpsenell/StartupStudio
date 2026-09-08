@@ -234,6 +234,37 @@ struct AppRootView: View {
                 endingCover(engine: engine)
                     .gameColumn()
             }
+            // MARK: Iteration 10 — M3 (incident room)
+            // A live product on fire opens its own room, the way the war
+            // room is presented — full screen, at window level, over
+            // whichever tab the player was on. It stays until the room is
+            // closed: the clock is stopped and this *is* the interruption,
+            // so there is nothing behind it to go back to.
+            .fullScreenCover(isPresented: incidentPresented) {
+                IncidentRoomScreen(engine: incidentEngine(engine))
+            }
+            // The one flag the engine's gate reads: incidents may only be
+            // raised once the player has opened the Products tab in this
+            // run. A pacing bot and a headless pass never switch tabs, so
+            // they never set it and never see an incident.
+            .onChange(of: router.tab, initial: true) { _, tab in
+                guard tab == .products else { return }
+                engine.send(.noticeProductsOpened)
+            }
+            // The Now card's row asks for the room back after it was put
+            // aside; HQ takes the route itself a beat later.
+            .onChange(of: router.pendingPush) { _, pending in
+                guard pending == .incidentRoom else { return }
+                incidentSetAside = nil
+            }
+            .task {
+                #if DEBUG
+                if incidentFixtureEngine == nil, let fixture = IncidentDebug.launchEngine() {
+                    incidentFixtureEngine = fixture
+                }
+                #endif
+            }
+            // MARK: end M3
             // Pending rival offers surface here (not per tab) so the paused
             // timeline always has its question on screen.
             .sheet(item: pendingDecision) { prompt in
@@ -336,6 +367,55 @@ struct AppRootView: View {
     func canContinue(_ info: GameOverInfo) -> Bool {
         (info.kind == .ipo || info.kind == .independent) && session.engine.state.epilogue == nil
     }
+
+    // MARK: Iteration 10 — M3 (incident room)
+
+    /// The room's own engine in DEBUG: `-autoIncident <kind>` plays a
+    /// fixture company to a live product and raises one, because a
+    /// headless launch has no shipped product to break. Every real launch
+    /// gets the session's engine.
+    @State private var incidentFixtureEngine: GameEngine?
+    /// The incident the player has put aside — closed the room without
+    /// closing the incident. Keyed by the day it started and the product,
+    /// so a *new* incident opens its own room rather than inheriting the
+    /// last one's dismissal. The Now card's row brings it back.
+    @State private var incidentSetAside: String?
+
+    private func incidentEngine(_ engine: GameEngine) -> GameEngine {
+        incidentFixtureEngine ?? engine
+    }
+
+    /// A stable key for the open incident, for `incidentSetAside`.
+    private var incidentKey: String? {
+        #if DEBUG
+        if let incident = incidentFixtureEngine?.state.incident {
+            return "\(incident.productID)-\(incident.startedDay)"
+        }
+        #endif
+        guard let incident = session.engine.state.incident else { return nil }
+        return "\(incident.productID)-\(incident.startedDay)"
+    }
+
+    /// Open for as long as something is on fire and the player has not put
+    /// it aside. Unlike the ending's cover this one can be closed — the
+    /// incident stays open, the Now card carries it, and the clock stays
+    /// stopped until the room is actually finished.
+    private var incidentPresented: Binding<Bool> {
+        Binding(
+            get: {
+                guard !session.needsOnboarding, session.engine.state.gameOver == nil,
+                      let key = incidentKey
+                else { return false }
+                return incidentSetAside != key
+            },
+            set: { presented in
+                guard !presented, let key = incidentKey else { return }
+                incidentSetAside = key
+            }
+        )
+    }
+
+    // MARK: end M3
 
     private var gameOverPresented: Binding<Bool> {
         Binding(

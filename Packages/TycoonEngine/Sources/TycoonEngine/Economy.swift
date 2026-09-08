@@ -163,6 +163,17 @@ public struct EconomyState: Codable, Equatable, Sendable {
     /// pending-decision sheets do.
     public var pauseEvents: [GameEvent]
 
+    // MARK: Iteration 10 — M3 (incident room)
+
+    /// The run's incident ledger: whether the player has ever opened the
+    /// Products tab (nothing is raised until they have) and the last day
+    /// each product had an incident. `.empty` for every run that has never
+    /// opened the tab, and encoded only when it is not — so a pacing bot's
+    /// save is byte-for-byte the save it always was. See `Incident.swift`.
+    public var incidents: IncidentLog
+
+    // MARK: end M3
+
     public init(
         workPace: WorkPace = .normal,
         pendingResignation: PendingResignation? = nil,
@@ -179,7 +190,10 @@ public struct EconomyState: Codable, Equatable, Sendable {
         rescueSalary: Int? = nil,
         guaranteedLoanAmount: Int = 0,
         lastNonCriticalPauseDay: Int? = nil,
-        pauseEvents: [GameEvent] = []
+        pauseEvents: [GameEvent] = [],
+        // MARK: Iteration 10 — M3 (incident room)
+        incidents: IncidentLog = .empty
+        // MARK: end M3
     ) {
         self.workPace = workPace
         self.pendingResignation = pendingResignation
@@ -197,6 +211,9 @@ public struct EconomyState: Codable, Equatable, Sendable {
         self.guaranteedLoanAmount = guaranteedLoanAmount
         self.lastNonCriticalPauseDay = lastNonCriticalPauseDay
         self.pauseEvents = pauseEvents
+        // MARK: Iteration 10 — M3 (incident room)
+        self.incidents = incidents
+        // MARK: end M3
     }
 
     /// A fresh company's economy state.
@@ -223,6 +240,9 @@ extension EconomyState {
         case chronicCondition, hospitalizationDays, burnoutDays, recoveryWeeks
         case lonelySinceDay, evictionWarningDay, lastNonCriticalPauseDay, pauseEvents
         case convalescingUntilDay, walletLastWeek, rescueSalary, guaranteedLoanAmount
+        // MARK: Iteration 10 — M3 (incident room)
+        case incidents
+        // MARK: end M3
     }
 
     private struct RecognitionEntry: Codable {
@@ -263,7 +283,10 @@ extension EconomyState {
             lastNonCriticalPauseDay: try container.decodeIfPresent(
                 Int.self, forKey: .lastNonCriticalPauseDay
             ),
-            pauseEvents: try container.decodeIfPresent([GameEvent].self, forKey: .pauseEvents) ?? []
+            pauseEvents: try container.decodeIfPresent([GameEvent].self, forKey: .pauseEvents) ?? [],
+            // MARK: Iteration 10 — M3 (incident room)
+            incidents: try container.decodeIfPresent(IncidentLog.self, forKey: .incidents) ?? .empty
+            // MARK: end M3
         )
     }
 
@@ -290,5 +313,12 @@ extension EconomyState {
         try container.encode(guaranteedLoanAmount, forKey: .guaranteedLoanAmount)
         try container.encodeIfPresent(lastNonCriticalPauseDay, forKey: .lastNonCriticalPauseDay)
         try container.encode(pauseEvents, forKey: .pauseEvents)
+        // MARK: Iteration 10 — M3 (incident room)
+        // Encoded only when the player has touched it: an untouched run
+        // writes exactly the bytes it wrote before incidents existed.
+        if !incidents.isEmpty {
+            try container.encode(incidents, forKey: .incidents)
+        }
+        // MARK: end M3
     }
 }

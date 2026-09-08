@@ -1811,6 +1811,17 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 9 — L6
 
+    // MARK: Iteration 10 — M3 (incident room)
+
+    /// When a live product breaks, and what the room can do about it
+    /// (`BalanceConfig+Incidents.swift`). Inline default, like `codebase`
+    /// above, so `"incidents"` is an optional key — and behind a gate only
+    /// the app opens, so a run that never opens the Products tab never
+    /// reads a value from it.
+    public var incidents: IncidentBalance = .default
+
+    // MARK: end Iteration 10 — M3
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

@@ -1181,5 +1181,28 @@
     "boardPatienceFactor": 0.5,
     "poachChanceFactor": 1.5,
     "earlyEndBondPenalty": 25.0
+  },
+  "incidents": {
+    "enabled": true,
+    "cooldownDays": 91,
+    "badPatchWindowDays": 3,
+    "badPatchBugFactor": 1.0,
+    "spikeGrowthFactor": 1.8,
+    "spikeHostingShare": 0.35,
+    "minimumReach": 120,
+    "leakWeeklyChance": 0.02,
+    "leakLegalFactor": 0.25,
+    "hoursPerIncident": 8,
+    "pointsPerPersonHour": 9.0,
+    "skillFloor": 0.6,
+    "skillSpan": 0.9,
+    "roleBonus": 0.45,
+    "founderFactor": 1.15,
+    "mitigateRelief": 0.6,
+    "communicateRelief": 0.3,
+    "reliefCap": 0.9,
+    "credibilityFloor": 0.4,
+    "brokenPromisePenalty": 6.0,
+    "hypePerUserLost": 0.02
   }
 }

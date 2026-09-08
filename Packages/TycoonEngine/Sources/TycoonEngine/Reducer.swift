@@ -129,6 +129,12 @@ public enum Reducer {
 
         // MARK: M3 (incident room)
 
+        // Nothing here on purpose. An incident is raised from
+        // `LiveOpsSystem`'s M3 region, at the end of the live-ops day,
+        // where the facts it reads (the patch that just landed, the week
+        // the wild just had) are freshest — and behind a gate the pacing
+        // bots never open. The room itself is all actions.
+
         // MARK: M4 (leagues)
 
         // MARK: M5 (morning desk)
@@ -508,6 +514,20 @@ public enum Reducer {
         // MARK: M2 (pitch room)
 
         // MARK: M3 (incident room)
+
+        case let .assignToIncident(employeeID, thread):
+            events = IncidentSystem.assign(
+                employeeID: employeeID, thread: thread, state: &state, balance: balance
+            )
+        case let .chooseIncidentStatement(id):
+            events = IncidentSystem.chooseStatement(id: id, state: &state, content: content)
+        case .advanceIncident:
+            events = IncidentSystem.advance(state: &state, balance: balance)
+        case .resolveIncident:
+            events = IncidentSystem.resolve(state: &state, balance: balance, content: content)
+        case .noticeProductsOpened:
+            state.economy.incidents.hasOpenedProducts = true
+            events = []
 
         // MARK: M4 (leagues)
 

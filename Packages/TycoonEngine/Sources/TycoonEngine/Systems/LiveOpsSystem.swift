@@ -39,6 +39,19 @@ enum LiveOpsSystem {
             events.append(contentsOf: discoverLiveBugs(&state, balance))
         }
         events.append(contentsOf: completeUpdates(&state, balance, content))
+
+        // MARK: Iteration 10 — M3 (incident room)
+
+        // What raises an incident, read off the day live-ops just
+        // produced: the patch that landed a moment ago, the week the wild
+        // just had, and — once a week, and only for a player who has
+        // opened the Products tab — the roll for a leak. Returns on its
+        // first line for every headless run and every pacing bot, so the
+        // stream and the balance below the gate are never touched.
+        events.append(contentsOf: IncidentSystem.raiseIfNeeded(&state, balance, content))
+
+        // MARK: end M3
+
         return events
     }
 
