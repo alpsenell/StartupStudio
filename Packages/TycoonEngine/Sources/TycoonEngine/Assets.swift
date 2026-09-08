@@ -338,6 +338,61 @@ extension GameState {
         }
     }
 
+    // MARK: The refusals
+
+    // Rule 7: every action shows its consequence on the button, and a
+    // refused one says why. `AssetsSystem` is internal — the app cannot
+    // see it — so each gate is published here in the founder's own words,
+    // and the system's handler asks the same function before it does
+    // anything. One rule, one sentence, no drift between the button and
+    // the reducer.
+
+    /// Why the founder cannot buy `catalogID` today, or `nil`.
+    public func assetBuyBlocker(_ catalogID: String, balance: BalanceConfig) -> String? {
+        AssetsSystem.buyBlocker(catalogID, state: self, balance: balance)
+    }
+
+    /// Why the bill cannot be paid today, or `nil`.
+    public func assetRepairBlocker(_ catalogID: String, balance: BalanceConfig) -> String? {
+        AssetsSystem.repairBlocker(catalogID, state: self, balance: balance)
+    }
+
+    /// What one owned thing would fetch today.
+    public func assetSalePrice(_ catalogID: String, balance: BalanceConfig) -> Int {
+        guard let owned = assets.asset(catalogID), let def = balance.assets.asset(catalogID) else { return 0 }
+        return AssetsSystem.resalePrice(owned, def, balance)
+    }
+
+    /// Why the course of treatment cannot start today, or `nil`.
+    public func assetTreatBlocker(_ ailmentID: String, balance: BalanceConfig) -> String? {
+        AssetsSystem.treatBlocker(ailmentID, state: self, balance: balance)
+    }
+
+    /// Why there is no hour on the couch this week, or `nil`.
+    public func assetTherapyBlocker(balance: BalanceConfig) -> String? {
+        AssetsSystem.therapyBlocker(state: self, balance: balance)
+    }
+
+    /// Why tonight cannot be an evening off it, or `nil`.
+    public func assetQuitBlocker(_ viceID: String, balance: BalanceConfig) -> String? {
+        AssetsSystem.quitBlocker(viceID, state: self, balance: balance)
+    }
+
+    /// Why that stake cannot go on that table, or `nil`.
+    public func assetGambleBlocker(_ gameID: String, stake: Int, balance: BalanceConfig) -> String? {
+        AssetsSystem.gambleBlocker(gameID, stake: stake, state: self, balance: balance)
+    }
+
+    /// Why there is no ticket this week, or `nil`.
+    public func assetTicketBlocker(balance: BalanceConfig) -> String? {
+        AssetsSystem.ticketBlocker(state: self, balance: balance)
+    }
+
+    /// Why that trade cannot happen, or `nil`.
+    public func assetTradeBlocker(dollars: Int, balance: BalanceConfig) -> String? {
+        AssetsSystem.tradeBlocker(dollars: dollars, state: self, balance: balance)
+    }
+
     /// The daily mood the founder's things are worth: a dog at the door, a
     /// cabin they can go to, a car that starts. Halved while the thing is
     /// off the road.

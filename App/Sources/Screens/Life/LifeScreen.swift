@@ -41,6 +41,7 @@ struct LifeScreen: View {
         // MARK: N1 (crime and the courtroom)
         // MARK: N2 (people menus)
         // MARK: N3 (assets, vices and the doctor)
+        case assets
         // MARK: N4 (fame and the feed)
         // MARK: end of Iteration 11
     }
@@ -107,6 +108,11 @@ struct LifeScreen: View {
                     // MARK: Iteration 11 — new cards, in this order
                     // MARK: N1 (crime and the courtroom)
                     // MARK: N3 (assets, vices and the doctor)
+                    // The founder's own balance sheet. It is money, but
+                    // it is also the doctor and the habits, so it sits in
+                    // *You* — under the meters it moves — with the
+                    // wallet's own card linking across to it.
+                    AssetsCard(engine: engine, onOpen: { path = [.assets] })
                     // MARK: N4 (fame and the feed)
                     // MARK: end of Iteration 11
                 }
@@ -152,6 +158,8 @@ struct LifeScreen: View {
                 // MARK: N1 (crime and the courtroom)
                 // MARK: N2 (people menus)
                 // MARK: N3 (assets, vices and the doctor)
+                case .assets:
+                    AssetsScreen(engine: engine)
                 // MARK: N4 (fame and the feed)
                 // MARK: end of Iteration 11
                 }
@@ -170,6 +178,19 @@ struct LifeScreen: View {
         // MARK: N1 (crime and the courtroom)
         // MARK: N2 (people menus)
         // MARK: N3 (assets, vices and the doctor)
+        // `-autoRoute assets` (and `doctor` / `casino`, which land on the
+        // same screen and open a sheet from there) push the founder's own
+        // balance sheet, once. Taken before the launch-route block below
+        // so the lane's own flag is read in its own region.
+        if !tookLaunchRoute, Route.launchRoute == .assets {
+            tookLaunchRoute = true
+            path = [.assets]
+            return
+        }
+        if router.take(.assets) {
+            path = [.assets]
+            return
+        }
         // MARK: N4 (fame and the feed)
         // MARK: end of Iteration 11
         // A headless screenshot pass cannot tap: `-autoRoute agenda` lands

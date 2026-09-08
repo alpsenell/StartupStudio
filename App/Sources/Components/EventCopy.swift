@@ -72,6 +72,17 @@ struct EventCopy {
         case .evictionWarning, .homeDowngraded, .chronicConditionDiagnosed,
              .chronicConditionCleared, .founderMeltdown:
             .life
+        // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+        // The car, the flat, the dog, the doctor and the habits are all
+        // the founder's own life, never the company's — the company never
+        // pays for a single one of them.
+        case .assetBought, .assetSold, .assetBrokeDown, .assetRepaired,
+             .assetStolen, .assetFlooded, .petVetBill,
+             .ailmentDiagnosed, .ailmentTreated, .ailmentCleared, .therapyAttended,
+             .viceIntervention, .viceQuitProgressed, .viceQuit, .viceRelapsed,
+             .casinoHandPlayed, .lotteryTicketBought, .lotteryDrawn, .cryptoTraded:
+            .life
+        // MARK: end of Iteration 11 — N3
         // The founder as a person: what they're learning, who they've met,
         // the money that is theirs rather than the company's, and how the
         // person they go home to is doing.
@@ -700,6 +711,115 @@ struct EventCopy {
                 Theme.accent
             )
 
+        // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+
+        case let .assetBought(assetID, price, day):
+            (
+                assetIcon(assetID),
+                "Bought \(assetName(assetID)) — \(price.money) of your own money",
+                day,
+                Theme.accent
+            )
+        case let .assetSold(assetID, price, day):
+            ("arrow.down.circle.fill", "Sold \(assetName(assetID)) for \(price.money)", day, Theme.positiveCash)
+        case let .assetBrokeDown(assetID, bill, day):
+            (
+                "wrench.and.screwdriver.fill",
+                "\(assetName(assetID)) is off the road — the garage wants \(bill.money)",
+                day,
+                Theme.warning
+            )
+        case let .assetRepaired(assetID, cost, day):
+            ("checkmark.circle.fill", "Paid \(cost.money) and got \(assetName(assetID)) back", day, Theme.accent)
+        case let .assetStolen(assetID, day):
+            ("car.fill", "\(assetName(assetID)) was not there this morning", day, Theme.negativeCash)
+        case let .assetFlooded(assetID, bill, day):
+            (
+                "drop.fill",
+                "Water where it should not be at \(assetName(assetID)) — \(bill.money) to put right",
+                day,
+                Theme.warning
+            )
+        case let .petVetBill(_, name, bill, day):
+            (
+                "pawprint.fill",
+                name.isEmpty
+                    ? "The vet has been. Everything is fine, and it cost \(bill.money)"
+                    : "\(name) is fine. The vet was \(bill.money)",
+                day,
+                Theme.warning
+            )
+        case let .ailmentDiagnosed(ailmentID, day):
+            (
+                AssetsPresentation.ailmentIcon(ailmentID),
+                "The doctor has put a name to it: \(ailmentName(ailmentID))",
+                day,
+                Theme.negativeCash
+            )
+        case let .ailmentTreated(ailmentID, cost, day):
+            (
+                "cross.case.fill",
+                "Started treating \(ailmentName(ailmentID)) — \(cost.money)",
+                day,
+                Theme.accent
+            )
+        case let .ailmentCleared(ailmentID, day):
+            ("checkmark.seal.fill", "\(ailmentName(ailmentID)) is gone", day, Theme.positiveCash)
+        case .therapyAttended(let day):
+            ("brain.head.profile", "An hour on the couch, and you said most of it out loud", day, Theme.accent)
+        case let .viceIntervention(viceID, from, day):
+            (
+                AssetsPresentation.viceIcon(viceID),
+                "\(from) sat you down about \(viceName(viceID).lowercased())",
+                day,
+                Theme.negativeCash
+            )
+        case let .viceQuitProgressed(viceID, evenings, day):
+            (
+                "figure.walk",
+                "\(evenings) evening\(evenings == 1 ? "" : "s") off \(viceName(viceID).lowercased())",
+                day,
+                Theme.accent
+            )
+        case let .viceQuit(viceID, day):
+            ("checkmark.seal.fill", "You are done with \(viceName(viceID).lowercased())", day, Theme.positiveCash)
+        case let .viceRelapsed(viceID, day):
+            (
+                AssetsPresentation.viceIcon(viceID),
+                "The run at \(viceName(viceID).lowercased()) ended the way those runs end",
+                day,
+                Theme.negativeCash
+            )
+        case let .casinoHandPlayed(_, stake, returned, day):
+            (
+                "suit.spade.fill",
+                returned > stake
+                    ? "\(stake.money) at the tables came back as \(returned.money)"
+                    : "\(stake.money) at the tables, and that was that",
+                day,
+                returned > stake ? Theme.positiveCash : Theme.negativeCash
+            )
+        case .lotteryTicketBought(let day):
+            ("ticket.fill", "One ticket, drawn at the weekend", day, Color.secondary)
+        case let .lotteryDrawn(prize, day):
+            (
+                "ticket.fill",
+                prize > 0 ? "The ticket came up: \(prize.money)" : "The ticket did not come up",
+                day,
+                prize > 0 ? Theme.positiveCash : Color.secondary
+            )
+        case let .cryptoTraded(dollars, price, day):
+            (
+                "chart.line.uptrend.xyaxis",
+                dollars > 0
+                    ? "\(dollars.money) into the wallet at \(price.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))) a unit"
+                    : "\(abs(dollars).money) back out of the wallet",
+                day,
+                Color.secondary
+            )
+
+        // MARK: end of Iteration 11 — N3
+
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a
         // warning naming the new case) when a workstream appends one.
@@ -709,6 +829,29 @@ struct EventCopy {
             fallbackEntry(for: event)
         }
     }
+
+    // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+
+    /// A catalog id as the player knows it. The balance is the only place
+    /// a car, a flat or a dog is named, so an id from a balance file this
+    /// build does not know still reads as something rather than nothing.
+    private func assetName(_ id: String) -> String {
+        balance.assets.asset(id)?.name ?? "something of yours"
+    }
+
+    private func assetIcon(_ id: String) -> String {
+        balance.assets.asset(id).map { AssetsPresentation.icon($0.assetKind) } ?? "key.fill"
+    }
+
+    private func ailmentName(_ id: String) -> String {
+        balance.assets.ailment(id)?.name ?? "something"
+    }
+
+    private func viceName(_ id: String) -> String {
+        balance.assets.vice(id)?.name ?? "it"
+    }
+
+    // MARK: end of Iteration 11 — N3
 
     // MARK: Iteration 10 — M2 (pitch room)
 

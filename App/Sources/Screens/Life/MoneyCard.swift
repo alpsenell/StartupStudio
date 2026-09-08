@@ -75,6 +75,14 @@ struct MoneyCard: View {
                     )
                 }
 
+                // MARK: Iteration 11 — N3 (assets, vices and the doctor)
+                // The other half of the founder's money: what they own.
+                // A line rather than a card, because the card itself is
+                // three sections further down the tab — this is the
+                // cross-reference, not a second front door.
+                AssetsMoneyNote(engine: engine)
+                // MARK: end of Iteration 11 — N3
+
                 MoneySheetLink(engine: engine)
                 Text("The company pays your salary out of cash each week; rent comes out of your wallet.")
                     .font(.caption)
@@ -263,5 +271,47 @@ private struct PayBandNote: View {
     private var detail: String {
         let base = "They know what you pay them — the median is \(median.money)/wk."
         return hasBoard ? base + " Your board has noticed too." : base
+    }
+}
+
+
+// MARK: - Iteration 11 — N3 (assets, vices and the doctor)
+
+/// One line under the salary stepper: what the founder owns, what it
+/// costs them a week, and — when there is nothing yet — that there is a
+/// whole other column waiting. Silent about the vices and the doctor:
+/// this card is about money.
+private struct AssetsMoneyNote: View {
+    let engine: GameEngine
+
+    var body: some View {
+        let state = engine.state
+        let worth = state.assetResaleValue(balance: engine.balance)
+        let weekly = state.assetWeeklyCosts(balance: engine.balance)
+        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+            Image(systemName: "key.fill")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+            Text(line(worth: worth, weekly: weekly))
+                .font(.caption)
+                .monospacedDigit()
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func line(worth: Int, weekly: Int) -> String {
+        guard worth != 0 || weekly != 0 else {
+            return "You own nothing but what is in your wallet. Your things are further down this tab."
+        }
+        if weekly > 0 {
+            return "Your things are worth \(worth.money) and cost \(weekly.money)/wk to keep."
+        }
+        if weekly < 0 {
+            return "Your things are worth \(worth.money) and bring in \(abs(weekly).money)/wk."
+        }
+        return "Your things are worth \(worth.money)."
     }
 }

@@ -68,7 +68,7 @@ extension HomeSceneComposer {
                 HomeDecorSlotFrame("floorA", .floor, 84, 69),
                 // MARK: Iteration 11 — N3
                 HomeDecorSlotFrame("drivewayA", .driveway, 2, 69),
-                HomeDecorSlotFrame("basketA", .basket, 40, 69),
+                HomeDecorSlotFrame("basketA", .basket, 60, 69),
                 // MARK: end of Iteration 11 — N3
             ]
         case .apartment:

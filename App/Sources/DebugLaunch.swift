@@ -261,6 +261,7 @@ extension Route {
         // MARK: N1 (crime and the courtroom)
         // MARK: N2 (people menus)
         // MARK: N3 (assets, vices and the doctor)
+        case "assets", "garage", "doctor", "casino", "habits": .assets
         // MARK: N4 (fame and the feed)
         // MARK: N5 (office secrets)
         // MARK: end of Iteration 11
@@ -858,6 +859,101 @@ extension DebugLaunch {
     // MARK: N2 (people menus)
 
     // MARK: N3 (assets, vices and the doctor)
+
+    /// `-autoAssets`: fills the garage for a screenshot pass — a coupé, a
+    /// flat to let, a dog, some of the wallet that moves on its own, a
+    /// ticket and three hands of blackjack.
+    ///
+    /// Every one of those is a real `GameAction` through the ordinary
+    /// reducer, including the salary that pays for them, so the pass has
+    /// no back door into state. DEBUG only, like every flag here, and
+    /// consumed in `AssetsScreen.onAppear` — the one place the flag's
+    /// route lands.
+    static var fillsGarage: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoAssets")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoRoute doctor` / `casino`: which of the two sheets a headless
+    /// pass should also open once the screen is up.
+    static var opensAssetsSheet: String? {
+        #if DEBUG
+        let name = autoRouteName
+        return name == "doctor" || name == "casino" ? name : nil
+        #else
+        return nil
+        #endif
+    }
+
+    /// Fills the garage, once per launch, from `AssetsScreen`.
+    ///
+    /// A coupé is $45,000 of the founder's *own* money and a screenshot
+    /// pass cannot play the four game-years that earns it — so, exactly
+    /// like `startAutoSabbatical`, this borrows the way a player would,
+    /// pays the founder the way a player would, and then buys the moment
+    /// the wallet can actually carry it. Every step is a real
+    /// `GameAction` through the ordinary reducer: no back door into
+    /// state, and nothing here can put the game in a shape a played run
+    /// could not reach. Requires `-autoSpeed`, since the wallet only
+    /// fills on the weekly settlement.
+    @MainActor
+    static func startAutoAssets(engine: GameEngine) {
+        #if DEBUG
+        guard fillsGarage, autoAssetsTask == nil else { return }
+        autoAssetsTask = Task { @MainActor in
+            // Everything is bought in one moment, once the wallet can
+            // carry the lot — so the clock stops immediately afterwards
+            // and a screenshot is of a still frame rather than a run that
+            // is still walking into decisions it cannot answer.
+            let shoppingList = ["dog", "hatchback", "estate", "coupe"]
+            let needed = 62_000
+            // Set once the shopping is done: the clock stays stopped from
+            // then on, but the loop keeps clearing modals so a question
+            // raised on the last tick does not sit over the screenshot.
+            var done = false
+            while !Task.isCancelled, engine.state.gameOver == nil {
+                try? await Task.sleep(for: .milliseconds(250))
+                // A pass that runs for game-months walks into every modal
+                // in the game; clear them the way the other passes do.
+                GameShell.shared.pendingAwardsYear = nil
+                GameShell.shared.launchDayProductID = nil
+                if !done, engine.state.speed == .paused { engine.setSpeed(.x4) }
+                if let prompt = DecisionPrompt.pending(
+                    in: engine.state, content: engine.content, balance: engine.balance
+                ), let option = prompt.options.first(where: { option in
+                    guard option.disabledReason == nil else { return false }
+                    // A pass that says yes to everything sells the company
+                    // out from under itself — the same guard the
+                    // sabbatical pass keeps.
+                    switch option.action {
+                    case .acceptBuyout, .acceptBuyoutEarnOut: return false
+                    default: return true
+                    }
+                }) {
+                    engine.send(option.action)
+                }
+                if engine.state.life.founderSalary < engine.balance.life.founderSalaryMax {
+                    engine.send(.setFounderSalary(engine.balance.life.founderSalaryMax))
+                }
+                guard !done, engine.state.life.wallet >= needed else { continue }
+
+                for id in shoppingList { engine.send(.buyAsset(assetID: id)) }
+                engine.send(.tradeCrypto(dollars: 2000))
+                engine.send(.buyLotteryTicket)
+                for _ in 0..<4 { engine.send(.playCasinoGame(gameID: "blackjack", stake: 400)) }
+                engine.setSpeed(.paused)
+                done = true
+            }
+        }
+        #endif
+    }
+
+    #if DEBUG
+    @MainActor private static var autoAssetsTask: Task<Void, Never>?
+    #endif
 
     // MARK: N4 (fame and the feed)
 
