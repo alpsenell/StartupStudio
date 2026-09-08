@@ -414,6 +414,14 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: M3 (incident room)
 
+    /// M3: a live product broke. Critical — the clock stops and the room
+    /// opens.
+    case incidentRaised(productID: UUID, kind: String, day: Int)
+    /// M3: the room closed. What it cost, and what the studio said.
+    case incidentResolved(
+        productID: UUID, kind: String, usersLost: Int, reputationDelta: Double, day: Int
+    )
+
     // MARK: M4 (leagues)
 
     // MARK: M5 (morning desk)
@@ -548,6 +556,18 @@ extension GameEvent {
         // is worth a line in the feed and nothing more.
         case .continuedAfterEnding, .heirloomApplied:
             .info
+
+        // MARK: Iteration 10 — M3 (incident room)
+
+        // A live product on fire is the one thing in the game that stops
+        // the clock and hands the player a room; what the room did is
+        // worth looking up for, and leads the week's front page.
+        case .incidentRaised:
+            .critical
+        case .incidentResolved:
+            .notable
+
+        // MARK: end M3
 
         default:
             .info

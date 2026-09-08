@@ -95,6 +95,10 @@ struct HQScreen: View {
     private func consumeRoute() {
         // MARK: Iteration 10
         // MARK: M3 (incident room)
+        // The room presents itself from the app root for as long as
+        // something is on fire, so the route only has to land the player
+        // on this tab and clear itself.
+        if router.take(.incidentRoom) { return }
         // MARK: M6 (bug hunt)
         // MARK: end of Iteration 10
         if router.take(.newspaper) {

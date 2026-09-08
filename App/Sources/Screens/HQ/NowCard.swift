@@ -37,6 +37,11 @@ struct NowCard: View {
                     // Launch week (U1): the war room, once a build is inside
                     // seven days of its ETA or shipped today. Empty otherwise.
                     WarRoomOfferRow(engine: engine)
+                    // MARK: Iteration 10 — M3 (incident room)
+                    // Something on fire, one tap from HQ. Renders nothing
+                    // on every ordinary day, so the card reads as it did.
+                    IncidentNowRow(engine: engine)
+                    // MARK: end M3
                     if let goal {
                         goalRow(goal)
                     } else if dayZero {

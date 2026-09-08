@@ -58,7 +58,11 @@ final class StringsAuditTests: XCTestCase {
     // Re-pinned by iteration 10's M4: the league table's place number,
     // `PixelText(text: "\(rank)")`, is a pure number — the rule above
     // says raise the count and say why, which is this.
-    static let pixelTextLiteralBaseline = 48
+    // Re-pinned by iteration 10's M3: the incident room adds one site, the
+    // count of users who have walked out, which is a pure number. Its two
+    // prose strings — "INCIDENT ROOM" and "<product> STATUS" — went
+    // through `String(localized:comment:)` instead and are not counted.
+    static let pixelTextLiteralBaseline = 49
 
     func testNoNewUnlocalizedPixelChrome() throws {
         let sources = try Self.appSourceFiles()

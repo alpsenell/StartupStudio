@@ -105,6 +105,29 @@ struct EventCopy {
         }
     }
 
+    // MARK: Iteration 10 — M3 (incident room)
+
+    private func incidentKindName(_ kind: String) -> String {
+        IncidentKind(rawValue: kind)?.displayName ?? "an incident"
+    }
+
+    /// Two sentences on purpose: the newspaper's deck is everything after
+    /// the first one, so the front page's headline is what happened and
+    /// its sub-line is what it cost.
+    private func incidentResolvedMessage(
+        productID: UUID, kind: String, usersLost: Int, reputationDelta: Double
+    ) -> String {
+        let users = usersLost == 1 ? "One user" : "\(usersLost) users"
+        let reputation = Int(reputationDelta.rounded())
+        let standing = reputation == 0
+            ? "the studio's standing came through it unchanged"
+            : "the studio's standing \(reputation > 0 ? "rose" : "fell") \(abs(reputation))"
+        return "\(productName(productID)) is back after \(incidentKindName(kind).lowercased()). "
+            + "\(users) walked, and \(standing)."
+    }
+
+    // MARK: end M3
+
     /// Iteration 7 (R2): the feed line for the thing that came along.
     private func heirloomMessage(_ kind: String) -> String {
         switch kind {
@@ -640,6 +663,27 @@ struct EventCopy {
             )
 
         // MARK: end of Iteration 10 — M2
+
+        // MARK: Iteration 10 — M3 (incident room)
+
+        case .incidentRaised(let productID, let kind, let day):
+            (
+                "exclamationmark.triangle.fill",
+                "\(productName(productID)) is down — \(incidentKindName(kind).lowercased()). "
+                    + "The clock stopped and the room is open.",
+                day,
+                Theme.negativeCash
+            )
+        case .incidentResolved(let productID, let kind, let usersLost, let reputationDelta, let day):
+            (
+                usersLost == 0 && reputationDelta >= 0 ? "checkmark.shield.fill" : "shield.lefthalf.filled",
+                incidentResolvedMessage(
+                    productID: productID, kind: kind,
+                    usersLost: usersLost, reputationDelta: reputationDelta
+                ),
+                day,
+                reputationDelta >= 0 ? Theme.positiveCash : Theme.warning
+            )
 
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a

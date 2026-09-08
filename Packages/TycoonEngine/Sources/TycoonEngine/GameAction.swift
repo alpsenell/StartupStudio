@@ -286,6 +286,23 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: M3 (incident room)
 
+    /// M3: puts somebody on one of the room's three lanes, or takes them
+    /// off it (`thread: nil`). Refused for a founder who is away.
+    case assignToIncident(employeeID: UUID, thread: IncidentThread?)
+    /// M3: picks what the company says in public. Changeable until the
+    /// room closes; it lands at `.resolveIncident`.
+    case chooseIncidentStatement(id: String)
+    /// M3: one hour of the room. The room's own clock is an action so the
+    /// whole incident replays from the log.
+    case advanceIncident
+    /// M3: closes the room and lands it on the world. Refused until a
+    /// statement has been chosen.
+    case resolveIncident
+    /// M3: the app's one flag — the player has opened the Products tab in
+    /// this run, so incidents may be raised. Nothing else sets it, which
+    /// is what keeps the pacing bots and the fixtures where they are.
+    case noticeProductsOpened
+
     // MARK: M4 (leagues)
 
     // MARK: M5 (morning desk)

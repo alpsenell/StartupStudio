@@ -117,6 +117,11 @@ enum Route: Hashable {
 
     // MARK: M3 (incident room)
 
+    /// M3: HQ, with the incident room over it. The room only opens when
+    /// something is actually on fire; the route is how the Now card's row
+    /// and the debug pass ask for it.
+    case incidentRoom
+
     // MARK: M4 (leagues)
 
     // MARK: M5 (morning desk)
@@ -163,6 +168,7 @@ enum Route: Hashable {
         // MARK: M2 (pitch room)
         case .pitch: .business
         // MARK: M3 (incident room)
+        case .incidentRoom: .hq
         // MARK: M4 (leagues)
         // MARK: M5 (morning desk)
         // MARK: M6 (bug hunt)

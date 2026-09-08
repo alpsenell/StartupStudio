@@ -252,6 +252,7 @@ extension Route {
         // MARK: M2 (pitch room)
         case "pitch": .pitch
         // MARK: M3 (incident room)
+        case "incident", "incidentroom": .incidentRoom
         // MARK: M4 (leagues)
         // MARK: M5 (morning desk)
         // MARK: M6 (bug hunt)
@@ -627,6 +628,20 @@ extension DebugLaunch {
     }
 
     // MARK: M3 (incident room)
+
+    /// `-autoIncident <kind>` — `badPatch`, `viralSpike` or `dataLeak`.
+    /// Plays a fixture company to a live product, raises that incident and
+    /// opens the room, because a headless launch has neither a shipped
+    /// product nor a way to tap the Products tab. Add `-autoIncidentPlay`
+    /// to staff the lanes and work three hours first.
+    /// See `IncidentDebug`.
+    static var incidentKindName: String? {
+        #if DEBUG
+        return value(after: "-autoIncident")
+        #else
+        return nil
+        #endif
+    }
 
     // MARK: M4 (leagues)
 
