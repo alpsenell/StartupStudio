@@ -76,4 +76,15 @@ extension GameCenterID {
     }
 
     // MARK: end of Iteration 9
+
+    // MARK: Iteration 10 — M4 (leagues)
+
+    /// One rung of the weekly league (money, descending, recurring every
+    /// seven days from Monday 00:00 UTC). Four boards, one per tier: the
+    /// tier you are in is the only one you ever post to, and the table
+    /// the app reads back is that same board, which is how promotion is
+    /// computed on the client with no server anywhere.
+    static func league(_ tier: String) -> String { leaderboard("league.\(tier)") }
+
+    // MARK: end of Iteration 10
 }

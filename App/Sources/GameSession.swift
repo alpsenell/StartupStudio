@@ -80,6 +80,19 @@ final class GameSession {
     /// Iteration 8: the season under way.
     var season_: SeasonState?
 
+    // MARK: Iteration 10 — one stored property per lane
+    // MARK: M4 (leagues)
+
+    /// The league week under way, and its result once there is one
+    /// (`GameSession+League.swift`).
+    var league: LeagueState?
+
+    /// A *Beat my company* challenge that arrived by URL, waiting at the
+    /// front door for the player to take it or leave it.
+    var pendingChallenge: LeagueChallenge?
+
+    // MARK: end of Iteration 10
+
     /// The gates composed into `engine.advanceGate`, by `installGate`.
     private(set) var gates: [any AdvanceGate] = []
     /// Fanned out from `engine.eventSink`, keyed by lane (`"tour"`,

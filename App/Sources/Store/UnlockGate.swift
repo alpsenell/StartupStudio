@@ -12,7 +12,7 @@ enum UnlockRule {
     static let firstPaidChapter = 2
 
     static func allows(chapter: Int, entitled: Bool, mode: RunMode) -> Bool {
-        entitled || chapter < firstPaidChapter || mode.isDaily || mode.isScenario || mode.isSeason
+        entitled || chapter < firstPaidChapter || mode.isDaily || mode.isScenario || mode.isSeason || mode.isLeague
     }
 }
 

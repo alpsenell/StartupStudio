@@ -177,8 +177,10 @@ enum DebugLaunch {
         // Iteration 7 (R3): `-autoDaily` is entered *from* the front door —
         // the daily is a title-screen row — so a pass carrying it keeps the
         // door even alongside a speed, and the daily starts itself there.
+        // Iteration 10 (M4): `-autoLeague` is the same shape — the League
+        // is a title-screen row, and the week starts itself from there.
         guard !arguments.contains("-autoDaily"), !arguments.contains("-autoScenario"),
-              !arguments.contains("-autoRoom") else { return false }
+              !arguments.contains("-autoRoom"), !arguments.contains("-autoLeague") else { return false }
         return arguments.contains("-autoSpeed") || arguments.contains("-autoTab")
             || arguments.contains("-autoRoute") || arguments.contains("-autoTour")
         #else
@@ -568,6 +570,49 @@ extension DebugLaunch {
     // MARK: M3 (incident room)
 
     // MARK: M4 (leagues)
+
+    /// `-autoLeague`: the front door opens the League sheet on launch.
+    /// With `-autoSpeed` as well it plays the week through, the way
+    /// `-autoRoom season` does, so the result card can be photographed
+    /// without a tap. `-autoLeague <yyyymmdd>` picks a week other than
+    /// the one running now; `-autoLeague demo` fills the tier's ghost
+    /// cache with a field so the table can be seen on a phone with no
+    /// Game Center account.
+    static var opensLeague: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoLeague")
+        #else
+        return false
+        #endif
+    }
+
+    /// The word after `-autoLeague`, when it is one of ours.
+    static var leagueArgument: String? {
+        #if DEBUG
+        guard let value = value(after: "-autoLeague"), !value.hasPrefix("-") else { return nil }
+        return value
+        #else
+        return nil
+        #endif
+    }
+
+    /// `-autoLeague demo`: seed the tier's ghost cache so the table has
+    /// somebody in it. Display data for a screenshot pass, never a
+    /// release build, and never anything the engine reads.
+    static var seedsLeagueDemoField: Bool {
+        leagueArgument?.lowercased() == "demo"
+    }
+
+    /// `-autoLeague challenge`: open the *Beat my company* card on a
+    /// made-up challenge, so the comparison flow can be photographed.
+    static var opensLeagueChallenge: Bool {
+        leagueArgument?.lowercased() == "challenge"
+    }
+
+    /// `-autoLeague result`: open the comparison card.
+    static var opensLeagueChallengeResult: Bool {
+        leagueArgument?.lowercased() == "result"
+    }
 
     // MARK: M5 (morning desk)
 

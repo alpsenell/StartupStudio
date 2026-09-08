@@ -33,6 +33,14 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
 
     // MARK: Iteration 10 — ledger fields, decode-if-present, one region per lane
     // MARK: M4 (leagues)
+
+    /// Which rung of the weekly league the player is on, the last week
+    /// that settled, and how it went. `nil` on a ledger from before
+    /// iteration 10 and on one that has never played a league week; the
+    /// league reads it as `LeagueRecord.starting` (bronze, unplaced), so
+    /// an old save is a new bronze player and nothing else changes.
+    public var league: LeagueRecord?
+
     // MARK: M5 (morning desk)
 
     /// The morning desk's streak: consecutive days the desk was cleared,
@@ -95,6 +103,7 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         // MARK: end of Iteration 9 — L7
         // MARK: Iteration 10
         // MARK: M4 (leagues)
+        case league
         // MARK: M5 (morning desk)
         case deskStreak, deskBestStreak, deskLastDay, deskSickDayMonth
         // MARK: end of Iteration 10
@@ -114,6 +123,7 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
         )
         // MARK: Iteration 10 — assign your field here after `self.init`
         // MARK: M4 (leagues)
+        self.league = try container.decodeIfPresent(LeagueRecord.self, forKey: .league)
         // MARK: M5 (morning desk)
         deskStreak = try container.decodeIfPresent(Int.self, forKey: .deskStreak) ?? 0
         deskBestStreak = try container.decodeIfPresent(Int.self, forKey: .deskBestStreak) ?? 0

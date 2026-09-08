@@ -98,11 +98,67 @@ extension GameSession {
         return SeedCode.decode(text)
     }
 
+    // MARK: Iteration 10 — M4 (leagues): the challenge link
+
+    /// The host a *Beat my company* link uses on the same scheme:
+    /// `startupstudio://beat/<code>?g=<letters>&s=<score>&n=<name>`.
+    ///
+    /// One scheme, two hosts: `seed` founds the company, `beat` founds it
+    /// *and* carries the challenger's year and score so the result card
+    /// can put the two grids side by side. A phone that has not got this
+    /// version reads nothing at all from it, which is why the challenger's
+    /// share text also spells the plain line out.
+    static let challengeURLHost = "beat"
+
+    /// The link a challenge card carries.
+    static func challengeURL(for challenge: LeagueChallenge) -> URL? {
+        var components = URLComponents()
+        components.scheme = seedURLScheme
+        components.host = challengeURLHost
+        components.path = "/" + challenge.code.encoded
+        components.queryItems = [
+            URLQueryItem(name: "g", value: challenge.grid),
+            URLQueryItem(name: "s", value: "\(challenge.score)"),
+            URLQueryItem(name: "n", value: challenge.challenger),
+        ]
+        return components.url
+    }
+
+    /// The challenge inside a `startupstudio://beat/…` URL, if it is one.
+    static func challenge(from url: URL) -> LeagueChallenge? {
+        guard url.scheme?.lowercased() == seedURLScheme,
+              url.host()?.lowercased() == challengeURLHost,
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        else { return nil }
+        let text = url.path().trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard let code = SeedCode.decode(text) else { return nil }
+        let items = components.queryItems ?? []
+        func value(_ name: String) -> String { items.first { $0.name == name }?.value ?? "" }
+        let grid = value("g").uppercased()
+        guard grid.allSatisfy({ LeagueChallenge.gridAlphabet.contains($0) }) else { return nil }
+        guard let score = Int(value("s")) else { return nil }
+        return LeagueChallenge(code: code, grid: grid, score: score, challenger: value("n"))
+    }
+
+    // MARK: end of Iteration 10
+
     /// `onOpenURL`: parks the code for the title screen's *From a code*
     /// row, which opens the custom page prefilled. Under a running game
     /// nothing is interrupted; the code waits at the front door.
     @discardableResult
     func handleOpenURL(_ url: URL) -> Bool {
+        // MARK: Iteration 10 — M4 (leagues)
+        // A challenge link is a seed code with a year attached, so it is
+        // tried first: the front door opens the challenge card on it.
+        if let challenge = Self.challenge(from: url) {
+            // Only the challenge is parked: setting `pendingSeedCode` as
+            // well would open the *From a code* sheet over the challenge
+            // card. Taking the challenge on sets it, through
+            // `beginCustomGame(code:)`.
+            pendingChallenge = challenge
+            return true
+        }
+        // MARK: end of Iteration 10
         guard let code = Self.seedCode(from: url) else { return false }
         pendingSeedCode = code
         return true

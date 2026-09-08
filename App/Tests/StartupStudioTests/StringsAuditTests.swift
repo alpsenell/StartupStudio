@@ -55,7 +55,10 @@ final class StringsAuditTests: XCTestCase {
     // "/100" beside the figure, which is a glyph rather than prose. Its
     // two words — "LIFE" and "LIFE SCORE" — went through
     // `String(localized:comment:)` instead and are not counted here.
-    static let pixelTextLiteralBaseline = 47
+    // Re-pinned by iteration 10's M4: the league table's place number,
+    // `PixelText(text: "\(rank)")`, is a pure number — the rule above
+    // says raise the count and say why, which is this.
+    static let pixelTextLiteralBaseline = 48
 
     func testNoNewUnlocalizedPixelChrome() throws {
         let sources = try Self.appSourceFiles()

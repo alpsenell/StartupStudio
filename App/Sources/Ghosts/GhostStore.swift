@@ -31,6 +31,38 @@ struct GhostLog: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+// MARK: Iteration 10 — M4 (leagues)
+
+/// A league week's field shares the ghost cache with the daily's, under
+/// a key no day number can reach.
+///
+/// `GhostLog` is keyed by an `Int` day, and the daily's keys are days
+/// since 2026-01-01 — a number that stays under six digits for the next
+/// two thousand years. A league week's ghosts are filed under
+/// `1_000_000 + week * 8 + tier`, so the two spaces can never collide and
+/// one cache, one file format and one CloudKit record type serve both.
+enum LeagueGhostKey {
+    static let base = 1_000_000
+    /// Room for the four tiers with four spare, so a fifth rung would
+    /// not renumber the four that exist.
+    static let tiersPerWeek = 8
+
+    static func key(week: Int, tier: LeagueTier) -> Int {
+        base + week * tiersPerWeek + tier.index
+    }
+
+    /// The week and tier a key names, or `nil` when it is a daily's.
+    static func components(_ key: Int) -> (week: Int, tier: LeagueTier)? {
+        guard key >= base else { return nil }
+        let offset = key - base
+        guard let tier = LeagueTier.allCases.first(where: { $0.index == offset % tiersPerWeek })
+        else { return nil }
+        return (offset / tiersPerWeek, tier)
+    }
+}
+
+// MARK: end of Iteration 10
+
 /// Where ghosts live: this phone's cache, one file per day under
 /// `Saves/Ghosts`. The field is your past selves until the cloud refresh
 /// below has pulled other players' days into the same cache.

@@ -23,6 +23,9 @@ struct TitleMenu {
         // MARK: Iteration 10 — M5 (morning desk)
         static let desk = true
         // MARK: end of Iteration 10 — M5
+        // MARK: Iteration 10 — M4 (leagues)
+        static let league = true
+        // MARK: end of Iteration 10
     }
 
     struct Row: Identifiable {
@@ -31,6 +34,9 @@ struct TitleMenu {
             // MARK: Iteration 10 — M5 (morning desk)
             case desk
             // MARK: end of Iteration 10 — M5
+            // MARK: Iteration 10 — M4 (leagues)
+            case league
+            // MARK: end of Iteration 10
         }
 
         let id: ID
@@ -55,8 +61,11 @@ struct TitleMenu {
         onDynasty: @escaping () -> Void = {},
         onSeason: @escaping () -> Void = {},
         // MARK: Iteration 10 — M5 (morning desk)
-        onDesk: @escaping () -> Void = {}
+        onDesk: @escaping () -> Void = {},
         // MARK: end of Iteration 10 — M5
+        // MARK: Iteration 10 — M4 (leagues)
+        onLeague: @escaping () -> Void = {}
+        // MARK: end of Iteration 10
     ) -> TitleMenu {
         TitleMenu(rows: [
             Row(id: .daily, title: "Today's company", systemImage: "calendar", isEnabled: Flags.daily, action: onDaily),
@@ -68,6 +77,7 @@ struct TitleMenu {
             Row(id: .dynasty, title: "Dynasty", systemImage: "person.2.crop.square.stack", isEnabled: Flags.dynasty, action: onDynasty),
             // MARK: Iteration 10 — one row per lane (add the id, the flag and the action in your own marked regions)
             // MARK: M4 (leagues)
+            Row(id: .league, title: "League", systemImage: "chart.bar.doc.horizontal", isEnabled: Flags.league, action: onLeague),
             // MARK: M5 (morning desk)
             Row(id: .desk, title: "The desk", systemImage: "tray.full", isEnabled: Flags.desk, action: onDesk),
             // MARK: end of Iteration 10

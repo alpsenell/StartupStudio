@@ -34,6 +34,14 @@ struct TitleScreen: View {
     /// The desk, while it is up.
     @State private var showingDesk = false
     // MARK: end of Iteration 10 — M5
+    // MARK: Iteration 10 — M4 (leagues)
+    /// The League sheet, once the table has been gathered.
+    @State private var leagueView: LeagueView?
+    /// A *Beat my company* link waiting to be taken on or left.
+    @State private var challengeOffer: LeagueChallenge?
+    /// The comparison a finished challenge owes the player.
+    @State private var challengeResult: LeagueChallengeResult?
+    // MARK: end of Iteration 10
 
     var body: some View {
         ScrollView {
@@ -67,8 +75,11 @@ struct TitleScreen: View {
                     onDynasty: { showingDynasty = true },
                     onSeason: { seasonEntry = session.seasonEntry(for: .current()) },
                     // MARK: Iteration 10 — M5 (morning desk)
-                    onDesk: { showingDesk = true }
+                    onDesk: { showingDesk = true },
                     // MARK: end of Iteration 10 — M5
+                    // MARK: Iteration 10 — M4 (leagues)
+                    onLeague: { openLeague() }
+                    // MARK: end of Iteration 10
                 ),
                 // MARK: Iteration 10 — M5 (morning desk)
                 // The desk card over the slots, and the sunrise a long
@@ -98,6 +109,23 @@ struct TitleScreen: View {
             session.startGameCenter()
             // Iteration 8: yesterday's ghosts, ahead of today's Play.
             Task { await session.refreshGhosts(forDailyDay: DailyChallenge.today().day) }
+            // MARK: Iteration 10 — M4 (leagues)
+            // This week's tier, ahead of the League row's Play, and the
+            // three things the league can owe the player at the door: a
+            // week just scored, a challenge that arrived by link, and a
+            // comparison a finished challenge is waiting to show.
+            Task { await session.refreshLeagueGhosts(week: LeagueWeek.current().week, tier: session.leagueRecord.tier) }
+            if let finished = session.league, finished.score != nil {
+                session.league = nil
+                openLeague()
+            } else if DebugLaunch.opensLeague {
+                openLeagueFromLaunchArguments()
+            } else if let offer = session.pendingChallenge {
+                challengeOffer = offer
+            } else if let result = session.challengeResult() {
+                challengeResult = result
+            }
+            // MARK: end of Iteration 10
             // Iteration 8: a scenario just decided shows its card once;
             // `-autoScenario <id>` starts one from here.
             if let result = session.scenarioResult {
@@ -186,6 +214,38 @@ struct TitleScreen: View {
                 onClose: { showingScenarios = false }
             )
         }
+        // MARK: Iteration 10 — M4 (leagues)
+        .onChange(of: session.pendingChallenge) { _, offer in
+            if let offer, !session.needsOnboarding { challengeOffer = offer }
+        }
+        .sheet(item: $leagueView) { view in
+            LeagueSheet(
+                view: view,
+                challengeText: leagueChallengeText(for: view),
+                onPlay: { week in
+                    leagueView = nil
+                    session.playLeague(week)
+                },
+                onClose: { leagueView = nil }
+            )
+        }
+        .sheet(item: $challengeOffer) { offer in
+            LeagueChallengeSheet(
+                challenge: offer,
+                onAccept: {
+                    challengeOffer = nil
+                    if !session.acceptChallenge(offer) { choosingSlotToReplace = true }
+                },
+                onDecline: {
+                    challengeOffer = nil
+                    session.declineChallenge(offer)
+                }
+            )
+        }
+        .sheet(item: $challengeResult) { result in
+            LeagueChallengeResultSheet(result: result) { challengeResult = nil }
+        }
+        // MARK: end of Iteration 10
         .sheet(item: $seasonEntry) { entry in
             SeasonSheet(
                 entry: entry,
@@ -252,6 +312,66 @@ struct TitleScreen: View {
     private var scene: OfficeSceneInput {
         session.hasCurrentGame ? TitleScene.input(for: session.engine.state) : TitleScene.emptyGarage
     }
+
+    // MARK: Iteration 10 — M4 (leagues)
+
+    /// Gathers the week's table — which settles last week's, and so is
+    /// where promotion happens — and opens the sheet on it.
+    private func openLeague(week: LeagueWeek = .current()) {
+        Task {
+            leagueView = await session.leagueView(for: week)
+        }
+    }
+
+    /// The line the result card's *Beat my company* share pastes.
+    private func leagueChallengeText(for view: LeagueView) -> String? {
+        guard case .result(let week, let entry) = view.entry, let grid = entry.grid, !grid.isEmpty
+        else { return nil }
+        let challenge = session.challenge(from: entry, week: week)
+        guard let link = GameSession.challengeURL(for: challenge)?.absoluteString else { return nil }
+        return YearGrid.challengeText(
+            title: "STARTUP STUDIO · \(entry.tier.displayName) league, \(week.dateRangeText)",
+            strip: grid,
+            scoreLine: "\(entry.score.money) · \(entry.headline) on day \(entry.gameDay)",
+            link: link
+        )
+    }
+
+    /// `-autoLeague [demo|challenge|result|<yyyymmdd>]`, and with
+    /// `-autoSpeed` as well the week plays itself through.
+    private func openLeagueFromLaunchArguments() {
+        #if DEBUG
+        let week = DebugLaunch.leagueArgument.flatMap(LeagueWeek.fromLaunchArgument) ?? .current()
+        if DebugLaunch.seedsLeagueDemoField {
+            LeagueDemoField.seed(into: session, week: week, tier: session.leagueRecord.tier)
+        }
+        if DebugLaunch.opensLeagueChallenge {
+            challengeOffer = LeagueChallenge(
+                code: week.seedCode,
+                grid: YearGrid.letters("🟩🟩🟨🟥🟩🟪🟩🟩⬛🟩🟨🟩🟥🟩🟩🟩🟨🟩🟩🟪🟩🟩🟩"),
+                score: 312_400, challenger: "Mira Okafor"
+            )
+            return
+        }
+        if DebugLaunch.opensLeagueChallengeResult {
+            challengeResult = LeagueChallengeResult(
+                challenger: "Mira Okafor", challengerScore: 312_400,
+                challengerGrid: YearGrid.letters("🟩🟩🟨🟥🟩🟪🟩🟩⬛🟩🟨🟩🟥🟩🟩🟩🟨🟩🟩🟪🟩🟩🟩"),
+                yourScore: 401_900,
+                yourGrid: YearGrid.letters("🟩🟩🟩🟨🟩🟪🟩🟥🟩🟩🟨🟩🟩🟩🟩⬛🟨🟩🟩🟩🟩🟩🟨"),
+                companyName: "Northgate Softworks"
+            )
+            return
+        }
+        if ProcessInfo.processInfo.arguments.contains("-autoSpeed") {
+            session.playLeague(week)
+        } else {
+            openLeague(week: week)
+        }
+        #endif
+    }
+
+    // MARK: end of Iteration 10
 
     /// Iteration 7 (R3): opens today's company on whatever it is now —
     /// a challenge, an attempt to resume, or the day's result.

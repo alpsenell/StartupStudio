@@ -98,6 +98,10 @@ whole table can be pasted.
 | 12 | `com.alpsenel.startupstudio.lb.life_score.easy` | Best life — Easy | Integer | High to Low | Classic (all time) (iteration 9) |
 | 13 | `com.alpsenel.startupstudio.lb.life_score.normal` | Best life — Normal | Integer | High to Low | Classic (all time) (iteration 9) |
 | 14 | `com.alpsenel.startupstudio.lb.life_score.hard` | Best life — Hard | Integer | High to Low | Classic (all time) (iteration 9) |
+| 15 | `com.alpsenel.startupstudio.lb.league.bronze` | League — Bronze | Money (US Dollar, no decimals) | High to Low | **Recurring — 7 days, starts Monday 00:00 UTC** (iteration 10) |
+| 16 | `com.alpsenel.startupstudio.lb.league.silver` | League — Silver | Money (US Dollar, no decimals) | High to Low | **Recurring — 7 days, starts Monday 00:00 UTC** (iteration 10) |
+| 17 | `com.alpsenel.startupstudio.lb.league.gold` | League — Gold | Money (US Dollar, no decimals) | High to Low | **Recurring — 7 days, starts Monday 00:00 UTC** (iteration 10) |
+| 18 | `com.alpsenel.startupstudio.lb.league.founders` | League — Founders | Money (US Dollar, no decimals) | High to Low | **Recurring — 7 days, starts Monday 00:00 UTC** (iteration 10) |
 
 ## What the game posts, and when
 
@@ -110,6 +114,7 @@ whole table can be pasted.
 | Any ending, `state.isRanked` | `…lb.life_score.<difficulty>` — `LifeScore.score`, 0…100 (iteration 9) |
 | Any ending, any mode, with at least one hire | `…lb.tenure_days` — `day − min(hiredDay)`, founder excluded |
 | The daily stopping (its ending, or day 364) | `…lb.daily` — `founderNetWorth`, only while that UTC day is still open |
+| A league week stopping (its ending, or day 364) | `…lb.league.<tier>` — `founderNetWorth`, only while that week is still open, and only to the tier the player is in (iteration 10) |
 
 `state.isRanked` is standard or daily mode with no heirloom: a custom
 company (R4) earns achievements and never posts to a ranked board.
@@ -129,3 +134,43 @@ an offline IPO still lands.
 - Localised titles are not needed for the first submission — the game ships
   in English (R9 owns the string catalog).
 
+## Iteration 10 (M4): the weekly league
+
+Four boards, one per rung, all recurring **weekly from Monday 00:00 UTC**
+so an occurrence is exactly one league week. A player posts to one board
+only — the rung their ledger says they are on — and the app *reads that
+same board back* to build the week's table. Promotion is computed on the
+client from those scores when the week rolls; there is no server and
+nothing is collected.
+
+- **Field:** twenty. The table is read against whoever actually turned
+  up, so a thinner week still settles.
+- **Promotion:** the top four go up a rung; the bottom four go down. In a
+  field smaller than nine the two bands shrink to `(field − 1) / 2` each,
+  so nobody is promoted and relegated at once.
+- **When:** the first time the player opens the League screen in a week
+  after the one they last finished. The previous occurrence of their
+  tier's board is read (`GKLeaderboard.loadPreviousOccurrence`), their
+  rank taken off it, and `LegacyLedger.league` moved once. A week that
+  cannot be placed — signed out with no ghosts in the cache — is marked
+  settled as `unplaced` and the tier holds.
+- **Signed out:** the table falls back to the week's ghost field (the
+  ghost cache, keyed `1_000_000 + week × 8 + tier`), which is also the
+  field of rivals a league run is founded against.
+
+### Challenges
+
+*Beat my company* is a **share card and a link**, not a Game Center
+challenge. The iOS 26 SDK deprecates `challengeComposeController` and
+replaces player-issued challenges with developer-defined
+`GKChallengeDefinition`s, which have to be created in App Store Connect
+and cannot be composed by the client at all — so there is no API on this
+SDK that issues an arbitrary "beat my score on this seed" challenge, and
+the link is the whole feature:
+
+    startupstudio://beat/<seed code>?g=<year letters>&s=<score>&n=<name>
+
+If the owner later creates a challenge definition and attaches it to the
+league boards, the scores the game already submits feed it with no code
+change (a definition's leaderboard collects its scores automatically).
+Nothing in the app depends on one existing.

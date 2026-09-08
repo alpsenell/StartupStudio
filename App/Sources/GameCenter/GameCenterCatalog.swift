@@ -129,6 +129,17 @@ enum GameCenterCatalog {
 
         // MARK: Iteration 10 — M4 (league boards)
 
+        // One recurring board per rung of the league: the week's company
+        // is the same for everybody in a tier, so the tier's board *is*
+        // the week's table, and promotion is read off it on the client.
+        for tier in LeagueTier.allCases {
+            boards.append(Leaderboard(
+                id: GameCenterID.league(tier),
+                title: "League — \(tier.displayName)",
+                sort: .descending, format: .money, isRecurring: true
+            ))
+        }
+
         // MARK: end of Iteration 10
         return boards
     }()

@@ -122,3 +122,63 @@ enum YearGrid {
         return "\(squares.count) weeks: " + counts.joined(separator: ", ") + "."
     }
 }
+
+// MARK: Iteration 10 — M4 (leagues): the challenge payload
+
+extension YearGrid.Square {
+    /// The letter this square travels as. A grid in a link or a pasted
+    /// line has to survive URLs, keyboards and a copy that eats emoji,
+    /// so the wire form is six ASCII letters and the squares are only
+    /// ever what gets drawn.
+    var letter: Character {
+        switch self {
+        case .profit: "U"
+        case .loss: "D"
+        case .launch: "L"
+        case .crash: "C"
+        case .round: "R"
+        case .quiet: "Q"
+        }
+    }
+
+    init?(letter: Character) {
+        switch Character(letter.uppercased()) {
+        case "U": self = .profit
+        case "D": self = .loss
+        case "L": self = .launch
+        case "C": self = .crash
+        case "R": self = .round
+        case "Q": self = .quiet
+        default: return nil
+        }
+    }
+}
+
+extension YearGrid {
+    /// A strip of squares as the letters a challenge carries.
+    static func letters(_ strip: String) -> String {
+        String(strip.compactMap { Square(rawValue: $0)?.letter })
+    }
+
+    /// Letters back into squares. Anything unreadable is dropped, so a
+    /// mangled link shows a shorter year rather than nothing.
+    static func squares(fromLetters letters: String) -> [Square] {
+        letters.compactMap(Square.init(letter:))
+    }
+
+    /// The strip a challenge's letters draw.
+    static func strip(fromLetters letters: String) -> String {
+        strip(squares(fromLetters: letters))
+    }
+
+    /// The text a *Beat my company* share pastes: the challenge line
+    /// under the year, so the reader sees the shape of the year they are
+    /// being asked to beat and taps the link to found it.
+    static func challengeText(
+        title: String, strip: String, scoreLine: String, link: String
+    ) -> String {
+        [title, wrapped(strip), scoreLine, "Beat it: " + link].joined(separator: "\n")
+    }
+}
+
+// MARK: end of Iteration 10
