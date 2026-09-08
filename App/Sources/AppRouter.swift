@@ -147,6 +147,9 @@ enum Route: Hashable {
 
     // MARK: N4 (fame and the feed)
 
+    /// N4: the founder's public feed, on the Life tab.
+    case feed
+
     // MARK: N5 (office secrets)
 
     /// The Team tab, on the thread the office is running.
@@ -205,6 +208,7 @@ enum Route: Hashable {
         case .peopleTeamMenu: .team
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
+        case .feed: .life
         // MARK: N5 (office secrets)
         case .secrets: .team
         // MARK: end of Iteration 11

@@ -82,6 +82,15 @@ enum JournalBuilder {
         // diary and opens to the lot.
         case .bugSquashed:
             true
+        // MARK: Iteration 11 — N4 (fame and the feed)
+        //
+        // A post a day is seven diary lines a week and none of them is
+        // news — until one gets away, and a viral post is not routine by
+        // anybody's definition. The routine fold collapses the habit and
+        // leaves the accidents standing.
+        case .famePosted(_, _, let viral, _, _):
+            !viral
+        // MARK: end of Iteration 11 — N4
         default:
             false
         }

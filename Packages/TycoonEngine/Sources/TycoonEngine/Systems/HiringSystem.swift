@@ -1,4 +1,5 @@
 import Foundation
+import TycoonContent
 
 /// The hiring-desk actions that sit alongside `EmployeeSystem.hire`:
 /// interviewing a candidate, and passing on one.
@@ -40,4 +41,73 @@ enum HiringSystem {
         state.progression.interviewedCandidateIDs.remove(candidateID)
         return []
     }
+
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// People who applied because they follow the founder, once a week.
+    ///
+    /// The desk's own refresh replaces `candidatePool` wholesale, so these
+    /// are guests rather than residents: they sit in the pool until the
+    /// next refresh and then they are gone, which is exactly what an
+    /// inbound application is. Returns the number added.
+    ///
+    /// Draws from `socialRNG` only, and only above `followedAt` — so no
+    /// pacing bot, and no run that never posted, ever calls past the
+    /// first guard.
+    @discardableResult
+    static func fameInbound(
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> Int {
+        let wanted = Fame.inboundApplicants(state.fame.fame, balance: balance.fame)
+        guard wanted > 0, state.candidatePool.count < balance.fame.inboundPoolCap else { return 0 }
+        let room = balance.fame.inboundPoolCap - state.candidatePool.count
+        let count = min(wanted, room)
+        guard count > 0, !content.names.firstNames.isEmpty, !content.names.lastNames.isEmpty
+        else { return 0 }
+
+        // Fame does not make people better, it makes more of them arrive:
+        // the skill ceiling is the desk's own, nudged by nothing.
+        let company = balance.company
+        let ceiling = min(100, max(5,
+            balance.candidateSkillBase
+                + state.company.reputation * balance.candidateSkillPerReputation
+        ))
+        let eligible = EmployeeRole.allCases.filter { role in
+            role != .founder
+                && (company.candidateRoleWeights[role.rawValue] ?? 0) > 0
+                && state.company.officeTier.rank >= company.candidateMinTier(role).rank
+        }
+        guard !eligible.isEmpty else { return 0 }
+
+        for _ in 0..<count {
+            let id = UUID(from: &state.socialRNG)
+            let first = content.names.firstNames[
+                state.socialRNG.nextInt(in: 0...(content.names.firstNames.count - 1))
+            ]
+            let last = content.names.lastNames[
+                state.socialRNG.nextInt(in: 0...(content.names.lastNames.count - 1))
+            ]
+            let role = eligible[state.socialRNG.nextInt(in: 0...(eligible.count - 1))]
+            let skills = SkillSet(
+                coding: Double(state.socialRNG.nextInt(in: 0...Int(ceiling))),
+                design: Double(state.socialRNG.nextInt(in: 0...Int(ceiling))),
+                marketing: Double(state.socialRNG.nextInt(in: 0...Int(ceiling)))
+            )
+            let salary = Double(balance.salaryBase)
+                + balance.salaryPerSkillPoint * skills.total
+            state.candidatePool.append(Candidate(
+                id: id,
+                name: "\(first) \(last)",
+                skills: skills,
+                weeklySalary: Int(salary.rounded()),
+                appearanceSeed: state.socialRNG.next(),
+                role: role
+            ))
+        }
+        return count
+    }
+
+    // MARK: end of Iteration 11 — N4
 }

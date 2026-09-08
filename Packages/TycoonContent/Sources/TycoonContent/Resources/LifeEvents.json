@@ -3183,5 +3183,1102 @@
         ]
       }
     ]
+  },
+  {
+    "id": "fame_first_recognised",
+    "headline": "Somebody recognised you in a queue and could not place you.",
+    "weight": 3,
+    "body": "They knew the face and not the name, worked through three wrong guesses out loud, and settled on “you do something with computers”. Which is accurate.",
+    "cooldownDays": 120,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_public"
+      ]
+    },
+    "impact": {
+      "mood": 4
+    }
+  },
+  {
+    "id": "fame_reply_guy",
+    "headline": "You have acquired a reply guy.",
+    "weight": 3,
+    "body": "Under every post, within four minutes, a man who disagrees. He has been doing this for eleven weeks. You have started checking for him.",
+    "cooldownDays": 90,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_public"
+      ]
+    },
+    "impact": {
+      "mood": -3
+    }
+  },
+  {
+    "id": "fame_mum_found_it",
+    "headline": "Your mother has found the feed.",
+    "weight": 2,
+    "body": "She has liked every post going back nine months and left one comment, on the angriest of them, that says “very good”.",
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "fame_public"
+      ]
+    },
+    "impact": {
+      "mood": 6
+    }
+  },
+  {
+    "id": "fame_screenshot_group_chat",
+    "headline": "A post of yours is in somebody's group chat, and not kindly.",
+    "weight": 3,
+    "body": "A friend forwards it with no message. Just the screenshot and the seventeen replies under it, all from people you have never met.",
+    "cooldownDays": 110,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_public"
+      ]
+    },
+    "impact": {
+      "mood": -5
+    }
+  },
+  {
+    "id": "fame_newsletter_quote",
+    "headline": "A newsletter quoted you without asking.",
+    "weight": 3,
+    "body": "Sixteen thousand subscribers, your sentence, and a paragraph explaining what you meant that is not what you meant.",
+    "cooldownDays": 100,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_public"
+      ]
+    },
+    "impact": {
+      "mood": 2
+    },
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "fame_old_teacher",
+    "headline": "An old teacher emailed to say they always knew.",
+    "weight": 2,
+    "body": "They did not always know. You have the report cards. But it is a kind lie and it arrived on a bad Tuesday.",
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "fame_public"
+      ]
+    },
+    "impact": {
+      "mood": 7
+    }
+  },
+  {
+    "id": "fame_lurker_at_standup",
+    "headline": "Somebody on the team reads everything you post and has never said so.",
+    "weight": 2,
+    "body": "It comes out in a standup, sideways, as a joke about a take you had forgotten. The room laughs. You do not.",
+    "cooldownDays": 140,
+    "category": "team",
+    "requires": {
+      "flagsAll": [
+        "fame_public"
+      ]
+    },
+    "impact": {
+      "mood": -2
+    }
+  },
+  {
+    "id": "fame_algorithm_cold",
+    "headline": "The algorithm has gone off you.",
+    "weight": 3,
+    "body": "Same posts, same hours, a tenth of the reach. There is nobody to appeal to. There has never been anybody to appeal to.",
+    "cooldownDays": 80,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_public"
+      ]
+    },
+    "impact": {
+      "mood": -5
+    }
+  },
+  {
+    "id": "fame_podcast_invite",
+    "headline": "A podcast wants ninety minutes about the early days.",
+    "weight": 3,
+    "body": "Two microphones, one host who has read everything, and a running time nobody will finish.",
+    "cooldownDays": 180,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "do_it",
+        "label": "Do the ninety minutes",
+        "detail": "An evening · energy −6 · reputation +2",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -6
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "decline",
+        "label": "Politely decline",
+        "detail": "Free · mood −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_dm_pitch",
+    "headline": "Your messages are now a slush pile.",
+    "weight": 3,
+    "body": "Forty unread. Nine decks, six job applications, one man who wants you to look at his cousin's app, and somebody's actual emergency, buried.",
+    "cooldownDays": 90,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "impact": {
+      "mood": -4,
+      "energy": -3
+    }
+  },
+  {
+    "id": "fame_parody_account",
+    "headline": "There is a parody account of you now.",
+    "weight": 3,
+    "body": "Same photo, one letter different, and it is funnier than you are. It has more followers than the company does.",
+    "cooldownDays": 200,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "report",
+        "label": "Report it",
+        "detail": "Free · mood −5 · they screenshot the report",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5
+          },
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      },
+      {
+        "id": "follow_it",
+        "label": "Follow it back",
+        "detail": "Free · mood +4 · reputation +1",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4
+          },
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_conference_hallway",
+    "headline": "You spent a conference in a hallway you could not leave.",
+    "weight": 3,
+    "body": "Six conversations, none finished, and a talk you paid to attend and did not see a slide of.",
+    "cooldownDays": 160,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "impact": {
+      "energy": -9,
+      "mood": 3
+    }
+  },
+  {
+    "id": "fame_recruiter_wave",
+    "headline": "Three recruiters used your feed as a directory.",
+    "weight": 3,
+    "body": "Every engineer you have publicly thanked got a call this week. Public gratitude, it turns out, is a hiring list.",
+    "cooldownDays": 120,
+    "category": "team",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "impact": {},
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "fame_ghostwriter_offer",
+    "headline": "Somebody offered to post for you.",
+    "weight": 2,
+    "body": "Four figures a month, your voice, their hours. They sent samples. Two of them are better than anything you have written.",
+    "cooldownDays": 220,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "hire_them",
+        "label": "Hire the ghost",
+        "detail": "−$2,000 from the wallet · mood −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -2000,
+            "mood": -4
+          }
+        ]
+      },
+      {
+        "id": "keep_writing",
+        "label": "Keep writing it yourself",
+        "detail": "Free · energy −4 · mood +3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -4,
+            "mood": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_stalker_lite",
+    "headline": "Somebody worked out which coffee shop.",
+    "weight": 2,
+    "body": "Not a threat. A photograph of your usual table, posted, with the time. You have started going somewhere else, which is its own small loss.",
+    "cooldownDays": 250,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "impact": {
+      "mood": -8,
+      "health": -2
+    }
+  },
+  {
+    "id": "fame_partner_tired",
+    "headline": "Your partner is tired of being in the photographs.",
+    "weight": 2,
+    "body": "They never asked for an audience and they married a company, not a channel. It is said once, calmly, over dinner.",
+    "cooldownDays": 200,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "minStage": "dating",
+    "impact": {
+      "relationships": -6,
+      "mood": -4
+    }
+  },
+  {
+    "id": "fame_ratio",
+    "headline": "You got ratioed by an account with a cartoon frog.",
+    "weight": 3,
+    "body": "Eleven likes on yours. Four thousand on theirs. The frog is right, which is the worst part.",
+    "cooldownDays": 70,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_followed"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "fame_book_deal",
+    "headline": "A publisher wants the book.",
+    "weight": 3,
+    "body": "Advance up front, manuscript in a year, a title they have already chosen that you would not have chosen. It is not a lot of money and it is a great deal of evenings.",
+    "cooldownDays": 400,
+    "once": true,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "autoChoiceIndex": 2,
+    "impact": {},
+    "choices": [
+      {
+        "id": "sign",
+        "label": "Sign it",
+        "detail": "+$18,000 to the wallet · an evening · energy −10",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "wallet": 18000,
+            "energy": -10
+          },
+          {
+            "type": "reputation",
+            "amount": 3
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "counter",
+        "label": "Ask for the title back",
+        "detail": "+$12,000 · mood +5",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": 12000,
+            "mood": 5
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "pass",
+        "label": "Pass",
+        "detail": "Free · mood −3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_profile_piece",
+    "headline": "A magazine is writing a profile, and it has a photographer.",
+    "weight": 3,
+    "body": "They want a day, the office, and one honest sentence about the hardest month. Two of those are easy.",
+    "cooldownDays": 220,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "open_the_doors",
+        "label": "Give them the day",
+        "detail": "Energy −7 · reputation +4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -7
+          },
+          {
+            "type": "reputation",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "statement_only",
+        "label": "Send a statement",
+        "detail": "Free · reputation +1 · mood −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          },
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_award_shortlist",
+    "headline": "You are on a shortlist for something with a trophy.",
+    "weight": 2,
+    "body": "Founder of the year, regional, sponsored by a bank. Four nominees, one table, a dinner you pay for.",
+    "cooldownDays": 300,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "impact": {
+      "mood": 6
+    },
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "fame_open_letter",
+    "headline": "An open letter about the industry wants your signature.",
+    "weight": 3,
+    "body": "Two hundred names already. You agree with about eighty per cent of it, which is either enough or exactly the problem.",
+    "cooldownDays": 150,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "sign_letter",
+        "label": "Sign it",
+        "detail": "Reputation +2 · mood −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "stay_out",
+        "label": "Stay out of it",
+        "detail": "Free · mood −1",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_investor_reads_you",
+    "headline": "An investor opened a meeting by quoting you back at yourself.",
+    "weight": 3,
+    "body": "They had the post printed. Underlined. It was a joke when you wrote it, and it is a thesis now.",
+    "cooldownDays": 180,
+    "category": "investor",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "impact": {
+      "mood": 3
+    },
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "fame_impostor_hour",
+    "headline": "You read your own press and did not recognise the person in it.",
+    "weight": 3,
+    "body": "Visionary, apparently. Relentless. The person in the photograph has not slept properly since March and cannot remember their own passwords.",
+    "cooldownDays": 140,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "impact": {
+      "mood": -7
+    }
+  },
+  {
+    "id": "fame_team_reads_the_quote",
+    "headline": "The team read your interview before you told them about it.",
+    "weight": 3,
+    "body": "One sentence about the next twelve months that you have not said in the building. It was true. It was just not theirs yet.",
+    "cooldownDays": 160,
+    "category": "team",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "impact": {
+      "mood": -3
+    },
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -3
+      }
+    ]
+  },
+  {
+    "id": "fame_fans_at_the_door",
+    "headline": "Two people are waiting outside the office to meet you.",
+    "weight": 2,
+    "body": "Students, polite, one with a printout. They have been there since ten. Reception does not know what the policy is because there is no policy.",
+    "cooldownDays": 200,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "go_down",
+        "label": "Go down and say hello",
+        "detail": "Energy −4 · mood +6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -4,
+            "mood": 6
+          }
+        ]
+      },
+      {
+        "id": "back_door",
+        "label": "Leave by the back",
+        "detail": "Free · mood −5",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_hot_take_regret",
+    "headline": "A take you posted at midnight is being discussed on three continents.",
+    "weight": 3,
+    "body": "It was a shower thought with a typo in it. It now has a defender in Berlin and a detractor in Seoul.",
+    "cooldownDays": 120,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_notable"
+      ]
+    },
+    "impact": {
+      "mood": -4
+    },
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -1
+      }
+    ]
+  },
+  {
+    "id": "fame_keynote_offer",
+    "headline": "A conference wants the keynote. Unpaid, honoured.",
+    "weight": 3,
+    "body": "Two thousand seats, twenty-five minutes, and the words “we cannot pay speakers but the exposure is enormous”, which you have now heard from both sides.",
+    "cooldownDays": 280,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_famous"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "give_it",
+        "label": "Give the keynote",
+        "detail": "An evening · energy −12 · reputation +5",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -12
+          },
+          {
+            "type": "reputation",
+            "amount": 5
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "decline_keynote",
+        "label": "Say no this year",
+        "detail": "Free · mood −3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_ex_colleague_thread",
+    "headline": "A former colleague wrote a thread about what you were like to work for.",
+    "weight": 3,
+    "body": "Nine posts. Two of them are unfair. Six of them are fair. The seventh you have thought about every day since.",
+    "cooldownDays": 240,
+    "category": "team",
+    "requires": {
+      "flagsAll": [
+        "fame_famous"
+      ]
+    },
+    "impact": {
+      "mood": -9
+    },
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -3
+      }
+    ]
+  },
+  {
+    "id": "fame_impersonator_scam",
+    "headline": "Somebody is running a giveaway in your name.",
+    "weight": 3,
+    "body": "Your photo, your handle with a hyphen in it, and a wallet address. Four people have already sent money and one of them has emailed you about it.",
+    "cooldownDays": 200,
+    "category": "legal",
+    "requires": {
+      "flagsAll": [
+        "fame_famous"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "warn_everyone",
+        "label": "Post the warning",
+        "detail": "Free · mood −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      },
+      {
+        "id": "lawyers",
+        "label": "Put a lawyer on it",
+        "detail": "−$3,500 from the company · reputation +1",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -3500
+          },
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_family_photographed",
+    "headline": "A photographer followed you to the school gate.",
+    "weight": 2,
+    "body": "Nothing was published. That is not the point and everybody at home knows it is not the point.",
+    "cooldownDays": 300,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "fame_famous"
+      ]
+    },
+    "impact": {
+      "mood": -10,
+      "relationships": -6
+    }
+  },
+  {
+    "id": "fame_advisor_requests",
+    "headline": "Nine companies would like you on their advisory board.",
+    "weight": 3,
+    "body": "Equity, a quarterly call, and your name on their site, which is the only part any of them actually want.",
+    "cooldownDays": 160,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "fame_famous"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "take_two",
+        "label": "Say yes to two",
+        "detail": "+$6,000 · energy −5 · mood −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": 6000,
+            "energy": -5,
+            "mood": -2
+          }
+        ]
+      },
+      {
+        "id": "say_no_all",
+        "label": "Say no to all nine",
+        "detail": "Free · mood +3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_burnout_of_being_seen",
+    "headline": "You have started drafting posts and deleting them.",
+    "weight": 3,
+    "body": "Eleven drafts this week. Not one of them was wrong. Every one of them could be read badly by somebody who wanted to.",
+    "cooldownDays": 130,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "fame_famous"
+      ]
+    },
+    "impact": {
+      "mood": -6,
+      "energy": -4
+    }
+  },
+  {
+    "id": "fame_documentary_crew",
+    "headline": "A documentary crew would like six months of access.",
+    "weight": 2,
+    "body": "They want the good quarter and they will take whichever one they get. Nobody has ever regretted saying no to this.",
+    "cooldownDays": 320,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_famous"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "let_them_in",
+        "label": "Let them in",
+        "detail": "Energy −8 · reputation +4 · morale −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -8
+          },
+          {
+            "type": "reputation",
+            "amount": 4
+          },
+          {
+            "type": "moraleAll",
+            "amount": -2
+          }
+        ]
+      },
+      {
+        "id": "no_crew",
+        "label": "No cameras",
+        "detail": "Free · nothing changes",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_tv_slot",
+    "headline": "Television wants seven minutes on the morning sofa.",
+    "weight": 3,
+    "body": "A car at half past five, a green room with one banana in it, and a host who will ask whether robots are coming for our jobs.",
+    "cooldownDays": 300,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_star"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "do_tv",
+        "label": "Do the sofa",
+        "detail": "Energy −10 · reputation +6 · mood +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "energy": -10,
+            "mood": 2
+          },
+          {
+            "type": "reputation",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "skip_tv",
+        "label": "Send somebody else",
+        "detail": "Free · reputation +1",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_bad_portrait",
+    "headline": "Someone made a very bad portrait of you and it is going around.",
+    "weight": 2,
+    "body": "Oil on canvas, three feet tall, the eyes not quite level. It is in a gallery. It is selling.",
+    "cooldownDays": 200,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_star"
+      ]
+    },
+    "impact": {
+      "mood": 4
+    }
+  },
+  {
+    "id": "fame_public_sofa_offer",
+    "headline": "A talk show wants you and a rival on the same sofa.",
+    "weight": 2,
+    "body": "They have pitched it as a conversation. It is not a conversation. Everyone involved knows what it is.",
+    "cooldownDays": 260,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_star"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "take_the_sofa",
+        "label": "Take the sofa",
+        "detail": "Reputation −2 · mood −4 · the clip lives for ever",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          },
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      },
+      {
+        "id": "no_sofa",
+        "label": "Decline the sofa",
+        "detail": "Free · mood +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_anonymity_gone",
+    "headline": "You cannot buy milk without a conversation about the company.",
+    "weight": 3,
+    "body": "Nobody is unkind. Everybody has a question. You have started going to the shop at eleven at night, which the doctor would have opinions about.",
+    "cooldownDays": 150,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "fame_star"
+      ]
+    },
+    "impact": {
+      "mood": -7,
+      "health": -3
+    }
+  },
+  {
+    "id": "fame_charity_ask",
+    "headline": "A charity would like your name and, ideally, your money.",
+    "weight": 3,
+    "body": "It is a good cause. So were the other four this month. There is no formula for this and everybody pretends there is.",
+    "cooldownDays": 180,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "fame_star"
+      ]
+    },
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "give",
+        "label": "Give properly",
+        "detail": "−$10,000 from the wallet · mood +8 · reputation +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "wallet": -10000,
+            "mood": 8
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "lend_name",
+        "label": "Lend the name only",
+        "detail": "Free · mood −2 · reputation +1",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          },
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fame_biography_unauthorised",
+    "headline": "Somebody is writing a book about you without asking.",
+    "weight": 2,
+    "body": "They have interviewed nine former employees and two people you went to school with. You are not going to enjoy the chapter about year two.",
+    "cooldownDays": 320,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "fame_star"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
   }
 ]

@@ -158,6 +158,9 @@ struct NewspaperPage: View {
             photo
             Rule()
             columns
+            // MARK: Iteration 11 — N4 (fame and the feed)
+            beef
+            // MARK: end of Iteration 11 — N4
             if !aboveTheFold {
                 Rule()
                 smallPrint
@@ -265,6 +268,24 @@ struct NewspaperPage: View {
             .fixedSize(horizontal: false, vertical: true)
         }
     }
+
+    // MARK: Iteration 11 — N4 (fame and the feed)
+
+    /// The beef column, full width under the two columns, because it is
+    /// quotation rather than a list and quotation wants the measure. Drawn
+    /// only in a week the founder actually posted — `beefColumn` is `nil`
+    /// otherwise, and the page below is the page that shipped.
+    @ViewBuilder
+    private var beef: some View {
+        if let column = issue.beefColumn {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Rule()
+                NewsColumn(column: column)
+            }
+        }
+    }
+
+    // MARK: end of Iteration 11 — N4
 
     // MARK: Small print
 
