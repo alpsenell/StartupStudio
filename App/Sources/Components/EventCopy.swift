@@ -618,6 +618,29 @@ struct EventCopy {
         case .incumbentRetreated(_, let name, let day):
             ("flag.checkered", "\(name) gave up your categories", day, Theme.positiveCash)
 
+        // MARK: Iteration 10 — M2 (pitch room)
+
+        case let .pitchOpened(counterpart, day):
+            (
+                "bubble.left.and.text.bubble.right.fill",
+                pitchOpenedMessage(counterpart),
+                day,
+                Theme.accent
+            )
+        case let .pitchClosed(counterpart, band, summary, day):
+            (
+                PitchBand(rawValue: band)?.isGood == true ? "hand.thumbsup.fill" : "quote.closing",
+                "\(pitchWhoMessage(counterpart)) \(summary)",
+                day,
+                PitchBand(rawValue: band).map { pitchBand in
+                    pitchBand.isGood
+                        ? Theme.positiveCash
+                        : (pitchBand.isBad ? Theme.negativeCash : Color.secondary)
+                } ?? Color.secondary
+            )
+
+        // MARK: end of Iteration 10 — M2
+
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a
         // warning naming the new case) when a workstream appends one.
@@ -627,6 +650,32 @@ struct EventCopy {
             fallbackEntry(for: event)
         }
     }
+
+    // MARK: Iteration 10 — M2 (pitch room)
+
+    /// "You sat down with the investor holding the term sheet".
+    private func pitchOpenedMessage(_ counterpart: String) -> String {
+        switch PitchCounterpart(rawValue: counterpart) {
+        case .investor: "You sat down with the investor holding the term sheet"
+        case .client: "You took the client meeting before answering the brief"
+        case .journalist: "You gave the press twenty minutes before the launch"
+        case .board: "You went into the board room rather than reading the minutes"
+        case nil: "You sat down with somebody"
+        }
+    }
+
+    /// Who the closing line is about, so the summary reads as a sentence.
+    private func pitchWhoMessage(_ counterpart: String) -> String {
+        switch PitchCounterpart(rawValue: counterpart) {
+        case .investor: "The term sheet meeting:"
+        case .client: "The client meeting:"
+        case .journalist: "The interview:"
+        case .board: "The board meeting:"
+        case nil: "The meeting:"
+        }
+    }
+
+    // MARK: end of Iteration 10 — M2
 
     /// How they left says what the line is. Somebody the founder burned is
     /// in the book only as history; everybody else is a call the founder

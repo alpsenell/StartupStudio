@@ -273,6 +273,17 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: M2 (pitch room)
 
+    /// M2: sits the founder down with the person behind a term sheet, a
+    /// contract offer, a launch or a board review. `subjectID` names the
+    /// offer or product when there is a choice; `nil` takes the one the
+    /// engine would pick. Refused with a room already open, with nothing
+    /// to talk about, and once that subject has been talked to.
+    case openPitch(counterpart: PitchCounterpart, subjectID: UUID? = nil)
+    /// M2: one exchange in the room, in the networking floor's grammar.
+    case sayInPitch(topic: ConversationTopic)
+    /// M2: gets up. Whatever was said is priced into the paperwork.
+    case leavePitch
+
     // MARK: M3 (incident room)
 
     // MARK: M4 (leagues)

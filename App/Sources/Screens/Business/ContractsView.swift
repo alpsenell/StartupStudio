@@ -278,6 +278,13 @@ private struct ContractOfferCard: View {
                 Spacer(minLength: 0)
             }
 
+            // MARK: Iteration 10 — M2 (pitch room)
+            // A brief is a starting position. Talking to the client moves
+            // the fee, the date and the crew they expect; Accept below is
+            // the same button it always was.
+            PitchInviteButton(engine: engine, counterpart: .client, subjectID: offer.id)
+            // MARK: end of Iteration 10 — M2
+
             HStack(spacing: Theme.Spacing.md) {
                 Text("Due in \(offer.deadlineDays) days once accepted")
                     .font(.footnote)

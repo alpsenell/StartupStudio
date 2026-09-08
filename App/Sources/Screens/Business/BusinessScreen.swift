@@ -186,6 +186,19 @@ struct BusinessScreen: View {
     private func consumeRoute() {
         // MARK: Iteration 10
         // MARK: M2 (pitch room)
+        // The pitch room is a sheet over a card, not a screen of its own,
+        // so the route lands on the segment holding whoever is waiting —
+        // the term sheet first, then the offers on the desk.
+        // `-autoRoute pitch` is read here rather than pushed, the way
+        // every other tab root reads its own launch route.
+        if router.pendingPush == .pitch || (router.pendingPush == nil && Route.launchRoute == .pitch) {
+            section = engine.state.investors.pendingOffer != nil ? .investors : .contracts
+            router.take(.pitch)
+            // The desk's own "land on the most urgent row" pass runs
+            // after this one and would otherwise pick the segment back.
+            landed = true
+            return
+        }
         // MARK: end of Iteration 10
         switch router.pendingPush {
         case .marketMap:

@@ -111,6 +111,10 @@ enum Route: Hashable {
 
     // MARK: M2 (pitch room)
 
+    /// M2: the Business tab, on whichever segment has somebody waiting to
+    /// be talked to — the term sheet, or the offers.
+    case pitch
+
     // MARK: M3 (incident room)
 
     // MARK: M4 (leagues)
@@ -157,6 +161,7 @@ enum Route: Hashable {
         // MARK: M1 (feature board)
         case .featureBoard: .products
         // MARK: M2 (pitch room)
+        case .pitch: .business
         // MARK: M3 (incident room)
         // MARK: M4 (leagues)
         // MARK: M5 (morning desk)

@@ -252,7 +252,10 @@ struct WarRoomContent: View {
             PressStripView(
                 lines: PressStrip.lines(
                     for: product, state: engine.state, balance: engine.balance, content: engine.content
-                )
+                ),
+                // MARK: Iteration 10 — M2 (pitch room) — the interview
+                engine: engine
+                // MARK: end of Iteration 10 — M2
             )
         }
     }
