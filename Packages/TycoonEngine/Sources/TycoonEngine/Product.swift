@@ -310,6 +310,11 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
     /// codebases existed, which is why an old save reads as greenfield
     /// and behaves exactly as it did.
     public var codebaseID: String?
+    /// Iteration 10 (M1): the `FeatureCard` ids placed on this product's
+    /// board, in slot order. Empty is the default and the whole of the old
+    /// game: an empty board multiplies quality by exactly 1.0 and is not
+    /// written to the save at all.
+    public var features: [String]
 
     public init(
         id: UUID,
@@ -317,7 +322,8 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
         typeID: String,
         topicID: String,
         stage: ProductStage,
-        codebaseID: String? = nil
+        codebaseID: String? = nil,
+        features: [String] = []
     ) {
         self.id = id
         self.name = name
@@ -325,15 +331,23 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
         self.topicID = topicID
         self.stage = stage
         self.codebaseID = codebaseID
+        self.features = features
     }
 }
 
 // Hand-written decode so an in-flight product from a save written before
 // codebases existed keeps loading — with no codebase, which is greenfield,
-// which is what it was.
+// which is what it was — and, since iteration 10, with an empty feature
+// board, which is what every product had before there were boards.
+//
+// The encode is hand-written for the other half of that promise: an empty
+// board writes no `features` key at all, so a run that never opens the
+// board produces byte-identical JSON to the one that shipped (which is
+// what `OriginTests` and `ReleaseFixtureGenerator` check).
 extension Product {
     private enum CodingKeys: String, CodingKey {
         case id, name, typeID, topicID, stage, codebaseID
+        case features
     }
 
     public init(from decoder: any Decoder) throws {
@@ -344,8 +358,20 @@ extension Product {
             typeID: try container.decode(String.self, forKey: .typeID),
             topicID: try container.decode(String.self, forKey: .topicID),
             stage: try container.decode(ProductStage.self, forKey: .stage),
-            codebaseID: try container.decodeIfPresent(String.self, forKey: .codebaseID)
+            codebaseID: try container.decodeIfPresent(String.self, forKey: .codebaseID),
+            features: try container.decodeIfPresent([String].self, forKey: .features) ?? []
         )
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(typeID, forKey: .typeID)
+        try container.encode(topicID, forKey: .topicID)
+        try container.encode(stage, forKey: .stage)
+        try container.encodeIfPresent(codebaseID, forKey: .codebaseID)
+        if !features.isEmpty { try container.encode(features, forKey: .features) }
     }
 }
 

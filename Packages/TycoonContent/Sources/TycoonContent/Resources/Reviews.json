@@ -270,6 +270,26 @@
         "Timing is not on its side.",
         "Everyone shipped a {topic} app this month."
       ]
+    },
+    {
+      "id": "featureLed",
+      "lines": [
+        "{feature} is the reason to have it.",
+        "The {feature} alone earns the download.",
+        "Whoever fought for {feature} was right.",
+        "{feature} is the bit everyone will copy.",
+        "It knows what it is: {feature}, done properly."
+      ]
+    },
+    {
+      "id": "featureMisfit",
+      "lines": [
+        "Nobody asked for {misfit}.",
+        "{misfit} belongs in a different app entirely.",
+        "Somebody should have cut {misfit} in the first week.",
+        "{misfit} is a feature in search of a product.",
+        "Time spent on {misfit} is time the rest of it needed."
+      ]
     }
   ]
 }

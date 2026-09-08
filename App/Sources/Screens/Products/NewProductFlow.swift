@@ -50,6 +50,10 @@ struct NewProductFlow: View {
     @State private var focus: PhaseFocus = .balanced
     /// Once the user types their own name, stop regenerating suggestions.
     @State private var nameEdited = false
+    /// M1: the product the flow just started. Setting it pushes the
+    /// feature board — the last step of starting a product is saying what
+    /// it *is*, and the board cannot exist before the product does.
+    @State private var startedProductID: UUID?
 
     /// - Parameter initialTopicID: a topic to arrive with already selected,
     ///   for deep links from the market screens (`Route.newProduct`). The
@@ -81,6 +85,18 @@ struct NewProductFlow: View {
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar }
+            // MARK: M1 (feature board)
+            .navigationDestination(item: $startedProductID) { productID in
+                FeatureBoardScreen(engine: engine, productID: productID)
+                    .navigationBarBackButtonHidden(true)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { dismiss() }
+                                .font(.system(.headline, design: .rounded))
+                        }
+                    }
+            }
+            // MARK: end M1 (feature board)
         }
         .interactiveDismissDisabled(step != .type)
     }
@@ -108,7 +124,8 @@ struct NewProductFlow: View {
                 focus: $focus,
                 suggestion: suggestion,
                 forecast: preStartForecast,
-                matching: selectedTypeID.flatMap { engine.content.productType($0) }.map { PhaseFocus.matching(type: $0) }
+                matching: selectedTypeID.flatMap { engine.content.productType($0) }.map { PhaseFocus.matching(type: $0) },
+                boardSlots: boardSlots
             ) {
                 nameEdited = true
             }
@@ -179,6 +196,14 @@ struct NewProductFlow: View {
         preStartForecast.map { "Start · ~\(Int($0.quality.rounded())) best case" } ?? "Start building"
     }
 
+    /// M1: how many cards the chosen type's board takes, for the details
+    /// page to say what happens after Start.
+    private var boardSlots: Int? {
+        selectedTypeID
+            .flatMap { engine.content.productType($0) }
+            .map { FeatureBoard.slots(for: $0, balance: engine.balance) }
+    }
+
     private var canAdvance: Bool {
         switch step {
         case .type: selectedTypeID != nil
@@ -243,8 +268,17 @@ struct NewProductFlow: View {
         } else {
             .startProduct(typeID: typeID, topicID: topicID, name: trimmedName, focus: focus)
         }
-        shell.toasts.send(action, to: engine, rejected: "Every development slot is busy.")
-        dismiss()
+        let events = shell.toasts.send(
+            action, to: engine, rejected: "Every development slot is busy."
+        )
+        // M1: straight on to the board, which is where the product is
+        // actually decided. A refused start (every slot busy) has no
+        // product to open one for and closes as it always did.
+        guard !events.isEmpty, let started = engine.state.products.last else {
+            dismiss()
+            return
+        }
+        startedProductID = started.id
     }
 
     // MARK: - Name suggestion
@@ -876,6 +910,9 @@ private struct DetailsStep: View {
     let forecast: ShipForecast?
     /// The split the type demands, offered as the starting focus.
     let matching: PhaseFocus?
+    /// M1: how many feature slots this type's board has, so the page can
+    /// say what Start leads to.
+    var boardSlots: Int?
     let onNameEdited: () -> Void
 
     var body: some View {
@@ -903,6 +940,19 @@ private struct DetailsStep: View {
             CardView("Starting focus", systemImage: "slider.horizontal.3") {
                 FocusEditor(focus: $focus, matching: matching)
             }
+
+            // MARK: M1 (feature board)
+            if let boardSlots {
+                CardView("Next: the board", systemImage: "square.grid.2x2.fill") {
+                    Text(
+                        "Start opens the feature board — \(boardSlots) slots to fill from the cards your research and your team can build. You can change it until design is finished."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            // MARK: end M1 (feature board)
         }
         .onAppear {
             // Start on the split the type asks for, not a flat third each;

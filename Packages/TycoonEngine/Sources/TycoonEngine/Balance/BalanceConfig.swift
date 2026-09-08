@@ -1811,6 +1811,21 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 9 — L6
 
+    // MARK: Iteration 10 blocks
+
+    // MARK: M1 (feature board)
+
+    /// What a placed feature card is worth
+    /// (`BalanceConfig+FeatureBoard.swift`). Inline default, so
+    /// `"featureBoard"` is an optional key; and the multiplier it feeds is
+    /// exactly 1.0 for an empty board, so a run that places no card never
+    /// reads a number that matters.
+    public var featureBoard: FeatureBoardBalance = .default
+
+    // MARK: end M1 (feature board)
+
+    // MARK: end of Iteration 10
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

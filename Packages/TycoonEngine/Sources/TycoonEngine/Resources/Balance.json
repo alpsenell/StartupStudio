@@ -1181,5 +1181,23 @@
     "boardPatienceFactor": 0.5,
     "poachChanceFactor": 1.5,
     "earlyEndBondPenalty": 25.0
+  },
+  "_iteration10Blocks": "M1 appends featureBoard here",
+  "featureBoard": {
+    "slotsMin": 4,
+    "slotsMax": 6,
+    "slotsComplexityStep": 0.3,
+    "handSize": 10,
+    "lockDesignFraction": 0.9,
+    "fitValue": 1.0,
+    "synergyValue": 0.5,
+    "appetiteValue": 0.5,
+    "appetiteQuarterDays": 91,
+    "appetiteTagCount": 2,
+    "boomAppetiteThreshold": 1.35,
+    "appetiteMaxTags": 4,
+    "qualitySwing": 0.1,
+    "qualityBonusCap": 0.12,
+    "qualityPenaltyCap": 0.1
   }
 }

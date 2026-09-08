@@ -463,18 +463,29 @@ enum RivalSystem {
         let ripeDay = state.day - RivalDepthTuning.copycatDelayWeeks * GameState.daysPerWeek
         // The player's best product old enough to have been noticed.
         let target = state.products
-            .compactMap { product -> (topicID: String, score: Int)? in
+            .compactMap { product -> (topicID: String, score: Int, product: Product)? in
                 guard case .released(let info) = product.stage,
                       !info.offMarket,
                       info.launchDay <= ripeDay
                 else { return nil }
-                return (product.topicID, info.averageReviewScore)
+                return (product.topicID, info.averageReviewScore, product)
             }
             .max { lhs, rhs in
                 if lhs.score != rhs.score { return lhs.score < rhs.score }
                 return lhs.topicID < rhs.topicID
             }
         guard let target else { return [] }
+
+        // MARK: M1 (feature board)
+
+        // What the copycat is actually copying. A player who never placed
+        // a card is copied the way they always were — the clone lifts
+        // nothing, and `copiedFeature` stays `nil` and unwritten.
+        let copiedFeature = FeatureBoard.reading(
+            for: target.product, state: state, content: content, balance: balance
+        ).bestCard?.name
+
+        // MARK: end M1 (feature board)
 
         var events: [GameEvent] = []
         for index in state.rivals.rivals.indices {
@@ -485,7 +496,10 @@ enum RivalSystem {
             if !state.rivals.rivals[index].focusTopicIDs.contains(target.topicID) {
                 state.rivals.rivals[index].focusTopicIDs.append(target.topicID)
             }
-            let clone = launchProduct(for: rival, in: target.topicID, &state, balance, content)
+            var clone = launchProduct(for: rival, in: target.topicID, &state, balance, content)
+            // MARK: M1 (feature board)
+            clone.copiedFeature = copiedFeature
+            // MARK: end M1 (feature board)
             appendProduct(clone, to: index, in: &state)
             state.rivals.rivals[index].lastShippedDay = state.day
             events.append(.rivalCopycat(rivalID: rival.id, topicID: target.topicID, day: state.day))

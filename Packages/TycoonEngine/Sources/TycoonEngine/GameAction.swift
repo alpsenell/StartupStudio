@@ -263,6 +263,14 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: M1 (feature board)
 
+    /// M1: puts a feature card in one of a product's board slots. A slot
+    /// past the last placed card appends; a slot inside the board replaces
+    /// what was there. Refused once design is finished, and for a card the
+    /// studio has not researched.
+    case placeFeature(productID: UUID, cardID: String, slot: Int)
+    /// M1: takes the card in `slot` off a product's board.
+    case removeFeature(productID: UUID, slot: Int)
+
     // MARK: M2 (pitch room)
 
     // MARK: M3 (incident room)

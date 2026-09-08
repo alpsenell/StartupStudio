@@ -95,6 +95,9 @@ struct StorefrontPage: View {
                 )
                 priceButton(info: info)
                 StorefrontShotsCard(product: product)
+                // M1: what the thing actually does, listed the way a store
+                // page lists it. Absent when nobody placed a card.
+                StorefrontFeaturesCard(product: product, content: engine.content)
                 StorefrontWeekCard(info: info, type: type)
                 WhatsNewCard(product: product, info: info)
                 StorefrontReviewsCard(info: info)
@@ -107,6 +110,7 @@ struct StorefrontPage: View {
                     rating: .comingSoon
                 )
                 ComingSoonCard(progress: progress, type: type)
+                StorefrontFeaturesCard(product: product, content: engine.content)
                 StorefrontShotsCard(product: product)
             }
         }
@@ -157,6 +161,49 @@ struct StorefrontPage: View {
 
     private var type: ProductTypeDef? { engine.content.productType(product.typeID) }
     private var topic: TopicDef? { engine.content.topic(product.topicID) }
+}
+
+// MARK: - What it does
+
+/// M1: the product's feature board, read as a store listing — the cards
+/// the studio actually chose, with the line each one was written with.
+/// Nothing is drawn for a product with an empty board, which is every
+/// product from before the board existed.
+private struct StorefrontFeaturesCard: View {
+    let product: Product
+    let content: ContentCatalog
+
+    private var cards: [FeatureCardDef] {
+        product.features.compactMap { content.featureCard($0) }
+    }
+
+    var body: some View {
+        if !cards.isEmpty {
+            CardView("What it does", systemImage: "checklist") {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    ForEach(cards) { card in
+                        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.footnote)
+                                .foregroundStyle(Theme.accent)
+                                .padding(.top, 2)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(card.name)
+                                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                if !card.blurb.isEmpty {
+                                    Text(card.blurb)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Getting here

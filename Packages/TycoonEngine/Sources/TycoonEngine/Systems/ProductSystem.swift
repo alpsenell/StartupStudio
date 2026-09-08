@@ -278,6 +278,7 @@ enum ProductSystem {
         focus: PhaseFocus,
         codebaseID: String? = nil,
         state: inout GameState,
+        balance: BalanceConfig,
         content: ContentCatalog
     ) -> [GameEvent] {
         guard state.hasFreeDevSlot,
@@ -302,10 +303,19 @@ enum ProductSystem {
             polishPts: min(type.polishPts, codebase?.polishPts ?? 0),
             openBugs: 0, focus: focus.normalized, hype: 0
         )
+        // M1: a sequel starts with its parent's board already laid out —
+        // the features you built last time are the ones the codebase you
+        // are reusing already has. Greenfield, and every save from before
+        // boards existed, inherits an empty board, which is neutral.
+        let inherited = FeatureBoard.inheritedBoard(
+            codebaseID: codebase?.id, typeID: typeID,
+            state: state, content: content, balance: balance
+        )
         state.products.append(Product(
             id: id, name: name, typeID: typeID, topicID: topicID,
             stage: .development(progress),
-            codebaseID: codebase?.id
+            codebaseID: codebase?.id,
+            features: inherited
         ))
         for index in state.employees.indices where state.employees[index].assignment == .idle {
             state.employees[index].assignment = .product(id)
@@ -371,8 +381,16 @@ enum ProductSystem {
         let codebaseCeiling = balance.codebase.debtCeiling(
             state.inheritedDebt(for: state.products[index])
         )
+        // M1: and what the board is worth. Exactly 1.0 for a product
+        // nobody placed a card on, which is every product the pacing bots
+        // and the byte-identical fixtures ever build.
+        let board = FeatureBoard.reading(
+            for: state.products[index], state: state, content: content, balance: balance
+        )
+        let boardMultiplier = state.products[index].features.isEmpty ? 1 : board.qualityMultiplier
         let quality = min(100, max(0,
             100 * completion * topicFit * bugFactor * techMultiplier * ceiling * codebaseCeiling
+                * boardMultiplier
         ))
 
         // Full review model: the press expects more from an older, more
@@ -402,7 +420,13 @@ enum ProductSystem {
             bugRatio: type.codePts > 0 ? Double(dev.openBugs) / type.codePts : 0,
             polishRatio: type.polishPts > 0 ? min(1, dev.polishPts / type.polishPts) : 1,
             hype: hypeAtLaunch,
-            marketScale: marketScale
+            marketScale: marketScale,
+            // M1: the two words a review can quote. Empty on an empty
+            // board, and `ReviewBlurbs` only reaches for the token when a
+            // feature callout fires, so a boardless launch reads exactly
+            // as it always did.
+            bestFeature: board.bestCard?.name ?? "",
+            worstFeature: board.worstCard?.name ?? ""
         )
 
         var reviews: [Review] = []

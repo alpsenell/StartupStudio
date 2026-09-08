@@ -97,6 +97,17 @@ struct ProductDetailScreen: View {
             }
         }
 
+        // M1: what the product *is*, before what the pools are. A build
+        // with an empty board says so and costs nothing.
+        if let board = featureBoard(for: product) {
+            FeatureBoardLinkButton(
+                productID: productID,
+                multiplier: board.qualityMultiplier,
+                filled: board.filled,
+                slots: board.slots
+            )
+        }
+
         CardView("Focus", systemImage: "slider.horizontal.3") {
             FocusEditor(
                 focus: focusBinding(fallback: progress.focus),
@@ -111,6 +122,15 @@ struct ProductDetailScreen: View {
         }
 
         shipButton(product: product, progress: progress)
+    }
+
+    /// M1: the product's board, read. `nil` for anything not in
+    /// development — a shipped board is history.
+    private func featureBoard(for product: Product) -> FeatureBoardReading? {
+        guard case .development = product.stage else { return nil }
+        return FeatureBoard.reading(
+            for: product, state: engine.state, content: engine.content, balance: engine.balance
+        )
     }
 
     /// Rounded percent bonus from researched quality techs, or nil when
@@ -201,6 +221,15 @@ struct ProductDetailScreen: View {
         }
         if polish < 100 {
             lines += " Unfinished polish costs review score."
+        }
+        // M1: the board is part of what ships, so it is part of the last
+        // sentence before it does.
+        if let product = engine.state.product(id: productID),
+           let board = featureBoard(for: product), board.filled > 0 {
+            let percent = Int(((board.qualityMultiplier - 1) * 100).rounded())
+            if percent != 0 {
+                lines += " The board is worth \(percent > 0 ? "+" : "")\(percent)% on quality."
+            }
         }
         return lines + " Development stops for good."
     }
@@ -749,6 +778,22 @@ private struct ShipForecastCard: View {
                     )
                     .font(.caption)
                     .foregroundStyle(Theme.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // M1: the board's contribution, in the same card as the
+                // other terms that decide the number. Absent on an empty
+                // board, which is what every pre-iteration-10 build has.
+                if let summary = forecast.featureSummary {
+                    let percent = Int(((forecast.featureMultiplier - 1) * 100).rounded())
+                    Label(
+                        percent == 0
+                            ? "Feature board: \(summary) It is not moving the score either way."
+                            : "Feature board: \(summary) Worth \(percent > 0 ? "+" : "")\(percent)% on quality.",
+                        systemImage: "square.grid.2x2.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(percent < 0 ? Theme.warning : .secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 }
 

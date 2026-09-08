@@ -44,6 +44,9 @@ public struct ContentCatalog: Sendable {
     /// Staff moments (`StaffEvents.json`), one def per `StaffEventKind`.
     /// Empty falls back to the engine's balance numbers.
     public let staffEvents: [StaffEventDef]
+    /// Feature cards for the product board (`Features.json`, M1). Empty
+    /// when the file is absent, which is exactly a game with no boards.
+    public let features: [FeatureCardDef]
 
     private let productTypesByID: [String: ProductTypeDef]
     private let topicsByID: [String: TopicDef]
@@ -51,6 +54,7 @@ public struct ContentCatalog: Sendable {
     private let lifeEventsByID: [String: LifeEventDef]
     private let eventsByID: [String: EventDef]
     private let staffEventsByID: [String: StaffEventDef]
+    private let featuresByID: [String: FeatureCardDef]
 
     public init(
         productTypes: [ProductTypeDef],
@@ -65,7 +69,8 @@ public struct ContentCatalog: Sendable {
         reviews: ReviewCatalog? = nil,
         goals: [GoalDef] = [],
         investors: [InvestorDef] = [],
-        staffEvents: [StaffEventDef] = []
+        staffEvents: [StaffEventDef] = [],
+        features: [FeatureCardDef] = []
     ) {
         self.productTypes = productTypes
         self.topics = topics
@@ -80,6 +85,7 @@ public struct ContentCatalog: Sendable {
         self.goals = goals
         self.investors = investors
         self.staffEvents = staffEvents
+        self.features = features
         self.productTypesByID = Dictionary(
             productTypes.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
@@ -104,6 +110,10 @@ public struct ContentCatalog: Sendable {
             staffEvents.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
+        self.featuresByID = Dictionary(
+            features.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
     }
 
     /// Decodes the bundled content JSON files from `Bundle.module`.
@@ -126,7 +136,8 @@ public struct ContentCatalog: Sendable {
             reviews: try decodeResourceIfPresent("Reviews", using: decoder),
             goals: try decodeResourceIfPresent("Goals", using: decoder) ?? [],
             investors: try decodeResourceIfPresent("Investors", using: decoder) ?? [],
-            staffEvents: try decodeResourceIfPresent("StaffEvents", using: decoder) ?? []
+            staffEvents: try decodeResourceIfPresent("StaffEvents", using: decoder) ?? [],
+            features: try decodeResourceIfPresent("Features", using: decoder) ?? []
         )
     }
 
@@ -153,6 +164,11 @@ public struct ContentCatalog: Sendable {
     /// O(1) lookup of a company event by id.
     public func event(_ id: String) -> EventDef? {
         eventsByID[id]
+    }
+
+    /// O(1) lookup of a feature card by id.
+    public func featureCard(_ id: String) -> FeatureCardDef? {
+        featuresByID[id]
     }
 
     /// O(1) lookup of a staff-event definition by its kind raw value.
