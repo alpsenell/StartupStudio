@@ -120,3 +120,91 @@ way it already knew the calendar's.
 
 `-autoRoute courtroom|people|assets|feed`, `-autoCase <kind>`,
 `-autoAssets`, `-autoFame`, `-autoCompose`, `-autoSecret <kind>`.
+
+## How wave two ran
+
+Four Opus lanes cut from wave one's merge (`scaffold-11b`), each on its
+own simulator, landing in the order W1, W3, W2, W4. Conflicts were the
+same kinds as wave one and were resolved the same way: both-added switch
+arms (two lanes each added a seventh `CrimeOffence`, laundering and
+industrial espionage, so the enum has eight), the severity switch, the
+balance JSON, and the event files by union: company events 147 → 204,
+life events 208 → 299. One lane noted that an ungated life event moves
+the byte-identical fixtures, which every wave-two lane then respected.
+
+## Wave two
+
+### W1 — Dirty money
+
+Three backers with real cheques: the family office ($240k, a consultant
+on payroll, a market of their choosing), the front ($90k, a quarterly
+invoice to nowhere, a nephew), the shark ($30k, a weekly vig and a visit
+when a week goes unpaid). The offer comes only to a company under four
+weeks of runway or one that declined a term sheet this quarter, and only
+after the finances have been opened. Strings are sheets with comply,
+stall and refuse, priced in dollars and heat on the button. Heat pays
+out weekly above a floor as the office window, the car, a friend's bond
+or a rival's strength. Every payment is laundering, the seventh offence,
+found by the ordinary sweep. Three exits: pay off, turn witness, sell
+up. Thirty-eight events.
+
+### W2 — Family drama
+
+Discovery of an affair rolls weekly, scaled by how long it has run, by a
+standing vice intervention and by fame; it pauses the clock and opens a
+four-answer confrontation. Divorce is the break-up first, then a
+two-column settlement whose total is the engine's arithmetic: things
+split by resale value, the roof following the children, the pet by
+name, half the crypto, and past two years married a slice of the company
+held the way a co-founder's is. Custody is a case in the courtroom with
+a family opener, graded on the children's memory ledgers. Parents, a
+sibling and the in-laws are derived from the seed like friends are,
+with care bills, a funeral with one argument, the sibling's job then
+stake then loan, the spare room, and the will, which the dynasty's
+successor list reads. Thirty-nine events.
+
+### W3 — Espionage
+
+Five operations from a rival's profile with cost, odds and trace odds
+printed: tail the founder, place a mole, poach with dirt, buy the
+roadmap, take the storefront down. Botched operations are easier to
+trace; a trace maxes the grudge and raises a case for industrial
+espionage, the eighth offence. Rivals run three of the same against you
+on the secret-thread machine once their grudge is high, and
+counterintelligence is three new responses on the secrets card: sweep,
+audit, feed false plans. Thirty-three events and six staff moments.
+
+### W4 — Inside
+
+A sentence is a place. Every day inside is one choice of five with its
+numbers on the button (keep your head down, the library, the yard, the
+phone call home, the deal), a cellmate drawn once who leaves with you as
+a contact, a wing to join or refuse, a parole board at the halfway mark
+in the courtroom's grammar, one go at the wall, and three doors out. A
+full-screen mode covers the game while the founder is inside; the
+caretaker runs the company; the phone is the window. The venue roster
+roll was moved off the archetype enum's `allCases` so the new inmate
+archetype moves no recorded party. Thirty-eight events.
+
+## Suites after iteration 11
+
+Engine 943, content 52, save 34, PixelKit 336, app 385, all green on the
+nine-lane merge. No test was added.
+
+## Not done, honestly (wave two)
+
+- The laundering offence's discovery rate is a constant, not a balance
+  key; the consultant and the nephew are passengers on payroll rather
+  than employees; nothing checks that you shipped into "their market".
+- The custody hearing's standing label still reads the crime's word.
+- The dossier does not warm the pitch room, and the mole's intel is on
+  the espionage state rather than the feature board.
+- The parole board is built and driven by a flag but was never
+  photographed: a root sheet always won the race.
+- Wave two's demand sheets are not on the shared decision rail.
+
+## Debug flags added (wave two)
+
+`-autoRoute dirtymoney|divorce|spy`, `-autoDirtyMoney <backer>`,
+`-autoSpy <operation>`, `-autoSpyCard`, `-autoInside <weeks>`,
+`-autoParole`.

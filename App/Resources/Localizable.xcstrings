@@ -139,6 +139,29 @@
         }
       }
     },
+    "%@ a week saved · mood %lld a week" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ a week saved · mood %2$lld a week"
+          }
+        }
+      }
+    },
+    "%@ a week saved · mood %lld · affection +%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ a week saved · mood %2$lld · affection +%3$lld"
+          }
+        }
+      }
+    },
+    "%@ a week to the home." : {
+
+    },
     "%@ and one evening. Every habit down %lld, mood +%lld. Once a week." : {
       "localizations" : {
         "en" : {
@@ -330,10 +353,16 @@
     "%@ updates since launch." : {
 
     },
+    "%@ went through them. The record has all of it." : {
+
+    },
     "%@ will be deleted for good." : {
 
     },
     "%@ works here now. They're on the team sheet." : {
+
+    },
+    "%@ would like an answer about protection. In means the yard stops being a problem and somebody outside will want a favour. Out means neither." : {
 
     },
     "%@ · %@" : {
@@ -449,6 +478,16 @@
     },
     "%@ · white-label" : {
 
+    },
+    "%@ → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ → %2$@"
+          }
+        }
+      }
     },
     "%@ → %@ · it %@" : {
       "localizations" : {
@@ -937,6 +976,16 @@
         }
       }
     },
+    "%lld day%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld day%2$@"
+          }
+        }
+      }
+    },
     "%lld day%@ ago" : {
       "localizations" : {
         "en" : {
@@ -963,6 +1012,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld day%2$@ left"
+          }
+        }
+      }
+    },
+    "%lld day%@ left of %lld week%@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld day%2$@ left of %3$lld week%4$@."
           }
         }
       }
@@ -1253,6 +1312,16 @@
         }
       }
     },
+    "%lld thing%@ they will hear before they decide." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld thing%2$@ they will hear before they decide."
+          }
+        }
+      }
+    },
     "%lld week%@ with %@%@" : {
       "localizations" : {
         "en" : {
@@ -1280,6 +1349,29 @@
       "comment" : "Runway readout: weeks of cash left. wk is short for weeks"
     },
     "%lld%%" : {
+
+    },
+    "%lld%% it works · %lld days if it does not" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld%% it works · %2$lld days if it does not"
+          }
+        }
+      }
+    },
+    "%lld%% of %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld%% of %2$@"
+          }
+        }
+      }
+    },
+    "%lld%% of nothing" : {
 
     },
     "%lld%% of the market" : {
@@ -1319,6 +1411,9 @@
 
     },
     "%lldd" : {
+
+    },
+    "%lld×" : {
 
     },
     "(%@)" : {
@@ -1388,6 +1483,26 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "A caretaker needs %1$lld weeks on the payroll and a bond of %2$lld. Coffees, one-on-ones and evenings out are how you get there."
+          }
+        }
+      }
+    },
+    "A cell shared with %@. Day %lld of %lld." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A cell shared with %1$@. Day %2$lld of %3$lld."
+          }
+        }
+      }
+    },
+    "A cell. Day %lld of %lld." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A cell. Day %1$lld of %2$lld."
           }
         }
       }
@@ -1514,6 +1629,9 @@
     "Amenities, %@" : {
 
     },
+    "An approach" : {
+
+    },
     "An empty garage at night" : {
 
     },
@@ -1539,6 +1657,9 @@
 
     },
     "Around the room" : {
+
+    },
+    "Ask them to go" : {
 
     },
     "Asking the App Store for the price" : {
@@ -1833,8 +1954,14 @@
     "Cash out" : {
 
     },
+    "Cellmate · %lld rapport. Yours in the address book when you leave." : {
+
+    },
     "Change" : {
       "comment" : "Weekly report figure: how much average morale moved this week"
+    },
+    "Change it" : {
+
     },
     "Change the price of %@" : {
 
@@ -1862,6 +1989,9 @@
 
     },
     "Chosen" : {
+
+    },
+    "Chosen. It is spent when the day turns over." : {
 
     },
     "City map" : {
@@ -2152,6 +2282,16 @@
         }
       }
     },
+    "Day %lld. %@ took what they took." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Day %1$lld. %2$@ took what they took."
+          }
+        }
+      }
+    },
     "Day one" : {
 
     },
@@ -2210,6 +2350,12 @@
 
     },
     "District colour is your standing: grey no presence, sand newcomer, light green known, green established, teal household name" : {
+
+    },
+    "Divide the estate" : {
+
+    },
+    "Divorced from %@." : {
 
     },
     "Do this next: %@" : {
@@ -2334,10 +2480,19 @@
     "Everyone's gone home." : {
 
     },
+    "Everything either of you owns is on one table and somebody has to divide it." : {
+
+    },
+    "Everything goes to %@." : {
+
+    },
     "Everything on this screen is your own money. The company never pays for any of it." : {
 
     },
     "Everything you do is for the company. This is the one thing that isn't." : {
+
+    },
+    "Everything you pay them goes on your own record as laundering. An auditor can find it, and a court can hear it." : {
 
     },
     "Expenses" : {
@@ -2518,6 +2673,15 @@
     "Go again" : {
 
     },
+    "Go before the board" : {
+
+    },
+    "Go in with them" : {
+
+    },
+    "Go over the wall" : {
+
+    },
     "Go to HQ" : {
 
     },
@@ -2533,6 +2697,9 @@
     "Gone from the scene" : {
 
     },
+    "Gone: %@" : {
+
+    },
     "Grab coffee (%@)" : {
 
     },
@@ -2542,11 +2709,20 @@
     "Guaranteed by you" : {
       "comment" : "Money sheet row: debt secured against the founder home"
     },
+    "HEAT" : {
+
+    },
     "HQ" : {
 
     },
     "HR" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
+    },
+    "Half, and then the solicitors argue." : {
+
+    },
+    "Half, and then the solicitors argue. The affair is on the record, which costs you %lld points of it." : {
+
     },
     "Hall of Fame" : {
 
@@ -2569,8 +2745,24 @@
     "Have a 1-on-1" : {
 
     },
+    "Have the conversation" : {
+
+    },
     "Health" : {
       "comment" : "Founder meter: physical health"
+    },
+    "Hear them out" : {
+
+    },
+    "Heat %lld of 100. %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Heat %1$lld of 100. %2$@."
+          }
+        }
+      }
     },
     "Heirlooms" : {
       "comment" : "Onboarding step name: carry one thing from the last company"
@@ -2624,6 +2816,9 @@
     "INCIDENT ROOM" : {
       "comment" : "Pixel-font title of the incident room, the stopped-clock screen for a live product that has broken. Uppercase A-Z only — the bitmap font has no accents."
     },
+    "INSIDE" : {
+      "comment" : "Pixel-font title of the prison screen, the full-screen mode while the founder is serving a sentence. Uppercase A-Z only — the bitmap font has no accents."
+    },
     "Idle" : {
       "comment" : "An employee with no work. Used in the assignment menu and as the current-assignment readout"
     },
@@ -2662,6 +2857,9 @@
     "In the red" : {
 
     },
+    "In your address book at %lld rapport. He has a phone and no job." : {
+
+    },
     "Incident room, %@" : {
 
     },
@@ -2670,6 +2868,9 @@
     },
     "Income last week" : {
       "comment" : "Money sheet row: money in over the last week"
+    },
+    "Inside, %@" : {
+
     },
     "Interest" : {
       "comment" : "Money sheet row: interest charged each week"
@@ -2697,6 +2898,16 @@
     },
     "It starts in a garage with one desk. Hire people and it grows into a loft, a studio, a campus — every move costs rent you have to keep earning." : {
       "comment" : "Body of the onboarding panel about the office"
+    },
+    "It was settled on day %lld. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It was settled on day %1$lld. %2$@"
+          }
+        }
+      }
     },
     "It's built, and it's mine" : {
 
@@ -2752,6 +2963,9 @@
     "LOCKED" : {
 
     },
+    "Later" : {
+
+    },
     "Launch day" : {
 
     },
@@ -2798,6 +3012,9 @@
 
     },
     "Let me think" : {
+
+    },
+    "Let them decide" : {
 
     },
     "Let them go" : {
@@ -2890,6 +3107,16 @@
     "Marketing needs something to hype — start a product first." : {
 
     },
+    "Married %lld years: %lld%% of the company goes with them." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Married %1$lld years: %2$lld%% of the company goes with them."
+          }
+        }
+      }
+    },
     "Match the offer" : {
       "comment" : "Answer to a poach: pay what the rival offered"
     },
@@ -2964,6 +3191,9 @@
       "comment" : "Bitmap kicker: somebody has handed in notice. Uppercase A-Z only"
     },
     "NOTORIETY" : {
+
+    },
+    "Name an heir" : {
 
     },
     "Name the studio" : {
@@ -3114,19 +3344,31 @@
     "Nobody can buy this any more." : {
 
     },
+    "Nobody has asked you for anything yet. They will." : {
+
+    },
     "Nobody has texted you. That is either peace or a warning." : {
 
     },
     "Nobody is close to walking out." : {
 
     },
+    "Nobody is holding you." : {
+
+    },
     "Nobody is idle" : {
+
+    },
+    "Nobody is named in a will. The board would enjoy that." : {
 
     },
     "Nobody is researching — the lab banks no points." : {
 
     },
     "Nobody is working on this — it makes no progress." : {
+
+    },
+    "Nobody knows yet." : {
 
     },
     "Nobody matches “%@”." : {
@@ -3171,6 +3413,9 @@
     "Not that desperate" : {
 
     },
+    "Not this time" : {
+
+    },
     "Not this week's scenario, so no board — the stars are yours." : {
 
     },
@@ -3210,10 +3455,16 @@
     "Nothing is listed. Nobody is waiting for you." : {
 
     },
+    "Nothing is listed. Nobody is waiting to hear from you." : {
+
+    },
     "Nothing is on fire." : {
 
     },
     "Nothing of yours targets this market yet." : {
+
+    },
+    "Nothing on either side yet." : {
 
     },
     "Nothing on the desk." : {
@@ -3238,6 +3489,9 @@
 
     },
     "Nothing reached the shelf." : {
+
+    },
+    "Nothing to read" : {
 
     },
     "Nothing to watch" : {
@@ -3286,6 +3540,9 @@
     "Offer" : {
       "comment" : "Decision sheet stat label: what is on the table - a rival salary offer, or a buyout price"
     },
+    "Offer it" : {
+
+    },
     "Office" : {
 
     },
@@ -3301,7 +3558,13 @@
     "On the market" : {
 
     },
+    "On the run" : {
+
+    },
     "On the side" : {
+
+    },
+    "On today's diary, a court would probably say: %@." : {
 
     },
     "One at a time. Put it down and the chapter you are in goes with it — the ones you finished stay finished." : {
@@ -3311,6 +3574,9 @@
 
     },
     "One company, one attempt, one game year — the same seed for everyone in %@. Top four go up on Monday, bottom four go down." : {
+
+    },
+    "One day left" : {
 
     },
     "One hour left" : {
@@ -3353,6 +3619,9 @@
 
     },
     "Open the life score breakdown" : {
+
+    },
+    "Open the phone" : {
 
     },
     "Open the team" : {
@@ -3454,6 +3723,9 @@
     "Out of cash — expenses are digging the hole deeper." : {
 
     },
+    "Out today, on paper, with an address to keep." : {
+
+    },
     "Outstanding" : {
       "comment" : "Money sheet row: loan principal still owed"
     },
@@ -3537,6 +3809,9 @@
 
     },
     "Pick a type, pick a topic, and get building. Press play when you are ready." : {
+
+    },
+    "Pick one. A day nobody picks is a day with your head down." : {
 
     },
     "Pick the slot the new company takes. Its save goes when the new one starts, not before." : {
@@ -3687,6 +3962,9 @@
     },
     "R&D" : {
 
+    },
+    "RELEASED" : {
+      "comment" : "Pixel-font heading on the sheet the founder reads on the way out of a prison sentence. Uppercase A-Z only — the bitmap font has no accents."
     },
     "ROUND %lld" : {
 
@@ -3966,6 +4244,9 @@
     "Saves" : {
       "comment" : "Bitmap section heading over the three save slots. Uppercased by the pixel face"
     },
+    "Say no" : {
+
+    },
     "Say nothing and the thread keeps that too." : {
 
     },
@@ -4010,6 +4291,9 @@
 
     },
     "See the rivals" : {
+
+    },
+    "See them" : {
 
     },
     "Seed" : {
@@ -4102,6 +4386,9 @@
     "Shipped on %@" : {
 
     },
+    "Shipped: %@" : {
+
+    },
     "Shipping unlocks once code reaches %lld%% of its target." : {
 
     },
@@ -4132,6 +4419,9 @@
     "Shuffle the founder's appearance" : {
 
     },
+    "Sign it. It is done." : {
+
+    },
     "Sign preview: %@, founded by %@" : {
       "localizations" : {
         "en" : {
@@ -4143,6 +4433,9 @@
       }
     },
     "Sign the guarantee" : {
+
+    },
+    "Signed and lodged. %@ does not know." : {
 
     },
     "Signed in" : {
@@ -4442,6 +4735,12 @@
     "Tap a district for its report. Bigger districts are hotter markets; greener ones are more yours." : {
 
     },
+    "Tap a thing to keep it. Tap the other column first to give something away." : {
+
+    },
+    "Tap a thing to let it go." : {
+
+    },
     "Tap an attribute to train it. Training is your evening and your money." : {
 
     },
@@ -4457,6 +4756,9 @@
           }
         }
       }
+    },
+    "Tap to move it to the armed column" : {
+
     },
     "Tap to put them on %@" : {
 
@@ -4478,6 +4780,9 @@
     },
     "Technical debt" : {
       "comment" : "Money sheet row: the worst codebase debt score"
+    },
+    "That is everything they are going to hear." : {
+
     },
     "That is the desk. See you tomorrow." : {
 
@@ -4510,10 +4815,35 @@
     "The bench: %@" : {
 
     },
+    "The board" : {
+
+    },
+    "The board heard you on day %lld and said no. There is no second board." : {
+
+    },
+    "The board let you out on day %lld." : {
+
+    },
+    "The board sits at the halfway mark. It has read your file: %@." : {
+
+    },
+    "The board sits when you are halfway through. %lld day%@ from now." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The board sits when you are halfway through. %1$lld day%2$@ from now."
+          }
+        }
+      }
+    },
     "The business" : {
       "comment" : "Heading of the onboarding panel about the business"
     },
     "The card: %@" : {
+
+    },
+    "The caretaker still texts. So does everybody else, and you can read all of it and answer almost none of it." : {
 
     },
     "The casino" : {
@@ -4567,13 +4897,22 @@
     "The fix is not finished. Closing now leaves it broken." : {
 
     },
+    "The folder" : {
+
+    },
     "The fortnight" : {
+
+    },
+    "The funeral" : {
 
     },
     "The garage was free. %@ has outgrown it." : {
 
     },
     "The garage, the deeds and the doctor" : {
+
+    },
+    "The gate is open" : {
 
     },
     "The hearing" : {
@@ -4583,6 +4922,9 @@
 
     },
     "The house will take %@ off you in a week and then politely stop." : {
+
+    },
+    "The in-laws are in the spare room" : {
 
     },
     "The incident stays open and the clock stays stopped" : {
@@ -4649,6 +4991,9 @@
     "The other ledger" : {
 
     },
+    "The phone" : {
+
+    },
     "The press hasn't weighed in yet." : {
 
     },
@@ -4667,6 +5012,12 @@
     },
     "The products" : {
       "comment" : "Heading of the onboarding panel about the products"
+    },
+    "The rest of it, day by day, the way it was written down." : {
+
+    },
+    "The rest of the family" : {
+
     },
     "The retreat clock is stopped until you hold both." : {
 
@@ -4699,6 +5050,12 @@
     "The season's face is in your looks." : {
 
     },
+    "The settlement" : {
+
+    },
+    "The spare room is empty" : {
+
+    },
     "The table settles when the week rolls over on Monday." : {
 
     },
@@ -4717,19 +5074,40 @@
     "The waiting room" : {
 
     },
+    "The way out" : {
+
+    },
     "The wedding costs %@ out of your own wallet." : {
 
     },
     "The weekly report will open on its own at the end of each week again." : {
 
     },
+    "The weeks, in order" : {
+
+    },
     "The whole score" : {
+
+    },
+    "The will" : {
+
+    },
+    "The will names %@." : {
 
     },
     "Them · you" : {
       "comment" : "Decision sheet stat label: the rival review score against yours"
     },
     "There are six things you could do that would help enormously and that you should not do. They are all still available to you." : {
+
+    },
+    "There is a laundry van on Thursdays. If it works you are outside and never off the list; if it does not, what is left of the sentence doubles." : {
+
+    },
+    "There is no version of this you can undo." : {
+
+    },
+    "There is no will. If this ends badly, the company is an argument." : {
 
     },
     "There is nobody on the payroll to draw." : {
@@ -4741,10 +5119,16 @@
     "They are not here." : {
 
     },
+    "They are shipping %@" : {
+
+    },
     "They clear their desk today. Their friends will notice." : {
       "comment" : "Detail under the let-them-go answer to a resignation"
     },
     "They keep their %lld%%. Firing a co-founder doesn't buy it back." : {
+
+    },
+    "They know about it. The house is very quiet and neither of you has cooked." : {
 
     },
     "They leave the pool. A new batch shows up every two weeks." : {
@@ -4763,6 +5147,9 @@
 
     },
     "They want " : {
+
+    },
+    "They want something" : {
 
     },
     "They will take %@ to make it go away. %@ is representing you." : {
@@ -4861,6 +5248,9 @@
     "Time is paused: %@" : {
 
     },
+    "Time served" : {
+
+    },
     "Timeline" : {
 
     },
@@ -4874,6 +5264,9 @@
 
     },
     "Today, day %lld" : {
+
+    },
+    "Tonight" : {
 
     },
     "Total payroll" : {
@@ -4933,6 +5326,9 @@
 
     },
     "Two clear weeks. Nothing is due, nobody is waiting, and the evenings are yours." : {
+
+    },
+    "Two parents, a sibling, and — while there is a partner — their parents as well. None of them work for you and all of them have opinions." : {
 
     },
     "Two people in a garage, one laptop, and a name to defend." : {
@@ -5007,6 +5403,12 @@
     "WHAT THEY HAVE" : {
 
     },
+    "WHAT THEY REMEMBER" : {
+
+    },
+    "Wait" : {
+
+    },
     "Walk away — %@ · Life %lld" : {
       "localizations" : {
         "en" : {
@@ -5022,6 +5424,16 @@
     },
     "Walk away. Not available: %@" : {
 
+    },
+    "Walking in at %lld · they let people out at %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Walking in at %1$lld · they let people out at %2$lld"
+          }
+        }
+      }
     },
     "Wallet" : {
       "comment" : "Money sheet row: the founder own money"
@@ -5097,6 +5509,15 @@
     "What is it?" : {
 
     },
+    "What you have already done" : {
+
+    },
+    "Whatever happens next happens over weeks, not tonight." : {
+
+    },
+    "Whatever they decide, the conviction stays where it is. That part does not get reviewed." : {
+
+    },
     "Whatever you say, communication decides how much of it lands." : {
 
     },
@@ -5158,6 +5579,9 @@
     "You are in the red — every week digs deeper" : {
       "comment" : "Weekly report runway line when cash is negative"
     },
+    "You are in with %@. The yard is a quieter place and there is a favour with your name on it for the outside." : {
+
+    },
     "You are the whole company. There is nobody to hand it to." : {
 
     },
@@ -5188,6 +5612,22 @@
     "You have energy, health, a mood, and someone waiting at home. Crunch weeks buy you output and cost you all four." : {
       "comment" : "Body of the onboarding panel about the life"
     },
+    "You have had %@ of %@'s money and put %@ through them. There is no door back to the morning before that." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You have had %1$@ of %2$@'s money and put %3$@ through them. There is no door back to the morning before that."
+          }
+        }
+      }
+    },
+    "You have had your go at the wall. There is not a second one." : {
+
+    },
+    "You have never been inside." : {
+
+    },
     "You have no legal department. Nobody got to it first." : {
 
     },
@@ -5201,6 +5641,12 @@
         }
       }
     },
+    "You keep less than you are owed, so about %@ comes back to you." : {
+
+    },
+    "You keep more than you are owed, so about %@ goes the other way." : {
+
+    },
     "You let it go — and you're holding it anyway." : {
 
     },
@@ -5211,6 +5657,12 @@
 
     },
     "You owe %@ between them. Nothing happens for six months — after that the friendship pays the interest." : {
+
+    },
+    "You said no. Nothing is owed and nothing is offered; the yard is a longer forty minutes than it was." : {
+
+    },
+    "You went over the wall on day %lld. There is a charge on the record with no date against it, and there is not going to be one." : {
 
     },
     "You're at the %@" : {
@@ -5336,6 +5788,9 @@
     "a marketer" : {
       "comment" : "Job title with its article, dropped into a sentence such as You need a lawyer"
     },
+    "against you" : {
+
+    },
     "an HR specialist" : {
       "comment" : "Job title with its article, dropped into a sentence such as You need a lawyer"
     },
@@ -5345,6 +5800,12 @@
     "answers itself today" : {
       "comment" : "Notice rail: a deferred question whose deadline is today"
     },
+    "d%lld" : {
+
+    },
+    "days left" : {
+
+    },
     "distress" : {
       "comment" : "Buyout kind: a lowball bid while you are failing"
     },
@@ -5352,6 +5813,9 @@
 
     },
     "final net worth · Life %lld" : {
+
+    },
+    "for you" : {
 
     },
     "iCloud" : {
@@ -5407,6 +5871,16 @@
     },
     "of %@ using it" : {
 
+    },
+    "of %lld week%@ handed down" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "of %1$lld week%2$@ handed down"
+          }
+        }
+      }
     },
     "of %lld · %@" : {
       "localizations" : {
@@ -5472,6 +5946,9 @@
     "the newer save" : {
       "comment" : "Stand-in name for a save written by a newer app version, used inside a sentence"
     },
+    "theirs" : {
+
+    },
     "this week" : {
 
     },
@@ -5500,6 +5977,9 @@
 
     },
     "your revenue" : {
+
+    },
+    "yours" : {
 
     },
     "~%lld" : {
