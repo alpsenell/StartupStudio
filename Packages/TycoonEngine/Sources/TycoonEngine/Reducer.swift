@@ -150,6 +150,9 @@ public enum Reducer {
         // MARK: Iteration 11 — after everything, no `rng`/`worldRNG` draws
 
         // MARK: N1 (crime and the courtroom)
+        // Returns on its first line while `state.crime` is empty, which is
+        // every run that has never pressed an offence button.
+        CrimeSystem.run,
 
         // MARK: N2 (people menus)
 
@@ -594,6 +597,27 @@ public enum Reducer {
         // MARK: Iteration 11 — handlers, one region per lane
 
         // MARK: N1 (crime and the courtroom)
+        case let .commitOffence(offence, rivalID, productID):
+            events = CrimeSystem.commit(
+                offence: offence, rivalID: rivalID, productID: productID,
+                state: &state, balance: balance, content: content
+            )
+        case let .confessOffence(entryID):
+            events = CrimeSystem.confess(entryID: entryID, state: &state, balance: balance)
+        case .settleCase:
+            events = CrimeSystem.settle(state: &state, balance: balance)
+        case let .hireLawyer(tier):
+            events = CrimeSystem.hire(lawyer: tier, state: &state, balance: balance)
+        case let .chooseDefence(defence):
+            events = CrimeSystem.choose(defence: defence, state: &state)
+        case .openHearing:
+            events = CrimeSystem.openHearing(state: &state, balance: balance)
+        case let .sayInCourt(exchange):
+            events = CrimeSystem.say(exchange, state: &state, balance: balance)
+        case .restCase:
+            events = CrimeSystem.rest(state: &state, balance: balance)
+        case let .sueRival(rivalID):
+            events = CrimeSystem.sue(rivalID: rivalID, state: &state, balance: balance)
 
         // MARK: N2 (people menus)
 

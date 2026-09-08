@@ -439,6 +439,38 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: N1 (crime and the courtroom)
 
+    /// The founder did one of the six things. `gain` is what it was worth
+    /// in dollars, or in points where dollars mean nothing.
+    case crimeCommitted(offence: String, gain: Int, notoriety: Double, day: Int)
+    /// Somebody found out. There is a hearing on the books.
+    case crimeCaseRaised(offence: String, accuser: String, hearingDay: Int, day: Int)
+    /// The founder went to them before they came to the founder.
+    case crimeConfessed(offence: String, day: Int)
+    /// The hearing is today and nobody has stood up yet.
+    case crimeHearingDue(offence: String, isFounderSuing: Bool, day: Int)
+    /// The founder is in the room.
+    case crimeHearingOpened(offence: String, day: Int)
+    /// It went away for money, before a judge saw it.
+    case crimeSettled(amount: Int, day: Int)
+    /// A tier of representation was bought.
+    case crimeLawyerHired(tier: String, fee: Int, day: Int)
+    /// The verdict. `penalty` is money and `weeks` is a sentence; exactly
+    /// one of them is non-zero, and both are zero on an acquittal.
+    case crimeVerdict(offence: String, verdict: String, penalty: Int, weeks: Int, day: Int)
+    /// The founder is out.
+    case crimeReleased(day: Int)
+    /// An envelope was cashed: a review came back kinder than it should.
+    case crimeFavourCalled(what: String, day: Int)
+    /// A build whose demo was faked shipped inside the window and came
+    /// apart in front of everybody.
+    case crimeDemoCollapsed(productID: UUID, liveBugs: Int, day: Int)
+    /// The NDA poach: whether they came, and who they are.
+    case crimeNDAPoach(name: String, landed: Bool, day: Int)
+    /// The founder filed against a studio.
+    case crimeSuitFiled(rivalID: UUID, hearingDay: Int, day: Int)
+    /// And how that went.
+    case crimeSuitResolved(won: Bool, damages: Int, productTaken: String, day: Int)
+
     // MARK: N2 (people menus)
 
     // MARK: N3 (assets, vices and the doctor)
@@ -508,6 +540,25 @@ extension GameEvent {
         case .weekendSpent, .instantActivityDone, .socialActivity, .staffBirthday,
              .friendshipFormed, .candidatesRefreshed, .contractOffersRefreshed:
             .quiet
+
+        // MARK: Iteration 11 — N1 (crime and the courtroom)
+
+        // A case, a hearing and a verdict are the loudest things that can
+        // happen to a founder who is not being evicted, and every one of
+        // them is a decision with a clock on it. The offence itself is the
+        // player's own act — they pressed the button, they do not need
+        // stopping to be told — and the two consequences that land inside
+        // an existing moment (a review, a launch) ride that moment.
+        case .crimeCaseRaised, .crimeHearingDue, .crimeVerdict, .crimeDemoCollapsed:
+            .critical
+        case .crimeConfessed, .crimeSettled, .crimeReleased, .crimeSuitResolved:
+            .notable
+        case .crimeCommitted, .crimeHearingOpened, .crimeSuitFiled, .crimeNDAPoach:
+            .info
+        case .crimeLawyerHired, .crimeFavourCalled:
+            .quiet
+
+        // MARK: end of Iteration 11 — N1
 
         // MARK: WS-B
 

@@ -959,6 +959,79 @@ enum RivalSystem {
         return [.incumbentRetreated(rivalID: rival.id, name: rival.name, day: state.day)]
     }
 
+    // MARK: Iteration 11 — N1 (crime and the courtroom: the story, the suit)
+
+    /// A story about a studio, placed with a desk that owed the founder a
+    /// favour. Their reputation takes the hit; if it is traced back to
+    /// you, they come back at it harder — a rival who knows who did it is
+    /// a rival with something to prove.
+    ///
+    /// One `socialRNG` word for the trace, and only from `CrimeSystem`'s
+    /// offence handler, which is only ever reached by a button press.
+    static func crimePlantStory(
+        against rivalID: UUID?,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> (name: String, traced: Bool)? {
+        let config = balance.crime
+        guard let index = rivalID.flatMap({ id in
+            state.rivals.rivals.firstIndex { $0.id == id }
+        }) ?? (state.rivals.rivals.isEmpty ? nil : 0) else { return nil }
+
+        state.rivals.rivals[index].reputation = max(0,
+            state.rivals.rivals[index].reputation - config.plantStoryReputationHit
+        )
+        let traced = state.socialRNG.nextUniform() < 0.35
+        if traced {
+            state.rivals.rivals[index].strength = min(100,
+                state.rivals.rivals[index].strength + config.plantStoryStrengthGift
+            )
+        }
+        return (state.rivals.rivals[index].name, traced)
+    }
+
+    /// A studio the founder has just beaten in court: damages out of their
+    /// size, a dent in their standing, and — where the balance allows it —
+    /// the newest thing on their shelf, withdrawn.
+    ///
+    /// Draws nothing.
+    static func crimeAwardDamages(
+        against rivalID: UUID,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> (damages: Int, productTaken: String?) {
+        let config = balance.crime
+        guard let index = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
+        else { return (0, nil) }
+
+        let damages = Int((state.rivals.rivals[index].strength
+            * config.suitDamagesPerStrength / 10).rounded())
+        state.rivals.rivals[index].reputation = max(0,
+            state.rivals.rivals[index].reputation - 8
+        )
+        var taken: String?
+        if config.suitTakesProduct,
+           let productIndex = state.rivals.rivals[index].products.indices.last {
+            taken = state.rivals.rivals[index].products[productIndex].name
+            state.rivals.rivals[index].products.remove(at: productIndex)
+            state.rivals.rivals[index].strength = max(5,
+                state.rivals.rivals[index].strength - 6
+            )
+        }
+        return (damages, taken)
+    }
+
+    /// The NDA poach lands: the studio it came out of is measurably
+    /// smaller for it.
+    static func crimeLostAnEngineer(_ rivalID: UUID?, state: inout GameState) {
+        guard let index = rivalID.flatMap({ id in
+            state.rivals.rivals.firstIndex { $0.id == id }
+        }) else { return }
+        state.rivals.rivals[index].strength = max(5, state.rivals.rivals[index].strength - 3)
+    }
+
+    // MARK: end of Iteration 11 — N1
+
     // MARK: - Poaching
 
     /// On poach-check days (interval + offset, cooldown elapsed, no offer

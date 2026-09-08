@@ -26,6 +26,15 @@ enum EventPresenter {
         content: ContentCatalog,
         balance: BalanceConfig
     ) -> EventLine? {
+        // MARK: Iteration 11 — N1 (crime and the courtroom)
+        // `EventCopy`'s switch has no region of N1's in it, so the lane's
+        // fifteen events are described in its own file and asked for here,
+        // before WS-B's cases. One line; all the words live in
+        // `CrimeEventPresenter`.
+        if let line = CrimeEventPresenter.describe(event, state: state, content: content) {
+            return line
+        }
+        // MARK: end of Iteration 11 — N1
         switch event {
         case let .narrativeChoice(eventID, respondByDay, day):
             let daysLeft = max(0, respondByDay - state.day)

@@ -310,6 +310,49 @@ enum FinanceSystem {
         return [.loanRepaid(amount: repaid, day: state.day)]
     }
 
+    // MARK: Iteration 11 — N1 (crime and the courtroom: the quarterly bill)
+
+    /// What the company would owe on the last quarter's trading.
+    ///
+    /// **This is a notional figure, and nothing in the game posts it.**
+    /// The studio has never had a tax line — its weekly operating cost has
+    /// always been the whole of "what running this costs" — and adding one
+    /// would have changed the ledger of every run ever recorded, which
+    /// rule 1 forbids. So the bill is derived on demand from the trailing
+    /// quarter's sales and contract revenue, shown to the player as the
+    /// number they are about to lie about, and the *dodge* is what posts:
+    /// see `crimePostDodgedTax`. A founder who never opens the crime sheet
+    /// never causes this function to be called.
+    public static func crimeQuarterlyTaxBill(
+        _ state: GameState,
+        _ balance: BalanceConfig
+    ) -> Int {
+        let config = balance.crime
+        let window = state.day - config.taxQuarterWeeks * GameState.daysPerWeek
+        let revenue = state.ledger.entries.reduce(0) { total, entry in
+            guard entry.day > window, entry.amount > 0,
+                  entry.category == .sales || entry.category == .contracts
+            else { return total }
+            return total + entry.amount
+        }
+        return max(0, Int((Double(revenue) * config.taxRateOnRevenue).rounded()))
+    }
+
+    /// The half of the bill the founder decided not to pay, credited to
+    /// the company on the day they file. One ledger line, labelled the way
+    /// the accountant labelled it, which is not the way a court would.
+    static func crimePostDodgedTax(_ amount: Int, state: inout GameState) {
+        guard amount > 0 else { return }
+        post(
+            amount: amount,
+            category: .other,
+            label: "Tax provision released",
+            to: &state
+        )
+    }
+
+    // MARK: end of Iteration 11 — N1
+
     private static func post(
         amount: Int,
         category: LedgerEntry.Category,
