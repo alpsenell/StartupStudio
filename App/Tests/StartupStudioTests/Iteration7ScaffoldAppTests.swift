@@ -91,10 +91,11 @@ final class Iteration7ScaffoldAppTests: XCTestCase {
 
     func testTitleMenuAndOnboardingPagesStayOffUntilALaneFlipsThem() {
         let menu = TitleMenu.make(onDaily: {}, onCustom: {}, onFromCode: {})
-        XCTAssertEqual(menu.rows.count, 7)
+        // Iteration 10 (M4): 7 → 8 rows, the League beside the Dynasty.
+        XCTAssertEqual(menu.rows.count, 8)
         // R3 and R4 have landed: the daily and the two custom rows are on;
         // iteration 8 added the Scenarios room beside the daily.
-        XCTAssertEqual(menu.enabledRows.map(\.id), [.daily, .season, .scenarios, .custom, .fromCode, .hall, .dynasty])
+        XCTAssertEqual(menu.enabledRows.map(\.id), [.daily, .season, .scenarios, .custom, .fromCode, .hall, .dynasty, .league])
         XCTAssertTrue(TitleMenu.Flags.daily && TitleMenu.Flags.custom && TitleMenu.Flags.fromCode)
         XCTAssertFalse(NewGameOptions.standard.showsCustomStep)
         XCTAssertFalse(NewGameOptions.standard.showsHeirloomsStep)

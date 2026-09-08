@@ -23,8 +23,9 @@ public enum RunMode: Codable, Equatable, Hashable, Sendable {
 
     // MARK: Iteration 10 — M4 (leagues)
 
-    // M4 appends `league(week:)` here and teaches every switch over
-    // `RunMode` (grep `case .season`) the new case.
+    /// Iteration 10: the week's shared company, played once, scored at
+    /// one game year against everyone else on your rung of the league.
+    case league(week: Int)
 
     // MARK: end of Iteration 10
 
@@ -33,7 +34,7 @@ public enum RunMode: Codable, Equatable, Hashable, Sendable {
     /// with the state, see `GameState.isRanked`.
     public var isRanked: Bool {
         switch self {
-        case .standard, .daily, .season: true
+        case .standard, .daily, .season, .league: true
         case .custom, .scenario: false
         }
     }
@@ -52,6 +53,21 @@ public enum RunMode: Codable, Equatable, Hashable, Sendable {
         if case .season = self { return true }
         return false
     }
+
+    // MARK: Iteration 10 — M4 (leagues)
+
+    public var isLeague: Bool {
+        if case .league = self { return true }
+        return false
+    }
+
+    /// The week a league run belongs to; `nil` in every other mode.
+    public var leagueWeek: Int? {
+        if case .league(let week) = self { return week }
+        return nil
+    }
+
+    // MARK: end of Iteration 10 — M4
 }
 
 /// Per-run overrides a custom company (R4) can set. Applied to the balance

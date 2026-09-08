@@ -38,6 +38,8 @@ final class GameCenterDailyTests: XCTestCase {
         let content = try ContentCatalog.loadBundled()
         // Iteration 9 (L2): 48 → 49 achievements and 11 → 14 boards — the
         // seventh ending, and the three Best life boards.
+        // Iteration 10 (M4): 14 → 18 boards — one per league tier.
+        // Achievements are unchanged at 49.
         let goals = GameCenterCatalog.goalAchievements(content: content)
         XCTAssertEqual(goals.count, 42, "one achievement per goal in Goals.json")
         XCTAssertEqual(GameCenterCatalog.endingAchievements.count, 7)
@@ -85,11 +87,20 @@ final class GameCenterDailyTests: XCTestCase {
                 "com.alpsenel.startupstudio.lb.life_score.easy",
                 "com.alpsenel.startupstudio.lb.life_score.normal",
                 "com.alpsenel.startupstudio.lb.life_score.hard",
+                // Iteration 10 (M4): one recurring board per rung of the
+                // weekly league.
+                "com.alpsenel.startupstudio.lb.league.bronze",
+                "com.alpsenel.startupstudio.lb.league.silver",
+                "com.alpsenel.startupstudio.lb.league.gold",
+                "com.alpsenel.startupstudio.lb.league.founders",
             ]
         )
         let daily = try XCTUnwrap(GameCenterCatalog.leaderboards.first { $0.id.hasSuffix(".daily") })
         XCTAssertTrue(daily.isRecurring, "lb.daily recurs")
-        XCTAssertEqual(GameCenterCatalog.leaderboards.filter(\.isRecurring).count, 3, "the daily, the weekly scenario, the season")
+        // Iteration 10 (M4): 3 → 7 recurring boards — the four league
+        // tiers, each recurring weekly, join the daily, the scenario and
+        // the season.
+        XCTAssertEqual(GameCenterCatalog.leaderboards.filter(\.isRecurring).count, 7, "the daily, the weekly scenario, the season and the four league tiers")
         XCTAssertEqual(
             GameCenterCatalog.leaderboards.first { $0.id.hasSuffix("ipo_days.normal") }?.sort,
             .ascending
