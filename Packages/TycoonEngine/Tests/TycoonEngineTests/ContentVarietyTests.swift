@@ -117,6 +117,11 @@ struct ContentVarietyTests {
             lifeTargets.insert(twin)
         }
 
+        // Iteration 11 (N5): the office's threads fire their own beats,
+        // the same way the childhood stages below do — they are
+        // `followUpOnly` so the roll never draws one, not because nothing
+        // can reach them.
+        companyTargets.formUnion(OfficeSecretsSystem.scheduledEventIDs)
         for event in content.events where event.followUpOnly {
             #expect(companyTargets.contains(event.id), "\(event.id) can never fire")
         }

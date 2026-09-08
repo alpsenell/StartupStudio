@@ -76,6 +76,22 @@ struct OfficeCard: View {
                 HeadcountPill(headcount: state.headcount, cap: cap)
             }
 
+            // MARK: Iteration 11 — N5 (office secrets)
+            //
+            // What the running thread has put in the room: two people at
+            // one desk, a shredder by the printer, the meeting-room door
+            // shut. Only the props the thread has actually dropped as
+            // clues, so the room never knows more than the founder does —
+            // and above the scene rather than below it, because a clue you
+            // have to scroll for is not a clue.
+            if let thread = engine.state.secrets.open, !thread.props.isEmpty {
+                SecretOfficeClueStrip(
+                    props: thread.props,
+                    appearanceSeed: engine.state.progression.founder.appearanceSeed ?? 0x5EED
+                )
+            }
+            // MARK: end Iteration 11 — N5
+
             PixelPanel(contentPadding: Theme.Spacing.xs) {
                 // Equatable input + EquatableView: HQ observes `state`,
                 // which mutates 4x a second at 4x speed. Without this the
@@ -186,6 +202,12 @@ struct OfficeCard: View {
             DebugLaunch.startAutoBugs(engine: engine)
             await huntBugs()
         }
+        // MARK: Iteration 11 — N5 (office secrets)
+        // `-autoSecret <kind>` is taken here as well as on the Team tab,
+        // so a headless pass can photograph the room's clues without
+        // switching tabs first. Debug only.
+        .task { DebugLaunch.startAutoSecret(engine: engine) }
+        // MARK: end Iteration 11 — N5
         .sheet(isPresented: $showingAmenities) {
             AmenitiesSheet(engine: engine)
         }

@@ -60,6 +60,30 @@ public enum StaffEventKind: String, Codable, Equatable, Sendable, CaseIterable {
     case remoteRequest
     /// A complaint that needs a process, not a chat.
     case harassmentComplaint
+
+    // MARK: Iteration 11 — N5 (office secrets)
+    //
+    // Six kinds a confrontation raises, one per `SecretKind`. None of them
+    // is ever *rolled*: `SocialSystem.pickKind` only considers defs whose
+    // id is a kind's raw value, and every def behind these lives under an
+    // `office_…_confront` id with `"kind"` set, exactly the way a second
+    // act does. They arrive when the founder says something, and never
+    // otherwise — which is what keeps the staff-moment stream identical.
+
+    /// You told the mole you know.
+    case officeMole
+    /// You said out loud that one of them signs the other's reviews.
+    case officeRomance
+    /// You put the expense report on the table.
+    case officeExpenses
+    /// You told the table who they have been leaving out.
+    case officeClique
+    /// You went to the organisers rather than waiting for the letter.
+    case officeUnion
+    /// You asked your co-founder what the calls are about.
+    case officeCoup
+
+    // MARK: end Iteration 11 — N5
 }
 
 /// The founder's answer to a staff event.

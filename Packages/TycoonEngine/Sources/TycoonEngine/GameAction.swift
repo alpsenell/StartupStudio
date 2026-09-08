@@ -341,6 +341,19 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: N5 (office secrets)
 
+    /// The founder opened the Team tab. The one flag `OfficeSecretsSystem`
+    /// reads before anything else: threads may start from here, and never
+    /// in a run that never looks at its own team.
+    case watchTheOffice
+    /// One answer to the thread the office is running — ask around, hire a
+    /// PI, say it to their face, take it to HR, make a deal, leave it.
+    /// Refused answers change nothing; `OfficeSecretsSystem.refusal` says
+    /// why, and the card puts the reason on the button.
+    case respondToSecret(SecretResponse)
+    /// `-autoSecret <kind>`: starts a thread at a stage for a screenshot.
+    /// Applied only in debug builds; nothing in the game sends it.
+    case seedOfficeSecret(kind: String, stage: Int)
+
     // MARK: end of Iteration 11
 }
 

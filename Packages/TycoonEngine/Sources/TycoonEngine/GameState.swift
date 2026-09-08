@@ -447,6 +447,13 @@ public enum GameEvent: Codable, Equatable, Sendable {
 
     // MARK: N5 (office secrets)
 
+    /// Something started going on in the office.
+    case secretThreadStarted(kind: String, day: Int)
+    /// The founder learned one more thing about it.
+    case secretClueFound(kind: String, text: String, day: Int)
+    /// It is over, one way or another.
+    case secretThreadEnded(kind: String, ending: String, day: Int)
+
     // MARK: end of Iteration 11
 }
 

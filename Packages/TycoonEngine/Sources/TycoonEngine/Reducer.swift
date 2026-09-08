@@ -159,6 +159,11 @@ public enum Reducer {
 
         // MARK: N5 (office secrets)
 
+        // Last of all, and behind its own gate: the office's slow-burn
+        // threads read the roster after every quit, fire and hire the day
+        // has already done.
+        OfficeSecretsSystem.run,
+
         // MARK: end of Iteration 11
     ]
 
@@ -602,6 +607,22 @@ public enum Reducer {
         // MARK: N4 (fame and the feed)
 
         // MARK: N5 (office secrets)
+        case .watchTheOffice:
+            events = OfficeSecretsSystem.watch(&state)
+        case let .respondToSecret(response):
+            events = OfficeSecretsSystem.respond(
+                response, state: &state, balance: balance, content: content
+            )
+        case let .seedOfficeSecret(kind, stage):
+            #if DEBUG
+            events = SecretKind(rawValue: kind).map {
+                OfficeSecretsSystem.seed(
+                    $0, stage: stage, state: &state, balance: balance, content: content
+                )
+            } ?? []
+            #else
+            events = []
+            #endif
 
         // MARK: end of Iteration 11
         }

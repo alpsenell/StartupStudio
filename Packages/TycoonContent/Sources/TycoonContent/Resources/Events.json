@@ -3071,5 +3071,512 @@
         ]
       }
     ]
+  },
+  {
+    "id": "office_mole_s1",
+    "headline": "A rival's changelog quotes a build number that has never left this room.",
+    "body": "The kind of thing you notice and then have a whole day about something else.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_mole_s2",
+    "headline": "Somebody has been badging in on Sundays and shipping nothing.",
+    "body": "It would be nothing on its own. It is the second one.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_mole_s3",
+    "headline": "Two taxis home at 02:40, billed to a project that ended in spring.",
+    "body": "There is a point where a run of coincidences stops being a run of coincidences.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_mole_end",
+    "headline": "A rival shipped your roadmap, down to the order of the features.",
+    "body": "Nobody did anything about it, including you, and it did what it was always going to do.",
+    "weight": 1,
+    "category": "team",
+    "severity": "critical",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -4
+      },
+      {
+        "type": "hype",
+        "amount": -12
+      }
+    ]
+  },
+  {
+    "id": "office_mole_hr",
+    "headline": "People and HR walked the leak out before lunch, with a letter and no scene.",
+    "body": "By the book, on paper, and finished before it reached the floor.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "office_mole_deal",
+    "headline": "You matched an offer nobody knew they had. They stayed, and they know you know.",
+    "body": "Not clean, not cheap, and over.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "loyalty",
+        "amount": 4,
+        "pick": "lowestMorale"
+      }
+    ]
+  },
+  {
+    "id": "office_mole_faced",
+    "headline": "You said it to their face with the meeting-room door open.",
+    "body": "Said out loud, to the person it was about, in a building with thin walls.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "office_romance_s1",
+    "headline": "Three glowing performance reviews, all in the same handwriting.",
+    "body": "The kind of thing you notice and then have a whole day about something else.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_romance_s2",
+    "headline": "One desk has two chairs at it now, and one of them belongs somewhere else.",
+    "body": "It would be nothing on its own. It is the second one.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_romance_s3",
+    "headline": "A raise was signed off on a Friday and mentioned to nobody on the Monday.",
+    "body": "There is a point where a run of coincidences stops being a run of coincidences.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_romance_end",
+    "headline": "They ended it, and one of them ended their contract in the same week.",
+    "body": "Nobody did anything about it, including you, and it did what it was always going to do.",
+    "weight": 1,
+    "category": "team",
+    "severity": "critical",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -4
+      }
+    ]
+  },
+  {
+    "id": "office_romance_hr",
+    "headline": "HR moved the reporting line and wrote it down, which is all anybody wanted.",
+    "body": "By the book, on paper, and finished before it reached the floor.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "office_romance_deal",
+    "headline": "You moved the line rather than the people, and everyone agreed that was always the plan.",
+    "body": "Not clean, not cheap, and over.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "office_romance_faced",
+    "headline": "You said the quiet part in a room with glass walls.",
+    "body": "Said out loud, to the person it was about, in a building with thin walls.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "office_embezzlement_s1",
+    "headline": "The expense line is up, and none of the receipts carry a company name.",
+    "body": "The kind of thing you notice and then have a whole day about something else.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_embezzlement_s2",
+    "headline": "Four hotel nights in a city where the company has never sold anything.",
+    "body": "It would be nothing on its own. It is the second one.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_embezzlement_s3",
+    "headline": "A supplier nobody can find invoiced twice in one week, and was paid twice.",
+    "body": "There is a point where a run of coincidences stops being a run of coincidences.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_embezzlement_end",
+    "headline": "The supplier was never real, and neither was most of last quarter.",
+    "body": "Nobody did anything about it, including you, and it did what it was always going to do.",
+    "weight": 1,
+    "category": "team",
+    "severity": "critical",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -4
+      }
+    ]
+  },
+  {
+    "id": "office_embezzlement_hr",
+    "headline": "HR took the file, the laptop and the badge, in that order.",
+    "body": "By the book, on paper, and finished before it reached the floor.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "office_embezzlement_deal",
+    "headline": "They will repay it in instalments, and nobody called anybody.",
+    "body": "Not clean, not cheap, and over.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_embezzlement_faced",
+    "headline": "You put the expense file on the table and let the silence do the work.",
+    "body": "Said out loud, to the person it was about, in a building with thin walls.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "office_clique_s1",
+    "headline": "Lunch leaves at half twelve, and there is always exactly one desk still occupied.",
+    "body": "The kind of thing you notice and then have a whole day about something else.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_clique_s2",
+    "headline": "Somebody was left off the invite to a meeting about their own work.",
+    "body": "It would be nothing on its own. It is the second one.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_clique_s3",
+    "headline": "A month of somebody's work was rewritten over a weekend, by people who did not say so.",
+    "body": "There is a point where a run of coincidences stops being a run of coincidences.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_clique_end",
+    "headline": "The newest hire left inside probation and gave a reason nobody wrote down.",
+    "body": "Nobody did anything about it, including you, and it did what it was always going to do.",
+    "weight": 1,
+    "category": "team",
+    "severity": "critical",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -4
+      },
+      {
+        "type": "reputation",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "office_clique_hr",
+    "headline": "HR broke the table up and reseated the room, which everybody hated for a week.",
+    "body": "By the book, on paper, and finished before it reached the floor.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "office_clique_deal",
+    "headline": "You bought a table big enough for everybody, which is cheaper than hiring twice.",
+    "body": "Not clean, not cheap, and over.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "office_clique_faced",
+    "headline": "You named the table out loud, and the table went quiet.",
+    "body": "Said out loud, to the person it was about, in a building with thin walls.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "office_uniondrive_s1",
+    "headline": "The meeting room is booked every Thursday at six by somebody with no meetings.",
+    "body": "The kind of thing you notice and then have a whole day about something else.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_uniondrive_s2",
+    "headline": "A card-signing form was left face down in the printer tray.",
+    "body": "It would be nothing on its own. It is the second one.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_uniondrive_s3",
+    "headline": "An advisor's invoice arrived at the company by mistake and explained a great deal.",
+    "body": "There is a point where a run of coincidences stops being a run of coincidences.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_uniondrive_end",
+    "headline": "The letter came certified. They are recognised, and so is the wage floor.",
+    "body": "Nobody did anything about it, including you, and it did what it was always going to do.",
+    "weight": 1,
+    "category": "team",
+    "severity": "critical",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "flag",
+        "flag": "office_union_recognised"
+      }
+    ]
+  },
+  {
+    "id": "office_uniondrive_hr",
+    "headline": "HR ran it by the book, and the vote happened in daylight.",
+    "body": "By the book, on paper, and finished before it reached the floor.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "office_uniondrive_deal",
+    "headline": "You recognised them before anybody made you, which everyone will remember differently.",
+    "body": "Not clean, not cheap, and over.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "id": "office_uniondrive_faced",
+    "headline": "You went to the organisers instead of the lawyers.",
+    "body": "Said out loud, to the person it was about, in a building with thin walls.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "office_coup_s1",
+    "headline": "Two board calls happened this month, and you were on neither of them.",
+    "body": "The kind of thing you notice and then have a whole day about something else.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_coup_s2",
+    "headline": "A deck called Leadership options was left open on the meeting-room screen.",
+    "body": "It would be nothing on its own. It is the second one.",
+    "weight": 1,
+    "category": "team",
+    "severity": "quiet",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_coup_s3",
+    "headline": "Somebody has counted the votes twice and started rounding up.",
+    "body": "There is a point where a run of coincidences stops being a run of coincidences.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_coup_end",
+    "headline": "The vote went exactly the way the count said it would.",
+    "body": "Nobody did anything about it, including you, and it did what it was always going to do.",
+    "weight": 1,
+    "category": "team",
+    "severity": "critical",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_coup_hr",
+    "headline": "HR did the one thing HR could do here, which was minute the meeting.",
+    "body": "By the book, on paper, and finished before it reached the floor.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
+  },
+  {
+    "id": "office_coup_deal",
+    "headline": "A title, a slice and a bigger room. Cheaper than a vote.",
+    "body": "Not clean, not cheap, and over.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true,
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "office_coup_faced",
+    "headline": "You asked what the board calls were about, in front of the board.",
+    "body": "Said out loud, to the person it was about, in a building with thin walls.",
+    "weight": 1,
+    "category": "team",
+    "severity": "notable",
+    "followUpOnly": true
   }
 ]

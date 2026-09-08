@@ -103,6 +103,8 @@ struct HQScreen: View {
         // MARK: end of Iteration 10
         // MARK: Iteration 11
         // MARK: N5 (office secrets)
+        // `.secrets` lives on the Team tab and is consumed there; the room
+        // shows its clues in `OfficeCard` without a route.
         // MARK: end of Iteration 11
         if router.take(.newspaper) {
             path.append(StoryDestination.newspaper)

@@ -1253,5 +1253,20 @@
   "bugHunt": {
     "perDay": 3,
     "maxOnScreen": 3
+  },
+  "officeSecrets": {
+    "minDay": 120,
+    "minHeadcount": 4,
+    "startChance": 0.14,
+    "gapDays": 90,
+    "stageDays": 12,
+    "privateEyeCost": 2200,
+    "dealCost": 4000,
+    "embezzledPerStage": 1400,
+    "badEndingMoraleAll": -8.0,
+    "badEndingReputation": -5.0,
+    "handledMoraleAll": 4.0,
+    "unionRaisePercent": 6.0,
+    "coupBoardPressure": 12.0
   }
 }

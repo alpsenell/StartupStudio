@@ -543,6 +543,16 @@ extension DecisionPrompt {
         case .parentalLeave: "figure.and.child.holdinghands"
         case .remoteRequest: "airplane.departure"
         case .harassmentComplaint: "exclamationmark.shield.fill"
+        // MARK: Iteration 11 — N5 (office secrets)
+        // The six confrontations. Each borrows the icon its thread wears
+        // on the Team tab, so the sheet and the card read as one thing.
+        case .officeMole: "doc.on.doc.fill"
+        case .officeRomance: "heart.slash.fill"
+        case .officeExpenses: "creditcard.trianglebadge.exclamationmark"
+        case .officeClique: "person.3.sequence.fill"
+        case .officeUnion: "figure.stand.line.dotted.figure.stand"
+        case .officeCoup: "hand.raised.slash.fill"
+        // MARK: end Iteration 11 — N5
         }
     }
 

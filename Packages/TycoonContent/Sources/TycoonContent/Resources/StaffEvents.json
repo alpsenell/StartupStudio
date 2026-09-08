@@ -476,5 +476,160 @@
       "morale": -14,
       "loyalty": -14
     }
+  },
+  {
+    "id": "officeMole",
+    "requires": {
+      "flagsAll": [
+        "office_confrontation"
+      ]
+    },
+    "title": "{name} does not deny it",
+    "body": "You say the word out loud and they do not blink. They ask what happens now, as though you have a policy for this. You do not.",
+    "headline": "{name} was asked about the leak, and did not argue.",
+    "weight": 1,
+    "supportive": {
+      "label": "Keep them, on paper this time",
+      "detail": "−$1,500 · loyalty +12 · morale −6",
+      "cash": -1500,
+      "loyalty": 12,
+      "morale": -6
+    },
+    "strict": {
+      "label": "They clear the desk today",
+      "detail": "They hand in notice · team morale −6",
+      "moraleAll": -6,
+      "noticeReason": "They were asked about the leak and stopped pretending."
+    }
+  },
+  {
+    "id": "officeRomance",
+    "requires": {
+      "flagsAll": [
+        "office_confrontation"
+      ]
+    },
+    "title": "{name} says it is nobody's business",
+    "body": "They are half right. Who they see is nobody's business. Who signs their reviews is yours, and you brought the reviews.",
+    "headline": "{name} was asked about the reporting line.",
+    "weight": 1,
+    "supportive": {
+      "label": "Disclose it and move the line",
+      "detail": "Morale +6 · loyalty +8 · they change teams",
+      "morale": 6,
+      "loyalty": 8,
+      "clearsAssignment": true
+    },
+    "strict": {
+      "label": "One of you has to go",
+      "detail": "Morale −12 · loyalty −14 · team morale −4",
+      "morale": -12,
+      "loyalty": -14,
+      "moraleAll": -4
+    }
+  },
+  {
+    "id": "officeExpenses",
+    "requires": {
+      "flagsAll": [
+        "office_confrontation"
+      ]
+    },
+    "title": "{name} has an explanation for the receipts",
+    "body": "It is a long explanation and it is going well until the second invoice from the supplier nobody can find.",
+    "headline": "{name} was shown the expense file.",
+    "weight": 1,
+    "supportive": {
+      "label": "Repay it, quietly, in instalments",
+      "detail": "+$2,000 · loyalty −20 · they stay",
+      "cash": 2000,
+      "loyalty": -20,
+      "morale": -8
+    },
+    "strict": {
+      "label": "Hand it to the accountants",
+      "detail": "They hand in notice · reputation −3",
+      "reputation": -3,
+      "noticeReason": "The expense file went to the accountants, and they did not wait for the result."
+    }
+  },
+  {
+    "id": "officeClique",
+    "requires": {
+      "flagsAll": [
+        "office_confrontation"
+      ]
+    },
+    "title": "{name} did not think it was a clique",
+    "body": "Nobody ever does. They point out that lunch is not a meeting, which is true, and that decisions do not happen at lunch, which is not.",
+    "headline": "{name} was told what the table looks like from outside it.",
+    "weight": 1,
+    "supportive": {
+      "label": "Ask them to fix it themselves",
+      "detail": "Morale −4 · loyalty +6 · team morale +5",
+      "morale": -4,
+      "loyalty": 6,
+      "moraleAll": 5
+    },
+    "strict": {
+      "label": "Break the table up",
+      "detail": "Morale −10 · team morale +3 · they are reassigned",
+      "morale": -10,
+      "moraleAll": 3,
+      "clearsAssignment": true
+    }
+  },
+  {
+    "id": "officeUnion",
+    "requires": {
+      "flagsAll": [
+        "office_confrontation"
+      ]
+    },
+    "title": "{name} is the one booking the room",
+    "body": "They are not embarrassed about it. They have a list of things, and the list is short, and everything on it is something you have said you would get to.",
+    "headline": "{name} said out loud what the Thursday meetings are for.",
+    "weight": 1,
+    "supportive": {
+      "label": "Read the list and answer it",
+      "detail": "−$2,000 · morale +8 · team morale +6",
+      "cash": -2000,
+      "morale": 8,
+      "moraleAll": 6,
+      "setFlag": "office_union_answered"
+    },
+    "strict": {
+      "label": "Remind them what the contract says",
+      "detail": "Morale −14 · team morale −8 · reputation −3",
+      "morale": -14,
+      "moraleAll": -8,
+      "reputation": -3
+    }
+  },
+  {
+    "id": "officeCoup",
+    "requires": {
+      "flagsAll": [
+        "office_confrontation"
+      ]
+    },
+    "title": "{name} asks whether you want the honest answer",
+    "body": "You say yes, and they give it to you, and it takes four minutes. Nothing in it is a lie. Some of it is about you.",
+    "headline": "{name} was asked what the board calls were about.",
+    "weight": 1,
+    "supportive": {
+      "label": "Give them the title and the room",
+      "detail": "Morale +10 · loyalty +18 · they stand down",
+      "morale": 10,
+      "loyalty": 18,
+      "setFlag": "office_coup_settled"
+    },
+    "strict": {
+      "label": "Tell them to call the vote",
+      "detail": "Morale −16 · loyalty −20 · team morale −6",
+      "morale": -16,
+      "loyalty": -20,
+      "moraleAll": -6
+    }
   }
 ]

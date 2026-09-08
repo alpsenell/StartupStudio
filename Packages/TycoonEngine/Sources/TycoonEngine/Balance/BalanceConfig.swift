@@ -1854,6 +1854,18 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 10 — M6
 
+    // MARK: Iteration 11 — N5 (office secrets)
+
+    /// What the office keeps from the founder: when a thread starts, how
+    /// fast it burns, and what each answer costs
+    /// (`BalanceConfig+OfficeSecrets.swift`). Inline default, so
+    /// `"officeSecrets"` is an optional key — and behind a gate only the
+    /// Team tab opens, so a run that never looks at the team never reads a
+    /// value from it.
+    public var officeSecrets: OfficeSecretsBalance = .default
+
+    // MARK: end Iteration 11 — N5
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

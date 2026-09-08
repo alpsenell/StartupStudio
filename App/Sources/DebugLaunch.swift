@@ -263,6 +263,7 @@ extension Route {
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
         // MARK: N5 (office secrets)
+        case "secrets", "office": .secrets
         // MARK: end of Iteration 11
         default: nil
         }
@@ -862,6 +863,28 @@ extension DebugLaunch {
     // MARK: N4 (fame and the feed)
 
     // MARK: N5 (office secrets)
+
+    /// `-autoSecret <kind>`: the thread a headless pass wants a picture of.
+    /// `SecretKind`'s raw value, case-insensitively ("mole", "romance",
+    /// "embezzlement", "clique", "uniondrive", "coup").
+    @MainActor
+    static var requestedSecret: SecretKind? {
+        guard let name = value(after: "-autoSecret")?.lowercased() else { return nil }
+        return SecretKind.allCases.first { $0.rawValue.lowercased() == name }
+    }
+
+    /// Consumed once per launch, so a redraw does not start a second one.
+    @MainActor private static var tookSecret = false
+
+    /// Starts the asked-for thread, once, on whatever save is loaded.
+    @MainActor
+    static func startAutoSecret(engine: GameEngine) {
+        #if DEBUG
+        guard !tookSecret, let kind = requestedSecret else { return }
+        tookSecret = true
+        engine.send(.seedOfficeSecret(kind: kind.rawValue, stage: 2))
+        #endif
+    }
 
     // MARK: end of Iteration 11
 

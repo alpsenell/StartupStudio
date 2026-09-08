@@ -78,6 +78,16 @@ struct TeamScreen: View {
             // the HUD and any pushed destination shows the navigation bar.
             .withTopHUD(engine: engine)
             .background(Theme.screenBackground)
+            // MARK: N5 (office secrets)
+            // The one flag `OfficeSecretsSystem` reads before anything
+            // else: the founder has looked at their own team. A pacing bot
+            // and a headless pass never switch tabs, so they never set it
+            // and never have a secret.
+            .task {
+                engine.send(.watchTheOffice)
+                DebugLaunch.startAutoSecret(engine: engine)
+            }
+            // MARK: end N5
             .sensoryFeedback(.success, trigger: engine.state.lastTeamDinnerDay)
             .navigationTitle("Team")
             .navigationBarTitleDisplayMode(.inline)
@@ -90,6 +100,10 @@ struct TeamScreen: View {
                     // MARK: Iteration 11 — a launch route per lane, consumed first
                     // MARK: N2 (people menus)
                     // MARK: N5 (office secrets)
+                    if Route.launchRoute == .secrets {
+                        teamView = .roster
+                        return
+                    }
                     // MARK: end of Iteration 11
                     if Route.launchRoute == .orgChart {
                         teamView = .chart
@@ -125,6 +139,17 @@ struct TeamScreen: View {
     /// The list: hiring and the whole-team moves at the top, then everybody.
     private var rosterList: some View {
         List {
+            // MARK: N5 (office secrets)
+            // What the room is keeping from you, and the six things you
+            // can do about it. It leads the tab while it is running — a
+            // thread in the office outranks the hiring pool — and shows
+            // nothing at all until one starts. The `.task` on the stack is
+            // what lets one start, and only a player ever runs it.
+            Section {
+                SecretsCard(engine: engine)
+            }
+            // MARK: end N5
+
             // In-content hiring entry point: nav-bar toolbars sit
             // underneath the opaque top HUD in this design, so actions
             // live in the list instead.

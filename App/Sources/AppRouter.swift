@@ -142,6 +142,9 @@ enum Route: Hashable {
 
     // MARK: N5 (office secrets)
 
+    /// The Team tab, on the thread the office is running.
+    case secrets
+
     // MARK: end of Iteration 11
 
     /// The tab this destination lives in.
@@ -194,6 +197,7 @@ enum Route: Hashable {
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
         // MARK: N5 (office secrets)
+        case .secrets: .team
         // MARK: end of Iteration 11
         }
     }

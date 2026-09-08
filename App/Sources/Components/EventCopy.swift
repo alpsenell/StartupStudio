@@ -700,6 +700,30 @@ struct EventCopy {
                 Theme.accent
             )
 
+        // MARK: Iteration 11 — N5 (office secrets)
+
+        // The office's own thread. The start says only that something is
+        // going on; each clue is the sentence the founder would actually
+        // write down; the ending says how it finished, in one line.
+        case .secretThreadStarted(let kind, let day):
+            (
+                secretIcon(kind),
+                "Something is going on in this office",
+                day,
+                Theme.warning
+            )
+        case .secretClueFound(_, let text, let day):
+            ("magnifyingglass", text, day, Theme.warning)
+        case .secretThreadEnded(let kind, let ending, let day):
+            (
+                secretIcon(kind),
+                secretEndingMessage(kind: kind, ending: ending),
+                day,
+                SecretEnding(rawValue: ending) == .ignored ? Theme.negativeCash : Theme.accent
+            )
+
+        // MARK: end Iteration 11 — N5
+
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a
         // warning naming the new case) when a workstream appends one.
@@ -709,6 +733,21 @@ struct EventCopy {
             fallbackEntry(for: event)
         }
     }
+
+    // MARK: Iteration 11 — N5 (office secrets)
+
+    private func secretIcon(_ kind: String) -> String {
+        SecretKind(rawValue: kind)?.systemImageName ?? "eye.trianglebadge.exclamationmark.fill"
+    }
+
+    /// "The mole: somebody left." — the one line the journal keeps.
+    private func secretEndingMessage(kind: String, ending: String) -> String {
+        let name = SecretKind(rawValue: kind)?.displayName ?? "It"
+        let how = SecretEnding(rawValue: ending)?.displayName ?? "Over"
+        return "\(name): \(how.lowercased())"
+    }
+
+    // MARK: end Iteration 11 — N5
 
     // MARK: Iteration 10 — M2 (pitch room)
 
