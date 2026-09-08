@@ -27,6 +27,11 @@ enum SoundEffect: String, CaseIterable, Sendable {
     /// The weekly report chip appearing.
     case weekEnd
 
+    // MARK: Iteration 10 — M6 (the bug hunt)
+
+    /// A bug going under a thumb: the chirp, then the splat.
+    case squash
+
     /// The note script for the effect: pitch in Hz, length in seconds, and
     /// which oscillator to use.
     fileprivate var notes: [ChipNote] {
@@ -70,6 +75,21 @@ enum SoundEffect: String, CaseIterable, Sendable {
             [
                 ChipNote(frequency: 587, duration: 0.06, wave: .triangle, gain: 0.16),
                 ChipNote(frequency: 880, duration: 0.10, wave: .triangle, gain: 0.16),
+            ]
+
+        // MARK: Iteration 10 — M6 (the bug hunt)
+
+        // An insect chirp, then the squash: two very short square blips
+        // high above everything else in the game (the highest note before
+        // this was the 1568 of `.cash`), then a hard drop to a low triangle
+        // that the shared exponential decay cuts off almost immediately.
+        // Up-up-*thud*, in eleven hundredths of a second — the whole point
+        // is that it is over before you have finished lifting your thumb.
+        case .squash:
+            [
+                ChipNote(frequency: 2093, duration: 0.022, wave: .square, gain: 0.13),
+                ChipNote(frequency: 2637, duration: 0.022, wave: .square, gain: 0.13),
+                ChipNote(frequency: 147, duration: 0.07, wave: .triangle, gain: 0.20),
             ]
         }
     }

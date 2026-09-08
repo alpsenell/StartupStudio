@@ -74,6 +74,14 @@ enum JournalBuilder {
         switch event {
         case .weekendSpent, .instantActivityDone, .itemPurchased:
             true
+        // MARK: Iteration 10 — M6 (the bug hunt)
+        //
+        // Three squashes a day is fifteen lines a week. Every one of them
+        // is real and none of them is news, which is exactly what the
+        // routine fold is for: a week of hunting reads as one line in the
+        // diary and opens to the lot.
+        case .bugSquashed:
+            true
         default:
             false
         }

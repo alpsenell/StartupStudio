@@ -573,6 +573,130 @@ extension DebugLaunch {
 
     // MARK: M6 (bug hunt)
 
+    /// `-autoBugs`: a headless pass gets a build with bugs in it.
+    ///
+    /// Bugs are not a thing the game hands out; they are rolled per
+    /// completed code point in `applyDailyProgress`, so the only way to
+    /// have one is to have written some code. This flag therefore does
+    /// what a player would: starts a product if none is in flight, puts
+    /// everybody idle on it, and lets the clock run — every step a real
+    /// `GameAction` through the ordinary reducer, no back door into state.
+    /// It stops as soon as a build has bugs on it, and never taps one; the
+    /// screenshot is of a room with bugs in it, not of a squash. Requires
+    /// `-autoSpeed`, since bugs are days away at 1×. DEBUG only.
+    static var huntsBugs: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoBugs")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoBugs splat`: the same pass, but every bug that reaches the
+    /// floor is drawn as the splat and stays there.
+    ///
+    /// The splat is the half second after a tap, and a simulator cannot
+    /// tap. Display only: nothing is squashed, no action is sent, no bug
+    /// comes off any build — the room is just told to draw the frame the
+    /// player would see.
+    static var showsBugSplat: Bool {
+        #if DEBUG
+        return huntsBugs && value(after: "-autoBugs")?.lowercased() == "splat"
+        #else
+        return false
+        #endif
+    }
+
+    /// Starts that loop, once per launch, from the office card.
+    @MainActor
+    static func startAutoBugs(engine: GameEngine) {
+        #if DEBUG
+        guard huntsBugs, autoBugsTask == nil else { return }
+        autoBugsTask = Task { @MainActor in
+            while !Task.isCancelled, engine.state.gameOver == nil {
+                try? await Task.sleep(for: .milliseconds(250))
+                // A pass that runs for game-weeks walks into sheets a
+                // simulator cannot tap away; clear them the way
+                // `startAutoSabbatical` clears its own.
+                GameShell.shared.pendingAwardsYear = nil
+                GameShell.shared.launchDayProductID = nil
+                if engine.state.speed == .paused { engine.setSpeed(.x4) }
+                // The first open option that is not the end of the run: a
+                // pass that sells the company on week 8 photographs an
+                // empty office.
+                if let prompt = DecisionPrompt.pending(
+                    in: engine.state, content: engine.content, balance: engine.balance
+                ), let option = prompt.options.first(where: { option in
+                    guard option.disabledReason == nil else { return false }
+                    switch option.action {
+                    case .acceptBuyout, .acceptBuyoutEarnOut: return false
+                    default: return true
+                    }
+                }) {
+                    _ = engine.send(option.action)
+                }
+                // One hire, so the bugs crawl in front of the desk grid
+                // where the brief puts them rather than only the founder's
+                // own corner — and only one, because a garage with three
+                // salaries on it is bankrupt before the code goes wrong.
+                if engine.state.headcount < 2, engine.state.company.cash > 8_000,
+                   let candidate = engine.state.candidatePool.first {
+                    _ = engine.send(.hire(candidateID: candidate.id))
+                }
+                // The moment there is something to hunt in a room with a
+                // team in it, stop the clock and stop steering: a pass that
+                // kept answering every prompt for game-years would run the
+                // company into the ground long before anybody photographed
+                // it.
+                let openBugs = BugHunt.huntableBuilds(in: engine.state).reduce(0) { total, product in
+                    guard case .development(let dev) = product.stage else { return total }
+                    return total + dev.openBugs
+                }
+                // A garage with three salaries on it runs out of money in
+                // about a quarter, and bugs are weeks of code away; borrow
+                // the way a player would rather than let the pass end in a
+                // fire sale.
+                if engine.state.company.cash < 15_000 {
+                    _ = engine.send(.takeLoan(amount: 40_000))
+                }
+                // Everybody idle goes on the build, so the bugs crawl in
+                // front of *their* desks — and before the pause below, or
+                // the pass stops the clock with the new hire still idle.
+                if let build = engine.state.productsInDevelopment.first {
+                    for employee in engine.state.employees
+                    where employee.assignment != .product(build.id) {
+                        _ = engine.send(.assign(employeeID: employee.id, to: .product(build.id)))
+                    }
+                }
+                let onTheBuild = engine.state.productsInDevelopment.first.map { build in
+                    engine.state.employees.allSatisfy { $0.assignment == .product(build.id) }
+                } ?? false
+                if openBugs >= 1, engine.state.headcount >= 2, onTheBuild {
+                    engine.setSpeed(.paused)
+                    return
+                }
+                guard engine.state.productsInDevelopment.isEmpty else { continue }
+                guard let type = engine.content.productTypes.first,
+                      let topic = engine.content.topics.first
+                else { continue }
+                // Code-heavy on purpose. Bugs are rolled per completed code
+                // point and fixed per completed polish point, so a balanced
+                // build cleans itself faster than it breaks and the pass
+                // waits for ever.
+                _ = engine.send(.startProduct(
+                    typeID: type.id, topicID: topic.id,
+                    name: "Bug Farm",
+                    focus: PhaseFocus(design: 0.15, code: 0.8, polish: 0.05)
+                ))
+            }
+        }
+        #endif
+    }
+
+    #if DEBUG
+    @MainActor private static var autoBugsTask: Task<Void, Never>?
+    #endif
+
     // MARK: end of Iteration 10
 
     /// The word after `flag` on the command line, in debug builds.

@@ -1811,6 +1811,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 9 — L6
 
+    // MARK: Iteration 10 — M6 (bug hunt)
+
+    /// The thumb on the bug: how many a day, and how many crawl at once
+    /// (`BalanceConfig+BugHunt.swift`). Inline default, so `"bugHunt"` is
+    /// an optional key; read only when the player taps one.
+    public var bugHunt: BugHuntBalance = .default
+
+    // MARK: end Iteration 10 — M6
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

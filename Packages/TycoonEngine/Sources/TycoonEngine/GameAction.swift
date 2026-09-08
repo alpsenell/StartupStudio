@@ -273,6 +273,12 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: M6 (bug hunt)
 
+    /// A thumb on a bug crawling over a coder's desk: takes one off that
+    /// build's `openBugs`, at most `balance.bugHunt.perDay` a day.
+    /// Refused past the cap, on a build that has shipped, and on one
+    /// nobody has started coding — `BugHunt.refusal` says which.
+    case squashBug(productID: UUID)
+
     // MARK: end of Iteration 10
 }
 

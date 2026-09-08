@@ -568,4 +568,32 @@ enum ProductSystem {
         }
         return []
     }
+
+    // MARK: Iteration 10 — M6
+
+    /// Takes one bug off a build in flight, because the player put a thumb
+    /// on it in the office.
+    ///
+    /// The only way into this function is `.squashBug`, which only the
+    /// office scene's tap gesture sends: no system calls it, no bot taps,
+    /// and nothing here draws from `rng` or `worldRNG`. A run that never
+    /// hunts is the run that shipped.
+    ///
+    /// Every gate lives in `BugHunt.refusal` so the sentence the player
+    /// reads is the reason the engine used. A refusal returns no events,
+    /// which is how the app's toast layer knows to say why.
+    static func squash(
+        productID: UUID,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard BugHunt.refusal(productID: productID, in: state, balance: balance) == nil,
+              let index = state.products.firstIndex(where: { $0.id == productID }),
+              case .development(var dev) = state.products[index].stage
+        else { return [] }
+
+        dev.openBugs = max(0, dev.openBugs - 1)
+        state.products[index].stage = .development(dev)
+        return [.bugSquashed(productID: productID, remaining: dev.openBugs, day: state.day)]
+    }
 }

@@ -514,6 +514,8 @@ public enum Reducer {
         // MARK: M5 (morning desk)
 
         // MARK: M6 (bug hunt)
+        case let .squashBug(productID):
+            events = ProductSystem.squash(productID: productID, state: &state, balance: balance)
 
         // MARK: end of Iteration 10
         }

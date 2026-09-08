@@ -37,6 +37,18 @@ enum Haptics {
         notify(.error)
     }
 
+    // MARK: Iteration 10 — M6 (the bug hunt)
+
+    /// A bug going under a thumb. `.rigid` is the sharpest impact iOS has —
+    /// a short, hard knock rather than the soft thud of a committed choice,
+    /// which is the difference between squashing something and pressing a
+    /// button.
+    static func squash() {
+        impact(.rigid)
+    }
+
+    // MARK: end Iteration 10 — M6
+
     /// The haptic that matches an event's severity, used by the toast and
     /// pause layers so the strength of the buzz tracks the news.
     static func play(severity: EventSeverity) {

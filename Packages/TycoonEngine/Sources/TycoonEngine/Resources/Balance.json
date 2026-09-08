@@ -1181,5 +1181,9 @@
     "boardPatienceFactor": 0.5,
     "poachChanceFactor": 1.5,
     "earlyEndBondPenalty": 25.0
+  },
+  "bugHunt": {
+    "perDay": 3,
+    "maxOnScreen": 3
   }
 }
