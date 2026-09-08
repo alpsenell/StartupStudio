@@ -61,6 +61,10 @@ struct PartnerCard: View {
                         }
                     }
 
+                    // MARK: Iteration 11 — N2 (people menus)
+                    PeopleMenuButton(engine: engine, target: .partner)
+                    // MARK: end of Iteration 11 — N2
+
                     LazyVGrid(columns: columns, spacing: Theme.Spacing.md) {
                         ForEach(PartnerActivity.allCases, id: \.self) { activity in
                             if let def = engine.balance.relationships.partnerActivity(activity) {

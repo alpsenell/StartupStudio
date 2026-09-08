@@ -2526,5 +2526,662 @@
       "mood": -6,
       "relationships": -4
     }
+  },
+  {
+    "id": "people_word_gets_around",
+    "headline": "Somebody repeated what you said. Word for word.",
+    "weight": 3,
+    "cooldownDays": 90,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "mood": -3
+    }
+  },
+  {
+    "id": "people_reputation_as_a_talker",
+    "headline": "You have a reputation now: the founder who says the thing out loud.",
+    "weight": 2,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "mood": 3,
+      "relationships": 2
+    }
+  },
+  {
+    "id": "people_someone_calls_out_of_nowhere",
+    "headline": "Somebody you were decent to once called for no reason at all.",
+    "weight": 3,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "mood": 5,
+      "relationships": 4
+    }
+  },
+  {
+    "id": "people_group_chat_screenshot",
+    "headline": "A screenshot of you is doing the rounds of a group chat you're not in.",
+    "weight": 2,
+    "cooldownDays": 150,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_cruel"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "people_apology_tour",
+    "headline": "Your calendar has four coffees in it and all four are apologies.",
+    "weight": 2,
+    "cooldownDays": 180,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_cruel"
+      ]
+    },
+    "body": "Four people, four flat whites, four versions of the same sentence. You could do them all this week, or you could do the one that matters.",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "all_four",
+        "label": "Do all four",
+        "detail": "An evening · energy −10 · relationships +10 · mood +4",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -10,
+            "relationships": 10,
+            "mood": 4
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "just_one",
+        "label": "Do the one that matters",
+        "detail": "Free · relationships +3 · mood −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 3,
+            "mood": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "people_someone_stopped_speaking",
+    "headline": "Somebody has stopped replying, and you know exactly which somebody.",
+    "weight": 3,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_cruel"
+      ]
+    },
+    "impact": {
+      "mood": -5,
+      "relationships": -4
+    }
+  },
+  {
+    "id": "people_you_were_the_story",
+    "headline": "You were the anecdote at a dinner you weren't invited to.",
+    "weight": 2,
+    "cooldownDays": 160,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_cruel"
+      ]
+    },
+    "impact": {
+      "mood": -4
+    }
+  },
+  {
+    "id": "people_hard_reputation",
+    "headline": "\"Difficult but effective\" is now a thing recruiters say about you.",
+    "weight": 2,
+    "cooldownDays": 220,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_cruel"
+      ]
+    },
+    "impact": {
+      "mood": -2
+    }
+  },
+  {
+    "id": "people_late_night_regret",
+    "headline": "Three in the morning, and you are replaying a sentence from March.",
+    "weight": 3,
+    "cooldownDays": 100,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_cruel"
+      ]
+    },
+    "impact": {
+      "energy": -6,
+      "mood": -4
+    }
+  },
+  {
+    "id": "people_someone_forgave_you",
+    "headline": "Somebody forgave you before you got round to asking.",
+    "weight": 2,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_cruel"
+      ]
+    },
+    "impact": {
+      "mood": 8,
+      "relationships": 5
+    }
+  },
+  {
+    "id": "people_two_phones",
+    "headline": "You have got very good at which phone is face-down.",
+    "weight": 3,
+    "cooldownDays": 60,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_affair"
+      ]
+    },
+    "impact": {
+      "energy": -5,
+      "mood": -4
+    }
+  },
+  {
+    "id": "people_alibi_rehearsal",
+    "headline": "You rehearsed a sentence in the car before going in.",
+    "weight": 3,
+    "cooldownDays": 70,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_affair"
+      ]
+    },
+    "impact": {
+      "mood": -5
+    }
+  },
+  {
+    "id": "people_a_friend_noticed",
+    "headline": "A friend asked one very carefully worded question.",
+    "weight": 2,
+    "cooldownDays": 150,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_affair"
+      ]
+    },
+    "body": "They didn't accuse you of anything. They asked whether everything was alright at home, and then they waited longer than people usually wait.",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "tell_them",
+        "label": "Tell them the truth",
+        "detail": "Free · mood +5 · relationships +3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 5,
+            "relationships": 3
+          }
+        ]
+      },
+      {
+        "id": "deflect",
+        "label": "Change the subject",
+        "detail": "Free · mood −6 · relationships −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -6,
+            "relationships": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "people_calendar_collision",
+    "headline": "Two calendars, one Thursday, and somebody's assistant does admin properly.",
+    "weight": 2,
+    "cooldownDays": 180,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_affair"
+      ]
+    },
+    "impact": {
+      "mood": -7
+    }
+  },
+  {
+    "id": "people_expensive_dinner_receipt",
+    "headline": "A receipt turned up in a coat pocket. It was a good restaurant.",
+    "weight": 2,
+    "cooldownDays": 160,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_affair"
+      ]
+    },
+    "impact": {
+      "mood": -6,
+      "relationships": -4
+    }
+  },
+  {
+    "id": "people_nemesis_named",
+    "headline": "A newsletter called it a feud. You'd been calling it a difference of opinion.",
+    "weight": 3,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_nemesis"
+      ]
+    },
+    "impact": {
+      "mood": 2
+    }
+  },
+  {
+    "id": "people_nemesis_at_the_same_event",
+    "headline": "They were at the same conference. Same room, twice.",
+    "weight": 3,
+    "cooldownDays": 110,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_nemesis"
+      ]
+    },
+    "body": "You were four metres apart at the coffee table for a full minute. Somebody was filming the room on their phone.",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "say_hello",
+        "label": "Say hello like an adult",
+        "detail": "Free · mood +4 · relationships +2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 4,
+            "relationships": 2
+          }
+        ]
+      },
+      {
+        "id": "walk_past",
+        "label": "Walk straight past",
+        "detail": "Free · mood −3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "people_nemesis_hired_your_ex",
+    "headline": "They hired somebody who used to sit six feet from you.",
+    "weight": 2,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_nemesis"
+      ]
+    },
+    "impact": {
+      "mood": -6
+    }
+  },
+  {
+    "id": "people_nemesis_praised_you",
+    "headline": "Your nemesis said something genuinely complimentary in public.",
+    "weight": 2,
+    "cooldownDays": 240,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_nemesis"
+      ]
+    },
+    "impact": {
+      "mood": 4
+    }
+  },
+  {
+    "id": "people_nemesis_mutual_friend",
+    "headline": "You both know the same person and that person is exhausted.",
+    "weight": 2,
+    "cooldownDays": 180,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_nemesis"
+      ]
+    },
+    "impact": {
+      "relationships": -4,
+      "mood": -2
+    }
+  },
+  {
+    "id": "people_empty_seat",
+    "headline": "There is a chair in the kitchen that nobody sits in now.",
+    "weight": 3,
+    "cooldownDays": 150,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_estranged"
+      ]
+    },
+    "impact": {
+      "mood": -7
+    }
+  },
+  {
+    "id": "people_the_letter",
+    "headline": "A letter arrived. Handwritten, which nobody does any more.",
+    "weight": 2,
+    "cooldownDays": 240,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_estranged"
+      ]
+    },
+    "body": "Two pages, both sides, no return address. It doesn't ask you for anything, which is the part that's hard to put down.",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "write_back",
+        "label": "Write back tonight",
+        "detail": "An evening · energy −6 · mood +8 · relationships +6",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -6,
+            "mood": 8,
+            "relationships": 6
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "drawer",
+        "label": "Put it in the drawer",
+        "detail": "Free · mood −5",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "people_reference_call",
+    "headline": "Somebody rang for a reference on a person you fired with cause.",
+    "weight": 2,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_estranged"
+      ]
+    },
+    "impact": {
+      "mood": -3
+    }
+  },
+  {
+    "id": "people_wedding_invite_that_didnt_come",
+    "headline": "There was a wedding. You found out from a photo.",
+    "weight": 2,
+    "cooldownDays": 300,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_estranged"
+      ]
+    },
+    "impact": {
+      "mood": -8,
+      "relationships": -3
+    }
+  },
+  {
+    "id": "people_mutual_acquaintance_asks",
+    "headline": "\"How are things with them?\" asked somebody who hadn't heard.",
+    "weight": 3,
+    "cooldownDays": 140,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_estranged"
+      ]
+    },
+    "impact": {
+      "mood": -4
+    }
+  },
+  {
+    "id": "people_old_photo_surfaces",
+    "headline": "A photo from four years ago came up on your phone this morning.",
+    "weight": 3,
+    "cooldownDays": 130,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_estranged"
+      ]
+    },
+    "impact": {
+      "mood": -5
+    }
+  },
+  {
+    "id": "people_someone_asks_advice",
+    "headline": "Somebody asked you how to handle a person. Genuinely asked.",
+    "weight": 3,
+    "cooldownDays": 120,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "mood": 4,
+      "relationships": 2
+    }
+  },
+  {
+    "id": "people_the_favour_returns",
+    "headline": "A favour you did without thinking came back with interest.",
+    "weight": 3,
+    "cooldownDays": 160,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "mood": 6,
+      "wallet": 500
+    }
+  },
+  {
+    "id": "people_someone_defended_you",
+    "headline": "Somebody defended you in a room you weren't in.",
+    "weight": 2,
+    "cooldownDays": 200,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "mood": 7,
+      "relationships": 4
+    }
+  },
+  {
+    "id": "people_a_name_you_forgot",
+    "headline": "You could not remember the name of somebody who remembered yours.",
+    "weight": 3,
+    "cooldownDays": 110,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "mood": -3
+    }
+  },
+  {
+    "id": "people_your_own_words_back",
+    "headline": "Somebody quoted you to you, and you did not recognise it.",
+    "weight": 2,
+    "cooldownDays": 190,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "mood": -2
+    }
+  },
+  {
+    "id": "people_an_evening_with_no_agenda",
+    "headline": "An evening with people, and nobody wanted anything from you.",
+    "weight": 3,
+    "cooldownDays": 140,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "impact": {
+      "energy": -4,
+      "mood": 9,
+      "relationships": 7
+    }
+  },
+  {
+    "id": "people_the_list_of_people",
+    "headline": "You wrote a list of everyone you owe a call. It got long.",
+    "weight": 2,
+    "cooldownDays": 170,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "people_meddler"
+      ]
+    },
+    "body": "Fourteen names. Some of them have been on the list since the seed round. The list is not the hard part.",
+    "autoChoiceIndex": 1,
+    "impact": {},
+    "choices": [
+      {
+        "id": "start_at_the_top",
+        "label": "Start at the top tonight",
+        "detail": "An evening · energy −7 · relationships +9 · mood +5",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "energy": -7,
+            "relationships": 9,
+            "mood": 5
+          }
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "keep_the_list",
+        "label": "Keep the list",
+        "detail": "Free · mood −4",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -4
+          }
+        ]
+      }
+    ]
   }
 ]

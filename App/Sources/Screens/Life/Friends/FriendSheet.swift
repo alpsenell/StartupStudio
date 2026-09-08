@@ -49,6 +49,9 @@ struct FriendSheet: View {
                     LastLine(text: line.text, day: line.day, today: engine.state.day)
                 }
                 timeCard(friend)
+                // MARK: Iteration 11 — N2 (people menus)
+                PeopleMenuButton(engine: engine, target: .friend(friend.id))
+                // MARK: end of Iteration 11 — N2
                 offersCard(friend)
                 if let loan = friend.loan, loan.outstanding > 0 {
                     loanCard(friend, loan: loan)

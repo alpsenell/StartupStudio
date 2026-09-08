@@ -89,6 +89,13 @@ struct TeamScreen: View {
                     tookLaunchRoute = true
                     // MARK: Iteration 11 — a launch route per lane, consumed first
                     // MARK: N2 (people menus)
+                    // `-autoRoute peopleTeam` opens the manage sheet on
+                    // the first person on the roster, which is where the
+                    // employee's people menu hangs.
+                    if Route.launchRoute == .peopleTeamMenu {
+                        employeeToManage = engine.state.employees.first { !$0.isFounder }
+                        return
+                    }
                     // MARK: N5 (office secrets)
                     // MARK: end of Iteration 11
                     if Route.launchRoute == .orgChart {

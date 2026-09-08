@@ -1,0 +1,1306 @@
+{
+  "interactions": [
+    {
+      "id": "compliment",
+      "title": "Pay them a compliment",
+      "icon": "hand.thumbsup.fill",
+      "group": "nice",
+      "targets": ["partner", "child", "friend", "employee", "contact"],
+      "good": 4,
+      "bad": -1,
+      "baseChance": 0.84,
+      "cooldownDays": 3,
+      "note": "Free. Costs you nothing but the sentence.",
+      "lines": {
+        "partner": {
+          "good": [
+            "\"You noticed the hair. Two days late, but you noticed.\"",
+            "\"Say that again on a day you're not asking me for anything.\"",
+            "\"That was nice. Don't ruin it by explaining why you said it.\"",
+            "\"Alright. I'll take it. I'll be insufferable about it too.\""
+          ],
+          "bad": [
+            "\"You said the same thing at the wedding. Word for word.\"",
+            "\"That's your investor voice. I know your investor voice.\"",
+            "\"Thanks. Are you about to tell me you're working the weekend?\"",
+            "\"Mm.\" That's it. That's the whole reply."
+          ]
+        },
+        "child": {
+          "good": [
+            "They went bright red and pretended to look for something.",
+            "\"I KNOW.\" Then they told you about it for eleven minutes.",
+            "They wrote it down. You saw them write it down.",
+            "\"You're not just saying that?\" You were not just saying that."
+          ],
+          "bad": [
+            "\"You didn't even look at it properly.\" Correct.",
+            "\"Is this because you missed Thursday?\" Also correct.",
+            "They shrugged with their whole body. Impressive, technically.",
+            "\"Okay.\" Door. Music, slightly too loud."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"Careful, that almost sounded sincere.\"",
+            "\"Screenshotting this. It goes in the speech.\"",
+            "\"Right back at you, mate. Now buy me a coffee.\"",
+            "\"I needed that today, actually. Don't make it weird.\""
+          ],
+          "bad": [
+            "\"You're being nice. What have you done.\"",
+            "\"Is this the bit before you ask me for something?\"",
+            "\"Mate, you're eight months late on that one.\"",
+            "\"Thanks?\" You could hear the question mark."
+          ]
+        },
+        "employee": {
+          "good": [
+            "They said thanks twice and then had a very good afternoon.",
+            "\"That's the first time anyone's said that out loud here.\"",
+            "They told three people. One of them told you they'd heard.",
+            "\"Cheers. I'll put that in my review, if we ever do reviews.\""
+          ],
+          "bad": [
+            "\"You've got the wrong ticket. That was Priya's.\"",
+            "\"Is this the bit before the reorg?\" Fair, honestly.",
+            "They said thanks in the flat voice people use for HR.",
+            "\"Great. Could I have the headcount instead?\""
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Kind of you to remember. Most people don't.\"",
+            "\"You're smoother than you were at the last thing.\"",
+            "\"Flattery works on me. It's my only real weakness.\"",
+            "\"That's the nicest thing anyone's said to me in this industry.\""
+          ],
+          "bad": [
+            "\"You've got me confused with the other one at the fund.\"",
+            "\"Mm. What is it you actually want?\"",
+            "\"That's what you said last time. I keep notes.\"",
+            "They smiled the way people smile at a pitch they won't take."
+          ]
+        }
+      }
+    },
+    {
+      "id": "apologise",
+      "title": "Apologise",
+      "icon": "figure.wave",
+      "group": "nice",
+      "targets": ["partner", "child", "friend", "employee", "contact", "rival"],
+      "good": 8,
+      "bad": -2,
+      "overrides": { "rival": { "good": -9, "bad": 2 } },
+      "baseChance": 0.68,
+      "cooldownDays": 7,
+      "maxBar": 88,
+      "note": "Worth most where you've done the most damage.",
+      "lines": {
+        "partner": {
+          "good": [
+            "\"Thank you. That's all I wanted. That's genuinely all it was.\"",
+            "\"Okay. Okay. Come here.\"",
+            "\"You didn't say 'but'. I noticed you didn't say 'but'.\"",
+            "\"We're fine. Eat something, you look like a founder.\""
+          ],
+          "bad": [
+            "\"You're apologising for the symptom again.\"",
+            "\"That's the third one this quarter. I've stopped counting them separately.\"",
+            "\"Don't apologise. Change the calendar.\"",
+            "\"Fine.\" It was not fine."
+          ]
+        },
+        "child": {
+          "good": [
+            "\"It's okay.\" It wasn't, but they meant it.",
+            "They hugged you sideways, which is the maximum available.",
+            "\"You can come to the next one instead.\" Deal.",
+            "\"Adults don't usually say sorry properly. That was properly.\""
+          ],
+          "bad": [
+            "\"You said that about the sports day too.\"",
+            "\"It's fine, it's fine, it's fine.\" Three fines is not fine.",
+            "They said \"okay\" and went back to the game.",
+            "\"Can you just not promise next time?\""
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"Consider it forgotten. Mostly. Ninety percent forgotten.\"",
+            "\"We're good. You owe me a curry, but we're good.\"",
+            "\"Thanks for saying it. Most people just go quiet for a year.\"",
+            "\"Ah, stop. Come round Sunday.\""
+          ],
+          "bad": [
+            "\"You didn't have to. That's sort of the problem.\"",
+            "\"Right.\" Long pause. \"Right.\"",
+            "\"It's been fourteen months, mate.\"",
+            "\"I'd rather you just called more.\""
+          ]
+        },
+        "employee": {
+          "good": [
+            "\"Appreciated. Genuinely. Nobody up there does that.\"",
+            "\"Okay. Clean slate. Where do you want me Monday?\"",
+            "They looked surprised, then relieved, then busy again.",
+            "\"That took something to say. Thanks.\""
+          ],
+          "bad": [
+            "\"Sorry doesn't unship it, though, does it.\"",
+            "\"Is this an apology or a retention conversation?\"",
+            "\"Noted.\" They wrote it down. That's worse.",
+            "\"I'd have preferred the four days back.\""
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Water under it. This industry is six people, anyway.\"",
+            "\"Decent of you. Most founders just wait it out.\"",
+            "\"Forgotten. Send me the deck again, properly this time.\"",
+            "\"Fine. Coffee. You're paying and you're on time.\""
+          ],
+          "bad": [
+            "\"You emailed. That's not the same as calling.\"",
+            "\"Mm. I've heard the sentence before.\"",
+            "\"It's not personal. It just isn't a yes.\"",
+            "They accepted it politely and did not warm up at all."
+          ]
+        },
+        "rival": {
+          "good": [
+            "They took the call. Fifteen minutes, no lawyers. Something cooled.",
+            "\"We'd both look better if this stopped.\" Agreed, apparently.",
+            "A short joint statement. Nobody meant a word and it worked.",
+            "\"You went first. I'll remember that.\" Said almost warmly."
+          ],
+          "bad": [
+            "\"Apology accepted,\" they said, in a way that meant the opposite.",
+            "They forwarded your message to a journalist. Nice.",
+            "No reply. The silence was doing the talking.",
+            "\"We're not enemies,\" they said. \"You're just smaller.\""
+          ]
+        }
+      }
+    },
+    {
+      "id": "flirt",
+      "title": "Flirt with them",
+      "icon": "heart.circle.fill",
+      "group": "nice",
+      "targets": ["partner", "contact"],
+      "good": 5,
+      "bad": -3,
+      "baseChance": 0.7,
+      "cooldownDays": 2,
+      "lines": {
+        "partner": {
+          "good": [
+            "\"You are so bad at this and it works every single time.\"",
+            "\"Put the laptop down and say that again.\"",
+            "\"Absolutely not. Ask me again at nine.\"",
+            "They laughed properly. The one from before the company."
+          ],
+          "bad": [
+            "\"You've got a spreadsheet open behind me. I can see it.\"",
+            "\"Is this instead of the conversation we said we'd have?\"",
+            "\"Not tonight. Not because of you. Mostly not because of you.\"",
+            "\"You smell like the office.\" Reader, you did."
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"You're trouble,\" they said, and did not move away.",
+            "They laughed and asked what you were doing Thursday.",
+            "\"Careful. I'm terrible at boundaries and worse at gossip.\"",
+            "The conversation stopped being about the deck an hour ago."
+          ],
+          "bad": [
+            "\"I'm going to pretend that was about the cap table.\"",
+            "They looked at your ring finger, then at their drink.",
+            "\"Let's keep this professional. It's a small industry.\"",
+            "\"You've got a partner. I've got a memory.\""
+          ]
+        }
+      }
+    },
+    {
+      "id": "confide",
+      "title": "Tell them something true",
+      "icon": "lock.open.fill",
+      "group": "nice",
+      "targets": ["partner", "friend", "employee", "contact"],
+      "good": 10,
+      "bad": -4,
+      "baseChance": 0.62,
+      "cooldownDays": 12,
+      "note": "The real number, the real fear. Expensive if it lands wrong.",
+      "lines": {
+        "partner": {
+          "good": [
+            "\"Thank you for not doing the brave voice.\"",
+            "\"I already knew. I was waiting for you to say it.\"",
+            "\"Right. Then we work out the plan together. Sit down.\"",
+            "They held your hand and asked exactly one good question."
+          ],
+          "bad": [
+            "\"How long have you been sitting on that?\" Too long.",
+            "\"And you told the investors first. Of course you did.\"",
+            "\"I can't be the only person you talk to about this.\"",
+            "They went very quiet and started tidying things."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"Mate. Right. Pub. Now. Bring the numbers.\"",
+            "\"Everyone's faking it. You're just faking it in public.\"",
+            "\"Thanks for telling me and not the internet.\"",
+            "They didn't offer advice. They just stayed on the phone."
+          ],
+          "bad": [
+            "\"I don't really know what to say to that, if I'm honest.\"",
+            "\"Have you spoken to someone? A proper someone?\"",
+            "The conversation got very practical, very fast.",
+            "\"Yeah, work's mad for me too.\" It was not the same."
+          ]
+        },
+        "employee": {
+          "good": [
+            "\"I'd rather know. Everyone would rather know.\"",
+            "\"Okay. What do you need from me to fix it?\"",
+            "They squared their shoulders and cleared their afternoon.",
+            "\"Thanks for treating me like an adult.\""
+          ],
+          "bad": [
+            "You watched them decide to update their CV tonight.",
+            "\"That's... a lot to put on the person who ships the build.\"",
+            "It was around the office by four. Not maliciously. Just fast.",
+            "\"Should I be worried?\" Yes. \"Right.\""
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Everyone's book looks like that. Nobody says it.\"",
+            "\"Useful. I'll stop pretending too. Here's mine.\"",
+            "\"You've just made me more likely to back you, oddly.\"",
+            "\"That's the most honest twenty minutes I've had all month.\""
+          ],
+          "bad": [
+            "\"I'm going to forget you told me that. Try to.\"",
+            "It surfaced in someone else's diligence call. Fast industry.",
+            "\"Right. Well. Let's revisit next quarter.\" Never.",
+            "They were kind about it, which was somehow worse."
+          ]
+        }
+      }
+    },
+    {
+      "id": "brag",
+      "title": "Brag about them to someone else",
+      "icon": "megaphone.fill",
+      "group": "nice",
+      "targets": ["child", "friend", "employee", "contact"],
+      "good": 6,
+      "bad": -2,
+      "baseChance": 0.78,
+      "cooldownDays": 6,
+      "note": "It always gets back to them. That's the mechanism.",
+      "lines": {
+        "child": {
+          "good": [
+            "It got back to them. They pretended not to care for a week.",
+            "\"You told your investors about my thing?\" Yes. \"Weird. Good weird.\"",
+            "They put it in their bio. Their actual bio.",
+            "\"Did you actually say that or is this a dad thing?\" You said it."
+          ],
+          "bad": [
+            "\"Please stop telling strangers about me.\"",
+            "You got a detail wrong. They will mention it for years.",
+            "\"That was two years ago. I do other things now.\"",
+            "\"Cool.\" They left the room to have a feeling privately."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"Someone at a conference quoted you about me. Bizarre. Lovely.\"",
+            "\"You're my agent now, apparently.\"",
+            "It got them a call. The call went somewhere.",
+            "\"I heard what you said. Thank you. Shut up.\""
+          ],
+          "bad": [
+            "\"Bit much, mate.\"",
+            "You oversold it and now someone's asking them for something.",
+            "\"Please don't do my networking for me.\"",
+            "\"You made me sound like a LinkedIn post.\""
+          ]
+        },
+        "employee": {
+          "good": [
+            "It got back to them within a day. They walked taller for a week.",
+            "\"You said that to an investor? About me?\"",
+            "A recruiter called them. They said no, and told you they'd said no.",
+            "\"Right, well, now I have to actually be that good.\""
+          ],
+          "bad": [
+            "You named the wrong project. Everyone heard which one.",
+            "\"Nice. Could that go in the salary band instead?\"",
+            "A recruiter called them. They took the call.",
+            "\"Don't do that in front of the team. It makes it worse for me.\""
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Somebody said you'd been talking me up. Unexpectedly decent of you.\"",
+            "It reached them by Thursday. They opened your last email.",
+            "\"You've got a reputation for slagging people off. Not this week.\"",
+            "\"That's a favour. I'll remember it's a favour.\""
+          ],
+          "bad": [
+            "\"You made it sound like we're closer than we are.\"",
+            "You attributed someone else's deal to them. Awkward.",
+            "\"Please don't use my name in rooms I'm not in.\"",
+            "It read as name-dropping, because it was."
+          ]
+        }
+      }
+    },
+    {
+      "id": "gift",
+      "title": "Buy them something",
+      "icon": "gift.fill",
+      "group": "nice",
+      "targets": ["partner", "child", "friend", "contact"],
+      "good": 9,
+      "bad": -1,
+      "baseChance": 0.85,
+      "wallet": 300,
+      "cooldownDays": 14,
+      "note": "The team's gift is on the Team tab. This one's personal.",
+      "lines": {
+        "partner": {
+          "good": [
+            "\"You remembered the specific one. The specific one!\"",
+            "\"This is very expensive and I love it and we're discussing money later.\"",
+            "They wore it out that evening, which was the whole point.",
+            "\"You didn't have to.\" They did not put it down all night."
+          ],
+          "bad": [
+            "\"You bought me a thing instead of a Tuesday.\"",
+            "\"It's lovely. Can we talk about the calendar now?\"",
+            "Wrong size. Wrong colour. Right idea, wrong everything.",
+            "\"Did the office order this?\" The office ordered this."
+          ]
+        },
+        "child": {
+          "good": [
+            "Ninety seconds of unfiltered joy. Worth every penny.",
+            "\"HOW did you know?\" You listened once, in March.",
+            "They took it to school. It came back famous.",
+            "They said thank you without being asked. Note the date."
+          ],
+          "bad": [
+            "\"I said that a year ago.\" They did.",
+            "\"Is this a sorry present?\" It was a sorry present.",
+            "They liked the box more than the thing. Fair.",
+            "\"Cool, thanks.\" Straight to the shelf. Still there."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"You absolute idiot. I love it. Come here.\"",
+            "\"This is the least practical thing I own. It's going on the wall.\"",
+            "\"You've been listening. That's the alarming part.\"",
+            "They sent a photo of it in position. Twice."
+          ],
+          "bad": [
+            "\"Mate, this is too much. It's genuinely too much.\"",
+            "\"Now I have to get you something and I have no money.\"",
+            "\"Is this because you cancelled twice?\" Yes. \"Right.\"",
+            "It sat in the hall unopened for three weeks."
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Well, that's not a mug with your logo on it. Thank you.\"",
+            "\"I'll declare this and keep it. In that order.\"",
+            "\"Very smooth. You'll do well in this industry.\"",
+            "They replied within the hour for the first time all year."
+          ],
+          "bad": [
+            "\"I can't accept this. Our compliance people are odd about it.\"",
+            "\"That's a lot of money to spend on a maybe.\"",
+            "\"This feels like it comes with an invoice.\"",
+            "It got sent back with a very polite note."
+          ]
+        }
+      }
+    },
+    {
+      "id": "takeThemOut",
+      "title": "Take them out for the evening",
+      "icon": "fork.knife",
+      "group": "nice",
+      "targets": ["partner", "child", "friend", "contact"],
+      "good": 14,
+      "bad": 3,
+      "baseChance": 0.86,
+      "cost": "evening",
+      "wallet": 450,
+      "cooldownDays": 7,
+      "note": "The dear one: an evening and a bill, and it almost always works.",
+      "lines": {
+        "partner": {
+          "good": [
+            "No phones on the table. Three hours. You both noticed.",
+            "\"That was the version of you I married.\"",
+            "You talked about something that wasn't runway. Revolutionary.",
+            "\"Same time next week?\" You said yes and meant it."
+          ],
+          "bad": [
+            "You took one call. One. It was a long call.",
+            "\"Nice place.\" Two hours of nice place and not much else.",
+            "You fell asleep in the taxi. They paid the taxi.",
+            "Lovely dinner, spent mostly rehearsing Monday's board deck."
+          ]
+        },
+        "child": {
+          "good": [
+            "They ordered the most expensive thing. You let them. Correct.",
+            "Two hours of a subject you know nothing about. Excellent.",
+            "\"This was actually good.\" High praise. Bank it.",
+            "They asked about the company. Properly asked. You told them."
+          ],
+          "bad": [
+            "They were on their phone. So were you. Symmetry.",
+            "You picked the restaurant you like. They noticed.",
+            "\"Can we go home now?\" Forty minutes in.",
+            "It was fine. Fine is not the word you were going for."
+          ]
+        },
+        "friend": {
+          "good": [
+            "Closed the place. Solved two of their problems and none of yours.",
+            "\"First proper night out I've had since the baby. Thank you.\"",
+            "You laughed until it hurt about something from 2011.",
+            "\"Same again next month. Put it in the diary now.\""
+          ],
+          "bad": [
+            "You talked about the company for two hours and heard yourself doing it.",
+            "They got the earlier train. You noticed which train it was.",
+            "Nice evening. Slightly like a meeting.",
+            "\"You alright? You seem somewhere else.\" You were."
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Best pitch I've had all year and you didn't pitch me once.\"",
+            "They introduced you to somebody on the way out.",
+            "\"Right. Send me the thing. I'll actually read it.\"",
+            "Four hours. Two bottles. One warm intro on Monday."
+          ],
+          "bad": [
+            "\"I'll expense my half, if that's alright.\" It was a signal.",
+            "They took a call at the table and did not come back quickly.",
+            "You pitched at the starter. It never recovered.",
+            "Perfectly pleasant. Absolutely nothing moved."
+          ]
+        }
+      }
+    },
+    {
+      "id": "insult",
+      "title": "Insult them",
+      "icon": "exclamationmark.bubble.fill",
+      "group": "mean",
+      "targets": ["partner", "child", "friend", "employee", "contact", "rival"],
+      "good": -6,
+      "bad": -13,
+      "overrides": { "rival": { "good": 9, "bad": 4 } },
+      "baseChance": 0.58,
+      "cooldownDays": 3,
+      "confirms": true,
+      "note": "It never costs nothing. The roll only decides how much.",
+      "lines": {
+        "partner": {
+          "good": [
+            "\"That was beneath you.\" It was. They let it go anyway.",
+            "They went to bed early without saying goodnight.",
+            "\"I'm going to assume that was the week talking.\"",
+            "The room got cold and stayed cold for an hour."
+          ],
+          "bad": [
+            "\"Say that again and mean it, or take it back properly.\"",
+            "They repeated it back to you slowly. It sounded much worse.",
+            "\"You talk to your investors better than you talk to me.\"",
+            "The door didn't slam. Somehow that was worse."
+          ]
+        },
+        "child": {
+          "good": [
+            "They went quiet in the way that means it landed.",
+            "\"Okay.\" They took their plate to their room.",
+            "You apologised twelve minutes later. It half worked.",
+            "They looked at you like you were a stranger at a bus stop."
+          ],
+          "bad": [
+            "They repeated it to their other parent, word for word.",
+            "\"You sound like a boss. I'm not one of them.\"",
+            "It went in the ledger. Kids keep a ledger.",
+            "They cried and were furious about crying."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"Alright, alright. Rough week?\" They let you off.",
+            "\"That's the second one this month, mind.\"",
+            "They laughed it off. The laugh was a bit late.",
+            "\"You get one of those a year. That was this year's.\""
+          ],
+          "bad": [
+            "\"I've known you twenty years and you said that out loud.\"",
+            "They left the group chat. They came back. Still.",
+            "\"Do you actually like me, or am I just staff now?\"",
+            "No reply for nine days. That's the reply."
+          ]
+        },
+        "employee": {
+          "good": [
+            "\"Understood.\" They shipped it anyway, colder.",
+            "The desk around them went very quiet and stayed that way.",
+            "They took it on the chin in public and had a word later.",
+            "\"Right.\" One word, and a productive, miserable afternoon."
+          ],
+          "bad": [
+            "Two people put their headphones on. Everyone heard it.",
+            "\"That's the sort of thing that ends up in a tribunal, boss.\"",
+            "They updated their profile that evening. Open to work.",
+            "\"I've been shouted at before. Not by someone I respected.\""
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Bold. I'll give you bold.\" They did not call back.",
+            "They smiled thinly and moved to another conversation.",
+            "\"Noted.\" It was, in fact, noted.",
+            "The rapport went out of the room like air from a tyre."
+          ],
+          "bad": [
+            "It was repeated at three dinners inside a fortnight.",
+            "\"This industry is small and I'm in most of it.\"",
+            "Their fund passed. The note said 'founder risk'.",
+            "They put it in writing so it could be forwarded. It was."
+          ]
+        },
+        "rival": {
+          "good": [
+            "Your line made their all-hands. They are properly annoyed.",
+            "They subtweeted it, badly, which made it worse for them.",
+            "Somebody printed it and pinned it to their wall as motivation.",
+            "\"We'll remember that at the next raise.\" They will."
+          ],
+          "bad": [
+            "It read as punching up. It made them look like the underdog.",
+            "They replied with one word and got twice your reach.",
+            "Your own team winced. That's the metric that matters.",
+            "They said nothing at all, which cost them nothing at all."
+          ]
+        }
+      }
+    },
+    {
+      "id": "prank",
+      "title": "Prank them",
+      "icon": "party.popper.fill",
+      "group": "mean",
+      "targets": ["child", "friend", "employee", "rival"],
+      "good": 3,
+      "bad": -9,
+      "overrides": { "rival": { "good": 7, "bad": 13 } },
+      "baseChance": 0.6,
+      "cooldownDays": 5,
+      "note": "Funny is a coin flip and you are holding the coin.",
+      "lines": {
+        "child": {
+          "good": [
+            "Shrieking. Genuine shrieking. Then an immediate revenge plan.",
+            "\"That was SO good. I hate you. That was so good.\"",
+            "They told the story at dinner for a month.",
+            "You got got back within the week. Fair play to them."
+          ],
+          "bad": [
+            "You went one step too far and had to sit on the stairs.",
+            "\"That's not funny, that's just mean.\" They were right.",
+            "Tears, and then a long conversation about trust.",
+            "They stopped believing anything you say for a fortnight."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"I cannot believe you kept that going for four days.\"",
+            "They fell for it completely and are furious with themselves.",
+            "It's already a story they tell about themselves.",
+            "\"Right. War. You've started a war and you'll lose it.\""
+          ],
+          "bad": [
+            "They'd had a bad week you didn't know about.",
+            "It cost them money. Small money, but money.",
+            "\"Bit old for this, aren't we?\"",
+            "They laughed and then didn't message for a while."
+          ]
+        },
+        "employee": {
+          "good": [
+            "The whole floor was in on it. Best morning in months.",
+            "They took it beautifully and started planning the return leg.",
+            "Somebody made a poster. The poster is still up.",
+            "\"Okay, that was good. That was annoyingly good.\""
+          ],
+          "bad": [
+            "It broke a build. The build was for a demo.",
+            "Nobody laughs when the boss is the one doing it. Nobody.",
+            "\"Is this a thing I'm allowed to not find funny?\"",
+            "HR would like a word, and you don't have an HR."
+          ]
+        },
+        "rival": {
+          "good": [
+            "Two hundred pizzas to their office. Petty. Effective.",
+            "Their launch stream opened with your logo. Somehow.",
+            "They spent a whole morning on it. That's the win.",
+            "The industry group chat has not stopped."
+          ],
+          "bad": [
+            "It cost them a customer. Now it's not funny, it's a letter.",
+            "Their lawyer wrote to your lawyer, who is also you.",
+            "It made them sympathetic. Nobody was on your side.",
+            "They escalated. They are much better at escalating."
+          ]
+        }
+      }
+    },
+    {
+      "id": "argue",
+      "title": "Pick a fight about it",
+      "icon": "bolt.fill",
+      "group": "mean",
+      "targets": ["partner", "child", "friend", "employee"],
+      "good": -2,
+      "bad": -11,
+      "baseChance": 0.52,
+      "cooldownDays": 4,
+      "note": "Sometimes the row is the honest thing. Sometimes it is just a row.",
+      "lines": {
+        "partner": {
+          "good": [
+            "Forty minutes, loud, and then something actually got decided.",
+            "\"Finally. I'd rather this than another polite month.\"",
+            "You both said the real thing. The real thing was survivable.",
+            "\"We're allowed to argue. We're not allowed to go quiet.\""
+          ],
+          "bad": [
+            "It became about 2019. It's always about 2019.",
+            "You won it. You could tell you'd won it. That was the problem.",
+            "They slept at their sister's. It's happened before.",
+            "Nothing was resolved and everything was said."
+          ]
+        },
+        "child": {
+          "good": [
+            "They held their ground. You were quietly impressed.",
+            "\"Fine. FINE.\" Then, later, a reasonable compromise.",
+            "You both apologised. They went first, which stung.",
+            "It cleared the air. Adolescence has weather."
+          ],
+          "bad": [
+            "You used your boss voice on a fourteen-year-old.",
+            "\"You're never here and you're arguing about the rules?\"",
+            "Door. Music. Two days of one-word answers.",
+            "They stopped telling you things. That took months to undo."
+          ]
+        },
+        "friend": {
+          "good": [
+            "A proper row, then a pint. That's the format.",
+            "\"You're wrong, but you're allowed to be wrong at me.\"",
+            "They gave as good as they got and you both felt better.",
+            "\"Twenty years. We've had worse. Sit down.\""
+          ],
+          "bad": [
+            "You brought up the loan. You should not have brought up the loan.",
+            "\"I'm not one of your reports.\"",
+            "Silence, then a very short message about Sunday being off.",
+            "Other people had to pick a side. They shouldn't have had to."
+          ]
+        },
+        "employee": {
+          "good": [
+            "A real disagreement, in the open, and then a decision.",
+            "\"Good. I'd rather that than another vague standup.\"",
+            "They pushed back hard and were mostly right.",
+            "The team saw the boss lose an argument. That's healthy."
+          ],
+          "bad": [
+            "You had it in the open plan. Everybody stopped typing.",
+            "\"I'm not doing this in front of the juniors.\"",
+            "They were right, you were loud, and everyone knew both.",
+            "The word 'toxic' got used at lunch. Not to your face."
+          ]
+        }
+      }
+    },
+    {
+      "id": "silentTreatment",
+      "title": "Give them the silent treatment",
+      "icon": "speaker.slash.fill",
+      "group": "mean",
+      "targets": ["partner", "child", "friend", "employee"],
+      "good": -4,
+      "bad": -10,
+      "baseChance": 0.6,
+      "cooldownDays": 7,
+      "note": "Cheap, quiet, and it always costs the same thing in the end.",
+      "lines": {
+        "partner": {
+          "good": [
+            "Three days of extremely polite logistics.",
+            "They cracked first. You did not enjoy winning.",
+            "\"Are we doing this? We're doing this.\"",
+            "The house got very tidy. That's how you can tell."
+          ],
+          "bad": [
+            "\"I can wait longer than you. I've had practice.\"",
+            "They stopped trying to start conversations. That's the bad version.",
+            "A week. Then a very calm question about whether this is it.",
+            "They told a friend. The friend told you at a party."
+          ]
+        },
+        "child": {
+          "good": [
+            "They noticed on day two and asked what was wrong.",
+            "A cold weekend. Then a truce over a takeaway.",
+            "\"Are you angry at me or at work?\" Good question.",
+            "You broke first, which was the right way round."
+          ],
+          "bad": [
+            "They assumed it was their fault. It was not their fault.",
+            "They matched you. Kids are much better at this than adults.",
+            "It went in the ledger under a heading you'd rather not read.",
+            "Two weeks. They stopped coming downstairs."
+          ]
+        },
+        "friend": {
+          "good": [
+            "You went quiet. They noticed, and rang.",
+            "\"You've gone weird on me. Out with it.\"",
+            "A fortnight of nothing, then a normal Tuesday.",
+            "They left one voice note and waited. It worked."
+          ],
+          "bad": [
+            "Silence is the default with old friends. Months went by.",
+            "\"I assumed you were busy.\" You let them assume it.",
+            "They stopped inviting you to things. Not pointedly. Just stopped.",
+            "The friendship went into the drawer where friendships go."
+          ]
+        },
+        "employee": {
+          "good": [
+            "You stopped stopping at their desk. They noticed by Wednesday.",
+            "Their tickets got reassigned without a conversation.",
+            "\"Have I done something?\" Yes. You didn't say what.",
+            "They started being early. Anxiety is a productivity tool, briefly."
+          ],
+          "bad": [
+            "Managing by silence. The team's word for it, not yours.",
+            "\"If I'm out, tell me I'm out.\"",
+            "They took the recruiter's call this time.",
+            "Two other people started polishing their CVs on principle."
+          ]
+        }
+      }
+    },
+    {
+      "id": "throwUnderBus",
+      "title": "Throw them under the bus",
+      "icon": "car.fill",
+      "group": "mean",
+      "targets": ["employee", "contact"],
+      "good": -10,
+      "bad": -20,
+      "baseChance": 0.55,
+      "cooldownDays": 14,
+      "confirms": true,
+      "note": "Somebody has to carry it into the room. It doesn't have to be you.",
+      "lines": {
+        "employee": {
+          "good": [
+            "The board bought it. Your name stayed clean. Theirs didn't.",
+            "\"That's not what happened and you know it.\" Said quietly, after.",
+            "It worked. They watched it work from the other side of the table.",
+            "Nobody corrected you. Several people could have."
+          ],
+          "bad": [
+            "Someone had the thread. The thread said otherwise.",
+            "\"I've got the email, boss.\" They had the email.",
+            "The room believed them, not you. Slowly, then completely.",
+            "They resigned in the meeting. Then they told the meeting why."
+          ]
+        },
+        "contact": {
+          "good": [
+            "The blame landed elsewhere. They noticed where.",
+            "\"Interesting version of events.\" No comment beyond that.",
+            "It held. It held at a price you'll pay later.",
+            "They stopped answering, which is cheaper than a lawsuit."
+          ],
+          "bad": [
+            "They were in the room. You did not know they were in the room.",
+            "It reached their fund's partners before it reached yours.",
+            "\"You used my name to cover a mess I warned you about.\"",
+            "Two intros evaporated by Friday."
+          ]
+        }
+      }
+    },
+    {
+      "id": "threaten",
+      "title": "Threaten them",
+      "icon": "hand.raised.slash.fill",
+      "group": "mean",
+      "targets": ["employee", "contact", "rival"],
+      "good": -11,
+      "bad": -21,
+      "overrides": { "rival": { "good": 15, "bad": 7 } },
+      "baseChance": 0.48,
+      "cooldownDays": 14,
+      "confirms": true,
+      "note": "Legal calls this 'a conversation about consequences'.",
+      "lines": {
+        "employee": {
+          "good": [
+            "They stayed. They stayed the way people stay in a hostage video.",
+            "\"Fine. I'll do it.\" And they did it, and hated it.",
+            "The notice period got mentioned. Loudly. It worked.",
+            "They folded quickly, which told you something about their year."
+          ],
+          "bad": [
+            "\"Put that in writing.\" You did not put it in writing.",
+            "They recorded it. Phones are very good now.",
+            "They quit on the spot and told the group chat why.",
+            "The word 'constructive dismissal' entered your life."
+          ]
+        },
+        "contact": {
+          "good": [
+            "They backed off. Quietly, and permanently.",
+            "\"Alright. No need for that.\" There had been need for that.",
+            "It stopped the thing you wanted stopped.",
+            "They stopped copying you into anything, which was the point."
+          ],
+          "bad": [
+            "They forwarded it to four people with 'FYI'.",
+            "\"You've just made this much more interesting for me.\"",
+            "Their lawyer replied. Their lawyer is a real lawyer.",
+            "It became a story about you at three different dinners."
+          ]
+        },
+        "rival": {
+          "good": [
+            "They took it seriously enough to change a launch date.",
+            "Their comms team asked for a call. That's a win, of sorts.",
+            "You are now genuinely a problem they think about on Sundays.",
+            "\"Understood.\" Cold, brief, and rattled."
+          ],
+          "bad": [
+            "They published it. In full. With a headline.",
+            "It got them a funding round's worth of sympathy.",
+            "Their lawyer is better than yours and everybody now knows.",
+            "You handed them the villain slot and took it yourself."
+          ]
+        }
+      }
+    },
+    {
+      "id": "askForMoney",
+      "title": "Ask them for money",
+      "icon": "hand.raised.fill",
+      "group": "money",
+      "targets": ["child", "friend", "contact"],
+      "good": -2,
+      "bad": -10,
+      "baseChance": 0.5,
+      "wallet": -2000,
+      "cooldownDays": 30,
+      "minBar": 55,
+      "note": "The money only arrives if they say yes. The asking costs either way.",
+      "lines": {
+        "child": {
+          "good": [
+            "\"How much do you need?\" Asked without a flicker. Terrifying.",
+            "They transferred it and made one joke about interest.",
+            "\"You paid for eighteen years of me. Take it.\"",
+            "\"Don't tell mum.\" Deal."
+          ],
+          "bad": [
+            "\"You're asking me?\" They will remember that you asked.",
+            "They said yes and it changed something between you.",
+            "\"I haven't got it. I'm sorry. I really haven't got it.\"",
+            "It went in the ledger. Right at the top of the ledger."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"Sent. Pay me back when you can, or don't.\"",
+            "\"Course. Don't make it weird and don't make it a habit.\"",
+            "No questions. That's what twenty years buys.",
+            "\"On one condition: you take a Saturday off.\""
+          ],
+          "bad": [
+            "\"I can't, mate. I want to, and I can't.\"",
+            "They said yes and asked for it in writing. Both hurt.",
+            "\"Is the company alright? Be honest with me.\" You weren't.",
+            "The conversation got very formal very quickly."
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Personal money? Unusual. Fine. Small, and it's a favour.\"",
+            "They wired it and said nothing about it again.",
+            "\"I've been where you are. Don't make me regret it.\"",
+            "\"This isn't an investment. Don't dress it up as one.\""
+          ],
+          "bad": [
+            "\"That's not really what I do. Talk to the fund properly.\"",
+            "They said no in the nicest available words.",
+            "\"You've just told me your balance sheet without meaning to.\"",
+            "Your name got a small asterisk on somebody's list."
+          ]
+        }
+      }
+    },
+    {
+      "id": "lendMoney",
+      "title": "Lend them money",
+      "icon": "banknote.fill",
+      "group": "money",
+      "targets": ["child", "friend", "employee", "contact"],
+      "good": 10,
+      "bad": -5,
+      "baseChance": 0.66,
+      "wallet": 2000,
+      "cooldownDays": 21,
+      "note": "Out of your wallet. You may see it again.",
+      "lines": {
+        "child": {
+          "good": [
+            "\"I'll pay it back.\" They wrote it down themselves.",
+            "It got them out of something they hadn't told you about.",
+            "\"Thanks. Properly, thanks.\"",
+            "They paid back half within a month. Unprompted."
+          ],
+          "bad": [
+            "It's the fourth time and everyone knows it's the fourth time.",
+            "\"So it's fine when it's money.\" Ouch.",
+            "You attached a lecture. The lecture was the expensive part.",
+            "They took it and stopped mentioning the thing it was for."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"You've saved me. I'm not being dramatic. You've saved me.\"",
+            "They insisted on a date and hit the date.",
+            "\"Right. Now nobody mentions this ever again.\"",
+            "They named it a loan out loud so it stayed a loan."
+          ],
+          "bad": [
+            "Nobody set terms. Nobody ever sets terms.",
+            "\"I didn't ask for this.\" They hadn't.",
+            "It sat between you at every dinner after that.",
+            "They went quiet for two months out of embarrassment."
+          ]
+        },
+        "employee": {
+          "good": [
+            "A quiet advance, no paperwork. They never mentioned it again.",
+            "\"I won't forget this.\" They didn't.",
+            "It solved the thing that had been eating their sprints.",
+            "\"That stays between us, yeah?\" It did."
+          ],
+          "bad": [
+            "Somebody found out. Now two other people have a question.",
+            "\"Is this a loan or a leash?\" Reasonable question.",
+            "It made the salary conversation impossible for a year.",
+            "Payroll noticed. Payroll is one spreadsheet and one person."
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Bridge accepted. You've bought yourself a friend.\"",
+            "They paid it back with a warm intro attached.",
+            "\"Not many people would have. I'll remember.\"",
+            "It cleared their problem and opened their book."
+          ],
+          "bad": [
+            "\"That's very kind and slightly odd.\"",
+            "They took it and the relationship became a ledger.",
+            "It looked like buying access. It was buying access.",
+            "Their compliance officer wrote a paragraph about it."
+          ]
+        }
+      }
+    },
+    {
+      "id": "askForAFavour",
+      "title": "Ask them for a favour",
+      "icon": "questionmark.circle.fill",
+      "group": "money",
+      "targets": ["friend", "employee", "contact"],
+      "good": -1,
+      "bad": -8,
+      "baseChance": 0.64,
+      "cooldownDays": 14,
+      "minBar": 40,
+      "note": "Favours are a currency and this spends some.",
+      "lines": {
+        "friend": {
+          "good": [
+            "\"Done. Don't even think about it.\"",
+            "They made a call you couldn't have made. It worked.",
+            "\"You never ask. So obviously, yes.\"",
+            "Sorted by Thursday, with a photo as proof."
+          ],
+          "bad": [
+            "\"That's the third one this year, you know.\"",
+            "They did it, and it clearly cost them something.",
+            "\"I'd rather you asked me to the pub sometimes instead.\"",
+            "\"Can't do that one, sorry.\" Said carefully."
+          ]
+        },
+        "employee": {
+          "good": [
+            "\"Yeah, I'll sort it.\" And they sorted it, off the books.",
+            "They stayed late without being asked to stay late.",
+            "\"You could have just put it in the sprint, but fine.\"",
+            "Done, quietly, before anybody noticed it needed doing."
+          ],
+          "bad": [
+            "\"Is this a favour or is this my job now?\"",
+            "It ate their evening. They had plans. They had told you.",
+            "They did it and logged the hours somewhere you'd see.",
+            "\"I'm going to say no this time.\" Good for them."
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"Sure. You're due one.\" You were not due one.",
+            "The intro came through the same afternoon.",
+            "\"Happy to. Remember this next time I ask.\"",
+            "One email from them opened a door two months of yours hadn't."
+          ],
+          "bad": [
+            "\"I don't really know them well enough to do that.\"",
+            "\"That's a big ask from someone I've met twice.\"",
+            "They forwarded it and did not vouch for you.",
+            "\"Let's build the relationship a bit first.\" Meaning no."
+          ]
+        }
+      }
+    },
+    {
+      "id": "breakUp",
+      "title": "End it",
+      "icon": "heart.slash.fill",
+      "group": "serious",
+      "targets": ["partner"],
+      "good": -100,
+      "bad": -100,
+      "baseChance": 0.5,
+      "cooldownDays": 0,
+      "minStage": "dating",
+      "confirms": true,
+      "note": "The home stays. The kids stay. Nothing else does.",
+      "lines": {
+        "partner": {
+          "good": [
+            "It was calm, which was the worst available version.",
+            "\"I've been waiting for you to say it for about a year.\"",
+            "They packed on a Sunday. You helped carry things to the car."
+          ],
+          "bad": [
+            "\"You're doing this on a Tuesday. Over the company.\"",
+            "They asked one question and you didn't have an answer.",
+            "The kids heard the whole thing through the floor."
+          ]
+        }
+      }
+    },
+    {
+      "id": "affair",
+      "title": "Start something with them",
+      "icon": "flame.circle.fill",
+      "group": "serious",
+      "targets": ["contact"],
+      "good": 8,
+      "bad": 3,
+      "baseChance": 0.6,
+      "cooldownDays": 0,
+      "minBar": 70,
+      "confirms": true,
+      "note": "A fact, and a secret with a shelf life.",
+      "lines": {
+        "contact": {
+          "good": [
+            "Nobody at either company knows. For now, nobody at either company knows.",
+            "Two phones. One of them is new. That's how these start.",
+            "\"We're being very stupid.\" Agreed, and not stopping."
+          ],
+          "bad": [
+            "A waiter recognised you. Small city, small industry.",
+            "You were photographed at a launch you'd both said you'd skip.",
+            "Somebody's assistant put two calendars side by side."
+          ]
+        }
+      }
+    },
+    {
+      "id": "disown",
+      "title": "Disown them",
+      "icon": "person.fill.xmark",
+      "group": "serious",
+      "targets": ["child"],
+      "good": -100,
+      "bad": -100,
+      "baseChance": 0.5,
+      "cooldownDays": 0,
+      "minChildStage": "grown",
+      "confirms": true,
+      "note": "They stay your kid. Nothing else about it survives.",
+      "lines": {
+        "child": {
+          "good": [
+            "They took it better than you did, which was the last insult.",
+            "\"Right,\" they said. \"Right.\" And that was the conversation.",
+            "They asked you to say it once more so they'd believe it."
+          ],
+          "bad": [
+            "They laughed, because they thought you were joking.",
+            "Your other kids found out within the hour.",
+            "They left the family group chat. The name stayed in it."
+          ]
+        }
+      }
+    },
+    {
+      "id": "fireWithCause",
+      "title": "Fire them, with cause",
+      "icon": "door.left.hand.open",
+      "group": "serious",
+      "targets": ["employee"],
+      "good": -100,
+      "bad": -100,
+      "baseChance": 0.5,
+      "cooldownDays": 0,
+      "confirms": true,
+      "note": "Named, on the record, and they do not come back through the book.",
+      "lines": {
+        "employee": {
+          "good": [
+            "Box, badge, lift. Twenty minutes, and legal says it's clean.",
+            "You said the reason out loud. Nobody argued with the reason.",
+            "The floor was quiet and slightly relieved. That happens."
+          ],
+          "bad": [
+            "They said their version on the way out and it sounded better.",
+            "Two people followed them out within the month.",
+            "Your reason will be in somebody's reference call for years."
+          ]
+        }
+      }
+    },
+    {
+      "id": "taunt",
+      "title": "Taunt them in public",
+      "icon": "quote.bubble.fill",
+      "group": "mean",
+      "targets": ["rival"],
+      "good": 9,
+      "bad": 4,
+      "baseChance": 0.7,
+      "cooldownDays": 7,
+      "note": "Grudge up either way. The roll decides who looks better.",
+      "lines": {
+        "rival": {
+          "good": [
+            "Your line got picked up. Theirs did not.",
+            "The quote made two newsletters and one of their standups.",
+            "\"Competition is healthy,\" they said, visibly unhealthy.",
+            "Your team put it on a mug. An actual mug."
+          ],
+          "bad": [
+            "It read as obsessed, because it was slightly obsessed.",
+            "They ignored it and looked enormous doing so.",
+            "The replies were about you, and not kindly.",
+            "One of your own investors asked you to stop."
+          ]
+        }
+      }
+    },
+    {
+      "id": "sabotage",
+      "title": "Sabotage their launch",
+      "icon": "wrench.and.screwdriver.fill",
+      "group": "mean",
+      "targets": ["rival"],
+      "good": 17,
+      "bad": 7,
+      "baseChance": 0.55,
+      "cooldownDays": 21,
+      "confirms": true,
+      "note": "Deniable. Mostly deniable.",
+      "lines": {
+        "rival": {
+          "good": [
+            "Their launch day went sideways and nobody knows why.",
+            "The reviewer got the wrong build. Somehow. Terrible luck.",
+            "Their announcement landed in the middle of somebody else's news.",
+            "Two of their integrations broke in the same hour. Extraordinary."
+          ],
+          "bad": [
+            "It was traced to somebody who has your company on their CV.",
+            "It made their week's numbers *better*. Sympathy sells.",
+            "Somebody kept the messages. Somebody always keeps the messages.",
+            "Your own team worked it out. That's a morale problem now."
+          ]
+        }
+      }
+    },
+    {
+      "id": "befriend",
+      "title": "Offer to bury it",
+      "icon": "hands.and.sparkles.fill",
+      "group": "serious",
+      "targets": ["rival"],
+      "good": -20,
+      "bad": -5,
+      "baseChance": 0.62,
+      "cooldownDays": 21,
+      "note": "The grudge comes down. It doesn't come down to nothing.",
+      "lines": {
+        "rival": {
+          "good": [
+            "A drink, no press, no lawyers. It genuinely helped.",
+            "\"We're both going to lose to the same giant anyway.\" True.",
+            "You agreed on one thing publicly and it cost you both nothing.",
+            "\"Truce.\" Said properly, with a handshake and a bad joke."
+          ],
+          "bad": [
+            "They took the meeting and briefed against you afterwards.",
+            "\"Very generous of the smaller company.\" That word again.",
+            "It was read as weakness by everybody, including your board.",
+            "They agreed and changed nothing at all."
+          ]
+        }
+      }
+    }
+  ]
+}

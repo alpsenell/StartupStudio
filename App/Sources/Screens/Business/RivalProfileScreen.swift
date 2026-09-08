@@ -49,6 +49,12 @@ struct RivalProfileContent: View {
                 RivalStrengthCard(engine: engine, rival: rival)
                 RivalShelfCard(engine: engine, rival: rival)
                 RivalHistoryCard(engine: engine, rival: rival)
+                // MARK: Iteration 11 — N2 (people menus)
+                // The nemesis strip: the grudge, and taunt / sabotage /
+                // bury it. N1's region for the suit and the planted story
+                // goes under its own marker, not this one.
+                PeopleNemesisCard(engine: engine, rivalID: rivalID)
+                // MARK: end of Iteration 11 — N2
                 RivalDealCard(engine: engine, rival: rival)
             }
         } else {

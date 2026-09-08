@@ -335,6 +335,31 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: N2 (people menus)
 
+    /// The people menu's one verb: do `interaction` to `target`. The id is
+    /// a row in `Interactions.json`; the outcome is a roll on `socialRNG`
+    /// against the founder's conversation attribute and the bar that
+    /// person sits on. Refused actions do nothing at all —
+    /// `GameState.interactionBlocker` says why, on the button.
+    ///
+    /// Every existing people action (`praise`, `giveGift`, `hangOutWith`,
+    /// `spendTimeWithPartner`, `seeFriend`, `talkToContact`,
+    /// `advanceRelationship`, `fire` and the rest) stays exactly as it was
+    /// and is listed in the same menu, which is why nothing a pacing bot
+    /// does changes.
+    case interact(target: InteractionTarget, interaction: String)
+
+    /// The founder ends the relationship deliberately, rather than letting
+    /// the relationships meter do it over a fortnight. Affection collapses,
+    /// the home stays, the children stay. Wave two's family drama takes
+    /// this and `InteractionState.affairContactID` as its two seams.
+    case breakUp
+
+    /// `fire`, plus a cause on the record: the alumnus entry is closed as
+    /// lost whatever the bond was, so the boomerang never brings this one
+    /// back through the address book. N5's office secrets route their
+    /// harshest response here.
+    case fireWithCause(employeeID: UUID)
+
     // MARK: N3 (assets, vices and the doctor)
 
     // MARK: N4 (fame and the feed)

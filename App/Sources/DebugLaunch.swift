@@ -260,6 +260,11 @@ extension Route {
         // MARK: Iteration 11 — route names
         // MARK: N1 (crime and the courtroom)
         // MARK: N2 (people menus)
+        // `-autoRoute people` lands on the partner's menu (the fixture
+        // `l3-family-day900` has one); `-autoRoute peopleTeam` opens the
+        // same menu on the first person on the roster.
+        case "people", "peoplemenu": .peopleMenu(.partner)
+        case "peopleteam": .peopleTeamMenu
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
         // MARK: N5 (office secrets)
@@ -856,6 +861,57 @@ extension DebugLaunch {
     // MARK: N1 (crime and the courtroom)
 
     // MARK: N2 (people menus)
+
+    /// `-autoInteract <id>`: perform one interaction, once, on whichever
+    /// person the people menu opened on, so a headless pass can photograph
+    /// the outcome paper — a simulator cannot tap a row.
+    ///
+    /// It sends the ordinary `.interact` action through the ordinary
+    /// reducer: no back door into state, and a refused one does exactly
+    /// what it does for a player, which is nothing. DEBUG only.
+    static var autoInteraction: String? {
+        #if DEBUG
+        return value(after: "-autoInteract")
+        #else
+        return nil
+        #endif
+    }
+
+    /// `-autoPeopleKind <partner|child|friend|employee|contact>`: which
+    /// person `-autoRoute people` should open on. Defaults to the partner.
+    static var autoPeopleKind: InteractionTargetKind? {
+        #if DEBUG
+        return value(after: "-autoPeopleKind").flatMap(InteractionTargetKind.init(rawValue:))
+        #else
+        return nil
+        #endif
+    }
+
+    /// `-autoPeopleGroup <nice|mean|money|serious>`: draw only that shelf
+    /// of the menu. Display only — nothing is disabled, nothing is sent —
+    /// and it exists because a screenshot pass cannot scroll to the mean
+    /// half of a menu with twenty rows in it.
+    static var autoPeopleGroup: String? {
+        #if DEBUG
+        return value(after: "-autoPeopleGroup")?.lowercased()
+        #else
+        return nil
+        #endif
+    }
+
+    #if DEBUG
+    @MainActor private static var autoInteractionTaken = false
+    #endif
+
+    /// Called by `PeopleMenuContent` when it appears.
+    @MainActor
+    static func takeAutoInteraction(engine: GameEngine, target: InteractionTarget) {
+        #if DEBUG
+        guard !autoInteractionTaken, let id = autoInteraction else { return }
+        autoInteractionTaken = true
+        _ = engine.send(.interact(target: target, interaction: id))
+        #endif
+    }
 
     // MARK: N3 (assets, vices and the doctor)
 
