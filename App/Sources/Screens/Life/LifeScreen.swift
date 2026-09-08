@@ -53,6 +53,12 @@ struct LifeScreen: View {
         case assets
         // MARK: N4 (fame and the feed)
         case feed
+        // MARK: Iteration 11, wave two
+        // MARK: W1 (dirty money)
+        // MARK: W2 (family drama)
+        // MARK: W3 (espionage)
+        // MARK: W4 (inside)
+        // MARK: end of Iteration 11, wave two
         // MARK: end of Iteration 11
     }
 
@@ -126,6 +132,10 @@ struct LifeScreen: View {
                     AssetsCard(engine: engine, onOpen: { path = [.assets] })
                     // MARK: N4 (fame and the feed)
                     FameCard(engine: engine) { path = [.feed] }
+                    // MARK: Iteration 11, wave two — new cards
+                    // MARK: W2 (family drama)
+                    // MARK: W4 (inside)
+                    // MARK: end of Iteration 11, wave two
                     // MARK: end of Iteration 11
                 }
                 .padding(Theme.Spacing.lg)
@@ -179,6 +189,12 @@ struct LifeScreen: View {
                 // MARK: N4 (fame and the feed)
                 case .feed:
                     FeedScreen(engine: engine)
+                // MARK: Iteration 11, wave two
+                // MARK: W1 (dirty money)
+                // MARK: W2 (family drama)
+                // MARK: W3 (espionage)
+                // MARK: W4 (inside)
+                // MARK: end of Iteration 11, wave two
                 // MARK: end of Iteration 11
                 }
             }
@@ -284,6 +300,12 @@ struct LifeScreen: View {
             path = [.feed]
             return
         }
+        // MARK: Iteration 11, wave two — launch routes
+        // MARK: W1 (dirty money)
+        // MARK: W2 (family drama)
+        // MARK: W3 (espionage)
+        // MARK: W4 (inside)
+        // MARK: end of Iteration 11, wave two
         // MARK: end of Iteration 11
         // A headless screenshot pass cannot tap: `-autoRoute agenda` lands
         // on the fortnight, once.

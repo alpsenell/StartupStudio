@@ -456,6 +456,18 @@ public enum GameAction: Codable, Equatable, Sendable {
     case seedOfficeSecret(kind: String, stage: Int)
 
     // MARK: end of Iteration 11
+
+    // MARK: Iteration 11, wave two
+
+    // MARK: W1 (dirty money)
+
+    // MARK: W2 (family drama)
+
+    // MARK: W3 (espionage)
+
+    // MARK: W4 (inside)
+
+    // MARK: end of Iteration 11, wave two
 }
 
 /// The skill a training course targets.

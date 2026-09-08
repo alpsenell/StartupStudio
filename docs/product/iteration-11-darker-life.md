@@ -277,21 +277,195 @@ menu of responses, and getting it wrong is a lawsuit or a walkout.
   the printer, a closed meeting-room door), and staff moments as they
   already appear. `-autoSecret <kind>` on a fixture with a full team.
 
-## Wave two (cut from wave one's merge; briefs to be expanded then)
+## Wave two — cut from wave one's merge (`scaffold-11b`)
 
-- **W1 — Dirty money.** Shady backers when the bank says no: fast cash,
-  strings that tighten each quarter, laundering in the ledger, threats
-  when you refuse, and a way out through N1's courtroom.
-- **W2 — Family drama.** Affairs discovered (N2's flag), divorce that
-  splits the assets (N3) and the home, custody in N1's courtroom,
-  in-laws, a sibling who wants in, parents' care, the will.
-- **W3 — Espionage.** A PI on a rival founder, a mole in their studio,
-  poaching with dirt, buying a roadmap, hacking a storefront; rivals run
-  the same against you; counterintelligence menus. Uses N1's notoriety
-  and N5's thread machinery.
-- **W4 — Inside.** Prison as a place: days, cellmates who become
-  contacts, a gang to join or refuse, a riot, an escape, parole. Uses
-  N1's sentence and the caretaker.
+Wave one is merged and green. These four lanes are cut from that merge
+and build on the seams the wave-one reports left (each lane's report
+under `iteration-11-lanes/n<n>.md` has a "Seams for wave two" section:
+read the ones named in your brief before touching code). The same twelve
+rules apply, and rule 12 (thirty or more events, ids prefixed `money_`,
+`family_`, `spy_`, `inside_`) too.
+
+### The scaffold (wave two)
+
+- Engine files, one per lane: `DirtyMoney.swift` (W1), `FamilyDrama.swift`
+  (W2), `Espionage.swift` (W3), `Prison.swift` (W4).
+- `GameState` slots `dirtyMoney`, `familyDrama`, `espionage`, `prison`,
+  decode-if-present and encode-when-non-default. Do not add fields to
+  `GameState`.
+- Marker regions `// MARK: W<n> (…)` in `GameAction`, `Reducer` (systems
+  and handlers), `GameEvent`, `AppRouter` (`Route` and its tab switch),
+  `DebugLaunch` (flags and route names), `LifeScreen` (cards,
+  destinations, destination switch, `consumeRoute`), `BusinessScreen`
+  (`consumeRoute`: W1, W3), `TeamScreen` (`consumeRoute`: W3), and
+  `EventCopy.swift` (a region per lane, so nobody prints "Something
+  happened").
+- **Balance keys** go after `"assets"` in `Balance.json`.
+- **A test that passes the balance by value at many call sites blows the
+  stack in a debug build** (wave one found this). Do not write one; you
+  are not writing tests anyway.
+
+### File ownership — wave two
+
+| Lane | Owns |
+|---|---|
+| W1 | `DirtyMoney.swift`, `Systems/DirtyMoneySystem.swift`, `Balance/BalanceConfig+DirtyMoney.swift`, `App/Sources/Screens/Business/DirtyMoney/**`, marked regions in `InvestorsView.swift` and `FinancesView.swift` (the offer appears where money is), `Crime.swift` marked region (a seventh `CrimeOffence`: laundering), `Systems/CrimeSystem.swift` marked region, `Systems/FinanceSystem.swift` marked region (the invoice to nowhere), `Events.json` append (`money_`), `LifeEvents.json` append (`money_`) |
+| W2 | `FamilyDrama.swift`, `Systems/FamilyDramaSystem.swift`, `Balance/BalanceConfig+FamilyDrama.swift`, `App/Sources/Screens/Life/Family/**` (the divorce sheet, the custody hearing's opener, the will, the in-laws), marked regions in `PartnerCard.swift`, `FamilyCard.swift`, `Interactions.swift` (affair discovery), `Assets.swift` (the split), `Crime.swift`/`Systems/CrimeSystem.swift` (a custody hearing through `LegalCase.isFounderSuing` with its own opener and verdict copy), `Systems/FamilyCalendar.swift` (parents' birthdays, the anniversary you now dread), `Legacy.swift` marked region (the will decides the successor), `LifeEvents.json` append (`family_`) |
+| W3 | `Espionage.swift`, `Systems/EspionageSystem.swift`, `Balance/BalanceConfig+Espionage.swift`, `App/Sources/Screens/Business/Espionage/**`, marked regions in `RivalProfileScreen.swift` (the spy menu; N1 and N2 have regions there, add yours under your own marker), `OfficeSecrets.swift`/`Systems/OfficeSecretsSystem.swift` (a rival running a thread against you is a new `SecretKind`; counterintelligence is new `SecretResponse`s), `Systems/RivalSystem.swift` marked region, `Crime.swift`/`Systems/CrimeSystem.swift` marked region (`raiseCase(against:)` on discovery), `Events.json` append (`spy_`), `StaffEvents.json` append (`spy_`) |
+| W4 | `Prison.swift`, `Systems/PrisonSystem.swift`, `Balance/BalanceConfig+Prison.swift`, `App/Sources/Screens/Life/Inside/**`, marked regions in `Systems/SabbaticalSystem.swift` (the "inside" report variant), `Systems/CrimeSystem.swift` (`servingTime` hands the days to the prison), `Networking.swift` (a cellmate is a `Contact` with a new archetype in a marked region), `AppRootView.swift` marked region (the prison as a full-screen mode while inside, the war room's presentation), `LifeEvents.json` append (`inside_`) |
+
+Shared, marker-only: the scaffold files above. `Crime.swift` and
+`CrimeSystem.swift` have three lanes' regions (W1, W2, W3, W4 each under
+their own marker); `RivalProfileScreen` has N1, N2 and W3.
+
+### W1 — Dirty money
+
+**What.** When the bank says no and the term sheets dry up, other money
+appears: an oligarch's family office, a fund that is a front, a loan
+shark who found you at demo day. Fast cash, no board, no diligence, and
+strings that tighten every quarter. Refuse and things happen to your
+office, your car and your friends. Take it and laundering becomes a line
+in the ledger the auditor can find.
+
+**Build.**
+
+- Three backers as content in `BalanceConfig+DirtyMoney.swift`: the family
+  office (large cheque, a "consultant" on payroll from month two, a
+  product that must ship into a market they name by month six), the
+  front (medium cheque, an invoice to a company that does not exist every
+  quarter, then "hire my nephew"), the shark (small cheque, weekly vig,
+  a visit when a payment is late). An offer appears only when the company
+  is in the red or a term sheet was declined this quarter, and only after
+  the player has opened the Business tab's finances (an identity gate
+  like `noticeAssetsOpened`).
+- `DirtyMoneyState`: the backer, the cheque, the strings as a list of
+  `Demand`s with due days, the compliance record, and `heat`. Each
+  demand is a story sheet with comply / stall / refuse; comply costs what
+  it says (payroll, cash, a launch you did not choose), stall raises
+  heat, refuse raises heat a lot. Heat pays out as events (`money_`): the
+  office window, the car (reads N3's `owned`), a friend's bond, a
+  rival's sudden strength. Every payment through them is laundering: a
+  seventh `CrimeOffence` in N1's marked region, with its own discovery
+  odds, so the auditor can find it and the courtroom can hear it.
+- The way out: pay them off (the cheque times a multiple), turn witness
+  (`CrimeSystem.confess` on the laundering, a sentence that W4 makes a
+  place, and the backer's heat becomes a permanent event source), or
+  sell the company to them (the buyout machinery with a `soldUp` ending
+  and a line in the biography).
+- App: `DirtyMoneyCard` on the Business tab's finances section (the
+  offer, the strings with their clocks, heat as a thermometer), the
+  demand sheets, `-autoRoute dirtymoney` on a fixture in the red.
+
+### W2 — Family drama
+
+**What.** Marriage has a downside. Affairs get discovered (N2's flag).
+Divorce splits the assets (N3's) and the home, and custody of the kids is
+a courtroom case (N1's room) with a judge who has read your calendar. The
+in-laws have opinions and a spare room. A sibling wants a job, then a
+stake, then a loan. Your parents get old and someone pays for the care.
+A will decides who gets the company if you die, and the family argues
+about it at the funeral.
+
+**Build.**
+
+- Discovery: `FamilyDramaSystem` reads `state.interactions.affairContactID`
+  and rolls discovery weekly on `socialRNG` (higher with a standing
+  vice intervention, N3's `intervened`, and with fame, N4's), sets
+  `affairDiscoveredDay`, posts to the partner's thread, and opens the
+  confrontation sheet: confess, deny, end it, leave.
+- Divorce: `InteractionSystem.breakUp` first, then the settlement: the
+  home stays with whoever the kids stay with; assets split by
+  `assetResaleValue` with a wallet transfer; the pet by name; the
+  company's equity untouched unless married past a threshold, in which
+  case a slice goes (a co-founder-style holder on the cap table). The
+  partner's lawyer tier versus yours.
+- Custody: a `LegalCase` with `isFounderSuing` and a family opener; the
+  evidence is the children's memory ledgers (missed birthdays count
+  against you, summers at the studio for you). Verdict: full, shared,
+  weekends, none. The children's bond moves with the verdict.
+- In-laws (a couple with faces, seeded from the partner's), a sibling
+  (one, from onboarding's family), parents (two, ageing on the calendar,
+  a care bill that lands on the wallet from year three, a death that
+  lands on the phone). The will: a sheet naming the heir (partner, a
+  child, the longest-serving employee, the sibling), which the dynasty's
+  successor list reads (`Legacy.swift` region). The funeral: a stopped
+  day with the family in the room and one argument to settle.
+- App: `FamilyDramaCard` under Family, the confrontation sheet, the
+  divorce sheet (two columns, drag things between them), the will sheet,
+  `-autoRoute divorce` on the family fixture.
+
+### W3 — Espionage
+
+**What.** Do to rivals what the mole is doing to you. A PI on a rival
+founder. A mole in their studio. Poaching with dirt. Buying their
+roadmap. Hacking their storefront the week of their launch. Rivals run
+the same playbook against you, and a counterintelligence menu lets you
+sweep the office, audit the roster and feed a mole false plans.
+
+**Build.**
+
+- Five operations as actions in the W3 region, each with a wallet cost,
+  a success roll against the rival's strength (and their Legal, if you
+  give rivals one: a per-rival flag), a discovery roll with
+  `Crime.discoveryChance` and `evidenceWeight`, and a payoff: the PI
+  returns dirt (a `Contact`-style dossier that raises your pitch warmth
+  against them and your grudge leverage), the mole reports their next
+  launch a month early (a rival column line and a board card in M1's
+  feature board: "they are shipping X"), poaching with dirt succeeds
+  where the NDA poach fails, the bought roadmap lets you ship their
+  topic first (copy `leakRoadmap` reversed), the hack drops their launch
+  week's sales and raises notoriety most. Discovery raises a case
+  against you (`raiseCase`) and a feud (grudge to max).
+- Rivals against you: a `SecretKind` per operation on N5's machine (a
+  rival's mole, a rival's PI, a rival's hack), started by grudge and by
+  your standing in their topics; the counterintelligence menu is new
+  `SecretResponse`s (sweep the office, audit the roster, feed false
+  plans, which sends the rival into a topic that is about to crash).
+- App: `EspionageCard` on the rival's profile (operations with their odds
+  and costs, the dossier once you have one), a counterintelligence row on
+  N5's `SecretsCard`, `-autoRoute spy`.
+
+### W4 — Inside
+
+**What.** Prison as a place. When N1's courtroom hands down a sentence,
+the founder goes inside for its weeks: days with a morning, a yard and a
+night, cellmates who become contacts, a gang to join or refuse, a riot,
+an escape attempt, parole hearings, and the company running on the
+caretaker's autopilot outside while the phone brings you the news.
+
+**Build.**
+
+- `PrisonState`: the sentence, the day count, the cellmate (a `Contact`
+  with the new `inmate` archetype, drawn on `socialRNG`, who becomes an
+  address-book entry with a rapport when you leave), the gang standing,
+  infractions, and parole eligibility. `PrisonSystem.run` replaces
+  `CrimeSystem.servingTime`'s daily cost with a day inside: one choice a
+  day from a small menu (keep your head down, work in the library, the
+  yard, the phone call home, the deal) with meter effects, and events
+  (`inside_`: the riot, the shakedown, the visit, the letter from a kid,
+  the rival's founder in the next cell).
+- The gang: join for protection (bond with the cellmate, a favour owed
+  on release that lands as a `money_`-style demand if W1 exists, else a
+  contact who asks for a job), refuse for infractions. Escape: one
+  attempt, a roll, and failure doubles the sentence; success is a run
+  with `awayReason` "on the run" and a case that never closes. Parole:
+  a hearing at the halfway mark in the courtroom's grammar, graded on
+  infractions and the caretaker's report.
+- The caretaker's report on release becomes the "inside" variant in
+  `SabbaticalSystem`'s marked region (headed like a release, not a
+  holiday). The children's memory ledger records it; the partner's
+  affection slides faster; the phone is the only window.
+- App: `InsideScreen` as a full-screen mode while the sentence runs
+  (pixel cell, the day's menu, the calendar of days left, the phone),
+  the parole sheet, `-autoInside <weeks>` on any fixture.
+
+### Working method (wave two)
+
+Same as wave one: worktree per lane, branch `w<n>-<slug>` from
+`scaffold-11b`, simulators `ws-l1` … `ws-l4`, every suite plus
+`make apptest SIM=ws-l<n>`, report as `iteration-11-lanes/w<n>.md`. The
+PM merges W2 → W1 → W3 → W4, runs `make strings` once, and appends the
+record to `iteration-11-features.md`.
 
 ## Working method
 

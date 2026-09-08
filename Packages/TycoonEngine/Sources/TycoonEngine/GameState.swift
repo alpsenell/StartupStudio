@@ -541,6 +541,19 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case secretThreadEnded(kind: String, ending: String, day: Int)
 
     // MARK: end of Iteration 11
+
+    // MARK: Iteration 11, wave two — one region per lane; copy in `EventCopy`'s
+    // matching region, and every exhaustive switch learns a new case
+
+    // MARK: W1 (dirty money)
+
+    // MARK: W2 (family drama)
+
+    // MARK: W3 (espionage)
+
+    // MARK: W4 (inside)
+
+    // MARK: end of Iteration 11, wave two
 }
 
 extension GameEvent {
@@ -963,6 +976,17 @@ public struct GameState: Codable, Equatable, Sendable {
     public var fame: FameState = .empty
     /// N5 — the office's slow-burn threads.
     public var secrets: OfficeSecretsState = .empty
+
+    // MARK: Iteration 11, wave two — reserved slots
+
+    /// W1 — the backer and the heat.
+    public var dirtyMoney: DirtyMoneyState = .empty
+    /// W2 — the divorce and the will.
+    public var familyDrama: FamilyDramaState = .empty
+    /// W3 — operations against rivals.
+    public var espionage: EspionageState = .empty
+    /// W4 — the founder inside, `nil` otherwise.
+    public var prison: PrisonState? = nil
     /// What the staff remember about the founder's answers: the rules
     /// they became and who was told no (WS-D). Empty until somebody asks.
     public var staffMemory: StaffMemory = .initial
@@ -1264,6 +1288,8 @@ extension GameState {
         case pitch, incident, desk
         // Iteration 11
         case crime, interactions, assets, fame, secrets
+        // Iteration 11, wave two
+        case dirtyMoney, familyDrama, espionage, prison
     }
 
     public init(from decoder: any Decoder) throws {
@@ -1347,6 +1373,11 @@ extension GameState {
         assets = try container.decodeIfPresent(AssetsState.self, forKey: .assets) ?? .empty
         fame = try container.decodeIfPresent(FameState.self, forKey: .fame) ?? .empty
         secrets = try container.decodeIfPresent(OfficeSecretsState.self, forKey: .secrets) ?? .empty
+        // Iteration 11, wave two
+        dirtyMoney = try container.decodeIfPresent(DirtyMoneyState.self, forKey: .dirtyMoney) ?? .empty
+        familyDrama = try container.decodeIfPresent(FamilyDramaState.self, forKey: .familyDrama) ?? .empty
+        espionage = try container.decodeIfPresent(EspionageState.self, forKey: .espionage) ?? .empty
+        prison = try container.decodeIfPresent(PrisonState.self, forKey: .prison)
         lockedTopics = Dictionary(
             (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
                 .map { ($0.topicID, $0.unlockDay) },
@@ -1449,5 +1480,10 @@ extension GameState {
         if assets != .empty { try container.encode(assets, forKey: .assets) }
         if fame != .empty { try container.encode(fame, forKey: .fame) }
         if secrets != .empty { try container.encode(secrets, forKey: .secrets) }
+        // Iteration 11, wave two: a slot at its default is not written.
+        if dirtyMoney != .empty { try container.encode(dirtyMoney, forKey: .dirtyMoney) }
+        if familyDrama != .empty { try container.encode(familyDrama, forKey: .familyDrama) }
+        if espionage != .empty { try container.encode(espionage, forKey: .espionage) }
+        try container.encodeIfPresent(prison, forKey: .prison)
     }
 }

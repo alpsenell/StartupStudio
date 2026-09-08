@@ -880,6 +880,18 @@ struct EventCopy {
 
         // MARK: end of Iteration 11 — N3
 
+        // MARK: Iteration 11, wave two — one region per lane
+
+        // MARK: W1 (dirty money)
+
+        // MARK: W2 (family drama)
+
+        // MARK: W3 (espionage)
+
+        // MARK: W4 (inside)
+
+        // MARK: end of Iteration 11, wave two
+
         // Events added after this file land here instead of breaking the
         // build: `@unknown default` keeps the switch compiling (with a
         // warning naming the new case) when a workstream appends one.

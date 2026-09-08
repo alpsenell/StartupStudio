@@ -275,6 +275,12 @@ extension Route {
         // MARK: N5 (office secrets)
         case "secrets", "office": .secrets
         // MARK: end of Iteration 11
+        // MARK: Iteration 11, wave two — route names
+        // MARK: W1 (dirty money)
+        // MARK: W2 (family drama)
+        // MARK: W3 (espionage)
+        // MARK: W4 (inside)
+        // MARK: end of Iteration 11, wave two
         default: nil
         }
         #else
@@ -1073,6 +1079,18 @@ extension DebugLaunch {
     }
 
     // MARK: end of Iteration 11
+
+    // MARK: Iteration 11, wave two — reserved flags
+
+    // MARK: W1 (dirty money)
+
+    // MARK: W2 (family drama)
+
+    // MARK: W3 (espionage)
+
+    // MARK: W4 (inside)
+
+    // MARK: end of Iteration 11, wave two
 
     /// The word after `flag` on the command line, in debug builds.
     static func value(after flag: String) -> String? {

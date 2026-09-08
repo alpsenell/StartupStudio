@@ -176,6 +176,18 @@ enum Route: Hashable {
 
     // MARK: end of Iteration 11
 
+    // MARK: Iteration 11, wave two
+
+    // MARK: W1 (dirty money)
+
+    // MARK: W2 (family drama)
+
+    // MARK: W3 (espionage)
+
+    // MARK: W4 (inside)
+
+    // MARK: end of Iteration 11, wave two
+
     /// The tab this destination lives in.
     var tab: GameTab {
         switch self {
@@ -234,6 +246,13 @@ enum Route: Hashable {
         // MARK: N5 (office secrets)
         case .secrets: .team
         // MARK: end of Iteration 11
+
+        // MARK: Iteration 11, wave two
+        // MARK: W1 (dirty money)
+        // MARK: W2 (family drama)
+        // MARK: W3 (espionage)
+        // MARK: W4 (inside)
+        // MARK: end of Iteration 11, wave two
         }
     }
 }

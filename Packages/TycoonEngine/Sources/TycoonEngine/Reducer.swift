@@ -183,6 +183,18 @@ public enum Reducer {
         OfficeSecretsSystem.run,
 
         // MARK: end of Iteration 11
+
+        // MARK: Iteration 11, wave two — after everything, no `rng`/`worldRNG` draws
+
+        // MARK: W1 (dirty money)
+
+        // MARK: W2 (family drama)
+
+        // MARK: W3 (espionage)
+
+        // MARK: W4 (inside)
+
+        // MARK: end of Iteration 11, wave two
     ]
 
     /// Advances the state by one game day. No-op once the game is over.
@@ -711,6 +723,18 @@ public enum Reducer {
             #endif
 
         // MARK: end of Iteration 11
+
+        // MARK: Iteration 11, wave two — handlers
+
+        // MARK: W1 (dirty money)
+
+        // MARK: W2 (family drama)
+
+        // MARK: W3 (espionage)
+
+        // MARK: W4 (inside)
+
+        // MARK: end of Iteration 11, wave two
         }
 
         state.logEvents(events)
