@@ -56,6 +56,11 @@ struct RivalProfileContent: View {
                 PeopleNemesisCard(engine: engine, rivalID: rivalID)
                 // MARK: end of Iteration 11 — N2
                 RivalDealCard(engine: engine, rival: rival)
+                // MARK: Iteration 11 — N1 (crime and the courtroom)
+                // The two offences that are about a person rather than a
+                // number live where that person does.
+                CrimeRivalCard(engine: engine, rival: rival)
+                // MARK: end of Iteration 11 — N1
             }
         } else {
             ContentUnavailableView(
@@ -647,5 +652,97 @@ extension RivalProfileScreen {
             founderSeed: rival.appearanceSeed,
             timeOfDay: .dusk
         )
+    }
+}
+
+// MARK: - Iteration 11 — N1 (crime and the courtroom)
+
+/// What the founder can do to this studio that a court would have an
+/// opinion about: place a story with a friendly desk, or sue them.
+///
+/// Both read the same gates the engine reads (`crimeRefusal`,
+/// `CrimeSystem.sue`'s own conditions), so a button that will not work
+/// says why rather than doing nothing.
+struct CrimeRivalCard: View {
+    let engine: GameEngine
+    let rival: Rival
+
+    @State private var arming = false
+
+    private var pendingCase: LegalCase? { engine.state.crime.pendingCase }
+
+    var body: some View {
+        CardView("Off the record", systemImage: "eye.trianglebadge.exclamationmark.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                plantStory
+                Divider().opacity(0.4)
+                suit
+            }
+        }
+    }
+
+    // MARK: Plant a story
+
+    @ViewBuilder
+    private var plantStory: some View {
+        let refusal = engine.state.crimeRefusal(
+            for: .plantStory, rivalID: rival.id, balance: engine.balance
+        )
+        let config = engine.balance.crime
+        VStack(alignment: .leading, spacing: 4) {
+            Button(arming ? "Place it — tap again" : "Plant a story about \(rival.name)",
+                   systemImage: "newspaper.fill") {
+                guard refusal == nil else { return }
+                if arming {
+                    arming = false
+                    engine.send(.commitOffence(offence: .plantStory, rivalID: rival.id))
+                    Haptics.commit()
+                } else {
+                    arming = true
+                    Haptics.tap()
+                }
+            }
+            .buttonStyle(.pressable)
+            .font(.footnote.weight(.semibold))
+            .disabled(refusal != nil)
+            Text(refusal?.sentence
+                ?? "\(config.plantStoryFee.money) of your own money · their reputation −\(Int(config.plantStoryReputationHit)) · notoriety +\(Int(config.plantStoryNotoriety)). If it is traced back, they come back harder.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: Sue them
+
+    @ViewBuilder
+    private var suit: some View {
+        let fee = engine.balance.crime.suitFilingFee
+        let blocked = suitBlocker
+        VStack(alignment: .leading, spacing: 4) {
+            Button("Sue \(rival.name)", systemImage: "building.columns.fill") {
+                engine.send(.sueRival(rivalID: rival.id))
+                Haptics.commit()
+            }
+            .buttonStyle(.pressable)
+            .font(.footnote.weight(.semibold))
+            .disabled(blocked != nil)
+            Text(blocked
+                ?? "\(fee.money) filing fee from the company. Win and you take damages and the newest thing off their shelf; lose and you are out the fee and the afternoon.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// Rule 7 again: the reasons `CrimeSystem.sue` would return early.
+    private var suitBlocker: String? {
+        if pendingCase != nil {
+            return "You are already in front of a judge. One case at a time."
+        }
+        if engine.state.company.cash < engine.balance.crime.suitFilingFee {
+            return "The company cannot cover the filing fee."
+        }
+        return nil
     }
 }

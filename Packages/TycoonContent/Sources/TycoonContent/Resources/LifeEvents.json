@@ -4280,5 +4280,297 @@
     "impact": {
       "mood": -6
     }
+  },
+  {
+    "id": "crime_partner_reads_it",
+    "headline": "Your partner reads about it before you tell them.",
+    "weight": 3,
+    "impact": {
+      "mood": -10,
+      "relationships": -8
+    },
+    "category": "personal",
+    "body": "They do not shout. They put the phone face down on the table and wait.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "tell",
+        "label": "Tell them everything",
+        "detail": "Relationships +6 · mood −2",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": 6,
+            "mood": -2
+          }
+        ]
+      },
+      {
+        "id": "minimise",
+        "label": "Tell them it's nothing",
+        "detail": "Relationships −6",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -6
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 160
+  },
+  {
+    "id": "crime_sleepless",
+    "headline": "You are awake at four again, doing arithmetic you already did at two.",
+    "weight": 4,
+    "impact": {
+      "energy": -12,
+      "mood": -5
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 60
+  },
+  {
+    "id": "crime_parents_call",
+    "headline": "Your mother has seen something and would like it explained slowly.",
+    "weight": 3,
+    "impact": {
+      "mood": -8
+    },
+    "category": "family",
+    "body": "She is not angry. That is much worse and she knows it.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 200
+  },
+  {
+    "id": "crime_old_friend",
+    "headline": "An old friend texts: 'tell me it isn't the thing I think it is'.",
+    "weight": 3,
+    "impact": {
+      "mood": -6,
+      "relationships": -3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 180
+  },
+  {
+    "id": "crime_lawyer_bill",
+    "headline": "The first legal bill arrives, itemised by the six-minute unit.",
+    "weight": 3,
+    "impact": {
+      "wallet": -1800,
+      "mood": -4
+    },
+    "category": "money",
+    "body": "Somebody billed you for reading the letter that said how much they bill.",
+    "requires": {
+      "flagsAll": [
+        "crime_case_open"
+      ]
+    },
+    "cooldownDays": 90
+  },
+  {
+    "id": "crime_neighbour",
+    "headline": "A neighbour asks, over the bins, whether you are 'the one from the news'.",
+    "weight": 2,
+    "impact": {
+      "mood": -5
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 220
+  },
+  {
+    "id": "crime_school_gate",
+    "headline": "Somebody at the school gate stops talking when you arrive.",
+    "weight": 2,
+    "impact": {
+      "mood": -7,
+      "relationships": -2
+    },
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 240
+  },
+  {
+    "id": "crime_gym_avoid",
+    "headline": "You have started going to the gym at half past five to avoid people.",
+    "weight": 3,
+    "impact": {
+      "health": 4,
+      "mood": -3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 140
+  },
+  {
+    "id": "crime_dream_courtroom",
+    "headline": "You dream about the courtroom. In the dream you are also the prosecutor.",
+    "weight": 3,
+    "impact": {
+      "energy": -6,
+      "mood": -4
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "crime_case_open"
+      ]
+    },
+    "cooldownDays": 70
+  },
+  {
+    "id": "crime_partner_lawyer_friend",
+    "headline": "Your partner's friend, who is a solicitor, offers to look at the papers for free.",
+    "weight": 2,
+    "impact": {
+      "mood": 4
+    },
+    "category": "personal",
+    "body": "They read for forty minutes and say 'right' twice.",
+    "requires": {
+      "flagsAll": [
+        "crime_case_open"
+      ]
+    },
+    "choices": [
+      {
+        "id": "accept",
+        "label": "Let them read it",
+        "detail": "Mood +6 · wallet unchanged",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 6
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "Keep it in the family",
+        "detail": "Relationships −3",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "relationships": -3
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 150
+  },
+  {
+    "id": "crime_child_asks",
+    "headline": "One of your children asks whether you are going to prison.",
+    "weight": 2,
+    "impact": {
+      "mood": -12
+    },
+    "category": "family",
+    "body": "They ask it the way they ask about weather.",
+    "requires": {
+      "flagsAll": [
+        "crime_case_open"
+      ]
+    },
+    "cooldownDays": 200
+  },
+  {
+    "id": "crime_drink_after",
+    "headline": "You have a drink after the meeting, and then the second one is not after anything.",
+    "weight": 3,
+    "impact": {
+      "health": -5,
+      "mood": 3
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 100
+  },
+  {
+    "id": "crime_anonymous_letter",
+    "headline": "An anonymous letter arrives at the house, not the office.",
+    "weight": 2,
+    "impact": {
+      "mood": -9,
+      "relationships": -3
+    },
+    "category": "personal",
+    "body": "That is the detail you keep coming back to. The house.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 260
+  },
+  {
+    "id": "crime_walk_it_off",
+    "headline": "You walk eleven kilometres without deciding to.",
+    "weight": 3,
+    "impact": {
+      "health": 5,
+      "energy": -8,
+      "mood": 5
+    },
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 110
+  },
+  {
+    "id": "crime_after_verdict_quiet",
+    "headline": "Nobody mentions it, all week, at all, by anybody, once.",
+    "weight": 3,
+    "impact": {
+      "mood": -6
+    },
+    "category": "personal",
+    "body": "It is the loudest week you have had.",
+    "requires": {
+      "flagsAll": [
+        "crime_convicted"
+      ]
+    },
+    "cooldownDays": 180
   }
 ]

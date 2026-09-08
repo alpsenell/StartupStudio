@@ -202,6 +202,28 @@ struct BusinessScreen: View {
         // MARK: end of Iteration 10
         // MARK: Iteration 11
         // MARK: N1 (crime and the courtroom: sue a rival)
+        // A suit is filed from a rival's profile, so the route lands on
+        // Rivals with that studio's page pushed — the same shape
+        // `.rivalProfile` takes below, read here so the launch flag works
+        // as well as the in-game link.
+        if case .rivalProfile(let rivalID) = Route.launchRoute,
+           router.pendingPush == nil, !landed,
+           engine.state.rivals.rival(id: rivalID) != nil {
+            section = .rivals
+            landed = true
+            path.append(RivalRoute(rivalID: rivalID))
+            return
+        }
+        if router.pendingPush == .rivalSuit
+            || (router.pendingPush == nil && !landed && Route.launchRoute == .rivalSuit) {
+            section = .rivals
+            landed = true
+            router.take(.rivalSuit)
+            if let rival = engine.state.rivals.rivals.first {
+                path.append(RivalRoute(rivalID: rival.id))
+            }
+            return
+        }
         // MARK: end of Iteration 11
         switch router.pendingPush {
         case .marketMap:

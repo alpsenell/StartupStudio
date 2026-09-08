@@ -1874,6 +1874,16 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     public var fame: FameBalance = .default
 
     // MARK: end Iteration 11 — N4
+    // MARK: Iteration 11 — N1 (crime and the courtroom)
+
+    /// What the six offences are worth, how likely they are to be found,
+    /// and how a courtroom grades three exchanges
+    /// (`BalanceConfig+Crime.swift`). Inline default, so `"crime"` is an
+    /// optional key; every field is read only from behind a button no bot
+    /// presses.
+    public var crime: CrimeBalance = .default
+
+    // MARK: end Iteration 11 — N1
 
     public init(
         startingCash: Int,

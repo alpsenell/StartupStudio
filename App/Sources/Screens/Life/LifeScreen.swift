@@ -15,6 +15,11 @@ struct LifeScreen: View {
     @State private var path: [LifeDestination] = []
     /// Whether the debug `-autoRoute` landing has already been taken.
     @State private var tookLaunchRoute = false
+    // MARK: Iteration 11 — N1 (crime and the courtroom)
+    /// Whether the hearing is open over the ledger. Held here rather than
+    /// in `CrimeScreen` so `-autoRoute courtroom` can set it as it pushes.
+    @State private var showingCourtroom = false
+    // MARK: end of Iteration 11 — N1
 
     /// What Life can push. One case today; an enum rather than a
     /// `NavigationPath` so the deep link can ask "am I already there?".
@@ -39,6 +44,7 @@ struct LifeScreen: View {
         // MARK: end of Iteration 9
         // MARK: Iteration 11
         // MARK: N1 (crime and the courtroom)
+        case crime
         // MARK: N2 (people menus)
         /// One person's whole menu, pushed. The sheet is the usual door
         /// (`PeopleMenuButton` on each card); this is the deep link's.
@@ -110,6 +116,7 @@ struct LifeScreen: View {
                     SabbaticalCard(engine: engine, onOpen: { path = [.sabbatical] })
                     // MARK: Iteration 11 — new cards, in this order
                     // MARK: N1 (crime and the courtroom)
+                    CrimeCard(engine: engine) { path = [.crime] }
                     // MARK: N3 (assets, vices and the doctor)
                     // MARK: N4 (fame and the feed)
                     FameCard(engine: engine) { path = [.feed] }
@@ -155,6 +162,8 @@ struct LifeScreen: View {
                 // MARK: end of Iteration 9
                 // MARK: Iteration 11
                 // MARK: N1 (crime and the courtroom)
+                case .crime:
+                    CrimeScreen(engine: engine, showingCourtroom: $showingCourtroom)
                 // MARK: N2 (people menus)
                 case .people(let target):
                     PeopleMenuScreen(engine: engine, target: target)
@@ -177,6 +186,31 @@ struct LifeScreen: View {
     private func consumeRoute() {
         // MARK: Iteration 11 — a launch route per lane, consumed first
         // MARK: N1 (crime and the courtroom)
+        // `-autoCase` starts here rather than in a `.task`: a pass that
+        // lands on Life with a decision sheet already up never runs the
+        // root's tasks, and `consumeRoute` is called from an
+        // `onChange(initial: true)` that does. No-ops without the flag.
+        CrimeDebug.startIfAsked(engine: engine)
+        // Both of N1's routes land on the ledger; `.courtroom` opens the
+        // hearing over it, which is the only way into the room.
+        if router.pendingPush == .crimeLedger || router.pendingPush == .courtroom {
+            let wantsRoom = router.pendingPush == .courtroom
+            path = [.crime]
+            showingCourtroom = wantsRoom
+            router.take(wantsRoom ? .courtroom : .crimeLedger)
+            return
+        }
+        if !tookLaunchRoute,
+           Route.launchRoute == .crimeLedger || Route.launchRoute == .courtroom {
+            tookLaunchRoute = true
+            path = [.crime]
+            // `-autoRoute courtroom` lands on the ledger and lets
+            // `CrimeDebug.openWhenListed` open the room the day the case
+            // is actually called — opening an empty room at launch would
+            // put a sheet with nothing in it over the whole pass.
+            return
+        }
+        // MARK: end of Iteration 11 — N1
         // MARK: N2 (people menus)
         // `-autoRoute people` opens the partner's menu; on a run with no
         // partner it falls through to the first child and then the first

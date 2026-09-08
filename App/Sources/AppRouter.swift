@@ -134,6 +134,20 @@ enum Route: Hashable {
 
     // MARK: N1 (crime and the courtroom)
 
+    /// N1: the founder's own ledger of things they should not have done,
+    /// with the pending case at the top of it. `.courtroom` is the same
+    /// screen with the hearing open over it — one route rather than two,
+    /// because the room is only ever reachable through the ledger.
+    case crimeLedger
+    case courtroom
+    /// N1: a studio's own profile, opened for the two things that belong
+    /// there — the planted story and the suit. Carries no id: it means
+    /// "the studio the founder is most likely to be angry at", which is
+    /// the first on the board. The in-game link is `.rivalProfile`; this
+    /// exists so `-autoRoute suit` can reach a page no command line can
+    /// name a UUID for.
+    case rivalSuit
+
     // MARK: N2 (people menus)
 
     /// The people menu for one person, pushed inside the Life tab.
@@ -203,6 +217,8 @@ enum Route: Hashable {
 
         // MARK: Iteration 11
         // MARK: N1 (crime and the courtroom)
+        case .crimeLedger, .courtroom: .life
+        case .rivalSuit: .business
         // MARK: N2 (people menus)
         case .peopleMenu: .life
         case .peopleTeamMenu: .team

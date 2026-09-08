@@ -259,6 +259,9 @@ extension Route {
         // MARK: end of Iteration 10
         // MARK: Iteration 11 — route names
         // MARK: N1 (crime and the courtroom)
+        case "crime", "ledger": .crimeLedger
+        case "courtroom", "court", "hearing": .courtroom
+        case "suit", "sue": .rivalSuit
         // MARK: N2 (people menus)
         // `-autoRoute people` lands on the partner's menu (the fixture
         // `l3-family-day900` has one); `-autoRoute peopleTeam` opens the
@@ -861,6 +864,9 @@ extension DebugLaunch {
     // MARK: Iteration 11 — reserved flags
 
     // MARK: N1 (crime and the courtroom)
+    // Parsed in `CrimeDebug`, next to the screens that read them:
+    // `-autoCase <offence>`, `-autoLawyer <tier>`, `-autoDefence <line>`
+    // and `-autoCourtSay <exchange,exchange>`. Nothing to add here.
 
     // MARK: N2 (people menus)
 

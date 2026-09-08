@@ -354,6 +354,81 @@ enum SabbaticalSystem {
         return [.founderAway(reason: awayReason, untilDay: until, day: state.day)]
     }
 
+    // MARK: Iteration 11 — N1 (crime and the courtroom: the caretaker while inside)
+
+    /// The reason string on `life.awayReason` while the founder is
+    /// serving a sentence. The office and home scenes already read
+    /// `awayReason`, so they say it without being told.
+    static let prisonAwayReason = "Inside"
+
+    /// A verdict takes the founder away for `weeks`.
+    ///
+    /// This is a sabbatical nobody booked: the same away window, the same
+    /// caretaker autopilot, the same weekly decisions and the same report
+    /// on the way out — because that machinery is exactly "somebody else
+    /// runs the company while the founder is not there", and a sentence is
+    /// that with the choice removed. What is different is written here:
+    /// no flights, no weekly cost, no gates (a court does not ask whether
+    /// you can afford to be away), and the caretaker is whoever the
+    /// founder trusts most rather than whoever they picked. `CrimeSystem`
+    /// adds what the absence *costs* — affection every day, board patience
+    /// every week — because those are the sentence's, not the trip's.
+    ///
+    /// Wave two's *Inside* lane replaces the middle of this with a place.
+    /// Until then the founder is away, and the company keeps going without
+    /// them.
+    ///
+    /// Draws nothing.
+    static func crimeBeginSentence(
+        weeks: Int,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        let until = state.day + max(1, weeks) * GameState.daysPerWeek
+        state.life.awayUntilDay = until
+        state.life.awaySinceDay = state.day
+        state.life.awayReason = prisonAwayReason
+
+        // Whoever is left holding it: the most loyal person in the room.
+        let caretaker = state.employees
+            .filter { !$0.isFounder }
+            .max { $0.founderBond < $1.founderBond }
+
+        if let caretaker {
+            var sabbatical = SabbaticalState(
+                caretakerID: caretaker.id,
+                caretakerName: caretaker.name,
+                sinceDay: state.day,
+                untilDay: until,
+                weeks: max(1, weeks),
+                weeklyCost: 0,
+                opening: SabbaticalSnapshot(state),
+                lastDecisionDay: state.day
+            )
+            sabbatical.note(
+                "You did not hand \(caretaker.name) the keys. Somebody else did.",
+                day: state.day, isDecision: true
+            )
+            state.life.sabbatical = sabbatical
+            state.life.phone.post(
+                "\(caretaker.name): \"I've got it. Don't worry about the building.\"",
+                from: .office, day: state.day
+            )
+        } else {
+            state.life.phone.post(
+                "The office is dark. There was nobody to give the keys to.",
+                from: .office, day: state.day
+            )
+        }
+        state.life.phone.post(
+            "I'll bring the children on the first weekend they allow it.",
+            from: .partner, day: state.day
+        )
+        return [.founderAway(reason: prisonAwayReason, untilDay: until, day: state.day)]
+    }
+
+    // MARK: end of Iteration 11 — N1
+
     /// The founder cuts it short. Costs the caretaker's bond — being
     /// trusted and then checked on is worse than not being trusted — and
     /// refunds nothing: the weeks were paid for in advance.

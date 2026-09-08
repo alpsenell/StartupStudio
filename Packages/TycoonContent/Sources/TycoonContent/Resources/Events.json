@@ -3578,5 +3578,715 @@
     "category": "team",
     "severity": "notable",
     "followUpOnly": true
+  },
+  {
+    "id": "crime_auditor_lunch",
+    "headline": "An auditor asks whether you would like to explain the Q3 reversal over lunch.",
+    "weight": 3,
+    "category": "legal",
+    "body": "They are being extremely pleasant about it, which is how you know.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "lunch",
+        "label": "Go to the lunch",
+        "detail": "Reputation +1 · they leave with a photocopy",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          },
+          {
+            "type": "flag",
+            "flag": "crime_auditor_curious"
+          }
+        ]
+      },
+      {
+        "id": "lawyer",
+        "label": "Send the lawyer instead",
+        "detail": "$2,500 · nothing is explained to anybody",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2500
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 180
+  },
+  {
+    "id": "crime_shredder",
+    "headline": "Somebody has ordered a second shredder.",
+    "weight": 2,
+    "category": "office",
+    "body": "Nobody will say who. The invoice is under 'office supplies'.",
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 200
+  },
+  {
+    "id": "crime_whistle_draft",
+    "headline": "A resignation letter arrives with four attachments.",
+    "weight": 2,
+    "category": "legal",
+    "body": "The letter is one paragraph. The attachments are not.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "settle",
+        "label": "Settle it quietly",
+        "detail": "$9,000 · the attachments go with them",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -9000
+          }
+        ]
+      },
+      {
+        "id": "counter",
+        "label": "Counter-sue for the attachments",
+        "detail": "Reputation −4 · they keep going",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -4
+          },
+          {
+            "type": "flag",
+            "flag": "crime_whistle_live"
+          }
+        ]
+      },
+      {
+        "id": "nothing",
+        "label": "Do nothing at all",
+        "detail": "Free · and it stays out there",
+        "setFlags": [
+          "crime_whistle_ignored"
+        ]
+      }
+    ],
+    "cooldownDays": 250
+  },
+  {
+    "id": "crime_journalist_call",
+    "headline": "A reporter you have never met asks about a payment you have never mentioned.",
+    "weight": 3,
+    "category": "press",
+    "body": "They have the amount right to the dollar, which narrows it down considerably.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "comment",
+        "label": "Give them a statement",
+        "detail": "Reputation −2 · it is a small story",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      },
+      {
+        "id": "silence",
+        "label": "No comment",
+        "detail": "Reputation −5 · it is a bigger one",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -5
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 160
+  },
+  {
+    "id": "crime_legal_retainer",
+    "headline": "A law firm sends an unsolicited retainer proposal.",
+    "weight": 2,
+    "category": "legal",
+    "body": "The covering letter says they have been 'following your growth with interest'.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "sign",
+        "label": "Put them on retainer",
+        "detail": "$6,000 · somebody answers the phone at 2am",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -6000
+          },
+          {
+            "type": "flag",
+            "flag": "crime_on_retainer"
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "You will risk it",
+        "detail": "Free · nobody is on call",
+        "setFlags": [
+          "crime_no_retainer"
+        ]
+      }
+    ],
+    "cooldownDays": 220
+  },
+  {
+    "id": "crime_cfo_ultimatum",
+    "headline": "Your finance lead asks, in writing, for the Q2 file to be corrected.",
+    "weight": 3,
+    "category": "money",
+    "body": "In writing is the part that matters. In writing is always the part that matters.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "correct",
+        "label": "Correct it",
+        "detail": "Cash −$4,000 · morale +4 · one less thing",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -4000
+          },
+          {
+            "type": "moraleAll",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "refuse",
+        "label": "Tell them it's fine",
+        "detail": "Morale −6 · and they keep the email",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -6
+          },
+          {
+            "type": "flag",
+            "flag": "crime_cfo_has_email"
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 240
+  },
+  {
+    "id": "crime_anonymous_forum",
+    "headline": "An anonymous post about your studio has 400 replies.",
+    "weight": 3,
+    "category": "press",
+    "body": "Two of the replies are extremely specific. One of them is from your building.",
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -3
+      },
+      {
+        "type": "moraleAll",
+        "amount": -2
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 140
+  },
+  {
+    "id": "crime_insurance_renewal",
+    "headline": "Your directors' liability insurance comes up for renewal at three times the price.",
+    "weight": 2,
+    "category": "money",
+    "body": "The broker calls it 'a market-wide adjustment' and will not meet your eye on video.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay it",
+        "detail": "$7,500 · you are covered",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -7500
+          }
+        ]
+      },
+      {
+        "id": "lapse",
+        "label": "Let it lapse",
+        "detail": "Free · you are not covered",
+        "effects": [
+          {
+            "type": "flag",
+            "flag": "crime_uninsured"
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 300
+  },
+  {
+    "id": "crime_investor_diligence",
+    "headline": "An investor's diligence team asks for the last eight quarters, unaudited.",
+    "weight": 3,
+    "category": "investor",
+    "body": "Unaudited is what they asked for. Unaudited is what worries you.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "send",
+        "label": "Send everything",
+        "detail": "Reputation +3 · nothing to hide, allegedly",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "partial",
+        "label": "Send six quarters",
+        "detail": "Reputation −3 · they notice",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -3
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 200
+  },
+  {
+    "id": "crime_staff_meeting",
+    "headline": "Somebody asks, in the all-hands, whether the rumours are true.",
+    "weight": 3,
+    "category": "team",
+    "body": "The room is very quiet and forty people are looking at the same place.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "honest",
+        "label": "Tell them what you can",
+        "detail": "Morale +5 · and it is out of the room",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "deflect",
+        "label": "Move to the next slide",
+        "detail": "Morale −7",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -7
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 180
+  },
+  {
+    "id": "crime_bank_review",
+    "headline": "Your bank moves the account to 'enhanced monitoring'.",
+    "weight": 2,
+    "category": "money",
+    "body": "Nothing changes except that everything takes four working days.",
+    "effects": [
+      {
+        "type": "cash",
+        "amount": -1500
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 260
+  },
+  {
+    "id": "crime_pr_firm",
+    "headline": "A crisis PR firm pitches you before there is a crisis.",
+    "weight": 2,
+    "category": "press",
+    "body": "'We like to be early,' they say, which is not reassuring from a crisis firm.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "retain",
+        "label": "Retain them",
+        "detail": "$5,000 · reputation +4",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -5000
+          },
+          {
+            "type": "reputation",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "pass",
+        "label": "Pass",
+        "detail": "Free · you will handle it yourself",
+        "setFlags": [
+          "crime_no_pr_firm"
+        ]
+      }
+    ],
+    "cooldownDays": 280
+  },
+  {
+    "id": "crime_rival_statement",
+    "headline": "A rival founder is asked about you on stage and takes their time answering.",
+    "weight": 3,
+    "category": "press",
+    "body": "'I'd rather build than comment,' they say, having commented.",
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -2
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 150
+  },
+  {
+    "id": "crime_subpoena_office",
+    "headline": "Two people arrive with a box and a list of what goes in it.",
+    "weight": 2,
+    "category": "legal",
+    "body": "They are polite, they are quick, and they take the good laptop.",
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -6
+      },
+      {
+        "type": "reputation",
+        "amount": -3
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_case_open"
+      ]
+    },
+    "cooldownDays": 90
+  },
+  {
+    "id": "crime_gag_order_leak",
+    "headline": "Somebody breaches the gag order on a podcast.",
+    "weight": 2,
+    "category": "legal",
+    "body": "It was not you, and it will be treated as though it was.",
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -4
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_convicted"
+      ]
+    },
+    "cooldownDays": 200
+  },
+  {
+    "id": "crime_compliance_hire",
+    "headline": "HR suggests, gently, that you might want a compliance officer.",
+    "weight": 2,
+    "category": "team",
+    "body": "They have already written the job description. It is two pages.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "hire",
+        "label": "Approve the role",
+        "detail": "$3,000 · morale +4 · fewer surprises",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -3000
+          },
+          {
+            "type": "moraleAll",
+            "amount": 4
+          },
+          {
+            "type": "flag",
+            "flag": "crime_has_compliance"
+          }
+        ]
+      },
+      {
+        "id": "later",
+        "label": "Next quarter",
+        "detail": "Free · morale −2",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -2
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 260
+  },
+  {
+    "id": "crime_customer_letter",
+    "headline": "A customer's legal team writes about a feature they were shown and never got.",
+    "weight": 2,
+    "category": "legal",
+    "body": "They have the recording of the demo. Of course they have the recording.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "refund",
+        "label": "Refund and apologise",
+        "detail": "$3,500 · reputation +2",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -3500
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "stall",
+        "label": "Point at the roadmap",
+        "detail": "Reputation −4",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -4
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 190
+  },
+  {
+    "id": "crime_ex_employee_book",
+    "headline": "A former employee is writing a book about a start-up that is obviously yours.",
+    "weight": 2,
+    "category": "press",
+    "body": "The working title is a phrase you said in a meeting.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "buy",
+        "label": "Buy the manuscript",
+        "detail": "$8,000 · nobody reads it",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -8000
+          }
+        ]
+      },
+      {
+        "id": "let",
+        "label": "Let them publish",
+        "detail": "Reputation −6 · hype +8, oddly",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -6
+          },
+          {
+            "type": "hype",
+            "amount": 8
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 300
+  },
+  {
+    "id": "crime_regulator_letter",
+    "headline": "A regulator sends a letter that asks eleven questions and answers none.",
+    "weight": 3,
+    "category": "legal",
+    "body": "Question seven is about a week you would rather not think about.",
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "choices": [
+      {
+        "id": "full",
+        "label": "Answer all eleven",
+        "detail": "$2,000 · reputation +2",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -2000
+          },
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "minimal",
+        "label": "Answer what you must",
+        "detail": "Reputation −2 · they write again",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -2
+          }
+        ]
+      }
+    ],
+    "cooldownDays": 170
+  },
+  {
+    "id": "crime_office_search_rumour",
+    "headline": "The rumour that the office was searched is now a rumour that it is being searched.",
+    "weight": 2,
+    "category": "office",
+    "body": "It is not. Three people have gone home anyway.",
+    "effects": [
+      {
+        "type": "moraleAll",
+        "amount": -4
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_case_open"
+      ]
+    },
+    "cooldownDays": 120
+  },
+  {
+    "id": "crime_supplier_terms",
+    "headline": "A supplier quietly moves you to payment in advance.",
+    "weight": 2,
+    "category": "money",
+    "body": "Their account manager calls it 'a routine review of terms'. It is not routine.",
+    "effects": [
+      {
+        "type": "cash",
+        "amount": -2000
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 210
+  },
+  {
+    "id": "crime_conference_uninvited",
+    "headline": "A conference that invited you to keynote has 'restructured the programme'.",
+    "weight": 2,
+    "category": "press",
+    "body": "The new programme has a panel where your talk was, and you are not on it.",
+    "effects": [
+      {
+        "type": "reputation",
+        "amount": -2
+      },
+      {
+        "type": "founderMeters",
+        "mood": -4
+      }
+    ],
+    "requires": {
+      "flagsAll": [
+        "crime_record"
+      ]
+    },
+    "cooldownDays": 230
   }
 ]

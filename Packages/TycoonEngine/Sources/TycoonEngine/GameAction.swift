@@ -333,6 +333,37 @@ public enum GameAction: Codable, Equatable, Sendable {
 
     // MARK: N1 (crime and the courtroom)
 
+    /// Does one of the six things a founder should not do. `rivalID` and
+    /// `productID` name the subject where the offence has one; `nil` means
+    /// "the obvious one" (the first rival, the build in flight).
+    /// Refused when a case is already pending, while the founder is away,
+    /// with an empty wallet, and per-offence — `CrimeRefusal` says which.
+    case commitOffence(offence: CrimeOffence, rivalID: UUID? = nil, productID: UUID? = nil)
+    /// Walks into a police station about a specific entry on the record
+    /// (or the most recent one). Raises the case today with a third of the
+    /// evidence against you. Refused while a case is already pending.
+    case confessOffence(entryID: String? = nil)
+    /// Pays the other side to make the pending case go away. Wallet first,
+    /// company for the rest; refused when the two together cannot cover it.
+    case settleCase
+    /// Buys representation for the pending case, out of the founder's own
+    /// wallet. Refused once the hearing has started.
+    case hireLawyer(tier: CrimeLawyer)
+    /// Picks the line the founder will run. Free, and changeable up to the
+    /// moment they stand up.
+    case chooseDefence(CrimeDefence)
+    /// Stands the founder up in front of the judge. Only on or after the
+    /// hearing day, and it stops the clock.
+    case openHearing
+    /// One of the three exchanges. `objection` needs a lawyer who has one
+    /// left.
+    case sayInCourt(CrimeExchange)
+    /// Stops talking and takes the verdict on what has been said.
+    case restCase
+    /// Files against a studio. Costs the company the filing fee and puts a
+    /// hearing on the books with the same machinery, reversed.
+    case sueRival(rivalID: UUID)
+
     // MARK: N2 (people menus)
 
     /// The people menu's one verb: do `interaction` to `target`. The id is
