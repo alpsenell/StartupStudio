@@ -30,6 +30,15 @@ struct EmployeeManageSheet: View {
                     moraleSection(employee)
                     relationshipSection(employee)
                     bondSection(employee)
+                    // MARK: Iteration 11 — N2 (people menus)
+                    Section("Things you could do") {
+                        PeopleMenuButton(
+                            engine: engine, target: .employee(employeeID), compact: true
+                        )
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                    }
+                    // MARK: end of Iteration 11 — N2
                     salarySection(employee)
                     careerSection(employee)
                     trainingSection(employee)

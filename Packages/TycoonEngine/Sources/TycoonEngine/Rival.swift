@@ -214,6 +214,25 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
     /// `nil` for a rival the world rolled.
     public var ghostIndex: Int?
 
+    // MARK: Iteration 11 — N2 (people menus)
+
+    /// 0...100: how personal this has got. Raised by taunts, sabotage,
+    /// insults and threats from `InteractionSystem`; lowered by an apology
+    /// or an offer to bury it. The rival carrying the most of it is the
+    /// founder's *nemesis* (`GameState.nemesis`) and is named on the
+    /// profile.
+    ///
+    /// Decode-if-present and encode-when-non-zero: a rival nobody has
+    /// annoyed writes exactly the bytes it wrote before this existed, so
+    /// the fixture suites do not move. Wave two's espionage lane reads it.
+    public var grudge: Double = 0
+
+    /// Whether this studio has anything personal against the founder at
+    /// all — the cheapest gate for the profile's nemesis strip.
+    public var holdsAGrudge: Bool { grudge > 0 }
+
+    // MARK: end of Iteration 11 — N2
+
     public var isGhost: Bool { ghostIndex != nil }
 
     /// A year of weekly samples.
@@ -236,7 +255,10 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
         priceWarTopicID: String? = nil,
         isIncumbent: Bool = false,
         strengthHistory: [Double] = [],
-        ghostIndex: Int? = nil
+        ghostIndex: Int? = nil,
+        // MARK: Iteration 11 — N2 (people menus)
+        grudge: Double = 0
+        // MARK: end of Iteration 11 — N2
     ) {
         self.id = id
         self.name = name
@@ -255,6 +277,9 @@ public struct Rival: Codable, Equatable, Sendable, Identifiable {
         self.isIncumbent = isIncumbent
         self.strengthHistory = strengthHistory
         self.ghostIndex = ghostIndex
+        // MARK: Iteration 11 — N2 (people menus)
+        self.grudge = grudge
+        // MARK: end of Iteration 11 — N2
     }
 
     /// Appends this week's strength to the history, dropping the oldest
@@ -309,6 +334,9 @@ extension Rival {
         case isIncumbent
         case strengthHistory
         case ghostIndex
+        // MARK: Iteration 11 — N2 (people menus)
+        case grudge
+        // MARK: end of Iteration 11 — N2
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -332,6 +360,11 @@ extension Rival {
             try container.encode(strengthHistory, forKey: .strengthHistory)
         }
         try container.encodeIfPresent(ghostIndex, forKey: .ghostIndex)
+        // MARK: Iteration 11 — N2 (people menus)
+        // Written only once somebody has actually annoyed them, so a rival
+        // in a run that never opens a people menu keeps its bytes.
+        if grudge != 0 { try container.encode(grudge, forKey: .grudge) }
+        // MARK: end of Iteration 11 — N2
     }
 
     public init(from decoder: any Decoder) throws {
@@ -354,7 +387,10 @@ extension Rival {
             priceWarTopicID: try container.decodeIfPresent(String.self, forKey: .priceWarTopicID),
             isIncumbent: try container.decodeIfPresent(Bool.self, forKey: .isIncumbent) ?? false,
             strengthHistory: try container.decodeIfPresent([Double].self, forKey: .strengthHistory) ?? [],
-            ghostIndex: try container.decodeIfPresent(Int.self, forKey: .ghostIndex)
+            ghostIndex: try container.decodeIfPresent(Int.self, forKey: .ghostIndex),
+            // MARK: Iteration 11 — N2 (people menus)
+            grudge: try container.decodeIfPresent(Double.self, forKey: .grudge) ?? 0
+            // MARK: end of Iteration 11 — N2
         )
     }
 }

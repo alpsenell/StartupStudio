@@ -79,6 +79,16 @@ struct FamilyCard: View {
                     DiaryLine(label: next.label, daysLeft: next.day - state.day)
                 }
 
+                // MARK: Iteration 11 — N2 (people menus)
+                // The whole menu for the partner, from the card that
+                // already names them. The kids get theirs on their own
+                // sheet, which is where their ledger already is.
+                if family.stage != .single {
+                    Divider()
+                    PeopleMenuButton(engine: engine, target: .partner, compact: true)
+                }
+                // MARK: end of Iteration 11 — N2
+
                 if let step = advanceStep(life: life, day: state.day) {
                     Divider()
                     GatedAction(title: step.title, reason: step.reason) {

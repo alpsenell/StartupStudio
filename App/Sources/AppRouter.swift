@@ -136,6 +136,13 @@ enum Route: Hashable {
 
     // MARK: N2 (people menus)
 
+    /// The people menu for one person, pushed inside the Life tab.
+    case peopleMenu(InteractionTarget)
+    /// The Team tab's door onto the same menu: open the manage sheet for
+    /// the first person on the roster. Used by `-autoRoute peopleTeam`,
+    /// which is the only caller that cannot name an employee id.
+    case peopleTeamMenu
+
     // MARK: N3 (assets, vices and the doctor)
 
     // MARK: N4 (fame and the feed)
@@ -194,6 +201,8 @@ enum Route: Hashable {
         // MARK: Iteration 11
         // MARK: N1 (crime and the courtroom)
         // MARK: N2 (people menus)
+        case .peopleMenu: .life
+        case .peopleTeamMenu: .team
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
         // MARK: N5 (office secrets)

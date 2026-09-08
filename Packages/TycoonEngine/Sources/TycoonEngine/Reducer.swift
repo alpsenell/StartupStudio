@@ -601,6 +601,19 @@ public enum Reducer {
         // MARK: N1 (crime and the courtroom)
 
         // MARK: N2 (people menus)
+        case let .interact(target, interaction):
+            events = InteractionSystem.perform(
+                target: target, interactionID: interaction,
+                state: &state, balance: balance, content: content
+            )
+        case .breakUp:
+            events = InteractionSystem.breakUp(
+                state: &state, balance: balance, content: content
+            )
+        case let .fireWithCause(employeeID):
+            events = InteractionSystem.fireWithCause(
+                employeeID: employeeID, state: &state, balance: balance
+            )
 
         // MARK: N3 (assets, vices and the doctor)
 

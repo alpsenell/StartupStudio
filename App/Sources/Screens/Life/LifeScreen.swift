@@ -40,6 +40,9 @@ struct LifeScreen: View {
         // MARK: Iteration 11
         // MARK: N1 (crime and the courtroom)
         // MARK: N2 (people menus)
+        /// One person's whole menu, pushed. The sheet is the usual door
+        /// (`PeopleMenuButton` on each card); this is the deep link's.
+        case people(InteractionTarget)
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
         // MARK: end of Iteration 11
@@ -151,6 +154,8 @@ struct LifeScreen: View {
                 // MARK: Iteration 11
                 // MARK: N1 (crime and the courtroom)
                 // MARK: N2 (people menus)
+                case .people(let target):
+                    PeopleMenuScreen(engine: engine, target: target)
                 // MARK: N3 (assets, vices and the doctor)
                 // MARK: N4 (fame and the feed)
                 // MARK: end of Iteration 11
@@ -169,6 +174,41 @@ struct LifeScreen: View {
         // MARK: Iteration 11 — a launch route per lane, consumed first
         // MARK: N1 (crime and the courtroom)
         // MARK: N2 (people menus)
+        // `-autoRoute people` opens the partner's menu; on a run with no
+        // partner it falls through to the first child and then the first
+        // friend, so the flag always lands on somebody.
+        func peopleTarget(_ requested: InteractionTarget) -> InteractionTarget? {
+            // `-autoPeopleKind employee` overrides the partner default, so
+            // a screenshot pass can photograph any of the six menus.
+            let wanted: InteractionTarget? = switch DebugLaunch.autoPeopleKind {
+            case .partner: .partner
+            case .child: engine.state.life.family.children.first.map { .child($0.id) }
+            case .friend: engine.state.friendRoster(content: engine.content).first.map { .friend($0.id) }
+            case .employee: engine.state.employees.first { !$0.isFounder }.map { .employee($0.id) }
+            case .contact: engine.state.networking.contacts.first.map { .contact($0.id) }
+            case .rival: engine.state.rivals.rivals.first.map { .rival($0.id) }
+            case nil: nil
+            }
+            if let wanted, engine.state.interactionBar(wanted, content: engine.content) != nil { return wanted }
+            if engine.state.interactionBar(requested, content: engine.content) != nil { return requested }
+            if let child = engine.state.life.family.children.first { return .child(child.id) }
+            if let friend = engine.state.life.friends.friends.first { return .friend(friend.id) }
+            if let employee = engine.state.employees.first(where: { !$0.isFounder }) {
+                return .employee(employee.id)
+            }
+            return nil
+        }
+        if !tookLaunchRoute, let launch = Route.launchRoute,
+           case .peopleMenu(let requested) = launch {
+            tookLaunchRoute = true
+            if let target = peopleTarget(requested) { path = [.people(target)] }
+            return
+        }
+        if let route = router.take(where: { if case .peopleMenu = $0 { true } else { false } }),
+           case .peopleMenu(let requested) = route {
+            if let target = peopleTarget(requested) { path = [.people(target)] }
+            return
+        }
         // MARK: N3 (assets, vices and the doctor)
         // MARK: N4 (fame and the feed)
         // MARK: end of Iteration 11

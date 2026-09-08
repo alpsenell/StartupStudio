@@ -56,6 +56,9 @@ struct ContactSheet: View {
                 if contact.isOpen, state.isAtNetworkingEvent {
                     topicsCard(contact: contact, state: state)
                 }
+                // MARK: Iteration 11 — N2 (people menus)
+                PeopleMenuButton(engine: engine, target: .contact(contactID))
+                // MARK: end of Iteration 11 — N2
                 offersCard(contact: contact, state: state)
                 if contact.isRevealed {
                     DossierCard(contact: contact, balance: engine.balance)

@@ -57,6 +57,15 @@ public struct ContentCatalog: Sendable {
 
     // MARK: end of Iteration 10 — M2
 
+    // MARK: Iteration 11 — N2 (people menus)
+
+    /// The people menu (`Interactions.json`): every interaction, the bars
+    /// it moves and the lines it can produce. `nil` without the file,
+    /// which reads as a menu with nothing on it rather than a crash.
+    public let interactions: InteractionCatalog?
+
+    // MARK: end of Iteration 11 — N2
+
     private let productTypesByID: [String: ProductTypeDef]
     private let topicsByID: [String: TopicDef]
     private let techByID: [String: TechNode]
@@ -81,8 +90,11 @@ public struct ContentCatalog: Sendable {
         staffEvents: [StaffEventDef] = [],
         features: [FeatureCardDef] = [],
         // MARK: Iteration 10 — M2 (pitch room)
-        pitches: PitchCatalog? = nil
+        pitches: PitchCatalog? = nil,
         // MARK: end of Iteration 10 — M2
+        // MARK: Iteration 11 — N2 (people menus)
+        interactions: InteractionCatalog? = nil
+        // MARK: end of Iteration 11 — N2
     ) {
         self.productTypes = productTypes
         self.topics = topics
@@ -101,6 +113,9 @@ public struct ContentCatalog: Sendable {
         // MARK: Iteration 10 — M2 (pitch room)
         self.pitches = pitches
         // MARK: end of Iteration 10 — M2
+        // MARK: Iteration 11 — N2 (people menus)
+        self.interactions = interactions
+        // MARK: end of Iteration 11 — N2
         self.productTypesByID = Dictionary(
             productTypes.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
@@ -154,8 +169,11 @@ public struct ContentCatalog: Sendable {
             staffEvents: try decodeResourceIfPresent("StaffEvents", using: decoder) ?? [],
             features: try decodeResourceIfPresent("Features", using: decoder) ?? [],
             // MARK: Iteration 10 — M2 (pitch room)
-            pitches: try decodeResourceIfPresent("Pitches", using: decoder)
+            pitches: try decodeResourceIfPresent("Pitches", using: decoder),
             // MARK: end of Iteration 10 — M2
+            // MARK: Iteration 11 — N2 (people menus)
+            interactions: try decodeResourceIfPresent("Interactions", using: decoder)
+            // MARK: end of Iteration 11 — N2
         )
     }
 

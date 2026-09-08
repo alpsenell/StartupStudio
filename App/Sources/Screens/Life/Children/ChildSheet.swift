@@ -32,6 +32,9 @@ struct ChildSheet: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                         header(child)
                         actions(child)
+                        // MARK: Iteration 11 — N2 (people menus)
+                        PeopleMenuButton(engine: engine, target: .child(child.id))
+                        // MARK: end of Iteration 11 — N2
                         ledger(child)
                     }
                     .padding(Theme.Spacing.lg)
