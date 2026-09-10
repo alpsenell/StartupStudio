@@ -666,6 +666,16 @@ struct LifeScreen: View {
         // MARK: K6 (home and rooms)
         // MARK: end K6
         // MARK: K7 (partner and diary)
+        // `-autoTab life -autoPartner partner|hired` lands on the partner's own
+        // page, once, where the office row is.
+        #if DEBUG
+        if !tookLaunchRoute, Route.launchRoute == nil,
+           ["partner", "hired"].contains(DebugLaunch.value(after: "-autoPartner")?.lowercased() ?? "") {
+            tookLaunchRoute = true
+            path = [.lifeCard(.partner)]
+            return
+        }
+        #endif
         // MARK: end K7
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14

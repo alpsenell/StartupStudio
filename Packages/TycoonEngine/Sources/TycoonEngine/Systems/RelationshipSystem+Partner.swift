@@ -40,7 +40,7 @@ extension RelationshipSystem {
             id: id,
             name: name,
             skills: skills,
-            weeklySalary: PartnerDerivation.ask(skills: skills, balance: balance),
+            weeklySalary: PartnerDerivation.ask(skills: skills, balance: balance, seed: seed),
             appearanceSeed: seed,
             role: PartnerDerivation.role(seed: seed)
         ))
@@ -177,9 +177,16 @@ public enum PartnerDerivation {
         }
     }
 
-    /// Fair pay for those skills, the way a friend's hire is priced.
-    public static func ask(skills: SkillSet, balance: BalanceConfig) -> Int {
-        Int((Double(balance.salaryBase) + balance.salaryPerSkillPoint * skills.total).rounded())
+    /// Fair pay for those skills: the band the room's morale reads, so the
+    /// partner does not walk in "underpaid".
+    public static func ask(skills: SkillSet, balance: BalanceConfig, seed: UInt64 = 0) -> Int {
+        let stand = Employee(
+            id: personID(seed: seed), name: "", skills: skills, weeklySalary: 0,
+            assignment: .idle, isFounder: false, hiredDay: 0, appearanceSeed: seed,
+            morale: balance.staff.startingMorale, level: .forSkillTotal(skills.total),
+            role: role(seed: seed)
+        )
+        return Int(balance.fairWeeklyPay(for: stand).rounded())
     }
 
     /// What they would be in an address book.
@@ -228,7 +235,7 @@ extension GameState {
     /// Their weekly ask, the way a friend's hire is priced.
     public func partnerHireAsk(balance: BalanceConfig) -> Int? {
         guard let seed = life.family.partnerAppearanceSeed else { return nil }
-        return PartnerDerivation.ask(skills: PartnerDerivation.skills(seed: seed), balance: balance)
+        return PartnerDerivation.ask(skills: PartnerDerivation.skills(seed: seed), balance: balance, seed: seed)
     }
 
     /// Morale-target points affection is worth to this employee: nonzero

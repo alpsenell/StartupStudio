@@ -47,7 +47,7 @@ struct PartnerPayrollRow: View {
                         .foregroundStyle(.primary)
                     Spacer(minLength: 0)
                 }
-                Text("Loyal from day one: their morale reads affection, \(signed(morale)) today. Crunch costs the marriage \(decimal(crunch)) a day; a launch +\(Int(balance.partner.shipAffection)), a burnout \(Int(balance.partner.burnoutAffection)).")
+                Text("Loyal from day one: their morale reads affection, \(signed(morale)) today. Crunch costs the marriage \(decimal(crunch)) a day; a launch +\(Int(balance.partner.shipAffection)), a burnout \(signed(balance.partner.burnoutAffection)).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

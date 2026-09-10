@@ -90,16 +90,9 @@ struct FamilyConfrontationSheet: View {
 
     // MARK: K7 (partner and diary)
 
-    /// The answer's line, and for "Pack a bag" the slice the settlement
-    /// that follows would hand over, at today's valuation.
+    /// The answer's line; "Pack a bag" carries the slice (`FamilyConfession.detail(state:balance:)`).
     private func detail(_ answer: FamilyConfession) -> String {
-        guard answer == .leave else { return answer.detail }
-        let state = engine.state
-        let points = state.familyProjectedExEquity(balance: engine.balance)
-        guard points > 0 else { return answer.detail + " · the company stays yours" }
-        let value = Int((points / 100 * Double(state.companyValuation(balance: engine.balance))).rounded())
-        let shown = points == points.rounded() ? "\(Int(points))" : String(format: "%.1f", points)
-        return answer.detail + " · they take \(shown)% of the company (\(value.money) today)"
+        answer.detail(state: engine.state, balance: engine.balance)
     }
 
     // MARK: end K7

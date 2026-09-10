@@ -960,7 +960,7 @@ extension DecisionPrompt {
         case .dirtyMoneyDemand:
             queueDemandPrompt(state: state, balance: balance)
         case .confrontation:
-            queueConfrontationPrompt(state: state)
+            queueConfrontationPrompt(state: state, balance: balance) // K7: the slice on "Pack a bag"
         case .priceWar:
             // Iteration 12 merge — J3's sheet, seated in J6's queue.
             PriceWarPrompt.pending(in: state, content: content, balance: balance)

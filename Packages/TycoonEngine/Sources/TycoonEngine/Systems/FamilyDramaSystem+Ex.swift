@@ -92,7 +92,7 @@ extension FamilyDramaSystem {
             appearanceSeed: seed,
             archetype: PartnerDerivation.archetype(seed: seed),
             skills: skills,
-            askingSalary: PartnerDerivation.ask(skills: skills, balance: balance),
+            askingSalary: PartnerDerivation.ask(skills: skills, balance: balance, seed: seed),
             rapport: rapport,
             interest: 0,
             metDay: state.day,

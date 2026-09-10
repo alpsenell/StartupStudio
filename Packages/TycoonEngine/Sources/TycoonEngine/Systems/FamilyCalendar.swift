@@ -215,6 +215,11 @@ enum FamilyCalendar {
         balance: BalanceConfig,
         content: ContentCatalog
     ) -> Bool {
+        // MARK: K7 (partner and diary)
+        // The doctor's letter is fired by `DoctorLetter`, which writes the
+        // numbers into it; the ordinary follow-up path leaves it alone.
+        if entry.source == .life, entry.eventID == DoctorLetter.eventID { return true }
+        // MARK: end K7
         guard entry.source == .life,
               let def = content.lifeEvent(entry.eventID), def.isDated
         else { return false }

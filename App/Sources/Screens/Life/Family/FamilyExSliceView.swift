@@ -135,3 +135,21 @@ struct FamilyExSliceView: View {
 }
 
 // MARK: end K7
+
+// MARK: K7 (partner and diary)
+
+extension FamilyConfession {
+    /// The answer's line, and for "Pack a bag" the slice the settlement
+    /// that follows would hand over, at today's valuation — the same
+    /// numbers `FamilyDramaSystem.divorce` will use.
+    func detail(state: GameState, balance: BalanceConfig) -> String {
+        guard self == .leave else { return detail }
+        let points = state.familyProjectedExEquity(balance: balance)
+        guard points > 0 else { return detail + " · the company stays yours" }
+        let value = Int((points / 100 * Double(state.companyValuation(balance: balance))).rounded())
+        let shown = points == points.rounded() ? "\(Int(points))" : String(format: "%.1f", points)
+        return detail + " · they take \(shown)% of the company (\(value.money) today)"
+    }
+}
+
+// MARK: end K7

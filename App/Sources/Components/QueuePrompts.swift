@@ -77,7 +77,7 @@ extension DecisionPrompt {
     /// family room, so the clock stopped for it and the question was three
     /// screens away. It has no deadline — the partner waits up — so
     /// "Let me think" leaves it on the rail as "waiting on you".
-    static func queueConfrontationPrompt(state: GameState) -> DecisionPrompt? {
+    static func queueConfrontationPrompt(state: GameState, balance: BalanceConfig? = nil) -> DecisionPrompt? { // K7: balance for the slice
         let drama = state.familyDrama
         guard drama.isConfrontationOpen else { return nil }
         let since = max(0, state.day - (drama.confrontedDay ?? state.day))
@@ -98,7 +98,9 @@ extension DecisionPrompt {
             options: FamilyConfession.allCases.map { confession in
                 Option(
                     label: confession.label,
-                    detail: confession.detail,
+                    // MARK: K7 (partner and diary) — "Pack a bag" prints the slice.
+                    detail: balance.map { confession.detail(state: state, balance: $0) } ?? confession.detail,
+                    // MARK: end K7
                     role: confession == .leave ? .destructive : nil,
                     action: .confrontFamily(confession)
                 )
