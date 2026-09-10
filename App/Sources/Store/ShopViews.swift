@@ -68,8 +68,6 @@ struct ShopFrontDoorRows: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            // Sit with the slot rows, not a section away from them.
-            .padding(.top, Theme.Spacing.sm - Theme.Spacing.lg)
         }
     }
 

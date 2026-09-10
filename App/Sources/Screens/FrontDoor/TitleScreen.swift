@@ -512,11 +512,6 @@ struct TitleScreenContent: View {
                 onOpen: onOpenSlot,
                 onDelete: onDeleteSlot
             )
-            // MARK: P2 (purchases: StoreKit and the session)
-            // Drawn from the environment, so the snapshots of this view
-            // (no session) are the three rows they always were.
-            ShopFrontDoorRows()
-            // MARK: end P2
         }
     }
 
@@ -696,6 +691,12 @@ private struct SlotList: View {
                     onDelete: { onDelete(row.slot) }
                 )
             }
+            // MARK: P2 (purchases: StoreKit and the session)
+            // The locked fourth slot and the parked line, under the three
+            // rows. Drawn from the environment, so the snapshots (no
+            // session) are the three rows they always were.
+            ShopFrontDoorRows()
+            // MARK: end P2
         }
     }
 }
