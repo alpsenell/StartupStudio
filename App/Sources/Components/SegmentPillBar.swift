@@ -5,10 +5,12 @@ import SwiftUI
 /// `.pickerStyle(.segmented)` divides the width evenly and then truncates,
 /// which is fine for three segments and unreadable at six ("Contr…",
 /// "Market…", "Investo…" on an iPhone at the default text size — worse at
-/// larger ones). Up to four segments scroll as a row with every label
-/// whole and a fade at the trailing edge that says more is there; five or
-/// more lay out as a grid of three, so every section is on screen at once
-/// — a scrolling row of six hid half of them behind a clipped fourth pill.
+/// larger ones). The segments scroll as one row with every label whole and
+/// a fade at the trailing edge that says more is there.
+///
+/// Iteration 13 (U1, C7): always one row. Five or more used to lay out as
+/// a grid of three, which cost the Business tab two rows of chrome (213
+/// px of 2,000) and still clipped "Contr…" once it carried a badge.
 ///
 /// A segment may carry a badge: the count of things waiting in it.
 struct SegmentPillBar<Segment: Hashable & Identifiable>: View {
@@ -24,29 +26,12 @@ struct SegmentPillBar<Segment: Hashable & Identifiable>: View {
     /// A count per segment id, shown as a small numeral on the pill.
     var badges: [Segment.ID: Int] = [:]
 
-    private var usesGrid: Bool { segments.count >= 5 }
-
+    // MARK: U1 (ux: the first-hour fixes)
+    // C7: one scrolling row whatever the count; the three-column grid is gone.
     var body: some View {
-        if usesGrid {
-            grid
-        } else {
-            scroller
-        }
+        scroller
     }
-
-    private var grid: some View {
-        LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: Theme.Spacing.sm), count: 3),
-            spacing: Theme.Spacing.sm
-        ) {
-            ForEach(segments) { segment in
-                pill(segment, fillsWidth: true)
-            }
-        }
-        .padding(.horizontal, Theme.Spacing.lg)
-        .padding(.vertical, Theme.Spacing.sm)
-        .accessibilityLabel(accessibilityLabel)
-    }
+    // MARK: end U1
 
     private var scroller: some View {
         ScrollViewReader { proxy in

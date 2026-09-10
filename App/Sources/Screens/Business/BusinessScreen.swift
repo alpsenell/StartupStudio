@@ -69,25 +69,6 @@ struct BusinessScreen: View {
     var body: some View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
-                // Pinned below the top HUD inset, outside the ScrollView,
-                // so it can never scroll under the opaque HUD.
-                //
-                // Six segments do not fit an iPhone as a segmented picker:
-                // they truncate to "Contr…" / "Market…" / "Investo…" at the
-                // default text size, and worse above it. The pill bar keeps
-                // every label whole and scrolls instead.
-                SegmentPillBar(
-                    segments: BusinessSection.allCases,
-                    title: \.rawValue,
-                    systemImage: \.systemImage,
-                    accessibilityLabel: "Business section",
-                    selection: $section,
-                    badges: badges
-                )
-                .padding(.top, Theme.Spacing.xs)
-                .background(Theme.screenBackground)
-                .overlay(alignment: .bottom) { Divider() }
-
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
                         // What has a clock on it, whichever section is
@@ -102,6 +83,24 @@ struct BusinessScreen: View {
                                 router.go(route)
                             }
                         }
+                        // MARK: U1 (ux: the first-hour fixes)
+                        // C7: the desk leads; one scrolling row of pills
+                        // under it, then the section. The pills used to be
+                        // a pinned 3×2 grid above everything (chrome to 625
+                        // px of 2,000). Six segments do not fit a segmented
+                        // picker ("Contr…", "Investo…"), so they scroll,
+                        // every label whole, bleeding to the screen's edges.
+                        SegmentPillBar(
+                            segments: visibleSections,
+                            title: \.rawValue,
+                            systemImage: \.systemImage,
+                            accessibilityLabel: "Business section",
+                            selection: $section,
+                            badges: badges
+                        )
+                        .padding(.horizontal, -Theme.Spacing.lg)
+                        .padding(.vertical, -Theme.Spacing.sm)
+                        // MARK: end U1
                         switch section {
                         case .contracts:
                             ContractsView(engine: engine)
@@ -165,10 +164,28 @@ struct BusinessScreen: View {
         Desk.items(in: engine.state, balance: engine.balance, content: engine.content)
     }
 
-    /// How many desk rows point at each section.
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C7: Investors is hidden, not disabled, until there is something to
+    /// invest in — a term sheet, a board seat, or a round already raised
+    /// (the cap table). A deep link that lands on it (`.investors`, the
+    /// pitch room's term sheet, `-autoRoute investors`, the Now card's
+    /// "See investors") selects it, and a selected section always shows.
+    private var visibleSections: [BusinessSection] {
+        let investors = engine.state.investors
+        let showsInvestors = investors.pendingOffer != nil
+            || investors.hasBoard
+            || !investors.rounds.isEmpty
+            || section == .investors
+        return BusinessSection.allCases.filter { $0 != .investors || showsInvestors }
+    }
+    // MARK: end U1
+
+    /// How many desk rows point at each section — U1 (C6/C7): only the
+    /// rows due inside a week, the same count the Business tab's badge
+    /// reads, so a pill's number and the tab's number agree.
     private var badges: [String: Int] {
         var counts: [String: Int] = [:]
-        for item in deskItems {
+        for item in deskItems where (item.daysLeft ?? .max) <= TabBadge.deskHorizonDays {
             if let target = BusinessSection(desk: item.section) {
                 counts[target.id, default: 0] += 1
             }

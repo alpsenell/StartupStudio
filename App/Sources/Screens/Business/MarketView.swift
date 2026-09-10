@@ -26,18 +26,31 @@ struct MarketView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
-            BusinessSectionHeader(
-                title: lens == .map ? "Market map" : "Market pulse",
-                systemImage: lens == .map ? "map.fill" : "chart.xyaxis.line"
-            )
-
-            Picker("Market view", selection: $lens.animation(Theme.Motion.selection)) {
-                ForEach(MarketLens.allCases) { lens in
-                    Text(lens.rawValue).tag(lens)
+            // MARK: U1 (ux: the first-hour fixes)
+            // C7: Report / Map is a toggle on the section's own header, so
+            // Business has one row of pills and no second segmented
+            // control. The `.marketMap` deep link still sets the lens.
+            HStack(spacing: Theme.Spacing.sm) {
+                BusinessSectionHeader(
+                    title: lens == .map ? "Market map" : "Market pulse",
+                    systemImage: lens == .map ? "map.fill" : "chart.xyaxis.line"
+                )
+                Button {
+                    Haptics.tap()
+                    withAnimation(Theme.Motion.selection) { lens = lens == .map ? .report : .map }
+                } label: {
+                    Label(
+                        lens == .map ? MarketLens.report.rawValue : MarketLens.map.rawValue,
+                        systemImage: lens == .map ? "chart.xyaxis.line" : "map"
+                    )
+                    .font(.system(.caption, design: .rounded).weight(.semibold))
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .tint(Theme.accent)
+                .accessibilityLabel(lens == .map ? "Show the report" : "Show the map")
             }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Market view")
+            // MARK: end U1
             // MARK: J3 (rivals and the market)
             // Opening the market board is the gate for rivals following
             // the money. Sent once; no bot ever opens this screen.
