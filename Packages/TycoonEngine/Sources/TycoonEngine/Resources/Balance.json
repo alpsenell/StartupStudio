@@ -2052,5 +2052,19 @@
     "veteranSkillSpread": 10.0,
     "veteranSalaryFactor": 1.4,
     "secondChanceReputationCost": 5.0
+  },
+  "partner": {
+    "moraleAffectionFactor": 0.3,
+    "crunchAffectionPerDay": -0.6,
+    "shipAffection": 6.0,
+    "burnoutAffection": -8.0,
+    "buyOutMultiple": 1.15,
+    "buyOutRunwayWeeks": 4,
+    "announceWindowDays": 2,
+    "launchWindowDays": 1,
+    "keepDateHypeFactor": 0.85,
+    "letterHealth": 40.0,
+    "letterLeadDays": 7,
+    "letterCooldownDays": 180
   }
 }

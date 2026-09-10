@@ -625,6 +625,22 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: K6 (home and rooms)
     // MARK: end K6
     // MARK: K7 (partner and diary)
+    /// Put the founder's partner on payroll: skills from their stored
+    /// seed, fair pay, the bond they already have. Refused for the reasons
+    /// `GameState.partnerHireBlocker` names. No bot sends it.
+    case hirePartner
+    /// Buy the ex's slice of the company back at the balance's multiple,
+    /// wallet first and company cash for the rest. Refused for the reasons
+    /// `GameState.exBuyOutBlocker` names. No bot sends it.
+    case buyOutEx
+    /// On a launch that landed on a diary date: skip the party and keep
+    /// the date. Hype at launch ×0.85, no launch-party vice, the date
+    /// counts as kept. No bot sends it.
+    case keepTheDate(productID: UUID)
+    /// `-autoPartner <stage>`: dresses one K7 situation for a screenshot
+    /// (`PartnerDebugSeed`). Applied only in debug builds; nothing in the
+    /// game sends it.
+    case partnerDebugSeed(stage: String)
     // MARK: end K7
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14

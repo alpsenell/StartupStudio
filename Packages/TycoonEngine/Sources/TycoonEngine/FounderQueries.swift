@@ -100,6 +100,9 @@ extension GameState {
         guard let median = teamMedianSalary, median > 0 else { return 0 }
         guard economy.rescueSalary != life.founderSalary else { return 0 }
         let ratio = Double(life.founderSalary) / Double(median)
+            // MARK: K7 (partner and diary) — the household draw: the partner's pay comes home.
+            + Double(partnerHouseholdDraw) / Double(median)
+            // MARK: end K7
         return max(0, ratio - balance.economy.founderPayFairRatio)
     }
 

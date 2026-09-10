@@ -708,6 +708,15 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: K6 (home and rooms)
     // MARK: end K6
     // MARK: K7 (partner and diary)
+    /// The partner is on payroll now.
+    case partnerHired(employeeID: UUID, day: Int)
+    /// The relationship ended, and the job with it, the same day.
+    case partnerResigned(employeeID: UUID, name: String, day: Int)
+    /// The ex's slice came back: `points` of the company for `price`,
+    /// `fromWallet` of it out of the founder's own pocket.
+    case exBoughtOut(points: Double, price: Int, fromWallet: Int, day: Int)
+    /// A launch landed on a diary date and the founder kept the date.
+    case diaryDateKept(productID: UUID, label: String, day: Int)
     // MARK: end K7
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14
@@ -852,6 +861,14 @@ extension GameEvent {
         case .purchaseApplied:
             .info
         // MARK: end P1
+        // MARK: K7 (partner and diary)
+        // Losing the partner and the colleague on one day is news; the
+        // rest are the player's own taps.
+        case .partnerResigned:
+            .notable
+        case .partnerHired, .exBoughtOut, .diaryDateKept:
+            .info
+        // MARK: end K7
 
         // MARK: WS-F
 

@@ -227,6 +227,14 @@ public struct FamilyState: Codable, Equatable, Sendable {
     /// Set when the partner came out of the address book, so the contact
     /// and the relationship stay the same person.
     public var partnerContactID: UUID?
+    // MARK: K7 (partner and diary)
+    /// Iteration 15 — K7. Set when the founder put this partner on
+    /// payroll (`.hirePartner`), and kept while the relationship lasts
+    /// even if they leave the job, so the settlement knows they were a
+    /// co-founder in everything but name. `nil`, and not encoded, for
+    /// every founder who never hired them — which is every bot.
+    public var partnerEmployeeID: UUID? = nil
+    // MARK: end K7
 
     public init(
         stage: RelationshipStage,
@@ -263,6 +271,9 @@ extension FamilyState {
     private enum CodingKeys: String, CodingKey {
         case stage, stageSinceDay, partnerName, partnerAppearanceSeed, children, lastChildDay
         case affection, partnerCooldowns, lastPartnerDay, partnerContactID
+        // MARK: K7 (partner and diary)
+        case partnerEmployeeID
+        // MARK: end K7
     }
 
     private struct CooldownEntry: Codable {
@@ -291,6 +302,9 @@ extension FamilyState {
             lastPartnerDay: try container.decodeIfPresent(Int.self, forKey: .lastPartnerDay),
             partnerContactID: try container.decodeIfPresent(UUID.self, forKey: .partnerContactID)
         )
+        // MARK: K7 (partner and diary)
+        partnerEmployeeID = try container.decodeIfPresent(UUID.self, forKey: .partnerEmployeeID)
+        // MARK: end K7
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -310,6 +324,9 @@ extension FamilyState {
         )
         try container.encodeIfPresent(lastPartnerDay, forKey: .lastPartnerDay)
         try container.encodeIfPresent(partnerContactID, forKey: .partnerContactID)
+        // MARK: K7 (partner and diary)
+        try container.encodeIfPresent(partnerEmployeeID, forKey: .partnerEmployeeID)
+        // MARK: end K7
     }
 }
 

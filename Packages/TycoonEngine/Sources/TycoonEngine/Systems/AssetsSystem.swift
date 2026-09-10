@@ -235,6 +235,9 @@ enum AssetsSystem {
             var value = state.assets.dependency(def.id) - def.weeklyDecay
             if crunched { value += def.perCrunchWeek }
             value += def.perLaunch * Double(launches)
+            // MARK: K7 (partner and diary) — a date kept is a launch party skipped.
+            value -= def.perLaunch * Double(DiaryRoadmap.partiesSkipped(state))
+            // MARK: end K7
             state.assets.setDependency(def.id, value)
         }
 

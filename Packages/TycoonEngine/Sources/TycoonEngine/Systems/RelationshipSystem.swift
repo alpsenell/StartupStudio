@@ -34,6 +34,19 @@ enum RelationshipSystem {
         var events: [GameEvent] = []
         events.append(contentsOf: driftAffection(&state, balance))
         driftBonds(&state, balance)
+        // MARK: K7 (partner and diary)
+        // The partner on payroll: the breakup that no path caught is still
+        // a resignation, and their pay comes home weekly. Then the
+        // launch-week birthday's answer, read the way `ChildhoodSystem`
+        // reads the ordinary one's.
+        if state.life.family.partnerEmployeeID != nil {
+            if state.life.family.stage == .single {
+                events.append(contentsOf: partnerLeavesPayroll(state: &state, balance: balance))
+            }
+            runPartnerWeek(&state)
+        }
+        DiaryRoadmap.resolveLaunchBirthday(&state, balance)
+        // MARK: end K7
         return events
     }
 
@@ -59,6 +72,11 @@ enum RelationshipSystem {
         if state.life.isAway(day: state.day) {
             drift += config.affectionDrift
         }
+        // MARK: K7 (partner and diary)
+        // A partner who works here reads the office: crunch, a launch, a
+        // burnout. Exactly 0 unless they are on payroll.
+        drift += partnerOfficeAffectionDrift(state, balance)
+        // MARK: end K7
 
         let before = state.life.family.affection
         state.life.family.affection = min(100, max(0, before + drift))

@@ -274,6 +274,11 @@ enum FamilyDramaSystem {
         state.life.phone.post(answer.line, from: .partner, day: state.day, fromFounder: true)
         var events: [GameEvent] = [.familyConfronted(answer: answer.rawValue, day: state.day)]
         if answer == .leave {
+            // MARK: K7 (partner and diary)
+            // "The settlement follows": keep the marriage as it stood, so
+            // the estate can still be divided once they are gone.
+            snapshotLeaving(&state)
+            // MARK: end K7
             events.append(contentsOf: InteractionSystem.breakUp(
                 state: &state, balance: balance, content: content
             ))
@@ -298,13 +303,16 @@ enum FamilyDramaSystem {
         balance: BalanceConfig,
         content: ContentCatalog
     ) -> [GameEvent] {
-        guard state.life.family.stage != .single, !state.familyDrama.isDivorced
+        // MARK: K7 (partner and diary)
+        // The marriage as it stands — or as it stood the night a bag was
+        // packed. Everything the breakup below wipes is read from here.
+        if state.life.family.stage != .single { snapshotLeaving(&state) }
+        guard let leaving = state.familyDrama.leaving, !state.familyDrama.isDivorced
         else { return [] }
+        // MARK: end K7
         let config = balance.familyDrama
-        let exName = state.life.family.partnerName ?? "your ex"
-        let marriedDays = state.life.family.stage == .married
-            ? max(0, state.day - state.life.family.stageSinceDay)
-            : 0
+        let exName = leaving.exName
+        let marriedDays = leaving.marriedDays
         // Their side hires one tier off yours, which is what money does.
         let theirLawyer = opposingLawyer(for: lawyer, state: &state)
         let fee = FamilyDrama.lawyerFee(lawyer, balance: config)
@@ -386,7 +394,10 @@ enum FamilyDramaSystem {
         let equity = FamilyDrama.equityToEx(
             marriedDays: marriedDays,
             equityRemaining: state.investors.equityRemaining,
-            balance: config
+            balance: config,
+            // MARK: K7 (partner and diary) — they worked here: a co-founder in all but name.
+            ignoresMarriedDays: leaving.wasOnPayroll
+            // MARK: end K7
         )
         if equity > 0 {
             state.investors.equityRemaining = max(0, state.investors.equityRemaining - equity)
@@ -406,6 +417,12 @@ enum FamilyDramaSystem {
             theirLawyer: theirLawyer.rawValue,
             exName: exName
         )
+        // MARK: K7 (partner and diary)
+        // The ex stays in the address book, from their stored seed.
+        let exContactID = exContact(from: leaving, state: &state, balance: balance)
+        state.familyDrama.settlement?.exContactID = exContactID
+        state.familyDrama.leaving = nil
+        // MARK: end K7
         // The in-laws were the partner's. They go with them.
         state.familyDrama.kin.removeAll { $0.kind?.isInLaw == true }
         state.life.meters.apply(mood: config.divorceMood)
@@ -845,7 +862,8 @@ extension GameState {
 
     /// Why a divorce would be refused today, or `nil` when it would land.
     public var familyDivorceRefusal: String? {
-        if life.family.stage == .single { return "There is nobody to divorce." }
+        // K7: after a packed bag the settlement still follows.
+        if life.family.stage == .single, familyDrama.leaving == nil { return "There is nobody to divorce." }
         if familyDrama.isDivorced { return "You have done this already." }
         return nil
     }

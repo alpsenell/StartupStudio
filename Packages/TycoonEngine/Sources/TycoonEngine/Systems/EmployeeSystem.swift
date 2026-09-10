@@ -157,6 +157,9 @@ enum EmployeeSystem {
                 // Being close to the person you work for is worth
                 // something on its own.
                 + employee.founderBond * balance.relationships.bondMoraleTargetFactor
+                // MARK: K7 (partner and diary) — the partner on payroll reads affection.
+                + state.partnerMoraleTargetDelta(for: employee, balance: balance)
+                // MARK: end K7
             if ratio < staff.underpaidThreshold {
                 target -= staff.underpaidTargetPenalty
             } else if ratio > staff.wellPaidThreshold {
