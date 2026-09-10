@@ -31,6 +31,11 @@ public struct OfficeHitRegion: Sendable, Equatable, Hashable, Identifiable {
         /// A built amenity's zone: the game room, the cafeteria, the gym.
         case amenity(AmenityStyle)
         // MARK: end K6
+        // MARK: S1 (seating)
+        /// A desk in the grid, by index — empty or not. Only in
+        /// `OfficeSceneInput.seatRegions` scenes (the office's move mode).
+        case desk(Int)
+        // MARK: end S1
 
         public var isPerson: Bool {
             if case .person = self { return true }
@@ -86,6 +91,9 @@ extension OfficeDirector {
         // MARK: K6 (home and rooms)
         if input.roomRegions { regions += roomRegions(input: input) }
         // MARK: end K6
+        // MARK: S1 (seating)
+        if input.seatRegions { regions += deskRegions(for: input.tier) }
+        // MARK: end S1
         for actor in actorFrames(input: input, timing: timing, at: t) {
             regions.append(OfficeHitRegion(
                 kind: .person(actor.id),
@@ -291,6 +299,24 @@ extension OfficeDirector {
         return regions
     }
     // MARK: end K6
+
+    // MARK: S1 (seating)
+
+    /// Every desk in the grid as a whole cell: the chair, the desk and the
+    /// monitor, where a thumb aiming at a desk actually lands. Furniture
+    /// (priority 1): anybody standing or sitting in front of it still wins,
+    /// and the move mode reads a tap on a seated person as their desk.
+    static func deskRegions(for tier: OfficeTierStyle) -> [OfficeHitRegion] {
+        (0..<tier.deskCapacity).map { index in
+            let cell = SceneComposer.cellOrigin(tier: tier, index: index)
+            return OfficeHitRegion(
+                kind: .desk(index), x: cell.x, y: cell.y,
+                width: SceneComposer.Layout.cellWidth, height: SceneComposer.Layout.cellHeight,
+                zIndex: cell.y + SceneComposer.Layout.cellHeight
+            )
+        }
+    }
+    // MARK: end S1
 
     /// Which region a fixed prop is, if it is one.
     static func pressKind(of name: SpriteLibrary.PropName) -> OfficeHitRegion.Kind? {

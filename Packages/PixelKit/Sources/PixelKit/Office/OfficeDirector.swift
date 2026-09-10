@@ -290,6 +290,11 @@ public enum OfficeDirector {
             if index == tier.deskCapacity, pressed == .founderDesk {
                 scene += pressedPlacements(desk, key: "desk", input: input, timing: timing)
                 scene += pressedPlacements(monitor, key: "monitor", input: input, timing: timing)
+            // MARK: S1 (seating) — the desk the move mode has picked.
+            } else if pressed == .desk(index) {
+                scene += pressedPlacements(desk, key: "desk", input: input, timing: timing)
+                scene += pressedPlacements(monitor, key: "monitor", input: input, timing: timing)
+            // MARK: end S1
             } else {
                 scene.append(desk)
                 scene.append(monitor)

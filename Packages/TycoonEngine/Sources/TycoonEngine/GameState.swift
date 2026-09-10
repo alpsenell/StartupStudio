@@ -10,7 +10,52 @@ public struct Company: Codable, Equatable, Sendable {
     public var officeTier: OfficeTier
     /// Consecutive days spent with negative cash. Resets to 0 on recovery.
     public var daysInDebt: Int
+    // MARK: S1 (seating)
+    /// Who the player has put at which desk: employee id → desk index in
+    /// the office grid (`SeatingLayout`). Empty on every run that never
+    /// seated anybody — every bot, every fixture — and then PixelKit seats
+    /// people by its own rule and every seating effect is zero. Encoded as
+    /// a desk-sorted array, and only when non-empty (`Company.encode`).
+    public var seating: [UUID: Int] = [:]
+    // MARK: end S1
 }
+
+// MARK: S1 (seating)
+// `Company` was synthesized `Codable` with five keys; the same five, in
+// the same shape, plus `"seating"` only when somebody has a desk, so a run
+// that never seats anyone writes the bytes it always wrote and an old
+// save decodes an empty map.
+extension Company {
+    private enum CodingKeys: String, CodingKey {
+        case name, cash, reputation, officeTier, daysInDebt, seating
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            name: try c.decode(String.self, forKey: .name),
+            cash: try c.decode(Int.self, forKey: .cash),
+            reputation: try c.decode(Double.self, forKey: .reputation),
+            officeTier: try c.decode(OfficeTier.self, forKey: .officeTier),
+            daysInDebt: try c.decode(Int.self, forKey: .daysInDebt)
+        )
+        let entries = try c.decodeIfPresent([SeatingEntry].self, forKey: .seating) ?? []
+        for entry in entries { seating[entry.employeeID] = entry.desk }
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(name, forKey: .name)
+        try c.encode(cash, forKey: .cash)
+        try c.encode(reputation, forKey: .reputation)
+        try c.encode(officeTier, forKey: .officeTier)
+        try c.encode(daysInDebt, forKey: .daysInDebt)
+        if !seating.isEmpty {
+            try c.encode(SeatingEntry.sorted(seating), forKey: .seating)
+        }
+    }
+}
+// MARK: end S1
 
 /// A single financial posting. Negative amounts are expenses.
 public struct LedgerEntry: Codable, Equatable, Sendable {
@@ -764,6 +809,14 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case officeDowngraded(tier: OfficeTier, day: Int)
     // MARK: end S2
     // MARK: end of Iteration 15
+    // MARK: S1 (seating)
+    /// Somebody changed desks. `swappedWithID` is whoever sat there before
+    /// and took the mover's old desk.
+    case seatingMoved(employeeID: UUID, desk: Int, swappedWithID: UUID?, day: Int)
+    /// The seating plan was torn up: people sit where the office puts them
+    /// again, and nobody's neighbours matter.
+    case seatingCleared(day: Int)
+    // MARK: end S1
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12

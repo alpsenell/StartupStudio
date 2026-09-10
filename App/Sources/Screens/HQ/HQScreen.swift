@@ -37,6 +37,9 @@ struct HQScreen: View {
                         .hqMeasured("now")
                     OfficeCard(engine: engine)
                         .hqMeasured("office")
+                        // MARK: S1 (seating) — where an `s1-…` screenshot scrolls to.
+                        .id(SeatingDebug.officeID)
+                        // MARK: end S1
                     // MARK: V3 (ux: card weights, the Now card)
                     // C11: below the office, one Company card with three
                     // rows — Burn and runway, Chapter, Journal. Each row
@@ -100,6 +103,15 @@ struct HQScreen: View {
             // V3: `-autoHQBottom` scrolls to Settings, so a headless pass
             // can photograph the bottom of HQ. Debug only.
             .task { await HQDebug.scrollToBottomIfAsked(scroller) }
+            // MARK: S1 (seating)
+            .task {
+                #if DEBUG
+                guard SeatingDebug.route != nil else { return }
+                try? await Task.sleep(for: .seconds(2))
+                scroller.scrollTo(SeatingDebug.officeID, anchor: .top)
+                #endif
+            }
+            // MARK: end S1
             }
         }
     }

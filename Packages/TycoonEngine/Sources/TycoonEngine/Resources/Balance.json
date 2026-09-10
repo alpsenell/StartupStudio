@@ -2147,5 +2147,13 @@
     "moraleDrag": 5.0,
     "moraleDragDays": 91,
     "reputationCost": 3.0
+  },
+  "seating": {
+    "mentorOutputCost": 0.1,
+    "mentorGainScale": 0.5,
+    "grumblerMoraleDelta": -0.1,
+    "friendBondGain": 2.0,
+    "founderBondGain": 2.0,
+    "doorPoachWeight": 60.0
   }
 }

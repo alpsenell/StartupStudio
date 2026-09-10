@@ -73,10 +73,19 @@ public enum OfficeSecretsSystem {
         else { return [] }
         if let last = state.secrets.lastClosedDay, state.day - last < config.gapDays { return [] }
 
-        let eligible = SecretKind.allCases.filter { kind in
+        // `var` for S1 only: the list is read, never written, without a plan.
+        var eligible = SecretKind.allCases.filter { kind in
             !state.secrets.history.contains(kind.rawValue) && canStart(kind, state, balance)
         }
         guard !eligible.isEmpty else { return [] }
+        // MARK: S1 (seating)
+        // Two friends at neighbouring desks are where the romance and the
+        // clique start: each is in the pick twice. Reweights the one draw
+        // below; adds none. Unchanged with no plan.
+        if !state.seatingFriendPairs().isEmpty {
+            eligible += eligible.filter { $0 == .romance || $0 == .clique }
+        }
+        // MARK: end S1
 
         var rng = stream(state, 0x5EC1_5EC1)
         guard rng.nextUniform() < config.startChance else { return [] }
@@ -165,6 +174,9 @@ public enum OfficeSecretsSystem {
     /// the romance.
     private static func pair(in state: GameState) -> (senior: UUID, junior: UUID)? {
         let byID = Dictionary(uniqueKeysWithValues: state.employees.map { ($0.id, $0) })
+        // MARK: S1 (seating) — pairs at neighbouring desks first; nobody is, with no plan.
+        let seatedTogether = Set(state.seatingFriendPairs().map { "\($0.a.uuidString)|\($0.b.uuidString)" })
+        // MARK: end S1
         let candidates = state.friendships
             .filter { $0.strength >= 55 }
             .compactMap { friendship -> (senior: UUID, junior: UUID, strength: Double)? in
@@ -177,13 +189,25 @@ public enum OfficeSecretsSystem {
                 return (senior.id, junior.id, friendship.strength)
             }
             .sorted {
-                $0.strength != $1.strength
+                // MARK: S1 (seating)
+                let lhsTogether = seatedTogether.contains(Self.seatingPairKey($0.senior, $0.junior))
+                let rhsTogether = seatedTogether.contains(Self.seatingPairKey($1.senior, $1.junior))
+                if lhsTogether != rhsTogether { return lhsTogether }
+                // MARK: end S1
+                return $0.strength != $1.strength
                     ? $0.strength > $1.strength
                     : $0.senior.uuidString < $1.senior.uuidString
             }
         guard let best = candidates.first else { return nil }
         return (best.senior, best.junior)
     }
+
+    // MARK: S1 (seating)
+    /// The key `GameState.seatingFriendPairs` pairs are compared by.
+    private static func seatingPairKey(_ x: UUID, _ y: UUID) -> String {
+        x.uuidString < y.uuidString ? "\(x.uuidString)|\(y.uuidString)" : "\(y.uuidString)|\(x.uuidString)"
+    }
+    // MARK: end S1
 
     /// The newest hire, if they are new enough to still be new.
     private static func newestHire(_ state: GameState) -> Employee? {
@@ -255,8 +279,18 @@ public enum OfficeSecretsSystem {
             return [pick.id]
         case .clique:
             guard let newest = newestHire(state) else { return [] }
-            let others = hired.filter { $0.id != newest.id }
+            // `var` for S1 only: the order is untouched without a plan.
+            var others = hired.filter { $0.id != newest.id }
                 .sorted { ($0.hiredDay, $0.id.uuidString) < ($1.hiredDay, $1.id.uuidString) }
+            // MARK: S1 (seating)
+            // The table forms round the friends who sit together: the
+            // strongest pair at neighbouring desks goes first.
+            if let pair = state.seatingFriendPairs().first(where: { $0.a != newest.id && $0.b != newest.id }) {
+                let table = [pair.a, pair.b]
+                others = table.compactMap { id in others.first { $0.id == id } }
+                    + others.filter { !table.contains($0.id) }
+            }
+            // MARK: end S1
             // The ringleader first, then whoever else is at the table, then
             // the person outside it — last, so `employeeIDs.last` is always
             // the one being left out.

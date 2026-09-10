@@ -33,6 +33,11 @@ struct EmployeeManageSheet: View {
                         LadderOptionsSection(engine: engine, employee: employee)
                     }
                     // MARK: end K3
+                    // MARK: S1 (seating) — DEBUG `-autoRoute s1-desk`: the Desk section first.
+                    if SeatingDebug.liftsDeskSection {
+                        SeatingDeskSection(engine: engine, employee: employee)
+                    }
+                    // MARK: end S1
                     headerSection(employee)
                     traitSection(employee)
                     moraleSection(employee)
@@ -54,6 +59,11 @@ struct EmployeeManageSheet: View {
                         LadderOptionsSection(engine: engine, employee: employee)
                     }
                     // MARK: end K3
+                    // MARK: S1 (seating) — where they sit, and the move to any other desk.
+                    if !SeatingDebug.liftsDeskSection {
+                        SeatingDeskSection(engine: engine, employee: employee)
+                    }
+                    // MARK: end S1
                     trainingSection(employee)
                     fireSection(employee)
                 }

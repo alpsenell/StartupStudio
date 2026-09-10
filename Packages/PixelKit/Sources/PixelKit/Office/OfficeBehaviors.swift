@@ -109,6 +109,14 @@ public enum OfficeBehaviors {
         let tier = input.tier
         let founders = input.occupants.filter(\.isFounder)
         let employees = input.occupants.filter { !$0.isFounder }
+        // MARK: S1 (seating)
+        // The player's plan first; everybody it does not name fills the
+        // free desks in the same order as below. With no plan this block
+        // is skipped and the rule is exactly what it always was.
+        if !input.seats.isEmpty {
+            return planned(tier: tier, founders: founders, employees: employees, seats: input.seats)
+        }
+        // MARK: end S1
         let regulars = Array((founders.dropFirst() + employees).prefix(tier.deskCapacity))
 
         var seats: [(Int, Occupant)] = []
@@ -120,6 +128,41 @@ public enum OfficeBehaviors {
         }
         return seats.map { (index: $0.0, occupant: $0.1) }
     }
+
+    // MARK: S1 (seating)
+    /// The seating with a plan: named occupants at their desks (a desk that
+    /// does not exist, or one somebody earlier in desk order already took,
+    /// is ignored), then the rest in order into the free desks, the
+    /// overflow undrawn, the founder at their own desk. Sorted by desk, so
+    /// the result is as deterministic as the rule it replaces.
+    private static func planned(
+        tier: OfficeTierStyle,
+        founders: [Occupant],
+        employees: [Occupant],
+        seats plan: [UUID: Int]
+    ) -> [(index: Int, occupant: Occupant)] {
+        let regulars = Array(founders.dropFirst()) + employees
+        var byDesk: [Int: Occupant] = [:]
+        let named = regulars
+            .compactMap { occupant in plan[occupant.id].map { (desk: $0, occupant: occupant) } }
+            .sorted { ($0.desk, $0.occupant.id.uuidString) < ($1.desk, $1.occupant.id.uuidString) }
+        for seat in named where seat.desk >= 0 && seat.desk < tier.deskCapacity && byDesk[seat.desk] == nil {
+            byDesk[seat.desk] = seat.occupant
+        }
+        let seated = Set(byDesk.values.map(\.id))
+        var next = 0
+        for occupant in regulars where !seated.contains(occupant.id) {
+            while next < tier.deskCapacity, byDesk[next] != nil { next += 1 }
+            guard next < tier.deskCapacity else { break }
+            byDesk[next] = occupant
+        }
+        var seats = byDesk.keys.sorted().map { (index: $0, occupant: byDesk[$0]!) }
+        if let founder = founders.first {
+            seats.append((index: tier.deskCapacity, occupant: founder))
+        }
+        return seats
+    }
+    // MARK: end S1
 
     /// Who is actually in the building.
     ///

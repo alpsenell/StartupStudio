@@ -150,6 +150,18 @@ public struct OfficeSceneInput: Sendable, Equatable, Hashable {
     public var roomRegions = false
     // MARK: end K6
 
+    // MARK: S1 (seating)
+    /// Who the player has put at which desk: occupant id → grid desk
+    /// index. Empty by default, and then `OfficeBehaviors.seating(for:)`
+    /// seats people by its own rule exactly as before; anybody the map does
+    /// not name fills the free desks by that same rule.
+    public var seats: [UUID: Int] = [:]
+    /// Whether every desk in the grid is a thing a finger can land on (the
+    /// office card's move mode). Off by default, so every existing caller,
+    /// frame sheet and hit-region test sees the regions it always saw.
+    public var seatRegions = false
+    // MARK: end S1
+
     /// A celebration plus the token that makes it fire once.
     public struct Celebration: Sendable, Equatable, Hashable {
         public var kind: SceneCelebration
@@ -377,6 +389,11 @@ public struct OfficeSceneView: View {
             case .shuttle: "The shuttle"
             }
         // MARK: end K6
+        // MARK: S1 (seating)
+        case .desk(let index):
+            OfficeBehaviors.seating(for: input).first { $0.index == index }
+                .map { "Desk \(index + 1), \($0.occupant.name ?? "somebody")'s" } ?? "Desk \(index + 1), empty"
+        // MARK: end S1
         }
     }
 

@@ -1307,6 +1307,10 @@ struct EventCopy {
             )
         // MARK: end S2
         // MARK: end of Iteration 15
+        // MARK: S1 (seating)
+        case .seatingMoved, .seatingCleared:
+            SeatingCopy.eventLine(event, state: state) ?? fallbackEntry(for: event)
+        // MARK: end S1
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12

@@ -262,6 +262,13 @@ public enum Reducer {
         // MARK: K7 (partner and diary)
         // MARK: end K7
         // MARK: end of Iteration 15
+        // MARK: S1 (seating)
+        // Who sits next to whom: a mentor's lesson, a grumbler's mood, two
+        // friends' bond and the founder's neighbour. Returns at its first
+        // line while `Company.seating` is empty — every bot, every fixture —
+        // and draws nothing either way.
+        SeatingSystem.run,
+        // MARK: end S1
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
@@ -1115,6 +1122,12 @@ public enum Reducer {
             #endif
         // MARK: end S2
         // MARK: end of Iteration 15
+        // MARK: S1 (seating)
+        case let .seatingMove(employeeID, desk):
+            events = SeatingSystem.move(employeeID: employeeID, desk: desk, state: &state)
+        case .seatingClear:
+            events = SeatingSystem.clear(state: &state)
+        // MARK: end S1
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12

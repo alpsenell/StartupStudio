@@ -79,6 +79,12 @@ enum OfficeTapDestination: Equatable, Identifiable {
         case .amenity:
             return .amenities
         // MARK: end K6
+        // MARK: S1 (seating)
+        // A desk is only a region in the move mode, which takes the tap
+        // before it gets here.
+        case .desk:
+            return nil
+        // MARK: end S1
         }
     }
 
@@ -87,6 +93,9 @@ enum OfficeTapDestination: Equatable, Identifiable {
     static func accessibilityHint(for kind: OfficeHitRegion.Kind, state: GameState) -> String? {
         // MARK: Iteration 10 — M6 (the bug hunt)
         if case .bug = kind { return "Squashes it" }
+        // MARK: S1 (seating)
+        if case .desk = kind { return "Moves whoever you picked here, and says what that does first" }
+        // MARK: end S1
         return switch destination(for: kind, state: state) {
         case .person: "Opens their page"
         case .coffee: "Coffee with someone, or dinner for the team"
