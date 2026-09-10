@@ -417,6 +417,16 @@
         }
       }
     },
+    "%@ sits at %@, %@. Tap a desk, or somebody to swap with." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ sits at %2$@, %3$@. Tap a desk, or somebody to swap with."
+          }
+        }
+      }
+    },
     "%@ sold" : {
 
     },
@@ -1106,6 +1116,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@: %2$@, was %3$@"
+          }
+        }
+      }
+    },
+    "%@: %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@."
           }
         }
       }
@@ -1852,6 +1872,9 @@
     "A save of its own, synced through iCloud like the other three." : {
       "comment" : "Front door: what the locked fourth slot is"
     },
+    "A smaller office" : {
+
+    },
     "A stake alone stays ranked. Any other change earns achievements but does not post to leaderboards." : {
 
     },
@@ -2121,6 +2144,9 @@
           }
         }
       }
+    },
+    "Beside a mentor people learn; beside a grumbler they sulk; friends together get closer; the desk by the door is the one a recruiter sees first." : {
+
     },
     "Best case with this crew: %lld out of 100" : {
 
@@ -2815,6 +2841,12 @@
     "Designer" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
     },
+    "Desk" : {
+
+    },
+    "Desks" : {
+
+    },
     "Details" : {
 
     },
@@ -2852,6 +2884,9 @@
 
     },
     "Done" : {
+
+    },
+    "Done moving desks" : {
 
     },
     "Drafted" : {
@@ -3238,6 +3273,9 @@
     "Go before the board" : {
 
     },
+    "Go in" : {
+
+    },
     "Go in with them" : {
 
     },
@@ -3515,6 +3553,12 @@
         }
       }
     },
+    "In storage" : {
+
+    },
+    "In storage: %@" : {
+
+    },
     "In the red" : {
 
     },
@@ -3621,6 +3665,9 @@
     "Keep the date" : {
 
     },
+    "Keep the plan" : {
+
+    },
     "Keep the rule" : {
 
     },
@@ -3693,6 +3740,9 @@
     "Leave the boards?" : {
       "comment" : "Title of the one confirmation before the first bought money in a ranked company"
     },
+    "Leaves the move mode" : {
+
+    },
     "Legal got to it first, which is why it is not worse." : {
 
     },
@@ -3703,6 +3753,12 @@
       "comment" : "Toast after lending the company money"
     },
     "Less" : {
+
+    },
+    "Less rent every week, for a company that looks smaller from the inside and the outside." : {
+
+    },
+    "Let everyone sit anywhere" : {
 
     },
     "Let it go" : {
@@ -3894,6 +3950,42 @@
     "Move" : {
 
     },
+    "Move %@ to %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move %1$@ to %2$@"
+          }
+        }
+      }
+    },
+    "Move %@ to desk %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move %1$@ to desk %2$lld"
+          }
+        }
+      }
+    },
+    "Move down" : {
+
+    },
+    "Move down to the %@ for %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move down to the %1$@ for %2$@"
+          }
+        }
+      }
+    },
+    "Move down: %@" : {
+
+    },
     "Move house and the boxes come with you — the walls do not. You put it all back where you want it." : {
 
     },
@@ -3928,6 +4020,9 @@
 
     },
     "Name an heir" : {
+
+    },
+    "Name it %@" : {
 
     },
     "Name the studio" : {
@@ -4171,6 +4266,9 @@
     "Nobody's at the table." : {
 
     },
+    "Nobody's neighbours matter until you seat somebody. The first move keeps everyone else where they are." : {
+
+    },
     "Non-compete until %@" : {
 
     },
@@ -4202,6 +4300,9 @@
 
     },
     "Not that desperate" : {
+
+    },
+    "Not there" : {
 
     },
     "Not this time" : {
@@ -4558,6 +4659,9 @@
     "Opens the section" : {
 
     },
+    "Opens the studio's profile" : {
+
+    },
     "Opens the system share sheet with the card as a 1080 by 1350 image" : {
 
     },
@@ -4580,6 +4684,9 @@
 
     },
     "Opens what is waiting on you; swipe the notice to see the next one" : {
+
+    },
+    "Opens what the move down saves and costs" : {
 
     },
     "Operating" : {
@@ -4781,6 +4888,9 @@
 
     },
     "Plan a sabbatical" : {
+
+    },
+    "Plan a weekend" : {
 
     },
     "Plan another networking weekend to get back out there." : {
@@ -5351,6 +5461,9 @@
     "Sell-up" : {
       "comment" : "Decision sheet stat: what selling up fetches today"
     },
+    "Sells the office for %@ and rents from then on" : {
+
+    },
     "Sends your year, your score and a link that founds the same company" : {
 
     },
@@ -5469,6 +5582,9 @@
 
     },
     "Shows this product's store page, as a customer sees it" : {
+
+    },
+    "Shows what moving them here would do" : {
 
     },
     "Shuffle" : {
@@ -5840,6 +5956,9 @@
     "Tap a district for its report. Bigger districts are hotter markets; greener ones are more yours." : {
 
     },
+    "Tap a person in the office, then a desk" : {
+
+    },
     "Tap a thing to keep it. Tap the other column first to give something away." : {
 
     },
@@ -5861,6 +5980,9 @@
           }
         }
       }
+    },
+    "Tap somebody, then the desk you want them at. Beside a mentor people learn; beside a grumbler they sulk; the desk by the door is the one a recruiter sees first." : {
+
     },
     "Tap to move it to the armed column" : {
 
@@ -5887,6 +6009,12 @@
 
     },
     "Team, at today's valuation" : {
+
+    },
+    "Tear it up" : {
+
+    },
+    "Tear up the seating plan?" : {
 
     },
     "Technical debt" : {
@@ -6030,6 +6158,9 @@
     "The file couldn't be read. Delete it to free the slot." : {
       "comment" : "Save slot detail for a corrupt file"
     },
+    "The first seat: from now on everybody's neighbours matter, and the room stays as you leave it." : {
+
+    },
     "The first week is still ticking — nothing to report yet." : {
 
     },
@@ -6046,6 +6177,9 @@
       "comment" : "Purchases list: the unlock"
     },
     "The funeral" : {
+
+    },
+    "The garage is as small as it gets." : {
 
     },
     "The garage was free. %@ has outgrown it." : {
@@ -6305,6 +6439,9 @@
     "The will names %@." : {
 
     },
+    "Their desk" : {
+
+    },
     "Their morale target %@ from affection." : {
 
     },
@@ -6486,6 +6623,9 @@
     "This week's ticket" : {
 
     },
+    "Three different names for the same product" : {
+
+    },
     "Three screenshots of the app" : {
 
     },
@@ -6660,6 +6800,9 @@
 
     },
     "View in store" : {
+
+    },
+    "Visit · %@" : {
 
     },
     "W%lld · Y%lld" : {
@@ -7490,6 +7633,9 @@
           }
         }
       }
+    },
+    "… and %lld more" : {
+
     },
     "…and make that the rule" : {
       "comment" : "Third answer to a staff question: apply the firm answer to everyone from now on"
