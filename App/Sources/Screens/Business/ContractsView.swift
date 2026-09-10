@@ -8,19 +8,17 @@ struct ContractsView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
-            BusinessSectionHeader(title: "Active", systemImage: "briefcase.fill")
-            if engine.state.activeContracts.isEmpty {
-                EmptyStateCard(
-                    message: "No active contracts.",
-                    systemImage: "briefcase",
-                    hint: "Accept an offer below to put the team on paid work.",
-                    tint: Theme.accent
-                )
-            } else {
+            // MARK: U1 (ux: the first-hour fixes)
+            // C8: with nothing running, the Active header and its empty
+            // card go. Every running contract is a row on the desk above,
+            // and the desk's empty line says it: "No contracts running."
+            if !engine.state.activeContracts.isEmpty {
+                BusinessSectionHeader(title: "Active", systemImage: "briefcase.fill")
                 ForEach(engine.state.activeContracts) { job in
                     ActiveContractCard(engine: engine, job: job)
                 }
             }
+            // MARK: end U1
 
             BusinessSectionHeader(title: "Offers", systemImage: "envelope.fill")
             if engine.state.contractOffers.isEmpty {

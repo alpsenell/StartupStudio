@@ -224,7 +224,9 @@ struct DeskCard: View {
     var body: some View {
         CardView("On the desk", systemImage: "tray.full.fill") {
             if items.isEmpty {
-                Text("Nothing on the desk.")
+                // U1 (C8): the Contracts section's empty Active card folds
+                // into this line; every running contract is a desk row.
+                Text("Nothing on the desk. No contracts running.")
                     .emptySectionText()
             } else {
                 VStack(spacing: 0) {
