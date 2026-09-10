@@ -67,6 +67,7 @@ struct LifeScreen: View {
         // MARK: W4 (inside)
         case inside
         // MARK: J1 (doors)
+        case door(DoorKind)
         // MARK: end J1
         // MARK: J2 (record)
         // MARK: end J2
@@ -164,6 +165,9 @@ struct LifeScreen: View {
                     // `state.prison` is non-nil.
                     InsideCard(engine: engine) { path = [.inside] }
                     // MARK: J1 (doors)
+                    // The doors waiting on an answer. Nothing at all while
+                    // none is open.
+                    DoorsCard(engine: engine) { path = [.door($0)] }
                     // MARK: end J1
                     // MARK: J2 (record)
                     // MARK: end J2
@@ -240,6 +244,8 @@ struct LifeScreen: View {
                 case .inside:
                     InsideReleaseScreen(engine: engine)
                 // MARK: J1 (doors)
+                case .door(let kind):
+                    DoorSheet(engine: engine, kind: kind)
                 // MARK: end J1
                 // MARK: J2 (record)
                 // MARK: end J2
@@ -383,6 +389,25 @@ struct LifeScreen: View {
             return
         }
         // MARK: J1 (doors)
+        // `-autoRoute door -autoDoor <kind>` opens the door today and
+        // lands on it, once; in the game, the card, a tip and the rail
+        // send `.door(kind)`.
+        // With any other route, `-autoDoor` still opens the door — so the
+        // phone, the journal or the card can be photographed with it.
+        if !tookLaunchRoute, DoorDebug.requestedKind != nil {
+            if case .door = Route.launchRoute {} else { DoorDebug.openIfAsked(engine: engine) }
+        }
+        if !tookLaunchRoute, case .door(let kind)? = Route.launchRoute {
+            tookLaunchRoute = true
+            DoorDebug.openIfAsked(engine: engine)
+            path = [.door(kind)]
+            return
+        }
+        if let route = router.take(where: { if case .door = $0 { true } else { false } }),
+           case .door(let kind) = route {
+            path = [.door(kind)]
+            return
+        }
         // MARK: end J1
         // MARK: J2 (record)
         // MARK: end J2

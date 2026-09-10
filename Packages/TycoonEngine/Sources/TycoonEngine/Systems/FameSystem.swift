@@ -103,6 +103,26 @@ enum FameSystem {
         state.fame.lastInboundWeek = week
     }
 
+    // MARK: J1 (doors)
+
+    /// The fame door, answered yes: the journalist's piece runs with your
+    /// quote in it, and the people who read it are the feed's first
+    /// followers — which is what moves `state.fame` off `.empty`. The post
+    /// itself is drafted by the app and sent through `post`, on a tap.
+    /// Nothing here draws.
+    static func doorOpenFeed(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        guard state.fame == .empty else { return [] }
+        state.fame.followers += DoorRules.fameFollowers
+        state.life.phone.post(
+            "The piece ran. Your quote is the second paragraph. "
+                + "\(DoorRules.fameFollowers) people followed you before lunch.",
+            from: .office, day: state.day
+        )
+        return []
+    }
+
+    // MARK: end J1
+
     // MARK: - Posting
 
     /// Why the founder cannot post right now, or `nil`. The app prints

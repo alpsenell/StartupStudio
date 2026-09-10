@@ -27,6 +27,10 @@ struct LaunchDaySheet: View {
 
     /// How many reviews have been revealed so far.
     @State private var revealed = 0
+    // MARK: J1 (doors)
+    /// Life B5: *Tell people* opens the feed's compose sheet over this one.
+    @State private var tellingPeople = false
+    // MARK: end J1
 
     private var release: ReleaseInfo? {
         if case .released(let info) = product.stage { return info }
@@ -46,6 +50,13 @@ struct LaunchDaySheet: View {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
                     hero
+                    // MARK: J1 (doors)
+                    // The feed, from the moment that wants it. Nothing is
+                    // posted until a row in the compose sheet is tapped.
+                    if release != nil {
+                        DoorTellPeopleRow(engine: engine) { tellingPeople = true }
+                    }
+                    // MARK: end J1
                     if let release {
                         if release.reviews.isEmpty {
                             waitingForReviews(release)
@@ -70,6 +81,11 @@ struct LaunchDaySheet: View {
             }
         }
         .onAppear { start() }
+        // MARK: J1 (doors)
+        .sheet(isPresented: $tellingPeople) {
+            FeedComposeSheet(engine: engine, draft: .launch)
+        }
+        // MARK: end J1
     }
 
     // MARK: - Hero

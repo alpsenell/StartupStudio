@@ -109,6 +109,35 @@ enum DirtyMoneySystem {
         }
     }
 
+    // MARK: J1 (doors)
+
+    /// The shark's door, answered yes: the lane wakes exactly as if the
+    /// founder had opened Finances, and the man who called is the offer on
+    /// the table — no weekly roll, because he has already rung. Nothing
+    /// here draws. A lane that already has a backer, an exit or an offer
+    /// only gets the wake-up.
+    static func doorOffer(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        if !state.dirtyMoney.noticed { state.dirtyMoney.noticed = true }
+        let shark = DirtyMoneyBacker.theShark
+        guard state.dirtyMoney.backer == nil,
+              state.dirtyMoney.exit == nil,
+              state.dirtyMoney.offeredBacker == nil,
+              !state.dirtyMoney.offeredAlready.contains(shark.rawValue)
+        else { return [] }
+        let config = balance.dirtyMoney
+        let payroll = state.employees.reduce(0) { $0 + $1.weeklySalary }
+        let cheque = DirtyMoney.cheque(shark, payroll: payroll, balance: config)
+        let by = state.day + config.offerDays
+        state.dirtyMoney.offerBacker(shark.rawValue, cheque: cheque, respondBy: by)
+        state.dirtyMoney.offeredAlready.append(shark.rawValue)
+        state.life.phone.post(offerText(shark), from: .office, day: state.day)
+        return [.dirtyMoneyOffered(
+            backer: shark.rawValue, cheque: cheque, respondByDay: by, day: state.day
+        )]
+    }
+
+    // MARK: end J1
+
     private static func offerText(_ backer: DirtyMoneyBacker) -> String {
         switch backer {
         case .familyOffice:

@@ -11,6 +11,12 @@ import TycoonEngine
 /// the default, because that is the one worth being seen to name.
 struct FeedComposeSheet: View {
     let engine: GameEngine
+    // MARK: J1 (doors)
+    /// The kind whose post arrives already written (the fame door's yes,
+    /// launch day's *Tell people*): a drafted note above the rows, and
+    /// that row outlined. `nil` is the sheet as it always was.
+    var draft: FamePostKind? = nil
+    // MARK: end J1
 
     @Environment(\.dismiss) private var dismiss
     @State private var subject: String?
@@ -24,6 +30,12 @@ struct FeedComposeSheet: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    // MARK: J1 (doors)
+                    if let draft {
+                        DoorDraftNote(engine: engine, kind: draft)
+                    }
+                    // MARK: end J1
 
                     ForEach(FamePostKind.allCases.filter { $0 != .reply }, id: \.self) { kind in
                         kindRow(kind)
@@ -118,6 +130,14 @@ struct FeedComposeSheet: View {
                 Theme.chipBackground,
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
             )
+            // MARK: J1 (doors)
+            .overlay {
+                if kind == draft {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Theme.accent, lineWidth: 2)
+                }
+            }
+            // MARK: end J1
         }
         .buttonStyle(.pressableRow)
         .disabled(blocker != nil)

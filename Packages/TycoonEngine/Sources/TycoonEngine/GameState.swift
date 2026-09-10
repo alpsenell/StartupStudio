@@ -640,6 +640,12 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case insideReleased(weeksServed: Int, paroled: Bool, day: Int)
 
     // MARK: J1 (doors)
+    /// One of the four doors opened (`DoorKind.rawValue`), and waits for
+    /// an answer until `respondByDay`. Never pauses.
+    case doorOpened(kind: String, respondByDay: Int, day: Int)
+    /// A door was answered (`DoorChoice.rawValue`) — or, `"lapsed"`, the
+    /// deadline answered it.
+    case doorAnswered(kind: String, choice: String, day: Int)
     // MARK: end J1
     // MARK: J2 (record)
     // MARK: end J2
@@ -1158,6 +1164,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// W4 — the founder inside, `nil` otherwise.
     public var prison: PrisonState? = nil
     // MARK: J1 (doors)
+    /// J1 — the four doors into the dormant rooms, and the crunch window
+    /// the vices door reads.
+    public var doors: DoorState = .empty
     // MARK: end J1
     // MARK: J2 (record)
     // MARK: end J2
@@ -1474,6 +1483,7 @@ extension GameState {
         // Iteration 11, wave two
         case dirtyMoney, familyDrama, espionage, prison
         // MARK: J1 (doors)
+        case doors
         // MARK: end J1
         // MARK: J2 (record)
         // MARK: end J2
@@ -1575,6 +1585,7 @@ extension GameState {
         espionage = try container.decodeIfPresent(EspionageState.self, forKey: .espionage) ?? .empty
         prison = try container.decodeIfPresent(PrisonState.self, forKey: .prison)
         // MARK: J1 (doors)
+        doors = try container.decodeIfPresent(DoorState.self, forKey: .doors) ?? .empty
         // MARK: end J1
         // MARK: J2 (record)
         // MARK: end J2
@@ -1695,6 +1706,7 @@ extension GameState {
         if espionage != .empty { try container.encode(espionage, forKey: .espionage) }
         try container.encodeIfPresent(prison, forKey: .prison)
         // MARK: J1 (doors)
+        if doors != .empty { try container.encode(doors, forKey: .doors) }
         // MARK: end J1
         // MARK: J2 (record)
         // MARK: end J2

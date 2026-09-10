@@ -346,6 +346,23 @@ enum AssetsSystem {
         return []
     }
 
+    // MARK: J1 (doors)
+
+    /// The vices door, answered yes: the room is engaged exactly as the
+    /// screen would engage it, and the habit a launch party feeds most
+    /// starts at what one launch party adds. Nothing draws.
+    static func doorEngage(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        let events = noticeOpened(&state)
+        guard let def = balance.assets.vices.max(by: { $0.perLaunch < $1.perLaunch }),
+              def.perLaunch > 0
+        else { return events }
+        let seeded = max(state.assets.dependency(def.id), def.perLaunch)
+        state.assets.setDependency(def.id, seeded)
+        return events
+    }
+
+    // MARK: end J1
+
     /// Buys a car, a property or a pet from the catalog with the
     /// founder's own money. A pet is given a name on `socialRNG`; nothing
     /// else here draws.

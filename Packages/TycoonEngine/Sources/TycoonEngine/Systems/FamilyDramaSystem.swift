@@ -684,6 +684,48 @@ enum FamilyDramaSystem {
         return [.familyFuneralSettled(choice: answer.rawValue, day: state.day)]
     }
 
+    // MARK: J1 (doors)
+
+    /// The care door, answered: the room opens at the care beat, and the
+    /// founder has already said how. The home is the bill `parentsAge`
+    /// would have raised; the spare room is an evening a week (booked by
+    /// `DoorSystem`); the sibling is a bond. `careSinceDay` is set either
+    /// way, so the room never asks the same question twice.
+    static func doorCare(
+        _ choice: DoorChoice,
+        relation: FamilyRelation,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        var events = openRoom(state: &state, balance: balance, content: content)
+        let config = balance.familyDrama
+        state.familyDrama.upsert(relation) {
+            $0.careSinceDay = state.day
+            $0.lastSeenDay = state.day
+        }
+        switch choice {
+        case .careHome:
+            state.familyDrama.careWeeklyBill += config.careWeeklyBill
+            state.narrative.flags.insert(FamilyDrama.careFlag)
+            events.append(.familyCareStarted(
+                relation: relation.rawValue,
+                name: state.familyRelativeName(relation, content: content),
+                weekly: config.careWeeklyBill,
+                day: state.day
+            ))
+        case .careSibling:
+            state.familyDrama.upsert(.sibling) {
+                $0.bond = min(100, max(0, $0.bond + DoorRules.careSiblingBond))
+            }
+        case .careSpareRoom, .accept, .decline, .lapsed:
+            break
+        }
+        return events
+    }
+
+    // MARK: end J1
+
     // MARK: - The screenshot pass
 
     #if DEBUG

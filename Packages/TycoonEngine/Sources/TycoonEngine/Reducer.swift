@@ -211,6 +211,12 @@ public enum Reducer {
         // MARK: W4 (inside)
 
         // MARK: J1 (doors)
+
+        // The four doors: the crunch window, the deadlines, and — from
+        // day 90 — at most one new door a day. Draws nothing; returns on
+        // its first line until the app has sent `.armDoors`, which no
+        // bot, replay or test does.
+        DoorSystem.run,
         // MARK: end J1
         // MARK: J2 (record)
         // MARK: end J2
@@ -875,6 +881,17 @@ public enum Reducer {
             #endif
 
         // MARK: J1 (doors)
+        case .armDoors:
+            if !state.doors.armed { state.doors.armed = true }
+            events = []
+        case let .answerDoor(kind, choice):
+            events = DoorSystem.answer(kind, choice, state: &state, balance: balance, content: content)
+        case let .openDoor(kind):
+            #if DEBUG
+            events = DoorSystem.debugOpen(kind, state: &state, content: content)
+            #else
+            events = []
+            #endif
         // MARK: end J1
         // MARK: J2 (record)
         // MARK: end J2
