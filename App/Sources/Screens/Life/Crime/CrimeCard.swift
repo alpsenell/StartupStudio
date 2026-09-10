@@ -102,7 +102,7 @@ struct CrimeCard: View {
         let legal = hasLegal ? " Legal is halving it." : ""
         let spotlight = state.standingSpotlight(balance: engine.balance)
         let lit = spotlight > 1
-            ? " Fame puts ×\(spotlight.formatted(.number.precision(.fractionLength(2)))) on it."
+            ? " Fame puts ×\(spotlight.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))) on it."
             : ""
         return "\(open.count) thing\(open.count == 1 ? "" : "s") still open · about \(percent)% somebody notices this week.\(legal)\(lit)"
         // MARK: end J2

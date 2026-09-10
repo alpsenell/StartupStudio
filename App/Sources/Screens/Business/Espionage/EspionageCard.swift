@@ -170,7 +170,7 @@ private struct EspionageOperationRow: View {
                             .foregroundStyle(.tertiary)
                         // MARK: J2 (record)
                         if spotlight > 1 {
-                            Text("Spotlight ×\(spotlight.formatted(.number.precision(.fractionLength(2)))) · "
+                            Text("Spotlight ×\(spotlight.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))) · "
                                  + "the famous are easier to follow")
                                 .font(Theme.Typography.number(.caption2, weight: .regular))
                                 .foregroundStyle(Theme.warning)
