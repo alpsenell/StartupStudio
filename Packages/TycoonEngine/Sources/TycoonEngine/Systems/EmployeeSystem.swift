@@ -575,6 +575,9 @@ enum EmployeeSystem {
         let crewIDs = state.employees
             .filter { if case .product(let id) = $0.assignment { return id == productID }; return false }
             .map(\.id)
+        // MARK: S1 (seating) — who is teaching today; empty with no plan.
+        let seatingMentors = state.seatingMentorIDs(balance: balance)
+        // MARK: end S1
 
         var out = CrewOutput()
         for index in state.employees.indices {
@@ -591,6 +594,9 @@ enum EmployeeSystem {
                 : state.employees[index].performanceMultiplier(balance: balance))
                 * friendFactor
                 * TraitEffects.outputFactor(state.employees[index], content: content)
+                // MARK: S1 (seating) — a mentor's lesson costs their own output; exactly 1 otherwise.
+                * GameState.seatingOutputFactor(state.employees[index].id, mentors: seatingMentors, balance: balance)
+                // MARK: end S1
             let skills = state.employees[index].skills
             let role = state.employees[index].role
             let yield = company.roleYield(role)
@@ -700,6 +706,9 @@ enum EmployeeSystem {
                 crewSizes[id, default: 0] += 1
             }
         }
+        // MARK: S1 (seating) — who is teaching today; empty with no plan.
+        let seatingMentors = state.seatingMentorIDs(balance: balance)
+        // MARK: end S1
 
         for index in state.employees.indices {
             guard case .contract(let contractID) = state.employees[index].assignment,
@@ -717,6 +726,9 @@ enum EmployeeSystem {
             let factor = (isFounder
                 ? founderFactor
                 : state.employees[index].performanceMultiplier(balance: balance)) * friendFactor
+                // MARK: S1 (seating) — a mentor's lesson costs their own output; exactly 1 otherwise.
+                * GameState.seatingOutputFactor(state.employees[index].id, mentors: seatingMentors, balance: balance)
+                // MARK: end S1
 
             let skills = state.employees[index].skills
             let yield = balance.company.roleYield(state.employees[index].role)

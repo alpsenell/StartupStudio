@@ -1272,6 +1272,9 @@ enum RivalSystem {
     /// id string so the pick replays identically.
     private static func poachTarget(_ state: GameState, _ balance: BalanceConfig) -> Employee? {
         let config = balance.rivals
+        // MARK: S1 (seating) — the desk by the door; nil with no plan.
+        let seatingDoorID = state.seatingDoorOccupantID()
+        // MARK: end S1
         return state.employees
             .filter { !$0.isFounder }
             .map { employee -> (score: Double, employee: Employee) in
@@ -1286,6 +1289,9 @@ enum RivalSystem {
                     // MARK: K3 (the ladder) — a holder's unvested options; 0 for everyone else.
                     + state.ladderPoachScoreDelta(employee, fairPay: fairPay, underpaidWeight: config.poachUnderpaidWeight, balance: balance)
                     // MARK: end K3
+                    // MARK: S1 (seating) — the first desk a recruiter sees; 0 for everyone else.
+                    + (employee.id == seatingDoorID ? balance.seating.doorPoachWeight : 0)
+                    // MARK: end S1
                 return (score, employee)
             }
             .max { lhs, rhs in

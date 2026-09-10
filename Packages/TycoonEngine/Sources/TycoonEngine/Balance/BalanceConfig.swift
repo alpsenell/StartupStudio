@@ -2052,6 +2052,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end K7
     // MARK: end of Iteration 15
+    // MARK: S1 (seating)
+    /// Iteration 16 — S1: who sits next to whom
+    /// (`BalanceConfig+Seating.swift`). Inline default, so `"seating"` is
+    /// an optional key; read only once a player has seated somebody.
+    public var seating: SeatingBalance = .default
+    // MARK: end S1
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12

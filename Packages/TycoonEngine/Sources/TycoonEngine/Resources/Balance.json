@@ -2140,5 +2140,13 @@
     "letterHealth": 40.0,
     "letterLeadDays": 7,
     "letterCooldownDays": 180
+  },
+  "seating": {
+    "mentorOutputCost": 0.1,
+    "mentorGainScale": 1.0,
+    "grumblerMoraleDelta": -0.1,
+    "friendBondGain": 2.0,
+    "founderBondGain": 2.0,
+    "doorPoachWeight": 60.0
   }
 }

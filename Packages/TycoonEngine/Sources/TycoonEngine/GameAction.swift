@@ -718,6 +718,18 @@ public enum GameAction: Codable, Equatable, Sendable {
     case partnerDebugSeed(stage: String)
     // MARK: end K7
     // MARK: end of Iteration 15
+    // MARK: S1 (seating)
+    /// Puts `employeeID` at `desk` in the office grid; whoever sat there
+    /// takes the mover's old desk. The first move writes today's whole
+    /// room into `Company.seating`, so nobody else shifts, and from then on
+    /// neighbours matter (`SeatingSystem`). Refused with
+    /// `GameState.seatingMoveBlocker`'s reason. Sent only from the app.
+    case seatingMove(employeeID: UUID, desk: Int)
+    /// Tears the plan up: `Company.seating` back to empty, the office's own
+    /// rule seats everyone, and every seating effect stops. Sent only from
+    /// the app.
+    case seatingClear
+    // MARK: end S1
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12
