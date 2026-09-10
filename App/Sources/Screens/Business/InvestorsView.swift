@@ -175,6 +175,9 @@ struct InvestorsView: View {
                             // no seat, bought back like any other round.
                             if round.isEmeritus {
                                 Text("KEPT STAKE")
+                            // MARK: K4 (deals and exits)
+                            if round.isDealPaper {
+                                Text("PAPER")
                                     .font(.caption2.weight(.bold))
                                     .kerning(0.5)
                                     .foregroundStyle(Theme.accent)
@@ -183,6 +186,7 @@ struct InvestorsView: View {
                                     .background(Theme.chipBackground, in: Capsule())
                             }
                             // MARK: end K5
+                            // MARK: end K4
                             Spacer()
                             Text(round.amount.money)
                                 .font(Theme.Typography.number(.subheadline))
@@ -191,6 +195,14 @@ struct InvestorsView: View {
                             .font(.caption)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
+                        // MARK: K4 (deals and exits)
+                        if round.isDealPaper {
+                            Text("Paid for their studio in stock, not cash · expects a ship every quarter")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        // MARK: end K4
                         buybackButton(round)
                     }
                     .accessibilityElement(children: .contain)

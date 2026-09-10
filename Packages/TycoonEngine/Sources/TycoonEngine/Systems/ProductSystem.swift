@@ -408,7 +408,11 @@ enum ProductSystem {
         // reputable studio and from a more ambitious kind of product, docks
         // a fraction of any shortfall, and grants a hype bonus. Reputation
         // here is the pre-nudge value.
-        let hypeAtLaunch = dev.hype
+        // MARK: K4 (deals and exits)
+        // A company with a for-sale sign up launches to a shrug. Exactly
+        // ×1 while no sign stands.
+        let hypeAtLaunch = dev.hype * state.dealLaunchHypeFactor(balance: balance)
+        // MARK: end K4
         let expected = balance.reviewExpectationBase
             + balance.reviewExpectationPerYear * Double(state.year - 1)
             + balance.reviewExpectationRepFactor * state.company.reputation

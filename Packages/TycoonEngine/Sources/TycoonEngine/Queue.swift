@@ -40,6 +40,11 @@ public enum QueueKind: String, Codable, Equatable, Sendable, CaseIterable {
     /// sell something (armed runs only).
     case rescue
     // MARK: end K1
+    // MARK: K4 (deals and exits)
+    /// Iteration 15 — K4 (A4): in the red, the sell-up against the grace
+    /// period. Last in the kind order, so no older tie moves.
+    case sellUp
+    // MARK: end K4
 }
 
 /// How the app answers a question: a sheet over whatever tab is open, or a
@@ -293,6 +298,23 @@ public enum QueueBoard {
                 surface: .room
             ))
         }
+
+        // MARK: K4 (deals and exits)
+        // From the first day in the red: sell up today, or ride the grace
+        // period. Both numbers are balance keys, so only a caller with the
+        // balance (the decision sheet, and the rail through it) lists it.
+        if let balance, let offer = state.dealSellUpOffer(balance: balance) {
+            let start = day - state.company.daysInDebt + 1
+            entries.append(QueueEntry(
+                id: "sellup-\(start)",
+                kind: .sellUp, severity: .critical,
+                title: "In the red: sell up or ride it", category: "money",
+                raisedDay: start, respondByDay: day + offer.daysLeft,
+                defaultLine: "Unanswered, the receiver calls when the grace runs out.",
+                surface: .sheet
+            ))
+        }
+        // MARK: end K4
 
         return entries.sorted(by: precedes)
     }

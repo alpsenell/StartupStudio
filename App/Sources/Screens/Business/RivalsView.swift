@@ -29,6 +29,14 @@ struct RivalsView: View {
     }
 
     var body: some View {
+        // MARK: K4 (deals and exits)
+        // A sign that is up leads the segment; one that is not waits at
+        // the foot, after the studios that might bid.
+        if engine.state.rivals.listing != nil || DealDebug.cardLeads {
+            BusinessSectionHeader(title: engine.state.rivals.listing != nil ? "For sale" : "Sell the company", systemImage: "signpost.right.fill")
+            DealSignCard(engine: engine)
+        }
+        // MARK: end K4
         if !contestedTopics.isEmpty {
             BusinessSectionHeader(title: "Head to head", systemImage: "chart.bar.xaxis")
             ForEach(contestedTopics, id: \.topicID) { entry in
@@ -50,6 +58,12 @@ struct RivalsView: View {
                 RivalCard(engine: engine, rival: rival)
             }
         }
+        // MARK: K4 (deals and exits)
+        if engine.state.rivals.listing == nil && !DealDebug.cardLeads {
+            BusinessSectionHeader(title: "Sell the company", systemImage: "signpost.right.fill")
+            DealSignCard(engine: engine)
+        }
+        // MARK: end K4
     }
 }
 

@@ -526,6 +526,10 @@ private struct RivalDealCard: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                // MARK: K4 (deals and exits)
+                // Paper beside cash, and what this studio bids for a sign.
+                DealProfileRows(engine: engine, rival: rival)
+                // MARK: end K4
             }
         }
         .confirmationDialog(

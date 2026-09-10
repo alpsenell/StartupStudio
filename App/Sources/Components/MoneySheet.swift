@@ -73,6 +73,10 @@ struct MoneySheetContent: View {
                     if worstDebt >= 1 {
                         row(String(localized: "Technical debt", comment: "Money sheet row: the worst codebase debt score"), "\(Int(worstDebt.rounded()))", tint: Theme.warning)
                     }
+                    // MARK: K4 (deals and exits)
+                    // In the red: the sell-up, its price and what waiting costs.
+                    DealSellUpRow(engine: engine)
+                    // MARK: end K4
                 }
             }
 

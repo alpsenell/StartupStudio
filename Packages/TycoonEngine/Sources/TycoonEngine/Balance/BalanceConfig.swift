@@ -2020,6 +2020,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end K3
     // MARK: K4 (deals and exits)
+
+    /// Iteration 15 — K4: the for-sale sign, the sell-up and the stock
+    /// deal (`BalanceConfig+Deals.swift`). Inline default, so `"deals"` is
+    /// an optional key; read only behind a verb the player chose.
+    public var deals: DealsBalance = .default
+
     // MARK: end K4
     // MARK: K5 (hand over the keys)
     // MARK: end K5

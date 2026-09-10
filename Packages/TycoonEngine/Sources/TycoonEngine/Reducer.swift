@@ -1039,6 +1039,16 @@ public enum Reducer {
             )
         // MARK: end K3
         // MARK: K4 (deals and exits)
+        case let .listForSale(askMultiple):
+            events = RivalSystem.dealListForSale(askMultiple: askMultiple, state: &state, balance: balance)
+        case .takeDownSign:
+            events = RivalSystem.dealTakeDownSign(state: &state)
+        case .sellUp:
+            events = RivalSystem.dealSellUp(state: &state, balance: balance)
+        case let .acquireRivalForStock(rivalID):
+            events = RivalSystem.dealAcquireForStock(
+                rivalID: rivalID, state: &state, balance: balance, content: content
+            )
         // MARK: end K4
         // MARK: K5 (hand over the keys)
         case let .handOverKeys(successorID, keptPercent, predecessorRunID):

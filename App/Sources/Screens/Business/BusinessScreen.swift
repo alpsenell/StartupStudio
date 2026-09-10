@@ -323,6 +323,12 @@ struct BusinessScreen: View {
         // MARK: K3 (the ladder)
         // MARK: end K3
         // MARK: K4 (deals and exits)
+        // `-autoRoute forsale`: the Rivals segment, where the sign lives.
+        if router.pendingPush == nil && !landed && Route.launchRoute == .rivals {
+            section = .rivals
+            landed = true
+            return
+        }
         // MARK: end K4
         // MARK: K5 (hand over the keys)
         // MARK: end K5

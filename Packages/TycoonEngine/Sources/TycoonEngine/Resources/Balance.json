@@ -2092,5 +2092,28 @@
     "breakGymEnergy": 5.0,
     "breakDayFactor": 0.5,
     "breakCooldownDays": 7
+  },
+  "deals": {
+    "askMin": 0.8,
+    "askMax": 1.6,
+    "bidIntervalDays": 28,
+    "bidBase": 0.9,
+    "bidStep": 0.1,
+    "buyerSizeFactor": 1.5,
+    "liquidatorFraction": 0.5,
+    "moralePerWeek": 1.0,
+    "moraleDragCap": 12.0,
+    "poachFactor": 1.5,
+    "launchHypeFactor": 0.9,
+    "boardPressure": 5.0,
+    "sellUpFraction": 0.5,
+    "sellUpLiquidatorFraction": 0.4,
+    "sellUpWeeklyFactor": 0.9,
+    "bankruptcyRapportHaircut": 20.0,
+    "stockPremium": 1.3,
+    "stockMaxEquity": 25.0,
+    "stockMinKept": 20.0,
+    "stockFounderRapport": 60.0,
+    "stockPatienceWeeks": 26
   }
 }

@@ -126,6 +126,11 @@ enum RivalSystem {
 
         events.append(contentsOf: poachCheck(&state, balance, content))
         events.append(contentsOf: buyoutCheck(&state, balance))
+        // MARK: K4 (deals and exits)
+        // The for-sale sign: after the approach, so a rival's own offer
+        // on the same day keeps the desk. Returns at once unless listed.
+        events.append(contentsOf: dealListingCheck(&state, balance))
+        // MARK: end K4
         return events
     }
 
@@ -1233,8 +1238,13 @@ enum RivalSystem {
         // unchanged either way, so the `worldRNG` stream never moves.
         let awayFactor = SabbaticalEffects.poachChanceFactor(state, balance: balance)
         // MARK: end Iteration 9 — L6
+        // MARK: K4 (deals and exits)
+        // A company with a for-sale sign up is a company recruiters call.
+        // Exactly 1 while no sign stands, so the comparison is unchanged.
+        let listedFactor = state.dealPoachFactor(balance: balance)
+        // MARK: end K4
         let roll = state.worldRNG.nextUniform()
-        guard roll < config.poachChance * resistance * appetite * awayFactor else { return [] }
+        guard roll < config.poachChance * resistance * appetite * awayFactor * listedFactor else { return [] }
 
         let fairPay = EmployeeSystem.fairWeeklyPay(for: target, balance: balance)
         let premium = config.poachPremiumMin
@@ -1393,8 +1403,9 @@ enum RivalSystem {
             exits.strategicPremiumMin
                 + state.worldRNG.nextUniform() * (exits.strategicPremiumMax - exits.strategicPremiumMin)
         } else {
-            config.offerFractionMin
-                + state.worldRNG.nextUniform() * (config.offerFractionMax - config.offerFractionMin)
+            // K4: extracted (`distressFraction`), the same draw and the
+            // same arithmetic, so the sell-up can price the midpoint.
+            distressFraction(config, uniform: state.worldRNG.nextUniform())
         }
         let amount = max(1000, Int((Double(valuation) * multiplier).rounded()))
         let offer = BuyoutOffer(
@@ -1528,6 +1539,21 @@ enum RivalSystem {
             category: .other,
             label: "Acquired \(rival.name)"
         ))
+        return absorbRival(at: rivalIndex, state: &state, balance: balance, content: content)
+    }
+
+    /// What every acquisition does once it is paid for, cash or paper:
+    /// the reputation bonus, part of their team, the shelf that beats
+    /// yours, and the rival off the board for good. Draws as
+    /// `acquireRival` describes.
+    private static func absorbRival(
+        at rivalIndex: Int,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        let config = balance.rivals
+        let rival = state.rivals.rivals[rivalIndex]
         state.company.reputation = clamp(
             state.company.reputation + config.acquireRepBonus, min: 0, max: 100
         )
@@ -1680,6 +1706,177 @@ enum RivalSystem {
             return lhs.id.uuidString < rhs.id.uuidString
         }
     }
+
+    // MARK: K4 (deals and exits)
+
+    /// The distress bid's fraction of valuation, `uniform` 0…1 across
+    /// `offerFractionMin…Max`. `buyoutCheck` passes its draw; the sell-up
+    /// passes the midpoint and draws nothing.
+    static func distressFraction(_ config: BalanceConfig.RivalBalance, uniform: Double) -> Double {
+        config.offerFractionMin + uniform * (config.offerFractionMax - config.offerFractionMin)
+    }
+
+    /// The for-sale sign's bids, daily while it stands (`Deals.swift`).
+    /// Draws nothing: every `bidIntervalDays`, with nothing else on the
+    /// desk, the bid lands on `pendingBuyout` and the board takes
+    /// `deals.boardPressure`. (The morale drag is `EmployeeSystem`'s
+    /// target; the poach odds are `poachCheck`'s; launch hype is the
+    /// ship's.)
+    private static func dealListingCheck(_ state: inout GameState, _ balance: BalanceConfig) -> [GameEvent] {
+        guard var listing = state.rivals.listing, state.epilogue == nil else { return [] }
+        let deals = balance.deals
+        let elapsed = state.day - listing.sinceDay
+        guard elapsed > 0 else { return [] }
+        var events: [GameEvent] = []
+        let interval = max(1, deals.bidIntervalDays)
+        if elapsed % interval == 0, state.rivals.pendingBuyout == nil,
+           let bid = state.dealListingBid(number: elapsed / interval, balance: balance) {
+            let offer = BuyoutOffer(
+                rivalID: bid.rivalID,
+                amount: bid.amount,
+                respondByDay: state.day + balance.rivals.buyoutResponseDays
+            )
+            state.rivals.pendingBuyout = offer
+            state.rivals.lastBuyoutWasStrategic = bid.isStrategic
+            listing.bids += 1
+            listing.lastBid = bid.amount
+            dealBoardPressure(&state, balance)
+            events.append(.buyoutOffered(
+                rivalID: bid.rivalID, amount: bid.amount, respondByDay: offer.respondByDay, day: state.day
+            ))
+        }
+        state.rivals.listing = listing
+        return events
+    }
+
+    /// The board reads the papers: `deals.boardPressure` when the sign goes
+    /// up and with every bid, when there is a board.
+    private static func dealBoardPressure(_ state: inout GameState, _ balance: BalanceConfig) {
+        guard state.investors.hasBoard, balance.deals.boardPressure > 0 else { return }
+        state.investors.boardPressure = min(
+            balance.investors.boardOustPressure,
+            state.investors.boardPressure + balance.deals.boardPressure
+        )
+    }
+
+    /// Hangs the sign. Refused for the reasons `dealListingBlocker` says.
+    static func dealListForSale(
+        askMultiple: Double,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard state.dealListingBlocker(balance: balance) == nil else { return [] }
+        let ask = GameState.dealClampedAsk(askMultiple, balance: balance)
+        let price = Int((Double(state.companyValuation(balance: balance)) * ask).rounded())
+        state.rivals.listing = DealListing(askingPrice: price, askMultiple: ask, sinceDay: state.day)
+        dealBoardPressure(&state, balance)
+        return [.dealListed(ask: price, multiple: ask, day: state.day)]
+    }
+
+    /// Takes the sign down. Ignored with no sign up.
+    static func dealTakeDownSign(state: inout GameState) -> [GameEvent] {
+        guard let listing = state.rivals.listing else { return [] }
+        state.rivals.listing = nil
+        return [.dealSignTakenDown(
+            weeks: max(0, (state.day - listing.sinceDay) / GameState.daysPerWeek), day: state.day
+        )]
+    }
+
+    /// Sells up before the receiver (`dealSellUpOffer`): the run ends as
+    /// *Sold up* today, the wallet and the address book intact. Ignored
+    /// out of the red.
+    static func dealSellUp(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        guard let offer = state.dealSellUpOffer(balance: balance) else { return [] }
+        state.rivals.pendingBuyout = nil
+        state.rivals.lastBuyoutWasStrategic = false
+        state.company.cash += offer.amount
+        state.ledger.post(LedgerEntry(
+            day: state.day,
+            amount: offer.amount,
+            category: .other,
+            label: "Company sale to \(offer.buyerName)"
+        ))
+        state.gameOver = GameOverInfo(
+            day: state.day,
+            reason: "Sold on day \(offer.daysInDebt) of \(offer.graceDays) in the red: "
+                + "\(offer.buyerName) bought the name and the desks for \(offer.amount.dollars).",
+            kind: .soldUp
+        )
+        var events: [GameEvent] = [.dealSoldUp(
+            buyer: offer.buyerName, amount: offer.amount, daysInDebt: offer.daysInDebt, day: state.day
+        )]
+        if let rivalID = offer.rivalID {
+            events.append(.companySold(rivalID: rivalID, amount: offer.amount, day: state.day))
+        }
+        events.append(.gameOver(day: state.day))
+        return events
+    }
+
+    /// Buys a rival with paper (`dealStockTerms`): their founder takes the
+    /// equity and a board seat — a round of `amount 0` that expects a ship
+    /// every quarter, so the review, the pressure and the buyback treat
+    /// them like any seated round — and joins the address book as a
+    /// founder, minted from the rival's own seed on a private stream. Then
+    /// the team and the shelf come over exactly as they do for cash.
+    static func dealAcquireForStock(
+        rivalID: UUID,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let rivalIndex = state.rivals.rivals.firstIndex(where: { $0.id == rivalID }) else { return [] }
+        let rival = state.rivals.rivals[rivalIndex]
+        let terms = state.dealStockTerms(for: rival, balance: balance, content: content)
+        guard terms.isOpen else { return [] }
+        let deals = balance.deals
+        let hadBoard = state.investors.hasBoard
+
+        state.investors.equityRemaining = max(0, state.investors.equityRemaining - terms.equity)
+        state.investors.rounds.append(RaisedRound(
+            investorID: RaisedRound.dealPaperPrefix + rival.id.uuidString,
+            investorName: "\(terms.founderName), ex-\(rival.name)",
+            amount: 0,
+            equity: terms.equity,
+            valuation: state.companyValuation(balance: balance),
+            day: state.day,
+            takesBoardSeat: true,
+            expects: .shipCadence,
+            patienceWeeks: deals.stockPatienceWeeks
+        ))
+        // A first seat starts the clock from today's numbers, as a first
+        // board-seat round does; a room that already sits keeps its own.
+        // No cheque came with it, so no pressure is forgiven.
+        if !hadBoard {
+            state.investors.lastQuarterCash = state.company.cash
+            state.investors.lastQuarterHeadcount = state.headcount
+        }
+
+        var stream = SeededRNG(seed: rival.appearanceSeed)
+        let ceiling = clamp(20 + rival.strength * 0.6, min: 20, max: 90)
+        let skills = SkillSet(coding: ceiling * 0.7, design: ceiling * 0.6, marketing: ceiling)
+        let salary = (Double(balance.salaryBase) + balance.salaryPerSkillPoint * skills.total) * 1.15
+        state.networking.contacts.append(Contact(
+            id: UUID(from: &stream),
+            name: terms.founderName,
+            appearanceSeed: rival.appearanceSeed,
+            archetype: .founder,
+            skills: skills,
+            askingSalary: Int(salary.rounded()),
+            rapport: deals.stockFounderRapport,
+            interest: 50,
+            metDay: state.day,
+            lastMetDay: state.day,
+            isRevealed: true
+        ))
+
+        var events = absorbRival(at: rivalIndex, state: &state, balance: balance, content: content)
+        events.append(.dealPaperSigned(
+            rivalID: rival.id, name: rival.name, founder: terms.founderName, equity: terms.equity, day: state.day
+        ))
+        return events
+    }
+
+    // MARK: end K4
 
     // MARK: J3 (rivals and the market)
     /// The share pass, for `RivalSystem+RivalMarket.swift`: an answered
