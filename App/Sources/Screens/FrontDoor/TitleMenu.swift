@@ -79,7 +79,8 @@ struct TitleMenu {
             // MARK: M4 (leagues)
             Row(id: .league, title: "League", systemImage: "chart.bar.doc.horizontal", isEnabled: Flags.league, action: onLeague),
             // MARK: M5 (morning desk)
-            Row(id: .desk, title: "The desk", systemImage: "tray.full", isEnabled: Flags.desk, action: onDesk),
+            // V2 (C10): the title only — the id, the order and the flag stay.
+            Row(id: .desk, title: "Morning papers", systemImage: "tray.full", isEnabled: Flags.desk, action: onDesk),
             // MARK: end of Iteration 10
         ])
     }

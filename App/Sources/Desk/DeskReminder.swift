@@ -90,8 +90,9 @@ enum DeskReminder {
     private static func schedule(at hour: Int) {
         let content = UNMutableNotificationContent()
         content.title = String(
-            localized: "The desk is set",
-            comment: "Title of the one daily notification the morning desk sends"
+            // V2 (C10): "Morning papers", so "the desk" means Business alone.
+            localized: "The morning papers are in",
+            comment: "Title of the one daily notification the morning papers send"
         )
         content.body = String(
             localized: "One message, one decision, one tap.",

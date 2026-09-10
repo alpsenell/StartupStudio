@@ -48,7 +48,8 @@ struct MorningDeskSheet: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .background(Theme.screenBackground.ignoresSafeArea())
-            .navigationTitle("The desk")
+            // V2 (C10): "Morning papers", so "the desk" means Business alone.
+            .navigationTitle("Morning papers")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -81,7 +82,7 @@ struct MorningDeskSheet: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 PixelText(text: greeting, scale: 3, color: Theme.pixelAccent)
                 Text(board.isCleared
-                     ? "That is the desk. See you tomorrow."
+                     ? "The papers are read. See you tomorrow."
                      : "One message, one decision, one tap. A minute, and out.")
                     .font(.footnote)
                     .foregroundStyle(Theme.pixelInk.opacity(0.8))
@@ -228,7 +229,7 @@ struct MorningDeskSheet: View {
         PixelPanel(paper: Theme.pixelAccent) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 PixelText(
-                    text: String(localized: "DESK CLEARED", comment: "Bitmap stamp on the morning desk once all three papers are done. Uppercase: the pixel face has no lowercase"),
+                    text: String(localized: "PAPERS READ", comment: "Bitmap stamp on the morning papers once all three are done. Uppercase: the pixel face has no lowercase"),
                     scale: 2,
                     color: Theme.ink(on: Theme.pixelAccent)
                 )
@@ -342,11 +343,11 @@ struct MorningDeskSheet: View {
         PixelPanel {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 PixelText(
-                    text: String(localized: "NO DESK YET", comment: "Bitmap heading on the morning desk when there is no company to have a morning about. Uppercase: the pixel face has no lowercase"),
+                    text: String(localized: "NO PAPERS YET", comment: "Bitmap heading on the morning papers when there is no company to have a morning about. Uppercase: the pixel face has no lowercase"),
                     scale: 3,
                     color: Theme.pixelInk.opacity(0.5)
                 )
-                Text("The desk belongs to a company. Start one, or open a save, and it will be here in the morning.")
+                Text("The papers belong to a company. Start one, or open a save, and they will be here in the morning.")
                     .font(.footnote)
                     .foregroundStyle(Theme.pixelInk.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)
