@@ -639,6 +639,19 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// Out, and how.
     case insideReleased(weeksServed: Int, paroled: Bool, day: Int)
 
+    // MARK: J1 (doors)
+    // MARK: end J1
+    // MARK: J2 (record)
+    // MARK: end J2
+    // MARK: J3 (rivals and the market)
+    // MARK: end J3
+    // MARK: J4 (house field)
+    // MARK: end J4
+    // MARK: J5 (announce)
+    // MARK: end J5
+    // MARK: J6 (queue)
+    // MARK: end J6
+    // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two
 }
 
@@ -1144,6 +1157,19 @@ public struct GameState: Codable, Equatable, Sendable {
     public var espionage: EspionageState = .empty
     /// W4 — the founder inside, `nil` otherwise.
     public var prison: PrisonState? = nil
+    // MARK: J1 (doors)
+    // MARK: end J1
+    // MARK: J2 (record)
+    // MARK: end J2
+    // MARK: J3 (rivals and the market)
+    // MARK: end J3
+    // MARK: J4 (house field)
+    // MARK: end J4
+    // MARK: J5 (announce)
+    // MARK: end J5
+    // MARK: J6 (queue)
+    // MARK: end J6
+    // MARK: end of Iteration 12
     /// What the staff remember about the founder's answers: the rules
     /// they became and who was told no (WS-D). Empty until somebody asks.
     public var staffMemory: StaffMemory = .initial
@@ -1447,6 +1473,19 @@ extension GameState {
         case crime, interactions, assets, fame, secrets
         // Iteration 11, wave two
         case dirtyMoney, familyDrama, espionage, prison
+        // MARK: J1 (doors)
+        // MARK: end J1
+        // MARK: J2 (record)
+        // MARK: end J2
+        // MARK: J3 (rivals and the market)
+        // MARK: end J3
+        // MARK: J4 (house field)
+        // MARK: end J4
+        // MARK: J5 (announce)
+        // MARK: end J5
+        // MARK: J6 (queue)
+        // MARK: end J6
+        // MARK: end of Iteration 12
     }
 
     public init(from decoder: any Decoder) throws {
@@ -1535,6 +1574,19 @@ extension GameState {
         familyDrama = try container.decodeIfPresent(FamilyDramaState.self, forKey: .familyDrama) ?? .empty
         espionage = try container.decodeIfPresent(EspionageState.self, forKey: .espionage) ?? .empty
         prison = try container.decodeIfPresent(PrisonState.self, forKey: .prison)
+        // MARK: J1 (doors)
+        // MARK: end J1
+        // MARK: J2 (record)
+        // MARK: end J2
+        // MARK: J3 (rivals and the market)
+        // MARK: end J3
+        // MARK: J4 (house field)
+        // MARK: end J4
+        // MARK: J5 (announce)
+        // MARK: end J5
+        // MARK: J6 (queue)
+        // MARK: end J6
+        // MARK: end of Iteration 12
         lockedTopics = Dictionary(
             (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
                 .map { ($0.topicID, $0.unlockDay) },
@@ -1642,5 +1694,18 @@ extension GameState {
         if familyDrama != .empty { try container.encode(familyDrama, forKey: .familyDrama) }
         if espionage != .empty { try container.encode(espionage, forKey: .espionage) }
         try container.encodeIfPresent(prison, forKey: .prison)
+        // MARK: J1 (doors)
+        // MARK: end J1
+        // MARK: J2 (record)
+        // MARK: end J2
+        // MARK: J3 (rivals and the market)
+        // MARK: end J3
+        // MARK: J4 (house field)
+        // MARK: end J4
+        // MARK: J5 (announce)
+        // MARK: end J5
+        // MARK: J6 (queue)
+        // MARK: end J6
+        // MARK: end of Iteration 12
     }
 }

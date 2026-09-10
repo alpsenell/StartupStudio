@@ -285,6 +285,19 @@ extension Route {
         case "spy", "espionage": .spy
         // MARK: W4 (inside)
         case "inside", "prison", "released": .inside
+        // MARK: J1 (doors)
+        // MARK: end J1
+        // MARK: J2 (record)
+        // MARK: end J2
+        // MARK: J3 (rivals and the market)
+        // MARK: end J3
+        // MARK: J4 (house field)
+        // MARK: end J4
+        // MARK: J5 (announce)
+        // MARK: end J5
+        // MARK: J6 (queue)
+        // MARK: end J6
+        // MARK: end of Iteration 12
         // MARK: end of Iteration 11, wave two
         default: nil
         }
@@ -1145,6 +1158,19 @@ extension DebugLaunch {
     // `-autoParoleSay <exchange,exchange>` and `-autoEscape`. Nothing to
     // add here.
 
+    // MARK: J1 (doors)
+    // MARK: end J1
+    // MARK: J2 (record)
+    // MARK: end J2
+    // MARK: J3 (rivals and the market)
+    // MARK: end J3
+    // MARK: J4 (house field)
+    // MARK: end J4
+    // MARK: J5 (announce)
+    // MARK: end J5
+    // MARK: J6 (queue)
+    // MARK: end J6
+    // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two
 
     /// The word after `flag` on the command line, in debug builds.

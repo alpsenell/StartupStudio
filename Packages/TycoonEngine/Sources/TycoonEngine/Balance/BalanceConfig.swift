@@ -1939,6 +1939,20 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end Iteration 11, wave two — W4
 
+    // MARK: J1 (doors)
+    // MARK: end J1
+    // MARK: J2 (record)
+    // MARK: end J2
+    // MARK: J3 (rivals and the market)
+    // MARK: end J3
+    // MARK: J4 (house field)
+    // MARK: end J4
+    // MARK: J5 (announce)
+    // MARK: end J5
+    // MARK: J6 (queue)
+    // MARK: end J6
+    // MARK: end of Iteration 12
+
     public init(
         startingCash: Int,
         weeklyOperatingCost: Int,

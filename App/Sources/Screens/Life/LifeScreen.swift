@@ -66,6 +66,19 @@ struct LifeScreen: View {
         // MARK: W3 (espionage)
         // MARK: W4 (inside)
         case inside
+        // MARK: J1 (doors)
+        // MARK: end J1
+        // MARK: J2 (record)
+        // MARK: end J2
+        // MARK: J3 (rivals and the market)
+        // MARK: end J3
+        // MARK: J4 (house field)
+        // MARK: end J4
+        // MARK: J5 (announce)
+        // MARK: end J5
+        // MARK: J6 (queue)
+        // MARK: end J6
+        // MARK: end of Iteration 12
         // MARK: end of Iteration 11, wave two
         // MARK: end of Iteration 11
     }
@@ -150,6 +163,19 @@ struct LifeScreen: View {
                     // down; the card draws itself only while
                     // `state.prison` is non-nil.
                     InsideCard(engine: engine) { path = [.inside] }
+                    // MARK: J1 (doors)
+                    // MARK: end J1
+                    // MARK: J2 (record)
+                    // MARK: end J2
+                    // MARK: J3 (rivals and the market)
+                    // MARK: end J3
+                    // MARK: J4 (house field)
+                    // MARK: end J4
+                    // MARK: J5 (announce)
+                    // MARK: end J5
+                    // MARK: J6 (queue)
+                    // MARK: end J6
+                    // MARK: end of Iteration 12
                     // MARK: end of Iteration 11, wave two
                     // MARK: end of Iteration 11
                 }
@@ -213,6 +239,19 @@ struct LifeScreen: View {
                 // MARK: W4 (inside)
                 case .inside:
                     InsideReleaseScreen(engine: engine)
+                // MARK: J1 (doors)
+                // MARK: end J1
+                // MARK: J2 (record)
+                // MARK: end J2
+                // MARK: J3 (rivals and the market)
+                // MARK: end J3
+                // MARK: J4 (house field)
+                // MARK: end J4
+                // MARK: J5 (announce)
+                // MARK: end J5
+                // MARK: J6 (queue)
+                // MARK: end J6
+                // MARK: end of Iteration 12
                 // MARK: end of Iteration 11, wave two
                 // MARK: end of Iteration 11
                 }
@@ -343,6 +382,19 @@ struct LifeScreen: View {
             path = [.inside]
             return
         }
+        // MARK: J1 (doors)
+        // MARK: end J1
+        // MARK: J2 (record)
+        // MARK: end J2
+        // MARK: J3 (rivals and the market)
+        // MARK: end J3
+        // MARK: J4 (house field)
+        // MARK: end J4
+        // MARK: J5 (announce)
+        // MARK: end J5
+        // MARK: J6 (queue)
+        // MARK: end J6
+        // MARK: end of Iteration 12
         // MARK: end of Iteration 11, wave two
         // MARK: end of Iteration 11
         // A headless screenshot pass cannot tap: `-autoRoute agenda` lands
