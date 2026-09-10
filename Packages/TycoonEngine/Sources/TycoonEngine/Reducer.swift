@@ -1019,6 +1019,10 @@ public enum Reducer {
         // MARK: K2 (product lifecycle)
         // MARK: end K2
         // MARK: K3 (the ladder)
+        case let .grantEquity(employeeID, percent):
+            events = EmployeeSystem.grantEquity(
+                employeeID: employeeID, percent: percent, state: &state, balance: balance
+            )
         // MARK: end K3
         // MARK: K4 (deals and exits)
         // MARK: end K4

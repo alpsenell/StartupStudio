@@ -145,7 +145,11 @@ enum EmployeeSystem {
             // A co-founder working for equity (WS-H) reads as fairly paid
             // until the office reaches the tier they were promised.
             let ratio = state.cofounderWorksForEquity(employee, balance: balance) ? 1
-                : (fairPay > 0 ? Double(employee.weeklySalary) / fairPay : 1)
+                // MARK: K3 (the ladder)
+                // A holder took the cut for the options: fairness reads
+                // the pay before it (`weeklySalary` for everyone else).
+                : (fairPay > 0 ? Double(employee.fairnessSalary) / fairPay : 1)
+                // MARK: end K3
             // Exactly zero when the trait factor is 1, so a trait-less
             // roster keeps the target it had to the last bit.
             let crunchAdjustment = paceMoralePenalty
@@ -157,6 +161,13 @@ enum EmployeeSystem {
                 // Being close to the person you work for is worth
                 // something on its own.
                 + employee.founderBond * balance.relationships.bondMoraleTargetFactor
+            // MARK: K3 (the ladder)
+            // A lead the founder promoted with nobody much to lead: a
+            // drift in the target, never a jump. 0 for everyone else.
+            if state.ladderLeadIsIdle(employee, balance: balance) {
+                target += balance.ladder.leads.idleMoraleDelta
+            }
+            // MARK: end K3
             if ratio < staff.underpaidThreshold {
                 target -= staff.underpaidTargetPenalty
             } else if ratio > staff.wellPaidThreshold {
@@ -433,7 +444,9 @@ enum EmployeeSystem {
         )
         let pace = balance.economy.pace(state.economy.workPace)
         let output = state.devSpeedTechMultiplier(content: content)
-            * crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            // MARK: K3 (the ladder) — Brooks, with a promoted lead's relief.
+            * state.ladderCrowdingFactor(producers: crew.producers, balance: balance)
+            // MARK: end K3
             * pace.outputFactor
 
         // Read out of `state` before the `&state` call below: the crew's
@@ -508,7 +521,9 @@ enum EmployeeSystem {
 
         let pace = balance.economy.pace(state.economy.workPace)
         let output = state.devSpeedTechMultiplier(content: content)
-            * crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            // MARK: K3 (the ladder) — a patch crew is led the same way.
+            * state.ladderCrowdingFactor(producers: crew.producers, balance: balance)
+            // MARK: end K3
             * pace.outputFactor
         state.economy.updates[updateIndex].progressDesign += crew.design * output
         state.economy.updates[updateIndex].progressCode += crew.code * output
@@ -638,7 +653,9 @@ enum EmployeeSystem {
         let pace = balance.economy.pace(state.economy.workPace)
         return crew.code
             * state.devSpeedTechMultiplier(content: content)
-            * crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            // MARK: K3 (the ladder)
+            * state.ladderCrowdingFactor(producers: crew.producers, balance: balance)
+            // MARK: end K3
             * pace.outputFactor
     }
 
@@ -1010,6 +1027,13 @@ enum EmployeeSystem {
         else { return [] }
 
         let before = state.employees[index].weeklySalary
+        // MARK: K3 (the ladder)
+        // Paid back up to (or past) what they earned before the grant:
+        // the cut is over, and fairness reads the real salary again.
+        if let prior = state.employees[index].salaryBeforeGrant, weeklySalary >= prior {
+            state.employees[index].salaryBeforeGrant = nil
+        }
+        // MARK: end K3
         let fraction = Double(weeklySalary - before) / Double(before)
         let staff = balance.staff
         let moraleDelta = fraction >= 0
@@ -1040,6 +1064,12 @@ enum EmployeeSystem {
 
         let staff = balance.staff
         state.employees[index].level = next
+        // MARK: K3 (the ladder)
+        // The founder made them lead: from today they run a room.
+        if next == .lead {
+            state.employees[index].leadSinceDay = state.day
+        }
+        // MARK: end K3
         state.employees[index].weeklySalary = Int(
             (Double(state.employees[index].weeklySalary) * (1 + staff.promotionSalaryBump)).rounded()
         )
@@ -1065,6 +1095,9 @@ enum EmployeeSystem {
 
         let staff = balance.staff
         state.employees[index].level = previous
+        // MARK: K3 (the ladder)
+        state.employees[index].leadSinceDay = nil
+        // MARK: end K3
         state.employees[index].weeklySalary = max(1, Int(
             (Double(state.employees[index].weeklySalary) * (1 - staff.demotionSalaryCut)).rounded()
         ))

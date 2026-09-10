@@ -135,6 +135,23 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
     /// else — the slice stays gone. Saves from before origins decode
     /// `false`.
     public var isCofounder: Bool
+    // MARK: K3 (the ladder)
+    /// The day the founder *promoted* this person to lead, or `nil` for
+    /// anyone who is not a lead or walked in the door as one (a candidate
+    /// with skills ≥ 210 is a lead at hire). Only a promoted lead runs a
+    /// room: see `GameState.ladderCrowdingFactor`. No bot promotes, so a
+    /// default-path roster never carries one.
+    public var leadSinceDay: Int?
+    /// Percentage points of the company granted as options (K3), 0 for
+    /// everyone who was never granted.
+    public var grantedEquity: Double
+    /// The day of the grant; vesting counts from it.
+    public var grantDay: Int?
+    /// What they were paid the day before the grant's pay cut. The
+    /// fairness read uses it: they took the cut, they did not lose a
+    /// grievance over it.
+    public var salaryBeforeGrant: Int?
+    // MARK: end K3
 
     /// `role` defaults to the pre-roles inference (founder, else the
     /// stronger of coding and design) so callers that predate roles keep
@@ -166,7 +183,13 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         traits: [String] = [],
         founderBond: Double = 0,
         lastMentoredDay: Int? = nil,
-        isCofounder: Bool = false
+        isCofounder: Bool = false,
+        // MARK: K3 (the ladder)
+        leadSinceDay: Int? = nil,
+        grantedEquity: Double = 0,
+        grantDay: Int? = nil,
+        salaryBeforeGrant: Int? = nil
+        // MARK: end K3
     ) {
         self.id = id
         self.name = name
@@ -186,6 +209,12 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
         self.founderBond = founderBond
         self.lastMentoredDay = lastMentoredDay
         self.isCofounder = isCofounder
+        // MARK: K3 (the ladder)
+        self.leadSinceDay = leadSinceDay
+        self.grantedEquity = grantedEquity
+        self.grantDay = grantDay
+        self.salaryBeforeGrant = salaryBeforeGrant
+        // MARK: end K3
         self.role = role ?? .inferred(isFounder: isFounder, skills: skills)
         self.traits = if !traits.isEmpty || isFounder {
             traits
@@ -224,6 +253,9 @@ extension Employee {
         case appearanceSeed, morale, level, lowMoraleStreakDays, lastPraisedDay, lastTrainedDay
         case loyalty, lastSocialDay, role, traits, founderBond, lastMentoredDay
         case isCofounder
+        // MARK: K3 (the ladder)
+        case leadSinceDay, grantedEquity, grantDay, salaryBeforeGrant
+        // MARK: end K3
     }
 
     public init(from decoder: any Decoder) throws {
@@ -248,7 +280,13 @@ extension Employee {
             traits: try container.decodeIfPresent([String].self, forKey: .traits) ?? [],
             founderBond: try container.decodeIfPresent(Double.self, forKey: .founderBond) ?? 0,
             lastMentoredDay: try container.decodeIfPresent(Int.self, forKey: .lastMentoredDay),
-            isCofounder: try container.decodeIfPresent(Bool.self, forKey: .isCofounder) ?? false
+            isCofounder: try container.decodeIfPresent(Bool.self, forKey: .isCofounder) ?? false,
+            // MARK: K3 (the ladder)
+            leadSinceDay: try container.decodeIfPresent(Int.self, forKey: .leadSinceDay),
+            grantedEquity: try container.decodeIfPresent(Double.self, forKey: .grantedEquity) ?? 0,
+            grantDay: try container.decodeIfPresent(Int.self, forKey: .grantDay),
+            salaryBeforeGrant: try container.decodeIfPresent(Int.self, forKey: .salaryBeforeGrant)
+            // MARK: end K3
         )
     }
 
@@ -280,6 +318,16 @@ extension Employee {
         if isCofounder {
             try container.encode(true, forKey: .isCofounder)
         }
+        // MARK: K3 (the ladder)
+        // Written only when set: a roster nobody promoted or granted
+        // encodes byte-for-byte as it did before the ladder.
+        try container.encodeIfPresent(leadSinceDay, forKey: .leadSinceDay)
+        if grantedEquity != 0 {
+            try container.encode(grantedEquity, forKey: .grantedEquity)
+        }
+        try container.encodeIfPresent(grantDay, forKey: .grantDay)
+        try container.encodeIfPresent(salaryBeforeGrant, forKey: .salaryBeforeGrant)
+        // MARK: end K3
     }
 }
 

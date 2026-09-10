@@ -321,6 +321,11 @@ enum SocialSystem {
         }
         for flag in gate.flagsAll where !state.narrative.flags.contains(flag) { return false }
         for flag in gate.flagsNone where state.narrative.flags.contains(flag) { return false }
+        // MARK: K3 (the ladder)
+        // Once a lead has been promoted, the ask for the title comes from
+        // a senior on a crowded build nobody runs. Before that, unchanged.
+        if def.id == "promotionDemand", !state.ladderAllowsPromotionDemand(employee) { return false }
+        // MARK: end K3
         return true
     }
 

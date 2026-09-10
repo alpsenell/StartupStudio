@@ -700,6 +700,13 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: K2 (product lifecycle)
     // MARK: end K2
     // MARK: K3 (the ladder)
+    /// Options granted to somebody on payroll, for `payCut` a week.
+    case ladderEquityGranted(employeeID: UUID, name: String, percent: Double, payCut: Int, day: Int)
+    /// A holder left: `keptPercent` vested and stays on the cap table
+    /// under their name, `returnedPercent` came back to the founder.
+    case ladderOptionsSettled(
+        employeeID: UUID, name: String, keptPercent: Double, returnedPercent: Double, day: Int
+    )
     // MARK: end K3
     // MARK: K4 (deals and exits)
     // MARK: end K4

@@ -242,6 +242,9 @@ enum Route: Hashable {
     // MARK: K2 (product lifecycle)
     // MARK: end K2
     // MARK: K3 (the ladder)
+    /// DEBUG `-autoRoute k3-…`: a person's manage sheet on the Team tab
+    /// (the promote preview, the options section).
+    case ladderManage
     // MARK: end K3
     // MARK: K4 (deals and exits)
     // MARK: end K4
@@ -358,6 +361,7 @@ enum Route: Hashable {
         // MARK: K2 (product lifecycle)
         // MARK: end K2
         // MARK: K3 (the ladder)
+        case .ladderManage: .team
         // MARK: end K3
         // MARK: K4 (deals and exits)
         // MARK: end K4

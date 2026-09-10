@@ -25,6 +25,14 @@ struct EmployeeManageSheet: View {
         NavigationStack {
             if let employee {
                 List {
+                    // MARK: K3 (the ladder)
+                    // DEBUG `-autoRoute k3-…`: the two ladder sections
+                    // first, where a headless camera can see them.
+                    if LadderDebug.liftsManageSections {
+                        careerSection(employee)
+                        LadderOptionsSection(engine: engine, employee: employee)
+                    }
+                    // MARK: end K3
                     headerSection(employee)
                     traitSection(employee)
                     moraleSection(employee)
@@ -40,7 +48,12 @@ struct EmployeeManageSheet: View {
                     }
                     // MARK: end of Iteration 11 — N2
                     salarySection(employee)
-                    careerSection(employee)
+                    // MARK: K3 (the ladder)
+                    if !LadderDebug.liftsManageSections {
+                        careerSection(employee)
+                        LadderOptionsSection(engine: engine, employee: employee)
+                    }
+                    // MARK: end K3
                     trainingSection(employee)
                     fireSection(employee)
                 }
@@ -180,7 +193,9 @@ struct EmployeeManageSheet: View {
         var causes: [(String, Bool)] = []
 
         let fair = Double(EmployeeSalaryGuide.fairPay(for: employee, balance: balance))
-        let ratio = fair > 0 ? Double(employee.weeklySalary) / fair : 1
+        // MARK: K3 (the ladder) — a holder is read on the pay before the cut.
+        let ratio = fair > 0 ? Double(employee.fairnessSalary) / fair : 1
+        // MARK: end K3
         if state.cofounderWorksForEquity(employee, balance: balance) {
             // The deal, not a grievance: the morale pass reads it as fair.
         } else if ratio < staff.underpaidThreshold {
@@ -205,6 +220,15 @@ struct EmployeeManageSheet: View {
         if state.hasDepartment(.hr) {
             causes.append(("People & HR looks after them", true))
         }
+
+        // MARK: K3 (the ladder)
+        if state.ladderLeadIsIdle(employee, balance: balance) {
+            causes.append(("A lead with nobody much to lead", false))
+        }
+        if employee.holdsOptions {
+            causes.append(("Holds \(employee.grantedEquity.oneDecimal)% of the company", true))
+        }
+        // MARK: end K3
 
         let traitDelta = TraitEffects.moraleTargetDelta(employee, content: engine.content)
         if traitDelta <= -2 {
@@ -420,7 +444,9 @@ struct EmployeeManageSheet: View {
                 Text("Works for equity until the \(engine.balance.origins.cofounderPaidFrom.displayName.lowercased()) — fair pay starts the day you move.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            } else if Double(employee.weeklySalary) < Double(fair) * engine.balance.staff.underpaidThreshold {
+            // MARK: K3 (the ladder) — the cut for options is not underpayment.
+            } else if Double(employee.fairnessSalary) < Double(fair) * engine.balance.staff.underpaidThreshold {
+            // MARK: end K3
                 Text("Underpaid — morale is draining.")
                     .font(.caption)
                     .foregroundStyle(Theme.warning)
@@ -498,14 +524,37 @@ struct EmployeeManageSheet: View {
             LabeledContent("Level") {
                 Text(employee.level.displayName)
             }
+            // MARK: K3 (the ladder)
+            // A lead's job, in words: which build they run, or why not.
+            if let status = LadderPromoteCopy.status(for: employee, engine: engine) {
+                Text(status)
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(engine.state.ladderLeadIsIdle(employee, balance: engine.balance) ? Theme.warning : .secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            // MARK: end K3
             if let next = employee.level.next {
                 Button {
                     engine.send(.promote(employeeID: employeeID))
                 } label: {
-                    Label(
-                        "Promote to \(next.displayName) (+\(Int(engine.balance.staff.promotionSalaryBump * 100))% salary)",
-                        systemImage: "arrow.up.forward.circle.fill"
-                    )
+                    // MARK: K3 (the ladder)
+                    // The consequence on the button: the build's factor
+                    // before and after, or why it would change nothing.
+                    VStack(alignment: .leading, spacing: 2) {
+                        Label(
+                            "Promote to \(next.displayName) (+\(Int(engine.balance.staff.promotionSalaryBump * 100))% salary)",
+                            systemImage: "arrow.up.forward.circle.fill"
+                        )
+                        if let preview = LadderPromoteCopy.preview(for: employee, engine: engine) {
+                            Text(preview)
+                                .font(.caption)
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    // MARK: end K3
                 }
             }
             if let previous = employee.level.previous {

@@ -110,7 +110,13 @@ extension NetworkingSystem {
         // The book keeps its cap; the person who just walked out is the
         // one entry it must not evict to do so.
         trimContacts(&state, balance, protecting: [employee.id])
+        // MARK: K3 (the ladder)
+        // Unvested options come home; what vested leaves with them — to a
+        // rival, if that is where they went. Nothing for a non-holder.
+        let settled = EmployeeSystem.ladderSettleOptions(employee, state: &state, balance: balance)
+        // MARK: end K3
         return [.alumnusJoinedBook(contactID: employee.id, name: employee.name, day: state.day)]
+            + settled
     }
 
     /// Daily: former employees keep moving. Every quarter away adds

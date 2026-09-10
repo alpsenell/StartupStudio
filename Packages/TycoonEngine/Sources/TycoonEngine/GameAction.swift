@@ -617,6 +617,11 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: K2 (product lifecycle)
     // MARK: end K2
     // MARK: K3 (the ladder)
+    /// Options instead of pay: `percent` (1 or 2) points of the company
+    /// for a pay cut of a fraction of fair pay, vesting over four years
+    /// after a one-year cliff. Sent only from the manage sheet; no bot
+    /// grants.
+    case grantEquity(employeeID: UUID, percent: Int)
     // MARK: end K3
     // MARK: K4 (deals and exits)
     // MARK: end K4

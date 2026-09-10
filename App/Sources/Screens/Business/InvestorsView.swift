@@ -53,6 +53,11 @@ struct InvestorsView: View {
             roundsCard
         }
 
+        // MARK: K3 (the ladder)
+        // The cap table's Team row: options on payroll and what alumni kept.
+        LadderTeamCapCard(engine: engine)
+        // MARK: end K3
+
         // An acquirer on an earn-out sits in the room like any seated round.
         if investors.hasBoard || investors.earnOut != nil {
             BusinessSectionHeader(title: "The board", systemImage: "person.3.fill")

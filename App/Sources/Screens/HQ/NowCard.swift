@@ -155,6 +155,11 @@ struct NowCard: View {
                     .foregroundStyle(NowBuildETA.isStalled(eta) ? Theme.warning : Theme.accent)
                     .contentTransition(.numericText())
                     .fixedSize(horizontal: false, vertical: true)
+                // MARK: K3 (the ladder)
+                // The estimate above already reads the crew factor; this
+                // line says what it is.
+                LadderCrewLine(engine: engine, productID: product.id)
+                // MARK: end K3
             }
             .contentShape(Rectangle())
         }

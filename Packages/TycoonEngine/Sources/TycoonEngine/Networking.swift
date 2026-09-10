@@ -446,11 +446,18 @@ public struct EquityGrant: Codable, Equatable, Sendable, Identifiable {
 
     public enum Reason: String, Codable, Equatable, Sendable {
         case partner, angel
+        // MARK: K3 (the ladder)
+        /// Options granted to somebody on payroll for a pay cut; vests.
+        case options
+        // MARK: end K3
 
         public var displayName: String {
             switch self {
             case .partner: "Joined for equity"
             case .angel: "Angel round"
+            // MARK: K3 (the ladder)
+            case .options: "Options"
+            // MARK: end K3
             }
         }
     }

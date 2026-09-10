@@ -170,6 +170,10 @@ private struct InDevelopmentCard: View {
                 .accessibilityHint("Opens details and the focus editor")
 
                 TriPhaseProgress(progress: progress, type: type)
+                // MARK: K3 (the ladder)
+                // Who is on it and what crowding does to each of them.
+                LadderCrewLine(engine: engine, productID: product.id)
+                // MARK: end K3
                 // MARK: V2 (ux: one inbox, one home per thing)
                 // C10: the control is the tab's now (`TeamPaceCard`); the
                 // build says so only when the pace is not normal.
