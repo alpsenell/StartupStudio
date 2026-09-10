@@ -251,8 +251,23 @@ struct LadderOptionsSection: View {
 /// options, vested and not, and alumni who kept what vested.
 struct LadderTeamCapCard: View {
     let engine: GameEngine
+    @State private var lifted = false
 
     var body: some View {
+        card
+            .sheet(isPresented: $lifted) {
+                ScrollView { card.padding(Theme.Spacing.lg) }
+                    .background(Theme.screenBackground)
+            }
+            .task {
+                guard LadderDebug.liftsCapTable else { return }
+                try? await Task.sleep(for: .seconds(4))
+                lifted = true
+            }
+    }
+
+    @ViewBuilder
+    private var card: some View {
         let grants = engine.state.networking.grants.filter { $0.reason == .options }
         if grants.isEmpty {
             Color.clear.frame(height: 0)
@@ -368,6 +383,26 @@ enum LadderDebug {
         for (offset, employee) in holders.enumerated() {
             engine.send(.grantEquity(employeeID: employee.id, percent: offset == 0 ? 2 : 1))
         }
+        #endif
+    }
+
+    /// `-autoRoute k3-lead | k3-options | k3-holder`: the manage sheet
+    /// draws the career and options sections first.
+    static var liftsManageSections: Bool {
+        #if DEBUG
+        return DebugLaunch.autoRouteName?.hasPrefix("k3-") == true
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoRoute k3-captable` (with `-autoTab business`): the Team card
+    /// is lifted onto a sheet a few seconds in.
+    static var liftsCapTable: Bool {
+        #if DEBUG
+        return DebugLaunch.autoRouteName == "k3-captable"
+        #else
+        return false
         #endif
     }
 

@@ -328,6 +328,7 @@ extension Route {
         // MARK: end K2
         // MARK: K3 (the ladder)
         case "k3-lead", "k3-options", "k3-holder": .ladderManage
+        case "k3-captable": .investors
         // MARK: end K3
         // MARK: K4 (deals and exits)
         // MARK: end K4

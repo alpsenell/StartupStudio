@@ -25,6 +25,14 @@ struct EmployeeManageSheet: View {
         NavigationStack {
             if let employee {
                 List {
+                    // MARK: K3 (the ladder)
+                    // DEBUG `-autoRoute k3-…`: the two ladder sections
+                    // first, where a headless camera can see them.
+                    if LadderDebug.liftsManageSections {
+                        careerSection(employee)
+                        LadderOptionsSection(engine: engine, employee: employee)
+                    }
+                    // MARK: end K3
                     headerSection(employee)
                     traitSection(employee)
                     moraleSection(employee)
@@ -40,9 +48,11 @@ struct EmployeeManageSheet: View {
                     }
                     // MARK: end of Iteration 11 — N2
                     salarySection(employee)
-                    careerSection(employee)
                     // MARK: K3 (the ladder)
-                    LadderOptionsSection(engine: engine, employee: employee)
+                    if !LadderDebug.liftsManageSections {
+                        careerSection(employee)
+                        LadderOptionsSection(engine: engine, employee: employee)
+                    }
                     // MARK: end K3
                     trainingSection(employee)
                     fireSection(employee)
