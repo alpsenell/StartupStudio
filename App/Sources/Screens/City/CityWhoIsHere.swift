@@ -159,12 +159,8 @@ struct CityWhoIsHere: View {
                 action: "Profile"
             )
         case .venue:
-            let open = state.networking.pendingEvent?.venue == venue
-            return FocusRow(
-                title: venue?.displayName ?? "The room",
-                detail: venue?.blurb ?? "",
-                action: open ? "Go in" : nil
-            )
+            // The Visit row under this carries the room's button.
+            return FocusRow(title: venue?.displayName ?? "The room", detail: venue?.blurb ?? "", action: nil)
         case .hospital:
             let stays = state.economy.hospitalizationDays.count
             return FocusRow(
