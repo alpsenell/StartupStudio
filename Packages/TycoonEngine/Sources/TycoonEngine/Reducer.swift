@@ -1048,6 +1048,12 @@ public enum Reducer {
             )
         // MARK: end K5
         // MARK: K6 (home and rooms)
+        case let .moveHome(district):
+            events = HomeSystem.moveHome(district: district, state: &state, balance: balance)
+        case .planFamilyHoliday:
+            events = HomeSystem.planFamilyHoliday(state: &state, balance: balance)
+        case let .callBreak(amenity):
+            events = HomeSystem.callBreak(amenity: amenity, state: &state, balance: balance)
         // MARK: end K6
         // MARK: K7 (partner and diary)
         // MARK: end K7

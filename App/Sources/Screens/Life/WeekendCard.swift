@@ -6,6 +6,10 @@ import TycoonEngine
 /// sends `.planWeekend`. Activities that fall back to something else in the
 /// founder's current situation say so instead of being disabled — the
 /// engine accepts them and applies the fallback.
+///
+/// Iteration 15 — K6: the family holiday sits beside the vacation once
+/// there is somebody to take, and the solo vacation finally prints what it
+/// costs the partner.
 struct WeekendCard: View {
     let engine: GameEngine
 
@@ -20,6 +24,26 @@ struct WeekendCard: View {
         GridItem(.flexible(), spacing: Theme.Spacing.md),
     ]
 
+    // MARK: K6 (home and rooms)
+    /// One cell of the grid: an activity, or the family holiday beside the
+    /// vacation.
+    private enum Cell: Hashable {
+        case activity(WeekendActivity)
+        case familyHoliday
+    }
+
+    private var cells: [Cell] {
+        var cells: [Cell] = []
+        for activity in WeekendActivity.allCases {
+            cells.append(.activity(activity))
+            if activity == .vacation, engine.state.familyHolidayQuote(balance: engine.balance) != nil {
+                cells.append(.familyHoliday)
+            }
+        }
+        return cells
+    }
+    // MARK: end K6
+
     var body: some View {
         let state = engine.state
         let life = state.life
@@ -28,19 +52,40 @@ struct WeekendCard: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 EveningPips(engine: engine, compact: true)
                 LazyVGrid(columns: columns, spacing: Theme.Spacing.md) {
-                    ForEach(WeekendActivity.allCases, id: \.self) { activity in
-                        ActivityCell(
-                            activity: activity,
-                            cost: weekendActivityCost(activity, balance: engine.balance),
-                            note: note(for: activity, life: life, day: state.day),
-                            isSelected: life.plannedActivity == activity
-                        ) {
-                            shell.toasts.send(
-                                .planWeekend(activity),
-                                to: engine,
-                                ack: "This weekend: \(activity.displayName.lowercased())",
-                                icon: activity.systemImage
-                            )
+                    ForEach(cells, id: \.self) { cell in
+                        switch cell {
+                        case .activity(let activity):
+                            ActivityCell(
+                                title: activity.displayName,
+                                systemImage: activity.systemImage,
+                                cost: weekendActivityCost(activity, balance: engine.balance),
+                                summary: activity.effectSummary,
+                                note: note(for: activity, life: life, day: state.day),
+                                isSelected: life.plannedActivity == activity
+                                    && !(activity == .vacation && life.familyHoliday)
+                            ) {
+                                shell.toasts.send(
+                                    .planWeekend(activity),
+                                    to: engine,
+                                    ack: "This weekend: \(activity.displayName.lowercased())",
+                                    icon: activity.systemImage
+                                )
+                            }
+                        // MARK: K6 (home and rooms)
+                        case .familyHoliday:
+                            if let quote = state.familyHolidayQuote(balance: engine.balance) {
+                                ActivityCell(
+                                    title: "Family holiday",
+                                    systemImage: "beach.umbrella.fill",
+                                    cost: quote.cost,
+                                    summary: familyHolidaySummary(quote),
+                                    note: nil,
+                                    isSelected: life.plannedActivity == .vacation && life.familyHoliday
+                                ) {
+                                    planFamilyHoliday()
+                                }
+                            }
+                        // MARK: end K6
                         }
                     }
                 }
@@ -62,17 +107,57 @@ struct WeekendCard: View {
             "No family yet — acts like Rest"
         case .doctor where !life.hasCold(day: day):
             "No cold to treat"
+        // MARK: K6 (home and rooms)
+        // The drift runs doubled while the founder is gone; the row has
+        // been charging it without saying so since iteration 9.
+        case .vacation:
+            engine.state.vacationAffectionCost(balance: engine.balance).map {
+                $0 < 0 ? "Affection −\(-$0) while you are away" : "Affection +\($0) while you are away"
+            }
+        // MARK: end K6
         default:
             nil
         }
     }
+
+    // MARK: K6 (home and rooms)
+
+    /// The family holiday's trade against the solo one, in numbers.
+    private func familyHolidaySummary(_ quote: FamilyHolidayQuote) -> String {
+        var parts = ["Away a week together", "energy +\(quote.energy) (not +\(soloEnergy))"]
+        if quote.hasPartner { parts.append("affection +\(quote.affection)") }
+        if quote.children > 0 { parts.append("kids' bond +\(quote.childBond)") }
+        return parts.joined(separator: " · ")
+    }
+
+    private var soloEnergy: Int {
+        Int(engine.balance.life.activity(.vacation).energy.rounded())
+    }
+
+    private func planFamilyHoliday() {
+        engine.send(.planFamilyHoliday)
+        guard engine.state.life.familyHoliday else {
+            shell.toasts.show(
+                "Nobody to take with you.",
+                icon: "exclamationmark.triangle.fill",
+                tint: Theme.warning,
+                severity: .notable
+            )
+            return
+        }
+        Haptics.commit()
+        shell.toasts.show("This weekend: a family holiday", icon: "beach.umbrella.fill", tint: Theme.accent)
+    }
+    // MARK: end K6
 }
 
 // MARK: - Activity cell
 
 private struct ActivityCell: View {
-    let activity: WeekendActivity
+    let title: String
+    let systemImage: String
     let cost: Int
+    let summary: String
     let note: String?
     let isSelected: Bool
     let select: () -> Void
@@ -81,11 +166,11 @@ private struct ActivityCell: View {
         Button(action: select) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 HStack(spacing: Theme.Spacing.sm) {
-                    Image(systemName: activity.systemImage)
+                    Image(systemName: systemImage)
                         .font(.body.weight(.semibold))
                         .foregroundStyle(isSelected ? Theme.accent : .primary)
                         .frame(width: 22)
-                    Text(activity.displayName)
+                    Text(title)
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
@@ -100,7 +185,7 @@ private struct ActivityCell: View {
                 Text(cost > 0 ? cost.money : "Free")
                     .font(Theme.Typography.number(.caption))
                     .foregroundStyle(.secondary)
-                Text(activity.effectSummary)
+                Text(summary)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.leading)
@@ -130,7 +215,7 @@ private struct ActivityCell: View {
     }
 
     private var accessibilityText: String {
-        var text = "\(activity.displayName), \(cost > 0 ? cost.money : "free"). \(activity.effectSummary)."
+        var text = "\(title), \(cost > 0 ? cost.money : "free"). \(summary)."
         if let note {
             text += " \(note)."
         }

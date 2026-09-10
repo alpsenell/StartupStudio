@@ -522,3 +522,45 @@ extension Double {
         String(format: "%.\(places)f", self)
     }
 }
+
+// MARK: K6 (home and rooms)
+
+extension ChildhoodSystem {
+    /// Iteration 15 — K6. A memory the home writes: the move ("moved") and
+    /// the family holiday ("holiday"), for every child at one of `stages`
+    /// (every child when `nil`), with `bond` added and, when it is non-zero,
+    /// the day counted as time together.
+    ///
+    /// The kinds are raw strings rather than `ChildMemoryKind` cases: that
+    /// enum is switched over in K7's files this round, and every reader that
+    /// grades memories (custody, the successor's traits) skips a kind it
+    /// does not know, so these two are the child's to keep and nobody's to
+    /// grade. The ledger row draws them with its default mark.
+    static func rememberHome(
+        _ state: inout GameState,
+        kind: String,
+        note: (String) -> String,
+        stages: Set<ChildStage>?,
+        bond: Double,
+        balance: BalanceConfig
+    ) {
+        let config = balance.childhood
+        let day = state.day
+        for index in state.life.family.children.indices {
+            let child = state.life.family.children[index]
+            if let stages, !stages.contains(child.stage(on: day, balance: config)) { continue }
+            state.life.family.children[index].memories.append(
+                ChildMemory(day: day, kind: kind, note: note(child.name))
+            )
+            let memories = state.life.family.children[index].memories
+            if memories.count > config.memoryCap {
+                state.life.family.children[index].memories.removeFirst(memories.count - config.memoryCap)
+            }
+            if bond != 0 {
+                move(&state.life.family.children[index].bond, by: bond)
+                state.life.family.children[index].lastTimeDay = day
+            }
+        }
+    }
+}
+// MARK: end K6

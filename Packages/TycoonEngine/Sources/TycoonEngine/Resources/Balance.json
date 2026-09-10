@@ -2077,5 +2077,20 @@
     "dividendPayWeeks": 13,
     "rescueStandingName": 4.0,
     "rescueStandingDays": 364
+  },
+  "home": {
+    "farPairs": [["suburbs", "downtown"], ["suburbs", "techPark"], ["oldTown", "techPark"]],
+    "commuteEvenings": 1,
+    "commuteSchedules": ["normal", "crunch"],
+    "moveRentWeeks": 2,
+    "familyHolidayCost": 1500,
+    "familyHolidayPerHead": 600,
+    "familyHolidayEnergy": 25.0,
+    "familyHolidayAffection": 20.0,
+    "familyHolidayChildBond": 8.0,
+    "breakMorale": 3.0,
+    "breakGymEnergy": 5.0,
+    "breakDayFactor": 0.5,
+    "breakCooldownDays": 7
   }
 }

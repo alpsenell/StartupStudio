@@ -133,6 +133,20 @@ struct CityMapScreen: View {
                     sortPriority: 2
                 ))
             }
+            // MARK: K6 (home and rooms)
+            if district == state.life.homeDistrict {
+                elements.append(MapElement(
+                    id: district.rawValue + ".home",
+                    district: district,
+                    rect: CityMapComposer.homeMarkerFrame(
+                        for: style, besideOffice: district == state.city.district
+                    ),
+                    label: "Your home, " + district.displayName,
+                    hint: "Shows this district's terms",
+                    sortPriority: 1.5
+                ))
+            }
+            // MARK: end K6
         }
         return elements
     }
@@ -187,6 +201,9 @@ struct CityMapScreen: View {
         if district == state.city.district {
             parts.append(state.city.ownership.isOwned ? "your office, owned" : "your office, renting")
         }
+        // MARK: K6 (home and rooms)
+        if district == state.life.homeDistrict { parts.append("your home") }
+        // MARK: end K6
         let rivals = state.rivals.rivals.filter { $0.homeDistrict == district }
         switch rivals.count {
         case 0: break
@@ -215,7 +232,10 @@ struct CityMapScreen: View {
                 hasPlayerOffice: district == state.city.district,
                 rivalSeeds: state.rivals.rivals
                     .filter { $0.homeDistrict == district }
-                    .map(\.appearanceSeed)
+                    .map(\.appearanceSeed),
+                // MARK: K6 (home and rooms)
+                hasPlayerHome: district == state.life.homeDistrict
+                // MARK: end K6
             )
         }
     }

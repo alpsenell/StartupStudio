@@ -8,12 +8,21 @@ public struct CityDistrictInfo: Sendable, Equatable {
     /// Appearance seeds of rivals headquartered here (drawn as pins, capped
     /// at three).
     public var rivalSeeds: [UInt64]
+    // MARK: K6 (home and rooms)
+    /// The founder lives here: a small house beside the flag. Defaults to
+    /// no, so every existing caller draws the map it always drew.
+    public var hasPlayerHome: Bool
+    // MARK: end K6
 
-    public init(style: DistrictStyle, selected: Bool, hasPlayerOffice: Bool, rivalSeeds: [UInt64]) {
+    public init(
+        style: DistrictStyle, selected: Bool, hasPlayerOffice: Bool, rivalSeeds: [UInt64],
+        hasPlayerHome: Bool = false
+    ) {
         self.style = style
         self.selected = selected
         self.hasPlayerOffice = hasPlayerOffice
         self.rivalSeeds = rivalSeeds
+        self.hasPlayerHome = hasPlayerHome
     }
 }
 
@@ -146,6 +155,17 @@ public enum CityMapComposer {
                 ))
                 x += 9
             }
+            // MARK: K6 (home and rooms)
+            if info.hasPlayerHome {
+                placements.append(PlacedSprite(
+                    sprite: CitySpriteLibrary.homeMarker(),
+                    x: x, y: anchor.y + 1,
+                    kind: .cityProp("homeMarker"),
+                    animation: .still, phase: 0
+                ))
+                x += 8
+            }
+            // MARK: end K6
             for (index, _) in info.rivalSeeds.prefix(3).enumerated() {
                 placements.append(PlacedSprite(
                     sprite: CitySpriteLibrary.rivalMarker(),
@@ -282,6 +302,19 @@ public enum CityMapComposer {
         let sprite = CitySpriteLibrary.officeMarker()
         return Rect(x: anchor.x, y: anchor.y, width: sprite.width, height: sprite.height)
     }
+
+    // MARK: K6 (home and rooms)
+    /// The rectangle the founder's home marker occupies in the district
+    /// they live in: after the office flag when both are there.
+    public static func homeMarkerFrame(for district: DistrictStyle, besideOffice: Bool) -> Rect {
+        let anchor = markerAnchor(for: district)
+        let sprite = CitySpriteLibrary.homeMarker()
+        return Rect(
+            x: anchor.x + (besideOffice ? 9 : 0), y: anchor.y + 1,
+            width: sprite.width, height: sprite.height
+        )
+    }
+    // MARK: end K6
 
     /// Where the district's flag/pin cluster sits.
     static func markerAnchor(for district: DistrictStyle) -> (x: Int, y: Int) {

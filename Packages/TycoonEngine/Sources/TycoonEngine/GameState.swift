@@ -1334,6 +1334,10 @@ public struct GameState: Codable, Equatable, Sendable {
     // MARK: K5 (hand over the keys)
     // MARK: end K5
     // MARK: K6 (home and rooms)
+    /// The day the last paid break was called in an amenity (`.callBreak`);
+    /// the next day's build progress reads it. `nil` on every run that never
+    /// called one, and then not encoded.
+    public var lastBreakDay: Int? = nil
     // MARK: end K6
     // MARK: K7 (partner and diary)
     // MARK: end K7
@@ -1696,6 +1700,7 @@ extension GameState {
         // MARK: K5 (hand over the keys)
         // MARK: end K5
         // MARK: K6 (home and rooms)
+        case lastBreakDay
         // MARK: end K6
         // MARK: K7 (partner and diary)
         // MARK: end K7
@@ -1831,6 +1836,7 @@ extension GameState {
         // MARK: K5 (hand over the keys)
         // MARK: end K5
         // MARK: K6 (home and rooms)
+        lastBreakDay = try container.decodeIfPresent(Int.self, forKey: .lastBreakDay)
         // MARK: end K6
         // MARK: K7 (partner and diary)
         // MARK: end K7
@@ -1987,6 +1993,7 @@ extension GameState {
         // MARK: K5 (hand over the keys)
         // MARK: end K5
         // MARK: K6 (home and rooms)
+        try container.encodeIfPresent(lastBreakDay, forKey: .lastBreakDay)
         // MARK: end K6
         // MARK: K7 (partner and diary)
         // MARK: end K7

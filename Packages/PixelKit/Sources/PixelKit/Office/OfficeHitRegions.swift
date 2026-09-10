@@ -22,6 +22,15 @@ public struct OfficeHitRegion: Sendable, Equatable, Hashable, Identifiable {
         /// region that is not part of the furniture — it moves, it can be
         /// squashed, and it is gone a second later.
         case bug(Int)
+        // MARK: K6 (home and rooms)
+        /// A plant on the floor, by its place among the tier's plants (the
+        /// campus has two). Only in `OfficeSceneInput.roomRegions` scenes.
+        case plant(Int)
+        /// A window on the back wall, by its place among the tier's windows.
+        case window(Int)
+        /// A built amenity's zone: the game room, the cafeteria, the gym.
+        case amenity(AmenityStyle)
+        // MARK: end K6
 
         public var isPerson: Bool {
             if case .person = self { return true }
@@ -74,6 +83,9 @@ extension OfficeDirector {
         at t: TimeInterval
     ) -> [OfficeHitRegion] {
         var regions = propRegions(for: input.tier)
+        // MARK: K6 (home and rooms)
+        if input.roomRegions { regions += roomRegions(input: input) }
+        // MARK: end K6
         for actor in actorFrames(input: input, timing: timing, at: t) {
             regions.append(OfficeHitRegion(
                 kind: .person(actor.id),
@@ -228,6 +240,57 @@ extension OfficeDirector {
         ))
         return regions
     }
+
+    // MARK: K6 (home and rooms)
+
+    /// The room's other things — the plants, the windows on the back wall,
+    /// the built amenity zones — exactly where they are drawn. Only for an
+    /// input with `roomRegions` on (the app's office card): everywhere
+    /// else the four props stay the only furniture a finger can find.
+    ///
+    /// The windows and the zones are the floor and the wall (priority 0),
+    /// so a prop, a desk or anybody in front of them wins the tap.
+    static func roomRegions(input: OfficeSceneInput) -> [OfficeHitRegion] {
+        let tier = input.tier
+        let l = SceneComposer.layout(for: tier)
+        let size = SceneComposer.sceneSize(for: tier)
+        var regions: [OfficeHitRegion] = []
+        var plants = 0
+        var windows = 0
+        for prop in SceneComposer.propPlacements(for: tier, size: size, layout: l) {
+            let sprite = prop.sprite
+            switch prop.name {
+            case .plant?:
+                regions.append(OfficeHitRegion(
+                    kind: .plant(plants), x: prop.x, y: prop.y,
+                    width: sprite.width, height: sprite.height, zIndex: prop.y + sprite.height
+                ))
+                plants += 1
+            case nil:
+                regions.append(OfficeHitRegion(
+                    kind: .window(windows), x: prop.x, y: prop.y,
+                    width: sprite.width, height: sprite.height,
+                    zIndex: prop.y + sprite.height, priority: 0
+                ))
+                windows += 1
+            default:
+                break
+            }
+        }
+        let shown = SceneComposer.shownAmenities(for: tier, amenities: input.amenities)
+        let frames = SceneComposer.zoneFrames(
+            for: tier, shown: shown, size: size, founderY: SceneComposer.founderRowY(for: tier)
+        )
+        for frame in frames where frame.amenity != .shuttle {
+            regions.append(OfficeHitRegion(
+                kind: .amenity(frame.amenity), x: frame.x, y: frame.y,
+                width: frame.width, height: frame.height,
+                zIndex: frame.y + frame.height, priority: 0
+            ))
+        }
+        return regions
+    }
+    // MARK: end K6
 
     /// Which region a fixed prop is, if it is one.
     static func pressKind(of name: SpriteLibrary.PropName) -> OfficeHitRegion.Kind? {

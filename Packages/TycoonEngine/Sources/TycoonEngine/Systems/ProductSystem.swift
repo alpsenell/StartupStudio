@@ -39,6 +39,10 @@ enum ProductSystem {
         balance: BalanceConfig
     ) {
         guard case .development(var dev) = state.products[productIndex].stage else { return }
+        // MARK: K6 (home and rooms) — the day after a called break, every build's work × `home.breakDayFactor`; × 1.0 (no bit moves) on every other day
+        let breakFactor = state.roomBreakDayFactor(balance)
+        let (design, code, polish) = (design * breakFactor, code * breakFactor, polish * breakFactor)
+        // MARK: end K6
 
         dev.designPts += design
 

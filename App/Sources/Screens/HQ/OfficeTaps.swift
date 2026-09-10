@@ -22,6 +22,14 @@ enum OfficeTapDestination: Equatable, Identifiable {
     case hiring
     /// The founder's desk: the work schedule, theirs and the team's.
     case work
+    // MARK: K6 (home and rooms)
+    /// A plant: the morning papers, whose one tap the plant is the floor of.
+    case morningDesk
+    /// The window: the city map.
+    case city
+    /// A built amenity: the amenities sheet, where its break is.
+    case amenities
+    // MARK: end K6
 
     var id: String {
         switch self {
@@ -31,6 +39,11 @@ enum OfficeTapDestination: Equatable, Identifiable {
         case .newProduct: "newProduct"
         case .hiring: "hiring"
         case .work: "work"
+        // MARK: K6 (home and rooms)
+        case .morningDesk: "morningDesk"
+        case .city: "city"
+        case .amenities: "amenities"
+        // MARK: end K6
         }
     }
 
@@ -58,6 +71,14 @@ enum OfficeTapDestination: Equatable, Identifiable {
         // before it ever gets here.
         case .bug:
             return nil
+        // MARK: K6 (home and rooms) — the room's other things answer too
+        case .plant:
+            return .morningDesk
+        case .window:
+            return .city
+        case .amenity:
+            return .amenities
+        // MARK: end K6
         }
     }
 
@@ -73,6 +94,11 @@ enum OfficeTapDestination: Equatable, Identifiable {
         case .newProduct: "Starts a product"
         case .hiring: "Opens hiring"
         case .work: "Opens the work schedule"
+        // MARK: K6 (home and rooms)
+        case .morningDesk: "Opens the morning papers"
+        case .city: "Opens the city map"
+        case .amenities: "Opens the amenities, where a break is called"
+        // MARK: end K6
         case nil: nil
         }
     }

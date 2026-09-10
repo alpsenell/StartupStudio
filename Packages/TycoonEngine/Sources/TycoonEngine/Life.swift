@@ -393,6 +393,18 @@ public struct LifeState: Codable, Equatable, Sendable {
     /// L7 — what stands where in the pixel home.
     public var decor: HomeDecorState = .empty
 
+    // MARK: K6 (home and rooms)
+    /// The district the founder lives in (`.moveHome`). `nil` is every run
+    /// before iteration 15 and every bot: the tier's rent unmultiplied and
+    /// no commute, so an office that relocates costs its founder nothing.
+    public var homeDistrict: DistrictID? = nil
+    /// The planned vacation takes the partner and the children along
+    /// (`.planFamilyHoliday`). Read only while `plannedActivity` is
+    /// `.vacation`; cleared when the weekend resolves or anything else is
+    /// planned.
+    public var familyHoliday: Bool = false
+    // MARK: end K6
+
     public init(
         meters: LifeMeters,
         schedule: WorkSchedule,
@@ -505,6 +517,9 @@ extension LifeState {
         case skills, trainingCooldowns, trainingsToday, eveningsSpentThisWeek
         // Iteration 9
         case phone, friends, sideProject, sabbatical, decor
+        // MARK: K6 (home and rooms)
+        case homeDistrict, familyHoliday
+        // MARK: end K6
     }
 
     private struct CooldownEntry: Codable {
@@ -556,6 +571,11 @@ extension LifeState {
         sideProject = try container.decodeIfPresent(SideProjectState.self, forKey: .sideProject)
         sabbatical = try container.decodeIfPresent(SabbaticalState.self, forKey: .sabbatical)
         decor = try container.decodeIfPresent(HomeDecorState.self, forKey: .decor) ?? .empty
+        // MARK: K6 (home and rooms)
+        // Absent in every older save: no district, no family holiday.
+        homeDistrict = try container.decodeIfPresent(DistrictID.self, forKey: .homeDistrict)
+        familyHoliday = try container.decodeIfPresent(Bool.self, forKey: .familyHoliday) ?? false
+        // MARK: end K6
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -597,6 +617,12 @@ extension LifeState {
         try container.encodeIfPresent(sabbatical, forKey: .sabbatical)
         if decor != .empty { try container.encode(decor, forKey: .decor) }
         try container.encode(eveningsSpentThisWeek, forKey: .eveningsSpentThisWeek)
+        // MARK: K6 (home and rooms)
+        // Written only once the founder has moved or planned one, so the
+        // byte-identical fixtures stand.
+        try container.encodeIfPresent(homeDistrict, forKey: .homeDistrict)
+        if familyHoliday { try container.encode(familyHoliday, forKey: .familyHoliday) }
+        // MARK: end K6
     }
 }
 
@@ -620,7 +646,13 @@ extension GameState {
     /// signed off after a hospital stay actually gets the chill week's
     /// evenings rather than the crunch they still intend to go back to.
     public func eveningsPerWeek(_ balance: BalanceConfig) -> Int? {
-        balance.life.evenings(for: effectiveSchedule)
+        // MARK: K6 (home and rooms)
+        // A far commute takes an evening, never the week's last one; zero
+        // with no home district, which is every run that never moved.
+        balance.life.evenings(for: effectiveSchedule).map {
+            $0 - commuteEveningsLost(from: $0, balance: balance)
+        }
+        // MARK: end K6
     }
 
     /// Evenings left this week, or `nil` when there is no budget.

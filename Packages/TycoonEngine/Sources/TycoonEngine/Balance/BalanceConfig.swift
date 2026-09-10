@@ -2024,6 +2024,10 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: K5 (hand over the keys)
     // MARK: end K5
     // MARK: K6 (home and rooms)
+    /// Where the founder lives, the family holiday and the paid break
+    /// (`BalanceConfig+Home.swift`). `"home"` is an optional key; read only
+    /// once a player has moved, planned the holiday or called a break.
+    public var home: HomeBalance = .default
     // MARK: end K6
     // MARK: K7 (partner and diary)
     // MARK: end K7
