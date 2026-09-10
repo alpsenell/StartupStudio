@@ -1510,6 +1510,26 @@ extension DebugLaunch {
     // MARK: V1 (ux: Life folded, rooms dormant)
     // MARK: end V1
     // MARK: V2 (ux: one inbox, one home per thing)
+    /// `-autoWaiting`: "Waiting on you" opens a few seconds in, and the
+    /// inbox, the desk and the morning papers are printed side by side
+    /// (the lane's measurement).
+    static var opensWaiting: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoWaiting")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoReopenReport`: the latest closed week's report opens again a
+    /// few seconds in, as the inbox's footer and the journal would.
+    static var reopensReport: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoReopenReport")
+        #else
+        return false
+        #endif
+    }
     // MARK: end V2
     // MARK: V3 (ux: card weights, the Now card)
     // MARK: end V3

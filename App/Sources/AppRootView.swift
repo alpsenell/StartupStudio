@@ -23,6 +23,10 @@ struct AppRootView: View {
     @State private var awardsResumeSpeed: SimSpeed?
     /// Iteration 7 (R4): the biography's share sheet.
     @State private var sharingBiography = false
+    // MARK: V2 (ux: one inbox, one home per thing)
+    /// C5: what the inbox's row asked for, run once the sheet is down.
+    @State private var waitingPick: WaitingSheetPick = .none
+    // MARK: end V2
 
     var body: some View {
         let engine = session.engine
@@ -346,7 +350,58 @@ struct AppRootView: View {
                     }
                 }
             }
+            // MARK: V2 (ux: one inbox, one home per thing)
+            // C5: "Waiting on you", from the rail's +N and the desk card.
+            // Presented here, beside the report, so a row's answer runs
+            // once the sheet is down: a recalled question comes up in its
+            // place, a route lands, a closed report opens again (C10).
+            .sheet(isPresented: waitingPresented, onDismiss: runWaitingPick) {
+                WaitingSheet(engine: engine) { pick in
+                    waitingPick = pick
+                    shell.showingWaiting = false
+                }
+                .environment(shell)
+                .environment(router)
+            }
+            .task {
+                #if DEBUG
+                await WaitingDebug.startIfAsked(session: session, shell: shell)
+                #endif
+            }
+            // MARK: end V2
     }
+
+    // MARK: V2 (ux: one inbox, one home per thing)
+
+    private var waitingPresented: Binding<Bool> {
+        Binding(
+            get: { shell.showingWaiting && session.engine.state.gameOver == nil },
+            set: { presented in
+                if !presented { shell.showingWaiting = false }
+            }
+        )
+    }
+
+    /// Runs what the inbox asked for, after it has gone: the rail's own
+    /// answers, a route, or the report again.
+    private func runWaitingPick() {
+        let pick = waitingPick
+        waitingPick = .none
+        switch pick {
+        case .none:
+            break
+        case .item(.answer(.recall(let promptID))):
+            shell.recall(promptID: promptID)
+        case .item(.answer(.route(let route))), .item(.route(let route)):
+            router.go(route)
+        case .item(.recallStoryBeat):
+            shell.recallDeferredChoice()
+        case .reopenReport(let week):
+            shell.reopenWeeklyReport(engine: session.engine, week: week)
+        }
+    }
+
+    // MARK: end V2
 
     /// Iteration 7 (R1): the tour introduces the tabs one beat at a time,
     /// so the bar draws only the ones it has reached — all five by the
@@ -553,7 +608,9 @@ struct AppRootView: View {
 
     private var weeklyReportPresented: Binding<Bool> {
         Binding(
-            get: { shell.showingWeeklyReport },
+            // V2 (C5): a report that closes its week while the inbox is up
+            // waits for the inbox, as it already waits for a question.
+            get: { shell.showingWeeklyReport && !shell.showingWaiting },
             set: { shell.showingWeeklyReport = $0 }
         )
     }
@@ -568,6 +625,11 @@ struct AppRootView: View {
             get: {
                 guard session.engine.state.gameOver == nil else { return nil }
                 guard shell.launchDayProductID == nil, !shell.showingWeeklyReport else { return nil }
+                // MARK: V2 (ux: one inbox, one home per thing)
+                // C5: a question that stops the clock while the inbox is
+                // up comes up the moment it closes.
+                if shell.showingWaiting { return nil }
+                // MARK: end V2
                 // MARK: J2 (record)
                 // DEBUG only: a screenshot of the hiring sheet, the board
                 // card or the espionage rows keeps the fixture's questions

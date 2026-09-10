@@ -92,6 +92,68 @@ final class GameShell {
 
     // MARK: end J6
 
+    // MARK: V2 (ux: one inbox, one home per thing)
+
+    /// Iteration 14 — V2, C5. "Waiting on you" is up. The root presents
+    /// it (`AppRootView`); the rail's +N and the desk card's "more" line
+    /// set it.
+    var showingWaiting = false
+
+    /// C10: every weekly report built this session, by week, so a closed
+    /// report can be read again. Not saved: after a relaunch the latest
+    /// closed week is rebuilt from the state instead, which is exactly
+    /// what opening an unread report late has always done.
+    private(set) var reportsByWeek: [Int: WeeklyReport] = [:]
+
+    /// Whether week `week`'s report can be opened again: one built this
+    /// session, or the latest closed week (rebuilt from the state).
+    /// Weeks are the report's and the journal's (`JournalEntry.week`):
+    /// week 1 is days 0…6.
+    func canReopenReport(week: Int, engine: GameEngine) -> Bool {
+        guard week >= 1 else { return false }
+        return reportsByWeek[week] != nil || week == engine.state.day / GameState.daysPerWeek
+    }
+
+    /// The newest week whose report can be opened again, or `nil` before
+    /// the first week has closed.
+    func reopenableReportWeek(engine: GameEngine) -> Int? {
+        let latest = engine.state.day / GameState.daysPerWeek
+        if canReopenReport(week: latest, engine: engine) { return latest }
+        return reportsByWeek.keys.max()
+    }
+
+    /// C10: opens week `week`'s report again (the latest closed week when
+    /// `nil`), the way the rail opens an unread one: the clock pauses
+    /// behind it and "Next week" resumes at the speed it had. An unread
+    /// report is simply opened. Returns `false` when that week cannot be
+    /// shown (see `canReopenReport`).
+    ///
+    /// The hook for V3's journal week row: `shell.reopenWeeklyReport(engine:
+    /// engine, week: row.week)`, guarded by `canReopenReport(week:engine:)`.
+    @discardableResult
+    func reopenWeeklyReport(engine: GameEngine, week: Int? = nil) -> Bool {
+        let target = week ?? engine.state.day / GameState.daysPerWeek
+        guard canReopenReport(week: target, engine: engine) else { return false }
+        if pendingReportWeek == target {
+            openWeeklyReport(engine: engine)
+            return true
+        }
+        let shown = reportsByWeek[target] ?? WeeklyReport(
+            state: engine.state,
+            balance: engine.balance,
+            weeklyBurn: engine.weeklyBurn
+        )
+        reportsByWeek[target] = shown
+        report = shown
+        resumeSpeed = engine.state.speed == .paused ? .x1 : engine.state.speed
+        engine.setSpeed(.paused)
+        showingWeeklyReport = true
+        Haptics.commit()
+        return true
+    }
+
+    // MARK: end V2
+
     // MARK: Iteration 9 — L1 (phone)
 
     /// `-autoDeferBeats`: a headless pass defers every deferrable story
@@ -246,6 +308,9 @@ final class GameShell {
         previousMorale = built.averageMorale
         previousMeters = built.founderMeters
         report = built
+        // MARK: V2 (ux: one inbox, one home per thing)
+        reportsByWeek[built.weekIndex] = built // C10: reopenable
+        // MARK: end V2
         resumeSpeed = engine.state.speed == .paused ? .x1 : engine.state.speed
         engine.setSpeed(.paused)
         pendingReportWeek = nil
@@ -290,6 +355,11 @@ final class GameShell {
         launchDayProductID = nil
         deferredChoiceID = nil
         deferredQueueIDs = [] // J6 (queue)
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // Another company's reports are not this one's to reopen.
+        reportsByWeek = [:]
+        showingWaiting = false
+        // MARK: end V2
         previousMorale = nil
         previousMeters = nil
     }

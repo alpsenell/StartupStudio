@@ -262,26 +262,72 @@ enum Desk {
 struct DeskCard: View {
     let items: [DeskItem]
     let onRoute: (Route) -> Void
+    // MARK: V2 (ux: one inbox, one home per thing)
+    /// C5: what waits on the founder off the desk — the inbox's questions
+    /// and phone threads (`WaitingList.elsewhere`). 0 draws nothing.
+    var elsewhere: Int = 0
+    /// Opens "Waiting on you"; `nil` draws no line.
+    var onOpenWaiting: (() -> Void)?
+    // MARK: end V2
 
     var body: some View {
         CardView("On the desk", systemImage: "tray.full.fill") {
-            if items.isEmpty {
-                // U1 (C8): the Contracts section's empty Active card folds
-                // into this line; every running contract is a desk row.
-                Text("Nothing on the desk. No contracts running.")
-                    .emptySectionText()
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(items) { item in
-                        row(item)
-                        if item.id != items.last?.id {
-                            Divider()
+            VStack(alignment: .leading, spacing: 0) {
+                if items.isEmpty {
+                    // U1 (C8): the Contracts section's empty Active card folds
+                    // into this line; every running contract is a desk row.
+                    Text("Nothing on the desk. No contracts running.")
+                        .emptySectionText()
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(items) { item in
+                            row(item)
+                            if item.id != items.last?.id {
+                                Divider()
+                            }
                         }
                     }
                 }
+                // MARK: V2 (ux: one inbox, one home per thing)
+                if elsewhere > 0, let onOpenWaiting {
+                    Divider().padding(.top, items.isEmpty ? Theme.Spacing.sm : 0)
+                    waitingLine(onOpenWaiting)
+                }
+                // MARK: end V2
             }
         }
     }
+
+    // MARK: V2 (ux: one inbox, one home per thing)
+    /// C5: "2 more waiting on you" — the rest of the inbox, one tap away,
+    /// so the desk and the inbox are visibly the same list.
+    private func waitingLine(_ open: @escaping () -> Void) -> some View {
+        Button {
+            Haptics.tap()
+            open()
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "tray.and.arrow.down.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 22)
+                Text(elsewhere == 1
+                     ? String(localized: "1 more waiting on you", comment: "Business desk card: one question or thread waiting outside the desk")
+                     : String(localized: "\(elsewhere) more waiting on you", comment: "Business desk card: questions and threads waiting outside the desk. Always 2 or more"))
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                Spacer(minLength: Theme.Spacing.xs)
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.vertical, Theme.Spacing.sm)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.pressableRow)
+        .accessibilityHint("Opens everything waiting on you")
+    }
+    // MARK: end V2
 
     private func row(_ item: DeskItem) -> some View {
         Button {
