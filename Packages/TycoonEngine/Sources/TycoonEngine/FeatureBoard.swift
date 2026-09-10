@@ -45,9 +45,19 @@ public struct FeatureCardReading: Equatable, Sendable, Identifiable {
     /// This card's contribution to the board total. Negative for a card
     /// that belongs on neither the type nor the topic.
     public var value: Double
+    // MARK: J3 (rivals and the market)
+    /// The studio whose live clone in this topic lifted this card, if one
+    /// has. While it competes the card's fit here is worth half.
+    public var copiedBy: String? = nil
+    // MARK: end J3
 
     /// What the card is doing here, in the player's words.
     public var verdict: String {
+        // MARK: J3 (rivals and the market)
+        if let copiedBy {
+            return "\(copiedBy) shipped this first. Everyone has it now; it counts for half."
+        }
+        // MARK: end J3
         if !fitsType, !fitsTopic { return "Belongs on neither this type nor this topic." }
         var parts: [String] = []
         if fitsType, fitsTopic {
@@ -312,6 +322,13 @@ public enum FeatureBoard {
             let typeTerm = card.fitsTypes.isEmpty ? 0 : (fitsType ? 0.5 : -0.5)
             let topicTerm = card.fitsTopics.isEmpty ? 0 : (fitsTopic ? 0.5 : -0.5)
             var value = (typeTerm + topicTerm) * config.fitValue
+            // MARK: J3 (rivals and the market)
+            // A card a rival's live clone lifted fits half as well here:
+            // 1.0 → 0.5 for a natural fit. Nil for every card nobody
+            // copied, which is every card on a board no rival has seen.
+            let copier = RivalMarket.copiedBy(cardName: card.name, topicID: product.topicID, state: state)
+            if copier != nil { value *= balance.rivalMarket.copiedFitFactor }
+            // MARK: end J3
 
             let partners = placed
                 .filter { other in
@@ -335,7 +352,10 @@ public enum FeatureBoard {
                 fitsTopic: fitsTopic,
                 synergyPartners: partners.filter { placedIDs.contains($0) },
                 ridesAppetite: rides,
-                value: value
+                value: value,
+                // MARK: J3 (rivals and the market)
+                copiedBy: copier?.name
+                // MARK: end J3
             ))
         }
 

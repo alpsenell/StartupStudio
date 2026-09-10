@@ -5541,5 +5541,124 @@
         ]
       }
     ]
+  },
+  {
+    "id": "rivalmarket_boom_company",
+    "headline": "A studio you have never heard of is hiring for the one market you are in.",
+    "weight": 3,
+    "category": "market",
+    "body": "The job ad describes your product in some detail. It is a good ad.",
+    "requires": {
+      "flagsAll": [
+        "rivalmarket_company"
+      ]
+    },
+    "cooldownDays": 200,
+    "choices": [
+      {
+        "id": "race",
+        "label": "Tell the office it is a race",
+        "detail": "Morale +2 · everyone likes a race until week three",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "apply",
+        "label": "Apply for the job, as a joke",
+        "detail": "Mood +2 · they invite you to a second round",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rivalmarket_matched_margin",
+    "headline": "Finance has drawn a chart of the price war. It goes down and to the right.",
+    "weight": 3,
+    "category": "money",
+    "body": "They have labelled the axis \"us\" and the other axis \"also us\".",
+    "requires": {
+      "flagsAll": [
+        "rivalmarket_matched"
+      ]
+    },
+    "cooldownDays": 240,
+    "choices": [
+      {
+        "id": "frame",
+        "label": "Frame it",
+        "detail": "Morale +1 · it goes in the kitchen",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 1
+          }
+        ]
+      },
+      {
+        "id": "consultant",
+        "label": "Pay somebody to draw a nicer one",
+        "detail": "$1,500 · reputation +1",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -1500
+          },
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rivalmarket_copied_card",
+    "headline": "A reviewer asks whether you copied them, or they copied you.",
+    "weight": 3,
+    "category": "press",
+    "body": "Both products have the same feature. Theirs came out first. Yours was on a whiteboard first, which is not a thing a reviewer can check.",
+    "requires": {
+      "flagsAll": [
+        "rivalmarket_copied"
+      ]
+    },
+    "cooldownDays": 240,
+    "choices": [
+      {
+        "id": "whiteboard",
+        "label": "Send them a photo of the whiteboard",
+        "detail": "Reputation +1 · the whiteboard also has a salary on it",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          },
+          {
+            "type": "moraleAll",
+            "amount": -1
+          }
+        ]
+      },
+      {
+        "id": "shrug",
+        "label": "Say great minds",
+        "detail": "Mood −2 · it is what they said",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      }
+    ]
   }
 ]

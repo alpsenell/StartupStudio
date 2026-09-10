@@ -38,6 +38,14 @@ struct MarketView: View {
             }
             .pickerStyle(.segmented)
             .accessibilityLabel("Market view")
+            // MARK: J3 (rivals and the market)
+            // Opening the market board is the gate for rivals following
+            // the money. Sent once; no bot ever opens this screen.
+            .onAppear {
+                if !engine.state.rivalMarket.noticed { engine.send(.noticeMarketOpened) }
+                if RivalMarketDebug.opensReport { showingReport = true }
+            }
+            // MARK: end J3
 
             switch lens {
             case .report:

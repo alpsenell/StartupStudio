@@ -48,6 +48,21 @@ struct RivalProfileContent: View {
                 RivalStudioCard(engine: engine, rival: rival)
                 RivalStrengthCard(engine: engine, rival: rival)
                 RivalShelfCard(engine: engine, rival: rival)
+                // MARK: J3 (rivals and the market)
+                // Where the studio is going and why, and the war it is
+                // running. Only once there is something to say.
+                if RivalMarketCard.hasSomething(rival, state: engine.state) {
+                    RivalMarketCard(engine: engine, rival: rival)
+                        .sheet(isPresented: .constant(RivalMarketDebug.liftsCard)) {
+                            ScrollView {
+                                RivalMarketCard(engine: engine, rival: rival)
+                                    .padding(Theme.Spacing.lg)
+                            }
+                            .background(Theme.screenBackground)
+                            .presentationDetents([.medium])
+                        }
+                }
+                // MARK: end J3
                 RivalHistoryCard(engine: engine, rival: rival)
                 // MARK: Iteration 11 — N2 (people menus)
                 // The nemesis strip: the grudge, and taunt / sabotage /

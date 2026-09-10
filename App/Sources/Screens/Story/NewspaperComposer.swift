@@ -383,6 +383,21 @@ struct NewspaperComposer {
                 return "\(topic.name) looks \(verb): ×\(band) in \(forecast.weeksAhead) weeks."
             }
             lines.append(contentsOf: held.prefix(2))
+            // MARK: J3 (rivals and the market)
+            // Who is moving into a category the studio holds. Empty until
+            // the market board has been opened; the moves themselves reach
+            // the column above as market events.
+            let threshold12 = balance.market.standing.forecastThreshold
+            let circling = state.market.standing.keys.sorted().compactMap { topicID -> String? in
+                guard state.market.holdsCategory(topicID, above: threshold12),
+                      let topic = content.topic(topicID),
+                      let entrant = RivalMarket.circling(topicID: topicID, state: state)
+                          .first(where: { $0.reason == .boom && !$0.isSelling })
+                else { return nil }
+                return "\(entrant.name) is circling \(topic.name) and has not shipped yet."
+            }
+            lines.append(contentsOf: circling.prefix(1))
+            // MARK: end J3
         }
 
         if lines.isEmpty {

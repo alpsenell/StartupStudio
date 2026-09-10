@@ -1981,5 +1981,18 @@
     "escapeFailureSentenceFactor": 2.0,
     "escapeFailureInfractions": 2,
     "escapeNotoriety": 20.0
+  },
+  "rivalMarket": {
+    "topicWeightExponent": 2.0,
+    "entrantMinStrength": 40.0,
+    "crashDropMultiplier": 0.7,
+    "crashDropShifts": 4,
+    "moveLogCap": 24,
+    "answerWindowDays": 7,
+    "matchStrengthPerWeek": 1.5,
+    "matchGrudge": 25.0,
+    "outshipStanding": 8.0,
+    "copiedFitFactor": 0.5,
+    "copiedCloneQualityBonus": 4.0
   }
 }

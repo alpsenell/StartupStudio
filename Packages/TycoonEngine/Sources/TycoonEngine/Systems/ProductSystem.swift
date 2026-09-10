@@ -426,7 +426,10 @@ enum ProductSystem {
             // feature callout fires, so a boardless launch reads exactly
             // as it always did.
             bestFeature: board.bestCard?.name ?? "",
-            worstFeature: board.worstCard?.name ?? ""
+            worstFeature: board.worstCard?.name ?? "",
+            // MARK: J3 (rivals and the market)
+            bestFeatureCopied: board.bestCard?.copiedBy != nil
+            // MARK: end J3
         )
 
         var reviews: [Review] = []

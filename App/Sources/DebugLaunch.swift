@@ -1163,6 +1163,9 @@ extension DebugLaunch {
     // MARK: J2 (record)
     // MARK: end J2
     // MARK: J3 (rivals and the market)
+    // Parsed in `RivalMarketDebug` (Screens/Business/RivalFight), started
+    // from the app root's task: `-autoRivalMarket boom|crash`,
+    // `-autoPriceWar` and `-autoCopied`. Nothing to add here.
     // MARK: end J3
     // MARK: J4 (house field)
     // MARK: end J4

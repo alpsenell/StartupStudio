@@ -318,6 +318,13 @@ extension DecisionPrompt {
         if let challenge = state.rivals.pendingChallenge {
             return challengePrompt(challenge, state: state, content: content, balance: balance)
         }
+        // MARK: J3 (rivals and the market)
+        // A price war, inside its answer week and unanswered. Past the
+        // week it is outlasted and there is nothing to ask.
+        if let priceWar = PriceWarPrompt.pending(in: state, content: content, balance: balance) {
+            return priceWar
+        }
+        // MARK: end J3
         if let staffEvent = state.pendingStaffEvent {
             return staffEventPrompt(staffEvent, state: state, content: content, balance: balance)
         }

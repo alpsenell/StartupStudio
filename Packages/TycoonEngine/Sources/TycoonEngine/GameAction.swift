@@ -550,6 +550,17 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: J2 (record)
     // MARK: end J2
     // MARK: J3 (rivals and the market)
+    /// The market board was opened. Sent by the app, never by a bot; the
+    /// gate for rivals following the money. Idempotent.
+    case noticeMarketOpened
+    /// Match, out-ship or outlast a rival's price war. Refused with a
+    /// reason (`RivalMarket.refusal(answering:…)`) past the answer window,
+    /// on a war already answered, or with nothing on sale.
+    case answerPriceWar(rivalID: UUID, answer: RivalMarketPriceWarAnswer)
+    /// `-autoRivalMarket boom|crash`, `-autoPriceWar`, `-autoCopied`: the
+    /// world doing it now, for a screenshot. Applied only in debug builds;
+    /// nothing in the game sends it.
+    case seedRivalMarket(scenario: String)
     // MARK: end J3
     // MARK: J4 (house field)
     // MARK: end J4

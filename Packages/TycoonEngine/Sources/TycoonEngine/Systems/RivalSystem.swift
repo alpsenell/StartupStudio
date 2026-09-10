@@ -78,6 +78,12 @@ enum RivalSystem {
             // The week's launches, read off the evolve and copycat events
             // so the challenge pass needs no second draw and no extra
             // state.
+            // MARK: J3 (rivals and the market)
+            // Booms bring company and crashes empty a topic — before the
+            // week's launches, so a studio that moved in can ship there.
+            // Returns at once until the market board has been opened.
+            events.append(contentsOf: rivalMarketMoves(&state, balance, content))
+            // MARK: end J3
             var launches: [GameEvent] = []
             launches.append(contentsOf: evolve(&state, balance, content))
             launches.append(contentsOf: copycatCheck(&state, balance, content))
@@ -89,6 +95,10 @@ enum RivalSystem {
             recomputeShare(&state, balance)
             events.append(contentsOf: priceWarCheck(&state, balance))
             bleedStrength(&state, balance)
+            // MARK: J3 (rivals and the market)
+            // A matched war costs the studio that started it.
+            rivalMarketMatchBleed(&state, balance)
+            // MARK: end J3
             events.append(contentsOf: settleChallenges(&state, balance))
             let retreat = incumbentRetreatCheck(&state, balance)
             events.append(contentsOf: retreat)
@@ -106,6 +116,12 @@ enum RivalSystem {
         // Re-applied every day, not just on evolution days: `MarketSystem`
         // rebuilds each `TopicMarket` on its weekly shift, and this system
         // runs after it and before `ProductSystem` posts the week's sales.
+        // MARK: J3 (rivals and the market)
+        // An out-shipped war ends the day the patch lands; a matched one
+        // gives the product its price back when it is over. Returns at
+        // once while no war has ever been answered.
+        events.append(contentsOf: rivalMarketDaily(&state, balance))
+        // MARK: end J3
         mirrorShareIntoMarket(&state)
 
         events.append(contentsOf: poachCheck(&state, balance, content))
@@ -232,7 +248,12 @@ enum RivalSystem {
                 : config.shipChance
             if roll < launchChance {
                 let rival = state.rivals.rivals[index]
-                if let topicID = pick(rival.focusTopicIDs, &state.worldRNG) {
+                // MARK: J3 (rivals and the market)
+                // The same one `worldRNG` word; once the market board has
+                // been opened it is weighted by multiplier², and a studio
+                // that moved in on a boom ships there first.
+                if let topicID = rivalMarketLaunchTopic(rival, &state, balance) {
+                // MARK: end J3
                     let product = launchProduct(
                         for: rival, in: topicID, &state, balance, content
                     )
@@ -310,7 +331,12 @@ enum RivalSystem {
         // A readable stand-in for units until a rival's own economy exists;
         // the head-to-head panel shows it, nothing simulates against it.
         let weeklyUnits = Int((rival.strength * 40 * (0.5 + quality / 200)).rounded())
-        let typeID = content.productTypes.first?.id ?? "mobile_app"
+        // MARK: J3 (rivals and the market)
+        // The type the topic suits best, once the market has been opened;
+        // until then the first of the catalog, as it always was.
+        let typeID = rivalMarketProductType(for: topicID, state, content)
+            ?? content.productTypes.first?.id ?? "mobile_app"
+        // MARK: end J3
         return RivalProduct(
             id: id,
             name: name,
@@ -412,7 +438,13 @@ enum RivalSystem {
                 sum + pow(max(1, entry.product.quality), RivalDepthTuning.shareExponent)
             }
             var share = playerWeight / (playerWeight + rivalWeight)
-            if competitors.contains(where: { $0.rival.isInPriceWar(on: day) && $0.rival.priceWarTopicID == topicID }) {
+            // MARK: J3 (rivals and the market)
+            // A war the player matched takes nothing: they went budget too.
+            if competitors.contains(where: {
+                $0.rival.isInPriceWar(on: day) && $0.rival.priceWarTopicID == topicID
+                    && !state.rivalMarket.isMatched($0.rival)
+            }) {
+            // MARK: end J3
                 share -= RivalDepthTuning.priceWarSharePenalty
             }
             let standingFloor = floorAtFull * state.market.standing(for: topicID) / maxStanding
@@ -487,6 +519,18 @@ enum RivalSystem {
 
         // MARK: end M1 (feature board)
 
+        // MARK: J3 (rivals and the market)
+        // The card a studio fed false plans takes instead: the weakest on
+        // the board. Read only when somebody has been fed them.
+        let worstFeature: String? = state.rivalMarket.fedFalsePlans.isEmpty ? nil
+            : FeatureBoard.reading(
+                for: target.product, state: state, content: content, balance: balance
+            ).cards.min { lhs, rhs in
+                if lhs.value != rhs.value { return lhs.value < rhs.value }
+                return lhs.cardID < rhs.cardID
+            }?.name
+        // MARK: end J3
+
         var events: [GameEvent] = []
         for index in state.rivals.rivals.indices {
             let rival = state.rivals.rivals[index]
@@ -500,6 +544,13 @@ enum RivalSystem {
             // MARK: M1 (feature board)
             clone.copiedFeature = copiedFeature
             // MARK: end M1 (feature board)
+            // MARK: J3 (rivals and the market)
+            // Best card or, after false plans, worst; +4 for having copied
+            // anything. Nothing moves for a board nobody placed a card on.
+            rivalMarketCopy(
+                &clone, rivalID: rival.id, best: copiedFeature, worst: worstFeature, &state, balance
+            )
+            // MARK: end J3
             appendProduct(clone, to: index, in: &state)
             state.rivals.rivals[index].lastShippedDay = state.day
             events.append(.rivalCopycat(rivalID: rival.id, topicID: target.topicID, day: state.day))
@@ -1138,6 +1189,10 @@ enum RivalSystem {
         state.rivals.rivals[index].strength = max(
             5, state.rivals.rivals[index].strength - balance.espionage.falsePlansStrengthHit
         )
+        // MARK: J3 (rivals and the market)
+        // …and when it next copies you, it copies the wrong thing.
+        rivalMarketFedFalsePlans(rivalID, state: &state)
+        // MARK: end J3
         return worst
     }
 
@@ -1622,6 +1677,14 @@ enum RivalSystem {
             return lhs.id.uuidString < rhs.id.uuidString
         }
     }
+
+    // MARK: J3 (rivals and the market)
+    /// The share pass, for `RivalSystem+RivalMarket.swift`: an answered
+    /// war lands on this week's share, not next week's.
+    static func rivalMarketRecomputeShare(_ state: inout GameState, _ balance: BalanceConfig) {
+        recomputeShare(&state, balance)
+    }
+    // MARK: end J3
 
     private static func pick(_ pool: [String], _ rng: inout SeededRNG) -> String? {
         guard !pool.isEmpty else { return nil }
