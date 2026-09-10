@@ -2051,6 +2051,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     public var partner: PartnerBalance = .default
 
     // MARK: end K7
+    // MARK: S2 (office downgrade)
+
+    /// Iteration 16 — S2: what moving one office tier down costs
+    /// (`BalanceConfig+OfficeDowngrade.swift`). Inline default with the
+    /// shipped numbers, so `"officeDowngrade"` is an optional key; read only
+    /// behind `.downgradeOffice`, which no bot sends.
+    public var officeDowngrade: OfficeDowngradeBalance = .default
+
+    // MARK: end S2
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13

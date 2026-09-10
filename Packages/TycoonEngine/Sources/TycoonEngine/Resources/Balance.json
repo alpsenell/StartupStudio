@@ -2140,5 +2140,12 @@
     "letterHealth": 40.0,
     "letterLeadDays": 7,
     "letterCooldownDays": 180
+  },
+  "officeDowngrade": {
+    "moveCostBase": 2000,
+    "moveCostRentWeeks": 2,
+    "moraleDrag": 5.0,
+    "moraleDragDays": 91,
+    "reputationCost": 3.0
   }
 }

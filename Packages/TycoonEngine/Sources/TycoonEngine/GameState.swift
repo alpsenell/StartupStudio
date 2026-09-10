@@ -759,6 +759,10 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// A launch landed on a diary date and the founder kept the date.
     case diaryDateKept(productID: UUID, label: String, day: Int)
     // MARK: end K7
+    // MARK: S2 (office downgrade)
+    /// The company moved one office tier down, to `tier`.
+    case officeDowngraded(tier: OfficeTier, day: Int)
+    // MARK: end S2
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
@@ -915,6 +919,11 @@ extension GameEvent {
         case .partnerHired, .exBoughtOut, .diaryDateKept:
             .info
         // MARK: end K7
+        // MARK: S2 (office downgrade)
+        // A move is news, the way the move up is.
+        case .officeDowngraded:
+            .notable
+        // MARK: end S2
 
         // MARK: WS-F
 
@@ -1379,6 +1388,12 @@ public struct GameState: Codable, Equatable, Sendable {
     // MARK: end K6
     // MARK: K7 (partner and diary)
     // MARK: end K7
+    // MARK: S2 (office downgrade)
+    /// The last move down the office ladder: the morale drag's end and the
+    /// amenities in storage. `nil` on every run that never moved down, and
+    /// then not encoded.
+    public var officeDowngrade: OfficeDowngradeState? = nil
+    // MARK: end S2
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
@@ -1742,6 +1757,9 @@ extension GameState {
         // MARK: end K6
         // MARK: K7 (partner and diary)
         // MARK: end K7
+        // MARK: S2 (office downgrade)
+        case officeDowngrade
+        // MARK: end S2
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
@@ -1878,6 +1896,9 @@ extension GameState {
         // MARK: end K6
         // MARK: K7 (partner and diary)
         // MARK: end K7
+        // MARK: S2 (office downgrade)
+        officeDowngrade = try container.decodeIfPresent(OfficeDowngradeState.self, forKey: .officeDowngrade)
+        // MARK: end S2
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
@@ -2035,6 +2056,9 @@ extension GameState {
         // MARK: end K6
         // MARK: K7 (partner and diary)
         // MARK: end K7
+        // MARK: S2 (office downgrade)
+        try container.encodeIfPresent(officeDowngrade, forKey: .officeDowngrade)
+        // MARK: end S2
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13

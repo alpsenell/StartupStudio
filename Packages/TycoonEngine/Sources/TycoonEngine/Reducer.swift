@@ -1102,6 +1102,18 @@ public enum Reducer {
             events = []
             #endif
         // MARK: end K7
+        // MARK: S2 (office downgrade)
+        case .downgradeOffice:
+            events = OfficeDowngradeSystem.downgrade(state: &state, balance: balance)
+        case let .officeDowngradeDebugSeed(scenario):
+            #if DEBUG
+            events = OfficeDowngradeDebugSeed.apply(
+                scenario: scenario, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
+        // MARK: end S2
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
