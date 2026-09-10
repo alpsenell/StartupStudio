@@ -22,6 +22,7 @@ struct HQScreen: View {
 
     var body: some View {
         NavigationStack(path: $path) {
+            ScrollViewReader { scroller in
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
                     if engine.state.company.daysInDebt > 0 {
@@ -33,26 +34,23 @@ struct HQScreen: View {
                     // What is happening and what to do next leads; the
                     // office, the game's face, comes straight after it.
                     NowCard(engine: engine) { showingNewProduct = true }
+                        .hqMeasured("now")
                     OfficeCard(engine: engine)
-                    BurnRateCard(
-                        weeklyBurn: engine.weeklyBurn,
-                        cash: engine.state.company.cash,
-                        engineForSheet: engine,
-                        codebases: engine.state.codebases,
-                        accruingDebt: engine.state.productsInDevelopment.reduce(0.0) {
-                            guard case .development(let dev) = $1.stage else { return $0 }
-                            return $0 + dev.debtAccrued
-                        },
-                        balance: engine.balance
-                    )
-                    // The chapter card stays: it is the only place the
-                    // other goals, the perks and the next chapter's teaser
-                    // live. It sits below the money now, not above it.
-                    GoalsCard(engine: engine)
-                    JournalCard(engine: engine)
+                        .hqMeasured("office")
+                    // MARK: V3 (ux: card weights, the Now card)
+                    // C11: below the office, one Company card with three
+                    // rows — Burn and runway, Chapter, Journal. Each row
+                    // pushes the card it used to be (the burn card, the
+                    // chapter card with its goals, perks and teaser, the
+                    // journal), so nothing is gone; it is one tap in.
+                    CompanyCard(engine: engine)
+                        .hqMeasured("company")
+                    // MARK: end V3
                     // In-content settings entry point: nav-bar toolbars are
                     // hidden on tab roots (the HUD takes that slot).
                     SettingsButton { showingSettings = true }
+                        .hqMeasured("settings")
+                        .id(HQDebug.bottomID)
                 }
                 .padding(Theme.Spacing.lg)
             }
@@ -76,6 +74,17 @@ struct HQScreen: View {
                 case .timeline: TimelineScreen(engine: engine)
                 }
             }
+            // MARK: V3 (ux: card weights, the Now card)
+            .navigationDestination(for: CompanyDestination.self) { destination in
+                companyPage(destination)
+            }
+            // `-autoRoute hq-money|hq-chapter|hq-journal` pushes a Company
+            // row's page on launch, for a headless screenshot. Debug only
+            // in effect: the name is only ever set by a debug flag.
+            .task {
+                if let destination = CompanyDestination.launched { path.append(destination) }
+            }
+            // MARK: end V3
             .onChange(of: router.pendingPush, initial: true) { _, _ in
                 consumeRoute()
             }
@@ -88,8 +97,48 @@ struct HQScreen: View {
                 // R2: `-autoRoute settings` opens the sheet for the iCloud row.
                 if DebugLaunch.autoRouteName == "settings" { showingSettings = true }
             }
+            // V3: `-autoHQBottom` scrolls to Settings, so a headless pass
+            // can photograph the bottom of HQ. Debug only.
+            .task { await HQDebug.scrollToBottomIfAsked(scroller) }
+            }
         }
     }
+
+    // MARK: V3 (ux: card weights, the Now card)
+
+    /// A Company row's page: the card the row folds, on its own.
+    private func companyPage(_ destination: CompanyDestination) -> some View {
+        ScrollView {
+            VStack(spacing: Theme.Spacing.lg) {
+                switch destination {
+                case .money:
+                    BurnRateCard(
+                        weeklyBurn: engine.weeklyBurn,
+                        cash: engine.state.company.cash,
+                        engineForSheet: engine,
+                        codebases: engine.state.codebases,
+                        accruingDebt: engine.state.productsInDevelopment.reduce(0.0) {
+                            guard case .development(let dev) = $1.stage else { return $0 }
+                            return $0 + dev.debtAccrued
+                        },
+                        balance: engine.balance
+                    )
+                case .chapter:
+                    // The only place the other goals, the perks and the
+                    // next chapter's teaser live.
+                    GoalsCard(engine: engine)
+                case .journal:
+                    JournalCard(engine: engine)
+                }
+            }
+            .padding(Theme.Spacing.lg)
+        }
+        .background(Theme.screenBackground)
+        .navigationTitle(destination.title)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    // MARK: end V3
 
     /// Deep links into this tab: the week's front page and the timeline.
     private func consumeRoute() {
@@ -302,5 +351,227 @@ private struct StatBlock: View {
                 .animation(Theme.Motion.valueChange, value: value)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - V3: debug measuring
+
+/// Two debug-only aids for measuring HQ the way the audit did, since
+/// `simctl` cannot scroll: `-autoHQBottom` scrolls to Settings, and
+/// `-autoHQMeasure` writes each measured card's frame (in points, in the
+/// scroll content) to `tmp/hq-measure.txt` in the app's container. Both
+/// do nothing in a release build or without their flag.
+enum HQDebug {
+    static let bottomID = "hq-bottom"
+    static let coordinateSpace = "hq-content"
+
+    static var measures: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-autoHQMeasure")
+        #else
+        false
+        #endif
+    }
+
+    @MainActor
+    static func scrollToBottomIfAsked(_ scroller: ScrollViewProxy) async {
+        #if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("-autoHQBottom") else { return }
+        try? await Task.sleep(for: .seconds(2))
+        scroller.scrollTo(bottomID, anchor: .bottom)
+        #endif
+    }
+
+    @MainActor private static var frames: [String: CGRect] = [:]
+
+    @MainActor
+    static func record(_ name: String, _ frame: CGRect) {
+        #if DEBUG
+        frames[name] = frame
+        let lines = frames.keys.sorted().map { key -> String in
+            let rect = frames[key] ?? .zero
+            return "\(key) minY=\(Int(rect.minY)) maxY=\(Int(rect.maxY)) height=\(Int(rect.height)) width=\(Int(rect.width))"
+        }
+        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("hq-measure.txt")
+        try? lines.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)
+        #endif
+    }
+}
+
+private struct HQMeasured: ViewModifier {
+    let name: String
+
+    func body(content: Content) -> some View {
+        if HQDebug.measures {
+            content.onGeometryChange(for: CGRect.self) { proxy in
+                proxy.frame(in: .scrollView)
+            } action: { frame in
+                HQDebug.record(name, frame)
+            }
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// Debug: records this card's frame under `-autoHQMeasure`.
+    func hqMeasured(_ name: String) -> some View {
+        modifier(HQMeasured(name: name))
+    }
+}
+
+// MARK: - V3: the Company card
+
+/// The three pages HQ's Company card pushes.
+enum CompanyDestination: Hashable {
+    case money
+    case chapter
+    case journal
+
+    var title: String {
+        switch self {
+        case .money: "Burn and runway"
+        case .chapter: "Chapter"
+        case .journal: "Journal"
+        }
+    }
+
+    /// `-autoRoute hq-money|hq-chapter|hq-journal`, for a screenshot pass.
+    static var launched: CompanyDestination? {
+        switch DebugLaunch.autoRouteName ?? "" {
+        case "hq-money": .money
+        case "hq-chapter": .chapter
+        case "hq-journal": .journal
+        default: nil
+        }
+    }
+}
+
+/// Everything HQ used to stack below the office — the burn card, the
+/// chapter card and the journal — as one grouped card of three `.row`
+/// lines (C11): the one number each is for, and a chevron into the card.
+private struct CompanyCard: View {
+    let engine: GameEngine
+
+    var body: some View {
+        let latest = latestEntry
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            CardHeader(title: "Company", systemImage: "building.columns.fill")
+                .padding(.horizontal, Theme.Spacing.lg)
+            VStack(spacing: 0) {
+                NavigationLink(value: CompanyDestination.money) {
+                    CardRowLabel("Burn and runway", systemImage: "flame.fill", subtitle: burnLine) {
+                        Text(runwayValue).foregroundStyle(runwayTint)
+                    }
+                }
+                .buttonStyle(.pressableRow)
+                .accessibilityHint("Opens the burn rate, the runway and all the money")
+
+                if showsChapter {
+                    Divider().padding(.leading, CardRowLabel<EmptyView>.dividerInset)
+                    NavigationLink(value: CompanyDestination.chapter) {
+                        CardRowLabel(chapterTitle, systemImage: "flag.checkered", subtitle: chapterSubtitle) {
+                            Text("\(chapterDone)/\(chapterTotal)")
+                        }
+                    }
+                    .buttonStyle(.pressableRow)
+                    .accessibilityHint("Opens the chapter's goals")
+                }
+
+                Divider().padding(.leading, CardRowLabel<EmptyView>.dividerInset)
+                NavigationLink(value: CompanyDestination.journal) {
+                    CardRowLabel(
+                        "Journal",
+                        systemImage: "book.closed.fill",
+                        subtitle: latest?.line.message ?? "All quiet. Time to build something."
+                    ) {
+                        if let latest { Text("Week \(latest.week)") }
+                    }
+                }
+                .buttonStyle(.pressableRow)
+                .accessibilityHint("Opens the journal")
+            }
+            .background(
+                Theme.cardBackground,
+                in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        }
+    }
+
+    // MARK: Burn and runway
+
+    private var weeklyBurn: Int { engine.weeklyBurn }
+    private var cash: Int { engine.state.company.cash }
+
+    private var burnLine: String {
+        cash < 0 ? "Out of cash · \(weeklyBurn.money)/wk" : "Burning \(weeklyBurn.money)/wk"
+    }
+
+    /// The same runway the burn card shows.
+    private var runwayValue: String {
+        if cash < 0 { return "—" }
+        guard weeklyBurn > 0 else { return "∞" }
+        return "\(cash / weeklyBurn) wk"
+    }
+
+    private var runwayTint: Color {
+        if cash < 0 { return Theme.negativeCash }
+        guard weeklyBurn > 0 else { return Theme.positiveCash }
+        return cash / weeklyBurn <= 4 ? Theme.warning : .primary
+    }
+
+    // MARK: Chapter
+
+    private var progression: ProgressionState { engine.state.progression }
+
+    /// The chapter card draws nothing before the first tick; neither does
+    /// its row.
+    private var showsChapter: Bool {
+        !progression.activeGoals.isEmpty || !progression.completedGoalIDs.isEmpty
+    }
+
+    /// How many chapters the catalog has, counting up from this one.
+    private var chapterCount: Int {
+        var count = progression.chapter
+        while !engine.content.goals(inChapter: count + 1).isEmpty { count += 1 }
+        return count
+    }
+
+    private var chapterTitle: String {
+        "Chapter \(progression.chapter) of \(chapterCount)"
+    }
+
+    /// "Studio", or from the split "Studio · Independent".
+    private var chapterSubtitle: String {
+        guard progression.chapter >= ProgressionState.firstSplitChapter,
+              let track = engine.state.declaredGoalTrack?.displayName
+        else { return progression.chapterTitle }
+        return "\(progression.chapterTitle) · \(track)"
+    }
+
+    private var chapterGoals: [GoalDef] {
+        engine.content.goals(inChapter: progression.chapter, track: engine.state.goalTrack)
+    }
+
+    private var chapterDone: Int {
+        chapterGoals.count { progression.completedGoalIDs.contains($0.id) }
+    }
+
+    private var chapterTotal: Int { chapterGoals.count }
+
+    // MARK: Journal
+
+    /// The newest line the journal would lead with (routine weeks folded).
+    private var latestEntry: JournalEntry? {
+        let copy = EventCopy(state: engine.state, content: engine.content, balance: engine.balance)
+        let rows = JournalBuilder.collapsingRoutine(
+            JournalBuilder.entries(state: engine.state, copy: copy, limit: 40)
+        )
+        for row in rows {
+            if case .entry(let entry) = row { return entry }
+        }
+        return nil
     }
 }

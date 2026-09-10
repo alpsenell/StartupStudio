@@ -150,7 +150,11 @@ struct JournalCard: View {
                         .emptySectionText()
                 } else {
                     ForEach(groupedByWeek(rows), id: \.week) { group in
-                        WeekGroup(week: group.week, rows: group.rows)
+                        WeekGroup(
+                            week: group.week,
+                            rows: group.rows,
+                            onOpenReport: reportOpener(for: group.week)
+                        )
                     }
                 }
                 HStack(spacing: Theme.Spacing.lg) {
@@ -177,6 +181,26 @@ struct JournalCard: View {
         }
     }
 
+    // MARK: V3 (ux: card weights, the Now card)
+
+    /// C10/C11: a closed week's row reopens that week's report. A journal
+    /// week N (days 7N−7…7N−1) is the report the shell offered on day 7N,
+    /// so it is closed once `day / 7 >= N`; the week in progress has no
+    /// report yet and keeps a plain heading.
+    private func reportOpener(for week: Int) -> ((Int) -> Void)? {
+        guard week <= engine.state.day / 7 else { return nil }
+        return reopenReport
+    }
+
+    /// The presenter is V2's (`AppRootView`'s report region). Until it
+    /// lands there is nothing to call, so this is `nil` and every week
+    /// heading draws as it always did; V2 replaces the one line below.
+    private var reopenReport: ((Int) -> Void)? {
+        nil // V3: call V2's reopen here
+    }
+
+    // MARK: end V3
+
     private func groupedByWeek(_ rows: [JournalRow]) -> [(week: Int, rows: [JournalRow])] {
         var groups: [(week: Int, rows: [JournalRow])] = []
         for row in rows {
@@ -194,16 +218,50 @@ struct JournalCard: View {
 struct WeekGroup: View {
     let week: Int
     let rows: [JournalRow]
+    // MARK: V3 (ux: card weights, the Now card)
+    /// Reopens this week's report. `nil` (the default, and every caller
+    /// but HQ's journal card) draws the plain heading.
+    var onOpenReport: ((Int) -> Void)? = nil
+    // MARK: end V3
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            PixelText(text: "Week \(week)", scale: 2, color: .secondary)
-                .accessibilityAddTraits(.isHeader)
+            heading
             ForEach(rows) { row in
                 JournalRowView(row: row)
             }
         }
     }
+
+    // MARK: V3 (ux: card weights, the Now card)
+    @ViewBuilder
+    private var heading: some View {
+        if let onOpenReport {
+            Button {
+                Haptics.tap()
+                onOpenReport(week)
+            } label: {
+                HStack(spacing: Theme.Spacing.sm) {
+                    PixelText(text: "Week \(week)", scale: 2, color: .secondary)
+                    Spacer(minLength: Theme.Spacing.sm)
+                    Text("Report")
+                        .font(.footnote.weight(.semibold))
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.bold))
+                }
+                .foregroundStyle(Theme.accent)
+                .frame(minHeight: 34)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.pressableRow)
+            .accessibilityLabel("Week \(week) report")
+            .accessibilityHint("Opens that week's report again")
+        } else {
+            PixelText(text: "Week \(week)", scale: 2, color: .secondary)
+                .accessibilityAddTraits(.isHeader)
+        }
+    }
+    // MARK: end V3
 }
 
 /// One rendered journal row.
