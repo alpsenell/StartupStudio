@@ -598,6 +598,9 @@ struct NewspaperComposer {
         )
         // A photograph is a still: everybody is where they sit.
         scene.reduceMotion = true
+        // MARK: S1 (seating) — where the player seated them; nothing with no plan.
+        if state.seatingIsSet { scene.seats = state.seatingPlan() }
+        // MARK: end S1
 
         let count = occupants.count
         let place = "The \(state.company.officeTier.displayName.lowercased()), "

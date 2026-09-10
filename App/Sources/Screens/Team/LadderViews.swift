@@ -20,7 +20,9 @@ struct LadderCrewLine: View {
         if let crew = engine.state.ladderCrew(productID: productID, balance: engine.balance),
            crew.count > 0 {
             Label {
-                Text(Self.sentence(crew))
+                // MARK: S1 (seating) — a mentor's cost is its own factor, after the lead's.
+                Text(Self.sentence(crew) + (SeatingCopy.crewSuffix(state: engine.state, productID: productID, balance: engine.balance) ?? ""))
+                // MARK: end S1
                     .font(.caption)
                     .monospacedDigit()
                     .foregroundStyle(crew.leadsColliding ? Theme.warning : .secondary)

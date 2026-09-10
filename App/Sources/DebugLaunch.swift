@@ -1716,6 +1716,68 @@ extension DebugLaunch {
     // MARK: K7 (partner and diary)
     // MARK: end K7
     // MARK: end of Iteration 15
+    // MARK: S1 (seating)
+    /// S1's launch flags. `-autoSeating dress` sends the real move once the
+    /// office card appears: the demo's student to the desk beside the
+    /// room's strongest mentor (`seatingDemo`), so the plan starts and every
+    /// neighbour in the room is live. A refused move (already there) is a
+    /// no-op, so a relaunch is harmless. The routes are read by the office
+    /// card: `-autoRoute s1-move` (the move mode with the demo's move
+    /// previewed), `s1-pick` (the demo's student picked, no desk yet),
+    /// `s1-desk` (their page, the Desk section first, the desk picked),
+    /// `s1-office` (HQ scrolled to the office). Debug only.
+    @MainActor
+    static func startSeating(engine: GameEngine) {
+        #if DEBUG
+        let flag = UserDefaults.standard.string(forKey: "autoSeating") ?? ""
+        // `now` / `dress-now`: the demo's mentor on the Now card's build
+        // first (a real `.assign`), so its crew line and ship date carry
+        // the lesson's price — with (`dress-now`) or without the seat.
+        if flag == "now" || flag == "dress-now",
+           let mentor = seatingDemoMentor(engine.state),
+           let build = engine.state.productInDevelopment {
+            _ = engine.send(.assign(employeeID: mentor.id, to: .product(build.id)))
+        }
+        guard flag == "dress" || flag == "dress-now",
+              let demo = seatingDemo(engine.state, balance: engine.balance)
+        else { return }
+        _ = engine.send(.seatingMove(employeeID: demo.studentID, desk: demo.desk))
+        #endif
+    }
+
+    /// The move every S1 screenshot shows: the room's strongest mentor, the
+    /// person furthest behind them in the mentor's own skill who does not
+    /// already sit beside them, and the mentor's neighbouring desk that
+    /// person would take. `nil` in a room with no mentor.
+    static func seatingDemo(_ state: GameState, balance: BalanceConfig) -> (studentID: UUID, desk: Int)? {
+        func subject(_ mentor: Employee, _ e: Employee) -> Double {
+            let m = mentor.skills
+            if m.coding >= m.design, m.coding >= m.marketing { return e.skills.coding }
+            return m.design >= m.marketing ? e.skills.design : e.skills.marketing
+        }
+        let plan = state.seatingPlan()
+        guard let mentor = seatingDemoMentor(state), let mentorDesk = plan[mentor.id] else { return nil }
+        let besideDesks = SeatingLayout.neighbours(of: mentorDesk, tier: state.company.officeTier)
+        let beside = Set(state.seatingNeighbours(of: mentor.id).map(\.id))
+        guard let student = state.employees
+            .filter({ !$0.isFounder && $0.id != mentor.id && !beside.contains($0.id) && plan[$0.id] != nil })
+            .min(by: { subject(mentor, $0) < subject(mentor, $1) }),
+              let desk = besideDesks.last ?? besideDesks.first
+        else { return nil }
+        return (student.id, desk)
+    }
+
+    /// The room's strongest mentor with a desk.
+    static func seatingDemoMentor(_ state: GameState) -> Employee? {
+        let plan = state.seatingPlan()
+        return state.employees
+            .filter { $0.traits.contains("mentor") && plan[$0.id] != nil }
+            .max { lhs, rhs in
+                max(lhs.skills.coding, lhs.skills.design, lhs.skills.marketing)
+                    < max(rhs.skills.coding, rhs.skills.design, rhs.skills.marketing)
+            }
+    }
+    // MARK: end S1
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12

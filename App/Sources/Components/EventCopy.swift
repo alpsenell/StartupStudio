@@ -1299,6 +1299,10 @@ struct EventCopy {
             ("calendar.badge.checkmark", "You kept the date: \(label). The launch party went on without you.", day, Theme.romance)
         // MARK: end K7
         // MARK: end of Iteration 15
+        // MARK: S1 (seating)
+        case .seatingMoved, .seatingCleared:
+            SeatingCopy.eventLine(event, state: state) ?? fallbackEntry(for: event)
+        // MARK: end S1
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12

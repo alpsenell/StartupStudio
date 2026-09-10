@@ -31,6 +31,12 @@ struct OfficeCard: View {
     @State private var tapHintDismissed = GameSettings.dismissedTips.contains(OfficeTapHint.tipID)
     /// Iteration 7 (R4): the office photo, as a share card.
     @State private var sharingPhoto = false
+    // MARK: S1 (seating)
+    /// Whether taps in the room move people between desks instead of
+    /// opening their pages, and what the move has in hand.
+    @State private var seatingMoving = false
+    @State private var seatingMove = SeatingMoveState()
+    // MARK: end S1
 
     // MARK: Iteration 10 — M6 (the bug hunt)
 
@@ -120,7 +126,10 @@ struct OfficeCard: View {
                         sceneLabel: sceneAccessibilityLabel,
                         onTapRegion: { kind in handleTap(kind) },
                         accessibilityHint: { kind in
-                            OfficeTapDestination.accessibilityHint(for: kind, state: engine.state)
+                            // MARK: S1 (seating) — a person in the move mode is picked, not opened.
+                            if seatingMoving, kind.isPerson { return "Picks them to move, or swaps with whoever you picked" }
+                            // MARK: end S1
+                            return OfficeTapDestination.accessibilityHint(for: kind, state: engine.state)
                         }
                     )
                 )
@@ -154,10 +163,27 @@ struct OfficeCard: View {
                 OfficeTapHint { dismissTapHint() }
             }
 
+            // MARK: S1 (seating) — the move mode's instructions and the move itself.
+            if seatingMoving {
+                SeatingMoveStrip(engine: engine, move: $seatingMove)
+            }
+            // MARK: end S1
+
             Divider()
             AmenitiesRow(ownedCount: ownedAmenities.count) {
                 showingAmenities = true
             }
+
+            // MARK: S1 (seating)
+            Divider()
+            SeatingRow(engine: engine, moving: seatingMoving) {
+                Haptics.tap()
+                withAnimation(Theme.Motion.entrance) {
+                    seatingMoving.toggle()
+                    seatingMove = SeatingMoveState()
+                }
+            }
+            // MARK: end S1
 
             Divider()
             CityMapRow(
@@ -230,6 +256,29 @@ struct OfficeCard: View {
         // MARK: K6 (home and rooms) — `-autoK6Break` and friends, from HQ too
         .task { DebugLaunch.startK6(engine: engine) }
         // MARK: end K6
+        // MARK: S1 (seating) — `-autoSeating dress` and the `s1-…` routes.
+        .task {
+            DebugLaunch.startSeating(engine: engine)
+            switch SeatingDebug.route {
+            case "s1-move"?:
+                seatingMoving = true
+                if let demo = DebugLaunch.seatingDemo(engine.state, balance: engine.balance) {
+                    seatingMove = SeatingMoveState(picked: demo.studentID, target: demo.desk)
+                }
+            case "s1-pick"?:
+                seatingMoving = true
+                if let demo = DebugLaunch.seatingDemo(engine.state, balance: engine.balance) {
+                    seatingMove = SeatingMoveState(picked: demo.studentID)
+                }
+            case "s1-desk"?:
+                if let demo = DebugLaunch.seatingDemo(engine.state, balance: engine.balance) {
+                    destination = .person(demo.studentID)
+                }
+            default:
+                break
+            }
+        }
+        // MARK: end S1
         .sheet(isPresented: $showingAmenities) {
             AmenitiesSheet(engine: engine)
         }
@@ -280,6 +329,14 @@ struct OfficeCard: View {
     /// that means; this opens it. Every tap that lands gets a haptic, and
     /// the first one retires the hint — the tap is the proof it was read.
     private func handleTap(_ kind: OfficeHitRegion.Kind) {
+        // MARK: S1 (seating) — in the move mode a person or a desk is a move, nothing opens.
+        if seatingMoving {
+            if case .bug(let id) = kind { squash(bugID: id); return }
+            Haptics.tap()
+            seatingMove.tap(kind, state: engine.state)
+            return
+        }
+        // MARK: end S1
         // MARK: Iteration 10 — M6 (the bug hunt)
         if case .bug(let id) = kind {
             squash(bugID: id)
@@ -399,6 +456,18 @@ struct OfficeCard: View {
         // MARK: K6 (home and rooms) — the plants, the windows and the amenities answer a tap
         input.roomRegions = true
         // MARK: end K6
+        // MARK: S1 (seating)
+        // The player's plan, once there is one; with none PixelKit seats
+        // people by its own rule, exactly as before. In the move mode every
+        // desk answers a tap and the scene outlines what is in hand.
+        if engine.state.seatingIsSet {
+            input.seats = engine.state.seatingPlan()
+        }
+        if seatingMoving {
+            input.seatRegions = true
+            if pressedForPreview == nil { input.pressed = seatingMove.pressed }
+        }
+        // MARK: end S1
         return input
     }
 
