@@ -629,6 +629,27 @@ public enum GameAction: Codable, Equatable, Sendable {
     case founderMoneyDebugSeed(kind: String)
     // MARK: end K1
     // MARK: K2 (product lifecycle)
+    /// Retire a live product: hosting stops, its subscribers leave, the
+    /// store says *Discontinued*, and its topic loses the live presence it
+    /// gave. Refused (no events) for the reasons `LifecycleRefusal` names.
+    /// Sent only by the product page's *Retire*; no bot sends it.
+    case sunsetProduct(productID: UUID)
+    /// Ship a build as `ship` does, then retire `parentID` the same day: the
+    /// parent is left out of the build's launch saturation and genre
+    /// fatigue, and the successor opens with `lifecycle.successorBookCarry`
+    /// of its subscribers (a one-time product carries its hype instead).
+    /// Same type and topic only. Sent only by the ship confirmation.
+    case shipReplacing(productID: UUID, parentID: UUID)
+    /// The priced price change: a rise churns the book (or dents a one-time
+    /// product's next weeks), a cut is a sale once a quarter, and changes
+    /// are `lifecycle.changeCooldownDays` apart. Sent only by the price
+    /// sheet; `setPriceTier` stays the free, silent move the rivals' code
+    /// and the tests use.
+    case repriceProduct(productID: UUID, tier: PriceTier)
+    /// `-autoRoute k2-…`: dresses the save for a screenshot
+    /// (`LifecycleDebugSeed`). Applied only in debug builds; nothing in the
+    /// game sends it.
+    case lifecycleDebug(scenario: String)
     // MARK: end K2
     // MARK: K3 (the ladder)
     /// Options instead of pay: `percent` (1 or 2) points of the company

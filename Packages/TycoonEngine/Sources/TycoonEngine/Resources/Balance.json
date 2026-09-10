@@ -2115,5 +2115,16 @@
     "stockMinKept": 20.0,
     "stockFounderRapport": 60.0,
     "stockPatienceWeeks": 26
+  },
+  "lifecycle": {
+    "successorBookCarry": 0.4,
+    "successorHypeCarry": 0.5,
+    "riseChurn": 0.12,
+    "riseUnitsFactor": 0.8,
+    "riseWeeks": 4,
+    "saleBump": 1.5,
+    "saleIntervalDays": 91,
+    "saleStanding": 2.0,
+    "changeCooldownDays": 28
   }
 }

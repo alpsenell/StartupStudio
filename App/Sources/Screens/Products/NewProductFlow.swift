@@ -58,10 +58,53 @@ struct NewProductFlow: View {
     /// - Parameter initialTopicID: a topic to arrive with already selected,
     ///   for deep links from the market screens (`Route.newProduct`). The
     ///   flow still opens on the type step; the topic step shows it chosen.
-    init(engine: GameEngine, initialTopicID: String? = nil) {
+    init(
+        engine: GameEngine,
+        initialTopicID: String? = nil,
+        // MARK: K2 (product lifecycle)
+        successorOf: UUID? = nil
+        // MARK: end K2
+    ) {
         self.engine = engine
         _selectedTopicID = State(initialValue: initialTopicID)
+        // MARK: K2 (product lifecycle) — "Build its v2" from a product's
+        // page: type, topic, codebase and name filled, straight to the
+        // details. Back still walks every step.
+        if let successorOf, let parent = engine.state.product(id: successorOf) {
+            _selectedTypeID = State(initialValue: parent.typeID)
+            _selectedTopicID = State(initialValue: parent.topicID)
+            _selectedCodebaseID = State(
+                initialValue: engine.state.availableCodebases(typeID: parent.typeID).first?.id
+            )
+            _name = State(initialValue: Self.lifecycleName(for: parent))
+            _nameEdited = State(initialValue: true)
+            _step = State(initialValue: .details)
+        }
+        // MARK: end K2
     }
+
+    // MARK: K2 (product lifecycle)
+
+    /// "Round 6" → "Round 6 v2"; "Round 6 v2" → "Round 6 v3".
+    static func lifecycleName(for parent: Product) -> String {
+        let parts = parent.name.split(separator: " ")
+        if let last = parts.last, last.hasPrefix("v"), let number = Int(last.dropFirst()), parts.count > 1 {
+            return parts.dropLast().joined(separator: " ") + " v\(number + 1)"
+        }
+        return parent.name + " v2"
+    }
+
+    /// The type step's "v2 of…" chips: the same prefill as above.
+    private func prefillSuccessor(of parent: Product) {
+        selectedTypeID = parent.typeID
+        selectedTopicID = parent.topicID
+        selectedCodebaseID = engine.state.availableCodebases(typeID: parent.typeID).first?.id
+        name = Self.lifecycleName(for: parent)
+        nameEdited = true
+        withAnimation(Theme.Motion.entrance) { step = .details }
+    }
+
+    // MARK: end K2
 
     var body: some View {
         NavigationStack {
@@ -105,6 +148,9 @@ struct NewProductFlow: View {
     private var stepContent: some View {
         switch step {
         case .type:
+            // MARK: K2 (product lifecycle) — "v2 of…".
+            LifecycleSequelRow(engine: engine) { prefillSuccessor(of: $0) }
+            // MARK: end K2
             TypeStep(engine: engine, selectedTypeID: $selectedTypeID)
         case .foundation:
             FoundationStep(

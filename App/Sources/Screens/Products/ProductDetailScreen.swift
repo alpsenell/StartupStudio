@@ -25,6 +25,9 @@ struct ProductDetailScreen: View {
     var body: some View {
         Group {
             if let product = engine.state.product(id: productID) {
+                // MARK: K2 (product lifecycle) — a reader, so `-autoRoute
+                // k2-card` can scroll to the lifecycle card.
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
                         switch product.stage {
@@ -38,6 +41,22 @@ struct ProductDetailScreen: View {
                     }
                     .padding(Theme.Spacing.lg)
                 }
+                .task {
+                    #if DEBUG
+                    if LifecycleDebug.consume(.card) {
+                        try? await Task.sleep(for: .seconds(1))
+                        withAnimation { proxy.scrollTo("k2-lifecycle", anchor: .top) }
+                    }
+                    // The ship confirmation anchors to the button: bring
+                    // it on screen before `shipButton` opens the dialog.
+                    if LifecycleDebug.peek(.shipDialog) {
+                        try? await Task.sleep(for: .milliseconds(300))
+                        proxy.scrollTo("k2-ship", anchor: .bottom)
+                    }
+                    #endif
+                }
+                }
+                // MARK: end K2
             } else {
                 ContentUnavailableView(
                     "Product not found",
@@ -70,6 +89,10 @@ struct ProductDetailScreen: View {
         }
         SalesCard(info: info)
         LiveOpsCard(engine: engine, product: product, info: info, shell: shell)
+        // MARK: K2 (product lifecycle) — build its v2, or retire it.
+        LifecycleCard(engine: engine, product: product, info: info)
+            .id("k2-lifecycle")
+        // MARK: end K2
         RivalProductsCard(engine: engine, topicID: product.topicID)
         ReviewsCard(reviews: info.reviews)
     }
@@ -126,6 +149,9 @@ struct ProductDetailScreen: View {
         // MARK: end J5
 
         shipButton(product: product, progress: progress)
+            // MARK: K2 (product lifecycle) — a scroll target for `k2-replace`.
+            .id("k2-ship")
+            // MARK: end K2
     }
 
     /// M1: the product's board, read. `nil` for anything not in
@@ -203,10 +229,39 @@ struct ProductDetailScreen: View {
                     rejected: "It is not ready to ship yet."
                 )
             }
+            // MARK: K2 (product lifecycle) — the third answer: ship it as
+            // the v2 of a live product of the same kind, with what carries
+            // printed on the button.
+            ForEach(engine.state.lifecycleReplaceableParents(for: product.id)) { parent in
+                Button(LifecycleShip.replaceLabel(parent: parent, state: engine.state, balance: engine.balance)) {
+                    shell.toasts.send(
+                        .shipReplacing(productID: product.id, parentID: parent.id),
+                        to: engine,
+                        rejected: engine.state.lifecycleReplaceRefusal(
+                            productID: product.id, parentID: parent.id,
+                            balance: engine.balance, content: engine.content
+                        )?.sentence ?? "It is not ready to ship yet."
+                    )
+                }
+            }
+            // MARK: end K2
             Button("Keep working", role: .cancel) {}
         } message: {
-            Text(shipPreview(progress: progress))
+            // MARK: K2 (product lifecycle)
+            Text(shipPreview(progress: progress)
+                + (LifecycleShip.replaceMessage(for: product.id, state: engine.state) ?? ""))
+            // MARK: end K2
         }
+        // MARK: K2 (product lifecycle) — `-autoRoute k2-replace`.
+        .task {
+            #if DEBUG
+            if LifecycleDebug.consume(.shipDialog) {
+                try? await Task.sleep(for: .seconds(1))
+                confirmingShip = true
+            }
+            #endif
+        }
+        // MARK: end K2
     }
 
     /// What the player is about to trade away, in the engine's own terms:
@@ -276,6 +331,11 @@ private struct LiveOpsCard: View {
     let info: ReleaseInfo
     let shell: GameShell
 
+    // MARK: K2 (product lifecycle) — the priced sheet, in place of the
+    // free picker.
+    @State private var changingPrice = false
+    // MARK: end K2
+
     /// Employees currently on this product's support queue.
     private var supporters: [Employee] {
         guard let assignment = LiveOps.supportAssignment(productID: product.id) else { return [] }
@@ -317,17 +377,37 @@ private struct LiveOpsCard: View {
                 }
             }
         }
+        // MARK: K2 (product lifecycle)
+        .sheet(isPresented: $changingPrice) {
+            LifecyclePriceSheet(engine: engine, productID: product.id)
+        }
+        .task {
+            #if DEBUG
+            if LifecycleDebug.consume(.price) {
+                try? await Task.sleep(for: .seconds(1))
+                changingPrice = true
+            }
+            #endif
+        }
+        // MARK: end K2
     }
 
     private var priceTierPicker: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            Picker("Price tier", selection: priceBinding) {
-                ForEach(PriceTier.allCases, id: \.self) { tier in
-                    Text(tier.displayName).tag(tier)
-                }
+            // MARK: K2 (product lifecycle) — C6: the picker became a
+            // priced confirmation. The button opens it, and says when the
+            // next change is allowed.
+            Button { changingPrice = true } label: {
+                LifecycleRowLabel(
+                    title: "Change the price · \(info.priceTier.displayName)",
+                    icon: "tag.fill",
+                    detail: priceButtonDetail,
+                    tint: .secondary
+                )
             }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Price tier for \(product.name)")
+            .buttonStyle(.pressableRow)
+            .accessibilityLabel("Change the price of \(product.name)")
+            // MARK: end K2
 
             // MARK: J5 (announce) — I1: the caption at this product's score.
             Text(LiveOps.priceCaption(
@@ -340,20 +420,21 @@ private struct LiveOpsCard: View {
         }
     }
 
-    private var priceBinding: Binding<PriceTier> {
-        Binding(
-            get: { info.priceTier },
-            set: { tier in
-                guard let action = LiveOps.setPriceTier(productID: product.id, tier: tier) else { return }
-                shell.toasts.send(
-                    action,
-                    to: engine,
-                    ack: "\(product.name) is now priced \(tier.displayName.lowercased())",
-                    icon: "tag.fill"
-                )
-            }
-        )
+    // MARK: K2 (product lifecycle)
+    /// Under the price button: when the next change is allowed, or what
+    /// the two directions cost.
+    private var priceButtonDetail: String {
+        let other = PriceTier.allCases.first { $0 != info.priceTier } ?? .standard
+        if case .cooldown(let until)? = engine.state.lifecycleRepriceRefusal(
+            productID: product.id, tier: other, balance: engine.balance
+        ) {
+            return "The next change can come on day \(until)."
+        }
+        return info.isSubscription
+            ? "A rise costs subscribers; a cut is a sale once a quarter."
+            : "A rise dents sales for a month; a cut is a sale once a quarter."
     }
+    // MARK: end K2
 
     private var supportRow: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {

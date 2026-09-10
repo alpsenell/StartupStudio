@@ -1234,6 +1234,31 @@ struct EventCopy {
             founderMoneyRescueLine(answer, salary: salary, day: day)
         // MARK: end K1
         // MARK: K2 (product lifecycle)
+        // Two sentences where there is a cost, so the paper's deck is the
+        // cost and the headline is what happened.
+        case let .lifecycleSunset(productID, subscribers, day):
+            (
+                "archivebox.fill",
+                subscribers > 0
+                    ? "\(productName(productID)) is discontinued. \(subscribers) subscriber\(subscribers == 1 ? " was" : "s were") told by email"
+                    : "\(productName(productID)) is discontinued. The store page stays up to say so",
+                day,
+                Theme.accent
+            )
+        case let .lifecycleReplaced(productID, parentID, carried, day):
+            (
+                "arrow.triangle.2.circlepath.circle.fill",
+                carried > 0
+                    ? "\(productName(productID)) replaces \(productName(parentID)). \(carried) subscriber\(carried == 1 ? "" : "s") came across on day one"
+                    : "\(productName(productID)) replaces \(productName(parentID)). The old one is off the shelf",
+                day,
+                Theme.positiveCash
+            )
+        case let .lifecyclePriceMoved(productID, from, to, subscribersLost, sale, day):
+            LifecycleEventLine.priceMoved(
+                name: productName(productID), from: from, to: to,
+                subscribersLost: subscribersLost, sale: sale, day: day
+            )
         // MARK: end K2
         // MARK: K3 (the ladder)
         case .ladderEquityGranted, .ladderOptionsSettled:

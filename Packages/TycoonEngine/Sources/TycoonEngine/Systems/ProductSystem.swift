@@ -133,6 +133,18 @@ enum ProductSystem {
             let updateBump = info.lastUpdateDay.map {
                 state.day - $0 <= economy.updateBumpDays ? economy.updateSalesBump : 1
             } ?? 1
+            // MARK: K2 (product lifecycle) — the sale's bumper week (the
+            // better of it and a patch's, never both) and a rise's waiting
+            // weeks. Read only off the fields the priced price change
+            // writes: a product nobody re-priced takes the old path.
+            let lifecycle = balance.lifecycle
+            let bump: Double = info.lastSaleDay.map { saleDay in
+                max(updateBump, state.day - saleDay <= economy.updateBumpDays ? lifecycle.saleBump : 1)
+            } ?? updateBump
+            let riseDrag: Double = info.priceRiseUntilDay.map {
+                state.day <= $0 ? lifecycle.riseUnitsFactor : 1
+            } ?? 1
+            // MARK: end K2
             let demand = type.marketSize * balance.marketSizeScale
                 * (balance.salesBaseFactor + balance.salesQualityFactor * qHat)
                 * hypeBoost
@@ -146,7 +158,8 @@ enum ProductSystem {
                 // of the people who want it. Neutral until they train it.
                 * state.founderMarketFactor(balance)
             let price = type.unitPrice * pricing.priceFactor
-            let world = marketMultiplier * shareMultiplier * liveBugDrag * updateBump
+            // K2: `bump` is `updateBump` unless a sale was ever held.
+            let world = marketMultiplier * shareMultiplier * liveBugDrag * bump
 
             let units: Int
             let delisted: Bool
@@ -176,7 +189,9 @@ enum ProductSystem {
                 let overpricedDrag = overpriced ? economy.premiumOverpricedSalesFactor : 1
                 let decay = balance.salesDecayBase + balance.salesDecayQualityFactor * qHat
                 let decayWeeks = max(0, Double(week) - (rampWeeks - 1))
-                units = Int(demand * adoption * pow(decay, decayWeeks) * world * overpricedDrag)
+                // K2: `riseDrag` is exactly 1 unless the player raised the
+                // price of a one-time product in the last `riseWeeks`.
+                units = Int(demand * adoption * pow(decay, decayWeeks) * world * overpricedDrag * riseDrag)
                 delisted = units == 0
                     || (adoption >= 1 && Double(units) < balance.delistFraction * demand)
             }
@@ -251,14 +266,19 @@ enum ProductSystem {
     /// launched less than `genreFatigueWindowDays` ago multiplies it by
     /// `genreFatigueFactor`; each term is floored at `saturationFloor`.
     /// Off-market releases still count — the audience remembers them.
+    ///
+    /// K2: `excluding` leaves one more product out of both counts — the
+    /// parent a replacing successor retires the day it ships. `nil`, the
+    /// default and every caller but `shipReplacing`, excludes nothing.
     static func launchMarketScale(
         for product: Product,
         state: GameState,
-        balance: BalanceConfig
+        balance: BalanceConfig,
+        excluding: UUID? = nil
     ) -> Double {
         var sameTopic = 0
         var sameType = 0
-        for other in state.products where other.id != product.id {
+        for other in state.products where other.id != product.id && other.id != excluding {
             guard case .released(let info) = other.stage else { continue }
             let age = state.day - info.launchDay
             if other.topicID == product.topicID, age < balance.saturationWindowDays {
@@ -357,11 +377,16 @@ enum ProductSystem {
     /// hype at ship is captured into `ReleaseInfo.hypeAtLaunch` to boost the
     /// weekly sales peak, and the launch saturation / genre fatigue into
     /// `ReleaseInfo.launchMarketScale` to shrink it.
+    ///
+    /// K2: `excludingFromSaturation` is the parent `shipReplacing` is about
+    /// to retire, left out of the launch saturation and genre fatigue.
+    /// `nil` for the `.ship` action, which is every ship a bot makes.
     static func ship(
         productID: UUID,
         state: inout GameState,
         balance: BalanceConfig,
-        content: ContentCatalog
+        content: ContentCatalog,
+        excludingFromSaturation: UUID? = nil
     ) -> [GameEvent] {
         guard let index = state.products.firstIndex(where: { $0.id == productID }),
               case .development(let dev) = state.products[index].stage,
@@ -425,7 +450,8 @@ enum ProductSystem {
         // type and topic, and the three things that make a launch worth a
         // remark — bugs, polish, and hype the release cannot cash.
         let marketScale = launchMarketScale(
-            for: state.products[index], state: state, balance: balance
+            for: state.products[index], state: state, balance: balance,
+            excluding: excludingFromSaturation
         )
         let reviewContext = ReviewContext(
             productName: state.products[index].name,

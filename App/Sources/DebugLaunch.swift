@@ -1602,6 +1602,17 @@ extension DebugLaunch {
     }
     // MARK: end K1
     // MARK: K2 (product lifecycle)
+    /// `-autoRoute k2-<scenario>` (with `-autoTab products` and a fixture):
+    /// the lifecycle's surfaces, dressed by `LifecycleDebug`. The scenario
+    /// word without its prefix, `nil` otherwise and in release builds.
+    static var lifecycleScenario: String? {
+        #if DEBUG
+        guard let name = autoRouteName, name.hasPrefix("k2-") else { return nil }
+        return String(name.dropFirst(3))
+        #else
+        return nil
+        #endif
+    }
     // MARK: end K2
     // MARK: K3 (the ladder)
     /// `-autoLadder`: the loaded company gets a promoted lead on every

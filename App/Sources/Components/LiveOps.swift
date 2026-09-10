@@ -109,4 +109,35 @@ enum LiveOps {
     }
 
     // MARK: end J5
+
+    // MARK: K2 (product lifecycle)
+
+    /// The priced price change: what the price sheet's rows send.
+    static func reprice(productID: UUID, tier: PriceTier) -> GameAction {
+        .repriceProduct(productID: productID, tier: tier)
+    }
+
+    /// What one price change costs or buys, in the engine's numbers: the
+    /// line printed on the row that makes it.
+    static func lifecycleConsequence(_ change: LifecyclePriceChange, topicName: String) -> String {
+        if change.isRise {
+            if change.isSubscription {
+                return change.subscribersLost > 0
+                    ? "A rise: \(change.subscribersLost) subscriber\(change.subscribersLost == 1 ? "" : "s") leave the day it lands"
+                    : "A rise: a slice of the book leaves the day it lands"
+            }
+            let dent = Int(((1 - change.riseUnitsFactor) * 100).rounded())
+            return "A rise: −\(dent)% sales for \(change.riseWeeks) weeks while people wait for the sale"
+        }
+        if change.isSale {
+            let bump = Int(((change.saleBump - 1) * 100).rounded())
+            return "A sale: +\(bump)% for a week and +\(Int(change.saleStanding.rounded())) \(topicName) standing"
+        }
+        if let next = change.nextSaleDay {
+            return "Just a lower price: the next sale is on day \(next)"
+        }
+        return "Just a lower price"
+    }
+
+    // MARK: end K2
 }
