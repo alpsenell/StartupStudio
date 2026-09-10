@@ -2042,5 +2042,15 @@
     "refuseAt": 50.0,
     "spotlightPerRung": 0.25,
     "launderDiscovery": 0.035
+  },
+  "purchase": {
+    "cashFloorPerWeek": 2000,
+    "cashCapMonth": 250000,
+    "cashCapQuarter": 1000000,
+    "veteranSkillBonus": 15.0,
+    "veteranSkillCap": 95.0,
+    "veteranSkillSpread": 10.0,
+    "veteranSalaryFactor": 1.4,
+    "secondChanceReputationCost": 5.0
   }
 }

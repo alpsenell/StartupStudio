@@ -54,11 +54,9 @@ public final class GameEngine {
     /// payroll across all employees + the founder's salary + amenity
     /// upkeep (rent and upkeep after the Operations discount).
     public var weeklyBurn: Int {
-        balance.weeklyOperatingCost
-            + state.officeWeeklyRent(balance: balance)
-            + state.employees.reduce(0) { $0 + $1.weeklySalary }
-            + state.life.founderSalary
-            + state.amenityWeeklyUpkeep(balance: balance)
+        // MARK: P1 (purchases: engine) — the formula lives on the state.
+        state.weeklyBurn(balance: balance)
+        // MARK: end P1
     }
 
     @ObservationIgnored private var tickTask: Task<Void, Never>?

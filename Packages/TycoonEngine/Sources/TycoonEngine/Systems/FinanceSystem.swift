@@ -413,6 +413,15 @@ enum FinanceSystem {
 
     // MARK: end of Iteration 11, wave two — W1
 
+    // MARK: P1 (purchases: engine)
+    /// Iteration 13: money from the App Store, through the helper the loan
+    /// drawdown uses, so the ledger, the weekly report's money-in and
+    /// `FinancesView` all show it without new code.
+    static func postPurchase(amount: Int, label: String, to state: inout GameState) {
+        post(amount: amount, category: .other, label: label, to: &state)
+    }
+    // MARK: end P1
+
     private static func post(
         amount: Int,
         category: LedgerEntry.Category,

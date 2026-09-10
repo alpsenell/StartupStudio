@@ -1343,6 +1343,57 @@ extension DebugLaunch {
     // $5,000 a week and a story with money in it). Nothing to add here.
     // MARK: end J6
     // MARK: P1 (purchases: engine)
+
+    /// `-autoPurchase cash4|cash13|second|veteran`: the purchase, applied
+    /// through the ordinary reducer with a fake transaction id — no
+    /// StoreKit — so a screenshot pass (P3) or a hand check lands on the
+    /// granted state. Started from the root's task, so it needs a headless
+    /// pass (`-autoTab …`): at the front door the root is not up yet.
+    static var autoPurchaseKind: PurchaseKind? {
+        #if DEBUG
+        switch value(after: "-autoPurchase")?.lowercased() {
+        case "cash4", "month": return .cash(weeks: 4)
+        case "cash13", "quarter": return .cash(weeks: 13)
+        case "second", "secondchance", "receiver": return .secondChance
+        case "veteran": return .veteran
+        default: return nil
+        }
+        #else
+        return nil
+        #endif
+    }
+
+    /// The fake id `-autoPurchase` sends. Fixed, so relaunching on a save
+    /// that already took it shows the engine refusing a repeated id.
+    static let autoPurchaseTransactionID: UInt64 = 0xDEB0_0000_0000_0001
+
+    /// Waits up to a minute for `PurchaseRule` to allow the item (the
+    /// receiver's call needs a bankruptcy, the veteran a pool), then sends
+    /// it once. Logs `[P1] -autoPurchase …` with the outcome.
+    @MainActor
+    static func startAutoPurchase(engine: GameEngine) {
+        #if DEBUG
+        guard let kind = autoPurchaseKind, !autoPurchaseStarted else { return }
+        autoPurchaseStarted = true
+        Task { @MainActor in
+            for _ in 0..<120 {
+                if PurchaseRule.allows(kind, state: engine.state) {
+                    let events = engine.send(
+                        .applyPurchase(kind: kind, transactionID: autoPurchaseTransactionID)
+                    )
+                    print("[P1] -autoPurchase \(kind): \(events.isEmpty ? "refused (repeated id)" : "applied")")
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+            print("[P1] -autoPurchase \(kind): \(PurchaseRule.refusal(kind, state: engine.state) ?? "refused")")
+        }
+        #endif
+    }
+
+    #if DEBUG
+    @MainActor private static var autoPurchaseStarted = false
+    #endif
     // MARK: end P1
     // MARK: P2 (purchases: StoreKit and the session)
     // MARK: end P2

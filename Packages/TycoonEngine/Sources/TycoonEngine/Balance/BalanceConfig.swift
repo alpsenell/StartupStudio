@@ -1978,6 +1978,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end J6
     // MARK: P1 (purchases: engine)
+
+    /// Iteration 13 — P1: what the shop's items are worth
+    /// (`BalanceConfig+Purchase.swift`). Inline default with the shipped
+    /// numbers, so `"purchase"` is an optional key; read only when a
+    /// purchase is priced or applied.
+    public var purchase: PurchaseBalance = .default
+
     // MARK: end P1
     // MARK: P2 (purchases: StoreKit and the session)
     // MARK: end P2

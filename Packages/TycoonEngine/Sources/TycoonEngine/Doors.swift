@@ -235,11 +235,9 @@ public enum DoorRules {
     /// What the company costs a week, the way the office and the HUD add
     /// it up: operating cost, rent, payroll, the founder's salary, upkeep.
     public static func weeklyBurn(_ state: GameState, _ balance: BalanceConfig) -> Int {
-        balance.weeklyOperatingCost
-            + state.officeWeeklyRent(balance: balance)
-            + state.employees.reduce(0) { $0 + $1.weeklySalary }
-            + state.life.founderSalary
-            + state.amenityWeeklyUpkeep(balance: balance)
+        // MARK: P1 (purchases: engine) — the formula lives on the state.
+        state.weeklyBurn(balance: balance)
+        // MARK: end P1
     }
 
     /// Four weeks of runway or less. A company already in debt has none.

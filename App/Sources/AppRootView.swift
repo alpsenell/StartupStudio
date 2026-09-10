@@ -218,6 +218,10 @@ struct AppRootView: View {
                 // `-autoRivalMarket`, `-autoPriceWar`, `-autoCopied`.
                 RivalMarketDebug.startIfAsked(engine: engine)
                 // MARK: end J3
+                // MARK: P1 (purchases: engine)
+                // `-autoPurchase cash4|cash13|second|veteran`, no StoreKit.
+                DebugLaunch.startAutoPurchase(engine: engine)
+                // MARK: end P1
                 // Iteration 8: `-autoAwards <year>` shows that year's
                 // ceremony at once, for the screenshot pass.
                 if let year = DebugLaunch.value(after: "-autoAwards").flatMap(Int.init) {

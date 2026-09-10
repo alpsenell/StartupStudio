@@ -81,7 +81,8 @@ public enum StakeLadder {
         }
     }
 
-    /// Whether `action` is one a stake forbids: the loans at stake 2, the
+    /// Whether `action` is one a stake forbids: the loans at stake 2 (and,
+    /// iteration 13, bought cash and the receiver's call with them), the
     /// crunch at stake 5.
     static func refuses(_ action: GameAction, at level: Int) -> Bool {
         switch action {
@@ -89,6 +90,15 @@ public enum StakeLadder {
             level >= 2
         case .setWorkPace(let pace):
             level >= 5 && pace == .crunch
+        // MARK: P1 (purchases: engine)
+        // "The bank won't lend, and neither will we." The veteran is not
+        // money, so a stake leaves it alone.
+        case .applyPurchase(let kind, _):
+            switch kind {
+            case .cash, .secondChance: level >= 2
+            case .veteran: false
+            }
+        // MARK: end P1
         default:
             false
         }

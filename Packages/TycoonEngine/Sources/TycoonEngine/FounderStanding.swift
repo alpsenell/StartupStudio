@@ -175,8 +175,14 @@ public enum FounderStanding {
     public static func refusingCandidateID(_ state: GameState, balance: BalanceConfig) -> UUID? {
         guard name(state, balance: balance).refuses else { return nil }
         let friends = Set(state.life.friends.friends.map(\.id))
+        // MARK: P1 (purchases: engine)
+        // A bought veteran said yes before the money changed hands; the
+        // refusal falls on the best CV the pool itself rolled. Empty on
+        // every run that bought nothing.
+        let bought = PurchaseVeteran.boughtIDs(state)
+        // MARK: end P1
         return state.candidatePool
-            .filter { !friends.contains($0.id) }
+            .filter { !friends.contains($0.id) && !bought.contains($0.id) }
             .max { $0.skills.total < $1.skills.total }?
             .id
     }

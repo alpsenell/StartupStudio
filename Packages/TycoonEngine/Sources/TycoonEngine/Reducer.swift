@@ -296,8 +296,15 @@ public enum Reducer {
         }
         // MARK: P1 (purchases: engine)
         // Handled before the game-over guard: the second chance is only
-        // legal on an ended game. The scaffold grants nothing; P1 fills it in.
-        if case .applyPurchase = action { return [] }
+        // legal on an ended game. A repeated transaction id, or anything
+        // `PurchaseRule` refuses, grants nothing and returns `[]`.
+        if case let .applyPurchase(kind, transactionID) = action {
+            let events = PurchaseSystem.apply(
+                kind, transactionID: transactionID, to: &state, balance: balance, content: content
+            )
+            state.logEvents(events)
+            return events
+        }
         // MARK: end P1
         guard state.gameOver == nil else { return [] }
         // Iteration 8: a stake can forbid an action (no credit, no crunch).

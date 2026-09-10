@@ -1250,6 +1250,19 @@ public struct GameState: Codable, Equatable, Sendable {
     /// What this company bought from the App Store. `.empty` on every run
     /// that bought nothing, and then not encoded (`PurchaseLog`).
     public var purchases: PurchaseLog = .empty
+
+    /// Total weekly fixed costs: operating cost + current office rent +
+    /// payroll across all employees + the founder's salary + amenity
+    /// upkeep (rent and upkeep after the Operations discount). The one
+    /// formula: `GameEngine.weeklyBurn`, `DoorRules.weeklyBurn` and the
+    /// shop's cash packs all read it.
+    public func weeklyBurn(balance: BalanceConfig) -> Int {
+        balance.weeklyOperatingCost
+            + officeWeeklyRent(balance: balance)
+            + employees.reduce(0) { $0 + $1.weeklySalary }
+            + life.founderSalary
+            + amenityWeeklyUpkeep(balance: balance)
+    }
     // MARK: end P1
     // MARK: P2 (purchases: StoreKit and the session)
     // MARK: end P2

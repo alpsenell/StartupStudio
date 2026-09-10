@@ -546,9 +546,10 @@ extension GameState {
     }
 
     /// Whether an ending in this run may post to the ranked boards: a
-    /// standard-mode run with no heirloom.
+    /// standard-mode run with no heirloom that has bought nothing from
+    /// the shop (iteration 13 — P1: bought money unranks, like an heirloom).
     public var isRanked: Bool {
-        mode.isRanked && heirloom == nil
+        mode.isRanked && heirloom == nil && !purchases.affectsRanking
     }
 }
 

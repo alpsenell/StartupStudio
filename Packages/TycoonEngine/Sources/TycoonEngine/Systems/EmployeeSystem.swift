@@ -774,8 +774,36 @@ enum EmployeeSystem {
         _ balance: BalanceConfig,
         _ content: ContentCatalog
     ) {
-        let company = balance.company
         let count = state.rng.nextInt(in: balance.candidateCountMin...balance.candidateCountMax)
+        let ceiling = candidateSkillCeiling(state, balance)
+        let eligibleRoles = candidateRoles(state, balance)
+        let askFactor = candidateAskFactor(state, balance)
+
+        var pool: [Candidate] = []
+        pool.reserveCapacity(count)
+        for _ in 0..<count {
+            pool.append(rollCandidate(
+                roles: eligibleRoles,
+                ceiling: ceiling,
+                askFactor: askFactor,
+                balance: balance,
+                content: content,
+                rng: &state.rng
+            ))
+        }
+        state.candidatePool = pool
+    }
+
+    // MARK: P1 (purchases: engine)
+    // Iteration 13 — P1. The pool's roll, extracted so the bought veteran
+    // (`PurchaseRule.veteranOnOffer`) is rolled by the same code from its
+    // own private stream. The pool calls it with `&state.rng` and the
+    // default floor and cap, which is the arithmetic and the draw order it
+    // always had: the day-30 fixtures are byte-identical.
+
+    /// The pool's skill ceiling: base, reputation, office tier, district
+    /// and the `talentMagnet` perk, clamped to 5...100. Draws nothing.
+    static func candidateSkillCeiling(_ state: GameState, _ balance: BalanceConfig) -> Double {
         let tierBonus = balance.candidateSkillTierBonus[state.company.officeTier.rawValue] ?? 0
         let districtBonus = balance.city.district(state.city.district).candidateSkillBonus
         // WS-F's `talentMagnet` perk had no consumer: candidate ceilings are
@@ -784,58 +812,93 @@ enum EmployeeSystem {
         let perkBonus = state.progression.hasPerk(.talentMagnet)
             ? balance.progression.talentMagnetSkillBonus
             : 0
-        let ceiling = min(100, max(5,
+        return min(100, max(5,
             balance.candidateSkillBase
                 + state.company.reputation * balance.candidateSkillPerReputation
                 + tierBonus
                 + districtBonus
                 + perkBonus
         ))
-        let eligibleRoles = EmployeeRole.allCases.filter { role in
+    }
+
+    /// The roles this office can hire, in `EmployeeRole.allCases` order.
+    static func candidateRoles(_ state: GameState, _ balance: BalanceConfig) -> [EmployeeRole] {
+        let company = balance.company
+        return EmployeeRole.allCases.filter { role in
             role != .founder
                 && (company.candidateRoleWeights[role.rawValue] ?? 0) > 0
                 && state.company.officeTier.rank >= company.candidateMinTier(role).rank
         }
-        // WS-D: a studio with a leave policy is a cheaper place to say yes
-        // to. One multiplier on the ask, 1.0 without the flag, no draw.
-        let askFactor = state.narrative.hasFlag(StaffPolicyFlag.goodLeavePolicy)
+    }
+
+    /// WS-D: a studio with a leave policy is a cheaper place to say yes
+    /// to. One multiplier on the ask, 1.0 without the flag, no draw.
+    static func candidateAskFactor(_ state: GameState, _ balance: BalanceConfig) -> Double {
+        state.narrative.hasFlag(StaffPolicyFlag.goodLeavePolicy)
             ? balance.staff.leavePolicyAskFactor
             : 1
-
-        var pool: [Candidate] = []
-        pool.reserveCapacity(count)
-        for _ in 0..<count {
-            let id = UUID(from: &state.rng)
-            let name = "\(pick(content.names.firstNames, &state.rng)) \(pick(content.names.lastNames, &state.rng))"
-            let role = rollRole(eligibleRoles, weights: company.candidateRoleWeights, &state.rng)
-
-            var codingCeiling = ceiling, designCeiling = ceiling, marketingCeiling = ceiling
-            switch role.primarySkill {
-            case .coding: codingCeiling = min(100, ceiling + company.builderPrimarySkillBonus)
-            case .design: designCeiling = min(100, ceiling + company.builderPrimarySkillBonus)
-            case .marketing: marketingCeiling = min(100, ceiling + company.marketerSkillBonus)
-            case nil: break
-            }
-            let skills = SkillSet(
-                coding: rollSkill(upTo: codingCeiling, &state.rng),
-                design: rollSkill(upTo: designCeiling, &state.rng),
-                marketing: rollSkill(upTo: marketingCeiling, &state.rng)
-            )
-            let jitter = 1 + (state.rng.nextUniform() * 2 - 1) * balance.salaryJitter
-            let salaryFactor = role.department != nil ? company.supportSalaryFactor : 1
-            let salary = (Double(balance.salaryBase) + balance.salaryPerSkillPoint * skills.total)
-                * jitter * salaryFactor * askFactor
-            pool.append(Candidate(
-                id: id,
-                name: name,
-                skills: skills,
-                weeklySalary: Int(salary.rounded()),
-                appearanceSeed: state.rng.next(),
-                role: role
-            ))
-        }
-        state.candidatePool = pool
     }
+
+    /// One candidate, in the pool's fixed draw order: id (two words), first
+    /// name, last name, role (one word, only when more than one role is
+    /// eligible), coding, design, marketing, salary jitter, appearance seed.
+    ///
+    /// - `ceiling`: every skill's ceiling; a role's primary skill adds its
+    ///   bonus, capped at `skillCap`.
+    /// - `skillSpread`: `nil` rolls each skill in 5...its ceiling (the
+    ///   pool); a spread rolls it in (ceiling − spread)...ceiling (the
+    ///   veteran, who is *at* the ceiling rather than under it).
+    /// - `askFactor`: multiplies the salary formula (the leave policy; the
+    ///   veteran's 1.4×).
+    static func rollCandidate(
+        roles eligible: [EmployeeRole],
+        ceiling: Double,
+        skillSpread: Double? = nil,
+        skillCap: Double = 100,
+        askFactor: Double,
+        balance: BalanceConfig,
+        content: ContentCatalog,
+        rng: inout SeededRNG
+    ) -> Candidate {
+        let company = balance.company
+        let id = UUID(from: &rng)
+        let name = "\(pick(content.names.firstNames, &rng)) \(pick(content.names.lastNames, &rng))"
+        let role = rollRole(eligible, weights: company.candidateRoleWeights, &rng)
+
+        var codingCeiling = ceiling, designCeiling = ceiling, marketingCeiling = ceiling
+        switch role.primarySkill {
+        case .coding: codingCeiling = min(skillCap, ceiling + company.builderPrimarySkillBonus)
+        case .design: designCeiling = min(skillCap, ceiling + company.builderPrimarySkillBonus)
+        case .marketing: marketingCeiling = min(skillCap, ceiling + company.marketerSkillBonus)
+        case nil: break
+        }
+        let skills = SkillSet(
+            coding: rollSkill(upTo: codingCeiling, spread: skillSpread, &rng),
+            design: rollSkill(upTo: designCeiling, spread: skillSpread, &rng),
+            marketing: rollSkill(upTo: marketingCeiling, spread: skillSpread, &rng)
+        )
+        let jitter = 1 + (rng.nextUniform() * 2 - 1) * balance.salaryJitter
+        let salaryFactor = role.department != nil ? company.supportSalaryFactor : 1
+        let salary = (Double(balance.salaryBase) + balance.salaryPerSkillPoint * skills.total)
+            * jitter * salaryFactor * askFactor
+        return Candidate(
+            id: id,
+            name: name,
+            skills: skills,
+            weeklySalary: Int(salary.rounded()),
+            appearanceSeed: rng.next(),
+            role: role
+        )
+    }
+
+    /// A skill in `(ceiling − spread)...ceiling`, floored at 5. With no
+    /// spread this is `rollSkill(upTo:)`, the pool's roll, exactly.
+    private static func rollSkill(upTo ceiling: Double, spread: Double?, _ rng: inout SeededRNG) -> Double {
+        guard let spread else { return rollSkill(upTo: ceiling, &rng) }
+        let floor = min(ceiling, max(5, ceiling - spread))
+        return floor + rng.nextUniform() * (ceiling - floor)
+    }
+    // MARK: end P1
 
     /// Weighted pick over the eligible roles, cumulative weights in
     /// `EmployeeRole.allCases` order. Draws one word (`nextInt`) only when
