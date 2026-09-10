@@ -96,6 +96,18 @@ enum DebugLaunch {
             guard let rival = state.rivals.incumbent ?? strongest else { return nil }
             launchRouteConsumed = true
             return .rivalProfile(rivalID: rival.id)
+        // MARK: K4 (deals and exits)
+        // The smallest studio on the board: the paper deal a big company
+        // can sign today.
+        case "paperdeal":
+            let smallest = state.rivals.rivals.min { lhs, rhs in
+                if lhs.strength != rhs.strength { return lhs.strength < rhs.strength }
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            guard let rival = smallest else { return nil }
+            launchRouteConsumed = true
+            return .rivalProfile(rivalID: rival.id)
+        // MARK: end K4
         default:
             return nil
         }
@@ -329,6 +341,8 @@ extension Route {
         // MARK: K3 (the ladder)
         // MARK: end K3
         // MARK: K4 (deals and exits)
+        // The Rivals segment, where the for-sale sign lives.
+        case "forsale", "sign", "deals": .rivals
         // MARK: end K4
         // MARK: K5 (hand over the keys)
         // MARK: end K5
@@ -1580,6 +1594,15 @@ extension DebugLaunch {
     // MARK: K3 (the ladder)
     // MARK: end K3
     // MARK: K4 (deals and exits)
+    /// `-autoDeal list|<ask>`: the for-sale sign goes up once the Rivals
+    /// segment is on screen (`DealDebug`), at 1.3× or the ask given.
+    static var dealAutoAsk: String? {
+        #if DEBUG
+        return value(after: "-autoDeal")
+        #else
+        return nil
+        #endif
+    }
     // MARK: end K4
     // MARK: K5 (hand over the keys)
     // MARK: end K5

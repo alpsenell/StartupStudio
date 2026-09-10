@@ -58,6 +58,12 @@ struct DecisionPrompt: Identifiable {
     /// answers those itself at the deadline, so leaving one on the rail
     /// with a countdown is a real choice. Offers and notices stay modal.
     var isDeferrable = false
+    // MARK: K4 (deals and exits)
+    /// The wait answer's own words where "Let me think" is not what waiting
+    /// means — the sell-up sheet's *Ride it*. `nil` everywhere else.
+    var dealPostponeLabel: String?
+    var dealPostponeDetail: String?
+    // MARK: end K4
 }
 
 /// The reusable modal for `DecisionPrompt`s, presented at the app root so
@@ -354,11 +360,22 @@ struct DecisionSheetContent: View {
                     postpone()
                 } label: {
                     VStack(spacing: 2) {
-                        Text("Let me think")
-                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        Text("The clock runs on; it answers itself at the deadline.")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        // MARK: K4 (deals and exits)
+                        // A prompt may name what waiting means (*Ride it*).
+                        Group {
+                            if let label = prompt.dealPostponeLabel { Text(label) } else { Text("Let me think") }
+                        }
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        Group {
+                            if let detail = prompt.dealPostponeDetail {
+                                Text(detail)
+                            } else {
+                                Text("The clock runs on; it answers itself at the deadline.")
+                            }
+                        }
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        // MARK: end K4
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Theme.Spacing.sm)
@@ -883,7 +900,9 @@ extension DecisionPrompt {
             systemImage: strategic ? "envelope.badge.fill" : "tag.fill",
             tint: strategic ? Theme.accent : Theme.warning,
             title: "\(rivalName) wants to buy you out",
-            message: message,
+            // MARK: K4 (deals and exits) — a bid the sign brought says what was asked.
+            message: message + dealListingNote(offer, state: state, balance: balance),
+            // MARK: end K4
             stats: [
                 (String(localized: "Offer", comment: "Decision sheet stat label: what is on the table - a rival salary offer, or a buyout price"), offer.amount.money),
                 (String(localized: "Kind", comment: "Decision sheet stat label: which sort of buyout this is"), strategic ? String(localized: "strategic", comment: "Buyout kind: a buyer who wants what you built") : String(localized: "distress", comment: "Buyout kind: a lowball bid while you are failing")),
@@ -964,6 +983,10 @@ extension DecisionPrompt {
         case .priceWar:
             // Iteration 12 merge — J3's sheet, seated in J6's queue.
             PriceWarPrompt.pending(in: state, content: content, balance: balance)
+        // MARK: K4 (deals and exits)
+        case .sellUp:
+            dealSellUpPrompt(state: state, balance: balance)
+        // MARK: end K4
         case .dirtyMoneyOffer, .funeral, .legalCase, .hearing, .cancellation:
             nil
         }

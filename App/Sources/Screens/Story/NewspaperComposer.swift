@@ -317,6 +317,17 @@ struct NewspaperComposer {
         default: break
         }
         // MARK: end J5
+        // MARK: K4 (deals and exits)
+        // The paper leads with a company for sale: the sign going up, a
+        // bid it brought, the paper deal and the sell-up.
+        switch dated.event {
+        case .dealListed, .dealSoldUp: return severity * 10 + strand + 25
+        case .dealPaperSigned: return severity * 10 + strand + 20
+        case .buyoutOffered where state.rivals.listing != nil: return severity * 10 + strand + 15
+        case .dealSignTakenDown: return severity * 10 + strand + 10
+        default: break
+        }
+        // MARK: end K4
         return severity * 10 + strand
     }
 

@@ -87,6 +87,14 @@ enum PostMortem {
             ))
         }
 
+        // MARK: K4 (deals and exits)
+        // How the grace period ended: a sell-up leads with its day; the
+        // receiver follows the first finding with what it cost the people.
+        if let line = DealPostMortem.line(for: state, balance: balance) {
+            lines.insert(line, at: state.gameOver?.kind == .soldUp ? 0 : min(1, lines.count))
+        }
+        // MARK: end K4
+
         return Array(lines.prefix(3))
     }
 }

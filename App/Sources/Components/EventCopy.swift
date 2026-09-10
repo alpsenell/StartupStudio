@@ -1216,6 +1216,14 @@ struct EventCopy {
         // MARK: K3 (the ladder)
         // MARK: end K3
         // MARK: K4 (deals and exits)
+        case let .dealListed(ask, multiple, day):
+            ("signpost.right.fill", "Put the company up for sale at \(ask.money) — \(DealCopy.multiple(multiple)) what it is worth", day, Theme.warning)
+        case let .dealSignTakenDown(weeks, day):
+            ("signpost.right", "Took the for-sale sign down after \(weeks) week\(weeks == 1 ? "" : "s")", day, Color.secondary)
+        case let .dealSoldUp(buyer, amount, daysInDebt, day):
+            ("tag.fill", "Sold up on day \(daysInDebt) in the red: \(buyer) paid \(amount.money) for the name and the desks", day, Theme.warning)
+        case let .dealPaperSigned(_, name, founder, equity, day):
+            ("doc.text.fill", "Bought \(name) with paper: \(founder) took \(GameState.dealPercent(equity)) and a board seat", day, Theme.accent)
         // MARK: end K4
         // MARK: K5 (hand over the keys)
         // MARK: end K5

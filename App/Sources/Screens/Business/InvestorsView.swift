@@ -165,6 +165,17 @@ struct InvestorsView: View {
                                     .padding(.vertical, 2)
                                     .background(Theme.chipBackground, in: Capsule())
                             }
+                            // MARK: K4 (deals and exits)
+                            if round.isDealPaper {
+                                Text("PAPER")
+                                    .font(.caption2.weight(.bold))
+                                    .kerning(0.5)
+                                    .foregroundStyle(Theme.accent)
+                                    .padding(.horizontal, Theme.Spacing.xs + 2)
+                                    .padding(.vertical, 2)
+                                    .background(Theme.chipBackground, in: Capsule())
+                            }
+                            // MARK: end K4
                             Spacer()
                             Text(round.amount.money)
                                 .font(Theme.Typography.number(.subheadline))
@@ -173,6 +184,14 @@ struct InvestorsView: View {
                             .font(.caption)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
+                        // MARK: K4 (deals and exits)
+                        if round.isDealPaper {
+                            Text("Paid for their studio in stock, not cash · expects a ship every quarter")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        // MARK: end K4
                         buybackButton(round)
                     }
                     .accessibilityElement(children: .contain)
