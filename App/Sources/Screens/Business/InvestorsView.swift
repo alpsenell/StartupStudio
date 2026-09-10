@@ -175,6 +175,14 @@ struct InvestorsView: View {
                             // no seat, bought back like any other round.
                             if round.isEmeritus {
                                 Text("KEPT STAKE")
+                                    .font(.caption2.weight(.bold))
+                                    .kerning(0.5)
+                                    .foregroundStyle(Theme.accent)
+                                    .padding(.horizontal, Theme.Spacing.xs + 2)
+                                    .padding(.vertical, 2)
+                                    .background(Theme.chipBackground, in: Capsule())
+                            }
+                            // MARK: end K5
                             // MARK: K4 (deals and exits)
                             if round.isDealPaper {
                                 Text("PAPER")
@@ -185,7 +193,6 @@ struct InvestorsView: View {
                                     .padding(.vertical, 2)
                                     .background(Theme.chipBackground, in: Capsule())
                             }
-                            // MARK: end K5
                             // MARK: end K4
                             Spacer()
                             Text(round.amount.money)
