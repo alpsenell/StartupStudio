@@ -344,6 +344,27 @@ public enum CitySpriteLibrary {
         ])
     }
 
+    // MARK: K6 (home and rooms)
+    /// The founder's home: a small house beside the office flag.
+    public static func homeMarker() -> PixelSprite {
+        let a = [
+            "   O   ",
+            "  ORO  ",
+            " ORRRO ",
+            "ORRRRRO",
+            " OWWWO ",
+            " OWDWO ",
+            " OOOOO ",
+        ]
+        return PixelSprite(frames: [a], palette: [
+            "O": Palettes.outline,
+            "R": Palettes.ember[3],
+            "W": Palettes.stone[0],
+            "D": Palettes.clay[3],
+        ])
+    }
+    // MARK: end K6
+
     /// A rival HQ pin: small red banner (2-frame bob).
     public static func rivalMarker() -> PixelSprite {
         let a = [

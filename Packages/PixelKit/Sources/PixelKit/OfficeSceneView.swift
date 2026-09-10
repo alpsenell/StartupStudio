@@ -142,6 +142,14 @@ public struct OfficeSceneInput: Sendable, Equatable, Hashable {
 
     // MARK: end Iteration 10 — M6
 
+    // MARK: K6 (home and rooms)
+    /// Whether the plants, the windows and the built amenities are things a
+    /// finger can land on (iteration 15). Off by default, so every existing
+    /// caller, preview, frame sheet and hit-region test sees the four props
+    /// it always saw; the app's office card turns it on.
+    public var roomRegions = false
+    // MARK: end K6
+
     /// A celebration plus the token that makes it fire once.
     public struct Celebration: Sendable, Equatable, Hashable {
         public var kind: SceneCelebration
@@ -358,6 +366,17 @@ public struct OfficeSceneView: View {
         case .founderDesk: "Founder's desk"
         // MARK: Iteration 10 — M6 (the bug hunt)
         case .bug: "A bug, crawling"
+        // MARK: K6 (home and rooms)
+        case .plant: "A plant"
+        case .window: "The window"
+        case .amenity(let amenity):
+            switch amenity {
+            case .gameRoom: "The game room"
+            case .cafeteria: "The cafeteria"
+            case .gym: "The gym"
+            case .shuttle: "The shuttle"
+            }
+        // MARK: end K6
         }
     }
 
