@@ -81,7 +81,9 @@ extension GameState {
         )
         let pace = balance.economy.pace(economy.workPace)
         let output = devSpeedTechMultiplier(content: content)
-            * EmployeeSystem.crowdingFactor(producerCount: crew.producers.count, balance: balance)
+            // MARK: K3 (the ladder) — the same relief the tick applies.
+            * ladderCrowdingFactor(producers: crew.producers, balance: balance)
+            // MARK: end K3
             * pace.outputFactor
 
         let designPerDay = crew.design * output

@@ -1273,6 +1273,9 @@ enum RivalSystem {
                 let score = config.poachSkillWeight * employee.skills.total
                     + config.poachUnderpaidWeight * underpaid
                     + config.poachMoraleWeight * lowMorale
+                    // MARK: K3 (the ladder) — a holder's unvested options; 0 for everyone else.
+                    + state.ladderPoachScoreDelta(employee, fairPay: fairPay, underpaidWeight: config.poachUnderpaidWeight, balance: balance)
+                    // MARK: end K3
                 return (score, employee)
             }
             .max { lhs, rhs in

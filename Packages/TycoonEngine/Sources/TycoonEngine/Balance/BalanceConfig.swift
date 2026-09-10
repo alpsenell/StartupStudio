@@ -2003,6 +2003,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: K2 (product lifecycle)
     // MARK: end K2
     // MARK: K3 (the ladder)
+
+    /// Iteration 15 — K3: promoted leads and options instead of pay
+    /// (`BalanceConfig+Ladder.swift`). Inline default with the shipped
+    /// numbers, so `"ladder"` is an optional key; read only once the
+    /// player has promoted a lead or granted equity.
+    public var ladder: LadderBalance = .default
+
     // MARK: end K3
     // MARK: K4 (deals and exits)
     // MARK: end K4

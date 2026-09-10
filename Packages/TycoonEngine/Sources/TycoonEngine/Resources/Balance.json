@@ -2052,5 +2052,22 @@
     "veteranSkillSpread": 10.0,
     "veteranSalaryFactor": 1.4,
     "secondChanceReputationCost": 5.0
+  },
+  "ladder": {
+    "leads": {
+      "penaltyFactor": 0.5,
+      "span": 6,
+      "idleMinCrew": 3,
+      "idleMoraleDelta": -4.0
+    },
+    "grants": {
+      "payCut": [0.2, 0.35],
+      "loyalty": 25.0,
+      "bond": 10.0,
+      "cliffDays": 364,
+      "vestDays": 1456,
+      "poolMax": 10.0,
+      "poachUnvestedWeight": 20.0
+    }
   }
 }
