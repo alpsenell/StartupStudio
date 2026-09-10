@@ -66,13 +66,17 @@ enum PriceWarPrompt {
         } else {
             false
         }
+        // MARK: U1 (ux: the first-hour fixes)
+        // C4: the player's words, not the engine's — no "lifts", no
+        // "strength", no "grudge". The numbers stay.
         var matchDetail = alreadyBudget
-            ? "\(productName) is budget already: the −\(penalty)% lifts"
-            : "\(productName) goes budget for \(weeks) weeks: the −\(penalty)% lifts, less per sale"
-        matchDetail += " · \(rival.name) −\(bleed) strength a week · grudge \(grudgeNow) → \(grudgeAfter)"
+            ? "\(productName) is budget already: you win back the \(penalty)% of share"
+            : "\(productName) goes budget for \(weeks) weeks: you win back the \(penalty)% of share, but earn less per sale"
+        matchDetail += " · \(rival.name) gets weaker every week (−\(bleed)) · bad blood \(grudgeNow) → \(grudgeAfter) of 100"
         if grudgeAfter >= actsAt {
             matchDetail += " · past \(actsAt) they start working against you"
         }
+        // MARK: end U1
 
         let patching = product.map { state.economy.update(for: $0.id) != nil } ?? false
         let outshipDetail = patching

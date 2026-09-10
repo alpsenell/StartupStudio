@@ -75,6 +75,28 @@ struct DecisionSheet: View {
     private var shell: GameShell { injectedShell ?? .shared }
     @Environment(\.dynamicTypeSize) private var typeSize
 
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C4: the detent the sheet is at. A prompt with three answers or a
+    /// long body opens full (`opensLarge`); the rest open at half height
+    /// and can be dragged up. The content reads it to draw the question
+    /// compactly at the medium detent.
+    @State private var detent: PresentationDetent
+
+    init(prompt: DecisionPrompt, engine: GameEngine) {
+        self.prompt = prompt
+        self.engine = engine
+        _detent = State(initialValue: prompt.opensLarge && !DebugLaunch.opensSheetsAtMedium ? .large : .medium)
+    }
+
+    /// At accessibility sizes the sheet only has the full detent.
+    private var detentSelection: Binding<PresentationDetent> {
+        Binding(
+            get: { typeSize.isAccessibilitySize ? .large : detent },
+            set: { detent = $0 }
+        )
+    }
+    // MARK: end U1
+
     var body: some View {
         NavigationStack {
             DecisionSheetContent(
@@ -92,14 +114,19 @@ struct DecisionSheet: View {
                         tint: prompt.tint
                     )
                 },
-                postpone: prompt.isDeferrable ? { shell.postpone(prompt, engine: engine) } : nil
+                postpone: prompt.isDeferrable ? { shell.postpone(prompt, engine: engine) } : nil,
+                // MARK: U1 (ux: the first-hour fixes)
+                isCompact: !typeSize.isAccessibilitySize && detent == .medium,
+                expand: { withAnimation(Theme.Motion.entrance) { detent = .large } }
+                // MARK: end U1
             )
             .background(Theme.screenBackground)
         }
-        // Medium by default, draggable to full height. At accessibility
-        // sizes the medium detent left the title clipped behind the
-        // buttons, so the sheet opens full.
-        .presentationDetents(typeSize.isAccessibilitySize ? [.large] : [.medium, .large])
+        // Medium by default, draggable to full height; three answers or a
+        // long body open full (U1, C4). At accessibility sizes the medium
+        // detent left the title clipped behind the buttons, so the sheet
+        // only opens full.
+        .presentationDetents(typeSize.isAccessibilitySize ? [.large] : [.medium, .large], selection: detentSelection)
         .presentationDragIndicator(.visible)
         .interactiveDismissDisabled(!prompt.isDeferrable)
         .onAppear {
@@ -119,6 +146,14 @@ struct DecisionSheetContent: View {
     let choose: (DecisionPrompt.Option) -> Void
     /// Present only for deferrable prompts.
     let postpone: (() -> Void)?
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C4: the sheet is at its medium detent — the portrait shrinks to 48
+    /// points and the body keeps its first two lines. `false` draws the
+    /// full question (the large detent, and the snapshot suite).
+    var isCompact = false
+    /// C4: a tap on the clipped body takes the sheet to full height.
+    var expand: (() -> Void)? = nil
+    // MARK: end U1
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -129,10 +164,100 @@ struct DecisionSheetContent: View {
     private var pinsAnswers: Bool { !typeSize.isAccessibilitySize }
 
     var body: some View {
-        // The question scrolls and the answers stay put in the bottom
-        // inset: a two-sentence body plus the deadline's answer does not
-        // fit a half sheet, and clipping the sentence that says what
-        // silence costs is the worst thing to lose.
+        // MARK: U1 (ux: the first-hour fixes)
+        // C4: with the answers pinned, the question is pinned too — the
+        // portrait, the kicker, the title and the body's first lines sit
+        // above the scroll view, so three long answers can never push the
+        // title out of a half sheet. Only the stats scroll.
+        if pinsAnswers {
+            pinnedQuestion
+        } else {
+            scrollingQuestion
+        }
+        // MARK: end U1
+    }
+
+    // MARK: U1 (ux: the first-hour fixes)
+    /// Three answers do not fit under the question in a half sheet. When
+    /// the founder drags such a sheet down, the answers scroll under the
+    /// pinned question instead of pushing it off the top.
+    private var answersScroll: Bool {
+        isCompact && prompt.options.count >= 3
+    }
+
+    private var pinnedQuestion: some View {
+        VStack(spacing: 0) {
+            question
+                .padding(.top, isCompact ? Theme.Spacing.lg : Theme.Spacing.xl)
+                .padding(.bottom, Theme.Spacing.md)
+                .layoutPriority(1)
+            ScrollView {
+                VStack(spacing: 0) {
+                    if !prompt.stats.isEmpty {
+                        stats
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Theme.Spacing.sm)
+                    }
+                    if answersScroll {
+                        answers
+                    }
+                }
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .frame(maxWidth: .infinity)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if !answersScroll {
+                answers
+            }
+        }
+    }
+
+    /// The question itself: who is asking, the kicker, the title — which
+    /// never truncates — and the body, two lines at the medium detent.
+    private var question: some View {
+        VStack(spacing: isCompact ? Theme.Spacing.sm : Theme.Spacing.lg) {
+            header
+
+            PixelText(text: prompt.kicker, scale: 2, color: Theme.pixelAccent)
+                .accessibilityHidden(true)
+
+            VStack(spacing: Theme.Spacing.sm) {
+                Text(prompt.title)
+                    .font(.system(.title2, design: .rounded).weight(.bold))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                if !prompt.message.isEmpty {
+                    Text(prompt.message)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(isCompact ? 2 : nil)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            guard isCompact, let expand else { return }
+                            Haptics.tap()
+                            expand()
+                        }
+                        .accessibilityHint(isCompact ? "Shows the whole question" : "")
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.xl)
+        }
+    }
+
+    private var stats: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            ForEach(Array(prompt.stats.enumerated()), id: \.offset) { _, stat in
+                StatPill(systemImage: "circle.fill", value: "\(stat.label) \(stat.value)")
+            }
+        }
+    }
+    // MARK: end U1
+
+    /// Accessibility sizes: the question and the answers as one scrolling
+    /// column, as the sheet always drew them there.
+    private var scrollingQuestion: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.lg) {
                 header
@@ -181,8 +306,9 @@ struct DecisionSheetContent: View {
     /// The person asking, or the category's icon on a pixel tile.
     @ViewBuilder
     private var header: some View {
+        // U1 (C4): 48 points at the medium detent, 64 at full height.
         if let seed = prompt.portraitSeed {
-            PixelPortrait(seed: seed, size: 64)
+            PixelPortrait(seed: seed, size: isCompact ? 48 : 64)
                 .padding(4)
                 .background(Theme.pixelPaper)
                 .overlay {
@@ -191,7 +317,7 @@ struct DecisionSheetContent: View {
                 }
                 .accessibilityHidden(true)
         } else {
-            PixelIconTile(systemImage: prompt.systemImage, tint: prompt.tint)
+            PixelIconTile(systemImage: prompt.systemImage, tint: prompt.tint, size: isCompact ? 48 : 64)
         }
     }
 
@@ -293,6 +419,14 @@ extension DecisionPrompt {
         }
         return "\(signed) → \(after.money) · \(runway)"
     }
+
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C4: three answers, or a body past about 120 characters, do not fit
+    /// a half sheet with the question still on it, so the sheet opens full.
+    var opensLarge: Bool {
+        options.count >= 3 || message.count > 120
+    }
+    // MARK: end U1
 }
 
 // MARK: - Prompt mapping
@@ -660,7 +794,8 @@ extension DecisionPrompt {
         }
         options.append(Option(
             label: String(localized: "Let it go", comment: "Answer to a category challenge: do nothing and take what comes"),
-            detail: "Hold \(holdShare)% when it settles and they lose \(Int(depth.heldRivalStrengthLoss)) strength; "
+            // U1 (C4): "they come out N weaker", not the engine's "strength".
+            detail: "Hold \(holdShare)% when it settles and they come out \(Int(depth.heldRivalStrengthLoss)) weaker; "
                 + "lose it and your standing here drops \(Int(depth.lostStandingLoss))",
             role: .destructive,
             action: .concedeCategory
