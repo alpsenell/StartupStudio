@@ -48,7 +48,7 @@ struct FounderMoneyCard: View {
         let amount = amounts.isEmpty ? 0 : amounts[min(lendIndex, amounts.count - 1)]
 
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            PixelText(text: "DIRECTORS LOAN", scale: 2, color: Theme.pixelAccent)
+            PixelText(text: String(localized: "DIRECTORS LOAN", comment: "Bitmap kicker on the money sheet: the founder's loan to the company. Uppercase A-Z only"), scale: 2, color: Theme.pixelAccent)
             row(String(localized: "The company owes you", comment: "Money sheet row: the director's loan outstanding"), owed.money, tint: owed > 0 ? Theme.accent : .secondary)
             Text("Your own money, lent to the company. Repaid when you ask and cash covers it, and first out of the next round's cheque. If the company goes under, it goes with it.")
                 .font(.caption)
@@ -107,7 +107,8 @@ struct FounderMoneyCard: View {
         let refusal = state.founderMoneyDividendBlocker(amount: amount, balance: balance)
 
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            PixelText(text: "DIVIDEND", scale: 2, color: Theme.pixelAccent)
+            PixelText(text: String(localized: "DIVIDEND", comment: "Bitmap kicker on the money sheet: paying the company's cash out to its owners. Uppercase A-Z only"), scale: 2, color: Theme.pixelAccent)
+                .background { FounderMoneyDebugScroller() }
             Text("The company pays out; you keep your \(Self.percent(state.investors.equityRemaining)) and the rest of the cap table takes theirs. Once a quarter, and never below \(config.dividendRunwayWeeks) weeks of runway.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -135,7 +136,9 @@ struct FounderMoneyCard: View {
                 .padding(Theme.Spacing.sm)
                 .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-                ForEach(priceLines(state: state, balance: balance, amount: amount, take: take), id: \.self) { line in
+                // The prices, only while the button would pay: a refused
+                // dividend carries its reason instead.
+                ForEach(refusal == nil ? priceLines(state: state, balance: balance, amount: amount, take: take) : [], id: \.self) { line in
                     Label(line, systemImage: "exclamationmark.circle")
                         .font(.caption)
                         .foregroundStyle(Theme.warning)
@@ -389,8 +392,7 @@ extension DecisionPrompt {
             message: String(localized: "The letter is on the mat again. You are \(abs(min(0, wallet)).money) down and the landlord wants it cleared by day \(by). The company could cover you. Everybody would know.", comment: "Decision sheet body: the rescue question"),
             stats: [
                 (String(localized: "Wallet", comment: "Decision sheet stat: the founder's wallet"), wallet.money),
-                (String(localized: "The line", comment: "Decision sheet stat: the wallet balance below which the landlord acts"), line.money),
-                (String(localized: "Answer by", comment: "Decision sheet stat: the deadline"), String(localized: "day \(by)", comment: "A game day")),
+                (String(localized: "Due", comment: "Decision sheet stat: the landlord's deadline"), String(localized: "day \(by)", comment: "A game day")),
             ],
             options: [
                 Option(
@@ -419,6 +421,27 @@ extension DecisionPrompt {
 }
 
 // MARK: - Debug
+
+/// DEBUG: with `-autoFounderMoney dividend|paid`, scroll the money sheet so
+/// the dividend is on screen — after the shop card's own scroll (1.5 s),
+/// on an anchor of its own.
+private struct FounderMoneyDebugScroller: View {
+    var body: some View {
+        #if DEBUG
+        ScrollViewReader { proxy in
+            Color.clear
+                .id("k1.founderMoney.dividendAnchor")
+                .task {
+                    guard ["dividend", "paid"].contains(DebugLaunch.founderMoneySeed ?? "") else { return }
+                    try? await Task.sleep(for: .seconds(3))
+                    proxy.scrollTo("k1.founderMoney.dividendAnchor", anchor: .top)
+                }
+        }
+        #else
+        Color.clear
+        #endif
+    }
+}
 
 /// `-autoFounderMoney loan|dividend|paid|rescue`: one situation each,
 /// seeded a beat after launch (`FounderMoneySystem.debugSeed`). Pair with
