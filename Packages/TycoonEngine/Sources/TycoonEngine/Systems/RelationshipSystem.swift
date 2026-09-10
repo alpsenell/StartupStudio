@@ -69,9 +69,12 @@ enum RelationshipSystem {
             drift += config.neglectDrift
         }
         // A founder who is never home is not there in the evenings either.
-        if state.life.isAway(day: state.day) {
+        // MARK: K6 (home and rooms) — not on the family holiday: the partner
+        // is on it too (merge glue; K7's follow-up).
+        if state.life.isAway(day: state.day), state.life.awayReason != HomeSystem.familyHolidayReason {
             drift += config.affectionDrift
         }
+        // MARK: end K6
         // MARK: K7 (partner and diary)
         // A partner who works here reads the office: crunch, a launch, a
         // burnout. Exactly 0 unless they are on payroll.

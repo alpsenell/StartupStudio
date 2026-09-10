@@ -391,7 +391,10 @@ enum LifeSystem {
     /// `founderSalaryMax`.
     static func evictionRescueSalary(_ state: GameState, _ balance: BalanceConfig) -> Int {
         let economy = balance.economy
-        let rent = balance.life.home(state.life.home).weeklyRent
+        // MARK: K6 (home and rooms) — the rescue reads the district's rent,
+        // exactly the tier's rent with no district (merge glue).
+        let rent = state.homeWeeklyRent(balance: balance)
+        // MARK: end K6
         let weeklyCosts = livingCosts(state, balance)
         let deficit = max(0, -state.life.wallet)
         let amortised = weeklyCosts

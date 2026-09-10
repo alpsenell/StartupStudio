@@ -18,6 +18,9 @@ enum TabBadge {
     /// The queue's questions that are answered in a room on Life.
     static let lifeQueueKinds: Set<QueueKind> = [
         .confrontation, .funeral, .legalCase, .hearing, .cancellation,
+        // MARK: K1 (founder money) — the landlord's question is answered on Life (merge glue).
+        .rescue,
+        // MARK: end K1
     ]
 
     /// How far ahead a desk row counts as needing the founder.

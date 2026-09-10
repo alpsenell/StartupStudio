@@ -60,7 +60,9 @@ struct MoneySheetContent: View {
         let creditLimit = state.creditLimit(balance: balance)
         let secured = state.securedHeadroom(balance: balance)
         let interest = Int((Double(outstanding) * balance.loans.weeklyInterestRate).rounded())
-        let rent = homeWeeklyRent(life.home, balance: balance)
+        // MARK: K6 (home and rooms) — the rent the district actually charges (merge glue).
+        let rent = state.homeWeeklyRent(balance: balance)
+        // MARK: end K6
         let median = state.teamMedianSalary
 
         VStack(spacing: Theme.Spacing.lg) {

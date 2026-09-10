@@ -18,7 +18,9 @@ struct MoneyCard: View {
     var body: some View {
         let state = engine.state
         let life = state.life
-        let rent = homeWeeklyRent(life.home, balance: engine.balance)
+        // MARK: K6 (home and rooms) — the rent the district actually charges (merge glue).
+        let rent = state.homeWeeklyRent(balance: engine.balance)
+        // MARK: end K6
         let kids = life.family.children.count
 
         CardView("Personal money", systemImage: "wallet.pass.fill") {

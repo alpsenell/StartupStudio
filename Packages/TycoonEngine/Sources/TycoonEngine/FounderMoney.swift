@@ -172,6 +172,12 @@ extension GameState {
     /// the founder would hit the gates.
     public func founderMoneyDividendBlocker(amount: Int, balance: BalanceConfig) -> String? {
         let config = balance.founderMoney
+        // Merge glue (K1's report): a sole owner could take most of the
+        // garage's seed cash home on day one. The company has to have
+        // shipped something first.
+        if !products.contains(where: { if case .released = $0.stage { return true } else { return false } }) {
+            return "Not before the company has shipped a product"
+        }
         if investors.earnOut != nil { return "Not while the acquirer's earn-out runs" }
         if FounderStanding.openCases(self) > 0 { return "Not with a case open against you" }
         if company.cash < 0 { return "Not while the company is in the red" }
