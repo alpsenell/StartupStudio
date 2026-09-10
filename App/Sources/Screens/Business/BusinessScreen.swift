@@ -65,6 +65,11 @@ struct BusinessScreen: View {
     @State private var path = NavigationPath()
 
     @Environment(AppRouter.self) private var router
+    // MARK: V2 (ux: one inbox, one home per thing)
+    @Environment(GameShell.self) private var injectedShell: GameShell?
+    /// See `GameShell.shared`: read optionally, as every screen does.
+    private var shell: GameShell { injectedShell ?? .shared }
+    // MARK: end V2
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -75,14 +80,23 @@ struct BusinessScreen: View {
                         // open: the tab used to land on two empty states
                         // with a contract three days out hidden behind
                         // the right pill.
-                        DeskCard(items: deskItems) { route in
-                            if let target = BusinessSection(route: route) {
-                                withAnimation(Theme.Motion.selection) { section = target }
-                                if case .marketReport = route { router.go(route) }
-                            } else {
-                                router.go(route)
-                            }
-                        }
+                        // MARK: V2 (ux: one inbox, one home per thing)
+                        // C5: the desk is the inbox's desk rows' source; its
+                        // foot counts the rest of the inbox and opens it.
+                        DeskCard(
+                            items: deskItems,
+                            onRoute: { route in
+                                if let target = BusinessSection(route: route) {
+                                    withAnimation(Theme.Motion.selection) { section = target }
+                                    if case .marketReport = route { router.go(route) }
+                                } else {
+                                    router.go(route)
+                                }
+                            },
+                            elsewhere: WaitingList.make(engine: engine, shell: shell).elsewhere,
+                            onOpenWaiting: { shell.showingWaiting = true }
+                        )
+                        // MARK: end V2
                         // MARK: U1 (ux: the first-hour fixes)
                         // C7: the desk leads; one scrolling row of pills
                         // under it, then the section. The pills used to be

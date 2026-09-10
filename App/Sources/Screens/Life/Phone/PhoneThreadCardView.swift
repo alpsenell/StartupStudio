@@ -20,7 +20,8 @@ struct PhoneThreadCardView: View {
     private var thread: PhoneThread? { state.life.phone.thread(with: counterpart) }
 
     private var messages: [PhoneMessage] {
-        Array((thread?.messages ?? []).suffix(Self.bubbleLimit))
+        // V2 (C10): the card shows the thread the phone shows.
+        Array((thread?.shownMessages ?? []).suffix(Self.bubbleLimit))
     }
 
     var body: some View {

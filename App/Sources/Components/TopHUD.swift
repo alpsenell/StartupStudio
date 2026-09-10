@@ -108,7 +108,7 @@ struct TopHUD: View {
         }
         .buttonStyle(.pressable)
         .accessibilityAddTraits(.isButton)
-        .accessibilityHint("Opens the morning desk")
+        .accessibilityHint("Opens the morning papers") // V2 (C10)
         .sheet(isPresented: $showingDesk) {
             if let session {
                 MorningDeskSheet(

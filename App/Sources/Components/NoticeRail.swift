@@ -112,7 +112,6 @@ struct NoticeRail: View {
     /// moves it and a change of leader resets it.
     @State private var cycle = 0
     @State private var dismissedTips: Set<String> = GameSettings.dismissedTips
-    @State private var showingJournal = false
     // MARK: U1 (ux: the first-hour fixes)
     /// C3: the notice whose line is open to its full text; a tap on the
     /// line toggles it, and a change of notice closes it.
@@ -182,10 +181,30 @@ struct NoticeRail: View {
     /// has been put off and only while the clock runs (a stopped clock is
     /// the sheet's own moment); a room is here whenever it is open.
     private func queueNotices(_ state: GameState) -> [RailNotice] {
-        let items = DecisionPrompt.queueItems(in: state, content: engine.content, balance: engine.balance)
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // C5: J6's rule, unchanged, lives in `queueRows` so the inbox
+        // ("Waiting on you") reads the very same rows.
+        Self.queueRows(
+            state, content: engine.content, balance: engine.balance,
+            isDeferred: { shell.isDeferred($0) }
+        )
+        // MARK: end V2
+    }
+
+    /// Iteration 12 (J6), moved into a static by V2 (C5) so the rail and
+    /// the inbox share it: the queue's rows for `state`. A sheet is here
+    /// only once put off and only while the clock runs; a room whenever it
+    /// is open.
+    static func queueRows(
+        _ state: GameState,
+        content: ContentCatalog,
+        balance: BalanceConfig,
+        isDeferred: (String) -> Bool
+    ) -> [RailNotice] {
+        let items = DecisionPrompt.queueItems(in: state, content: content, balance: balance)
         return items.compactMap { item in
             if let prompt = item.prompt {
-                guard shell.isDeferred(prompt.id), state.speed != .paused else { return nil }
+                guard isDeferred(prompt.id), state.speed != .paused else { return nil }
                 return .queued(item.entry, day: state.day, answer: .recall(promptID: prompt.id))
             }
             guard let route = queueRoute(for: item.entry.kind) else { return nil }
@@ -194,7 +213,7 @@ struct NoticeRail: View {
     }
 
     /// The room a queued question is answered in.
-    private func queueRoute(for kind: QueueKind) -> Route? {
+    private static func queueRoute(for kind: QueueKind) -> Route? {
         switch kind {
         case .dirtyMoneyOffer: .dirtyMoney
         case .funeral: .family
@@ -288,16 +307,11 @@ struct NoticeRail: View {
         .onChange(of: session?.tutorial?.isComplete) { _, complete in
             if complete == true { dismissedTips = GameSettings.dismissedTips }
         }
-        .sheet(isPresented: $showingJournal) {
-            NavigationStack {
-                JournalScreen(engine: engine)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("Done") { showingJournal = false }
-                        }
-                    }
-            }
-        }
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // C5: the +N no longer opens the journal from here; it opens
+        // "Waiting on you" at the root (`GameShell.showingWaiting`), whose
+        // footer carries the journal and the week's report.
+        // MARK: end V2
     }
 
     private func row(for notice: RailNotice, queued: Int) -> some View {
@@ -335,12 +349,15 @@ struct NoticeRail: View {
         .accessibilityElement(children: .contain)
     }
 
-    /// "+2": more is waiting. Tapping opens the journal, where every
-    /// notice ends up; swiping the rail pages through them in place.
+    /// "+2": more is waiting. Tapping opens "Waiting on you" (V2, C5) —
+    /// every open question in one list, with the journal at its foot;
+    /// swiping the rail pages through the notices in place.
     private func counter(_ count: Int) -> some View {
         Button {
             Haptics.tap()
-            showingJournal = true
+            // MARK: V2 (ux: one inbox, one home per thing)
+            shell.showingWaiting = true
+            // MARK: end V2
         } label: {
             Text("+\(count)")
                 .font(.system(.caption, design: .rounded).weight(.bold).monospacedDigit())
@@ -352,7 +369,7 @@ struct NoticeRail: View {
         }
         .buttonStyle(.pressableRow)
         .accessibilityLabel("\(count) more notice\(count == 1 ? "" : "s")")
-        .accessibilityHint("Opens the journal; swipe the notice to see the next one")
+        .accessibilityHint("Opens what is waiting on you; swipe the notice to see the next one")
     }
 
     // MARK: - Rows

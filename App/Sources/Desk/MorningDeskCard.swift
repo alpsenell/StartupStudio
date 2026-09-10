@@ -28,7 +28,8 @@ struct MorningDeskCard: View {
                 HStack(alignment: .top, spacing: Theme.Spacing.md) {
                     VStack(alignment: .leading, spacing: 2) {
                         PixelText(
-                            text: String(localized: "THE DESK", comment: "Bitmap heading on the front door's morning desk card. Uppercase: the pixel face has no lowercase"),
+                            // V2 (C10): "the desk" is Business's alone now.
+                            text: String(localized: "MORNING PAPERS", comment: "Bitmap heading on the front door's morning papers card. Uppercase: the pixel face has no lowercase"),
                             scale: 2,
                             color: Theme.pixelAccent
                         )
@@ -47,7 +48,7 @@ struct MorningDeskCard: View {
                 }
                 Button(action: onOpen) {
                     Label(
-                        isCleared ? "Look at the desk" : "Open the desk",
+                        isCleared ? "Look at the papers" : "Read the papers",
                         systemImage: isCleared ? "checkmark.circle.fill" : "tray.full.fill"
                     )
                     .font(.system(.headline, design: .rounded))

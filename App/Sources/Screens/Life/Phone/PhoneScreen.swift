@@ -49,7 +49,8 @@ struct PhoneScreenContent: View {
     var content: ContentCatalog?
     var onOpenThread: ((PhoneCounterpart) -> Void)?
 
-    private var threads: [PhoneThread] { state.life.phone.byRecency }
+    // V2 (C10): sorted on what the phone shows, weekly closes left out.
+    private var threads: [PhoneThread] { state.life.phone.shownByRecency }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {

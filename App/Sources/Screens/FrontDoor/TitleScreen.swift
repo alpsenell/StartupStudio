@@ -753,9 +753,12 @@ private struct ContinueCard: View {
     private func deskLine(_ desk: MorningDeskCard) -> some View {
         let waiting = DeskPart.allCases.count - desk.done.count
         let line: String = switch waiting {
-        case ...0: String(localized: "The desk is cleared · come back tomorrow", comment: "Front door, the Continue card's desk line when the morning desk is done")
-        case 1: String(localized: "1 thing on the desk · \(desk.summary)", comment: "Front door, the Continue card's desk line: one thing waiting, then what it is")
-        default: String(localized: "\(waiting) things on the desk · \(desk.summary)", comment: "Front door, the Continue card's desk line: how many things are waiting, then the first")
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // C10: "Morning papers", so "the desk" means Business alone.
+        case ...0: String(localized: "The papers are read · come back tomorrow", comment: "Front door, the Continue card's morning papers line when all three are done")
+        case 1: String(localized: "1 thing in the morning papers · \(desk.summary)", comment: "Front door, the Continue card's morning papers line: one thing waiting, then what it is")
+        default: String(localized: "\(waiting) things in the morning papers · \(desk.summary)", comment: "Front door, the Continue card's morning papers line: how many things are waiting, then the first")
+        // MARK: end V2
         }
         return Button(action: desk.onOpen) {
             HStack(spacing: Theme.Spacing.sm) {
@@ -775,7 +778,7 @@ private struct ContinueCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.pressableRow)
-        .accessibilityHint("Opens the morning desk")
+        .accessibilityHint("Opens the morning papers") // V2 (C10)
     }
     // MARK: end U1
 

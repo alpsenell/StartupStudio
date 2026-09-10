@@ -86,7 +86,11 @@ enum Desk {
                     id: "pitch-journalist",
                     systemImage: "mic.fill",
                     text: "A reporter wants twenty minutes before the launch",
-                    daysLeft: nil,
+                    // MARK: V2 (ux: one inbox, one home per thing)
+                    // C5: the interview's real deadline — the day the build
+                    // ships, or the end of a shipped build's launch week.
+                    daysLeft: Self.interviewDaysLeft(in: state, balance: balance, content: content),
+                    // MARK: end V2
                     tint: Theme.accent,
                     // The interview is offered under the war room's press
                     // strip, which is where the outlet's name is; the row
@@ -146,7 +150,11 @@ enum Desk {
                     id: "war-\(rival.id)",
                     systemImage: "flag.2.crossed.fill",
                     text: "\(rival.name) is running a price war in \(topic)",
-                    daysLeft: nil,
+                    // MARK: V2 (ux: one inbox, one home per thing)
+                    // C5: the answer window, while the war is unanswered;
+                    // an answered war is an open state again.
+                    daysLeft: Self.priceWarDaysLeft(rival, in: state, balance: balance),
+                    // MARK: end V2
                     tint: Theme.warning,
                     route: .rivals,
                     section: .rivals
@@ -212,6 +220,40 @@ enum Desk {
             }
         }
     }
+
+    // MARK: V2 (ux: one inbox, one home per thing)
+
+    /// C5: days until the reporter's twenty minutes stop being on offer —
+    /// the build the press want ships (`interviewableProductID`'s first
+    /// case), or a build that shipped leaves its launch week (its second).
+    /// U1 found the row undated, which kept it off the badge and the inbox.
+    static func interviewDaysLeft(in state: GameState, balance: BalanceConfig, content: ContentCatalog) -> Int? {
+        let week = GameState.daysPerWeek
+        if let eta = state.shipETAs(balance: balance, content: content).first(where: { $0.daysAway <= week }) {
+            return max(0, eta.daysAway)
+        }
+        let launched = state.products.compactMap { product -> Int? in
+            guard case .released(let info) = product.stage, !info.offMarket,
+                  state.day - info.launchDay <= week
+            else { return nil }
+            return info.launchDay
+        }.max()
+        return launched.map { max(0, $0 + week - state.day) }
+    }
+
+    /// C5: days left to answer a rival's price war — the same window the
+    /// decision sheet's question closes on (`RivalMarket.answerDeadline`).
+    /// `nil` once it is answered or the window has gone: the war is then
+    /// a state, not a question.
+    static func priceWarDaysLeft(_ rival: Rival, in state: GameState, balance: BalanceConfig) -> Int? {
+        guard state.rivalMarket.answer(to: rival) == nil,
+              let deadline = RivalMarket.answerDeadline(rival, balance: balance),
+              deadline >= state.day
+        else { return nil }
+        return deadline - state.day
+    }
+
+    // MARK: end V2
 }
 
 /// The card above the Business tab's pill bar: what has a clock on it, most
@@ -220,26 +262,72 @@ enum Desk {
 struct DeskCard: View {
     let items: [DeskItem]
     let onRoute: (Route) -> Void
+    // MARK: V2 (ux: one inbox, one home per thing)
+    /// C5: what waits on the founder off the desk — the inbox's questions
+    /// and phone threads (`WaitingList.elsewhere`). 0 draws nothing.
+    var elsewhere: Int = 0
+    /// Opens "Waiting on you"; `nil` draws no line.
+    var onOpenWaiting: (() -> Void)?
+    // MARK: end V2
 
     var body: some View {
         CardView("On the desk", systemImage: "tray.full.fill") {
-            if items.isEmpty {
-                // U1 (C8): the Contracts section's empty Active card folds
-                // into this line; every running contract is a desk row.
-                Text("Nothing on the desk. No contracts running.")
-                    .emptySectionText()
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(items) { item in
-                        row(item)
-                        if item.id != items.last?.id {
-                            Divider()
+            VStack(alignment: .leading, spacing: 0) {
+                if items.isEmpty {
+                    // U1 (C8): the Contracts section's empty Active card folds
+                    // into this line; every running contract is a desk row.
+                    Text("Nothing on the desk. No contracts running.")
+                        .emptySectionText()
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(items) { item in
+                            row(item)
+                            if item.id != items.last?.id {
+                                Divider()
+                            }
                         }
                     }
                 }
+                // MARK: V2 (ux: one inbox, one home per thing)
+                if elsewhere > 0, let onOpenWaiting {
+                    Divider().padding(.top, items.isEmpty ? Theme.Spacing.sm : 0)
+                    waitingLine(onOpenWaiting)
+                }
+                // MARK: end V2
             }
         }
     }
+
+    // MARK: V2 (ux: one inbox, one home per thing)
+    /// C5: "2 more waiting on you" — the rest of the inbox, one tap away,
+    /// so the desk and the inbox are visibly the same list.
+    private func waitingLine(_ open: @escaping () -> Void) -> some View {
+        Button {
+            Haptics.tap()
+            open()
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "tray.and.arrow.down.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 22)
+                Text(elsewhere == 1
+                     ? String(localized: "1 more waiting on you", comment: "Business desk card: one question or thread waiting outside the desk")
+                     : String(localized: "\(elsewhere) more waiting on you", comment: "Business desk card: questions and threads waiting outside the desk. Always 2 or more"))
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                Spacer(minLength: Theme.Spacing.xs)
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.vertical, Theme.Spacing.sm)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.pressableRow)
+        .accessibilityHint("Opens everything waiting on you")
+    }
+    // MARK: end V2
 
     private func row(_ item: DeskItem) -> some View {
         Button {
