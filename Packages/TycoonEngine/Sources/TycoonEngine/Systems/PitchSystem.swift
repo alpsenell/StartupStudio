@@ -102,6 +102,19 @@ enum PitchSystem {
             )
         }
         // MARK: end of Iteration 11 — N4
+        // MARK: J5 (announce)
+        //
+        // The launch-week interview reads the announced date: warmer when
+        // today's ETA makes it, cooler when it does not or already slipped.
+        // `announceInterviewWarmth` is exactly zero for a product nobody
+        // announced, so the room's invariant holds.
+        if counterpart == .journalist, let productID = resolved {
+            let dateWarmth = state.announceInterviewWarmth(
+                for: productID, balance: balance, content: content
+            )
+            if dateWarmth != 0 { pitch.session?.warmth += dateWarmth }
+        }
+        // MARK: end J5
         state.pitch = pitch
         return [.pitchOpened(counterpart: counterpart.rawValue, day: state.day)]
     }

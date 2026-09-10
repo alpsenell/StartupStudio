@@ -210,6 +210,10 @@ struct AppRootView: View {
             // tab: started here, it runs whichever tab the pass opens on.
             .task {
                 DebugLaunch.startAutoAnswering(engine: engine)
+                // MARK: J5 (announce) — `-autoAnnounce [slip|void]` and
+                // `-autoPremium`, whichever tab the pass opens on.
+                AnnounceDebug.start(engine: engine)
+                // MARK: end J5
                 // Iteration 8: `-autoAwards <year>` shows that year's
                 // ceremony at once, for the screenshot pass.
                 if let year = DebugLaunch.value(after: "-autoAwards").flatMap(Int.init) {

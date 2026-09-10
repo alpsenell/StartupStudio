@@ -5541,5 +5541,422 @@
         ]
       }
     ]
+  },
+  {
+    "id": "announce_countdown_site",
+    "headline": "A fan site has put a countdown to your ship date on its front page.",
+    "body": "It has a ticking clock and a comments section. The comments are ahead of the clock.",
+    "weight": 3,
+    "category": "press",
+    "requires": {
+      "hasProductInDev": true,
+      "flagsAll": [
+        "announce_live"
+      ]
+    },
+    "cooldownDays": 120,
+    "choices": [
+      {
+        "id": "link",
+        "label": "Link to it",
+        "detail": "Hype +6 · now it is your clock",
+        "effects": [
+          {
+            "type": "hype",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "leave",
+        "label": "Leave it alone",
+        "detail": "Reputation +1 · you look busy",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_standup_question",
+    "headline": "In stand-up, somebody asks whether the date on the website is a real date.",
+    "body": "The room goes quiet in the way rooms do when the answer is already known.",
+    "weight": 3,
+    "category": "team",
+    "requires": {
+      "hasProductInDev": true,
+      "flagsAll": [
+        "announce_live"
+      ]
+    },
+    "cooldownDays": 120,
+    "choices": [
+      {
+        "id": "real",
+        "label": "It is real",
+        "detail": "Morale −4 · hype +4 · the room believes you",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -4
+          },
+          {
+            "type": "hype",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "target",
+        "label": "It is a target",
+        "detail": "Morale +2 · reputation −1 · somebody tells a friend",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 2
+          },
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_preorders",
+    "headline": "A reseller offers to take pre-orders against your announced date.",
+    "body": "Cash now. A refund clause, in a font size chosen with care, if it slips.",
+    "weight": 2,
+    "category": "money",
+    "requires": {
+      "hasProductInDev": true,
+      "flagsAll": [
+        "announce_live"
+      ]
+    },
+    "cooldownDays": 240,
+    "choices": [
+      {
+        "id": "take",
+        "label": "Take the pre-orders",
+        "detail": "+$4,000 · they want $5,000 back if the date slips",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": 4000
+          },
+          {
+            "type": "flag",
+            "flag": "announce_preorders"
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "label": "Not yet",
+        "detail": "Mood +1 · one less clause",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_diary",
+    "headline": "A trade reporter has written your ship date in their diary. In pen.",
+    "body": "They mention the pen twice, so that you know about the pen.",
+    "weight": 3,
+    "category": "press",
+    "requires": {
+      "hasProductInDev": true,
+      "flagsAll": [
+        "announce_live"
+      ]
+    },
+    "cooldownDays": 150,
+    "choices": [
+      {
+        "id": "preview",
+        "label": "Offer them an early look",
+        "detail": "Hype +8 · energy −4",
+        "effects": [
+          {
+            "type": "hype",
+            "amount": 8
+          },
+          {
+            "type": "founderMeters",
+            "energy": -4
+          }
+        ]
+      },
+      {
+        "id": "thank",
+        "label": "Thank them for their interest",
+        "detail": "Reputation +1",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_rival_week",
+    "headline": "A rival studio has announced something for the week before your date.",
+    "body": "No product name, no screenshot. Just the week, and a logo that looks a lot like yours.",
+    "weight": 2,
+    "category": "market",
+    "requires": {
+      "hasProductInDev": true,
+      "flagsAll": [
+        "announce_live"
+      ]
+    },
+    "cooldownDays": 200,
+    "choices": [
+      {
+        "id": "hold",
+        "label": "Hold your date",
+        "detail": "Reputation +2 · you do not flinch in print",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "quiet",
+        "label": "Say nothing",
+        "detail": "Hype −4 · the story is theirs this week",
+        "effects": [
+          {
+            "type": "hype",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_forum_thread",
+    "headline": "A forum thread asks whether your product is dead. It is eleven pages long.",
+    "body": "Page nine is a detailed theory involving your office plants.",
+    "weight": 3,
+    "category": "press",
+    "requires": {
+      "hasProductInDev": true,
+      "flagsAll": [
+        "announce_slipped"
+      ]
+    },
+    "cooldownDays": 150,
+    "choices": [
+      {
+        "id": "screenshot",
+        "label": "Post one screenshot",
+        "detail": "Hype +5 · reputation −1 · page twelve is about the screenshot",
+        "effects": [
+          {
+            "type": "hype",
+            "amount": 5
+          },
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      },
+      {
+        "id": "ignore",
+        "label": "Let it run",
+        "detail": "Reputation −1",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_correction_framed",
+    "headline": "Somebody has framed the paper's correction and hung it in the kitchen.",
+    "body": "It is level. Somebody took the time to make it level.",
+    "weight": 3,
+    "category": "team",
+    "requires": {
+      "flagsAll": [
+        "announce_slipped"
+      ]
+    },
+    "cooldownDays": 300,
+    "choices": [
+      {
+        "id": "leave",
+        "label": "Leave it up",
+        "detail": "Morale +3 · everyone is in on it",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "remove",
+        "label": "Take it down",
+        "detail": "Morale −2 · the nail stays",
+        "effects": [
+          {
+            "type": "moraleAll",
+            "amount": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_investor_forward",
+    "headline": "An investor forwards you the correction with no message.",
+    "body": "The subject line is \"Fwd:\". The subject line is doing a lot of work.",
+    "weight": 2,
+    "category": "investor",
+    "requires": {
+      "flagsAll": [
+        "announce_slipped"
+      ]
+    },
+    "cooldownDays": 300,
+    "choices": [
+      {
+        "id": "reply",
+        "label": "Reply with the new date",
+        "detail": "Reputation +1 · energy −3",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          },
+          {
+            "type": "founderMeters",
+            "energy": -3
+          }
+        ]
+      },
+      {
+        "id": "ignore",
+        "label": "Do not reply",
+        "detail": "Mood −2 · it sits in your inbox",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_preorder_refunds",
+    "headline": "The reseller would like its pre-order money back, as agreed.",
+    "body": "They attach the clause. They have highlighted it in a colour that suggests they enjoyed highlighting it.",
+    "weight": 5,
+    "category": "money",
+    "requires": {
+      "flagsAll": [
+        "announce_slipped",
+        "announce_preorders"
+      ]
+    },
+    "cooldownDays": 60,
+    "choices": [
+      {
+        "id": "pay",
+        "label": "Pay it back",
+        "detail": "−$5,000 · the clause is done with you",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -5000
+          },
+          {
+            "type": "clearFlag",
+            "flag": "announce_preorders"
+          }
+        ]
+      },
+      {
+        "id": "argue",
+        "label": "Argue about the font size",
+        "detail": "−$4,000 · reputation −2",
+        "effects": [
+          {
+            "type": "cash",
+            "amount": -4000
+          },
+          {
+            "type": "reputation",
+            "amount": -2
+          },
+          {
+            "type": "clearFlag",
+            "flag": "announce_preorders"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "announce_no_more_dates",
+    "headline": "A journalist asks when it ships, then says: actually, don't.",
+    "body": "They put the pen away before you can answer, which is a kindness, and also not.",
+    "weight": 3,
+    "category": "press",
+    "requires": {
+      "flagsAll": [
+        "announce_void"
+      ]
+    },
+    "cooldownDays": 300,
+    "choices": [
+      {
+        "id": "laugh",
+        "label": "Laugh it off",
+        "detail": "Mood +2 · reputation −1",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": 2
+          },
+          {
+            "type": "reputation",
+            "amount": -1
+          }
+        ]
+      },
+      {
+        "id": "nothing",
+        "label": "Promise nothing",
+        "detail": "Reputation +1 · the first thing you have got right",
+        "effects": [
+          {
+            "type": "reputation",
+            "amount": 1
+          }
+        ]
+      }
+    ]
   }
 ]

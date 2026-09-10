@@ -783,6 +783,13 @@
     },
     "premiumQualityThreshold": 70.0,
     "premiumChurnPenalty": 2.0,
+    "premiumReviewCurve": {
+      "slope": 0.02,
+      "pivot": 75.0,
+      "cap": 0.8,
+      "floor": 0.3,
+      "liveBugFactor": 2.0
+    },
     "updatePoolFraction": 0.3,
     "updateQualityBonus": 8.0,
     "updateReviewWeight": 0.5,
@@ -1987,5 +1994,19 @@
     "campusRentBase": 4000,
     "campusRentPerHead": 200,
     "campusRentFreeHeadcount": 14
+  },
+  "announce": {
+    "minLeadDays": 21,
+    "maxSlackDays": 14,
+    "earlyLeadDays": 14,
+    "hypeDecayRate": 0.01,
+    "campaignFactor": 1.25,
+    "firstSlipReputation": 4.0,
+    "firstSlipHypeFactor": 0.6,
+    "secondSlipReputation": 8.0,
+    "secondSlipHypeFactor": 0.4,
+    "redateDays": 14,
+    "copycatDelayWeeks": 4,
+    "interviewWarmth": 12.0
   }
 }

@@ -115,10 +115,13 @@ enum ProductSystem {
             let overpriced = info.priceTier == .premium
                 && Double(info.averageReviewScore) < economy.premiumQualityThreshold
             // Bugs players hit in the wild cost sales and subscribers alike.
+            // MARK: J5 (announce) — I1: premium buyers notice bugs twice as
+            // much. The standard penalty, untouched, for every other tier.
             let liveBugDrag = 1 - min(
                 economy.liveBugPenaltyCap,
-                Double(info.liveBugs) * economy.liveBugSalesPenalty
+                Double(info.liveBugs) * economy.liveBugSalesPenalty(for: info.priceTier)
             )
+            // MARK: end J5
             let week = info.weeklySales.count
             let rampWeeks = max(1, info.adoptionWeeks)
             let adoption = min(1, (Double(week) + 1) / rampWeeks)
@@ -130,7 +133,11 @@ enum ProductSystem {
                 * (balance.salesBaseFactor + balance.salesQualityFactor * qHat)
                 * hypeBoost
                 * info.launchMarketScale
-                * pricing.demandFactor
+                // MARK: J5 (announce) — I1: premium demand follows the
+                // reviews. The table's factor, untouched, for every other
+                // tier and for premium with the curve off.
+                * economy.demandFactor(for: info.priceTier, reviewScore: info.averageReviewScore)
+                // MARK: end J5
                 // A founder who knows the market puts the product in front
                 // of the people who want it. Neutral until they train it.
                 * state.founderMarketFactor(balance)

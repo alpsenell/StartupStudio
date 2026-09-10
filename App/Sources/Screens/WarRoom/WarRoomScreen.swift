@@ -370,6 +370,9 @@ private struct CountdownPanel: View {
             PixelText(text: "—", scale: 7, color: .secondary)
             PixelText(text: stalledReason, scale: 2, color: Theme.warning)
         }
+        // MARK: J5 (announce) — the day the press was told, under the ETA.
+        AnnounceCountdownLine(engine: engine, product: product)
+        // MARK: end J5
     }
 
     @ViewBuilder
@@ -396,12 +399,17 @@ private struct CountdownPanel: View {
     private var accessibilityLabel: String {
         switch product.stage {
         case .development:
+            // MARK: J5 (announce) — the announced date, read after the ETA.
+            let announced = AnnounceCountdownLine.accessibilityText(for: product, engine: engine)
+                .map { ". \($0)" } ?? ""
+            // MARK: end J5
             if let days = eta?.daysToComplete {
-                return days == 0
+                return (days == 0
                     ? "Countdown: the build is done"
-                    : "Countdown: \(days) day\(days == 1 ? "" : "s") to the ETA, \(GameCalendar(day: day + days).longLabel)"
+                    : "Countdown: \(days) day\(days == 1 ? "" : "s") to the ETA, \(GameCalendar(day: day + days).longLabel)")
+                    + announced
             }
-            return "Countdown: \(stalledReason.lowercased())"
+            return "Countdown: \(stalledReason.lowercased())" + announced
         case .released(let info):
             return info.launchDay == day
                 ? "Launch day"

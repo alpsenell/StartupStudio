@@ -1131,6 +1131,9 @@ struct EventCopy {
         // MARK: J4 (house field)
         // MARK: end J4
         // MARK: J5 (announce)
+        // Every line is `AnnounceEventPresenter`'s, in the lane's own file.
+        case .announceMade, .announceSlipped, .announceKept:
+            AnnounceEventPresenter.entry(for: event, state: state) ?? fallbackEntry(for: event)
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6

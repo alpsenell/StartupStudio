@@ -554,6 +554,12 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: J4 (house field)
     // MARK: end J4
     // MARK: J5 (announce)
+    /// Tell the press `day` is the ship date of a build in development.
+    /// Refused (no events) for the reasons `AnnounceRefusal` names.
+    case announceShipDate(productID: UUID, day: Int)
+    /// Miss the standing date now, for `-autoAnnounce slip`. Applied only
+    /// in debug builds; nothing in the game sends it.
+    case announceForceSlip(productID: UUID)
     // MARK: end J5
     // MARK: J6 (queue)
     /// `-autoQueue`, `-autoChild <stage>`, `-autoCampus` and

@@ -294,6 +294,7 @@ extension Route {
         // MARK: J4 (house field)
         // MARK: end J4
         // MARK: J5 (announce)
+        case "announce", "premium": .announce
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6
@@ -1167,6 +1168,40 @@ extension DebugLaunch {
     // MARK: J4 (house field)
     // MARK: end J4
     // MARK: J5 (announce)
+
+    /// What `-autoAnnounce` asks `AnnounceDebug.start` to do on launch.
+    enum AnnounceMode: String {
+        /// Announce the war room's build (or the soonest build that can
+        /// take a date) at the sheet's usual slack.
+        case announce
+        /// …then miss it once: the correction, the new date.
+        case slip
+        /// …then miss that too: the announcement is void.
+        case void
+    }
+
+    /// `-autoAnnounce [slip|void]`. Debug builds only.
+    static var autoAnnounceMode: AnnounceMode? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-autoAnnounce") else { return nil }
+        let next = arguments.indices.contains(index + 1) ? arguments[index + 1].lowercased() : ""
+        return AnnounceMode(rawValue: next) ?? .announce
+        #else
+        return nil
+        #endif
+    }
+
+    /// `-autoPremium`: price the best-reviewed release premium on launch;
+    /// with `-autoRoute premium`, land on its page, where the live-ops
+    /// caption states what premium earns at its score.
+    static var autoPremium: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoPremium")
+        #else
+        return false
+        #endif
+    }
     // MARK: end J5
     // MARK: J6 (queue)
     // Parsed in `QueueDebug` (`Components/QueuePrompts.swift`), started from

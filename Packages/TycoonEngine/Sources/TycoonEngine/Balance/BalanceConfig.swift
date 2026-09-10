@@ -1948,6 +1948,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: J4 (house field)
     // MARK: end J4
     // MARK: J5 (announce)
+
+    /// What an announced ship date buys and what missing it costs
+    /// (`BalanceConfig+Announce.swift`). Inline default, and read through
+    /// the `KeyedDecodingContainer` overload beside it, so `"announce"` is
+    /// an optional key. Read only for a product somebody announced.
+    public var announce: AnnounceBalance = .default
     // MARK: end J5
     // MARK: J6 (queue)
 

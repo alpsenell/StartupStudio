@@ -64,6 +64,13 @@ extension BalanceConfig {
         public var premiumQualityThreshold: Double
         /// What an unjustified premium price multiplies churn by.
         public var premiumChurnPenalty: Double
+        // MARK: J5 (announce)
+        /// I1: premium demand read off the reviews, and what a live bug
+        /// costs a premium product (`BalanceConfig+Announce.swift`). Off by
+        /// default — the flat `priceTiers.premium.demandFactor` — and an
+        /// optional key, so a balance file without it decodes.
+        public var premiumReviewCurve: AnnouncePremiumCurve = .off
+        // MARK: end J5
         /// A patch costs this share of the original point pools.
         public var updatePoolFraction: Double
         /// Quality a finished patch adds (capped at 100).

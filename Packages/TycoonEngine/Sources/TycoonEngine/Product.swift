@@ -315,6 +315,15 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
     /// game: an empty board multiplies quality by exactly 1.0 and is not
     /// written to the save at all.
     public var features: [String]
+    // MARK: J5 (announce)
+    /// The ship date told to the press, `nil` until one is and again once
+    /// a second slip voids it. Kept after launch, so the copycat can read
+    /// that it was announced. Not written while `nil`.
+    public var announcedDay: Int?
+    /// How many announced dates this build has missed (0, 1 or 2). Not
+    /// written while 0.
+    public var slips: Int
+    // MARK: end J5
 
     public init(
         id: UUID,
@@ -323,7 +332,11 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
         topicID: String,
         stage: ProductStage,
         codebaseID: String? = nil,
-        features: [String] = []
+        features: [String] = [],
+        // MARK: J5 (announce)
+        announcedDay: Int? = nil,
+        slips: Int = 0
+        // MARK: end J5
     ) {
         self.id = id
         self.name = name
@@ -332,6 +345,10 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
         self.stage = stage
         self.codebaseID = codebaseID
         self.features = features
+        // MARK: J5 (announce)
+        self.announcedDay = announcedDay
+        self.slips = slips
+        // MARK: end J5
     }
 }
 
@@ -348,6 +365,9 @@ extension Product {
     private enum CodingKeys: String, CodingKey {
         case id, name, typeID, topicID, stage, codebaseID
         case features
+        // MARK: J5 (announce)
+        case announcedDay, slips
+        // MARK: end J5
     }
 
     public init(from decoder: any Decoder) throws {
@@ -359,7 +379,11 @@ extension Product {
             topicID: try container.decode(String.self, forKey: .topicID),
             stage: try container.decode(ProductStage.self, forKey: .stage),
             codebaseID: try container.decodeIfPresent(String.self, forKey: .codebaseID),
-            features: try container.decodeIfPresent([String].self, forKey: .features) ?? []
+            features: try container.decodeIfPresent([String].self, forKey: .features) ?? [],
+            // MARK: J5 (announce)
+            announcedDay: try container.decodeIfPresent(Int.self, forKey: .announcedDay),
+            slips: try container.decodeIfPresent(Int.self, forKey: .slips) ?? 0
+            // MARK: end J5
         )
     }
 
@@ -372,6 +396,11 @@ extension Product {
         try container.encode(stage, forKey: .stage)
         try container.encodeIfPresent(codebaseID, forKey: .codebaseID)
         if !features.isEmpty { try container.encode(features, forKey: .features) }
+        // MARK: J5 (announce) — written only when set, so a product nobody
+        // announced encodes to the bytes it always did.
+        try container.encodeIfPresent(announcedDay, forKey: .announcedDay)
+        if slips != 0 { try container.encode(slips, forKey: .slips) }
+        // MARK: end J5
     }
 }
 
