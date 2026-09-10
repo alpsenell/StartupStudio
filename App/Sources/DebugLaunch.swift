@@ -1715,6 +1715,50 @@ extension DebugLaunch {
     // MARK: end K6
     // MARK: K7 (partner and diary)
     // MARK: end K7
+    // MARK: S2 (office downgrade)
+    /// What `OfficeDowngradeSection` opens after `startOfficeDowngrade`.
+    enum OfficeDowngradeLanding { case sheet, storage }
+
+    @MainActor private static var officeDowngradeStarted = false
+
+    /// `-autoRoute s2-…` with `-autoFixture release-studio-day400`, applied
+    /// once when the office card appears, through the engine:
+    /// - `s2-downgrade`: the newest hires let go and the newest build
+    ///   shipped down to the loft's caps (`.officeDowngradeDebugSeed
+    ///   legal`) — the move down is allowed; its sheet opens.
+    /// - `s2-owned`: the same with the office owned — the sale price shows.
+    /// - `s2-refused`: the fixture as it ships (over both caps); the sheet
+    ///   opens on its refusals.
+    /// - `s2-moved`: `legal`, then `.downgradeOffice` — the loft, with the
+    ///   storage line on the card.
+    /// - `s2-storage`: `s2-moved` with the amenities sheet open.
+    /// Debug only; `nil` otherwise.
+    @MainActor
+    static func startOfficeDowngrade(engine: GameEngine) -> OfficeDowngradeLanding? {
+        #if DEBUG
+        guard !officeDowngradeStarted, let route = launchRoute, route.hasPrefix("s2-") else { return nil }
+        officeDowngradeStarted = true
+        switch route {
+        case "s2-downgrade":
+            engine.send(.officeDowngradeDebugSeed(scenario: "legal"))
+            return .sheet
+        case "s2-owned":
+            engine.send(.officeDowngradeDebugSeed(scenario: "owned"))
+            return .sheet
+        case "s2-refused":
+            return .sheet
+        case "s2-moved", "s2-storage":
+            engine.send(.officeDowngradeDebugSeed(scenario: "legal"))
+            engine.send(.downgradeOffice)
+            return route == "s2-storage" ? .storage : nil
+        default:
+            return nil
+        }
+        #else
+        return nil
+        #endif
+    }
+    // MARK: end S2
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
