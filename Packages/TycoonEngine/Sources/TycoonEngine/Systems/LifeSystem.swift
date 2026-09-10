@@ -359,7 +359,9 @@ enum LifeSystem {
     /// What the founder's week costs them before they eat: rent and the
     /// children.
     static func livingCosts(_ state: GameState, _ balance: BalanceConfig) -> Int {
-        balance.life.home(state.life.home).weeklyRent
+        // MARK: K6 (home and rooms) — the rent reads the home's district
+        state.homeWeeklyRent(balance: balance)
+        // MARK: end K6
             + state.life.family.children.count * balance.life.childWeeklyCost
     }
 
@@ -400,7 +402,10 @@ enum LifeSystem {
             ))
         }
 
-        state.life.wallet -= config.home(state.life.home).weeklyRent
+        // MARK: K6 (home and rooms) — the tier's rent × the home district's
+        // multiplier; exactly the tier's rent with no district.
+        state.life.wallet -= state.homeWeeklyRent(balance: balance)
+        // MARK: end K6
             + state.life.family.children.count * config.childWeeklyCost
 
         // An overdrawn personal account is not free money — but the
@@ -430,6 +435,17 @@ enum LifeSystem {
         }
 
         let activity = resolvedActivity(state.life)
+        // MARK: K6 (home and rooms)
+        // A vacation planned with the family, and a family to take: the
+        // holiday resolves in its own function. Seeing them is seeing
+        // people, so the recovery reads it as family time (loneliness
+        // lifts; a chronic streak resets, as any vacation's does).
+        if activity == .vacation, state.life.familyHoliday, state.familyHolidayHeads > 0 {
+            var holiday = HomeSystem.resolveFamilyHoliday(&state, balance)
+            holiday.insert(contentsOf: applyWeekendRecovery(.familyTime, &state, balance), at: 1)
+            return holiday
+        }
+        // MARK: end K6
         let def = config.activity(activity)
         state.life.meters.apply(
             energy: def.energy, health: def.health, mood: def.mood, relationships: def.relationships
@@ -458,6 +474,10 @@ enum LifeSystem {
             state.life.awaySinceDay = day
             state.life.awayReason = vacationReason
             state.life.plannedActivity = .rest
+            // MARK: K6 (home and rooms) — a family holiday with nobody left
+            // to take went as the vacation; the plan is spent either way.
+            state.life.familyHoliday = false
+            // MARK: end K6
             events.append(.founderAway(reason: vacationReason, untilDay: until, day: day))
         case .doctor:
             state.life.coldUntilDay = nil
@@ -557,6 +577,10 @@ enum LifeSystem {
     /// Plans the next weekend. No event.
     static func planWeekend(_ activity: WeekendActivity, state: inout GameState) -> [GameEvent] {
         state.life.plannedActivity = activity
+        // MARK: K6 (home and rooms) — any plan but `.planFamilyHoliday`'s
+        // is the founder's own (a no-op on every run that never planned one).
+        state.life.familyHoliday = false
+        // MARK: end K6
         return []
     }
 

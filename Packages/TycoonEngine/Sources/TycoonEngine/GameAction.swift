@@ -623,6 +623,19 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: K5 (hand over the keys)
     // MARK: end K5
     // MARK: K6 (home and rooms)
+    /// Moves the founder's home to `district`: `home.moveRentWeeks` of the
+    /// new rent from the wallet and an evening; the weekly rent then reads
+    /// the district's multiplier and a far commute costs an evening a week
+    /// (`HomeSystem`). Sent only from the Home card's move sheet.
+    case moveHome(district: DistrictID)
+    /// Plans the coming weekend as a family holiday: the vacation, with the
+    /// partner and the children along (`HomeSystem`). Sent only from the
+    /// weekend card.
+    case planFamilyHoliday
+    /// A paid break in the game room, the cafeteria or the gym: everyone's
+    /// morale up, the next day's build progress at `home.breakDayFactor`,
+    /// once a week (`HomeSystem`). Sent only from the amenities sheet.
+    case callBreak(amenity: Amenity)
     // MARK: end K6
     // MARK: K7 (partner and diary)
     // MARK: end K7
