@@ -238,6 +238,11 @@ struct OfficeDowngradeSheet: View {
                 "The room itself: morale target +\(OfficeDowngradeCopy.points(quote.officeMoraleNow)) → +\(OfficeDowngradeCopy.points(quote.officeMoraleAfter)), for as long as you stay"
             )
         }
+        if -quote.moraleTargetChange > quote.moraleDrag {
+            lines.append(
+                "All told, the morale target moves −\(OfficeDowngradeCopy.points(-quote.moraleTargetChange)) on the day; \(OfficeDowngradeCopy.points(quote.moraleDrag)) of it comes back after \(weeks) weeks"
+            )
+        }
         let back = engine.balance.office(quote.from).upgradeCost
         if back > 0 {
             lines.append("Moving back up costs the \(quote.from.displayName)'s \(back.money) again")
@@ -251,7 +256,7 @@ struct OfficeDowngradeSheet: View {
         ]
         if !quote.storedAmenities.isEmpty {
             lines.append(
-                "\(OfficeDowngradeCopy.list(quote.storedAmenities.map(\.displayName))) into storage: no upkeep, no effect, back when you move up"
+                "\(OfficeDowngradeCopy.list(quote.storedAmenities.map(\.displayName))) into storage: no upkeep, and their morale target +\(OfficeDowngradeCopy.points(quote.storedMoraleBonus)) goes with them until you move back up"
             )
         }
         if quote.losesLaunchEvents {
@@ -335,10 +340,14 @@ enum OfficeDowngradeCopy {
         return "costs \((-saved).money) more a week: rent again"
     }
 
-    /// "morale −5 for 13 weeks · reputation −3"
+    /// "Morale target −23 (5 of it for 13 weeks) · reputation −3"
     static func costLine(_ quote: OfficeDowngradeQuote) -> String {
         let weeks = max(1, Int((Double(quote.moraleDragDays) / 7).rounded()))
-        return "Morale −\(points(quote.moraleDrag)) for \(weeks) weeks · reputation −\(points(quote.reputationCost))"
+        let total = -quote.moraleTargetChange
+        let morale = total > quote.moraleDrag
+            ? "Morale target −\(points(total)) (\(points(quote.moraleDrag)) of it for \(weeks) weeks)"
+            : "Morale target −\(points(total)) for \(weeks) weeks"
+        return morale + " · reputation −\(points(quote.reputationCost))"
     }
 
     static func storageLine(_ stored: [Amenity], balance: BalanceConfig) -> String {

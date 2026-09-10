@@ -66,6 +66,9 @@ public struct OfficeDowngradeQuote: Equatable, Sendable {
     public let slotsAfter: Int
     /// Amenities the smaller office cannot hold.
     public let storedAmenities: [Amenity]
+    /// The morale target those amenities give today, which storage takes
+    /// away for as long as they are boxed up.
+    public let storedMoraleBonus: Double
     /// Whether the smaller office is below the launch-event tier while
     /// the current one is not.
     public let losesLaunchEvents: Bool
@@ -80,6 +83,12 @@ public struct OfficeDowngradeQuote: Equatable, Sendable {
     /// Company cash after the sale and the move.
     public func cashAfter(from cash: Int) -> Int { cash + (salePrice ?? 0) - moveCost }
     public var refusal: String? { refusals.first }
+    /// Everything the move does to the morale target on the day: the drag,
+    /// the smaller room and the boxed amenities. Only `moraleDrag` of it
+    /// ends after `moraleDragDays`.
+    public var moraleTargetChange: Double {
+        -(moraleDrag + max(0, officeMoraleNow - officeMoraleAfter) + storedMoraleBonus)
+    }
 }
 
 extension OfficeTier {
@@ -154,6 +163,7 @@ extension GameState {
             desksAfter: targetDef.headcountCap,
             slotsAfter: target.concurrentDevSlots,
             storedAmenities: stored,
+            storedMoraleBonus: stored.reduce(0.0) { $0 + balance.company.amenity($1).moraleBonus },
             losesLaunchEvents: launchTier.map { current.rank >= $0.rank && target.rank < $0.rank } ?? false,
             refusals: refusals
         )
