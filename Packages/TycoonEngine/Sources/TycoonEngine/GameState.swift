@@ -644,6 +644,14 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: J2 (record)
     // MARK: end J2
     // MARK: J3 (rivals and the market)
+    /// A studio moved into a topic the week it boomed.
+    case rivalMarketEntered(rivalID: UUID, topicID: String, day: Int)
+    /// A studio walked away from a topic that stayed crashed.
+    case rivalMarketLeft(rivalID: UUID, topicID: String, day: Int)
+    /// The founder answered a price war.
+    case priceWarAnswered(rivalID: UUID, topicID: String, answer: RivalMarketPriceWarAnswer, day: Int)
+    /// A patch landed inside an out-shipped war and ended it.
+    case priceWarOutshipped(rivalID: UUID, topicID: String, day: Int)
     // MARK: end J3
     // MARK: J4 (house field)
     // MARK: end J4
@@ -1199,6 +1207,9 @@ public struct GameState: Codable, Equatable, Sendable {
     // MARK: J2 (record)
     // MARK: end J2
     // MARK: J3 (rivals and the market)
+    /// J3 — the market board noticed, boom entries and crash exits, the
+    /// price wars answered. `.empty` until the player does one of those.
+    public var rivalMarket: RivalMarketState = .empty
     // MARK: end J3
     // MARK: J4 (house field)
     // MARK: end J4
@@ -1522,6 +1533,7 @@ extension GameState {
         // MARK: J2 (record)
         // MARK: end J2
         // MARK: J3 (rivals and the market)
+        case rivalMarket
         // MARK: end J3
         // MARK: J4 (house field)
         // MARK: end J4
@@ -1623,6 +1635,7 @@ extension GameState {
         // MARK: J2 (record)
         // MARK: end J2
         // MARK: J3 (rivals and the market)
+        rivalMarket = try container.decodeIfPresent(RivalMarketState.self, forKey: .rivalMarket) ?? .empty
         // MARK: end J3
         // MARK: J4 (house field)
         // MARK: end J4
@@ -1743,6 +1756,7 @@ extension GameState {
         // MARK: J2 (record)
         // MARK: end J2
         // MARK: J3 (rivals and the market)
+        if rivalMarket != .empty { try container.encode(rivalMarket, forKey: .rivalMarket) }
         // MARK: end J3
         // MARK: J4 (house field)
         // MARK: end J4

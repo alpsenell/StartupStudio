@@ -214,6 +214,10 @@ struct AppRootView: View {
                 // `-autoPremium`, whichever tab the pass opens on.
                 AnnounceDebug.start(engine: engine)
                 // MARK: end J5
+                // MARK: J3 (rivals and the market)
+                // `-autoRivalMarket`, `-autoPriceWar`, `-autoCopied`.
+                RivalMarketDebug.startIfAsked(engine: engine)
+                // MARK: end J3
                 // Iteration 8: `-autoAwards <year>` shows that year's
                 // ceremony at once, for the screenshot pass.
                 if let year = DebugLaunch.value(after: "-autoAwards").flatMap(Int.init) {

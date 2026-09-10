@@ -61,7 +61,10 @@ struct FeatureBoardScreen: View {
                             product: product,
                             appetite: Set(reading.appetite),
                             inspecting: $inspecting,
-                            onPlace: place(cardID:)
+                            onPlace: place(cardID:),
+                            // MARK: J3 (rivals and the market)
+                            copiedBy: copiedBy(product)
+                            // MARK: end J3
                         )
                     }
                     .padding(Theme.Spacing.lg)
@@ -109,6 +112,23 @@ struct FeatureBoardScreen: View {
         )
         selectedSlot = nil
     }
+
+    // MARK: J3 (rivals and the market)
+    /// The cards in this hand a rival's live clone has already lifted in
+    /// this topic, by card id, with the studio's name. Empty until a clone
+    /// copies a card, which needs a board somebody placed a card on.
+    private func copiedBy(_ product: Product) -> [String: String] {
+        var copied: [String: String] = [:]
+        for card in hand {
+            if let rival = RivalMarket.copiedBy(
+                cardName: card.name, topicID: product.topicID, state: engine.state
+            ) {
+                copied[card.id] = rival.name
+            }
+        }
+        return copied
+    }
+    // MARK: end J3
 
     private func remove(slot: Int) {
         if let refusal = FeatureBoard.refusal(
@@ -283,6 +303,11 @@ private struct FeatureBoardSlotCard: View {
                 if card.ridesAppetite {
                     FeatureBoardBadge(text: "hot", tint: Theme.warning)
                 }
+                // MARK: J3 (rivals and the market)
+                if card.copiedBy != nil {
+                    FeatureBoardBadge(text: "copied", tint: Theme.negativeCash)
+                }
+                // MARK: end J3
                 Spacer(minLength: 0)
                 if !locked {
                     Button(action: onRemove) {
@@ -359,6 +384,10 @@ private struct FeatureBoardHandPanel: View {
     let appetite: Set<String>
     @Binding var inspecting: String?
     let onPlace: (String) -> Void
+    // MARK: J3 (rivals and the market)
+    /// Card id → the studio whose clone lifted it.
+    var copiedBy: [String: String] = [:]
+    // MARK: end J3
 
     var body: some View {
         PixelPanel {
@@ -379,7 +408,10 @@ private struct FeatureBoardHandPanel: View {
                             isOpen: reading.isOpen,
                             isExpanded: inspecting == card.id,
                             onInspect: { inspecting = inspecting == card.id ? nil : card.id },
-                            onPlace: { onPlace(card.id) }
+                            onPlace: { onPlace(card.id) },
+                            // MARK: J3 (rivals and the market)
+                            copiedBy: copiedBy[card.id]
+                            // MARK: end J3
                         )
                     }
                 }
@@ -398,6 +430,10 @@ private struct FeatureBoardHandRow: View {
     let isExpanded: Bool
     let onInspect: () -> Void
     let onPlace: () -> Void
+    // MARK: J3 (rivals and the market)
+    /// The studio whose live clone in this topic already has this card.
+    var copiedBy: String? = nil
+    // MARK: end J3
 
     /// The pairs this card would make with what is already down.
     private var partners: [String] {
@@ -442,6 +478,14 @@ private struct FeatureBoardHandRow: View {
             HStack(alignment: .top, spacing: Theme.Spacing.sm) {
                 VStack(alignment: .leading, spacing: 4) {
                     PixelText(text: card.name, scale: 2, color: Theme.pixelInk)
+                    // MARK: J3 (rivals and the market)
+                    // Before you place it: somebody shipped this first, and
+                    // while their clone competes it fits half as well here.
+                    if let copiedBy {
+                        FeatureBoardBadge(text: "copied by \(copiedBy)", tint: Theme.negativeCash)
+                            .accessibilityLabel("Copied by \(copiedBy): worth half its fit here while their clone competes")
+                    }
+                    // MARK: end J3
                     Text("\(card.leansOn.displayName) · \(fitLine)")
                         .font(.caption2)
                         .foregroundStyle(Theme.pixelInk.opacity(0.7))
@@ -484,6 +528,14 @@ private struct FeatureBoardHandRow: View {
                         .font(.caption2)
                         .foregroundStyle(Theme.warning)
                 }
+                // MARK: J3 (rivals and the market)
+                if let copiedBy {
+                    Text("\(copiedBy) already sells this in the same market. While their clone competes, it counts for half its fit here — and the reviews will notice.")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.negativeCash)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                // MARK: end J3
             }
         }
         .padding(.vertical, 6)

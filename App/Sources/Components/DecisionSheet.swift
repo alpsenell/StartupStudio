@@ -761,7 +761,7 @@ extension DecisionPrompt {
         content: ContentCatalog,
         balance: BalanceConfig
     ) -> [QueueItem] {
-        QueueBoard.entries(in: state).map { entry in
+        QueueBoard.entries(in: state, balance: balance).map { entry in
             QueueItem(
                 entry: entry,
                 prompt: queuePrompt(for: entry, state: state, content: content, balance: balance)
@@ -814,6 +814,9 @@ extension DecisionPrompt {
             queueDemandPrompt(state: state, balance: balance)
         case .confrontation:
             queueConfrontationPrompt(state: state)
+        case .priceWar:
+            // Iteration 12 merge — J3's sheet, seated in J6's queue.
+            PriceWarPrompt.pending(in: state, content: content, balance: balance)
         case .dirtyMoneyOffer, .funeral, .legalCase, .hearing, .cancellation:
             nil
         }

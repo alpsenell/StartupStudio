@@ -25,6 +25,11 @@ struct ReviewContext: Equatable, Sendable {
     /// M1: the card on the board that should not have been there. Empty
     /// unless something on it actually costs the product.
     var worstFeature: String = ""
+    // MARK: J3 (rivals and the market)
+    /// Whether a rival's live clone in this topic has already lifted the
+    /// best card. False on an empty board and on every uncopied one.
+    var bestFeatureCopied: Bool = false
+    // MARK: end J3
 
     static let unknown = ReviewContext(
         productName: "the app", typeName: "app", topicName: "software",
@@ -136,6 +141,11 @@ enum ReviewBlurbs {
         // so a launch with no board still earns exactly the callout it
         // earned before boards existed. Both are `nil` on an empty board.
         if !context.worstFeature.isEmpty, score < 60 { return "featureMisfit" }
+        // MARK: J3 (rivals and the market)
+        // The best card is somebody else's now too. Needs a copied card,
+        // which needs a board, so every earlier callout is untouched.
+        if context.bestFeatureCopied, !context.bestFeature.isEmpty { return "featureCopied" }
+        // MARK: end J3
         if !context.bestFeature.isEmpty, score >= 55 { return "featureLed" }
         if context.polishRatio >= 0.95, score >= 55 { return "polished" }
         if context.hype <= 8, score >= 60 { return "unnoticed" }

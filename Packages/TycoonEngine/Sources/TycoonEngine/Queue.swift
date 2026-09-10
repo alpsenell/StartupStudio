@@ -33,6 +33,8 @@ public enum QueueKind: String, Codable, Equatable, Sendable, CaseIterable {
     case story, poach, buyout, challenge, staff, resignation, termSheet
     case dirtyMoneyOffer, dirtyMoneyDemand, confrontation, funeral
     case legalCase, hearing, cancellation
+    // Iteration 12 merge — J3's price war, seated in J6's queue.
+    case priceWar
 }
 
 /// How the app answers a question: a sheet over whatever tab is open, or a
@@ -92,7 +94,10 @@ public struct QueueEntry: Equatable, Sendable, Identifiable {
 /// be answered: the loud ones first, then the soonest deadline, then the
 /// oldest, then a fixed order of kinds so two reads always agree.
 public enum QueueBoard {
-    public static func entries(in state: GameState) -> [QueueEntry] {
+    /// `balance` is only needed for the questions whose deadline is a
+    /// balance key (the price war's answer window); the rail passes
+    /// none and never lists them, the decision sheet passes it.
+    public static func entries(in state: GameState, balance: BalanceConfig? = nil) -> [QueueEntry] {
         var entries: [QueueEntry] = []
         let day = state.day
 
@@ -128,6 +133,18 @@ public enum QueueBoard {
                 title: "\(rival) launched into your category", category: "market",
                 raisedDay: nil, respondByDay: challenge.settlesDay,
                 defaultLine: "Unanswered, the shelf settles it.",
+                surface: .sheet
+            ))
+        }
+        // Iteration 12 merge — J3's price war (I4), inside its answer week.
+        if let balance, let rival = RivalMarket.pendingPriceWar(state: state, balance: balance),
+           let deadline = RivalMarket.answerDeadline(rival, balance: balance) {
+            entries.append(QueueEntry(
+                id: "pricewar-\(rival.id.uuidString)-\(deadline)",
+                kind: .priceWar, severity: .critical,
+                title: "\(rival.name) started a price war", category: "market",
+                raisedDay: nil, respondByDay: deadline,
+                defaultLine: "Unanswered, you outlast it.",
                 surface: .sheet
             ))
         }

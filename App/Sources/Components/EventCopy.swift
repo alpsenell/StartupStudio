@@ -61,6 +61,14 @@ struct EventCopy {
             .team
         case .marketBoom, .marketCrash, .industryNews:
             .market
+        // MARK: J3 (rivals and the market)
+        // A studio moving with demand is market news — and so the paper's
+        // market column prints it; an answered war is news about them.
+        case .rivalMarketEntered, .rivalMarketLeft:
+            .market
+        case .priceWarAnswered, .priceWarOutshipped:
+            .rivals
+        // MARK: end J3
         case .rivalFounded, .rivalShipped, .rivalFolded, .poachAttempt, .poachDefeated,
              .employeePoached, .buyoutOffered, .buyoutWithdrawn, .companySold, .rivalAcquired,
              .rivalProductLaunched, .priceWarStarted, .rivalCopycat, .sponsoredContractDelivered,
@@ -1127,6 +1135,34 @@ struct EventCopy {
         // MARK: J2 (record)
         // MARK: end J2
         // MARK: J3 (rivals and the market)
+        case let .rivalMarketEntered(rivalID, topicID, day):
+            (
+                "arrow.right.circle.fill",
+                "\(rivalName(rivalID)) moved into \(topicName(topicID)) on the boom",
+                day,
+                Theme.warning
+            )
+        case let .rivalMarketLeft(rivalID, topicID, day):
+            (
+                "arrow.left.circle.fill",
+                "\(rivalName(rivalID)) walked out of \(topicName(topicID)) after a month under ×0.70",
+                day,
+                Theme.positiveCash
+            )
+        case let .priceWarAnswered(rivalID, topicID, answer, day):
+            (
+                RivalMarketEventLine.icon(answer),
+                RivalMarketEventLine.answered(answer, rival: rivalName(rivalID), topic: topicName(topicID)),
+                day,
+                answer == .match ? Theme.warning : Theme.accent
+            )
+        case let .priceWarOutshipped(rivalID, topicID, day):
+            (
+                "hammer.fill",
+                "The patch landed inside \(rivalName(rivalID))'s price war in \(topicName(topicID)). It is over",
+                day,
+                Theme.positiveCash
+            )
         // MARK: end J3
         // MARK: J4 (house field)
         // MARK: end J4

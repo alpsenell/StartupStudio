@@ -884,6 +884,23 @@ public enum Reducer {
         // MARK: J2 (record)
         // MARK: end J2
         // MARK: J3 (rivals and the market)
+        case .noticeMarketOpened:
+            // The identity gate: the only thing that turns rivals toward
+            // the market. Written once.
+            if !state.rivalMarket.noticed { state.rivalMarket.noticed = true }
+            events = []
+        case let .answerPriceWar(rivalID, answer):
+            events = RivalSystem.rivalMarketAnswer(
+                rivalID: rivalID, answer: answer, state: &state, balance: balance, content: content
+            ).events
+        case let .seedRivalMarket(scenario):
+            #if DEBUG
+            events = RivalSystem.rivalMarketDebugSeed(
+                scenario: scenario, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
         // MARK: end J3
         // MARK: J4 (house field)
         // MARK: end J4

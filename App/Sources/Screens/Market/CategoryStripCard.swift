@@ -41,7 +41,12 @@ struct CategoryStripCard: View {
                         NavigationLink(value: TopicRoute(topicID: category.id)) {
                             CategoryRow(
                                 category: category,
-                                driftSigma: engine.balance.market.driftSigma
+                                driftSigma: engine.balance.market.driftSigma,
+                                // MARK: J3 (rivals and the market)
+                                circling: MarketForecast.rivalMarketLine(
+                                    topicID: category.id, state: engine.state, balance: engine.balance
+                                )
+                                // MARK: end J3
                             )
                         }
                         .buttonStyle(.plain)
@@ -80,6 +85,11 @@ struct CategoryStripCard: View {
 private struct CategoryRow: View {
     let category: CategorySnapshot
     let driftSigma: Double
+    // MARK: J3 (rivals and the market)
+    /// Who is circling this market and why — the forecast's first line
+    /// that differs by topic. `nil` until the market board is opened.
+    var circling: String? = nil
+    // MARK: end J3
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -132,6 +142,20 @@ private struct CategoryRow: View {
             }
 
             forwardRead
+            // MARK: J3 (rivals and the market)
+            if let circling {
+                HStack(alignment: .top, spacing: Theme.Spacing.xs) {
+                    Image(systemName: "flag.2.crossed.fill")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.warning)
+                    Text(circling)
+                        .font(.caption2)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.leading, 24 + Theme.Spacing.md)
+            }
+            // MARK: end J3
         }
         .padding(.vertical, Theme.Spacing.sm)
         .contentShape(Rectangle())
@@ -166,6 +190,9 @@ private struct CategoryRow: View {
         if let read = category.forwardRead(driftSigma: driftSigma) {
             summary += ". Forward read: \(read)"
         }
+        // MARK: J3 (rivals and the market)
+        if let circling { summary += ". Rivals: \(circling)" }
+        // MARK: end J3
         return summary
     }
 }

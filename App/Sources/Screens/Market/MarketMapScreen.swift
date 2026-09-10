@@ -48,7 +48,13 @@ struct MarketMapScreen: View {
                 }
             }
 
-            MarketMapLegendCard(heldCount: snapshot.heldCount, threshold: snapshot.threshold)
+            MarketMapLegendCard(
+                heldCount: snapshot.heldCount,
+                threshold: snapshot.threshold,
+                // MARK: J3 (rivals and the market)
+                siegeLabel: engine.state.rivalMarket.noticed ? "Under challenge, or a rival moving in" : "Under challenge"
+                // MARK: end J3
+            )
 
             Text("Tap a district for its report. Bigger districts are hotter markets; greener ones are more yours.")
                 .font(.caption)
@@ -99,6 +105,11 @@ private struct MarketDistrictLabel: View {
 private struct MarketMapLegendCard: View {
     let heldCount: Int
     let threshold: Double
+    // MARK: J3 (rivals and the market)
+    /// The siege marker's legend: a fight, or — once rivals read the
+    /// market — a studio that moved in on a boom and has not shipped yet.
+    var siegeLabel = "Under challenge"
+    // MARK: end J3
 
     /// Two columns of marks, or one when the reader's text needs the
     /// width — a legend row whose words are cut off explains nothing.
@@ -125,7 +136,9 @@ private struct MarketMapLegendCard: View {
                     legendRow(MarketSpriteLibrary.playerBuilding(), "One of your products")
                     legendRow(MarketSpriteLibrary.rivalFlag(), "A rival sells here")
                     legendRow(MarketSpriteLibrary.fortress(), "The incumbent")
-                    legendRow(MarketSpriteLibrary.siegeMarker(), "Under challenge")
+                    // MARK: J3 (rivals and the market)
+                    legendRow(MarketSpriteLibrary.siegeMarker(), siegeLabel)
+                    // MARK: end J3
                     legendRow(MarketSpriteLibrary.weather(.sunny), "Forecast: warming")
                     legendRow(MarketSpriteLibrary.weather(.overcast), "Forecast: steady")
                     legendRow(MarketSpriteLibrary.weather(.rain), "Forecast: cooling")
@@ -245,7 +258,13 @@ struct MarketMapSnapshot {
                 playerProducts: category.liveProducts.count,
                 rivalCount: rivals,
                 hasFortress: fortress,
-                underSiege: state.rivals.challenge(in: topic.id) != nil,
+                // MARK: J3 (rivals and the market)
+                // A fight, or a studio that moved in on the boom and has
+                // not shipped yet. The second is off until the market
+                // board has been opened.
+                underSiege: state.rivals.challenge(in: topic.id) != nil
+                    || RivalMarket.isBesieged(topicID: topic.id, state: state),
+                // MARK: end J3
                 weather: weather,
                 // The studio only *has* a share where it is selling; an
                 // untouched category reads 1.0 in the engine, which would
@@ -254,6 +273,13 @@ struct MarketMapSnapshot {
             )
             districts.append(district)
             summaries[topic.id] = Self.summary(district, category: category, incumbentName: incumbent?.name)
+            // MARK: J3 (rivals and the market)
+            if state.rivals.challenge(in: topic.id) == nil,
+               RivalMarket.isBesieged(topicID: topic.id, state: state) {
+                summaries[topic.id] = summaries[topic.id]?
+                    .replacingOccurrences(of: "under challenge", with: "a rival moving in")
+            }
+            // MARK: end J3
         }
         input = MarketMapInput(districts: districts)
         self.summaries = summaries

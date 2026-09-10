@@ -257,6 +257,71 @@ public struct MarketState: Codable, Equatable, Sendable {
     }
 }
 
+// MARK: J3 (rivals and the market)
+
+extension MarketForecast {
+    /// The forecast's first line that differs by topic: who is circling
+    /// this market, and why. `nil` until the market board has been opened
+    /// (rivals do not read the market before then, so there is nothing
+    /// true to say) and wherever nobody is moving.
+    ///
+    /// A pure read of state: the studios with the topic in their focus,
+    /// the moves the market remembers, and the weight a launch gives the
+    /// topic at today's multiplier.
+    public static func rivalMarketLine(
+        topicID: String,
+        state: GameState,
+        balance: BalanceConfig
+    ) -> String? {
+        guard state.rivalMarket.noticed else { return nil }
+        let day = state.day
+        let circling = RivalMarket.circling(topicID: topicID, state: state)
+        var clauses: [String] = []
+
+        let incoming = circling.filter { $0.reason == .boom && !$0.isSelling }
+        if let first = incoming.first {
+            let weeks = first.sinceDay.map { max(0, (day - $0) / GameState.daysPerWeek) } ?? 0
+            let when = weeks == 0 ? "this week" : weeks == 1 ? "a week ago" : "\(weeks) weeks ago"
+            clauses.append(incoming.count == 1
+                ? "\(first.name) moved in on the boom \(when) and has not shipped yet"
+                : "\(first.name) and \(incoming.count - 1) more moved in on the boom and have not shipped yet")
+        }
+        let recentExit = state.rivalMarket.moves.last {
+            $0.topicID == topicID && $0.kind == .crashExit
+                && day - $0.day <= 13 * GameState.daysPerWeek
+        }
+        if let exit = recentExit {
+            clauses.append("\(exit.rivalName) left when it crashed")
+        }
+        if clauses.isEmpty {
+            let selling = circling.filter { $0.reason == .boom && $0.isSelling }
+            if let first = selling.first {
+                clauses.append("\(first.name) followed the boom here and is selling")
+            } else if let copycat = circling.first(where: { $0.reason == .copycat }) {
+                clauses.append("\(copycat.name) is here because you are")
+            } else if let home = circling.first(where: { !$0.isSelling }) {
+                clauses.append("\(home.name) calls this home and has nothing out")
+            }
+        }
+        guard !clauses.isEmpty else { return nil }
+
+        // The why: launches follow demand, so say how hard this one pulls.
+        let config = balance.rivalMarket
+        let multiplier = state.market.multiplier(for: topicID)
+        let pull = RivalMarket.weight(multiplier: multiplier, exponent: config.topicWeightExponent)
+        var line = clauses.joined(separator: "; ")
+        if pull >= 1.3 || pull <= 0.7 {
+            // POSIX formatting: the game prints its numbers one way on
+            // every phone, and the engine has no `Theme.gameLocale`.
+            line += ". At ×\(String(format: "%.2f", multiplier)) "
+                + "it draws \(String(format: "%.1f", pull))× the launches of a quiet market"
+        }
+        return line + "."
+    }
+}
+
+// MARK: end J3
+
 // MARK: - Codable
 
 // Hand-written so the per-topic history encodes as an array of entries

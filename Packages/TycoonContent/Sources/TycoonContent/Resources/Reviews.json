@@ -290,6 +290,16 @@
         "{misfit} is a feature in search of a product.",
         "Time spent on {misfit} is time the rest of it needed."
       ]
+    },
+    {
+      "id": "featureCopied",
+      "lines": [
+        "{feature} is good. It was also good in the other one.",
+        "Everyone has {feature} now. This one has it too.",
+        "{feature}, which you have already seen this quarter.",
+        "Nothing wrong with {feature}. Nothing new about it either.",
+        "It leads with {feature}, like everyone else this month."
+      ]
     }
   ]
 }

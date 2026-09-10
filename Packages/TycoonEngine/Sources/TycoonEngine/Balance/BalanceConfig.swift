@@ -1944,6 +1944,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: J2 (record)
     // MARK: end J2
     // MARK: J3 (rivals and the market)
+
+    /// Rivals following the money, the price war's three answers and the
+    /// copied card (`BalanceConfig+RivalMarket.swift`). Inline default, so
+    /// `"rivalMarket"` is an optional key; every number is read behind a
+    /// gate the player raises.
+    public var rivalMarket: RivalMarketBalance = .default
+
     // MARK: end J3
     // MARK: J4 (house field)
     // MARK: end J4
