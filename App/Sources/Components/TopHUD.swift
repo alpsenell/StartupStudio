@@ -37,6 +37,14 @@ struct TopHUD: View {
         }
         .animation(Theme.Motion.entrance, value: engine.state.speed)
         .animation(Theme.Motion.entrance, value: shell.pendingReportWeek)
+        // MARK: J1 (doors)
+        // A person is playing this game: arm the four doors, once per
+        // engine. The HUD is on every tab's root, so this runs whichever
+        // tab the game opens on.
+        .task(id: ObjectIdentifier(engine)) {
+            if !engine.state.doors.armed { engine.send(.armDoors) }
+        }
+        // MARK: end J1
     }
 
     private var bar: some View {

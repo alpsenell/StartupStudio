@@ -145,6 +145,7 @@ struct NoticeRail: View {
         // `RailNotice.deferred` rows for the current state (J1's doors).
         notices.append(contentsOf: laneNotices(state))
 
+
         // Iteration 7 (R1): the tour's beat, after a pause and before a
         // deferred question. Silent across the ship beat's wait.
         if let step = session?.tutorial?.activeStep {
@@ -221,15 +222,15 @@ struct NoticeRail: View {
     /// route through `laneRoute(forNoticeID:)` below.
     private func laneNotices(_ state: GameState) -> [RailNotice] {
         // MARK: J1 (doors)
+        DoorRail.notices(for: state)
         // MARK: end J1
-        []
     }
 
     /// A tip for the current state, used only when no active goal has one.
     private var fallbackTip: CoachTip? {
         // MARK: J1 (doors)
+        CoachTip.stateTip(in: engine.state, dismissed: dismissedTips)
         // MARK: end J1
-        nil
     }
 
     /// Where a deferred row without a queue answer should walk the founder,
@@ -237,8 +238,8 @@ struct NoticeRail: View {
     /// behaviour, which brings the deferred story beat back.
     private func laneRoute(forNoticeID noticeID: String) -> Route? {
         // MARK: J1 (doors)
+        DoorRail.route(forNoticeID: noticeID)
         // MARK: end J1
-        nil
     }
 
     private var shown: RailNotice? {

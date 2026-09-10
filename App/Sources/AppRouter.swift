@@ -206,6 +206,10 @@ enum Route: Hashable {
     case inside
 
     // MARK: J1 (doors)
+    /// J1: one of the four doors, on its sheet of paper. Lands on Life,
+    /// which pushes it; reached from the doors' card, their coach tips,
+    /// and (once hooked up) the rail's deferred row.
+    case door(DoorKind)
     // MARK: end J1
     // MARK: J2 (record)
     // MARK: end J2
@@ -291,6 +295,7 @@ enum Route: Hashable {
         // MARK: W4 (inside)
         case .inside: .life
         // MARK: J1 (doors)
+        case .door: .life
         // MARK: end J1
         // MARK: J2 (record)
         // MARK: end J2

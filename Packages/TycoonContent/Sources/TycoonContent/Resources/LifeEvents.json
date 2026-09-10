@@ -7819,5 +7819,67 @@
       }
     ],
     "cooldownDays": 200
+  },
+  {
+    "id": "door_shark_declined",
+    "headline": "Denny sends a Christmas card. No return address. It is signed \"Still flexible\".",
+    "weight": 3,
+    "once": true,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "door_shark_declined"
+      ]
+    },
+    "impact": {
+      "mood": -2
+    }
+  },
+  {
+    "id": "door_vices_again",
+    "headline": "The number from the napkin texts at two in the morning: \"Launch week again?\"",
+    "weight": 3,
+    "cooldownDays": 180,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "door_vices"
+      ]
+    },
+    "impact": {
+      "energy": -3,
+      "mood": 2
+    }
+  },
+  {
+    "id": "door_fame_declined",
+    "headline": "The piece ran without you. Somebody else said the clever thing, about your company.",
+    "weight": 3,
+    "once": true,
+    "category": "personal",
+    "requires": {
+      "flagsAll": [
+        "door_fame_declined"
+      ]
+    },
+    "impact": {
+      "mood": -3
+    }
+  },
+  {
+    "id": "door_care_photo",
+    "headline": "A photo arrives: a paper hat, a cake, and a thumbs-up aimed slightly past the camera.",
+    "weight": 3,
+    "cooldownDays": 240,
+    "category": "family",
+    "requires": {
+      "flagsAll": [
+        "door_care"
+      ]
+    },
+    "impact": {
+      "mood": 4,
+      "relationships": 2
+    }
   }
 ]

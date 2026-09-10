@@ -286,6 +286,7 @@ extension Route {
         // MARK: W4 (inside)
         case "inside", "prison", "released": .inside
         // MARK: J1 (doors)
+        case "door", "doors": .door(DoorDebug.requestedKind ?? .shark)
         // MARK: end J1
         // MARK: J2 (record)
         // The hiring sheet (the name line, the asks, the refusal) and the
@@ -1164,6 +1165,10 @@ extension DebugLaunch {
     // add here.
 
     // MARK: J1 (doors)
+    // Parsed in `DoorDebug`, next to the sheet: `-autoRoute door` with
+    // `-autoDoor shark|vices|fame|care` (opens that door today and lands
+    // on it), `-autoDoorAnswer <choice>` (answers it once the sheet is
+    // up), and `-autoTip <id>` (forces a coach tip's trigger on).
     // MARK: end J1
     // MARK: J2 (record)
 

@@ -546,6 +546,16 @@ public enum GameAction: Codable, Equatable, Sendable {
     case serveSentence(weeks: Int)
 
     // MARK: J1 (doors)
+    /// A person is at the controls: the doors may open. Sent by the app's
+    /// HUD, once per game; bots, replays and tests never send it, which
+    /// is the doors' whole identity gate.
+    case armDoors
+    /// The founder's answer at one of the four doors. Refused (a no-op)
+    /// once the door has closed or for an answer that door does not take.
+    case answerDoor(kind: DoorKind, choice: DoorChoice)
+    /// Opens a door today whatever the state says, for `-autoDoor <kind>`.
+    /// Applied only in debug builds; nothing in the game sends it.
+    case openDoor(kind: DoorKind)
     // MARK: end J1
     // MARK: J2 (record)
     /// Dress the founder's record for a screenshot: `-autoStanding <name>`,

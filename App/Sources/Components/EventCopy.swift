@@ -1131,6 +1131,9 @@ struct EventCopy {
             InsideEventPresenter.entry(for: event) ?? fallbackEntry(for: event)
 
         // MARK: J1 (doors)
+        // Every line is `DoorCopy`'s, in the lane's own file.
+        case .doorOpened, .doorAnswered:
+            DoorCopy.journal(for: event, state: state, content: content) ?? fallbackEntry(for: event)
         // MARK: end J1
         // MARK: J2 (record)
         case .standingFounderQuarter(let points, let day):
