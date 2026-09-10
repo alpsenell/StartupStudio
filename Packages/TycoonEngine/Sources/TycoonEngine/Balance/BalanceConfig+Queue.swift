@@ -13,8 +13,12 @@ import Foundation
 //    Under the reference burn — the garage, an early loft — that is exactly
 //    1.0 and the multiplication is skipped altogether, so a run that never
 //    outgrows the garage writes the bytes it always wrote. A studio at
-//    about $11k a week reads about 1.66×, a campus at about $40k about
-//    3.16×. `0` turns it off.
+//    about $11k a week reads about 1.35× at the shipped reference of
+//    $6,000, and a campus at about $40k about 2.58×. `0` turns it off.
+//    The brief asked for a $4,000 reference (1.66× and 3.16×); at $4,000
+//    InvestorTargets' "serving the number the board watches is worth
+//    doing" gate fails on path noise, and at $6,000 it passes as written
+//    (measured in the lane report).
 // 2. **The campus.** The campus's weekly rent is `campusRentBase`, plus
 //    `campusRentPerHead` for every person above `campusRentFreeHeadcount`,
 //    instead of the office's listed `weeklyRent`. The listed rent still

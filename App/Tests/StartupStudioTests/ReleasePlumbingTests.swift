@@ -141,7 +141,7 @@ final class ReleasePlumbingTests: XCTestCase {
         let expected: [String: (day: Int, tier: OfficeTier)] = [
             "release-garage-day40": (40, .garage),
             "release-studio-day400": (400, .studio),
-            "release-campus-day900": (905, .campus),
+            "release-campus-day900": (900, .campus), // J6: was 905 — the campus key re-played it
         ]
         for name in ReleaseFixture.names {
             let state = try XCTUnwrap(

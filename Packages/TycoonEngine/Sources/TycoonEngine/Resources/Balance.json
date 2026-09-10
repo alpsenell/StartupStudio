@@ -1983,7 +1983,7 @@
     "escapeNotoriety": 20.0
   },
   "queuePacing": {
-    "eventCashReferenceBurn": 4000,
+    "eventCashReferenceBurn": 6000,
     "campusRentBase": 4000,
     "campusRentPerHead": 200,
     "campusRentFreeHeadcount": 14
