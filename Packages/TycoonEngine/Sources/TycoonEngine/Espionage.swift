@@ -401,7 +401,10 @@ public enum Espionage {
         notoriety: Double,
         hasLegal: Bool,
         balance: BalanceConfig.EspionageBalance,
-        crime: BalanceConfig.CrimeBalance
+        crime: BalanceConfig.CrimeBalance,
+        // MARK: J2 (record) — fame's spotlight, exactly 1 at fame zero.
+        spotlight: Double = 1
+        // MARK: end J2
     ) -> Double {
         let base: Double = switch operation {
         case .tailFounder: balance.tailTrace
@@ -413,7 +416,9 @@ public enum Espionage {
         let heat = 1 + notoriety / 100 * crime.notorietyDiscoveryFactor
         let legal = hasLegal ? crime.legalDepartmentFactor : 1
         let botched = landed ? 1 : balance.botchedTraceFactor
-        return min(balance.traceCeiling, base * heat * legal * botched)
+        // MARK: J2 (record) — × spotlight.
+        return min(balance.traceCeiling, base * heat * legal * botched * spotlight)
+        // MARK: end J2
     }
 
     /// The grudge an operation earns you, traced or not. A studio that

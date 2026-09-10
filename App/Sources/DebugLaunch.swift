@@ -288,6 +288,10 @@ extension Route {
         // MARK: J1 (doors)
         // MARK: end J1
         // MARK: J2 (record)
+        // The hiring sheet (the name line, the asks, the refusal) and the
+        // cap table (the review line, the key-person clause).
+        case "hiring", "standing": .hiring
+        case "investors", "board", "boardreview": .investors
         // MARK: end J2
         // MARK: J3 (rivals and the market)
         // MARK: end J3
@@ -1161,6 +1165,54 @@ extension DebugLaunch {
     // MARK: J1 (doors)
     // MARK: end J1
     // MARK: J2 (record)
+
+    /// The founder's record, dressed for a screenshot, as the scenarios
+    /// `GameAction.standingDebug` understands:
+    ///
+    /// - `-autoStanding <name>`: notoriety, mean acts on staff and firings
+    ///   with cause enough for a name of about `<name>` (pair with
+    ///   `-autoRoute hiring`).
+    /// - `-autoBoardReview case`: a seated board, an open case and a beef,
+    ///   then the quarterly review, run today (pair with
+    ///   `-autoRoute investors`). `-autoBoardReview offer`: an open case
+    ///   and a term sheet today, key-person clause and all.
+    /// - `-autoSpotlight <level>`: fame at a level ("known" … "star"),
+    ///   for the spotlight line (pair with `-autoRoute spy -autoSpyCard`).
+    static var standingScenarios: [String] {
+        var scenarios: [String] = []
+        if let name = value(after: "-autoStanding") { scenarios.append("name \(name)") }
+        if let review = value(after: "-autoBoardReview")?.lowercased() {
+            scenarios.append(review == "offer" ? "offercase" : "boardcase")
+        }
+        if let level = value(after: "-autoSpotlight") { scenarios.append("spotlight \(level)") }
+        return scenarios
+    }
+
+    /// Sends each scenario once the shell has a company to send it to.
+    /// `current` is read on every attempt, the way `InsideDebug` reads it:
+    /// installing a fixture swaps the engine, and a scenario sent to the
+    /// old one goes down with it. Each is re-sent to a new engine until
+    /// that engine shows it.
+    @MainActor
+    static func startStandingIfAsked(current: @escaping () -> GameEngine) async {
+        #if DEBUG
+        let scenarios = standingScenarios
+        guard !scenarios.isEmpty else { return }
+        var sentTo: [String: ObjectIdentifier] = [:]
+        for _ in 0..<40 {
+            let engine = current()
+            let id = ObjectIdentifier(engine)
+            if engine.state.gameOver == nil {
+                for scenario in scenarios where sentTo[scenario] != id {
+                    engine.send(.standingDebug(scenario: scenario))
+                    sentTo[scenario] = id
+                }
+            }
+            try? await Task.sleep(for: .milliseconds(250))
+        }
+        #endif
+    }
+
     // MARK: end J2
     // MARK: J3 (rivals and the market)
     // MARK: end J3

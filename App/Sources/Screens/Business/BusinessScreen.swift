@@ -255,6 +255,13 @@ struct BusinessScreen: View {
         // MARK: J1 (doors)
         // MARK: end J1
         // MARK: J2 (record)
+        // `-autoRoute investors` lands on the cap table: the review line
+        // and the key-person clause both live there.
+        if router.pendingPush == nil && !landed && Route.launchRoute == .investors {
+            section = .investors
+            landed = true
+            return
+        }
         // MARK: end J2
         // MARK: J3 (rivals and the market)
         // MARK: end J3

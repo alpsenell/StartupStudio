@@ -1942,6 +1942,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: J1 (doors)
     // MARK: end J1
     // MARK: J2 (record)
+
+    /// What the founder's record costs the company: the board's line, the
+    /// key-person clause, the premium on asks and fame's spotlight
+    /// (`BalanceConfig+Standing.swift`). Inline default; every weight
+    /// multiplies or adds to a number that is zero for a clean founder.
+    public var founderStanding: StandingRecordBalance = .default
+
     // MARK: end J2
     // MARK: J3 (rivals and the market)
     // MARK: end J3

@@ -548,6 +548,10 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: J1 (doors)
     // MARK: end J1
     // MARK: J2 (record)
+    /// Dress the founder's record for a screenshot: `-autoStanding <name>`,
+    /// `-autoBoardReview case|offer`, `-autoSpotlight <level>`. Applied
+    /// only in debug builds; nothing in the game sends it.
+    case standingDebug(scenario: String)
     // MARK: end J2
     // MARK: J3 (rivals and the market)
     // MARK: end J3

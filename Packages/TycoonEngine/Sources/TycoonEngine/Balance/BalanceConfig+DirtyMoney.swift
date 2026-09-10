@@ -102,9 +102,11 @@ extension BalanceConfig {
         // MARK: Laundering
 
         /// Notoriety a payment through the backer adds, per payment.
-        /// (The weekly chance one is *found* is `Crime.launderDiscovery`,
-        /// a constant in N1's file: `Crime.discoveryChance` is handed the
-        /// crime block alone and cannot reach this one.)
+        // MARK: J2 (record)
+        /// (The weekly chance one is *found* is the balance key
+        /// `founderStanding.launderDiscovery` since iteration 12 — it was
+        /// W1's `Crime.launderDiscovery` constant, same value.)
+        // MARK: end J2
         public var launderNotoriety: Double
 
         // MARK: The ways out

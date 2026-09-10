@@ -187,6 +187,12 @@ public struct InteractionState: Codable, Equatable, Sendable {
     /// biography's number, and the cheapest "has this player ever touched
     /// this feature" test there is.
     public var performedCount: Int
+    // MARK: J2 (record)
+    /// The days a mean interaction was used on somebody on payroll, oldest
+    /// first, pruned to the window the founder's name remembers. Empty —
+    /// and not written — for a founder who never did.
+    public var standingMeanDays: [Int] = []
+    // MARK: end J2
 
     public init(
         cooldowns: [String: Int] = [:],
@@ -253,6 +259,22 @@ public struct InteractionState: Codable, Equatable, Sendable {
     public func wasFiredWithCause(_ employeeID: UUID) -> Bool {
         firedWithCauseIDs.contains(employeeID)
     }
+
+    // MARK: J2 (record)
+
+    /// Mean acts on staff after `day`.
+    public func standingMeanActs(since day: Int) -> Int {
+        standingMeanDays.count { $0 > day }
+    }
+
+    /// Remembers a mean act on staff, and forgets the ones older than the
+    /// window, so the list stays the size of a bad half-year.
+    public mutating func standingRecordMeanAct(day: Int, window: Int) {
+        standingMeanDays.removeAll { $0 <= day - window }
+        standingMeanDays.append(day)
+    }
+
+    // MARK: end J2
 }
 
 // MARK: - Codable
@@ -265,6 +287,9 @@ extension InteractionState {
     private enum CodingKeys: String, CodingKey {
         case cooldowns, affairContactID, affairSinceDay, affairDiscoveredDay
         case disownedChildIDs, firedWithCauseIDs, lastOutcome, performedCount
+        // MARK: J2 (record)
+        case standingMeanDays
+        // MARK: end J2
     }
 
     private struct CooldownEntry: Codable {
@@ -295,6 +320,11 @@ extension InteractionState {
             ),
             performedCount: try container.decodeIfPresent(Int.self, forKey: .performedCount) ?? 0
         )
+        // MARK: J2 (record)
+        standingMeanDays = try container.decodeIfPresent(
+            [Int].self, forKey: .standingMeanDays
+        ) ?? []
+        // MARK: end J2
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -316,6 +346,11 @@ extension InteractionState {
         }
         try container.encodeIfPresent(lastOutcome, forKey: .lastOutcome)
         if performedCount != 0 { try container.encode(performedCount, forKey: .performedCount) }
+        // MARK: J2 (record)
+        if !standingMeanDays.isEmpty {
+            try container.encode(standingMeanDays, forKey: .standingMeanDays)
+        }
+        // MARK: end J2
     }
 }
 

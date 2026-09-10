@@ -74,10 +74,12 @@ enum CrimeSystem {
 
         var found: CrimeRecordEntry?
         for entry in state.crime.record where entry.isOpen {
-            let chance = Crime.discoveryChance(
-                entry, notoriety: state.crime.notoriety,
-                hasLegal: hasLegal, day: state.day, balance: config
-            )
+            // MARK: J2 (record)
+            // The same odds, plus the laundering key and fame's spotlight
+            // (exactly 1 at fame zero). `hasLegal` is read inside.
+            _ = hasLegal
+            let chance = state.standingDiscoveryChance(entry, balance: balance)
+            // MARK: end J2
             let roll = state.socialRNG.nextUniform()
             if roll < chance, found == nil { found = entry }
         }
@@ -874,6 +876,16 @@ enum CrimeSystem {
                 weeks: weeks, state: &state, balance: balance
             ))
         }
+        // MARK: J2 (record)
+        // A conviction is news, and news costs a famous founder a rung.
+        // Nothing to drop for a founder who never posted.
+        if verdict != .acquitted,
+           let level = state.fame.standingDropRung(balance: balance.fame) {
+            events.append(.standingFameDropped(
+                level: level.rawValue, reason: "conviction", day: state.day
+            ))
+        }
+        // MARK: end J2
 
         events.insert(.crimeVerdict(
             offence: offence.rawValue,

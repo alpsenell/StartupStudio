@@ -769,16 +769,11 @@ public enum Crime {
     /// Standing is clamped to this either way.
     public static let standingLimit: Double = 100
 
-    // MARK: W1 (dirty money)
-
-    /// The weekly base rate at which a payment through a backer is found.
-    ///
-    /// A constant rather than a balance key: `discoveryChance` is handed
-    /// `BalanceConfig.CrimeBalance` and nothing else, and that block is
-    /// N1's — a seventh field in it is not W1's to add.
-    public static let launderDiscovery: Double = 0.035
-
-    // MARK: end of W1
+    // MARK: J2 (record)
+    // W1's `launderDiscovery` constant lived here. It is a balance key now,
+    // `founderStanding.launderDiscovery`, with the same value (0.035), handed to
+    // `discoveryChance` by `GameState.standingDiscoveryChance`.
+    // MARK: end J2
 
     // MARK: The offences
 
@@ -833,7 +828,14 @@ public enum Crime {
         notoriety: Double,
         hasLegal: Bool,
         day: Int,
-        balance: BalanceConfig.CrimeBalance
+        balance: BalanceConfig.CrimeBalance,
+        // MARK: J2 (record)
+        // The laundering rate (a balance key since iteration 12) and fame's
+        // spotlight. Both default to the shipped behaviour, so a caller
+        // that passes neither reads the odds it always read.
+        launderDiscovery: Double = BalanceConfig.StandingRecordBalance.default.launderDiscovery,
+        spotlight: Double = 1
+        // MARK: end J2
     ) -> Double {
         guard entry.isOpen else { return 0 }
         let base: Double = switch entry.offence {
@@ -848,7 +850,9 @@ public enum Crime {
         // rate is a constant of this file rather than a balance key that
         // could not reach here. Deliberately low: a laundered payment
         // surfaces when somebody else's file is opened, not when yours is.
-        case .launderMoney: Crime.launderDiscovery
+        // MARK: J2 (record) — the rate is a balance key now.
+        case .launderMoney: launderDiscovery
+        // MARK: end J2
         // MARK: end of W1
         // MARK: W3 (espionage)
         // The weekly exposure of an operation nobody traced on the day.
@@ -861,7 +865,9 @@ public enum Crime {
         let weeksOld = Double(max(0, day - entry.day)) / Double(GameState.daysPerWeek)
         let cold = max(balance.coldCaseFloor, 1 - weeksOld / max(1, balance.coldCaseWeeks))
         let legal = hasLegal ? balance.legalDepartmentFactor : 1
-        return min(balance.discoveryCeiling, base * heat * cold * legal)
+        // MARK: J2 (record) — × spotlight, exactly 1 at fame zero.
+        return min(balance.discoveryCeiling, base * heat * cold * legal * spotlight)
+        // MARK: end J2
     }
 
     /// How much paper the other side is holding, 0…1: the offence's

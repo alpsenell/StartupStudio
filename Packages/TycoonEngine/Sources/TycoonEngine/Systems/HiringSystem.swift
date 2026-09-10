@@ -25,6 +25,11 @@ enum HiringSystem {
               !state.life.isAway(day: state.day),
               state.progression.lastInterviewDay != state.day
         else { return [] }
+        // MARK: J2 (record)
+        // Past the line, the best CV on the desk rang somebody who used to
+        // work here and will not come in. Never at a name of zero.
+        guard !state.standingRefuses(candidateID, balance: balance) else { return [] }
+        // MARK: end J2
 
         state.progression.interviewedCandidateIDs.insert(candidateID)
         state.progression.lastInterviewDay = state.day

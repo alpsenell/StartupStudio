@@ -606,3 +606,25 @@ public enum Fame {
         }
     }
 }
+
+// MARK: J2 (record)
+
+extension FameState {
+    /// A conviction or a trace: fame drops to the foot of the rung below.
+    /// Returns the level it landed on, or `nil` when there was no rung to
+    /// fall from — which is every founder who never posted.
+    ///
+    /// The follower count is untouched, so fame climbs back the ordinary
+    /// way, a little each day toward its target; the rung is lost now and
+    /// earned back later. `highWaterLevel` is left alone, so the climb
+    /// does not fire the level events a second time.
+    public mutating func standingDropRung(balance: BalanceConfig.FameBalance) -> FameLevel? {
+        let level = Fame.level(fame, balance: balance)
+        guard level > .unknown, let lower = FameLevel(rawValue: level.rawValue - 1)
+        else { return nil }
+        fame = min(fame, Fame.threshold(lower, balance: balance))
+        return lower
+    }
+}
+
+// MARK: end J2

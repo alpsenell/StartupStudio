@@ -195,7 +195,10 @@ enum EspionageSystem {
             notoriety: state.crime.notoriety,
             hasLegal: state.knownDepartments.contains(.legal),
             balance: config,
-            crime: balance.crime
+            crime: balance.crime,
+            // MARK: J2 (record)
+            spotlight: state.standingSpotlight(balance: balance)
+            // MARK: end J2
         )
         let traced = state.socialRNG.nextUniform() < traceChance
 
@@ -233,6 +236,14 @@ enum EspionageSystem {
                 operation, entry: entry, rival: rival, state: &state, balance: balance
             ))
         }
+        // MARK: J2 (record)
+        // A trace is news, and news costs a famous founder a rung.
+        if traced, let level = state.fame.standingDropRung(balance: balance.fame) {
+            events.append(.standingFameDropped(
+                level: level.rawValue, reason: "trace", day: state.day
+            ))
+        }
+        // MARK: end J2
         return events
     }
 
@@ -485,7 +496,10 @@ extension GameState {
             notoriety: crime.notoriety,
             hasLegal: knownDepartments.contains(.legal),
             balance: balance.espionage,
-            crime: balance.crime
+            crime: balance.crime,
+            // MARK: J2 (record)
+            spotlight: standingSpotlight(balance: balance)
+            // MARK: end J2
         )
         return (success, trace)
     }

@@ -281,6 +281,15 @@ struct AppRootView: View {
                 #endif
             }
             // MARK: end of Iteration 11, wave two — W4
+            // MARK: J2 (record)
+            // `-autoStanding`, `-autoBoardReview`, `-autoSpotlight`: the
+            // founder's record, dressed for a screenshot.
+            .task {
+                #if DEBUG
+                await DebugLaunch.startStandingIfAsked(current: { session.engine })
+                #endif
+            }
+            // MARK: end J2
             // Pending rival offers surface here (not per tab) so the paused
             // timeline always has its question on screen.
             .sheet(item: pendingDecision) { prompt in
