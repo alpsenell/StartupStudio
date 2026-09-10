@@ -17,27 +17,27 @@ import TycoonEngine
 /// and — the part that matters — *plays to the number its board watches*,
 /// because a founder who takes a growth cheque and then optimises for
 /// something else is not measuring the board, they are ignoring it.
-struct InvestorBot: BotPolicy {
-    var name = "investor"
+public struct InvestorBot: BotPolicy {
+    public var name = "investor"
     /// Whether the bot answers term sheets at all. The control for "does
     /// taking money help?" is this same bot with the cheque declined.
-    var takesTheMoney = true
+    public var takesTheMoney = true
     /// The most of the company it will part with in one round.
-    var maxEquityPerRound = 25.0
+    public var maxEquityPerRound = 25.0
     /// A cheque is worth taking when it covers at least this many weeks of
     /// payroll — below that the dilution buys nothing.
-    var minRunwayWeeksBought = 8
+    public var minRunwayWeeksBought = 8
     /// Weeks of payroll kept in the bank before hiring. At 8 the bot hired
     /// on day one out of the starting cash and was dead by day 84 with
     /// nothing shipped.
-    var hireRunwayWeeks = 12
+    public var hireRunwayWeeks = 12
     /// Whether the founder actually runs the company against the number
     /// their board watches. False is the other kind of founder: takes the
     /// growth cheque, keeps doing exactly what they were doing.
-    var playsToTheBoard = true
+    public var playsToTheBoard = true
     /// Whether it spends on the things chapter 4 asks for: amenities, and
     /// buying a rival outright.
-    var buysTheTrophies = true
+    public var buysTheTrophies = true
     /// Whether the company keeps growing once the money is in the bank.
     ///
     /// False is the founder who raises a round and then settles down to
@@ -47,9 +47,31 @@ struct InvestorBot: BotPolicy {
     /// board exists to fire, because the cheque was priced on the growth
     /// they have stopped delivering. It is the only bot that ever reaches
     /// the vote, so it is the only one that can measure it.
-    var growsAfterFunding = true
+    public var growsAfterFunding = true
     /// How finished a build has to look before the perfectionist ships it.
-    var coastingPolish = 0.98
+    public var coastingPolish = 0.98
+
+    public init(
+        name: String = "investor",
+        takesTheMoney: Bool = true,
+        maxEquityPerRound: Double = 25.0,
+        minRunwayWeeksBought: Int = 8,
+        hireRunwayWeeks: Int = 12,
+        playsToTheBoard: Bool = true,
+        buysTheTrophies: Bool = true,
+        growsAfterFunding: Bool = true,
+        coastingPolish: Double = 0.98
+    ) {
+        self.name = name
+        self.takesTheMoney = takesTheMoney
+        self.maxEquityPerRound = maxEquityPerRound
+        self.minRunwayWeeksBought = minRunwayWeeksBought
+        self.hireRunwayWeeks = hireRunwayWeeks
+        self.playsToTheBoard = playsToTheBoard
+        self.buysTheTrophies = buysTheTrophies
+        self.growsAfterFunding = growsAfterFunding
+        self.coastingPolish = coastingPolish
+    }
 
     /// True once there is a *board* on the cap table and this founder has
     /// stopped growing into what it paid for.
@@ -64,7 +86,7 @@ struct InvestorBot: BotPolicy {
         !growsAfterFunding && state.investors.rounds.contains { $0.takesBoardSeat }
     }
 
-    func actions(
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -282,7 +304,7 @@ extension InvestorBot {
     /// The control: the identical studio that turns every term sheet down.
     /// The only difference between the two is the answer to one question,
     /// which is what makes "does taking money help?" answerable.
-    static var bootstrapper: InvestorBot {
+    public static var bootstrapper: InvestorBot {
         InvestorBot(name: "bootstrapper", takesTheMoney: false)
     }
 
@@ -292,7 +314,7 @@ extension InvestorBot {
     /// that keeps hiring and keeps shipping hits a growth board's numbers
     /// without being asked to, which is the mechanic working as written
     /// rather than a hole in it.
-    static var ignoresTheBoard: InvestorBot {
+    public static var ignoresTheBoard: InvestorBot {
         InvestorBot(name: "ignores-board", playsToTheBoard: false)
     }
 
@@ -301,7 +323,7 @@ extension InvestorBot {
     /// *right*. Every one of the board's three numbers goes flat at once,
     /// which is what the pressure meter was built to notice, and this is
     /// the only bot that ever reaches the vote.
-    static var coasts: InvestorBot {
+    public static var coasts: InvestorBot {
         InvestorBot(name: "coasts", growsAfterFunding: false)
     }
 }
@@ -315,11 +337,16 @@ extension InvestorBot {
 /// collects the full price on nearly every seed the number is free money;
 /// if it is ousted or forfeits on nearly every seed the twelve-week board
 /// is a coin flip. Never in either pinned suite.
-struct AcquirerBot: BotPolicy {
-    var name = "acquirer"
-    var base = InvestorBot()
+public struct AcquirerBot: BotPolicy {
+    public var name = "acquirer"
+    public var base = InvestorBot()
 
-    func actions(
+    public init(name: String = "acquirer", base: InvestorBot = InvestorBot()) {
+        self.name = name
+        self.base = base
+    }
+
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -339,16 +366,26 @@ struct AcquirerBot: BotPolicy {
 /// costs as a share of the cash on hand, and whether the founder who
 /// bought the vote away is better or worse off than the one who did not.
 /// Never in either pinned suite.
-struct BuybackBot: BotPolicy {
-    var name = "buyback"
-    var base = InvestorBot()
-    var runwayWeeks = 8
+public struct BuybackBot: BotPolicy {
+    public var name = "buyback"
+    public var base = InvestorBot()
+    public var runwayWeeks = 8
     /// Only buy the vote away once the room is at least this hot. Zero
     /// is the founder who ends the meeting the moment they can pay for
     /// it; sixty is the one who waits for the formal warning.
-    var minPressure = 0.0
+    public var minPressure = 0.0
 
-    func actions(
+    public init(
+        name: String = "buyback", base: InvestorBot = InvestorBot(),
+        runwayWeeks: Int = 8, minPressure: Double = 0.0
+    ) {
+        self.name = name
+        self.base = base
+        self.runwayWeeks = runwayWeeks
+        self.minPressure = minPressure
+    }
+
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog

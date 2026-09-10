@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 /// "Hold the Category": the standing ledger, its decay, and the forward
 /// read it buys.

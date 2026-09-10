@@ -1,6 +1,7 @@
 import Foundation
 import TycoonContent
 import TycoonEngine
+import TycoonBots
 
 // Two bots for the progression acceptance bar, played through the same
 // headless `SimRunner` as the balance harness. (Named `Goal…` at merge:

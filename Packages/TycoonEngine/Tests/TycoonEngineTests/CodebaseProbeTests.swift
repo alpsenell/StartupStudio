@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 import TycoonEngine
+import TycoonBots
 
 /// Bots that take the head start every time, and the table that says
 /// whether it is worth taking.

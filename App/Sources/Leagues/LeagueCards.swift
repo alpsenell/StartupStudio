@@ -93,6 +93,10 @@ struct LeagueResultCard: View {
     /// The line a *Beat my company* share pastes; nothing when the run
     /// left no year behind.
     var challengeText: String?
+    // MARK: J4 (house field)
+    /// Who finished directly above, and how they play.
+    var above: HouseFieldAbove?
+    // MARK: end J4
 
     var body: some View {
         PixelPanel {
@@ -129,6 +133,12 @@ struct LeagueResultCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+
+                // MARK: J4 (house field)
+                if let above {
+                    HouseFieldAboveLine(above: above)
+                }
+                // MARK: end J4
 
                 if let grid = entry.grid, !grid.isEmpty {
                     Text(YearGrid.wrapped(grid))
@@ -210,6 +220,10 @@ struct LeagueTierBadge: View {
 struct LeagueTableView: View {
     let standings: [LeagueStanding]
     let source: LeagueView.Source
+    // MARK: J4 (house field)
+    /// How each house founder plays, by name.
+    var houseLines: [String: String] = [:]
+    // MARK: end J4
 
     var body: some View {
         PixelPanel {
@@ -225,7 +239,10 @@ struct LeagueTableView: View {
                         LeagueRow(
                             rank: index + 1,
                             standing: row,
-                            outcome: LeagueRules.outcome(rank: index + 1, fieldSize: standings.count)
+                            outcome: LeagueRules.outcome(rank: index + 1, fieldSize: standings.count),
+                            // MARK: J4 (house field)
+                            houseLine: row.isYou ? nil : houseLines[row.name]
+                            // MARK: end J4
                         )
                     }
                     Text(source.line)
@@ -244,17 +261,32 @@ struct LeagueRow: View {
     let rank: Int
     let standing: LeagueStanding
     let outcome: LeagueOutcome
+    // MARK: J4 (house field)
+    /// "Grinder — contracts only, never hired", for a house founder.
+    var houseLine: String?
+    // MARK: end J4
 
     var body: some View {
         HStack(spacing: Theme.Spacing.sm) {
             PixelText(text: "\(rank)", scale: 2, color: Theme.pixelInk)
                 .frame(width: 28, alignment: .leading)
                 .accessibilityHidden(true)
-            Text(standing.name)
-                .font(.system(.subheadline, design: .rounded).weight(standing.isYou ? .bold : .regular))
-                .foregroundStyle(Theme.pixelInk)
-                .lineLimit(1)
-                .truncationMode(.tail)
+            // MARK: J4 (house field)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(standing.name)
+                    .font(.system(.subheadline, design: .rounded).weight(standing.isYou ? .bold : .regular))
+                    .foregroundStyle(Theme.pixelInk)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                if let houseLine {
+                    Text(houseLine)
+                        .font(.caption2)
+                        .foregroundStyle(Theme.pixelInk.opacity(0.6))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+            }
+            // MARK: end J4
             Spacer(minLength: Theme.Spacing.sm)
             Text(standing.score.money)
                 .font(.system(.caption, design: .rounded).weight(.semibold))
@@ -274,6 +306,9 @@ struct LeagueRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "\(rank). \(standing.name), \(standing.score.money)\(standing.isYou ? ", you" : ""). \(outcome.headline)."
+                // MARK: J4 (house field)
+                + (houseLine.map { " \($0)." } ?? "")
+                // MARK: end J4
         )
     }
 }
@@ -365,10 +400,15 @@ struct LeagueScreen: View {
                 LeagueCard(week: week, record: view.record, resumingFromDay: day) { onPlay(week) }
             case .result(let week, let entry):
                 LeagueResultCard(
-                    week: week, tier: entry.tier, entry: entry, challengeText: challengeText
+                    week: week, tier: entry.tier, entry: entry, challengeText: challengeText,
+                    // MARK: J4 (house field)
+                    above: HouseFieldAbove.make(standings: view.standings, lines: view.houseLines)
+                    // MARK: end J4
                 )
             }
-            LeagueTableView(standings: view.standings, source: view.source)
+            // MARK: J4 (house field)
+            LeagueTableView(standings: view.standings, source: view.source, houseLines: view.houseLines)
+            // MARK: end J4
         }
     }
 }

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 import TycoonEngine
+import TycoonBots
 
 /// Not gates — instrumentation. `BalanceTargetsTests` says *whether* a
 /// strategy survives; these tests say *why*. Every one of them prints a

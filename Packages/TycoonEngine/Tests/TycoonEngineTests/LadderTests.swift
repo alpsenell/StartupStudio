@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 /// The two ladders (WS-G, iteration 5): which one a run is on, what the
 /// independent one measures, the ending it leads to, and the bar the

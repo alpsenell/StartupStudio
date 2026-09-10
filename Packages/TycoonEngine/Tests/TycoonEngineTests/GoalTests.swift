@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 /// The chapter/goal engine: the catalog's shape, one-shot completion,
 /// chapter gating, perks, determinism, and the bar the plan set for how

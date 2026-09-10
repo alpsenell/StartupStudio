@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 /// The PM's *How to verify* for the category fight and the incumbent,
 /// measured over the pacing suite's ten seeds with rivals on. Every gate

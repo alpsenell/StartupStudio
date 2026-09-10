@@ -126,6 +126,16 @@ struct TitleScreen: View {
                 challengeResult = result
             }
             // MARK: end of Iteration 10
+            // MARK: J4 (house field)
+            // `-autoHouseField week|day`: the field played, a made-up year
+            // filed in the middle of it, and the sheet opened on the result.
+            if let mode = DebugLaunch.houseFieldArgument {
+                Task {
+                    await session.debugFileHouseFieldRun(mode)
+                    if mode == "day" { openDaily(DailyChallenge.today()) } else { openLeague() }
+                }
+            }
+            // MARK: end J4
             // Iteration 8: a scenario just decided shows its card once;
             // `-autoScenario <id>` starts one from here.
             if let result = session.scenarioResult {
@@ -268,14 +278,11 @@ struct TitleScreen: View {
         // Iteration 7 (R3): today's company — the challenge, the attempt
         // under way, or the result once the day is recorded.
         .sheet(item: $dailyEntry) { entry in
-            DailySheet(
-                entry: entry,
-                onPlay: { challenge in
-                    dailyEntry = nil
-                    session.playDaily(challenge)
-                },
-                onClose: { dailyEntry = nil }
-            )
+            // MARK: J4 (house field)
+            // Built in a helper: the extra argument tipped this modifier
+            // chain over the type-checker's time limit in Release.
+            houseFieldDailySheet(entry)
+            // MARK: end J4
         }
         .confirmationDialog(
             "Delete this save?",
@@ -372,6 +379,21 @@ struct TitleScreen: View {
     }
 
     // MARK: end of Iteration 10
+
+    // MARK: J4 (house field)
+    /// Today's sheet, with the result card's "directly above you" line.
+    private func houseFieldDailySheet(_ entry: DailyEntry) -> DailySheet {
+        DailySheet(
+            entry: entry,
+            above: session.houseFieldAbove(forDaily: entry),
+            onPlay: { challenge in
+                dailyEntry = nil
+                session.playDaily(challenge)
+            },
+            onClose: { dailyEntry = nil }
+        )
+    }
+    // MARK: end J4
 
     /// Iteration 7 (R3): opens today's company on whatever it is now —
     /// a challenge, an attempt to resume, or the day's result.

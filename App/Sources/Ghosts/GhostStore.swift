@@ -17,6 +17,13 @@ struct GhostLog: Codable, Equatable, Sendable, Identifiable {
     var launches: [GhostLaunch]
     var finalNetWorth: Int
     var recordedAt: Date
+    // MARK: J4 (house field)
+    /// The house founder who played this year (`HouseFieldFounder.id`);
+    /// `nil` for a real player. Absent on every log written before
+    /// iteration 12 and on every real one, so those decode — and encode —
+    /// exactly as they did.
+    var houseFounderID: String? = nil
+    // MARK: end J4
 
     var id: String { "\(day)-\(player)-\(companyName)" }
 
@@ -62,6 +69,28 @@ enum LeagueGhostKey {
 }
 
 // MARK: end of Iteration 10
+
+// MARK: J4 (house field)
+extension LocalGhostStore {
+    /// Files many logs in one write per day — the house field's nineteen
+    /// would otherwise read and rewrite the day's file nineteen times.
+    func save(all newLogs: [GhostLog]) {
+        for (day, batch) in Dictionary(grouping: newLogs, by: \.day) {
+            var logs = (try? SaveStore<GhostLogs>(
+                directory: base.appendingPathComponent("\(day)", isDirectory: true),
+                currentFormatVersion: 1, slotCount: 1
+            ).load())?.state ?? GhostLogs()
+            let ids = Set(batch.map(\.id))
+            logs.logs.removeAll { ids.contains($0.id) }
+            logs.logs.append(contentsOf: batch)
+            try? SaveStore<GhostLogs>(
+                directory: base.appendingPathComponent("\(day)", isDirectory: true),
+                currentFormatVersion: 1, slotCount: 1
+            ).save(logs, appVersion: "1")
+        }
+    }
+}
+// MARK: end J4
 
 /// Where ghosts live: this phone's cache, one file per day under
 /// `Saves/Ghosts`. The field is your past selves until the cloud refresh

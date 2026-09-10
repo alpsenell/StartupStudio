@@ -2,15 +2,19 @@ import Foundation
 import TycoonContent
 import TycoonEngine
 
-// Test-target-only balance harness: a headless driver that plays scripted
-// bot strategies through the real `Reducer` so `BalanceSimulationTests` can
+// The balance harness: a headless driver that plays scripted bot
+// strategies through the real `Reducer` so `BalanceSimulationTests` can
 // assert long-horizon survival invariants against the shipped Balance.json.
+//
+// Iteration 12 (J4): moved out of the test target into the shipping
+// `TycoonBots` library, unchanged but for `public`, so the app can play
+// the house field with the same bots the tests measure the economy with.
 
 /// A deterministic bot: polled once per day (right after the tick) with the
 /// fresh state, returning the actions to apply that day, in order. Policies
 /// are pure functions of the state — all persistence lives in `GameState`,
 /// so a run replays byte-identically from its seed.
-protocol BotPolicy {
+public protocol BotPolicy {
     var name: String { get }
     func actions(
         for state: GameState,
@@ -20,82 +24,82 @@ protocol BotPolicy {
 }
 
 /// Headless driver for bot runs.
-enum SimRunner {
+public enum SimRunner {
     /// Mirrors the engine's (internal) `GameState.daysPerYear`.
-    static let daysPerYear = 364
+    public static let daysPerYear = 364
     /// Mirrors the engine's (internal) `GameState.daysPerWeek`.
-    static let daysPerWeek = 7
+    public static let daysPerWeek = 7
 
-    struct Result {
-        var botName: String
-        var state: GameState
+    public struct Result {
+        public var botName: String
+        public var state: GameState
         /// Days actually simulated (a bankruptcy ends the run early).
-        var daysRun: Int
+        public var daysRun: Int
         /// How the run ended, `nil` if it was still going at the horizon.
         /// Distinguishing these matters as soon as a bot answers a term
         /// sheet: a board ousting and an IPO both set `gameOver`, and
         /// counting either as a bankruptcy would have the investor gates
         /// measuring the opposite of what they say.
-        var endingKind: EndingKind?
+        public var endingKind: EndingKind?
         /// Ran out of money. *Not* "the run ended" — see `endingKind`.
-        var wentBankrupt: Bool { endingKind == .bankruptcy }
+        public var wentBankrupt: Bool { endingKind == .bankruptcy }
         /// The run ended before the horizon, however it ended.
-        var runEnded: Bool { endingKind != nil }
-        var contractsCompleted: Int
-        var contractsFailed: Int
-        var productsShipped: Int
-        var officeUpgrades: Int
-        var randomEvents: Int
-        var maxLedgerCount: Int
-        var maxEventLogCount: Int
-        var minCash: Int
+        public var runEnded: Bool { endingKind != nil }
+        public var contractsCompleted: Int
+        public var contractsFailed: Int
+        public var productsShipped: Int
+        public var officeUpgrades: Int
+        public var randomEvents: Int
+        public var maxLedgerCount: Int
+        public var maxEventLogCount: Int
+        public var minCash: Int
 
         // MARK: Pacing instrumentation (WS-A)
 
         /// The day the studio's first product shipped, `nil` if it never did.
-        var firstShipDay: Int?
+        public var firstShipDay: Int?
         /// The average review score of that first product.
-        var firstProductScore: Int?
+        public var firstProductScore: Int?
         /// Lifetime revenue of the first product shipped.
-        var firstProductLifetimeRevenue: Int?
+        public var firstProductLifetimeRevenue: Int?
         /// Total events that would have stopped the clock.
-        var pauses: Int
+        public var pauses: Int
         /// Employees who resigned over low morale.
-        var quits: Int
+        public var quits: Int
         /// Employees who served a resignation notice.
-        var resignationNotices: Int
+        public var resignationNotices: Int
         /// Times the founder was hospitalised.
-        var hospitalizations: Int
+        public var hospitalizations: Int
         /// Times the founder burned out.
-        var burnouts: Int
+        public var burnouts: Int
         /// Eviction warnings served on the founder.
-        var evictionWarnings: Int
+        public var evictionWarnings: Int
         /// Weekly samples (one per weekly tick) where the wallet was negative.
-        var weeksNegativeWallet: Int
+        public var weeksNegativeWallet: Int
         /// The worst wallet balance seen.
-        var minWallet: Int
-        var peakHeadcount: Int
+        public var minWallet: Int
+        public var peakHeadcount: Int
         /// The day each office tier was first reached.
-        var daysToLoft: Int?
-        var daysToStudio: Int?
-        var daysToCampus: Int?
+        public var daysToLoft: Int?
+        public var daysToStudio: Int?
+        public var daysToCampus: Int?
         /// Updates shipped for already-released products.
-        var updatesShipped: Int
+        public var updatesShipped: Int
         /// Live bugs discovered in the wild across every release.
-        var liveBugsDiscovered: Int
+        public var liveBugsDiscovered: Int
 
-        var finalCash: Int { state.company.cash }
-        var officeTier: OfficeTier { state.company.officeTier }
+        public var finalCash: Int { state.company.cash }
+        public var officeTier: OfficeTier { state.company.officeTier }
 
         /// Pauses per game year over the days actually simulated.
-        var pausesPerYear: Double {
+        public var pausesPerYear: Double {
             guard daysRun > 0 else { return 0 }
             return Double(pauses) * Double(SimRunner.daysPerYear) / Double(daysRun)
         }
 
         /// Weekly recurring revenue in the final week: subscription revenue
         /// posted by every on-market subscription product.
-        var finalWeeklySubscriptionRevenue: Int {
+        public var finalWeeklySubscriptionRevenue: Int {
             state.products.reduce(0) { total, product in
                 guard case .released(let info) = product.stage,
                       info.isSubscription, !info.offMarket,
@@ -107,7 +111,7 @@ enum SimRunner {
 
         /// Lifetime revenue across every shipped product (products never
         /// leave `state.products`, so this sees the whole run).
-        var totalProductRevenue: Int {
+        public var totalProductRevenue: Int {
             state.products.reduce(0) { total, product in
                 guard case .released(let info) = product.stage else { return total }
                 return total + info.totalRevenue
@@ -115,7 +119,7 @@ enum SimRunner {
         }
 
         /// One row of the per-bot baseline table.
-        var tableRow: String {
+        public var tableRow: String {
             let columns = [
                 botName.padding(toLength: 17, withPad: " ", startingAt: 0),
                 "cash \(finalCash)".padding(toLength: 14, withPad: " ", startingAt: 0),
@@ -133,7 +137,7 @@ enum SimRunner {
     ///
     /// `origin` defaults to the garage — every pacing and investor gate runs
     /// there — and is only set by the origin table (`OriginBotTests`).
-    static func run(
+    public static func run(
         days: Int,
         seed: UInt64,
         bot: any BotPolicy,
@@ -141,9 +145,26 @@ enum SimRunner {
         content: ContentCatalog,
         origin: FoundingOrigin = .garage
     ) -> Result {
-        var state = GameState.newGame(
+        let state = GameState.newGame(
             companyName: bot.name, seed: seed, balance: balance, origin: origin, content: content
         )
+        return run(from: state, days: days, bot: bot, balance: balance, content: content)
+    }
+
+    // MARK: J4 (house field)
+    /// The same loop from a state the caller founded — the house field
+    /// founds a league week's or a daily's company exactly the way the
+    /// player's is founded (its difficulty, origin, founder and mode) and
+    /// hands it here. `run(days:seed:…)` is this with a garage start.
+    public static func run(
+        from start: GameState,
+        days: Int,
+        bot: any BotPolicy,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> Result {
+        var state = start
+        // MARK: end J4
         var result = Result(
             botName: bot.name,
             state: state,
@@ -270,10 +291,12 @@ enum SimRunner {
 /// "affordable" = the penalty for a missed deadline couldn't exceed current
 /// cash), keeps everyone assigned to the active contract, and never builds
 /// products.
-struct ContractGrinderBot: BotPolicy {
-    let name = "contract-grinder"
+public struct ContractGrinderBot: BotPolicy {
+    public let name = "contract-grinder"
 
-    func actions(
+    public init() {}
+
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -306,12 +329,14 @@ struct ContractGrinderBot: BotPolicy {
 /// has returned everyone to idle by then, so `startProduct` auto-assigns
 /// them). Hires the first coder-leaning candidate whenever cash exceeds its
 /// chosen buffer.
-struct ShipFastBot: BotPolicy {
-    let name = "ship-fast"
+public struct ShipFastBot: BotPolicy {
+    public let name = "ship-fast"
+
+    public init() {}
     /// The bot's own choice of hiring war chest.
     let hireCashBuffer = 15_000
 
-    func actions(
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -355,13 +380,15 @@ struct ShipFastBot: BotPolicy {
 /// pools — hires once at cash > $25k, upgrades the office whenever the next
 /// tier is affordable with a safety buffer left over, and parks everyone on
 /// research when there is neither a product nor a contract to work.
-struct BalancedBot: BotPolicy {
-    let name = "balanced"
+public struct BalancedBot: BotPolicy {
+    public let name = "balanced"
+
+    public init() {}
     let productCashFloor = 20_000
     let hireCashFloor = 25_000
     let upgradeCashBuffer = 10_000
 
-    func actions(
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 import TycoonEngine
+import TycoonBots
 
 /// Long-horizon balance gates: three deterministic bots each play 730 days
 /// (two game years) through the real reducer against the shipped

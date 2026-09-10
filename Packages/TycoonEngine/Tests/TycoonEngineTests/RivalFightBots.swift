@@ -1,6 +1,7 @@
 import Foundation
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 // The WS-A verification bots for the category fight and the incumbent.
 // Each is an existing bot plus one idea, so a measured difference is the
