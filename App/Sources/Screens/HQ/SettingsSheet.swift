@@ -134,10 +134,6 @@ struct SettingsSheet: View {
                     }
                 }
             }
-            // MARK: P2 (purchases: StoreKit and the session)
-            // `-autoServices` (DEBUG): open on Restore and Purchases.
-            .defaultScrollAnchor(DebugLaunch.scrollsSettingsToServices ? .bottom : nil)
-            // MARK: end P2
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

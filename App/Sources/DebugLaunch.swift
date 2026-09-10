@@ -1369,16 +1369,6 @@ extension DebugLaunch {
         #endif
     }
 
-    /// `-autoServices`: with `-autoRoute settings`, Settings opens
-    /// scrolled to Services (Restore and the Purchases row).
-    static var scrollsSettingsToServices: Bool {
-        #if DEBUG
-        return ProcessInfo.processInfo.arguments.contains("-autoServices")
-        #else
-        return false
-        #endif
-    }
-
     /// `-autoPurchases`: with `-autoRoute settings`, the Purchases list
     /// opens over Settings.
     static var opensPurchases: Bool {
