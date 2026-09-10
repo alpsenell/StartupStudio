@@ -222,8 +222,11 @@ struct NoticeRail: View {
     /// route through `laneRoute(forNoticeID:)` below.
     private func laneNotices(_ state: GameState) -> [RailNotice] {
         // MARK: J1 (doors)
-        DoorRail.notices(for: state)
+        let doors = DoorRail.notices(for: state)
         // MARK: end J1
+        // Iteration 12 merge — J5's announced-date countdown (wired here
+        // because `AnnounceRail` did not exist on J6's branch).
+        return doors + AnnounceRail.notices(state: state)
     }
 
     /// A tip for the current state, used only when no active goal has one.

@@ -7,3 +7,6 @@ DerivedData/
 xcuserdata/
 build-device/
 .claude/worktrees/
+
+# Release derived data from the house-field timing (J4) and the merge Release check
+build-release/
