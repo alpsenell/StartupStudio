@@ -89,12 +89,17 @@ struct MorningDeskMessage {
     /// newest unread one. `nil` when the phone is quiet.
     static func waiting(in state: GameState, content: ContentCatalog) -> MorningDeskMessage? {
         let asking = PhoneReply.waitingThread(in: state, content: content)
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // C10: the one message is never the office's weekly close — the
+        // report delivers that. The thread asking is the inbox's phone row.
         let counterpart = asking
-            ?? state.life.phone.byRecency.first { $0.unreadCount > 0 }?.counterpart
+            ?? state.life.phone.shownByRecency.first { $0.shownUnreadCount > 0 }?.counterpart
         guard let counterpart, let thread = state.life.phone.thread(with: counterpart) else {
             return nil
         }
-        let last = thread.messages.last { !$0.fromFounder } ?? thread.messages.last
+        let shown = thread.shownMessages
+        let last = shown.last { !$0.fromFounder } ?? shown.last ?? thread.messages.last
+        // MARK: end V2
         return MorningDeskMessage(
             counterpart: counterpart,
             name: state.phoneName(for: counterpart),

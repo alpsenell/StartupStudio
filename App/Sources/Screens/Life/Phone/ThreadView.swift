@@ -98,9 +98,21 @@ struct ThreadContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             header
-            if let thread, !thread.messages.isEmpty {
+            // MARK: V2 (ux: one inbox, one home per thing)
+            // C10: the office's weekly closes are the report's; the thread
+            // keeps everything else the office said.
+            if let thread, thread.hidesWeeklyCloses {
+                Label(
+                    String(localized: "The weekly closes are in the weekly report.", comment: "Phone thread: a line where the office's weekly close messages used to be"),
+                    systemImage: "calendar.badge.clock"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            // MARK: end V2
+            if let thread, !thread.shownMessages.isEmpty {
                 VStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(grouped(thread.messages).enumerated()), id: \.offset) { _, group in
+                    ForEach(Array(grouped(thread.shownMessages).enumerated()), id: \.offset) { _, group in
                         DayDivider(day: group.day, today: state.day)
                         ForEach(group.messages) { message in
                             MessageBubble(message: message)

@@ -18,7 +18,8 @@ struct PhoneCard: View {
 
     var body: some View {
         let state = engine.state
-        let threads = Array(state.life.phone.byRecency.prefix(3))
+        // V2 (C10): the order the phone shows, weekly closes left out.
+        let threads = Array(state.life.phone.shownByRecency.prefix(3))
         if !threads.isEmpty {
             CardView("Phone", systemImage: "bubble.left.and.bubble.right.fill") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -77,7 +78,13 @@ struct PhoneThreadRow: View {
     /// actually waiting on the founder.
     var isAsking = false
 
-    private var unread: Bool { thread.unreadCount > 0 }
+    // MARK: V2 (ux: one inbox, one home per thing)
+    // C10: the row reads the thread as the phone shows it — the office's
+    // weekly closes are the report's, so they are not the preview, not the
+    // time, and not the unread number.
+    private var unreadCount: Int { thread.shownUnreadCount }
+    private var unread: Bool { unreadCount > 0 }
+    // MARK: end V2
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
@@ -114,7 +121,7 @@ struct PhoneThreadRow: View {
                     .truncationMode(.tail)
             }
             if unread {
-                Text("\(thread.unreadCount)")
+                Text("\(unreadCount)")
                     .font(Theme.Typography.number(.caption2))
                     .foregroundStyle(Theme.onTint)
                     .padding(.horizontal, 6)
@@ -127,19 +134,24 @@ struct PhoneThreadRow: View {
         .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(name). \(preview). \(unread ? "\(thread.unreadCount) unread." : "Read.")"
+            "\(name). \(preview). \(unread ? "\(unreadCount) unread." : "Read.")"
         )
     }
 
     private var preview: String {
-        guard let last = thread.lastMessage else { return "No messages" }
+        guard let last = thread.shownLastMessage else {
+            // V2 (C10): a thread of weekly closes alone.
+            return thread.messages.isEmpty
+                ? "No messages"
+                : String(localized: "The weekly closes are in the weekly report", comment: "Phone row: the office thread when it holds nothing but weekly closes")
+        }
         if last.kind == .unanswered { return last.text }
         return last.fromFounder ? "You: \(last.text)" : last.text
     }
 
     /// "Today", "Yesterday", "4d" — a phone's own idea of time.
     private var agoLabel: String {
-        let days = day - thread.lastDay
+        let days = day - thread.shownLastDay
         return switch days {
         case ..<1: "Today"
         case 1: "1d"
@@ -147,6 +159,49 @@ struct PhoneThreadRow: View {
         }
     }
 }
+
+// MARK: V2 (ux: one inbox, one home per thing)
+
+/// Iteration 14 — V2, C10. The phone as the player sees it: the office's
+/// weekly closes ("Week 128 closed. In $58,596…") are the weekly report's
+/// to deliver, so the thread list, the thread and the morning papers leave
+/// them out. An app-side filter over the saved posts (U1's
+/// `TabBadge.isWeeklyClose`); the save still holds every message, and
+/// opening the thread still marks them read.
+extension PhoneThread {
+    /// The messages the phone draws.
+    var shownMessages: [PhoneMessage] {
+        messages.filter { !TabBadge.isWeeklyClose($0, in: self) }
+    }
+
+    /// Whether anything was left out of `shownMessages`.
+    var hidesWeeklyCloses: Bool { shownMessages.count != messages.count }
+
+    var shownLastMessage: PhoneMessage? { shownMessages.last }
+
+    /// The day of the newest message shown; the thread's own last day
+    /// when it holds only closes, so it sorts where it always did.
+    var shownLastDay: Int { shownLastMessage?.day ?? lastDay }
+
+    /// Unread, without the closes — `TabBadge.unread`, one thread.
+    var shownUnreadCount: Int {
+        shownMessages.filter { !$0.fromFounder && $0.day > lastReadDay }.count
+    }
+}
+
+extension PhoneState {
+    /// `byRecency`, sorted on what the phone shows: a thread of weekly
+    /// closes stops rising to the top every Sunday.
+    var shownByRecency: [PhoneThread] {
+        threads.sorted {
+            $0.shownLastDay == $1.shownLastDay
+                ? $0.counterpart.sortKey < $1.counterpart.sortKey
+                : $0.shownLastDay > $1.shownLastDay
+        }
+    }
+}
+
+// MARK: end V2
 
 /// A `Label` with the icon on the right, for a "go there" row.
 struct TrailingIconLabelStyle: LabelStyle {
