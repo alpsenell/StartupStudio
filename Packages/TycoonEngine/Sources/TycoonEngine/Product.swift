@@ -203,6 +203,21 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// The forecast's terms the day this shipped, for launch day to say
     /// why. Absent on releases from before it was recorded.
     public var launchForecast: LaunchForecast?
+    // MARK: K2 (product lifecycle)
+    /// The day the player retired this product (`sunsetProduct`, or the
+    /// successor's `shipReplacing`). `nil` for every product the market
+    /// delisted on its own and every product from before it existed. Only
+    /// the player's tap writes it; not written while `nil`.
+    public var sunsetDay: Int?
+    /// The day the player last moved this product's price through the
+    /// priced confirmation (`repriceProduct`): the 28-day cooldown reads it.
+    public var lastPriceChangeDay: Int?
+    /// A rise on a one-time product sells ×`riseUnitsFactor` until this
+    /// day: people wait for the sale.
+    public var priceRiseUntilDay: Int?
+    /// The day the last cut was a sale: one bumper week, once a quarter.
+    public var lastSaleDay: Int?
+    // MARK: end K2
 
     public init(
         launchDay: Int,
@@ -220,9 +235,21 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
         isSubscription: Bool = false,
         lastUpdateDay: Int? = nil,
         updateCount: Int = 0,
-        launchForecast: LaunchForecast? = nil
+        launchForecast: LaunchForecast? = nil,
+        // MARK: K2 (product lifecycle)
+        sunsetDay: Int? = nil,
+        lastPriceChangeDay: Int? = nil,
+        priceRiseUntilDay: Int? = nil,
+        lastSaleDay: Int? = nil
+        // MARK: end K2
     ) {
         self.launchForecast = launchForecast
+        // MARK: K2 (product lifecycle)
+        self.sunsetDay = sunsetDay
+        self.lastPriceChangeDay = lastPriceChangeDay
+        self.priceRiseUntilDay = priceRiseUntilDay
+        self.lastSaleDay = lastSaleDay
+        // MARK: end K2
         self.launchDay = launchDay
         self.quality = quality
         self.reviews = reviews
@@ -265,6 +292,11 @@ extension ReleaseInfo {
         case launchMarketScale, liveBugs, priceTier, subscribers, isSubscription
         case lastUpdateDay, updateCount
         case launchForecast
+        // MARK: K2 (product lifecycle) — optional, so the synthesized
+        // encode writes them only when set: a release nobody retired or
+        // re-priced encodes to the bytes it always did.
+        case sunsetDay, lastPriceChangeDay, priceRiseUntilDay, lastSaleDay
+        // MARK: end K2
     }
 
     public init(from decoder: any Decoder) throws {
@@ -285,7 +317,13 @@ extension ReleaseInfo {
             isSubscription: try container.decodeIfPresent(Bool.self, forKey: .isSubscription) ?? false,
             lastUpdateDay: try container.decodeIfPresent(Int.self, forKey: .lastUpdateDay),
             updateCount: try container.decodeIfPresent(Int.self, forKey: .updateCount) ?? 0,
-            launchForecast: try container.decodeIfPresent(LaunchForecast.self, forKey: .launchForecast)
+            launchForecast: try container.decodeIfPresent(LaunchForecast.self, forKey: .launchForecast),
+            // MARK: K2 (product lifecycle)
+            sunsetDay: try container.decodeIfPresent(Int.self, forKey: .sunsetDay),
+            lastPriceChangeDay: try container.decodeIfPresent(Int.self, forKey: .lastPriceChangeDay),
+            priceRiseUntilDay: try container.decodeIfPresent(Int.self, forKey: .priceRiseUntilDay),
+            lastSaleDay: try container.decodeIfPresent(Int.self, forKey: .lastSaleDay)
+            // MARK: end K2
         )
     }
 }
@@ -324,6 +362,11 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
     /// written while 0.
     public var slips: Int
     // MARK: end J5
+    // MARK: K2 (product lifecycle)
+    /// The product this one replaced (`shipReplacing`), `nil` for every
+    /// product that replaced nothing. Not written while `nil`.
+    public var parentID: UUID?
+    // MARK: end K2
 
     public init(
         id: UUID,
@@ -335,8 +378,11 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
         features: [String] = [],
         // MARK: J5 (announce)
         announcedDay: Int? = nil,
-        slips: Int = 0
+        slips: Int = 0,
         // MARK: end J5
+        // MARK: K2 (product lifecycle)
+        parentID: UUID? = nil
+        // MARK: end K2
     ) {
         self.id = id
         self.name = name
@@ -349,6 +395,9 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
         self.announcedDay = announcedDay
         self.slips = slips
         // MARK: end J5
+        // MARK: K2 (product lifecycle)
+        self.parentID = parentID
+        // MARK: end K2
     }
 }
 
@@ -368,6 +417,9 @@ extension Product {
         // MARK: J5 (announce)
         case announcedDay, slips
         // MARK: end J5
+        // MARK: K2 (product lifecycle)
+        case parentID
+        // MARK: end K2
     }
 
     public init(from decoder: any Decoder) throws {
@@ -382,8 +434,11 @@ extension Product {
             features: try container.decodeIfPresent([String].self, forKey: .features) ?? [],
             // MARK: J5 (announce)
             announcedDay: try container.decodeIfPresent(Int.self, forKey: .announcedDay),
-            slips: try container.decodeIfPresent(Int.self, forKey: .slips) ?? 0
+            slips: try container.decodeIfPresent(Int.self, forKey: .slips) ?? 0,
             // MARK: end J5
+            // MARK: K2 (product lifecycle)
+            parentID: try container.decodeIfPresent(UUID.self, forKey: .parentID)
+            // MARK: end K2
         )
     }
 
@@ -401,6 +456,9 @@ extension Product {
         try container.encodeIfPresent(announcedDay, forKey: .announcedDay)
         if slips != 0 { try container.encode(slips, forKey: .slips) }
         // MARK: end J5
+        // MARK: K2 (product lifecycle) — only a successor has one.
+        try container.encodeIfPresent(parentID, forKey: .parentID)
+        // MARK: end K2
     }
 }
 

@@ -2052,5 +2052,16 @@
     "veteranSkillSpread": 10.0,
     "veteranSalaryFactor": 1.4,
     "secondChanceReputationCost": 5.0
+  },
+  "lifecycle": {
+    "successorBookCarry": 0.4,
+    "successorHypeCarry": 0.5,
+    "riseChurn": 0.12,
+    "riseUnitsFactor": 0.8,
+    "riseWeeks": 4,
+    "saleBump": 1.5,
+    "saleIntervalDays": 91,
+    "saleStanding": 2.0,
+    "changeCooldownDays": 28
   }
 }

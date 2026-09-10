@@ -2001,6 +2001,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: K1 (founder money)
     // MARK: end K1
     // MARK: K2 (product lifecycle)
+
+    /// Iteration 15 — K2: retire, replace, re-price
+    /// (`BalanceConfig+Lifecycle.swift`). Inline default, so `"lifecycle"`
+    /// is an optional key; read only by the three actions no bot sends and
+    /// the sales reads gated on what they write.
+    public var lifecycle: LifecycleBalance = .default
+
     // MARK: end K2
     // MARK: K3 (the ladder)
     // MARK: end K3

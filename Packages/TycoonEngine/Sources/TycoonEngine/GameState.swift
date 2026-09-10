@@ -698,6 +698,18 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: K1 (founder money)
     // MARK: end K1
     // MARK: K2 (product lifecycle)
+    /// The player retired a product; `subscribers` is the book that left
+    /// with it (0 for a one-time product).
+    case lifecycleSunset(productID: UUID, subscribers: Int, day: Int)
+    /// A successor shipped and retired its parent the same day, opening
+    /// with `carried` subscribers (0 for a one-time product, which carries
+    /// hype).
+    case lifecycleReplaced(productID: UUID, parentID: UUID, carried: Int, day: Int)
+    /// A priced price change: the book a rise cost, and whether a cut was
+    /// the quarter's sale.
+    case lifecyclePriceMoved(
+        productID: UUID, from: PriceTier, to: PriceTier, subscribersLost: Int, sale: Bool, day: Int
+    )
     // MARK: end K2
     // MARK: K3 (the ladder)
     // MARK: end K3

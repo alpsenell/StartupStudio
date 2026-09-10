@@ -1017,6 +1017,27 @@ public enum Reducer {
         // MARK: K1 (founder money)
         // MARK: end K1
         // MARK: K2 (product lifecycle)
+        // Three player verbs (`ProductSystem+Lifecycle`); no bot sends
+        // any of them.
+        case let .sunsetProduct(productID):
+            events = ProductSystem.sunset(productID: productID, state: &state, balance: balance)
+        case let .shipReplacing(productID, parentID):
+            events = ProductSystem.shipReplacing(
+                productID: productID, parentID: parentID,
+                state: &state, balance: balance, content: content
+            )
+        case let .repriceProduct(productID, tier):
+            events = ProductSystem.reprice(
+                productID: productID, tier: tier, state: &state, balance: balance
+            )
+        case let .lifecycleDebug(scenario):
+            #if DEBUG
+            events = LifecycleDebugSeed.apply(
+                scenario: scenario, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
         // MARK: end K2
         // MARK: K3 (the ladder)
         // MARK: end K3
