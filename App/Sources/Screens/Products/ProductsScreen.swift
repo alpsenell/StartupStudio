@@ -112,6 +112,9 @@ struct ProductsScreen: View {
         // M1: `-autoRoute featureboard` lands a headless pass on a board
         // with cards on it.
         .featureBoardAutoRoute(engine: engine, router: router)
+        // MARK: K2 (product lifecycle) — `-autoRoute k2-…`.
+        .lifecycleAutoRoute(engine: engine, router: router)
+        // MARK: end K2
     }
 
     /// Deep links into this tab: R&D picks the segment, a product id

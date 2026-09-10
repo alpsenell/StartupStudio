@@ -317,6 +317,16 @@ struct NewspaperComposer {
         default: break
         }
         // MARK: end J5
+        // MARK: K2 (product lifecycle)
+        // A v2 replacing its parent is the week's product news; a
+        // retirement, a rise or a sale is news too — a price change the
+        // paper prints is a price change the customers read.
+        switch dated.event {
+        case .lifecycleReplaced: return severity * 10 + strand + 15
+        case .lifecycleSunset, .lifecyclePriceMoved: return severity * 10 + strand + 10
+        default: break
+        }
+        // MARK: end K2
         return severity * 10 + strand
     }
 

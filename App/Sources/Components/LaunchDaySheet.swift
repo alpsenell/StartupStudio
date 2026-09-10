@@ -57,6 +57,12 @@ struct LaunchDaySheet: View {
                         DoorTellPeopleRow(engine: engine) { tellingPeople = true }
                     }
                     // MARK: end J1
+                    // MARK: K2 (product lifecycle) — a v2's launch says
+                    // what it replaced and what came across.
+                    if release != nil, let parentID = product.parentID {
+                        LifecycleLaunchRow(engine: engine, product: product, parentID: parentID)
+                    }
+                    // MARK: end K2
                     if let release {
                         if release.reviews.isEmpty {
                             waitingForReviews(release)

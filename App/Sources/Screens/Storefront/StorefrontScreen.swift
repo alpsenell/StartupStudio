@@ -48,15 +48,12 @@ struct StorefrontScreen: View {
         // The Products tab hides its bar for the HUD; a pushed screen
         // shows it again so Back and the swipe-back gesture come back.
         .toolbar(.visible, for: .navigationBar)
+        // MARK: K2 (product lifecycle) — the buy button opens the priced
+        // sheet the product page opens, so the price has one sheet.
         .sheet(isPresented: $changingPrice) {
-            if let product = engine.state.product(id: productID),
-               case .released(let info) = product.stage {
-                StorefrontPriceSheet(
-                    engine: engine, shell: shell, product: product, info: info,
-                    type: type(for: product)
-                )
-            }
+            LifecyclePriceSheet(engine: engine, productID: productID)
         }
+        // MARK: end K2
     }
 
     private func type(for product: Product) -> ProductTypeDef? {
@@ -141,17 +138,37 @@ struct StorefrontPage: View {
         .accessibilityLabel(
             priceable ? "\(priceLabel(info: info)). Change the price." : "Off the market"
         )
-        if info.offMarket {
+        // MARK: K2 (product lifecycle) — a retired product says so and
+        // when; a sale and a rise are printed where the customer sees them.
+        if let sunset = info.sunsetDay {
+            Text("Discontinued on \(GameCalendar(day: sunset).longLabel). Nobody can buy this any more.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } else if info.offMarket {
             Text("Nobody can buy this any more.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        } else if let sale = info.lastSaleDay,
+                  engine.state.day - sale <= engine.balance.economy.updateBumpDays {
+            Text("On sale this week only.")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.positiveCash)
+        } else if let rise = info.priceRiseUntilDay, engine.state.day <= rise,
+                  let changed = info.lastPriceChangeDay {
+            Text("The price went up on \(GameCalendar(day: changed).longLabel). Buyers are waiting for a sale.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+        // MARK: end K2
     }
 
     /// "$14 · Premium", or "$9 / mo · Standard" for a subscription. The
     /// price is the type's list price times the tier's factor, which is
     /// the same arithmetic the economy charges.
     private func priceLabel(info: ReleaseInfo) -> String {
+        // MARK: K2 (product lifecycle)
+        if info.sunsetDay != nil { return "Discontinued" }
+        // MARK: end K2
         guard let type else { return info.priceTier.displayName }
         let factor = engine.balance.economy.priceTier(info.priceTier).priceFactor
         let price = Int((type.unitPrice * factor).rounded())
@@ -661,91 +678,9 @@ private struct ComingSoonCard: View {
     }
 }
 
-// MARK: - The price change
-
-/// The buy button's destination: the price tier picker that lives on the
-/// product detail screen's live-ops card, presented as a sheet so the
-/// store's one control is the price.
-private struct StorefrontPriceSheet: View {
-    let engine: GameEngine
-    let shell: GameShell
-    let product: Product
-    let info: ReleaseInfo
-    let type: ProductTypeDef?
-
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-                    Picker("Price tier", selection: priceBinding) {
-                        ForEach(PriceTier.allCases, id: \.self) { tier in
-                            Text(tier.displayName).tag(tier)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .accessibilityLabel("Price tier for \(product.name)")
-
-                    ForEach(PriceTier.allCases, id: \.self) { tier in
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: Theme.Spacing.sm) {
-                                Text(tier.displayName)
-                                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                                Spacer(minLength: 0)
-                                Text(price(for: tier))
-                                    .font(Theme.Typography.number(.subheadline))
-                            }
-                            Text(LiveOps.priceCaption(for: tier, balance: engine.balance))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(Theme.Spacing.md)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            tier == info.priceTier ? Theme.chipBackground : Color.clear,
-                            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        )
-                        .accessibilityElement(children: .combine)
-                    }
-                }
-                .padding(Theme.Spacing.lg)
-            }
-            .background(Theme.screenBackground)
-            .navigationTitle("Price")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-    }
-
-    private func price(for tier: PriceTier) -> String {
-        guard let type else { return "—" }
-        let factor = engine.balance.economy.priceTier(tier).priceFactor
-        let amount = Int((type.unitPrice * factor).rounded())
-        return info.isSubscription ? "\(amount.money) / mo" : amount.money
-    }
-
-    private var priceBinding: Binding<PriceTier> {
-        Binding(
-            get: { info.priceTier },
-            set: { tier in
-                guard let action = LiveOps.setPriceTier(productID: product.id, tier: tier) else { return }
-                shell.toasts.send(
-                    action,
-                    to: engine,
-                    ack: "\(product.name) is now priced \(tier.displayName.lowercased())",
-                    icon: "tag.fill"
-                )
-            }
-        )
-    }
-}
+// MARK: K2 (product lifecycle) — the buy button's old sheet, a free
+// picker, is `LifecyclePriceSheet` now (Screens/Products/Lifecycle).
+// MARK: end K2
 
 // MARK: - Art seed
 

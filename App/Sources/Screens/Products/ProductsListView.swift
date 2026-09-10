@@ -222,9 +222,26 @@ private struct InDevelopmentCard: View {
                     rejected: "It is not ready to ship yet."
                 )
             }
+            // MARK: K2 (product lifecycle) — ship it as a v2.
+            ForEach(engine.state.lifecycleReplaceableParents(for: product.id)) { parent in
+                Button(LifecycleShip.replaceLabel(parent: parent, state: engine.state, balance: engine.balance)) {
+                    shell.toasts.send(
+                        .shipReplacing(productID: product.id, parentID: parent.id),
+                        to: engine,
+                        rejected: engine.state.lifecycleReplaceRefusal(
+                            productID: product.id, parentID: parent.id,
+                            balance: engine.balance, content: engine.content
+                        )?.sentence ?? "It is not ready to ship yet."
+                    )
+                }
+            }
+            // MARK: end K2
             Button("Keep working", role: .cancel) {}
         } message: {
-            Text("Development stops for good and the press reviews whatever is finished.")
+            // MARK: K2 (product lifecycle)
+            Text("Development stops for good and the press reviews whatever is finished."
+                + (LifecycleShip.replaceMessage(for: product.id, state: engine.state) ?? ""))
+            // MARK: end K2
         }
     }
 }

@@ -18,6 +18,12 @@ enum LifecycleDebugSeed {
         switch scenario {
         case "successor":
             return seedSuccessor(state: &state, content: content)
+        case "solvent":
+            // The studio fixture has four weeks of runway: a pass that
+            // lets a week go by would photograph the bankruptcy warning
+            // instead of the paper.
+            state.company.cash += 500_000
+            return []
         default:
             return []
         }
