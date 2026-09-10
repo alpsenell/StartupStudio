@@ -362,9 +362,12 @@ struct AppRootView: View {
                     .gameColumn()
                     .tabItem { Label("Life", systemImage: "heart.fill") }
                     // MARK: Iteration 9 — L1 (phone)
-                    // Unread texts, the same badge the Team tab wears for
-                    // people who need answering.
-                    .badge(engine.state.life.phone.unreadCount)
+                    // MARK: U1 (ux: the first-hour fixes) — C6
+                    // What needs the founder on Life: threads asking, doors
+                    // open, and Life's own questions. It used to be every
+                    // unread text, weekly closes and all (102 on the campus).
+                    .badge(TabBadge.life(in: engine.state, content: engine.content))
+                    // MARK: end U1
                     // MARK: end L1
                     .tag(GameTab.life)
             }
@@ -402,6 +405,10 @@ struct AppRootView: View {
                     .tutorialCardInset(session: session, engine: engine)
                     .gameColumn()
                     .tabItem { Label("Business", systemImage: "briefcase.fill") }
+                    // MARK: U1 (ux: the first-hour fixes) — C6
+                    // Desk rows due inside a week.
+                    .badge(TabBadge.business(in: engine.state, balance: engine.balance, content: engine.content))
+                    // MARK: end U1
                     .tag(GameTab.business)
             }
         }

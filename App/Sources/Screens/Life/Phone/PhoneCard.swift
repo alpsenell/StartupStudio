@@ -56,7 +56,9 @@ struct PhoneCard: View {
     }
 
     private func openLabel(_ state: GameState) -> String {
-        let unread = state.life.phone.unreadCount
+        // MARK: U1 (ux: the first-hour fixes) — C6: weekly closes are read
+        let unread = TabBadge.unread(state.life.phone)
+        // MARK: end U1
         let threads = state.life.phone.threads.count
         if unread > 0 {
             return "Open the phone · \(unread) unread"
