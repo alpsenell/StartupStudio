@@ -392,6 +392,7 @@ struct LifeScreen: View {
         // `-autoRoute door -autoDoor <kind>` opens the door today and
         // lands on it, once; in the game, the card, a tip and the rail
         // send `.door(kind)`.
+        DoorDebug.showLaunchDayIfAsked(engine: engine)
         // With any other route, `-autoDoor` still opens the door — so the
         // phone, the journal or the card can be photographed with it.
         if !tookLaunchRoute, DoorDebug.requestedKind != nil {

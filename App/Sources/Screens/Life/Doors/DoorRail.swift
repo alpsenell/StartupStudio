@@ -27,6 +27,15 @@ enum DoorRail {
         }
     }
 
+    /// The open door whose rail line reads `title`, or `nil`. The deferred
+    /// row is handed the title, not the notice id, so this is how its
+    /// *Answer* finds the door without the row changing shape.
+    static func route(forTitle title: String, state: GameState) -> Route? {
+        state.doors.open(on: state.day)
+            .first { DoorCopy.railTitle($0.kind) == title }
+            .map { .door($0.kind) }
+    }
+
     /// The door behind a rail notice id (`"deferred-door-shark"`), or `nil`
     /// for a notice that is not a door.
     static func route(forNoticeID id: String) -> Route? {

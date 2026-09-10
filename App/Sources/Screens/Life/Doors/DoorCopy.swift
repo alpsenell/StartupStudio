@@ -147,7 +147,7 @@ enum DoorCopy {
             return "One evening a week, every week · no bill · opens the family room"
         case (.care, .careSibling):
             let sibling = siblingName(state: engine.state, content: engine.content)
-            return "\(sibling)'s bond \(Int(DoorRules.careSiblingBond)) · no bill · opens the family room"
+            return "\(sibling)'s bond −\(Int(abs(DoorRules.careSiblingBond))) · no bill · opens the family room"
         case (.care, _):
             return "The home sorts something out. The family room stays shut."
         }
@@ -210,6 +210,17 @@ enum DoorCopy {
     }
 
     // MARK: - The family
+
+    /// The family room's line for a parent the care door placed somewhere
+    /// other than a home, or `nil` (the room's own "in a home" stands).
+    static func careNote(_ relation: FamilyRelation, state: GameState, content: ContentCatalog) -> String? {
+        guard let record = state.doors.record(.care), record.subject == relation.rawValue else { return nil }
+        switch record.answer {
+        case .careSpareRoom: return "in the spare room"
+        case .careSibling: return "with \(siblingName(state: state, content: content))"
+        default: return nil
+        }
+    }
 
     private static func careRelation(_ record: DoorRecord?) -> FamilyRelation {
         record?.subject.flatMap(FamilyRelation.init(rawValue:)) ?? .mother

@@ -158,7 +158,10 @@ struct FamilyDramaScreen: View {
                         record: engine.state.familyDrama.record(relative.relation),
                         day: engine.state.day,
                         cooldownDays: engine.balance.familyDrama.visitCooldownDays,
-                        visit: { visit(relative.relation) }
+                        // MARK: J1 (doors)
+                        visit: { visit(relative.relation) },
+                        careNote: DoorCopy.careNote(relative.relation, state: engine.state, content: engine.content)
+                        // MARK: end J1
                     )
                 }
                 if engine.state.life.family.stage != .single {
@@ -315,6 +318,10 @@ private struct FamilyRelativeRow: View {
     let day: Int
     let cooldownDays: Int
     let visit: () -> Void
+    // MARK: J1 (doors)
+    /// Where the care door put them, when it was not the home.
+    var careNote: String? = nil
+    // MARK: end J1
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Spacing.md) {
@@ -349,6 +356,9 @@ private struct FamilyRelativeRow: View {
 
     private var subtitle: String {
         if let died = record?.diedDay { return "\(relative.relation.shortName) · died day \(died)" }
+        // MARK: J1 (doors)
+        if record?.isInCare == true, let careNote { return "\(relative.caption) · \(careNote)" }
+        // MARK: end J1
         if record?.isInCare == true { return "\(relative.caption) · in a home" }
         if record?.employeeID != nil { return "\(relative.caption) · on the payroll" }
         if let stake = record?.stakePoints, stake > 0 {

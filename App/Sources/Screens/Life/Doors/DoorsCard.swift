@@ -103,7 +103,10 @@ struct DoorDraftNote: View {
     var body: some View {
         PixelPanel {
             VStack(alignment: .leading, spacing: 6) {
-                PixelText(text: "Drafted", scale: 2, color: Theme.pixelAccent)
+                PixelText(
+                    text: String(localized: "Drafted", comment: "Pixel header over a feed post the game has already written for you"),
+                    scale: 2, color: Theme.pixelAccent
+                )
                 Text(line)
                     .font(.callout)
                     .italic()

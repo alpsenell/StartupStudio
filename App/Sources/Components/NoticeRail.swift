@@ -128,6 +128,10 @@ struct NoticeRail: View {
             )
         }
 
+        // MARK: J1 (doors)
+        notices.append(contentsOf: DoorRail.notices(for: state))
+        // MARK: end J1
+
         // Iteration 7 (R1): the tour's beat, after a pause and before a
         // deferred question. Silent across the ship beat's wait.
         if let step = session?.tutorial?.activeStep {
@@ -159,6 +163,10 @@ struct NoticeRail: View {
     /// dismissed it or finished the goal.
     private var activeTip: CoachTip? {
         let activeGoals = ProgressionReader.activeGoalIDs(in: engine.state)
+        // MARK: J1 (doors)
+        if let tip = CoachTip.all.first(where: { activeGoals.contains($0.goalID) && !dismissedTips.contains($0.id) })
+            ?? CoachTip.stateTip(in: engine.state, dismissed: dismissedTips) { return tip }
+        // MARK: end J1
         guard !activeGoals.isEmpty else { return nil }
         return CoachTip.all.first {
             activeGoals.contains($0.goalID) && !dismissedTips.contains($0.id)
@@ -391,6 +399,9 @@ struct NoticeRail: View {
             Button {
                 Haptics.commit()
                 Sounds.play(.tap)
+                // MARK: J1 (doors)
+                if let route = DoorRail.route(forTitle: title, state: engine.state), let onRoute { return onRoute(route) }
+                // MARK: end J1
                 shell.recallDeferredChoice()
             } label: {
                 Text("Answer")

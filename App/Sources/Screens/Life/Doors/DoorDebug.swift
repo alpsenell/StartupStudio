@@ -34,6 +34,23 @@ enum DoorDebug {
         DebugLaunch.value(after: "-autoTip")
     }
 
+    @MainActor private static var tookLaunchDay = false
+
+    /// `-autoTellPeople`: puts the launch-day sheet up for the newest
+    /// release, so *Tell people* can be photographed. (`-autoRoute
+    /// launchday` is the war room's moment, a different screen.)
+    @MainActor
+    static func showLaunchDayIfAsked(engine: GameEngine) {
+        #if DEBUG
+        guard !tookLaunchDay, ProcessInfo.processInfo.arguments.contains("-autoTellPeople") else { return }
+        tookLaunchDay = true
+        GameShell.shared.launchDayProductID = engine.state.products.last { product in
+            if case .released = product.stage { return true }
+            return false
+        }?.id
+        #endif
+    }
+
     @MainActor
     static func openIfAsked(engine: GameEngine) {
         #if DEBUG
