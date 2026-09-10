@@ -69,6 +69,13 @@ struct LifeScoreCard: View {
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(Theme.positiveCash)
                             }
+                            // MARK: K5 (hand over the keys)
+                            else if engine.state.handOverBlocker(balance: engine.balance) == nil {
+                                Label("You could hand it over", systemImage: "key.fill")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(Theme.accent)
+                            }
+                            // MARK: end K5
                             Spacer(minLength: Theme.Spacing.sm)
                             Button {
                                 Haptics.tap()

@@ -37,8 +37,57 @@ extension GameSession {
         if DebugLaunch.opensHeirloomsPage || ProcessInfo.processInfo.arguments.contains("-autoNewGame") {
             beginNewGame(inSlot: slots.first(where: \.isEmpty)?.slot ?? 0)
         }
+        // MARK: K5 (hand over the keys)
+        handOverOnLaunchIfAsked()
+        // MARK: end K5
         #endif
     }
+
+    // MARK: K5 (hand over the keys)
+
+    /// Hands the live company to `successorID`, keeping `keptPercent` of
+    /// the founder's holding. The outgoing founder's `LegacyRun` is written
+    /// from the state *before* the send, under the id the new `lineage`
+    /// points at, and only once the engine accepted — a refused hand-over
+    /// writes nothing. No `gameOver`, so nothing posts to Game Center.
+    @discardableResult
+    func handOverKeys(successorID: UUID, keptPercent: Int) -> Bool {
+        let before = engine.state
+        let balance = engine.balance
+        let runID = UUID()
+        let events = engine.send(.handOverKeys(
+            successorID: successorID, keptPercent: keptPercent, predecessorRunID: runID
+        ))
+        guard !events.isEmpty else { return false }
+        ledger.recordHandOver(
+            before, runID: runID, successorID: successorID, keptPercent: keptPercent, balance: balance
+        )
+        ledger.induct(AwardsJudge.hallEntries(state: before, content: engine.content))
+        saveLedger()
+        return true
+    }
+
+    #if DEBUG
+    /// `-autoRoute k5after` / `-k5HandOver`: hand the fixture to its best
+    /// successor at a quarter, a moment after launch (the slot is loaded
+    /// by then). Once: a company that already has a lineage is left alone.
+    private func handOverOnLaunchIfAsked() {
+        guard DebugLaunch.handsOverOnLaunch else { return }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(800))
+            guard let self else { return }
+            let state = engine.state
+            let balance = engine.balance
+            guard state.lineage == nil,
+                  let heir = state.handOverCandidates(balance: balance)
+                      .first(where: { state.handOverSuccessorBlocker($0, balance: balance) == nil })
+            else { return }
+            handOverKeys(successorID: heir.id, keptPercent: HandOverKeep.standard)
+        }
+    }
+    #endif
+
+    // MARK: end K5
 
     /// The live engine's ending, if it has one.
     func recordEndingIfNeeded() {

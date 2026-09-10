@@ -331,6 +331,7 @@ extension Route {
         // MARK: K4 (deals and exits)
         // MARK: end K4
         // MARK: K5 (hand over the keys)
+        case "k5keys", "k5after": .lifeScore
         // MARK: end K5
         // MARK: K6 (home and rooms)
         // MARK: end K6
@@ -1582,6 +1583,46 @@ extension DebugLaunch {
     // MARK: K4 (deals and exits)
     // MARK: end K4
     // MARK: K5 (hand over the keys)
+
+    /// `-autoRoute k5keys`: Life's score screen with the hand-over sheet
+    /// open. `-autoRoute k5after` (or `-k5HandOver` with any other route):
+    /// the company handed to the best successor, keeping a quarter, a
+    /// moment after launch. Both prepare the `-autoFixture` first
+    /// (`k5Prepared`), because no bundled fixture passes the gates as it
+    /// ships: every campus save has a seated board and nobody at bond 50.
+    static var opensHandOverSheet: Bool { autoRouteName == "k5keys" }
+
+    static var handsOverOnLaunch: Bool {
+        #if DEBUG
+        return autoRouteName == "k5after" || ProcessInfo.processInfo.arguments.contains("-k5HandOver")
+        #else
+        return false
+        #endif
+    }
+
+    static var preparesHandOver: Bool { opensHandOverSheet || handsOverOnLaunch }
+
+    /// The fixture with its seated rounds bought out for nothing and its
+    /// longest-serving person at bond 60 — the preparation K5's
+    /// measurement used (`iteration-15-lanes/k5.md`). Screenshot passes
+    /// only; the save a player has is never touched by it.
+    static func k5Prepared(_ start: GameState) -> GameState {
+        var state = start
+        let seated = state.investors.rounds.filter(\.takesBoardSeat)
+        state.investors.rounds.removeAll(where: \.takesBoardSeat)
+        for var round in seated {
+            round.boughtOutDay = state.day
+            round.buybackPrice = 0
+            state.investors.boughtOut.append(round)
+            state.investors.equityRemaining = min(100, state.investors.equityRemaining + round.equity)
+        }
+        state.investors.boardPressure = 0
+        let staff = state.employees.indices.filter { !state.employees[$0].isFounder }
+        if let longest = staff.min(by: { state.employees[$0].hiredDay < state.employees[$1].hiredDay }) {
+            state.employees[longest].founderBond = max(state.employees[longest].founderBond, 60)
+        }
+        return state
+    }
     // MARK: end K5
     // MARK: K6 (home and rooms)
     // MARK: end K6

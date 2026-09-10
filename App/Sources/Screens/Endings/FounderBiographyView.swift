@@ -137,7 +137,7 @@ struct FounderBiographyView: View {
 
             // Iteration 8: where the founder came from, when from the ledger.
             if let lineage = state.lineage {
-                Text(Successors.line(for: lineage))
+                Text(Successors.line(for: lineage, companyName: state.company.name))
                     .font(.system(.footnote, design: .rounded))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -502,12 +502,18 @@ struct FounderBiographyView: View {
                             (round.buybackPrice ?? 0).money
                         )
                     }
+                    // K5: a kept stake is not a round anybody raised; it
+                    // gets its own line, and stays out of the count.
+                    let raisedRounds = state.investors.rounds.count(where: { !$0.isEmeritus })
                     if state.investors.totalRaised > 0 {
                         row(
-                            "Raised across \(state.investors.rounds.count) round"
-                                + "\(state.investors.rounds.count == 1 ? "" : "s"),",
+                            "Raised across \(raisedRounds) round"
+                                + "\(raisedRounds == 1 ? "" : "s"),",
                             state.investors.totalRaised.money
                         )
+                    }
+                    ForEach(state.investors.rounds.filter(\.isEmeritus)) { round in
+                        row("\(round.investorName) kept, silently", "\(round.equity.oneDecimal)%")
                     }
                     row("Reached", state.company.officeTier.displayName)
                     // MARK: P3 (purchases: surfaces and copy)

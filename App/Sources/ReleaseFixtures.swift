@@ -78,10 +78,13 @@ enum ReleaseFixture {
     ) -> String? {
         #if DEBUG
         guard let name = DebugLaunch.launchFixtureName else { return nil }
-        guard let state = state(named: name) else {
+        guard var state = state(named: name) else {
             assertionFailure("-autoFixture \(name): no such bundled fixture")
             return nil
         }
+        // MARK: K5 (hand over the keys)
+        if DebugLaunch.preparesHandOver { state = DebugLaunch.k5Prepared(state) }
+        // MARK: end K5
         do {
             try store.save(
                 state, appVersion: appVersion, summary: SaveSummary(state: state), slot: 0

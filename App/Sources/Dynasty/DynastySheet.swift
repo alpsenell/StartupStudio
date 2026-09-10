@@ -51,7 +51,7 @@ struct DynastySheet: View {
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                         ForEach(nodes) { node in
-                            DynastyRow(run: node.run)
+                            DynastyRow(run: node.run, successorName: successorName(for: node.run))
                                 .padding(.leading, CGFloat(node.depth) * Theme.Spacing.lg)
                         }
                     }
@@ -73,10 +73,22 @@ struct DynastySheet: View {
     private var generations: Int {
         (nodes.map(\.depth).max() ?? 0) + 1
     }
+
+    // MARK: K5 (hand over the keys)
+    /// Who took the keys from a founder who handed over: the founder of the
+    /// run that hangs under this one, once that run has its own line.
+    private func successorName(for run: LegacyRun) -> String? {
+        guard run.successorEmployeeID != nil else { return nil }
+        return ledger.runs.first { $0.lineage?.predecessorRunID == run.id }?.founderName
+    }
+    // MARK: end K5
 }
 
 private struct DynastyRow: View {
     let run: LegacyRun
+    // MARK: K5 (hand over the keys)
+    var successorName: String? = nil
+    // MARK: end K5
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Spacing.md) {
@@ -102,11 +114,22 @@ private struct DynastyRow: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 if let lineage = run.lineage {
-                    Text(Successors.line(for: lineage))
+                    Text(Successors.line(for: lineage, companyName: run.companyName))
                         .font(.caption)
                         .foregroundStyle(Theme.accent)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                // MARK: K5 (hand over the keys)
+                if run.successorEmployeeID != nil {
+                    Text(
+                        successorName.map { "Handed the keys to \($0) and kept a silent stake." }
+                            ?? "Handed the keys over and kept a silent stake. The company is still running."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(Theme.accent)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+                // MARK: end K5
                 if let children = run.children, !children.isEmpty {
                     Text("Children: \(children.map(\.name).joined(separator: ", "))")
                         .font(.caption)

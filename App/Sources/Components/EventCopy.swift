@@ -1218,6 +1218,8 @@ struct EventCopy {
         // MARK: K4 (deals and exits)
         // MARK: end K4
         // MARK: K5 (hand over the keys)
+        case .keysHandedOver(let successorID, let keptEquity, let day):
+            HandOverCopy.line(state: state, successorID: successorID, keptEquity: keptEquity, day: day)
         // MARK: end K5
         // MARK: K6 (home and rooms)
         // MARK: end K6
