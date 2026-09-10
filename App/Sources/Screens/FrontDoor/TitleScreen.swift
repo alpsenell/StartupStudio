@@ -279,8 +279,7 @@ struct TitleScreen: View {
         // under way, or the result once the day is recorded.
         .sheet(item: $dailyEntry) { entry in
             // MARK: J4 (house field)
-            // Built in a helper: the extra argument tipped this modifier
-            // chain over the type-checker's time limit in Release.
+            // Built in a helper, to keep this modifier chain short.
             houseFieldDailySheet(entry)
             // MARK: end J4
         }

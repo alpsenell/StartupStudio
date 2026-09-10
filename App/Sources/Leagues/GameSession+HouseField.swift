@@ -179,13 +179,18 @@ extension GameSession {
 
     // MARK: - Debug
 
-    #if DEBUG
     /// `-autoHouseField week|day`: plays this week's field for the
     /// player's tier (or today's), then files a made-up finished year for
     /// the player between the house's ninth and tenth, so the table and
     /// the "directly above you" line can be photographed without playing
     /// a year. An attempt already recorded is left alone.
+    ///
+    /// Declared in every build because the front door's launch-flag block
+    /// calls it unconditionally (the flag is `nil` outside DEBUG); only the
+    /// body is DEBUG. A Release build without the declaration fails to
+    /// type-check `TitleScreen`'s modifier chain.
     func debugFileHouseFieldRun(_ mode: String, now: Date = Date()) async {
+        #if DEBUG
         let lines = [
             "Filed by -autoHouseField: a made-up year,",
             "placed in the middle of the house field.",
@@ -216,8 +221,8 @@ extension GameSession {
             ))
             try? leagueStores.ledger.save(ledgerFile, appVersion: Self.leagueAppVersion)
         }
+        #endif
     }
-    #endif
 }
 
 // MARK: end J4
