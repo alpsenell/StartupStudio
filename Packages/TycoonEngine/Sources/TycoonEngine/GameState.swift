@@ -642,6 +642,11 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: J1 (doors)
     // MARK: end J1
     // MARK: J2 (record)
+    /// The board read the papers: the key-person line a review added.
+    case standingFounderQuarter(points: Int, day: Int)
+    /// A conviction or a trace cost the founder a rung of fame
+    /// (`reason`: "conviction" or "trace"; `level`: `FameLevel` raw value).
+    case standingFameDropped(level: Int, reason: String, day: Int)
     // MARK: end J2
     // MARK: J3 (rivals and the market)
     /// A studio moved into a topic the week it boomed.

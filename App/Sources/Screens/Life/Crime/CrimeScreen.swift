@@ -100,13 +100,11 @@ struct CrimeScreen: View {
                     ForEach(engine.state.crime.record.reversed()) { entry in
                         CrimeRecordRow(
                             entry: entry,
-                            chance: Crime.discoveryChance(
-                                entry,
-                                notoriety: engine.state.crime.notoriety,
-                                hasLegal: engine.state.knownDepartments.contains(.legal),
-                                day: engine.state.day,
-                                balance: engine.balance.crime
+                            // MARK: J2 (record) — the odds the sweep rolls.
+                            chance: engine.state.standingDiscoveryChance(
+                                entry, balance: engine.balance
                             ),
+                            // MARK: end J2
                             day: engine.state.day
                         )
                     }

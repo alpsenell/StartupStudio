@@ -156,6 +156,15 @@ public enum InteractionSystem {
         }
 
         state.interactions.markUsed(target, rule.id, day: day)
+        // MARK: J2 (record)
+        // People you treated badly give references too. A mean act on
+        // somebody on payroll goes on the list the founder's name reads.
+        if rule.group == .mean, case .employee = target {
+            state.interactions.standingRecordMeanAct(
+                day: day, window: balance.founderStanding.nameMeanActWindowDays
+            )
+        }
+        // MARK: end J2
         state.interactions.performedCount += 1
         state.interactions.lastOutcome = InteractionOutcome(
             target: target, interactionID: rule.id, good: good, line: line,

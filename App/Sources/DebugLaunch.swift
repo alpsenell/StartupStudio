@@ -288,6 +288,10 @@ extension Route {
         // MARK: J1 (doors)
         // MARK: end J1
         // MARK: J2 (record)
+        // The hiring sheet (the name line, the asks, the refusal) and the
+        // cap table (the review line, the key-person clause).
+        case "hiring", "standing": .hiring
+        case "investors", "board", "boardreview": .investors
         // MARK: end J2
         // MARK: J3 (rivals and the market)
         // MARK: end J3
@@ -1162,6 +1166,102 @@ extension DebugLaunch {
     // MARK: J1 (doors)
     // MARK: end J1
     // MARK: J2 (record)
+
+    /// The founder's record, dressed for a screenshot, as the scenarios
+    /// `GameAction.standingDebug` understands:
+    ///
+    /// - `-autoStanding <name>`: notoriety, mean acts on staff and firings
+    ///   with cause enough for a name of about `<name>` (pair with
+    ///   `-autoRoute hiring`).
+    /// - `-autoBoardReview case`: a seated board, an open case and a beef,
+    ///   then the quarterly review, run today (pair with
+    ///   `-autoRoute investors`). `-autoBoardReview offer`: an open case
+    ///   and a term sheet today, key-person clause and all.
+    /// - `-autoSpotlight <level>`: fame at a level ("known" … "star"),
+    ///   for the spotlight line (pair with `-autoRoute spy -autoSpyCard`).
+    static var standingScenarios: [String] {
+        var scenarios: [String] = []
+        if let name = value(after: "-autoStanding") { scenarios.append("name \(name)") }
+        if let review = value(after: "-autoBoardReview")?.lowercased() {
+            scenarios.append(review == "offer" ? "offercase" : "boardcase")
+        }
+        if let level = value(after: "-autoSpotlight") { scenarios.append("spotlight \(level)") }
+        return scenarios
+    }
+
+    /// Whether a J2 screenshot pass is running that wants the decision
+    /// sheet held back: every J2 flag except `-autoBoardReview offer`,
+    /// whose subject *is* the term-sheet prompt. Always false in release.
+    static var standingHoldsDecisions: Bool {
+        #if DEBUG
+        let scenarios = standingScenarios
+        return !scenarios.isEmpty && !scenarios.contains("offercase")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoBoardReview case` also lifts the board card onto a sheet: it
+    /// sits below the fold of the cap table and a headless pass cannot
+    /// scroll (W3's `-autoSpyCard`, for the same reason).
+    static var standingLiftsBoardCard: Bool {
+        #if DEBUG
+        return standingScenarios.contains("boardcase")
+        #else
+        return false
+        #endif
+    }
+
+    /// Sends each scenario until the state shows it. `current` is read on
+    /// every attempt, the way `InsideDebug` reads it, and the test is the
+    /// state rather than the engine: installing a fixture replaces the
+    /// state a scenario was applied to. At most five sends a scenario.
+    @MainActor
+    static func startStandingIfAsked(current: @escaping () -> GameEngine) async {
+        #if DEBUG
+        let scenarios = standingScenarios
+        guard !scenarios.isEmpty else { return }
+        var sends: [String: Int] = [:]
+        // An action lands on the engine's next turn, so a scenario is
+        // given three seconds to show before it is sent again.
+        var lastSent: [String: Int] = [:]
+        for attempt in 0..<40 {
+            let engine = current()
+            if engine.state.gameOver == nil {
+                for scenario in scenarios
+                where !standingShows(scenario, engine: engine)
+                    && sends[scenario, default: 0] < 5
+                    && attempt - lastSent[scenario, default: -100] >= 10 {
+                    engine.send(.standingDebug(scenario: scenario))
+                    sends[scenario, default: 0] += 1
+                    lastSent[scenario] = attempt
+                }
+            }
+            try? await Task.sleep(for: .milliseconds(300))
+        }
+        #endif
+    }
+
+    /// Whether the state already shows a scenario.
+    @MainActor
+    private static func standingShows(_ scenario: String, engine: GameEngine) -> Bool {
+        let state = engine.state
+        let words = scenario.split(separator: " ").map(String.init)
+        switch words.first {
+        case "name":
+            let target = min(100, Double(words.dropFirst().first ?? "40") ?? 40)
+            return state.standingName(balance: engine.balance).score >= target - 0.5
+        case "boardcase":
+            return (state.investors.reviews.last?.founderQuarter ?? 0) > 0
+        case "offercase":
+            return state.investors.pendingOffer?.standingKeyPersonClause == true
+        case "spotlight":
+            return state.standingSpotlight(balance: engine.balance) > 1
+        default:
+            return true
+        }
+    }
+
     // MARK: end J2
     // MARK: J3 (rivals and the market)
     // Parsed in `RivalMarketDebug` (Screens/Business/RivalFight), started

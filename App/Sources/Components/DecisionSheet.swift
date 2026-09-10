@@ -467,12 +467,23 @@ extension DecisionPrompt {
     private static func investmentPrompt(
         _ offer: InvestmentOffer,
         state: GameState,
-        content: ContentCatalog
+        content: ContentCatalog,
+        // MARK: J2 (record)
+        balance: BalanceConfig
+        // MARK: end J2
     ) -> DecisionPrompt? {
         let persona = content.investors.first { $0.id == offer.investorID }
-        let boardLine = offer.takesBoardSeat
+        var boardLine = offer.takesBoardSeat
             ? "They take a board seat and will grade you on \(offer.expects.displayName.lowercased()) every quarter."
             : "No board seat — they wire the money and leave you alone."
+        // MARK: J2 (record)
+        // The sheet says so: it arrived while a case was open and nobody
+        // sat on the board to read the papers first.
+        if offer.standingKeyPersonClause {
+            let cut = Int(((1 - balance.founderStanding.keyPersonClauseFactor) * 100).rounded())
+            boardLine += " Key-person clause: −\(cut)%. They read about the case."
+        }
+        // MARK: end J2
         // WS-G: signing is the one-way declaration. Said once, on the
         // button, while there is still something to give up.
         let oneWay = state.investors.equityRemaining >= 100
@@ -807,7 +818,8 @@ extension DecisionPrompt {
                 resignationPrompt($0, state: state, balance: balance)
             }
         case .termSheet:
-            state.investors.pendingOffer.flatMap { investmentPrompt($0, state: state, content: content) }
+            // J2's key-person clause reads the balance.
+            state.investors.pendingOffer.flatMap { investmentPrompt($0, state: state, content: content, balance: balance) }
         case .story:
             NarrativeChoicePresenter.prompt(for: state, content: content, balance: balance)
         case .dirtyMoneyDemand:

@@ -303,6 +303,15 @@ struct AppRootView: View {
                 #endif
             }
             // MARK: end of Iteration 11, wave two — W4
+            // MARK: J2 (record)
+            // `-autoStanding`, `-autoBoardReview`, `-autoSpotlight`: the
+            // founder's record, dressed for a screenshot.
+            .task {
+                #if DEBUG
+                await DebugLaunch.startStandingIfAsked(current: { session.engine })
+                #endif
+            }
+            // MARK: end J2
             // Pending rival offers surface here (not per tab) so the paused
             // timeline always has its question on screen.
             .sheet(item: pendingDecision) { prompt in
@@ -525,6 +534,12 @@ struct AppRootView: View {
             get: {
                 guard session.engine.state.gameOver == nil else { return nil }
                 guard shell.launchDayProductID == nil, !shell.showingWeeklyReport else { return nil }
+                // MARK: J2 (record)
+                // DEBUG only: a screenshot of the hiring sheet, the board
+                // card or the espionage rows keeps the fixture's questions
+                // off the screen while it is taken.
+                if DebugLaunch.standingHoldsDecisions { return nil }
+                // MARK: end J2
                 guard let prompt = currentPrompt() else { return nil }
                 // MARK: Iteration 9 — L1 (phone)
                 shell.deferBeatIfHeadless(prompt, engine: session.engine)

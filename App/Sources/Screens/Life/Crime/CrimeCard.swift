@@ -92,15 +92,20 @@ struct CrimeCard: View {
         guard !open.isEmpty else { return "Everything on the record has been answered for." }
         let hasLegal = state.knownDepartments.contains(.legal)
         // The chance at least one of them surfaces this week.
+        // MARK: J2 (record)
+        // The odds the sweep rolls: the laundering key and fame's
+        // spotlight included, and the spotlight named when it is on.
         let survive = open.reduce(1.0) { total, entry in
-            total * (1 - Crime.discoveryChance(
-                entry, notoriety: state.crime.notoriety, hasLegal: hasLegal,
-                day: state.day, balance: engine.balance.crime
-            ))
+            total * (1 - state.standingDiscoveryChance(entry, balance: engine.balance))
         }
         let percent = Int(((1 - survive) * 100).rounded())
         let legal = hasLegal ? " Legal is halving it." : ""
-        return "\(open.count) thing\(open.count == 1 ? "" : "s") still open · about \(percent)% somebody notices this week.\(legal)"
+        let spotlight = state.standingSpotlight(balance: engine.balance)
+        let lit = spotlight > 1
+            ? " Fame puts ×\(spotlight.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))) on it."
+            : ""
+        return "\(open.count) thing\(open.count == 1 ? "" : "s") still open · about \(percent)% somebody notices this week.\(legal)\(lit)"
+        // MARK: end J2
     }
 
     // MARK: - A case

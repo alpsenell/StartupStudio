@@ -63,6 +63,12 @@ public struct InvestmentOffer: Codable, Equatable, Sendable {
     public var patienceWeeks: Int
     /// Last day the player can answer.
     public var respondByDay: Int
+    // MARK: J2 (record)
+    /// Priced with a key-person clause: it arrived while a case was open
+    /// and nobody sat on the board. The sheet says so. Encoded only when
+    /// set, so every other offer writes the bytes it always wrote.
+    public var standingKeyPersonClause: Bool = false
+    // MARK: end J2
 
     public init(
         investorID: String,
@@ -168,6 +174,9 @@ extension InvestmentOffer {
     private enum CodingKeys: String, CodingKey {
         case investorID, investorName, amount, equity, valuation
         case takesBoardSeat, expects, patienceWeeks, respondByDay
+        // MARK: J2 (record)
+        case standingKeyPersonClause
+        // MARK: end J2
     }
 
     public init(from decoder: any Decoder) throws {
@@ -183,7 +192,32 @@ extension InvestmentOffer {
             patienceWeeks: try container.decodeIfPresent(Int.self, forKey: .patienceWeeks) ?? 26,
             respondByDay: try container.decode(Int.self, forKey: .respondByDay)
         )
+        // MARK: J2 (record)
+        standingKeyPersonClause = try container.decodeIfPresent(
+            Bool.self, forKey: .standingKeyPersonClause
+        ) ?? false
+        // MARK: end J2
     }
+
+    // MARK: J2 (record)
+    // Hand-written so the key-person flag is written only when set: the
+    // same keys, in the same order, as the synthesized encoder wrote.
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(investorID, forKey: .investorID)
+        try container.encode(investorName, forKey: .investorName)
+        try container.encode(amount, forKey: .amount)
+        try container.encode(equity, forKey: .equity)
+        try container.encode(valuation, forKey: .valuation)
+        try container.encode(takesBoardSeat, forKey: .takesBoardSeat)
+        try container.encode(expects, forKey: .expects)
+        try container.encode(patienceWeeks, forKey: .patienceWeeks)
+        try container.encode(respondByDay, forKey: .respondByDay)
+        if standingKeyPersonClause {
+            try container.encode(standingKeyPersonClause, forKey: .standingKeyPersonClause)
+        }
+    }
+    // MARK: end J2
 }
 
 /// A strategic buyout taken as an earn-out (iteration 5, WS-B): part of
@@ -247,6 +281,12 @@ public struct BoardReview: Codable, Equatable, Sendable {
     public var pressure: Double
     /// One line the board room shows.
     public var note: String
+    // MARK: J2 (record)
+    /// What the founder's own quarter added to the pressure: the key-person
+    /// line (`FounderStanding.boardLine`). Zero for a founder with no
+    /// record, and then not written.
+    public var founderQuarter: Double = 0
+    // MARK: end J2
 
     public init(day: Int, expectation: BoardExpectation, met: Bool, pressure: Double, note: String) {
         self.day = day
@@ -256,6 +296,39 @@ public struct BoardReview: Codable, Equatable, Sendable {
         self.note = note
     }
 }
+
+// MARK: J2 (record)
+// Hand-written so `founderQuarter` decodes if present and is written only
+// when non-zero: every review a clean founder sits through encodes the
+// five keys, in the order, the synthesized coder wrote.
+extension BoardReview {
+    private enum CodingKeys: String, CodingKey {
+        case day, expectation, met, pressure, note, founderQuarter
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            day: try container.decode(Int.self, forKey: .day),
+            expectation: try container.decode(BoardExpectation.self, forKey: .expectation),
+            met: try container.decode(Bool.self, forKey: .met),
+            pressure: try container.decode(Double.self, forKey: .pressure),
+            note: try container.decode(String.self, forKey: .note)
+        )
+        founderQuarter = try container.decodeIfPresent(Double.self, forKey: .founderQuarter) ?? 0
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(day, forKey: .day)
+        try container.encode(expectation, forKey: .expectation)
+        try container.encode(met, forKey: .met)
+        try container.encode(pressure, forKey: .pressure)
+        try container.encode(note, forKey: .note)
+        if founderQuarter != 0 { try container.encode(founderQuarter, forKey: .founderQuarter) }
+    }
+}
+// MARK: end J2
 
 /// Everything the investor and board layer persists: the cap table, the
 /// offer on the table, board pressure, and the profitability record that

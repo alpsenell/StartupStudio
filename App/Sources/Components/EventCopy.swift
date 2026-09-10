@@ -1133,6 +1133,23 @@ struct EventCopy {
         // MARK: J1 (doors)
         // MARK: end J1
         // MARK: J2 (record)
+        case .standingFounderQuarter(let points, let day):
+            (
+                "newspaper.fill",
+                "The board read the papers. Your quarter added +\(points) to the pressure",
+                day,
+                Theme.negativeCash
+            )
+        case .standingFameDropped(let level, let reason, let day):
+            (
+                "star.slash.fill",
+                (reason == "trace"
+                    ? "Traced, and the feed found out. Down a rung: "
+                    : "Convicted, in public. Down a rung: ")
+                    + (FameLevel(rawValue: level)?.displayName ?? "Unknown"),
+                day,
+                Theme.warning
+            )
         // MARK: end J2
         // MARK: J3 (rivals and the market)
         case let .rivalMarketEntered(rivalID, topicID, day):

@@ -18,6 +18,10 @@ struct InvestorsView: View {
     private var shell: GameShell { injectedShell ?? .shared }
 
     private var investors: InvestorState { engine.state.investors }
+    // MARK: J2 (record)
+    /// DEBUG screenshot pass only: the board card lifted onto a sheet.
+    @State private var standingLiftsBoard = false
+    // MARK: end J2
 
     var body: some View {
         BusinessSectionHeader(title: "Cap table", systemImage: "chart.pie.fill")
@@ -53,6 +57,19 @@ struct InvestorsView: View {
         if investors.hasBoard || investors.earnOut != nil {
             BusinessSectionHeader(title: "The board", systemImage: "person.3.fill")
             boardCard
+                // MARK: J2 (record)
+                // DEBUG: `-autoBoardReview case` lifts the card where a
+                // camera can see it; nothing in the game presents this.
+                .sheet(isPresented: $standingLiftsBoard) {
+                    ScrollView { boardCard.padding(Theme.Spacing.lg) }
+                        .background(Theme.screenBackground)
+                }
+                .task {
+                    guard DebugLaunch.standingLiftsBoardCard else { return }
+                    try? await Task.sleep(for: .seconds(4))
+                    standingLiftsBoard = true
+                }
+                // MARK: end J2
         }
 
         BusinessSectionHeader(title: "Going public", systemImage: "bell.fill")
@@ -275,6 +292,24 @@ struct InvestorsView: View {
                     .foregroundStyle(Theme.negativeCash)
                 }
 
+                // MARK: J2 (record)
+                // Rule 7: the number before it lands. What the next review
+                // would add for the founder's own quarter, if it met today.
+                if investors.hasBoard {
+                    let line = engine.state.standingBoardLine(balance: engine.balance)
+                    if line.points > 0 {
+                        Label(
+                            "They read the papers. Next review: +\(Int(line.points.rounded())) for "
+                                + standingReasons(line),
+                            systemImage: "newspaper.fill"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(Theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                // MARK: end J2
+
                 if !investors.reviews.isEmpty {
                     Divider()
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -283,10 +318,21 @@ struct InvestorsView: View {
                                 Image(systemName: review.met ? "checkmark.circle.fill" : "xmark.circle.fill")
                                     .font(.caption)
                                     .foregroundStyle(review.met ? Theme.positiveCash : Theme.negativeCash)
-                                Text(review.note)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                // MARK: J2 (record)
+                                // The review prints the founder's own
+                                // quarter as its own line, when there was one.
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(review.note)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    if review.founderQuarter > 0 {
+                                        Text(FounderStanding.boardLineText(points: review.founderQuarter))
+                                            .font(Theme.Typography.number(.caption2, weight: .bold))
+                                            .foregroundStyle(Theme.negativeCash)
+                                    }
+                                }
+                                // MARK: end J2
                                 Spacer(minLength: 0)
                                 Text("D\(review.day)")
                                     .font(.caption2)
@@ -300,6 +346,24 @@ struct InvestorsView: View {
             }
         }
     }
+
+    // MARK: J2 (record)
+    /// "an open case and three rounds of a beef".
+    private func standingReasons(_ line: StandingBoardLine) -> String {
+        var parts: [String] = []
+        if line.openCases > 0 {
+            parts.append(line.openCases == 1 ? "an open case" : "\(line.openCases) open cases")
+        }
+        if line.guiltyVerdicts > 0 {
+            parts.append(line.guiltyVerdicts == 1 ? "a guilty verdict" : "\(line.guiltyVerdicts) guilty verdicts")
+        }
+        if line.beefRounds > 0 {
+            parts.append("\(line.beefRounds) round\(line.beefRounds == 1 ? "" : "s") of a public beef")
+        }
+        if line.unansweredCancellation { parts.append("a cancellation you haven't answered") }
+        return parts.formatted(.list(type: .and)) + "."
+    }
+    // MARK: end J2
 
     /// The acquirer's seat: what has been paid, what each review is worth,
     /// and how many are left to sit through.
@@ -471,6 +535,22 @@ private struct TermSheetCard: View {
                 .font(.caption)
                 .foregroundStyle(offer.takesBoardSeat ? Theme.warning : .secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+                // MARK: J2 (record)
+                // The sheet says so: it was priced with the case in mind.
+                if offer.standingKeyPersonClause {
+                    let cut = Int(((1 - engine.balance.founderStanding.keyPersonClauseFactor) * 100).rounded())
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("KEY-PERSON CLAUSE: −\(cut)%")
+                            .font(Theme.Typography.number(.caption, weight: .bold))
+                            .foregroundStyle(Theme.negativeCash)
+                        Text("They read about the case. The cheque is smaller by the size of the risk that you go away.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                // MARK: end J2
 
                 if offer.takesBoardSeat {
                     // Patience swings how hard every quarterly verdict

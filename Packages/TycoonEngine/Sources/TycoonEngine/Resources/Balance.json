@@ -2021,5 +2021,26 @@
     "outshipStanding": 8.0,
     "copiedFitFactor": 0.5,
     "copiedCloneQualityBonus": 4.0
+  },
+  "founderStanding": {
+    "boardOpenCase": 8.0,
+    "boardGuiltyVerdict": 12.0,
+    "boardBeefRound": 4.0,
+    "boardCancellation": 6.0,
+    "boardCap": 25.0,
+    "keyPersonClauseFactor": 0.85,
+    "nameNotorietyWeight": 0.5,
+    "nameFiredWithCause": 6.0,
+    "nameMeanAct": 3.0,
+    "nameMeanActCap": 24.0,
+    "nameMeanActWindowDays": 180,
+    "nameGuiltyVerdict": 10.0,
+    "nameFameLevel": 4.0,
+    "nameAlumnusVouch": 3.0,
+    "vouchRapport": 60.0,
+    "askDivisor": 200.0,
+    "refuseAt": 50.0,
+    "spotlightPerRung": 0.25,
+    "launderDiscovery": 0.035
   }
 }

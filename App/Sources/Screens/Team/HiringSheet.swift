@@ -17,6 +17,14 @@ struct HiringSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
+                    // MARK: J2 (record)
+                    // One line: what recruiters hear when they ring the
+                    // people who used to work for you. Nothing at all for a
+                    // founder with a clean name and nobody vouching.
+                    if standingName.score > 0 || standingName.vouching > 0 {
+                        standingLine
+                    }
+                    // MARK: end J2
                     if candidates.isEmpty {
                         emptyState
                     } else {
@@ -30,7 +38,15 @@ struct HiringSheet: View {
                                 interviewBlocker: interviewBlocker,
                                 departmentActive: candidate.role.department.map {
                                     engine.state.hasDepartment($0)
-                                } ?? false
+                                } ?? false,
+                                // MARK: J2 (record)
+                                standingAsk: engine.state.standingAsk(
+                                    for: candidate, balance: engine.balance
+                                ),
+                                standingRefuses: engine.state.standingRefuses(
+                                    candidate.id, balance: engine.balance
+                                )
+                                // MARK: end J2
                             )
                         }
                         if atCap {
@@ -54,6 +70,41 @@ struct HiringSheet: View {
     private var candidates: [Candidate] {
         engine.state.candidatePool
     }
+
+    // MARK: J2 (record)
+
+    private var standingName: StandingName {
+        engine.state.standingName(balance: engine.balance)
+    }
+
+    /// `YOUR NAME: +14% ON ASKS · 2 ALUMNI VOUCH`, and what it means.
+    private var standingLine: some View {
+        let name = standingName
+        // The refusal names who, so it reads at the top of the sheet
+        // however far down their card is.
+        let refuser = name.refuses
+            ? candidates.first { engine.state.standingRefuses($0.id, balance: engine.balance) }?.name
+            : nil
+        return VStack(alignment: .leading, spacing: 2) {
+            Text(FounderStanding.nameLineText(name))
+                .font(Theme.Typography.number(.caption, weight: .bold))
+                .foregroundStyle(name.score > 0 ? Theme.warning : Theme.positiveCash)
+            Text(
+                refuser != nil
+                    ? "\(refuser ?? "") rang someone who used to work for you, and will not come in. Every other ask below has heard."
+                    : name.score > 0
+                        ? "Recruiters ring the people who used to work for you. Every ask below has heard."
+                        : "Recruiters ring the people who used to work for you. It goes well."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: end J2
 
     private var headcountCap: Int {
         engine.balance.office(engine.state.company.officeTier).headcountCap
@@ -130,6 +181,13 @@ private struct CandidateCard: View {
     /// Whether the candidate's department (if their role has one) is
     /// already staffed — flips the hint from "forms" to "joins".
     let departmentActive: Bool
+    // MARK: J2 (record)
+    /// What they ask once they have heard about the founder — the number
+    /// `EmployeeSystem.hire` pays. The rolled salary at a clean name.
+    let standingAsk: Int
+    /// The best CV on the desk, past the line: they will not come in.
+    let standingRefuses: Bool
+    // MARK: end J2
 
     @State private var confirmingPass = false
 
@@ -161,9 +219,15 @@ private struct CandidateCard: View {
                             .lineLimit(1)
                         RoleBadge(role: candidate.role, prominent: true)
                     }
-                    Text("\(candidate.weeklySalary.money)/wk")
-                        .font(Theme.Typography.number(.caption, weight: .regular))
-                        .foregroundStyle(.secondary)
+                    // MARK: J2 (record) — the ask, name and all.
+                    Text(
+                        standingAsk == candidate.weeklySalary
+                            ? "\(candidate.weeklySalary.money)/wk"
+                            : "\(standingAsk.money)/wk · was \(candidate.weeklySalary.money)"
+                    )
+                    .font(Theme.Typography.number(.caption, weight: .regular))
+                    .foregroundStyle(standingAsk == candidate.weeklySalary ? .secondary : Theme.warning)
+                    // MARK: end J2
                 }
                 .accessibilityElement(children: .combine)
 
@@ -209,11 +273,13 @@ private struct CandidateCard: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
-                .disabled(atCap)
+                // MARK: J2 (record) — a refusal disables the hire too.
+                .disabled(atCap || standingRefuses)
                 .accessibilityLabel(
                     "Hire \(candidate.name), \(candidate.role.displayName), "
-                        + "for \(candidate.weeklySalary.money) per week"
+                        + "for \(standingAsk.money) per week"
                 )
+                // MARK: end J2
 
                 Button {
                     confirmingPass = true
@@ -226,6 +292,15 @@ private struct CandidateCard: View {
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Pass on \(candidate.name)")
             }
+            // MARK: J2 (record)
+            // Rule 7: the refused hire says why. Before an interview the
+            // interview row already says it.
+            if standingRefuses && interviewed {
+                Text(FounderStanding.refusalLine)
+                    .font(.caption)
+                    .foregroundStyle(Theme.warning)
+            }
+            // MARK: end J2
         }
         .cardStyle()
         .confirmationDialog(
@@ -252,15 +327,23 @@ private struct CandidateCard: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            .disabled(interviewBlocker != nil)
+            // MARK: J2 (record) — the refusal is a blocker with a reason.
+            .disabled(interviewBlocker != nil || standingRefuses)
             .accessibilityLabel(
-                "Interview \(candidate.name). Reveals the trait their CV left out, "
-                    + "and costs a day of your energy."
+                standingRefuses
+                    ? "\(candidate.name) will not come in. \(FounderStanding.refusalLine)"
+                    : "Interview \(candidate.name). Reveals the trait their CV left out, "
+                        + "and costs a day of your energy."
             )
 
-            Text(interviewBlocker ?? "Reveals the trait their CV left out.")
-                .font(.caption)
-                .foregroundStyle(interviewBlocker == nil ? .secondary : Theme.warning)
+            Text(
+                standingRefuses
+                    ? FounderStanding.refusalLine
+                    : interviewBlocker ?? "Reveals the trait their CV left out."
+            )
+            .font(.caption)
+            .foregroundStyle(interviewBlocker == nil && !standingRefuses ? .secondary : Theme.warning)
+            // MARK: end J2
         }
     }
 

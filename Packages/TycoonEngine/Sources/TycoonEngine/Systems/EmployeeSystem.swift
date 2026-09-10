@@ -881,6 +881,14 @@ enum EmployeeSystem {
         guard let poolIndex = state.candidatePool.firstIndex(where: { $0.id == candidateID }),
               state.headcount < balance.office(state.company.officeTier).headcountCap
         else { return [] }
+        // MARK: J2 (record)
+        // The founder's name, read at the moment of hiring rather than at
+        // the roll: the best CV past the line will not come in, and every
+        // other ask carries the premium. Exactly the rolled salary, and
+        // nobody refusing, at a name of zero.
+        guard !state.standingRefuses(candidateID, balance: balance) else { return [] }
+        let standingAsk = state.standingAsk(for: state.candidatePool[poolIndex], balance: balance)
+        // MARK: end J2
 
         let candidate = state.candidatePool.remove(at: poolIndex)
         let assignment: Assignment = if let product = state.productInDevelopment {
@@ -892,7 +900,9 @@ enum EmployeeSystem {
             id: candidate.id,
             name: candidate.name,
             skills: candidate.skills,
-            weeklySalary: candidate.weeklySalary,
+            // MARK: J2 (record) — what they asked, name and all.
+            weeklySalary: standingAsk,
+            // MARK: end J2
             assignment: assignment,
             isFounder: false,
             hiredDay: state.day,

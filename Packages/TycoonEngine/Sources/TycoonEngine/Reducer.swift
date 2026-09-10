@@ -882,6 +882,15 @@ public enum Reducer {
         // MARK: J1 (doors)
         // MARK: end J1
         // MARK: J2 (record)
+        case let .standingDebug(scenario):
+            #if DEBUG
+            events = StandingDebug.apply(
+                scenario, state: &state, balance: balance, content: content
+            )
+            #else
+            _ = scenario
+            events = []
+            #endif
         // MARK: end J2
         // MARK: J3 (rivals and the market)
         case .noticeMarketOpened:

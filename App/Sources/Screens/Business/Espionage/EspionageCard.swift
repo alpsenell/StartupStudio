@@ -46,7 +46,10 @@ struct EspionageCard: View {
                                     for: operation, against: rivalID, balance: engine.balance
                                 ),
                                 armed: arming == operation,
-                                tap: { tap(operation) }
+                                tap: { tap(operation) },
+                                // MARK: J2 (record)
+                                spotlight: engine.state.standingSpotlight(balance: engine.balance)
+                                // MARK: end J2
                             )
                         }
                     }
@@ -131,6 +134,11 @@ private struct EspionageOperationRow: View {
     let refusal: EspionageRefusal?
     let armed: Bool
     let tap: () -> Void
+    // MARK: J2 (record)
+    /// Fame's multiplier on the trace, already inside `odds.trace`; drawn
+    /// as its own line when it is more than one.
+    var spotlight: Double = 1
+    // MARK: end J2
 
     var body: some View {
         Button(action: tap) {
@@ -160,6 +168,14 @@ private struct EspionageOperationRow: View {
                              + "\(Int((odds.trace * 100).rounded()))% they trace it")
                             .font(Theme.Typography.number(.caption2, weight: .regular))
                             .foregroundStyle(.tertiary)
+                        // MARK: J2 (record)
+                        if spotlight > 1 {
+                            Text("Spotlight ×\(spotlight.formatted(.number.precision(.fractionLength(2)).locale(Theme.gameLocale))) · "
+                                 + "the famous are easier to follow")
+                                .font(Theme.Typography.number(.caption2, weight: .regular))
+                                .foregroundStyle(Theme.warning)
+                        }
+                        // MARK: end J2
                     }
                 }
                 Spacer(minLength: 0)

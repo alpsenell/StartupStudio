@@ -117,6 +117,12 @@ struct TeamScreen: View {
                     // MARK: J1 (doors)
                     // MARK: end J1
                     // MARK: J2 (record)
+                    // `-autoRoute hiring` opens the sheet the founder's
+                    // name is printed on.
+                    if Route.launchRoute == .hiring {
+                        showingHiring = true
+                        return
+                    }
                     // MARK: end J2
                     // MARK: J3 (rivals and the market)
                     // MARK: end J3

@@ -117,10 +117,20 @@ enum InvestorSystem {
         // was not a trade-off, it was a trap.
         let priced = Double(valuation) * config.roundValuationPremium
         let impliedByEquity = priced * persona.equityAsk / 100
-        let amount = max(1, Int((min(impliedByEquity, Double(persona.checkSize)) * jitter).rounded()))
+        var amount = max(1, Int((min(impliedByEquity, Double(persona.checkSize)) * jitter).rounded()))
+        // MARK: J2 (record)
+        // Nobody on the board to read the papers, so the investor prices
+        // them: a sheet that arrives during an open case carries a
+        // key-person clause. Applied after the roll, so it draws nothing;
+        // the same slice for less money is a lower valuation.
+        let keyPersonClause = FounderStanding.keyPersonClauseApplies(state)
+        if keyPersonClause {
+            amount = FounderStanding.keyPersonPrice(amount, balance: balance)
+        }
+        // MARK: end J2
         let offerValuation = Int((Double(amount) * 100 / max(1, persona.equityAsk)).rounded())
 
-        let offer = InvestmentOffer(
+        var offer = InvestmentOffer(
             investorID: persona.id,
             investorName: persona.name,
             amount: amount,
@@ -131,6 +141,9 @@ enum InvestorSystem {
             patienceWeeks: persona.patienceWeeks,
             respondByDay: state.day + config.responseDays
         )
+        // MARK: J2 (record)
+        offer.standingKeyPersonClause = keyPersonClause
+        // MARK: end J2
         state.investors.pendingOffer = offer
         state.investors.lastOfferDay = state.day
         state.investors.approachedInvestorIDs.insert(persona.id)
@@ -216,9 +229,16 @@ enum InvestorSystem {
             // tab the Business tab can see directly.
             let payPressure = state.founderPayExcess(balance: balance)
                 * balance.economy.founderPayBoardPressure
+            // MARK: J2 (record)
+            // The board reads the papers as well as the pay line: open
+            // cases, a guilty verdict this quarter, a beef still running
+            // and a cancellation nobody answered, capped. Exactly +0 for
+            // a founder with no record, which is every board bot.
+            let founderQuarter = FounderStanding.boardLine(state, balance: balance).points
+            // MARK: end J2
             var pressure = min(config.boardOustPressure, max(
                 0,
-                state.investors.boardPressure + step * harshness + payPressure
+                state.investors.boardPressure + step * harshness + payPressure + founderQuarter
             ))
             let crossedWarning = pressure >= config.boardWarningPressure
                 && state.investors.boardPressure < config.boardWarningPressure
@@ -234,14 +254,25 @@ enum InvestorSystem {
                 pressure = min(pressure, config.boardOustPressure - 1)
             }
             state.investors.boardPressure = pressure
-            state.investors.record(BoardReview(
+            var review = BoardReview(
                 day: state.day,
                 expectation: reported,
                 met: met,
                 pressure: pressure,
                 note: met ? metNote(reported) : missNote(reported)
-            ))
+            )
+            // MARK: J2 (record)
+            review.founderQuarter = founderQuarter
+            // MARK: end J2
+            state.investors.record(review)
             events.append(.boardReviewed(met: met, pressure: pressure, day: state.day))
+            // MARK: J2 (record)
+            if founderQuarter > 0 {
+                events.append(.standingFounderQuarter(
+                    points: Int(founderQuarter.rounded()), day: state.day
+                ))
+            }
+            // MARK: end J2
 
             if crossedWarning, pressure < config.boardOustPressure {
                 events.append(.boardDemandedPlan(pressure: pressure, day: state.day))
@@ -656,3 +687,66 @@ enum InvestorSystem {
         return [.stayedIndependent(day: state.day), .gameOver(day: state.day)]
     }
 }
+
+// MARK: J2 (record)
+
+#if DEBUG
+extension InvestorSystem {
+    /// `-autoBoardReview case`: the quarterly review, run today, through
+    /// the one function that runs it — so the screenshot's line is the
+    /// line a real quarter prints. The review keys off a quarter boundary,
+    /// so the day is moved to the next one for the call and put back.
+    static func standingDebugReview(
+        _ state: inout GameState, _ balance: BalanceConfig
+    ) -> [GameEvent] {
+        let interval = max(1, balance.investors.reviewIntervalDays)
+        let realDay = state.day
+        state.day = (realDay / interval + 1) * interval
+        let events = quarterlyReview(&state, balance)
+        state.day = realDay
+        if let last = state.investors.reviews.indices.last {
+            state.investors.reviews[last].day = realDay
+        }
+        return events
+    }
+
+    /// `-autoBoardReview offer`: a term sheet today, priced the way
+    /// `offerCheck` prices one (without its jitter or its chance roll),
+    /// key-person clause and all.
+    static func standingDebugOffer(
+        _ state: inout GameState, _ balance: BalanceConfig, _ content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let persona = content.investors.first(where: { !$0.boardSeat })
+            ?? content.investors.first
+        else { return [] }
+        let config = balance.investors
+        let valuation = state.companyValuation(balance: balance)
+        let priced = Double(valuation) * config.roundValuationPremium
+        var amount = max(1, Int(
+            min(priced * persona.equityAsk / 100, Double(persona.checkSize)).rounded()
+        ))
+        let clause = FounderStanding.keyPersonClauseApplies(state)
+        if clause { amount = FounderStanding.keyPersonPrice(amount, balance: balance) }
+        var offer = InvestmentOffer(
+            investorID: persona.id,
+            investorName: persona.name,
+            amount: amount,
+            equity: persona.equityAsk,
+            valuation: Int((Double(amount) * 100 / max(1, persona.equityAsk)).rounded()),
+            takesBoardSeat: persona.boardSeat,
+            expects: persona.expectation,
+            patienceWeeks: persona.patienceWeeks,
+            respondByDay: state.day + config.responseDays
+        )
+        offer.standingKeyPersonClause = clause
+        state.investors.pendingOffer = offer
+        state.investors.lastOfferDay = state.day
+        return [.investmentOffered(
+            investorID: persona.id, amount: amount, equity: persona.equityAsk,
+            respondByDay: offer.respondByDay, day: state.day
+        )]
+    }
+}
+#endif
+
+// MARK: end J2
