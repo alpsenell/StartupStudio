@@ -1,3 +1,4 @@
+import PixelKit
 import SwiftUI
 import TycoonEngine
 
@@ -8,6 +9,12 @@ import TycoonEngine
 struct DistrictDetailPanel: View {
     let engine: GameEngine
     let district: DistrictID
+    // MARK: S4 (city)
+    /// The thing the map's last tap named, and what opens it.
+    var focused: CityHitTarget? = nil
+    var onOpen: ((CityHitTarget) -> Void)? = nil
+    var onPlanWeekend: (() -> Void)? = nil
+    // MARK: end S4
 
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI
@@ -53,19 +60,35 @@ struct DistrictDetailPanel: View {
 
             if !rivalsHere.isEmpty {
                 HStack(spacing: Theme.Spacing.xs) {
-                    ForEach(rivalsHere) { rival in
-                        HStack(spacing: 3) {
-                            PixelPortrait(seed: rival.appearanceSeed, size: 20)
-                            Text(rival.name)
-                                .font(.caption2)
-                                .lineLimit(1)
+                    ForEach(Array(rivalsHere.enumerated()), id: \.element.id) { index, rival in
+                        // MARK: S4 (city) — a chip opens the studio's profile
+                        Button {
+                            onOpen?(.rival(style, index: index))
+                        } label: {
+                            HStack(spacing: 3) {
+                                PixelPortrait(seed: rival.appearanceSeed, size: 20)
+                                Text(rival.name)
+                                    .font(.caption2)
+                                    .lineLimit(1)
+                            }
+                            .padding(.horizontal, Theme.Spacing.xs)
+                            .padding(.vertical, 2)
+                            .background(Theme.chipBackground, in: Capsule())
                         }
-                        .padding(.horizontal, Theme.Spacing.xs)
-                        .padding(.vertical, 2)
-                        .background(Theme.chipBackground, in: Capsule())
+                        .buttonStyle(.plain)
+                        .disabled(onOpen == nil)
+                        .accessibilityHint("Opens the studio's profile")
+                        // MARK: end S4
                     }
                 }
             }
+
+            // MARK: S4 (city) — who's here: the named thing, the room, the rest
+            CityWhoIsHere(
+                engine: engine, district: district, focused: focused,
+                onOpen: { onOpen?($0) }, onPlanWeekend: { onPlanWeekend?() }
+            )
+            // MARK: end S4
 
             HStack(spacing: Theme.Spacing.sm) {
                 StatPill(systemImage: "key.fill", value: "\(weeklyRent.money)/wk")
@@ -192,6 +215,10 @@ struct DistrictDetailPanel: View {
         return Int((Double(config.relocationCostBase)
             * config.district(district).priceMultiplier).rounded())
     }
+
+    // MARK: S4 (city)
+    private var style: DistrictStyle { DistrictStyle(rawValue: district.rawValue) ?? .oldTown }
+    // MARK: end S4
 
     private var rivalsHere: [Rival] {
         engine.state.rivals.rivals.filter { $0.homeDistrict == district }

@@ -85,6 +85,9 @@ enum ReleaseFixture {
         // MARK: K5 (hand over the keys)
         if DebugLaunch.preparesHandOver { state = DebugLaunch.k5Prepared(state) }
         // MARK: end K5
+        // MARK: S4 (city)
+        if let dressing = DebugLaunch.launchCityDressing { state = DebugLaunch.cityDressed(state, dressing) }
+        // MARK: end S4
         do {
             try store.save(
                 state, appVersion: appVersion, summary: SaveSummary(state: state), slot: 0
