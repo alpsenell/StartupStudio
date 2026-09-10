@@ -121,6 +121,10 @@ struct ProductDetailScreen: View {
             ShipForecastCard(forecast: forecast)
         }
 
+        // MARK: J5 (announce) — the ship date, told or not.
+        AnnounceCard(engine: engine, product: product)
+        // MARK: end J5
+
         shipButton(product: product, progress: progress)
     }
 
@@ -325,7 +329,11 @@ private struct LiveOpsCard: View {
             .pickerStyle(.segmented)
             .accessibilityLabel("Price tier for \(product.name)")
 
-            Text(LiveOps.priceCaption(for: info.priceTier, balance: engine.balance))
+            // MARK: J5 (announce) — I1: the caption at this product's score.
+            Text(LiveOps.priceCaption(
+                for: info.priceTier, balance: engine.balance, reviewScore: info.averageReviewScore
+            ))
+            // MARK: end J5
                 .font(.caption)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)

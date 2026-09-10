@@ -466,7 +466,7 @@ enum RivalSystem {
             .compactMap { product -> (topicID: String, score: Int, product: Product)? in
                 guard case .released(let info) = product.stage,
                       !info.offMarket,
-                      info.launchDay <= ripeDay
+                      info.launchDay <= announceRipeDay(ripeDay, for: product, balance) // MARK: J5 (announce)
                 else { return nil }
                 return (product.topicID, info.averageReviewScore, product)
             }

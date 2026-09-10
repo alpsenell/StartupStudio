@@ -214,6 +214,8 @@ enum Route: Hashable {
     // MARK: J4 (house field)
     // MARK: end J4
     // MARK: J5 (announce)
+    /// The build that most wants a ship date, with its announcement open.
+    case announce
     // MARK: end J5
     // MARK: J6 (queue)
     // MARK: end J6
@@ -297,6 +299,7 @@ enum Route: Hashable {
         // MARK: J4 (house field)
         // MARK: end J4
         // MARK: J5 (announce)
+        case .announce: .products
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6

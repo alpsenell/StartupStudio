@@ -219,6 +219,11 @@ public enum Reducer {
         // MARK: J4 (house field)
         // MARK: end J4
         // MARK: J5 (announce)
+
+        // A build still in development the day after its announced date
+        // has slipped; one that shipped on it gets a line. Skips every
+        // product nobody announced, and draws nothing.
+        AnnounceSystem.run,
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6
@@ -883,6 +888,18 @@ public enum Reducer {
         // MARK: J4 (house field)
         // MARK: end J4
         // MARK: J5 (announce)
+        case let .announceShipDate(productID, day):
+            events = AnnounceSystem.announce(
+                productID: productID, day: day, state: &state, balance: balance, content: content
+            )
+        case let .announceForceSlip(productID):
+            #if DEBUG
+            events = AnnounceSystem.forceSlip(
+                productID: productID, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6

@@ -648,6 +648,15 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: J4 (house field)
     // MARK: end J4
     // MARK: J5 (announce)
+    /// A ship date told to the press.
+    case announceMade(productID: UUID, forDay: Int, day: Int)
+    /// An announced date passed with the build still in development.
+    /// `newDay` is the date the press printed next; `nil` when this second
+    /// slip voided the announcement.
+    case announceSlipped(productID: UUID, slips: Int, newDay: Int?, day: Int)
+    /// A build shipped on or before its announced date (`slips` of them
+    /// missed on the way).
+    case announceKept(productID: UUID, forDay: Int, slips: Int, day: Int)
     // MARK: end J5
     // MARK: J6 (queue)
     // MARK: end J6
@@ -778,6 +787,15 @@ extension GameEvent {
             .info
         case .industryNews:
             .quiet
+
+        // MARK: J5 (announce)
+        // A missed date is news the player should look up for (within the
+        // pause budget); naming one, or keeping it, is not.
+        case .announceSlipped:
+            .notable
+        case .announceMade, .announceKept:
+            .info
+        // MARK: end J5
 
         // MARK: WS-F
 

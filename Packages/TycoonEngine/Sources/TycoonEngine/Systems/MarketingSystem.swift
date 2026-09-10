@@ -38,7 +38,11 @@ enum MarketingSystem {
         for index in state.products.indices {
             switch state.products[index].stage {
             case .development(var dev):
-                dev.hype *= 1 - balance.hypeDecayRate
+                // MARK: J5 (announce) — a date told to the press holds the
+                // hype: 1% a day instead of 2%. The ordinary rate, returned
+                // untouched, for every build nobody announced.
+                dev.hype *= 1 - Announce.hypeDecayRate(for: state.products[index], balance)
+                // MARK: end J5
                 state.products[index].stage = .development(dev)
             case .released(var info) where info.liveHype > 0:
                 // A post-launch push fades the same way, which is what
@@ -101,7 +105,13 @@ enum MarketingSystem {
             let target: ProductStage
             switch state.products[index].stage {
             case .development(var dev):
-                dev.hype += balance.socialPushDailyHype * hypeFactor
+                // MARK: J5 (announce) — a push on an announced build lands
+                // ×1.25; unannounced builds add exactly what they did.
+                let announced = Announce.campaignFactor(for: state.products[index], balance)
+                dev.hype += announced == 1
+                    ? balance.socialPushDailyHype * hypeFactor
+                    : balance.socialPushDailyHype * hypeFactor * announced
+                // MARK: end J5
                 target = .development(dev)
             case .released(var info) where campaign.startedOnRelease && !info.offMarket:
                 info.liveHype += balance.socialPushDailyHype * hypeFactor
@@ -204,7 +214,12 @@ enum MarketingSystem {
         let perkHype = state.progression.hasPerk(.pressContacts)
             ? balance.progression.pressContactsHypeBonus
             : 0
-        let oneShotHype = kindHype + perkHype
+        var oneShotHype = kindHype + perkHype
+        // MARK: J5 (announce) — a campaign on an announced build lands
+        // ×1.25. Unannounced builds, and every release, add what they did.
+        let announcedFactor = Announce.campaignFactor(for: state.products[productIndex], balance)
+        if announcedFactor != 1 { oneShotHype *= announcedFactor }
+        // MARK: end J5
         if oneShotHype > 0 {
             switch state.products[productIndex].stage {
             case .development(var dev):

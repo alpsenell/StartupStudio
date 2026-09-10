@@ -129,6 +129,25 @@ struct ProductsScreen: View {
         }
         // MARK: M6 (bug hunt)
         // MARK: end of Iteration 10
+        // MARK: J5 (announce)
+        // The build that most wants a date, pushed with its announcement
+        // open (`-autoRoute announce`; with `-autoPremium`, the release
+        // just priced premium instead).
+        if router.pendingPush == .announce
+            || (router.pendingPush == nil && AnnounceRoute.takeLaunchRoute()) {
+            section = .products
+            router.take(.announce)
+            if let productID = AnnounceRoute.target(in: engine) {
+                path.append(productID)
+            }
+            return
+        }
+        #if DEBUG
+        if warRoom == nil, let request = AnnounceRoute.debugRoom() {
+            warRoom = request
+        }
+        #endif
+        // MARK: end J5
         #if DEBUG
         // `-autoRoute warRoom`: a headless pass lands in the room.
         if warRoom == nil, let request = WarRoomRequest.debugLaunch() {

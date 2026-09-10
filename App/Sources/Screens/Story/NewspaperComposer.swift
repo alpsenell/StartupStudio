@@ -154,7 +154,10 @@ struct NewspaperComposer {
             lead: lead,
             rivalColumn: rivalColumn(from: events),
             marketColumn: marketColumn(from: events, includeForecast: isLatest),
-            smallPrint: smallPrint(from: events, excluding: leadSource),
+            // MARK: J5 (announce) — the latest issue prints every standing date.
+            smallPrint: smallPrint(from: events, excluding: leadSource)
+                + (isLatest ? announceDates() : []),
+            // MARK: end J5
             // MARK: Iteration 11 — N4 (fame and the feed)
             beefColumn: beefColumn(in: range),
             // MARK: end of Iteration 11 — N4
@@ -305,6 +308,15 @@ struct NewspaperComposer {
             return severity * 10 + strand + 25
         }
         // MARK: end of Iteration 10 — M2
+        // MARK: J5 (announce)
+        // A missed date is the lead whatever else happened that week; a
+        // date told to the press is front-page news the week it is told.
+        switch dated.event {
+        case .announceSlipped: return severity * 10 + strand + 25
+        case .announceMade: return severity * 10 + strand + 15
+        default: break
+        }
+        // MARK: end J5
         return severity * 10 + strand
     }
 
@@ -480,6 +492,24 @@ struct NewspaperComposer {
         }
         return Array(unique(lines).prefix(6))
     }
+
+    // MARK: J5 (announce)
+
+    /// Every standing ship date, in the paper's own hand: the date is a
+    /// promise the paper remembers. Empty for a run that never announced.
+    private func announceDates() -> [String] {
+        state.announcedBuilds.compactMap { product in
+            guard let date = product.announcedDay else { return nil }
+            let left = date - state.day
+            let when = AnnounceEventPresenter.dateLabel(date, today: state.day)
+            let slipped = product.slips > 0 ? " (the second date)" : ""
+            return left <= 0
+                ? "\(product.name) is due today\(slipped). We will be checking."
+                : "\(product.name) is promised for \(when)\(slipped), \(left) day\(left == 1 ? "" : "s") away."
+        }
+    }
+
+    // MARK: end J5
 
     // MARK: - The photo
 
