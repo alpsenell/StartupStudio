@@ -14,6 +14,11 @@ struct ThisWeekCard: View {
     /// when Life nests the two ("This week" leads with one card, not
     /// two). `nil`, the default, draws "Your week" alone, as before.
     var fortnight: AgendaCard?
+
+    /// C10: the team's pace is read here and set on Products. Optional
+    /// for the same reason the shell is: a card rendered alone has no
+    /// router, and the line is then just a line.
+    @Environment(AppRouter.self) private var injectedRouter: AppRouter?
     // MARK: end V1
 
     @Environment(GameShell.self) private var injectedShell: GameShell?
@@ -68,24 +73,12 @@ struct ThisWeekCard: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 if hasTeam {
-                    controlRow(
-                        label: "The team's pace",
-                        systemImage: "person.3.fill",
-                        value: pace.displayName,
-                        tint: pace == .crunch ? Theme.warning : Theme.accent
-                    ) {
-                        ForEach(WorkPace.allCases, id: \.self) { option in
-                            Button {
-                                shell.toasts.send(
-                                    .setWorkPace(option),
-                                    to: engine,
-                                    ack: "The team is on \(option.displayName.lowercased()) pace"
-                                )
-                            } label: {
-                                Label(option.displayName, systemImage: option == pace ? "checkmark" : "person.3")
-                            }
-                        }
-                    }
+                    // MARK: V1 (ux: Life folded, rooms dormant)
+                    // Iteration 14 — C10: one home for the team's pace. It
+                    // is the company's setting and it is set on Products;
+                    // here it is read, and the line goes there.
+                    paceLine(pace)
+                    // MARK: end V1
                     Text(pace.consequence)
                         .font(.caption)
                         .foregroundStyle(pace == .crunch ? Theme.warning : .secondary)
@@ -135,6 +128,45 @@ struct ThisWeekCard: View {
             }
         }
     }
+
+    // MARK: V1 (ux: Life folded, rooms dormant)
+    /// The team's pace, read-only, with the way to where it is set. Until
+    /// V2's one control lands in the Products header, the line opens the
+    /// Products tab.
+    private func paceLine(_ pace: WorkPace) -> some View {
+        let tint = pace == .crunch ? Theme.warning : Theme.accent
+        return Button {
+            Haptics.tap()
+            injectedRouter?.tab = .products
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "person.3.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 20)
+                Text("The team's pace")
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Text(pace.displayName)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(tint)
+                Text("on Products")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Theme.accent)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.pressableRow)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("The team's pace")
+        .accessibilityValue(pace.displayName)
+        .accessibilityHint("Set on the Products tab")
+    }
+    // MARK: end V1
 
     private func controlRow<Options: View>(
         label: String,
