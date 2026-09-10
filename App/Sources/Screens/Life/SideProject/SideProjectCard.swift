@@ -26,15 +26,27 @@ struct SideProjectCard: View {
         let state = engine.state
         let project = state.life.sideProject
 
-        CardView("On the side", systemImage: "sparkles") {
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                if let project, let track = project.track,
-                   let def = engine.balance.sideProject.track(track) {
-                    active(project: project, track: track, def: def, state: state)
-                } else {
-                    idle(project: project)
+        Group {
+            // MARK: V1 (ux: Life folded, rooms dormant) — C2
+            // Nothing on Life until the room has something in it (a
+            // door, an event, a case, a first post): until then it is a
+            // quiet row under "Other rooms". The modifiers below stay on
+            // the stand-in, so the card's debug hooks still run.
+            if LifeRoom.sideProject.isOpen(in: engine.state, balance: engine.balance) {
+                CardView("On the side", systemImage: "sparkles") {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                        if let project, let track = project.track,
+                           let def = engine.balance.sideProject.track(track) {
+                            active(project: project, track: track, def: def, state: state)
+                        } else {
+                            idle(project: project)
+                        }
+                    }
                 }
+            } else {
+                LifeRoomDormant()
             }
+            // MARK: end V1
         }
         .sheet(item: $playing) { playing in
             ActivityPlaybackSheet(playing: playing, appearanceSeed: founderAppearanceSeed)

@@ -20,25 +20,37 @@ struct FameCard: View {
         let config = engine.balance.fame
         let level = Fame.level(state.fame.fame, balance: config)
 
-        CardView("The feed", systemImage: "at") {
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                if state.fame.posts.isEmpty {
-                    invitation
-                } else {
-                    standing(state: state, level: level, config: config)
+        Group {
+            // MARK: V1 (ux: Life folded, rooms dormant) — C2
+            // Nothing on Life until the room has something in it (a
+            // door, an event, a case, a first post): until then it is a
+            // quiet row under "Other rooms". The modifiers below stay on
+            // the stand-in, so the card's debug hooks still run.
+            if LifeRoom.fame.isOpen(in: engine.state, balance: engine.balance) {
+                CardView("The feed", systemImage: "at") {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                        if state.fame.posts.isEmpty {
+                            invitation
+                        } else {
+                            standing(state: state, level: level, config: config)
+                        }
+                        Button {
+                            Haptics.tap()
+                            onOpen()
+                        } label: {
+                            Label(openLabel(state), systemImage: "chevron.right")
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                .labelStyle(.trailingIcon)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.pressable)
+                        .tint(Theme.accent)
+                    }
                 }
-                Button {
-                    Haptics.tap()
-                    onOpen()
-                } label: {
-                    Label(openLabel(state), systemImage: "chevron.right")
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .labelStyle(.trailingIcon)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.pressable)
-                .tint(Theme.accent)
+            } else {
+                LifeRoomDormant()
             }
+            // MARK: end V1
         }
         // `-autoFame` drives from the card as well as the screen, so a
         // headless pass can photograph either without tapping through.

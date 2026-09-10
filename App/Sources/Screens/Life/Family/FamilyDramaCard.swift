@@ -17,44 +17,56 @@ struct FamilyDramaCard: View {
     var body: some View {
         let state = engine.state
         let drama = state.familyDrama
-        CardView("The rest of the family", systemImage: "person.2.badge.gearshape.fill") {
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                if drama.isConfrontationOpen {
-                    headline(
-                        "They know.",
-                        detail: "It has been sitting on the kitchen table since this morning.",
-                        icon: "exclamationmark.bubble.fill",
-                        tint: Theme.negativeCash
-                    )
-                } else if drama.isFuneralOpen {
-                    headline(
-                        "The funeral is Thursday.",
-                        detail: "Everybody is coming, including the ones who are a problem.",
-                        icon: "leaf.fill",
-                        tint: Theme.warning
-                    )
-                } else if let ask = drama.pendingAsk, let kind = FamilyAsk(rawValue: ask.askStage) {
-                    headline(
-                        kind.title,
-                        detail: "\(siblingName) is waiting on an answer.",
-                        icon: "hand.raised.fill",
-                        tint: Theme.warning
-                    )
-                } else if let settlement = drama.settlement {
-                    divorceSummary(settlement)
-                } else if drama.openedDay == nil {
-                    Text("Two parents, a sibling, and — while there is a partner — their parents as well. None of them work for you and all of them have opinions.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    middle(state)
-                }
+        Group {
+            // MARK: V1 (ux: Life folded, rooms dormant) — C2
+            // Nothing on Life until the room has something in it (a
+            // door, an event, a case, a first post): until then it is a
+            // quiet row under "Other rooms". The modifiers below stay on
+            // the stand-in, so the card's debug hooks still run.
+            if LifeRoom.familyDrama.isOpen(in: engine.state, balance: engine.balance) {
+                CardView("The rest of the family", systemImage: "person.2.badge.gearshape.fill") {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                        if drama.isConfrontationOpen {
+                            headline(
+                                "They know.",
+                                detail: "It has been sitting on the kitchen table since this morning.",
+                                icon: "exclamationmark.bubble.fill",
+                                tint: Theme.negativeCash
+                            )
+                        } else if drama.isFuneralOpen {
+                            headline(
+                                "The funeral is Thursday.",
+                                detail: "Everybody is coming, including the ones who are a problem.",
+                                icon: "leaf.fill",
+                                tint: Theme.warning
+                            )
+                        } else if let ask = drama.pendingAsk, let kind = FamilyAsk(rawValue: ask.askStage) {
+                            headline(
+                                kind.title,
+                                detail: "\(siblingName) is waiting on an answer.",
+                                icon: "hand.raised.fill",
+                                tint: Theme.warning
+                            )
+                        } else if let settlement = drama.settlement {
+                            divorceSummary(settlement)
+                        } else if drama.openedDay == nil {
+                            Text("Two parents, a sibling, and — while there is a partner — their parents as well. None of them work for you and all of them have opinions.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            middle(state)
+                        }
 
-                Button(buttonTitle(drama), systemImage: "chevron.right.circle.fill") { onOpen() }
-                    .buttonStyle(.pressable)
-                    .font(.footnote.weight(.semibold))
+                        Button(buttonTitle(drama), systemImage: "chevron.right.circle.fill") { onOpen() }
+                            .buttonStyle(.pressable)
+                            .font(.footnote.weight(.semibold))
+                    }
+                }
+            } else {
+                LifeRoomDormant()
             }
+            // MARK: end V1
         }
         .task { FamilyDramaDebug.setUpIfAsked(engine: engine) }
     }

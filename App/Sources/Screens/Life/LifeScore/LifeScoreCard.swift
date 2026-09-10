@@ -31,53 +31,65 @@ struct LifeScoreCard: View {
         let gap = LifeScore.biggestGap(state: engine.state, balance: engine.balance)
         let canWalk = engine.state.canWalkAway(balance: engine.balance)
 
-        CardView("Your life", systemImage: "heart.text.square.fill") {
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                PixelPanel(thickness: 3) {
-                    HStack(alignment: .center, spacing: Theme.Spacing.md) {
-                        LifeScoreFigure(score: score, scale: 6)
-                        Text(LifeScoreFigure.verdict(score))
-                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            .foregroundStyle(Theme.pixelInk)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 0)
-                    }
-                }
-
-                LifeScoreBreakdown(components: shown, showsDetail: false)
-
-                if let gap, let advice = gap.advice {
-                    Label(advice, systemImage: "arrow.up.right")
-                        .font(.caption)
-                        .foregroundStyle(Theme.accent)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityLabel("Would raise it most: \(advice)")
-                }
-
-                Divider()
-
-                HStack {
-                    if canWalk {
-                        Label("You could walk away", systemImage: "figure.walk.departure")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Theme.positiveCash)
-                    }
-                    Spacer(minLength: Theme.Spacing.sm)
-                    Button {
-                        Haptics.tap()
-                        onOpen()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text("The whole score")
-                                .font(.footnote.weight(.semibold))
-                            Image(systemName: "chevron.right")
-                                .font(.caption2.weight(.bold))
+        Group {
+            // MARK: V1 (ux: Life folded, rooms dormant) — C2
+            // Nothing on Life until the room has something in it (a
+            // door, an event, a case, a first post): until then it is a
+            // quiet row under "Other rooms". The modifiers below stay on
+            // the stand-in, so the card's debug hooks still run.
+            if LifeRoom.lifeScore.isOpen(in: engine.state, balance: engine.balance) {
+                CardView("Your life", systemImage: "heart.text.square.fill") {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                        PixelPanel(thickness: 3) {
+                            HStack(alignment: .center, spacing: Theme.Spacing.md) {
+                                LifeScoreFigure(score: score, scale: 6)
+                                Text(LifeScoreFigure.verdict(score))
+                                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                    .foregroundStyle(Theme.pixelInk)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                            }
                         }
-                        .foregroundStyle(Theme.accent)
+
+                        LifeScoreBreakdown(components: shown, showsDetail: false)
+
+                        if let gap, let advice = gap.advice {
+                            Label(advice, systemImage: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundStyle(Theme.accent)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .accessibilityLabel("Would raise it most: \(advice)")
+                        }
+
+                        Divider()
+
+                        HStack {
+                            if canWalk {
+                                Label("You could walk away", systemImage: "figure.walk.departure")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(Theme.positiveCash)
+                            }
+                            Spacer(minLength: Theme.Spacing.sm)
+                            Button {
+                                Haptics.tap()
+                                onOpen()
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text("The whole score")
+                                        .font(.footnote.weight(.semibold))
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2.weight(.bold))
+                                }
+                                .foregroundStyle(Theme.accent)
+                            }
+                            .accessibilityLabel("Open the life score breakdown")
+                        }
                     }
-                    .accessibilityLabel("Open the life score breakdown")
                 }
+            } else {
+                LifeRoomDormant()
             }
+            // MARK: end V1
         }
     }
 }
