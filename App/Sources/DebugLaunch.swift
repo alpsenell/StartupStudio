@@ -1721,6 +1721,56 @@ extension DebugLaunch {
     // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two
 
+    // MARK: S4 (city)
+    /// `-autoCityDistrict <district>`: the city map opens with this
+    /// district's panel up (and scrolled to it), for the panel shots.
+    static var launchCityDistrict: DistrictID? {
+        value(after: "-autoCityDistrict").flatMap { raw in
+            DistrictID.allCases.first { $0.rawValue.lowercased() == raw.lowercased() }
+        }
+    }
+
+    /// `-autoCityFocus <office|home|rival|venue|hospital|courthouse|school|former>`:
+    /// the map opens with that thing's name plate up.
+    static var launchCityFocus: String? { value(after: "-autoCityFocus")?.lowercased() }
+
+    /// `-autoCity <dressing>`: dresses the `-autoFixture` save before it is
+    /// installed so one screenshot shows every place the map can hold.
+    /// `rich`: a hospital stay, a settled case, a relocation (so an old
+    /// office stands to let) and a rooftop party open tonight. Screenshot
+    /// passes only; a player's save is never touched by it.
+    static var launchCityDressing: String? { value(after: "-autoCity")?.lowercased() }
+
+    static func cityDressed(_ start: GameState, _ dressing: String) -> GameState {
+        guard dressing == "rich" else { return start }
+        var state = start
+        let day = state.day
+        if state.economy.hospitalizationDays.isEmpty {
+            state.economy.hospitalizationDays.append(max(0, day - 40))
+        }
+        if state.crime.cases.isEmpty, let offence = CrimeOffence.allCases.first {
+            state.crime.cases.append(LegalCase(
+                id: "s4-city-dressing", kind: offence.rawValue,
+                raisedDay: max(0, day - 70), hearingDay: max(0, day - 50),
+                verdict: .acquitted, settledDay: max(0, day - 50)
+            ))
+        }
+        if state.cityFormerOfficeDistrict == nil {
+            let current = state.city.district
+            let former = DistrictID.allCases.first { $0 != current && $0 != .oldTown } ?? .midtown
+            state.eventLog.append(.officeRelocated(district: former, day: max(0, day - 120)))
+            state.eventLog.append(.officeRelocated(district: current, day: max(0, day - 20)))
+        }
+        if state.networking.pendingEvent == nil {
+            state.networking.pendingEvent = NetworkingEvent(
+                venue: .rooftopParty, day: day, expiresOnDay: day + 2,
+                contactIDs: Array(state.networking.contacts.prefix(5).map(\.id)), conversationsLeft: 3
+            )
+        }
+        return state
+    }
+    // MARK: end S4
+
     /// The word after `flag` on the command line, in debug builds.
     static func value(after flag: String) -> String? {
         #if DEBUG
