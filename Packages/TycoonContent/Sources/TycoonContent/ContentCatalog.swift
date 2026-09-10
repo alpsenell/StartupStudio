@@ -73,6 +73,14 @@ public struct ContentCatalog: Sendable {
     public let feed: FeedCatalog?
 
     // MARK: end of Iteration 11 — N4
+    // MARK: S3 (product names)
+
+    /// What the new-product flow suggests names from (`ProductNames.json`).
+    /// `nil` without the file; `productNamePools` falls back to the stems
+    /// the flow used to hard-code, so a caller never handles "no catalog".
+    public let productNames: ProductNamePools?
+
+    // MARK: end S3
 
     private let productTypesByID: [String: ProductTypeDef]
     private let topicsByID: [String: TopicDef]
@@ -104,8 +112,11 @@ public struct ContentCatalog: Sendable {
         interactions: InteractionCatalog? = nil,
         // MARK: end of Iteration 11 — N2
         // MARK: Iteration 11 — N4 (fame and the feed)
-        feed: FeedCatalog? = nil
+        feed: FeedCatalog? = nil,
         // MARK: end of Iteration 11 — N4
+        // MARK: S3 (product names)
+        productNames: ProductNamePools? = nil
+        // MARK: end S3
     ) {
         self.productTypes = productTypes
         self.topics = topics
@@ -130,6 +141,9 @@ public struct ContentCatalog: Sendable {
         // MARK: Iteration 11 — N4 (fame and the feed)
         self.feed = feed
         // MARK: end of Iteration 11 — N4
+        // MARK: S3 (product names)
+        self.productNames = productNames
+        // MARK: end S3
         self.productTypesByID = Dictionary(
             productTypes.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
@@ -189,8 +203,11 @@ public struct ContentCatalog: Sendable {
             interactions: try decodeResourceIfPresent("Interactions", using: decoder),
             // MARK: end of Iteration 11 — N2
             // MARK: Iteration 11 — N4 (fame and the feed)
-            feed: try decodeResourceIfPresent("Feed", using: decoder)
+            feed: try decodeResourceIfPresent("Feed", using: decoder),
             // MARK: end of Iteration 11 — N4
+            // MARK: S3 (product names)
+            productNames: try decodeResourceIfPresent("ProductNames", using: decoder)
+            // MARK: end S3
         )
     }
 
@@ -251,6 +268,16 @@ public struct ContentCatalog: Sendable {
     }
 
     // MARK: end of Iteration 11 — N4
+    // MARK: S3 (product names)
+
+    /// The product-name vocabulary, from `ProductNames.json` when it is
+    /// bundled and from the old hard-coded stems when it is not.
+    public var productNamePools: ProductNamePools {
+        guard let productNames, !productNames.patterns.isEmpty else { return .fallback }
+        return productNames
+    }
+
+    // MARK: end S3
 
     private static func decodeResource<T: Decodable>(
         _ name: String,
