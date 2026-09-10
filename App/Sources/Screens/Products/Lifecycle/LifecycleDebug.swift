@@ -108,10 +108,15 @@ private struct LifecycleAutoRoute: ViewModifier {
             // The issue on the stands covers the last *completed* week.
             let printed = (engine.state.day / 7 + 1) * 7
             for _ in 0..<120 where engine.state.day < printed + 1 { await beat(0.5) }
-            // Stop the clock, or the issue on the stands moves on.
+            // Stop the clock, or the issue on the stands moves on — and keep
+            // it stopped: `-autoAnswer` restarts a paused clock.
             engine.setSpeed(.paused)
             for _ in 0..<20 where !screenIsFree { await beat() }
             router.go(.newspaper)
+            for _ in 0..<120 {
+                engine.setSpeed(.paused)
+                await beat(0.5)
+            }
         default:
             break
         }
