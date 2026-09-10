@@ -1041,6 +1041,11 @@ public enum Reducer {
         // MARK: K4 (deals and exits)
         // MARK: end K4
         // MARK: K5 (hand over the keys)
+        case let .handOverKeys(successorID, keptPercent, predecessorRunID):
+            events = HandOverSystem.handOver(
+                successorID: successorID, keptPercent: keptPercent,
+                predecessorRunID: predecessorRunID, state: &state, balance: balance
+            )
         // MARK: end K5
         // MARK: K6 (home and rooms)
         // MARK: end K6

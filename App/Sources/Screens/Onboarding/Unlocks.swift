@@ -21,6 +21,8 @@ enum Unlocks {
     /// One earned look per ending, in the order the ribbons list them.
     /// The seeds are curated by eye: six faces the 24 base looks do not
     /// have, one per ending, appended to the picker as each is earned.
+    /// Seven since iteration 15 (K5): *Walked away* arrived in iteration 9
+    /// and earned no face until then.
     static let earnedLooks: [(ending: EndingKind, seed: UInt64)] = [
         (.bankruptcy, 0xB0A7_0001_5EED_0A11),
         (.soldUp, 0x50D1_0002_5EED_0B22),
@@ -28,6 +30,9 @@ enum Unlocks {
         (.acquired, 0xACC1_0004_5EED_0D44),
         (.ipo, 0x1B0E_0005_5EED_0E55),
         (.independent, 0x1DE9_0006_5EED_0F66),
+        // MARK: K5 (hand over the keys) — the seventh ending's face
+        (.walkedAway, 0x3A1C_0007_5EED_1077),
+        // MARK: end K5
     ]
 
     /// The seeds a player with these endings has earned, in ribbon order.

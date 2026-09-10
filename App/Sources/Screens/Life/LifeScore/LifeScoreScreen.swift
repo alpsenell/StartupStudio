@@ -12,7 +12,13 @@ import TycoonEngine
 struct LifeScoreScreen: View {
     let engine: GameEngine
 
+    // MARK: K5 (hand over the keys)
+    @State private var handingOver = false
+    // MARK: end K5
+
     var body: some View {
+        // MARK: K5 (hand over the keys) — the reader is for the debug passes
+        ScrollViewReader { proxy in
         ScrollView {
             LifeScoreContent(
                 score: LifeScore.score(engine.state, balance: engine.balance),
@@ -20,13 +26,44 @@ struct LifeScoreScreen: View {
                 components: LifeScore.breakdown(state: engine.state, balance: engine.balance),
                 gap: LifeScore.biggestGap(state: engine.state, balance: engine.balance),
                 walkAway: WalkAwayTerms(state: engine.state, balance: engine.balance),
-                onWalkAway: { engine.send(.walkAway) }
+                onWalkAway: { engine.send(.walkAway) },
+                // MARK: K5 (hand over the keys)
+                handOver: HandOverGate(state: engine.state, balance: engine.balance),
+                onHandOver: { handingOver = true }
+                // MARK: end K5
             )
             .padding(Theme.Spacing.lg)
         }
         .background(Theme.screenBackground)
         .navigationTitle("Your life")
         .navigationBarTitleDisplayMode(.inline)
+        // MARK: K5 (hand over the keys)
+        .sheet(isPresented: $handingOver) {
+            HandOverSheet(engine: engine) { handingOver = false }
+        }
+        .task {
+            // Screenshot passes only (`-autoRoute k5…`): the queue's
+            // sheets are answered from here, since the Life tab never
+            // builds HQ's root that starts it; the screen scrolls to the
+            // two doors; and the hand-over sheet opens once no question
+            // is up (a second sheet over the queue's is silently dropped).
+            guard DebugLaunch.k5ScrollsToWalkAway else { return }
+            DebugLaunch.startAutoAnswering(engine: engine)
+            for _ in 0..<60 {
+                try? await Task.sleep(for: .milliseconds(200))
+                proxy.scrollTo(LifeScoreContent.walkAwayAnchor, anchor: .bottom)
+                let asking = DecisionPrompt.pending(
+                    in: engine.state, content: engine.content, balance: engine.balance
+                ) != nil
+                if DebugLaunch.opensHandOverSheet, !asking, !handingOver {
+                    try? await Task.sleep(for: .milliseconds(400))
+                    handingOver = true
+                    return
+                }
+            }
+        }
+        }
+        // MARK: end K5
     }
 }
 
@@ -77,6 +114,12 @@ struct LifeScoreContent: View {
     let gap: LifeScore.Component?
     let walkAway: WalkAwayTerms
     let onWalkAway: () -> Void
+    // MARK: K5 (hand over the keys)
+    /// The second answer. `nil` draws the card exactly as it was, which is
+    /// how the snapshot tests build it.
+    var handOver: HandOverGate? = nil
+    var onHandOver: () -> Void = {}
+    // MARK: end K5
 
     @State private var confirming = false
 
@@ -93,8 +136,13 @@ struct LifeScoreContent: View {
             header
             breakdownCard
             walkAwayCard
+                .id(Self.walkAwayAnchor) // K5: the debug passes scroll here
         }
     }
+
+    // MARK: K5 (hand over the keys)
+    static let walkAwayAnchor = "k5.walkAway"
+    // MARK: end K5
 
     // MARK: - The number
 
@@ -214,6 +262,12 @@ struct LifeScoreContent: View {
                         .foregroundStyle(Theme.warning)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+
+                // MARK: K5 (hand over the keys)
+                if let handOver {
+                    handOverBlock(handOver)
+                }
+                // MARK: end K5
             }
         }
         .confirmationDialog(
@@ -221,7 +275,8 @@ struct LifeScoreContent: View {
             isPresented: $confirming,
             titleVisibility: .visible
         ) {
-            Button("Hand over the keys") {
+            // K5: "Hand over the keys" is the other door's name now.
+            Button("Walk away") {
                 Haptics.commit()
                 onWalkAway()
             }
@@ -233,6 +288,49 @@ struct LifeScoreContent: View {
             )
         }
     }
+
+    // MARK: K5 (hand over the keys)
+
+    /// *Hand it to…*, under *Walk away*: the same card, the other answer,
+    /// and why it is shut when it is.
+    private func handOverBlock(_ gate: HandOverGate) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Divider()
+            Text(
+                "Or stay in it. Hand the keys to somebody here, keep 10, 25 or 50% of your "
+                    + "stake as a silent share, and play on as them — unranked from then on."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                Haptics.tap()
+                onHandOver()
+            } label: {
+                Label("Hand it to…", systemImage: "key.fill")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .tint(Theme.accent)
+            .disabled(!gate.ready)
+            .accessibilityLabel(
+                gate.ready
+                    ? "Hand it to someone. Opens the choice of successor and stake."
+                    : "Hand it to someone. Not available: \(gate.blocker ?? "")"
+            )
+
+            if let blocker = gate.blocker, blocker != walkAway.blocker {
+                Text(blocker)
+                    .font(.caption)
+                    .foregroundStyle(Theme.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    // MARK: end K5
 
     private func gateRow(_ label: String, met: Bool) -> some View {
         HStack(spacing: Theme.Spacing.sm) {

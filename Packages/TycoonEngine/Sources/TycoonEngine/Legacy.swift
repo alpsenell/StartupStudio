@@ -373,6 +373,17 @@ public struct LegacyRun: Codable, Equatable, Sendable, Identifiable {
 
     // MARK: end of Iteration 9
 
+    // MARK: K5 (hand over the keys)
+
+    /// Set when this founder did not end the company but handed it to an
+    /// employee and kept playing as them: the successor's employee id. The
+    /// ending is `.walkedAway` — no eighth `EndingKind` — and the
+    /// continuation's own run hangs under this one by `lineage`. Optional,
+    /// so every ledger written before decodes and writes the same bytes.
+    public var successorEmployeeID: UUID?
+
+    // MARK: end K5
+
     public init(
         id: UUID, companyName: String, founderName: String, seed: UInt64,
         origin: FoundingOrigin, difficulty: Difficulty, ending: EndingKind, day: Int,
@@ -676,3 +687,44 @@ public struct LegacyChild: Codable, Equatable, Hashable, Sendable, Identifiable 
         if internSummers != 0 { try container.encode(internSummers, forKey: .internSummers) }
     }
 }
+
+// MARK: K5 (hand over the keys)
+
+extension LegacyLedger {
+    /// Records the outgoing founder of a hand-over: the run as it stands
+    /// the moment before the keys change hands, ended `.walkedAway`, worth
+    /// what they keep (their wallet, their things and the kept slice —
+    /// not the whole holding), under `runID` so the continuation's
+    /// `lineage` finds it, with `successorEmployeeID` set.
+    ///
+    /// Called by the app with the state from *before* it sent
+    /// `.handOverKeys`, and only once the engine accepted it. A hand-over
+    /// is an unranked continuation, so it opens no stake rung. Goes
+    /// through `record` so everything a walk-away writes is written the
+    /// same way; nothing here is read by any bot or pacing suite.
+    public mutating func recordHandOver(
+        _ state: GameState, runID: UUID, successorID: UUID, keptPercent: Int, balance: BalanceConfig
+    ) {
+        guard state.gameOver == nil,
+              let terms = state.handOverTerms(
+                  successorID: successorID, keptPercent: keptPercent, balance: balance
+              )
+        else { return }
+        var outgoing = state
+        outgoing.investors.equityRemaining = terms.keptEquity
+        outgoing.gameOver = GameOverInfo(
+            day: state.day,
+            reason: "Handed \(state.company.name) to \(terms.successorName), keeping \(keptPercent)% of it.",
+            kind: .walkedAway
+        )
+        let stake = highestStakeWon
+        let before = runs.count
+        record(outgoing, balance: balance)
+        highestStakeWon = stake
+        guard runs.count > before else { return }
+        runs[runs.count - 1].id = runID
+        runs[runs.count - 1].successorEmployeeID = successorID
+    }
+}
+
+// MARK: end K5

@@ -170,6 +170,19 @@ struct InvestorsView: View {
                                     .padding(.vertical, 2)
                                     .background(Theme.chipBackground, in: Capsule())
                             }
+                            // MARK: K5 (hand over the keys)
+                            // The old founder's kept stake: no money in,
+                            // no seat, bought back like any other round.
+                            if round.isEmeritus {
+                                Text("KEPT STAKE")
+                                    .font(.caption2.weight(.bold))
+                                    .kerning(0.5)
+                                    .foregroundStyle(Theme.accent)
+                                    .padding(.horizontal, Theme.Spacing.xs + 2)
+                                    .padding(.vertical, 2)
+                                    .background(Theme.chipBackground, in: Capsule())
+                            }
+                            // MARK: end K5
                             Spacer()
                             Text(round.amount.money)
                                 .font(Theme.Typography.number(.subheadline))

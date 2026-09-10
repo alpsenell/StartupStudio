@@ -170,6 +170,41 @@ extension RaisedRound {
     }
 }
 
+// MARK: K5 (hand over the keys)
+
+/// The stake a founder keeps when they hand the company over: an ordinary
+/// round with no money in it, no seat and no patience. `boardExpectations`
+/// is derived from seated rounds, so the board machinery never sees it;
+/// the quarterly review's patience reads the last *seated* round, so it
+/// never reads its zero; `buyBackRound` pays it out like any other. The
+/// `expects` field has to hold something and holds profitability, which
+/// nobody grades. Nothing new is encoded: it is a `RaisedRound`, and a
+/// save from before it decodes with none.
+extension RaisedRound {
+    static let emeritusPrefix = "emeritus-"
+
+    /// Whether this is an old founder's kept stake rather than a fund.
+    public var isEmeritus: Bool { investorID.hasPrefix(Self.emeritusPrefix) }
+
+    static func emeritus(
+        founderID: UUID, founderName: String, equity: Double, valuation: Int, day: Int
+    ) -> RaisedRound {
+        RaisedRound(
+            investorID: emeritusPrefix + founderID.uuidString,
+            investorName: founderName,
+            amount: 0,
+            equity: equity,
+            valuation: valuation,
+            day: day,
+            takesBoardSeat: false,
+            expects: .profitability,
+            patienceWeeks: 0
+        )
+    }
+}
+
+// MARK: end K5
+
 extension InvestmentOffer {
     private enum CodingKeys: String, CodingKey {
         case investorID, investorName, amount, equity, valuation

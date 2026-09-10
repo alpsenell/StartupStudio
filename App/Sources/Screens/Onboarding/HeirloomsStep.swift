@@ -101,7 +101,7 @@ struct HeirloomsStep: View {
                 PixelIconTile(systemImage: "gift.fill", size: 48)
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     PixelText(text: "The ledger", scale: 2, color: Theme.pixelAccent, shadow: true)
-                    Text("\(companies) \(companies == 1 ? "company" : "companies") · \(endings) of 6 endings · \(offers.count) on the table")
+                    Text("\(companies) \(companies == 1 ? "company" : "companies") · \(endings) of \(GameCenterCatalog.endings.count) endings · \(offers.count) on the table")
                         .font(.footnote)
                         .monospacedDigit()
                         .foregroundStyle(Theme.pixelInk.opacity(0.75))

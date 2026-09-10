@@ -204,8 +204,15 @@ enum Successors {
     }
 
     /// The lineage's one line for the biography.
-    static func line(for lineage: Lineage) -> String {
-        switch lineage.kind {
+    static func line(for lineage: Lineage, companyName: String? = nil) -> String {
+        // MARK: K5 (hand over the keys)
+        // The same company, carried on by somebody who worked there: a
+        // hand-over, not a new founding.
+        if lineage.kind == .employee, let companyName, companyName == lineage.predecessorCompanyName {
+            return "Took the keys to \(companyName) from \(lineage.predecessorFounderName)."
+        }
+        // MARK: end K5
+        return switch lineage.kind {
         case .child: "Child of \(lineage.predecessorFounderName), who ran \(lineage.predecessorCompanyName)."
         case .employee: "Started out at \(lineage.predecessorCompanyName), under \(lineage.predecessorFounderName)."
         case .founder: "Second time around: \(lineage.predecessorCompanyName) was the first."

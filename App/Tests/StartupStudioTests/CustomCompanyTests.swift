@@ -95,9 +95,10 @@ final class CustomCompanyTests: XCTestCase {
     }
 
     func testTheEarnedLooksAreSixDistinctFacesWithRibbons() {
-        XCTAssertEqual(Unlocks.earnedLooks.count, 6)
+        // Re-pinned 6 → 7 in iteration 15 (K5): *Walked away* earned its face.
+        XCTAssertEqual(Unlocks.earnedLooks.count, 7)
         let seeds = Set(Unlocks.earnedLooks.map(\.seed))
-        XCTAssertEqual(seeds.count, 6, "every ending's look is its own seed")
+        XCTAssertEqual(seeds.count, 7, "every ending's look is its own seed")
         XCTAssertTrue(seeds.isDisjoint(with: NewGameFlow.appearanceSeeds), "an earned look is not one of the 24")
         XCTAssertEqual(Unlocks.earnedLookSeeds(endingsReached: []).count, 0)
         XCTAssertEqual(Unlocks.earnedLookSeeds(endingsReached: [.ipo, .bankruptcy]).map(\.ending), [.bankruptcy, .ipo])

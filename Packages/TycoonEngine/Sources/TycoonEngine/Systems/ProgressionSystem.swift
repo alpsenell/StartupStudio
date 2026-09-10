@@ -85,7 +85,14 @@ enum ProgressionSystem {
         }
 
         stats.topicsDominated = max(stats.topicsDominated, state.rivals.dominatedTopicCount)
-        stats.roundsRaised = max(stats.roundsRaised, state.investors.rounds.count)
+        // MARK: K5 (hand over the keys)
+        // A stake the old founder kept is not money anybody raised: the
+        // emeritus round stays out of the goal's count. Every run without
+        // a hand-over has none, so the count is the one it always was.
+        stats.roundsRaised = max(
+            stats.roundsRaised, state.investors.rounds.count(where: { !$0.isEmeritus })
+        )
+        // MARK: end K5
 
         state.progression.stats = stats
     }
