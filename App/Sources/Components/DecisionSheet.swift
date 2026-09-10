@@ -817,7 +817,10 @@ extension DecisionPrompt {
         case .dirtyMoneyOffer, .funeral, .legalCase, .hearing, .cancellation:
             nil
         }
-        prompt?.isDeferrable = true
+        // The category fight is the one sheet that stays modal: its six
+        // weeks are its deadline and the answers are moves in the fight,
+        // and `RivalFightSnapshotTests` pins that. Everything else can wait.
+        prompt?.isDeferrable = entry.kind != .challenge
         return prompt
     }
 

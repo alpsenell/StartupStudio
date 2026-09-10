@@ -141,6 +141,9 @@ struct NoticeRail: View {
         // a question in it. One row each, in the queue's order. The story
         // beat that used to be the only thing here is one of them.
         notices.append(contentsOf: queueNotices(state))
+        // Iteration 12 (J6): the seam where another lane appends its own
+        // `RailNotice.deferred` rows for the current state (J1's doors).
+        notices.append(contentsOf: laneNotices(state))
 
         // Iteration 7 (R1): the tour's beat, after a pause and before a
         // deferred question. Silent across the ship beat's wait.
@@ -200,10 +203,42 @@ struct NoticeRail: View {
     /// dismissed it or finished the goal.
     private var activeTip: CoachTip? {
         let activeGoals = ProgressionReader.activeGoalIDs(in: engine.state)
-        guard !activeGoals.isEmpty else { return nil }
-        return CoachTip.all.first {
+        let goalTip = activeGoals.isEmpty ? nil : CoachTip.all.first {
             activeGoals.contains($0.goalID) && !dismissedTips.contains($0.id)
         }
+        // Iteration 12 (J6): when no goal has a tip, the fallback seam.
+        return goalTip ?? fallbackTip
+    }
+
+    // MARK: - Lane seams (iteration 12, J6)
+
+    // Three extension points for lanes that build on the rail without
+    // owning it. Each returns nothing today, so the rail is exactly what it
+    // was; a lane's lines go between its own markers inside.
+
+    /// Rows another lane adds for the current state — build them with
+    /// `RailNotice.deferred(id:title:daysLeft:category:)`, and give them a
+    /// route through `laneRoute(forNoticeID:)` below.
+    private func laneNotices(_ state: GameState) -> [RailNotice] {
+        // MARK: J1 (doors)
+        // MARK: end J1
+        []
+    }
+
+    /// A tip for the current state, used only when no active goal has one.
+    private var fallbackTip: CoachTip? {
+        // MARK: J1 (doors)
+        // MARK: end J1
+        nil
+    }
+
+    /// Where a deferred row without a queue answer should walk the founder,
+    /// by the notice's id (`"deferred-<id>"`); `nil` keeps the original
+    /// behaviour, which brings the deferred story beat back.
+    private func laneRoute(forNoticeID noticeID: String) -> Route? {
+        // MARK: J1 (doors)
+        // MARK: end J1
+        nil
     }
 
     private var shown: RailNotice? {
@@ -305,7 +340,10 @@ struct NoticeRail: View {
         case .pause(let headline, let more):
             pauseRow(headline: headline, more: more)
         case .deferred(let title, let daysLeft, let category):
-            deferredRow(title: title, daysLeft: daysLeft, category: category, answer: notice.answer)
+            deferredRow(
+                title: title, daysLeft: daysLeft, category: category,
+                answer: notice.answer, noticeID: notice.id
+            )
         case .report(let week):
             reportRow(week: week)
         case .event(let toast):
@@ -406,7 +444,8 @@ struct NoticeRail: View {
     }
 
     private func deferredRow(
-        title: String, daysLeft: Int, category: String?, answer: QueueRailAnswer? = nil
+        title: String, daysLeft: Int, category: String?, answer: QueueRailAnswer? = nil,
+        noticeID: String? = nil
     ) -> some View {
         let when = switch daysLeft {
         // Iteration 12 (J6): a question with no deadline — the partner
@@ -441,7 +480,14 @@ struct NoticeRail: View {
                 switch answer {
                 case .recall(let promptID): shell.recall(promptID: promptID)
                 case .route(let route): onRoute?(route)
-                case nil: shell.recallDeferredChoice()
+                case nil:
+                    // The lane route seam first (J1's doors), then the
+                    // original recall of the deferred story beat.
+                    if let noticeID, let route = laneRoute(forNoticeID: noticeID), let onRoute {
+                        onRoute(route)
+                    } else {
+                        shell.recallDeferredChoice()
+                    }
                 }
             } label: {
                 Text("Answer")
