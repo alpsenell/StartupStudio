@@ -99,8 +99,13 @@ struct SettingsSheet: View {
                             GameCenterRow()
                         }
                         if ServiceFlags.restore {
-                            // R6: AppStore.sync() and the outcome, see `Store/PaywallSheet.swift`.
-                            RestorePurchasesRow()
+                            // MARK: P2 (purchases: StoreKit and the session)
+                            // Restore names what came back and says the
+                            // consumables don't; Purchases lists what is
+                            // owned and what each company bought.
+                            ShopRestoreRow()
+                            ShopPurchasesRow(engine: engine)
+                            // MARK: end P2
                         }
                     }
                 }
@@ -129,6 +134,10 @@ struct SettingsSheet: View {
                     }
                 }
             }
+            // MARK: P2 (purchases: StoreKit and the session)
+            // `-autoServices` (DEBUG): open on Restore and Purchases.
+            .defaultScrollAnchor(DebugLaunch.scrollsSettingsToServices ? .bottom : nil)
+            // MARK: end P2
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

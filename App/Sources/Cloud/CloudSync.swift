@@ -4,7 +4,9 @@ import UIKit
 
 // MARK: Iteration 7 — iCloud (R2)
 
-/// The four keys in the key-value store: one per slot, one for the ledger.
+/// The keys in the key-value store: one per slot — `slot0`…`slot3` since
+/// the fourth slot (iteration 13, P2; the session iterates the store's
+/// count) — and one for the ledger.
 enum CloudKey {
     static let legacy = "legacy"
 
