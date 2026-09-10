@@ -65,6 +65,12 @@ struct PartnerCard: View {
                     PeopleMenuButton(engine: engine, target: .partner)
                     // MARK: end of Iteration 11 — N2
 
+                    // MARK: K7 (partner and diary)
+                    // Hire them — or, once they work here, what the office
+                    // is doing to the marriage today.
+                    PartnerPayrollRow(engine: engine)
+                    // MARK: end K7
+
                     // MARK: Iteration 11, wave two — W2 (family drama)
                     // One line when somebody knows, because a card that
                     // says "affection 12" and nothing else is a lie.

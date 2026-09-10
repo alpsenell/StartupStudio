@@ -264,6 +264,11 @@ struct AppRootView: View {
                 await QueueDebug.startIfAsked(current: { session.engine }, shell: shell)
             }
             // MARK: end J6
+            // MARK: K7 (partner and diary)
+            .task {
+                await PartnerDebug.startIfAsked(current: { session.engine }, shell: shell)
+            }
+            // MARK: end K7
             // Toasts are no longer overlaid here: the notice rail under
             // each tab's HUD shows the newest one as its transient line,
             // so an acknowledgement can never land across the pause

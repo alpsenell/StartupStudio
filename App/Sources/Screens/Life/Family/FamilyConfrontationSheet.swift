@@ -46,7 +46,7 @@ struct FamilyConfrontationSheet: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(answer.label)
                                             .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                                        Text(answer.detail)
+                                        Text(detail(answer)) // K7: "Pack a bag" prints the slice
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: false, vertical: true)
@@ -87,6 +87,22 @@ struct FamilyConfrontationSheet: View {
     private var openingLine: String {
         "\"I'm not going to shout. I'd just like you to say it out loud, once.\""
     }
+
+    // MARK: K7 (partner and diary)
+
+    /// The answer's line, and for "Pack a bag" the slice the settlement
+    /// that follows would hand over, at today's valuation.
+    private func detail(_ answer: FamilyConfession) -> String {
+        guard answer == .leave else { return answer.detail }
+        let state = engine.state
+        let points = state.familyProjectedExEquity(balance: engine.balance)
+        guard points > 0 else { return answer.detail + " · the company stays yours" }
+        let value = Int((points / 100 * Double(state.companyValuation(balance: engine.balance))).rounded())
+        let shown = points == points.rounded() ? "\(Int(points))" : String(format: "%.1f", points)
+        return answer.detail + " · they take \(shown)% of the company (\(value.money) today)"
+    }
+
+    // MARK: end K7
 
     private func say(_ answer: FamilyConfession) {
         engine.send(.confrontFamily(answer))

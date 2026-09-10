@@ -150,7 +150,10 @@ struct AnnounceSheet: View {
                         row(
                             title: "Announce for \(label(option.day))",
                             detail: detail(for: option),
-                            emphasised: option.isDefault
+                            emphasised: option.isDefault,
+                            // MARK: K7 (partner and diary)
+                            diary: option.clash.map { diaryLine($0, for: option.day) }
+                            // MARK: end K7
                         )
                     }
                     .buttonStyle(.pressableRow)
@@ -173,7 +176,28 @@ struct AnnounceSheet: View {
         let day: Int
         let slack: Int
         let isDefault: Bool
+        // MARK: K7 (partner and diary)
+        /// A date in the family diary near this one, if any.
+        var clash: FamilyDate? = nil
+        // MARK: end K7
     }
+
+    // MARK: K7 (partner and diary)
+
+    /// "Nora's birthday is two days before", from the diary.
+    private func diaryLine(_ clash: FamilyDate, for day: Int) -> String {
+        let offset = clash.day - day
+        let when: String = switch offset {
+        case 0: "is on the day"
+        case 1: "is the day after"
+        case -1: "is the day before"
+        case let days where days > 0: "is \(days) days after"
+        case let days: "is \(-days) days before"
+        }
+        return "\(clash.label) \(when)"
+    }
+
+    // MARK: end K7
 
     /// One option per distinct date: slack that the three-week minimum
     /// swallows collapses into the earliest date it allows.
@@ -189,7 +213,12 @@ struct AnnounceSheet: View {
                   // different choice.
                   result.last.map({ day - $0.day >= 4 }) ?? true
             else { continue }
-            result.append(Option(day: day, slack: day - eta.day, isDefault: slack == Self.defaultSlack))
+            result.append(Option(
+                day: day, slack: day - eta.day, isDefault: slack == Self.defaultSlack,
+                // MARK: K7 (partner and diary)
+                clash: state.announceDiaryClash(day: day, balance: engine.balance, content: engine.content)
+                // MARK: end K7
+            ))
         }
         return result
     }
@@ -205,7 +234,7 @@ struct AnnounceSheet: View {
         return "\(slack) · \(out) days out" + (option.isDefault ? " · the usual" : "")
     }
 
-    private func row(title: String, detail: String, emphasised: Bool) -> some View {
+    private func row(title: String, detail: String, emphasised: Bool, diary: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -214,6 +243,14 @@ struct AnnounceSheet: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            // MARK: K7 (partner and diary)
+            if let diary {
+                Label(diary, systemImage: "calendar.badge.exclamationmark")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.romance)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            // MARK: end K7
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.md)

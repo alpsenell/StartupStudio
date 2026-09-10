@@ -1222,6 +1222,22 @@ struct EventCopy {
         // MARK: K6 (home and rooms)
         // MARK: end K6
         // MARK: K7 (partner and diary)
+        case .partnerHired(_, let day):
+            (
+                "briefcase.fill",
+                "\(state.life.family.partnerName?.split(separator: " ").first.map(String.init) ?? "Your partner") works here now. Nobody is calling anybody boss.",
+                day, Theme.romance
+            )
+        case .partnerResigned(_, let name, let day):
+            ("briefcase", "\(name.split(separator: " ").first.map(String.init) ?? name) cleared their desk the same day.", day, Theme.warning)
+        case .exBoughtOut(let points, let price, _, let day):
+            (
+                "signature",
+                "Bought back \(points == points.rounded() ? "\(Int(points))" : String(format: "%.1f", points))% of the company from your ex for \(price.money).",
+                day, Theme.accent
+            )
+        case .diaryDateKept(_, let label, let day):
+            ("calendar.badge.checkmark", "You kept the date: \(label). The launch party went on without you.", day, Theme.romance)
         // MARK: end K7
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14

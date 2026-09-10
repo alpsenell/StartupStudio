@@ -516,6 +516,11 @@ private struct EmployeeRow: View {
                         if !employee.isFounder {
                             LevelBadge(level: employee.level)
                         }
+                        // MARK: K7 (partner and diary)
+                        if employee.id == engine.state.life.family.partnerEmployeeID {
+                            PartnerChip()
+                        }
+                        // MARK: end K7
                     }
                     HStack(spacing: Theme.Spacing.xs + 2) {
                         Text("\(employee.weeklySalary.money)/wk")

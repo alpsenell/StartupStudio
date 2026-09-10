@@ -153,7 +153,7 @@ private struct ContactRow: View {
         case nil: return "\(left) · \(AlumniCopy.formerRole(contact))"
         case .hired, .partner: return "Back on the team · \(AlumniCopy.formerRole(contact))"
         case .lost: return "\(left) · not taking your calls"
-        case .backed, .angel, .romance: return contact.outcome?.historyLabel ?? left
+        case .backed, .angel, .romance, .formerPartner: return contact.outcome?.historyLabel ?? left // K7
         }
     }
 }
@@ -284,6 +284,7 @@ private extension ContactOutcome {
         case .angel: "Backed you"
         case .romance: "You're together"
         case .lost: "Out of touch"
+        case .formerPartner: "Your ex" // K7
         }
     }
 }
