@@ -1214,6 +1214,8 @@ struct EventCopy {
         // MARK: K2 (product lifecycle)
         // MARK: end K2
         // MARK: K3 (the ladder)
+        case .ladderEquityGranted, .ladderOptionsSettled:
+            LadderEventCopy.entry(for: event) ?? fallbackEntry(for: event)
         // MARK: end K3
         // MARK: K4 (deals and exits)
         // MARK: end K4

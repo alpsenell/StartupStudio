@@ -327,6 +327,7 @@ extension Route {
         // MARK: K2 (product lifecycle)
         // MARK: end K2
         // MARK: K3 (the ladder)
+        case "k3-lead", "k3-options", "k3-holder": .ladderManage
         // MARK: end K3
         // MARK: K4 (deals and exits)
         // MARK: end K4
@@ -1578,6 +1579,15 @@ extension DebugLaunch {
     // MARK: K2 (product lifecycle)
     // MARK: end K2
     // MARK: K3 (the ladder)
+    /// `-autoLadder`: the loaded company gets a promoted lead on every
+    /// build and options for two people (`LadderDebug`), once.
+    static var ladderDresses: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoLadder")
+        #else
+        return false
+        #endif
+    }
     // MARK: end K3
     // MARK: K4 (deals and exits)
     // MARK: end K4

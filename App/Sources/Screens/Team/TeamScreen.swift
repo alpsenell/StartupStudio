@@ -151,6 +151,13 @@ struct TeamScreen: View {
                     // MARK: K2 (product lifecycle)
                     // MARK: end K2
                     // MARK: K3 (the ladder)
+                    // `-autoRoute k3-lead | k3-options | k3-holder` opens
+                    // the manage sheet on the person the lane photographs.
+                    LadderDebug.dressIfAsked(engine)
+                    if Route.launchRoute == .ladderManage {
+                        employeeToManage = LadderDebug.person(for: DebugLaunch.autoRouteName, engine: engine)
+                        return
+                    }
                     // MARK: end K3
                     // MARK: K4 (deals and exits)
                     // MARK: end K4
