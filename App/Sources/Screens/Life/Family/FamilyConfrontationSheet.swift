@@ -46,7 +46,7 @@ struct FamilyConfrontationSheet: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(answer.label)
                                             .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                                        Text(answer.detail)
+                                        Text(detail(answer)) // K7: "Pack a bag" prints the slice
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: false, vertical: true)
@@ -87,6 +87,15 @@ struct FamilyConfrontationSheet: View {
     private var openingLine: String {
         "\"I'm not going to shout. I'd just like you to say it out loud, once.\""
     }
+
+    // MARK: K7 (partner and diary)
+
+    /// The answer's line; "Pack a bag" carries the slice (`FamilyConfession.detail(state:balance:)`).
+    private func detail(_ answer: FamilyConfession) -> String {
+        answer.detail(state: engine.state, balance: engine.balance)
+    }
+
+    // MARK: end K7
 
     private func say(_ answer: FamilyConfession) {
         engine.send(.confrontFamily(answer))

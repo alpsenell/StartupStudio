@@ -63,6 +63,10 @@ struct LaunchDaySheet: View {
                         LifecycleLaunchRow(engine: engine, product: product, parentID: parentID)
                     }
                     // MARK: end K2
+                    // MARK: K7 (partner and diary)
+                    // A launch on a diary date: the party, or the cake.
+                    DiaryKeepDateRow(engine: engine, product: product)
+                    // MARK: end K7
                     if let release {
                         if release.reviews.isEmpty {
                             waitingForReviews(release)

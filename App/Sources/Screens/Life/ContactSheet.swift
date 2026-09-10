@@ -118,7 +118,7 @@ struct ContactSheet: View {
     private func offersCard(contact: Contact, state: GameState) -> some View {
         CardView("On the table", systemImage: "hands.and.sparkles.fill") {
             VStack(spacing: Theme.Spacing.sm) {
-                if let outcome = contact.outcome {
+                if let outcome = contact.outcome, outcome != .formerPartner { // K7: the ex is still open
                     Text(outcome.closingLine(for: contact))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -504,7 +504,7 @@ extension ContactOutcome {
             return "\(first) is back — they're on the Team tab."
         case .lost:
             return "You let \(first) go with nothing to fall back on. They're not taking your calls."
-        case .backed, .angel, .romance:
+        case .backed, .angel, .romance, .formerPartner: // K7
             return closingLine(name: contact.name)
         }
     }
@@ -518,6 +518,7 @@ extension ContactOutcome {
         case .angel: return "\(first) is on your cap table."
         case .romance: return "You're seeing \(first)."
         case .lost: return "You've lost touch with \(first)."
+        case .formerPartner: return "You were married to \(first)." // K7
         }
     }
 }

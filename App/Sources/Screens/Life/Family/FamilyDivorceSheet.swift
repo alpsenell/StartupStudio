@@ -77,9 +77,10 @@ struct FamilyDivorceSheet: View {
 
     private var entitlementCard: some View {
         let config = engine.balance.familyDrama
-        let marriedDays = engine.state.life.family.stage == .married
-            ? max(0, engine.state.day - engine.state.life.family.stageSinceDay)
-            : 0
+        // MARK: K7 (partner and diary) — the engine's numbers, snapshot and all.
+        let marriedDays = engine.state.familySettlementMarriedDays
+        let workedHere = engine.state.familySettlementPartnerWorkedHere
+        // MARK: end K7
         let share = FamilyDrama.entitlement(
             lawyer: lawyer,
             theirLawyer: .highStreet,
@@ -87,11 +88,7 @@ struct FamilyDivorceSheet: View {
             marriedDays: marriedDays,
             balance: config
         )
-        let equity = FamilyDrama.equityToEx(
-            marriedDays: marriedDays,
-            equityRemaining: engine.state.investors.equityRemaining,
-            balance: config
-        )
+        let equity = engine.state.familyProjectedExEquity(balance: engine.balance) // K7
         return CardView("What you are owed", systemImage: "scalemass.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text(estate == 0
@@ -105,7 +102,9 @@ struct FamilyDivorceSheet: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if equity > 0 {
-                    Text("Married \(marriedDays / 364) years: \(Int(equity.rounded()))% of the company goes with them.")
+                    Text(workedHere // K7: the co-founder clause
+                        ? "They worked at the company: \(Int(equity.rounded()))% of it goes with them, however long the marriage."
+                        : "Married \(marriedDays / 364) years: \(Int(equity.rounded()))% of the company goes with them.")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Theme.negativeCash)
                         .fixedSize(horizontal: false, vertical: true)
@@ -189,7 +188,9 @@ struct FamilyDivorceSheet: View {
     }
 
     private var exName: String {
-        engine.state.life.family.partnerName ?? "Theirs"
+        engine.state.life.family.partnerName
+            ?? engine.state.familyDrama.leaving?.exName // K7: after a packed bag
+            ?? "Theirs"
     }
 
     private var rows: [FamilyThing] {
@@ -288,9 +289,7 @@ struct FamilyDivorceSheet: View {
 
     private var commitCard: some View {
         let split = engine.state.assetSplitValue(keeping: mine, balance: engine.balance)
-        let marriedDays = engine.state.life.family.stage == .married
-            ? max(0, engine.state.day - engine.state.life.family.stageSinceDay)
-            : 0
+        let marriedDays = engine.state.familySettlementMarriedDays // K7
         let share = FamilyDrama.entitlement(
             lawyer: lawyer, theirLawyer: .highStreet,
             affairDiscovered: engine.state.interactions.affairDiscoveredDay != nil,

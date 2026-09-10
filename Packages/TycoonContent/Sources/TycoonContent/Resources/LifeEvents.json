@@ -7881,5 +7881,131 @@
       "mood": 4,
       "relationships": 2
     }
+  },
+  {
+    "id": "doctor_letter",
+    "headline": "A letter from your doctor. There is a number in it.",
+    "body": "She has written down three things, underlined the third, and would like you to actually do them.",
+    "weight": 1,
+    "followUpOnly": true,
+    "cooldownDays": 180,
+    "category": "personal",
+    "autoChoiceIndex": 1,
+    "requires": {
+      "flagsAll": [
+        "doctor_letter_due"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "listen",
+        "label": "Do the three things",
+        "detail": "An evening · −$400 · health +18 · energy +8",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "wallet": -400,
+            "health": 18,
+            "energy": 8
+          }
+        ],
+        "clearFlags": [
+          "doctor_letter_due"
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "later",
+        "label": "After this quarter",
+        "detail": "Free · health −8 · the next letter in six months",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "health": -8,
+            "mood": -4
+          }
+        ],
+        "clearFlags": [
+          "doctor_letter_due"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "diary_birthday_launch",
+    "headline": "{child}'s birthday landed on launch week.",
+    "body": "You were at the launch party until two. {child} had theirs at four, and made you a card with the product's logo on it, drawn from memory. There is still an afternoon, if you take it.",
+    "weight": 1,
+    "requiresChildren": true,
+    "followUpOnly": true,
+    "category": "family",
+    "autoChoiceIndex": 1,
+    "diaryLabel": "{child}'s birthday",
+    "requires": {
+      "flagsAll": [
+        "diary_launch_clash"
+      ]
+    },
+    "impact": {},
+    "choices": [
+      {
+        "id": "party",
+        "label": "Take the afternoon for {child}",
+        "detail": "An evening · relationships +12 · mood +8 · −$120",
+        "effects": [
+          {
+            "type": "evening"
+          },
+          {
+            "type": "founderMeters",
+            "mood": 8,
+            "relationships": 12,
+            "energy": -6,
+            "wallet": -120
+          },
+          {
+            "type": "affection",
+            "amount": 6
+          }
+        ],
+        "clearFlags": [
+          "diary_launch_clash"
+        ],
+        "requires": {
+          "minEveningsLeft": 1
+        }
+      },
+      {
+        "id": "present",
+        "label": "Send a present. The week is the launch's",
+        "detail": "Relationships −12 · mood −8 · affection −20 · −$150",
+        "effects": [
+          {
+            "type": "founderMeters",
+            "mood": -8,
+            "relationships": -12,
+            "wallet": -150
+          },
+          {
+            "type": "affection",
+            "amount": -20
+          }
+        ],
+        "setFlags": [
+          "family_date_missed"
+        ],
+        "clearFlags": [
+          "diary_launch_clash"
+        ],
+        "followUpEventID": "kid_after_missed_birthday",
+        "followUpDelayDays": 21
+      }
+    ]
   }
 ]

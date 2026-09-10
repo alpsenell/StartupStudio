@@ -53,6 +53,11 @@ enum FamilyCalendar {
     static let familyDramaScheduledEventIDs: Set<String> = parentDateIDs.union([
         "family_anniversary_after",
     ])
+    // MARK: K7 (partner and diary)
+    // The doctor's letter and the launch-week birthday: K7 fires both
+    // itself (`DoctorLetter`, `DiaryRoadmap.launchVariant`).
+    .union([DoctorLetter.eventID, DiaryRoadmap.birthdayLaunchEventID])
+    // MARK: end K7
 
     /// Puts the parents' birthdays in the diary, once. Called only from
     /// `FamilyDramaSystem`, which itself only runs once the founder has
@@ -210,6 +215,11 @@ enum FamilyCalendar {
         balance: BalanceConfig,
         content: ContentCatalog
     ) -> Bool {
+        // MARK: K7 (partner and diary)
+        // The doctor's letter is fired by `DoctorLetter`, which writes the
+        // numbers into it; the ordinary follow-up path leaves it alone.
+        if entry.source == .life, entry.eventID == DoctorLetter.eventID { return true }
+        // MARK: end K7
         guard entry.source == .life,
               let def = content.lifeEvent(entry.eventID), def.isDated
         else { return false }
@@ -227,6 +237,10 @@ enum FamilyCalendar {
         // The anniversary after the affair is a different evening.
         let def = anniversaryVariant(of: def, state: state, content: content)
         // MARK: end of Iteration 11, wave two — W2
+        // MARK: K7 (partner and diary)
+        // A child's birthday on launch week is its own evening.
+        if let twin = DiaryRoadmap.launchVariant(of: def, state: state, content: content) { return twin }
+        // MARK: end K7
         guard state.narrative.hasFlag(missedFlag),
               let id = def.missedVariantID,
               let twin = content.lifeEvent(id)
@@ -243,6 +257,13 @@ enum FamilyCalendar {
         balance: BalanceConfig,
         content: ContentCatalog
     ) {
+        // MARK: K7 (partner and diary)
+        // The launch clash is about the next diary date; once one has
+        // fired (or been kept), it is spent.
+        if state.narrative.hasFlag(DiaryRoadmap.clashFlag), content.lifeEvent(entry.eventID)?.isDated == true {
+            state.narrative.flags.remove(DiaryRoadmap.clashFlag)
+        }
+        // MARK: end K7
         let year = balance.relationships.diary.yearDays
         func next(after base: Int) -> Int {
             base + year * (max(0, entry.day - base) / year + 1)

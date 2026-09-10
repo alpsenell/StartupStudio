@@ -333,6 +333,14 @@ public struct FamilySettlement: Codable, Equatable, Sendable {
     public var theirLawyer: String
     /// The name on the other side of the table.
     public var exName: String
+    // MARK: K7 (partner and diary)
+    /// The day the founder bought the slice back; `nil` while the ex
+    /// still holds it (and on every save written before K7).
+    public var boughtOutDay: Int? = nil
+    /// The ex in the address book. `nil` on a settlement signed before K7:
+    /// "They changed their number".
+    public var exContactID: UUID? = nil
+    // MARK: end K7
 
     public init(
         day: Int,
@@ -469,6 +477,11 @@ public struct FamilyDramaState: Codable, Equatable, Sendable {
     /// The day the parents' birthdays went into the diary, so they go in
     /// exactly once.
     public var calendarSeededDay: Int?
+    // MARK: K7 (partner and diary)
+    /// The marriage as it stood when the founder packed a bag, so the
+    /// settlement can follow. Cleared by the divorce.
+    public var leaving: FamilyLeaving? = nil
+    // MARK: end K7
 
     public init(
         openedDay: Int? = nil,
@@ -551,6 +564,9 @@ public struct FamilyDramaState: Codable, Equatable, Sendable {
         case custodyCaseID, custodyVerdict, custodyDecidedDay, kin, careWeeklyBill
         case heir, heirChildID, heirName, willSignedDay
         case funeralDay, funeralRelation, funeralAnswer, lastSweepDay, calendarSeededDay
+        // MARK: K7 (partner and diary)
+        case leaving
+        // MARK: end K7
     }
 
     public init(from decoder: any Decoder) throws {
@@ -576,6 +592,9 @@ public struct FamilyDramaState: Codable, Equatable, Sendable {
             lastSweepDay: try c.decodeIfPresent(Int.self, forKey: .lastSweepDay),
             calendarSeededDay: try c.decodeIfPresent(Int.self, forKey: .calendarSeededDay)
         )
+        // MARK: K7 (partner and diary)
+        leaving = try c.decodeIfPresent(FamilyLeaving.self, forKey: .leaving)
+        // MARK: end K7
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -599,6 +618,9 @@ public struct FamilyDramaState: Codable, Equatable, Sendable {
         try c.encodeIfPresent(funeralAnswer, forKey: .funeralAnswer)
         try c.encodeIfPresent(lastSweepDay, forKey: .lastSweepDay)
         try c.encodeIfPresent(calendarSeededDay, forKey: .calendarSeededDay)
+        // MARK: K7 (partner and diary)
+        try c.encodeIfPresent(leaving, forKey: .leaving)
+        // MARK: end K7
     }
 }
 
@@ -684,10 +706,16 @@ public enum FamilyDrama {
     public static func equityToEx(
         marriedDays: Int,
         equityRemaining: Double,
-        balance: BalanceConfig.FamilyDramaBalance
+        balance: BalanceConfig.FamilyDramaBalance,
+        // MARK: K7 (partner and diary)
+        // A partner who worked at the company was a co-founder in all but
+        // name: the threshold does not apply and every year counts.
+        ignoresMarriedDays: Bool = false
+        // MARK: end K7
     ) -> Double {
-        guard marriedDays >= balance.equityMarriedDays else { return 0 }
-        let years = Double(marriedDays - balance.equityMarriedDays)
+        let threshold = ignoresMarriedDays ? 0 : balance.equityMarriedDays // K7
+        guard marriedDays >= threshold else { return 0 }
+        let years = Double(marriedDays - threshold)
             / Double(FamilyKin.daysPerYear)
         let points = balance.equityBasePoints + years * balance.equityPointsPerYear
         return max(0, min(balance.equityMaxPoints, min(equityRemaining * 0.5, points)))

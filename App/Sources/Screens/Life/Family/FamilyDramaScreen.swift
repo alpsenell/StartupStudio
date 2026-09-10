@@ -30,7 +30,8 @@ struct FamilyDramaScreen: View {
                 }
                 peopleCard
                 if engine.state.life.family.stage != .single
-                    || engine.state.familyDrama.settlement != nil {
+                    || engine.state.familyDrama.settlement != nil
+                    || engine.state.familyDrama.leaving != nil { // K7: after a packed bag
                     marriageCard
                 }
                 if !engine.state.life.family.children.isEmpty {
@@ -221,6 +222,10 @@ struct FamilyDramaScreen: View {
                     Text("It was settled on day \(settlement.day). \(settlement.lawyer == CrimeLawyer.silk.rawValue ? "Expensively." : "Cheaply.")")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                    // MARK: K7 (partner and diary)
+                    // The ex on the cap table, and in the address book.
+                    FamilyExSliceView(engine: engine)
+                    // MARK: end K7
                 } else if let reason = engine.state.familyDivorceRefusal {
                     Text(reason)
                         .font(.footnote)

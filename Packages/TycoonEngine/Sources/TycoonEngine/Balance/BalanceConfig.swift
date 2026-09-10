@@ -2043,6 +2043,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     public var home: HomeBalance = .default
     // MARK: end K6
     // MARK: K7 (partner and diary)
+
+    /// Iteration 15 — K7: the partner on payroll, the ex's slice, the
+    /// diary against the roadmap, the doctor's letter
+    /// (`BalanceConfig+Partner.swift`). Inline default, so `"partner"` is
+    /// an optional key; read only after the player's own action.
+    public var partner: PartnerBalance = .default
+
     // MARK: end K7
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14

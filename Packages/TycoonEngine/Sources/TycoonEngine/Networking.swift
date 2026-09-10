@@ -233,7 +233,12 @@ public struct Contact: Codable, Equatable, Sendable, Identifiable {
     }
 
     /// Whether they are still someone the founder could do something with.
-    public var isOpen: Bool { outcome == nil }
+    public var isOpen: Bool {
+        // MARK: K7 (partner and diary) — the ex is still someone to talk to.
+        if outcome == .formerPartner { return true }
+        // MARK: end K7
+        return outcome == nil
+    }
 
     /// Whether this person used to be on payroll.
     public var isAlumnus: Bool { leftDay != nil }
@@ -314,6 +319,12 @@ public enum ContactOutcome: String, Codable, Equatable, Sendable {
     case romance
     /// They folded, moved on, or stopped returning calls.
     case lost
+    // MARK: K7 (partner and diary)
+    /// Iteration 15 — K7. They were married to the founder. Still in the
+    /// book and still someone to talk to, recruit or ask out again:
+    /// `isOpen` counts them as open.
+    case formerPartner
+    // MARK: end K7
 }
 
 /// A stake the founder personally holds in somebody else's startup. Paid

@@ -293,6 +293,10 @@ public enum InteractionSystem {
     ) -> [GameEvent] {
         guard state.life.family.stage != .single else { return [] }
         let day = state.day
+        // MARK: K7 (partner and diary)
+        // A partner on payroll leaves the job the day they leave you.
+        let resigned = RelationshipSystem.partnerLeavesPayroll(state: &state, balance: balance)
+        // MARK: end K7
         state.life.family.stage = .single
         state.life.family.stageSinceDay = day
         state.life.family.partnerName = nil
@@ -305,7 +309,7 @@ public enum InteractionSystem {
         state.life.meters.apply(mood: -balance.life.breakupMoodPenalty)
         FamilyCalendar.partnerLeft(&state, content: content)
         state.narrative.flags.insert(InteractionTuning.estrangedFlag)
-        return [.breakup(day: day)]
+        return resigned + [.breakup(day: day)] // K7: the resignation first
     }
 
     /// A fact with a shelf life. Wave two's family drama reads

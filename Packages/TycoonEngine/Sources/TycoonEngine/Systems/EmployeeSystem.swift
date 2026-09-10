@@ -161,6 +161,9 @@ enum EmployeeSystem {
                 // Being close to the person you work for is worth
                 // something on its own.
                 + employee.founderBond * balance.relationships.bondMoraleTargetFactor
+                // MARK: K7 (partner and diary) — the partner on payroll reads affection.
+                + state.partnerMoraleTargetDelta(for: employee, balance: balance)
+                // MARK: end K7
             // MARK: K3 (the ladder)
             // A lead the founder promoted with nobody much to lead: a
             // drift in the target, never a jump. 0 for everyone else.

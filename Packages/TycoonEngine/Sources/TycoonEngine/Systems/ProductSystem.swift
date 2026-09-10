@@ -544,6 +544,9 @@ enum ProductSystem {
             &state, balance
         )
 
+        // MARK: K7 (partner and diary) — a launch on a diary date raises the clash.
+        DiaryRoadmap.noteLaunch(&state, balance: balance, content: content)
+        // MARK: end K7
         return [
             .shipped(productID: productID, day: state.day),
             .reviewsIn(productID: productID, averageScore: averageScore, day: state.day),

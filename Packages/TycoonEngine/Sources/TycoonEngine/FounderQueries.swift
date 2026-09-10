@@ -113,6 +113,9 @@ extension GameState {
         var pay = life.founderSalary
         pay += founderMoneyDividendWeeklyPay(balance: balance)
         // MARK: end K1
+        // MARK: K7 (partner and diary) — the household draw: the partner's pay comes home.
+        pay += partnerHouseholdDraw
+        // MARK: end K7
         let ratio = Double(pay) / Double(median)
         return max(0, ratio - balance.economy.founderPayFairRatio)
     }

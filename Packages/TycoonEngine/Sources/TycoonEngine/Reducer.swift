@@ -1087,6 +1087,20 @@ public enum Reducer {
             events = HomeSystem.callBreak(amenity: amenity, state: &state, balance: balance)
         // MARK: end K6
         // MARK: K7 (partner and diary)
+        case .hirePartner:
+            events = RelationshipSystem.hirePartner(state: &state, balance: balance)
+        case .buyOutEx:
+            events = FamilyDramaSystem.buyOutEx(state: &state, balance: balance)
+        case let .keepTheDate(productID):
+            events = DiaryRoadmap.keepTheDate(
+                productID: productID, state: &state, balance: balance, content: content
+            )
+        case let .partnerDebugSeed(stage):
+            #if DEBUG
+            events = PartnerDebugSeed.apply(stage: stage, state: &state, balance: balance, content: content)
+            #else
+            events = []
+            #endif
         // MARK: end K7
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14

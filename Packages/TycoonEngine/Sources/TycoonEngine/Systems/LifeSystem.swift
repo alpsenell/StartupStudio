@@ -61,6 +61,12 @@ enum LifeSystem {
 
         // 3. Thresholds.
         events.append(contentsOf: checkThresholds(&state, balance, content))
+        // MARK: K7 (partner and diary)
+        // 3a. The meter's own breakup resigns a partner on payroll today,
+        //     and — doors armed only — health under the line gets a
+        //     doctor's letter. Returns at once for every bot.
+        events.append(contentsOf: RelationshipSystem.afterThresholds(&state, balance, content))
+        // MARK: end K7
 
         // 3b. The long tail of those thresholds: a chronic condition, a
         //     meltdown that makes the press, loneliness, and the landlord.
