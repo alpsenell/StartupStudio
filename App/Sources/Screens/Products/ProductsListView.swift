@@ -25,6 +25,15 @@ struct ProductsListView: View {
                 DevSlotsRow(used: slots.used, total: slots.total)
             }
 
+            // MARK: V2 (ux: one inbox, one home per thing)
+            // C10: the team's pace, once for the tab. It is one company-wide
+            // setting (`economy.workPace`), and every build card used to
+            // carry its own copy of the control (five on the campus).
+            if showsTeamPace {
+                TeamPaceCard(engine: engine)
+            }
+            // MARK: end V2
+
             ForEach(engine.state.productsInDevelopment) { product in
                 if case .development(let progress) = product.stage {
                     InDevelopmentCard(engine: engine, product: product, progress: progress)
@@ -73,6 +82,18 @@ struct ProductsListView: View {
             NewProductFlow(engine: engine)
         }
     }
+
+    // MARK: V2 (ux: one inbox, one home per thing)
+    /// C10: the same rule the build cards used for their control — somebody
+    /// to set a pace for, or a pace that is not normal — and something in
+    /// development to set it on (or a pace that still needs undoing).
+    private var showsTeamPace: Bool {
+        let pace = engine.state.economy.workPace
+        let hasTeam = engine.state.employees.contains { !$0.isFounder }
+        return (pace != .normal || hasTeam)
+            && (pace != .normal || !engine.state.productsInDevelopment.isEmpty)
+    }
+    // MARK: end V2
 
     /// Released products, newest launch first.
     private var releasedProducts: [(product: Product, info: ReleaseInfo)] {
@@ -149,13 +170,19 @@ private struct InDevelopmentCard: View {
                 .accessibilityHint("Opens details and the focus editor")
 
                 TriPhaseProgress(progress: progress, type: type)
-                if engine.state.economy.workPace != .normal || engine.state.employees.contains(where: { !$0.isFounder }) {
+                // MARK: V2 (ux: one inbox, one home per thing)
+                // C10: the control is the tab's now (`TeamPaceCard`); the
+                // build says so only when the pace is not normal.
+                if engine.state.economy.workPace != .normal {
                     HStack(spacing: Theme.Spacing.sm) {
                         WorkPacePill(pace: engine.state.economy.workPace)
+                        Text("Team pace, set at the top")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         Spacer(minLength: 0)
                     }
-                    WorkPaceControl(engine: engine, compact: true)
                 }
+                // MARK: end V2
 
                 Button {
                     confirmingShip = true
@@ -201,6 +228,34 @@ private struct InDevelopmentCard: View {
         }
     }
 }
+
+// MARK: V2 (ux: one inbox, one home per thing)
+
+/// C10: the team's work pace, once for the Products tab. The control is
+/// `WorkPaceControl`, the same one Life's work card and a product's detail
+/// page draw, writing the one company-wide `setWorkPace` — so the card
+/// says in words that it is the whole team's, not this build's.
+private struct TeamPaceCard: View {
+    let engine: GameEngine
+
+    var body: some View {
+        CardView("Team pace", systemImage: "speedometer") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Text("One pace for the whole team: every build here, and everything else they work on.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    WorkPacePill(pace: engine.state.economy.workPace)
+                }
+                WorkPaceControl(engine: engine, compact: true)
+            }
+        }
+    }
+}
+
+// MARK: end V2
 
 /// "2 of 3 in development" — the office's concurrent build slots.
 private struct DevSlotsRow: View {
