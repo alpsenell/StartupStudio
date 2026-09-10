@@ -704,6 +704,9 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: K4 (deals and exits)
     // MARK: end K4
     // MARK: K5 (hand over the keys)
+    /// K5: the keys changed hands. `keptEquity` is the points the old
+    /// founder kept as a silent round.
+    case keysHandedOver(successorID: UUID, keptEquity: Double, day: Int)
     // MARK: end K5
     // MARK: K6 (home and rooms)
     // MARK: end K6
@@ -852,6 +855,11 @@ extension GameEvent {
         case .purchaseApplied:
             .info
         // MARK: end P1
+        // MARK: K5 (hand over the keys)
+        // The player's own tap, on a sheet that already said everything.
+        case .keysHandedOver:
+            .info
+        // MARK: end K5
 
         // MARK: WS-F
 

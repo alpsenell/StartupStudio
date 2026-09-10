@@ -621,6 +621,14 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: K4 (deals and exits)
     // MARK: end K4
     // MARK: K5 (hand over the keys)
+    /// K5: the founder hands the company to `successorID` and keeps
+    /// `keptPercent` (10, 25 or 50) of their holding as a silent round; the
+    /// successor becomes the founder with a fresh life and the run becomes
+    /// `.custom`. `predecessorRunID` is the id the app gives the outgoing
+    /// founder's `LegacyRun`, so the new `lineage` points at it without
+    /// the engine minting an id. Refused with `handOverBlocker` /
+    /// `handOverSuccessorBlocker`'s reason. Sent only from the app.
+    case handOverKeys(successorID: UUID, keptPercent: Int, predecessorRunID: UUID)
     // MARK: end K5
     // MARK: K6 (home and rooms)
     // MARK: end K6
