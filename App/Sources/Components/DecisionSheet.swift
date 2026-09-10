@@ -329,7 +329,9 @@ extension DecisionPrompt {
         // A term sheet pauses the clock, so the question has to be on
         // screen whatever tab the player was on.
         if let offer = state.investors.pendingOffer {
-            return investmentPrompt(offer, state: state, content: content)
+            // MARK: J2 (record) — the balance, for the key-person clause.
+            return investmentPrompt(offer, state: state, content: content, balance: balance)
+            // MARK: end J2
         }
         return NarrativeChoicePresenter.prompt(for: state, content: content, balance: balance)
     }
@@ -488,12 +490,23 @@ extension DecisionPrompt {
     private static func investmentPrompt(
         _ offer: InvestmentOffer,
         state: GameState,
-        content: ContentCatalog
+        content: ContentCatalog,
+        // MARK: J2 (record)
+        balance: BalanceConfig
+        // MARK: end J2
     ) -> DecisionPrompt? {
         let persona = content.investors.first { $0.id == offer.investorID }
-        let boardLine = offer.takesBoardSeat
+        var boardLine = offer.takesBoardSeat
             ? "They take a board seat and will grade you on \(offer.expects.displayName.lowercased()) every quarter."
             : "No board seat — they wire the money and leave you alone."
+        // MARK: J2 (record)
+        // The sheet says so: it arrived while a case was open and nobody
+        // sat on the board to read the papers first.
+        if offer.standingKeyPersonClause {
+            let cut = Int(((1 - balance.founderStanding.keyPersonClauseFactor) * 100).rounded())
+            boardLine += " Key-person clause: −\(cut)%. They read about the case."
+        }
+        // MARK: end J2
         // WS-G: signing is the one-way declaration. Said once, on the
         // button, while there is still something to give up.
         let oneWay = state.investors.equityRemaining >= 100

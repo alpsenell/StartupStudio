@@ -36,6 +36,11 @@ enum StandingDebug {
                 yourLine: "Some of us get sued for it.",
                 waitingOnYou: true
             )
+            // Idempotent: a launch that sends this twice gets one review.
+            if let last = state.investors.reviews.last,
+               last.founderQuarter > 0, state.day - last.day < 30 {
+                return events
+            }
             events += InvestorSystem.standingDebugReview(&state, balance)
             return events
         case "offercase":

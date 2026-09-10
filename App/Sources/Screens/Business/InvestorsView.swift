@@ -18,6 +18,10 @@ struct InvestorsView: View {
     private var shell: GameShell { injectedShell ?? .shared }
 
     private var investors: InvestorState { engine.state.investors }
+    // MARK: J2 (record)
+    /// DEBUG screenshot pass only: the board card lifted onto a sheet.
+    @State private var standingLiftsBoard = false
+    // MARK: end J2
 
     var body: some View {
         BusinessSectionHeader(title: "Cap table", systemImage: "chart.pie.fill")
@@ -53,6 +57,19 @@ struct InvestorsView: View {
         if investors.hasBoard || investors.earnOut != nil {
             BusinessSectionHeader(title: "The board", systemImage: "person.3.fill")
             boardCard
+                // MARK: J2 (record)
+                // DEBUG: `-autoBoardReview case` lifts the card where a
+                // camera can see it; nothing in the game presents this.
+                .sheet(isPresented: $standingLiftsBoard) {
+                    ScrollView { boardCard.padding(Theme.Spacing.lg) }
+                        .background(Theme.screenBackground)
+                }
+                .task {
+                    guard DebugLaunch.standingLiftsBoardCard else { return }
+                    try? await Task.sleep(for: .seconds(4))
+                    standingLiftsBoard = true
+                }
+                // MARK: end J2
         }
 
         BusinessSectionHeader(title: "Going public", systemImage: "bell.fill")

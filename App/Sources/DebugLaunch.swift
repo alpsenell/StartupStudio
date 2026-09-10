@@ -1188,29 +1188,77 @@ extension DebugLaunch {
         return scenarios
     }
 
-    /// Sends each scenario once the shell has a company to send it to.
-    /// `current` is read on every attempt, the way `InsideDebug` reads it:
-    /// installing a fixture swaps the engine, and a scenario sent to the
-    /// old one goes down with it. Each is re-sent to a new engine until
-    /// that engine shows it.
+    /// Whether a J2 screenshot pass is running that wants the decision
+    /// sheet held back: every J2 flag except `-autoBoardReview offer`,
+    /// whose subject *is* the term-sheet prompt. Always false in release.
+    static var standingHoldsDecisions: Bool {
+        #if DEBUG
+        let scenarios = standingScenarios
+        return !scenarios.isEmpty && !scenarios.contains("offercase")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoBoardReview case` also lifts the board card onto a sheet: it
+    /// sits below the fold of the cap table and a headless pass cannot
+    /// scroll (W3's `-autoSpyCard`, for the same reason).
+    static var standingLiftsBoardCard: Bool {
+        #if DEBUG
+        return standingScenarios.contains("boardcase")
+        #else
+        return false
+        #endif
+    }
+
+    /// Sends each scenario until the state shows it. `current` is read on
+    /// every attempt, the way `InsideDebug` reads it, and the test is the
+    /// state rather than the engine: installing a fixture replaces the
+    /// state a scenario was applied to. At most five sends a scenario.
     @MainActor
     static func startStandingIfAsked(current: @escaping () -> GameEngine) async {
         #if DEBUG
         let scenarios = standingScenarios
         guard !scenarios.isEmpty else { return }
-        var sentTo: [String: ObjectIdentifier] = [:]
-        for _ in 0..<40 {
+        var sends: [String: Int] = [:]
+        // An action lands on the engine's next turn, so a scenario is
+        // given three seconds to show before it is sent again.
+        var lastSent: [String: Int] = [:]
+        for attempt in 0..<40 {
             let engine = current()
-            let id = ObjectIdentifier(engine)
             if engine.state.gameOver == nil {
-                for scenario in scenarios where sentTo[scenario] != id {
+                for scenario in scenarios
+                where !standingShows(scenario, engine: engine)
+                    && sends[scenario, default: 0] < 5
+                    && attempt - lastSent[scenario, default: -100] >= 10 {
                     engine.send(.standingDebug(scenario: scenario))
-                    sentTo[scenario] = id
+                    sends[scenario, default: 0] += 1
+                    lastSent[scenario] = attempt
                 }
             }
-            try? await Task.sleep(for: .milliseconds(250))
+            try? await Task.sleep(for: .milliseconds(300))
         }
         #endif
+    }
+
+    /// Whether the state already shows a scenario.
+    @MainActor
+    private static func standingShows(_ scenario: String, engine: GameEngine) -> Bool {
+        let state = engine.state
+        let words = scenario.split(separator: " ").map(String.init)
+        switch words.first {
+        case "name":
+            let target = min(100, Double(words.dropFirst().first ?? "40") ?? 40)
+            return state.standingName(balance: engine.balance).score >= target - 0.5
+        case "boardcase":
+            return (state.investors.reviews.last?.founderQuarter ?? 0) > 0
+        case "offercase":
+            return state.investors.pendingOffer?.standingKeyPersonClause == true
+        case "spotlight":
+            return state.standingSpotlight(balance: engine.balance) > 1
+        default:
+            return true
+        }
     }
 
     // MARK: end J2

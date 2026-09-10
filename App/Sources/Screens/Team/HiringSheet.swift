@@ -80,14 +80,18 @@ struct HiringSheet: View {
     /// `YOUR NAME: +14% ON ASKS · 2 ALUMNI VOUCH`, and what it means.
     private var standingLine: some View {
         let name = standingName
-        let refuses = name.refuses
+        // The refusal names who, so it reads at the top of the sheet
+        // however far down their card is.
+        let refuser = name.refuses
+            ? candidates.first { engine.state.standingRefuses($0.id, balance: engine.balance) }?.name
+            : nil
         return VStack(alignment: .leading, spacing: 2) {
             Text(FounderStanding.nameLineText(name))
                 .font(Theme.Typography.number(.caption, weight: .bold))
                 .foregroundStyle(name.score > 0 ? Theme.warning : Theme.positiveCash)
             Text(
-                refuses
-                    ? "Recruiters ring the people who used to work for you. The best of them already did."
+                refuser != nil
+                    ? "\(refuser ?? "") rang someone who used to work for you, and will not come in. Every other ask below has heard."
                     : name.score > 0
                         ? "Recruiters ring the people who used to work for you. Every ask below has heard."
                         : "Recruiters ring the people who used to work for you. It goes well."
