@@ -54,10 +54,9 @@ struct AppRootView: View {
         // The shop's prices, what the Apple ID owns, and whatever a killed
         // app left unfinished, once, for the app's life.
         .task { session.installShop() }
-        // At the merge with P3 (whose `\.shopSurface` key does not exist on
-        // p2-store), this one line goes here, with the three-line
-        // conformance in `ShopSurfaceStore.swift`'s doc comment:
-        //     .environment(\.shopSurface, session.shopSurfaceStore)
+        // Iteration 13 merge: P2's store behind P3's surfaces. With nothing
+        // injected every shop surface draws nothing, so this line is the shop.
+        .environment(\.shopSurface, session.shopSurfaceStore)
         // MARK: end P2
         // The new-game flow is opened from the front door, into the slot
         // the player picked there; cancelling goes back to the door.

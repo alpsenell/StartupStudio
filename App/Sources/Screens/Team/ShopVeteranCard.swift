@@ -92,7 +92,7 @@ private struct ShopVeteranCard: View {
                             .lineLimit(1)
                         RoleBadge(role: veteran.role, prominent: true)
                     }
-                    Text("\(veteran.weeklySalary.money)/wk", comment: "A candidate's weekly salary. wk is short for week")
+                    Text("\(engine.state.standingAsk(for: veteran, balance: engine.balance).money)/wk", comment: "A candidate's weekly salary. wk is short for week")
                         .font(Theme.Typography.number(.caption, weight: .regular))
                         .foregroundStyle(.secondary)
                 }
@@ -119,7 +119,7 @@ private struct ShopVeteranCard: View {
                 price: price,
                 refusedWord: refusal?.button,
                 enabled: enabled,
-                spokenGrant: String(localized: "\(veteran.name), \(veteran.role.displayName), joins the hiring pool at \(veteran.weeklySalary.money) a week", comment: "VoiceOver: what buying the veteran does. Arguments are a name, a role and a weekly salary")
+                spokenGrant: String(localized: "\(veteran.name), \(veteran.role.displayName), joins the hiring pool at \(engine.state.standingAsk(for: veteran, balance: engine.balance).money) a week", comment: "VoiceOver: what buying the veteran does. Arguments are a name, a role and a weekly salary")
             ) {
                 ShopPurchaseFlow.tap(item, state: state, shop: shop, pending: &pending)
             }

@@ -57,3 +57,8 @@ final class ShopSurfaceStore {
         session?.requestShopPurchase(product)
     }
 }
+
+// Iteration 13 merge — P2's store meets P3's surface protocol.
+extension ShopSurfaceStore: ShopSurfaceModel {
+    func buy(_ item: ShopSurfaceItem) { buy(productID: item.productID) }
+}

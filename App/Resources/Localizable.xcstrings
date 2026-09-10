@@ -195,6 +195,9 @@
         }
       }
     },
+    "%@ are yours on this Apple ID." : {
+      "comment" : "Restore alert: several owned things"
+    },
     "%@ at %lld: %@" : {
       "localizations" : {
         "en" : {
@@ -273,6 +276,9 @@
     "%@ is unhappy" : {
 
     },
+    "%@ is yours on this Apple ID." : {
+      "comment" : "Restore alert: one owned thing"
+    },
     "%@ last wk" : {
 
     },
@@ -300,6 +306,28 @@
     },
     "%@ of this debt is personally guaranteed." : {
 
+    },
+    "%@ open at the %@" : {
+      "comment" : "Team tab, under the departments: the departments the office is still too small for, and the office tier that allows them",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ open at the %2$@"
+          }
+        }
+      }
+    },
+    "%@ opens at the %@" : {
+      "comment" : "Team tab, under the departments: the one department the office is still too small for, and the office tier that allows it",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ opens at the %2$@"
+          }
+        }
+      }
     },
     "%@ out of 5 stars, from %lld review%@, scoring %lld out of 100" : {
       "localizations" : {
@@ -504,6 +532,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ · day %2$lld of %3$lld"
+          }
+        }
+      }
+    },
+    "%@ · slot %lld" : {
+      "comment" : "Purchases list: another save's heading",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · slot %2$lld"
           }
         }
       }
@@ -1356,6 +1395,12 @@
     "%lld pts" : {
       "comment" : "Progress bar readout when the requirement is unknown: points banked. Abbreviation of points"
     },
+    "%lld purchases are waiting for a company. They go to the next ones that can take them." : {
+      "comment" : "Purchases list: several parked consumables"
+    },
+    "%lld purchases waiting for a company" : {
+      "comment" : "Front door: several bought consumables no company could take yet"
+    },
     "%lld researcher%@" : {
       "localizations" : {
         "en" : {
@@ -1389,6 +1434,17 @@
         }
       }
     },
+    "%lld things on the desk · %@" : {
+      "comment" : "Front door, the Continue card's desk line: how many things are waiting, then the first",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld things on the desk · %2$@"
+          }
+        }
+      }
+    },
     "%lld week%@ with %@%@" : {
       "localizations" : {
         "en" : {
@@ -1411,6 +1467,9 @@
           }
         }
       }
+    },
+    "%lld weeks of runway" : {
+      "comment" : "Purchases list: a cash grant of an unusual size"
     },
     "%lld weeks of runway came in from outside the story: %@." : {
       "comment" : "Journal line after buying cash. Arguments are a number of weeks and a dollar figure with a plus sign",
@@ -1530,6 +1589,15 @@
     "1 day left" : {
       "comment" : "Notice rail: a deferred question with one day of its deadline left"
     },
+    "1 purchase is waiting for a company. It goes to the next one that can take it." : {
+      "comment" : "Purchases list: one parked consumable"
+    },
+    "1 purchase waiting for a company" : {
+      "comment" : "Front door: a bought consumable no company could take yet"
+    },
+    "1 thing on the desk · %@" : {
+      "comment" : "Front door, the Continue card's desk line: one thing waiting, then what it is"
+    },
     "4 wks" : {
 
     },
@@ -1599,6 +1667,9 @@
     "A distress bid for the name and the desks: taking it ends the run as a sale." : {
 
     },
+    "A fourth slot" : {
+      "comment" : "Shop item: a fourth save slot on the front door"
+    },
     "A hit" : {
       "comment" : "One-word verdict under the average review score, best to worst"
     },
@@ -1612,7 +1683,7 @@
       "comment" : "Receiver's call: the cash it puts in after clearing the overdraft. The argument is a dollar figure with a plus sign"
     },
     "A month of runway" : {
-      "comment" : "Shop item on the money sheet: four weeks of company burn in cash"
+      "comment" : "Shop item on the money sheet: four weeks of company burn in cash\nShop item: four weeks of the company's burn, in cash"
     },
     "A month of runway came in from outside the story: %@." : {
       "comment" : "Journal line after buying a month of cash. The argument is a dollar figure with a plus sign"
@@ -1636,7 +1707,7 @@
 
     },
     "A quarter of runway" : {
-      "comment" : "Shop item on the money sheet: thirteen weeks of company burn in cash"
+      "comment" : "Shop item on the money sheet: thirteen weeks of company burn in cash\nShop item: thirteen weeks of the company's burn, in cash"
     },
     "A quarter of runway came in from outside the story: %@." : {
       "comment" : "Journal line after buying a quarter of cash. The argument is a dollar figure with a plus sign"
@@ -1649,6 +1720,9 @@
     },
     "A rival just shipped into a topic you hold. Their page says how strong they are and what they are after." : {
       "comment" : "Coach tip keyed to game state"
+    },
+    "A save of its own, synced through iCloud like the other three." : {
+      "comment" : "Front door: what the locked fourth slot is"
     },
     "A stake alone stays ranked. Any other change earns achievements but does not post to leaderboards." : {
 
@@ -1666,7 +1740,7 @@
 
     },
     "A veteran" : {
-      "comment" : "Hire sheet: the heading over the one candidate sold through the App Store\nShop item on the hire sheet: one lead-level candidate, shown before you buy"
+      "comment" : "Hire sheet: the heading over the one candidate sold through the App Store\nShop item on the hire sheet: one lead-level candidate, shown before you buy\nShop item: one lead-level candidate added to the hiring pool"
     },
     "A veteran joined the hiring pool from outside the story." : {
       "comment" : "Journal line after buying the veteran candidate"
@@ -1735,6 +1809,9 @@
     },
     "Already where it goes" : {
 
+    },
+    "Already yours on this Apple ID." : {
+      "comment" : "Shop: the owned item was tapped again"
     },
     "Amenities" : {
 
@@ -1982,11 +2059,25 @@
         }
       }
     },
+    "Bought in: %@ over %lld purchases. This company no longer posts to the leaderboards." : {
+      "comment" : "Purchases list: the open company's total, and that it is unranked",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bought in: %1$@ over %2$lld purchases. This company no longer posts to the leaderboards."
+          }
+        }
+      }
+    },
     "Bought in: %@ over 1 purchase." : {
       "comment" : "Founder biography, money card: what the run bought from the App Store, one purchase. The argument is a dollar figure"
     },
     "Bought money makes this company unranked — no leaderboards from here on, like an heirloom. Achievements, the ledger and the Hall of Fame carry on." : {
       "comment" : "Money sheet, App Store card: the rule above the two cash packs, shown in every standard company"
+    },
+    "Bought. No company open can take it right now, so it waits and goes to the next one that can." : {
+      "comment" : "Shop: a consumable was paid for but parked"
     },
     "Bring them in" : {
       "comment" : "Button on the veteran's card on the hire sheet; the price follows it after a middle dot"
@@ -2129,6 +2220,12 @@
     },
     "Cash out" : {
 
+    },
+    "Cash, second chances and veterans are used once, in the company that took them, and don't restore." : {
+
+    },
+    "Cash, second chances and veterans don't restore — each is used once." : {
+      "comment" : "Restore alert: consumables are one-use"
     },
     "Cellmate · %lld rapport. Yours in the address book when you leave." : {
 
@@ -2442,7 +2539,7 @@
       "comment" : "War room: the announced ship date was missed twice and no longer stands. Pixel face, A-Z only"
     },
     "Day %lld" : {
-
+      "comment" : "Purchases list: the game day a grant landed"
     },
     "Day %lld · %@" : {
       "localizations" : {
@@ -2450,6 +2547,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Day %1$lld · %2$@"
+          }
+        }
+      }
+    },
+    "Day %lld · kept safe, locked. %@ opens it again, or Restore purchases in Settings." : {
+      "comment" : "Front door: a save in the fourth slot after the slot was refunded",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Day %1$lld · kept safe, locked. %2$@ opens it again, or Restore purchases in Settings."
           }
         }
       }
@@ -2506,6 +2614,9 @@
     },
     "Denny rang about the runway. His number is on your phone, and he is waiting." : {
       "comment" : "Coach tip while the loan shark's door is open"
+    },
+    "Departments open at the %@" : {
+      "comment" : "Team tab, one line while no department can be formed yet: the office tier that allows the first ones"
     },
     "Design" : {
       "comment" : "Used for the design build phase, the design skill, and the founder archetype skill chip. One word, on a chip or a bar label"
@@ -2976,6 +3087,9 @@
     "Here's the job" : {
       "comment" : "Onboarding page heading"
     },
+    "Hides the save slots" : {
+
+    },
     "Hire" : {
       "comment" : "Button on a launch-day reason: go to the hiring screen"
     },
@@ -3326,9 +3440,6 @@
     "Market read: %@" : {
 
     },
-    "Market view" : {
-
-    },
     "Marketer" : {
       "comment" : "Job title on a badge beside a name. Keep it short - one word if possible"
     },
@@ -3388,6 +3499,9 @@
 
     },
     "More than 1.5× the team's median: morale slides, and a board adds it to the pressure." : {
+
+    },
+    "More ways to play" : {
 
     },
     "Most on the table: %@. %@" : {
@@ -3554,6 +3668,9 @@
     "No previous period to compare" : {
 
     },
+    "No purchase to restore on this Apple ID." : {
+      "comment" : "Restore alert: nothing owned"
+    },
     "No reviews yet" : {
 
     },
@@ -3677,6 +3794,15 @@
     "Nothing between you yet. Sell into a topic they are in and there will be." : {
 
     },
+    "Nothing bought on this Apple ID." : {
+
+    },
+    "Nothing bought, and this company still posts to the leaderboards." : {
+      "comment" : "Purchases list: the open company bought nothing and is ranked"
+    },
+    "Nothing bought." : {
+
+    },
     "Nothing has crept in yet. Launch parties, crunch weeks and the tables are how it starts." : {
 
     },
@@ -3713,7 +3839,7 @@
     "Nothing on either side yet." : {
 
     },
-    "Nothing on the desk." : {
+    "Nothing on the desk. No contracts running." : {
 
     },
     "Nothing on the ledger yet." : {
@@ -3810,6 +3936,9 @@
     "On the side" : {
 
     },
+    "On this Apple ID" : {
+
+    },
     "On today's diary, a court would probably say: %@." : {
 
     },
@@ -3859,6 +3988,9 @@
     "Open Market Report" : {
 
     },
+    "Open a company first." : {
+      "comment" : "Shop: a consumable was tapped with no company open"
+    },
     "Open hiring" : {
 
     },
@@ -3900,6 +4032,9 @@
     },
     "Opens each child's memory ledger and the evening and internship actions" : {
 
+    },
+    "Opens the App Store to buy the fourth slot" : {
+      "comment" : "Spoken hint on the locked fourth save slot"
     },
     "Opens the amenities sheet" : {
 
@@ -4207,6 +4342,12 @@
     "Propose?" : {
 
     },
+    "Purchases" : {
+
+    },
+    "Purchases are turned off on this device." : {
+      "comment" : "Shop: in-app purchases are restricted on the device"
+    },
     "Put %@ away" : {
 
     },
@@ -4299,6 +4440,9 @@
     },
     "Relaxed" : {
       "comment" : "Pill on a header: the team is on the easiest work pace"
+    },
+    "Remember" : {
+      "comment" : "Bitmap heading in the More ways to play sheet: the Hall of Fame and the dynasty. Uppercased by the pixel face"
     },
     "Rent" : {
       "comment" : "Used as a ledger bucket (the office rent) and as the money-sheet row for the founder home rent"
@@ -4609,6 +4753,9 @@
     "Set to" : {
 
     },
+    "Set up" : {
+      "comment" : "Bitmap heading in the More ways to play sheet: scenarios, a custom company and a company from a code. Uppercased by the pixel face"
+    },
     "Settings" : {
 
     },
@@ -4687,6 +4834,21 @@
     "Show details" : {
 
     },
+    "Show the map" : {
+
+    },
+    "Show the report" : {
+
+    },
+    "Shows the save slots" : {
+
+    },
+    "Shows the whole line" : {
+
+    },
+    "Shows the whole question" : {
+
+    },
     "Shows this product's store page, as a customer sees it" : {
 
     },
@@ -4744,6 +4906,17 @@
     },
     "Slot %lld is cleared. This can't be undone." : {
       "comment" : "Confirmation message for deleting an empty save slot"
+    },
+    "Slot %lld, locked. %@. %@" : {
+      "comment" : "Spoken: the locked fourth save slot",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Slot %1$lld, locked. %2$@. %3$@"
+          }
+        }
+      }
     },
     "Slot %lld: %@, %@, day %lld. This can't be undone." : {
       "comment" : "Confirmation message for deleting a save: slot number, company, founder and the day reached",
@@ -5049,7 +5222,7 @@
 
     },
     "Tap anyone — or the whiteboard, the coffee machine, the door." : {
-
+      "comment" : "Coach tip on HQ's rail the first time: the office scene can be tapped"
     },
     "Tap anything on the line to read it. %lld moment%@ so far." : {
       "localizations" : {
@@ -5118,6 +5291,15 @@
     },
     "The App Store" : {
       "comment" : "Money sheet card: the two cash packs sold through the App Store"
+    },
+    "The App Store couldn't be reached. Try again in a moment." : {
+      "comment" : "Shop: the store did not answer"
+    },
+    "The App Store isn't answering. Try again later." : {
+      "comment" : "Front door: the fourth slot's price did not load\nShop: the store's prices did not load"
+    },
+    "The App Store's answer couldn't be verified. Nothing was granted; try again in a moment." : {
+      "comment" : "Shop: the transaction did not verify"
     },
     "The answer itself is still yours — this only changed what you're answering." : {
 
@@ -5192,6 +5374,9 @@
     "The desk belongs to a company. Start one, or open a save, and it will be here in the morning." : {
 
     },
+    "The desk is cleared · come back tomorrow" : {
+      "comment" : "Front door, the Continue card's desk line when the morning desk is done"
+    },
     "The desk is set" : {
       "comment" : "Title of the one daily notification the morning desk sends"
     },
@@ -5215,6 +5400,9 @@
     },
     "The fortnight" : {
 
+    },
+    "The full company" : {
+      "comment" : "Purchases list: the unlock"
     },
     "The funeral" : {
 
@@ -5271,7 +5459,7 @@
 
     },
     "The loft pack" : {
-      "comment" : "Shop item on the furnish sheet: six decor items for the flat"
+      "comment" : "Shop item on the furnish sheet: six decor items for the flat\nShop item: six home decor pieces"
     },
     "The loft pack · %@" : {
       "comment" : "Furnish sheet: the heading of the decor pack sold through the App Store, with its price"
@@ -5336,7 +5524,7 @@
       "comment" : "Heading of the onboarding panel about the products"
     },
     "The receiver's call" : {
-      "comment" : "Shop item on the bankruptcy post-mortem: reverses the bankruptcy once"
+      "comment" : "Shop item on the bankruptcy post-mortem: reverses the bankruptcy once\nShop item: reverses a bankruptcy ending once"
     },
     "The rest of it, day by day, the way it was written down." : {
 
@@ -5439,6 +5627,9 @@
 
     },
     "There is nobody to leave it with. Hire somebody, then get to know them." : {
+
+    },
+    "These restore on any device signed in to the same Apple ID." : {
 
     },
     "They are not here." : {
@@ -5592,7 +5783,7 @@
 
     },
     "Today" : {
-
+      "comment" : "Bitmap heading in the More ways to play sheet: the daily, the season and the league. Uppercased by the pixel face"
     },
     "Today is already cleared" : {
 
@@ -5609,6 +5800,9 @@
     },
     "Today's company is the same for everyone, and your year leaves a ghost for the next player. Money from outside it would be a different game. The shop opens in a company of your own." : {
       "comment" : "Footnote under a disabled shop button in a daily, season or league company"
+    },
+    "Today's company, the season, the league, scenarios, a custom company, a code, the Hall of Fame and the dynasty" : {
+
     },
     "Today, day %lld" : {
 
@@ -5761,6 +5955,12 @@
     },
     "Wait" : {
 
+    },
+    "Waiting" : {
+
+    },
+    "Waiting for approval. It arrives by itself when it comes through." : {
+      "comment" : "Shop: Ask to Buy is pending"
     },
     "Walk away — %@ · Life %lld" : {
       "localizations" : {
@@ -6138,6 +6338,9 @@
     "a founder" : {
       "comment" : "Job title with its article, dropped into a sentence such as You need a lawyer"
     },
+    "a fourth slot" : {
+      "comment" : "Restore alert: the slot, inside a list"
+    },
     "a frontend dev" : {
       "comment" : "Job title with its article, dropped into a sentence such as You need a lawyer"
     },
@@ -6307,6 +6510,12 @@
     },
     "the damaged save" : {
       "comment" : "Stand-in name for a save file that could not be read, used inside a sentence"
+    },
+    "the full company" : {
+      "comment" : "Restore alert: the unlock, inside a list"
+    },
+    "the loft pack" : {
+      "comment" : "Restore alert: the pack, inside a list"
     },
     "the newer save" : {
       "comment" : "Stand-in name for a save written by a newer app version, used inside a sentence"
