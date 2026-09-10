@@ -188,7 +188,8 @@ struct JournalCard: View {
     /// so it is closed once `day / 7 >= N`; the week in progress has no
     /// report yet and keeps a plain heading.
     private func reportOpener(for week: Int) -> ((Int) -> Void)? {
-        guard week <= engine.state.day / 7 else { return nil }
+        // V2: only a week the shell can show draws as a button.
+        guard GameShell.shared.canReopenReport(week: week, engine: engine) else { return nil }
         return reopenReport
     }
 
@@ -196,7 +197,9 @@ struct JournalCard: View {
     /// lands there is nothing to call, so this is `nil` and every week
     /// heading draws as it always did; V2 replaces the one line below.
     private var reopenReport: ((Int) -> Void)? {
-        nil // V3: call V2's reopen here
+        // Iteration 14 merge: V2's reopen, which shows the week's report as
+        // it was built, without resetting the deltas or counting an open.
+        { week in _ = GameShell.shared.reopenWeeklyReport(engine: engine, week: week) }
     }
 
     // MARK: end V3

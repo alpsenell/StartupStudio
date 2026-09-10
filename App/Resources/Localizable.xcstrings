@@ -276,6 +276,9 @@
     "%@ is unhappy" : {
 
     },
+    "%@ is waiting on an answer" : {
+      "comment" : "Waiting on you: a phone thread with a question in it"
+    },
     "%@ is yours on this Apple ID." : {
       "comment" : "Restore alert: one owned thing"
     },
@@ -1270,6 +1273,9 @@
         }
       }
     },
+    "%lld more waiting on you" : {
+      "comment" : "Business desk card: questions and threads waiting outside the desk. Always 2 or more"
+    },
     "%lld of %lld desks filled" : {
       "localizations" : {
         "en" : {
@@ -1434,16 +1440,22 @@
         }
       }
     },
-    "%lld things on the desk · %@" : {
-      "comment" : "Front door, the Continue card's desk line: how many things are waiting, then the first",
+    "%lld things in the morning papers · %@" : {
+      "comment" : "Front door, the Continue card's morning papers line: how many things are waiting, then the first",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$lld things on the desk · %2$@"
+            "value" : "%1$lld things in the morning papers · %2$@"
           }
         }
       }
+    },
+    "%lld things need an answer from you. The soonest is first in each group." : {
+      "comment" : "Waiting on you: how many things are in the inbox"
+    },
+    "%lld waiting" : {
+
     },
     "%lld week%@ with %@%@" : {
       "localizations" : {
@@ -1589,14 +1601,17 @@
     "1 day left" : {
       "comment" : "Notice rail: a deferred question with one day of its deadline left"
     },
+    "1 more waiting on you" : {
+      "comment" : "Business desk card: one question or thread waiting outside the desk"
+    },
     "1 purchase is waiting for a company. It goes to the next one that can take it." : {
       "comment" : "Purchases list: one parked consumable"
     },
     "1 purchase waiting for a company" : {
       "comment" : "Front door: a bought consumable no company could take yet"
     },
-    "1 thing on the desk · %@" : {
-      "comment" : "Front door, the Continue card's desk line: one thing waiting, then what it is"
+    "1 thing in the morning papers · %@" : {
+      "comment" : "Front door, the Continue card's morning papers line: one thing waiting, then what it is"
     },
     "4 wks" : {
 
@@ -1712,7 +1727,7 @@
     "A quarter of runway came in from outside the story: %@." : {
       "comment" : "Journal line after buying a quarter of cash. The argument is a dollar figure with a plus sign"
     },
-    "A review worth repeating. The feed, under Life, is where you repeat it." : {
+    "A review worth repeating. Somebody should repeat it, and it may as well be you." : {
       "comment" : "Coach tip keyed to game state"
     },
     "A rival" : {
@@ -2114,7 +2129,7 @@
     "Burn is covered" : {
       "comment" : "Weekly report runway line when income covers the spend"
     },
-    "Burnout. The doctor is under Assets. The schedule that did it is on the Life tab." : {
+    "Burnout. The doctor will see you. The schedule that did it is still the schedule." : {
       "comment" : "Coach tip keyed to game state"
     },
     "Business" : {
@@ -2526,9 +2541,6 @@
     "DECISION" : {
       "comment" : "Bitmap kicker over a decision sheet. Uppercase, and only A-Z since the pixel face has no lowercase"
     },
-    "DESK CLEARED" : {
-      "comment" : "Bitmap stamp on the morning desk once all three papers are done. Uppercase: the pixel face has no lowercase"
-    },
     "DISTRESS BID" : {
       "comment" : "Bitmap kicker: a lowball offer while the company is failing. Uppercase A-Z only"
     },
@@ -2870,7 +2882,13 @@
     "Flying home means telling %@ you did not think they could do it." : {
 
     },
+    "Folded" : {
+
+    },
     "Folds" : {
+
+    },
+    "Folds the section" : {
 
     },
     "Forecast: %lld out of 100 if shipped today, ceiling %lld. %@" : {
@@ -3164,16 +3182,6 @@
     "In debt" : {
 
     },
-    "In development: %@, %lld open bugs" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "In development: %1$@, %2$lld open bugs"
-          }
-        }
-      }
-    },
     "In progress, %lld of %lld research points" : {
       "localizations" : {
         "en" : {
@@ -3249,7 +3257,7 @@
 
     },
     "Journal" : {
-
+      "comment" : "Waiting on you: opens the full journal"
     },
     "Just finished a course — try again in a couple of weeks." : {
 
@@ -3311,7 +3319,7 @@
     "Launch hype is high — sales should peak almost immediately." : {
 
     },
-    "Launch parties run late. What they cost — the habits, the doctor, the money — is under Assets." : {
+    "Launch parties run late. What they cost — the habits, the doctor, the money — adds up somewhere." : {
       "comment" : "Coach tip keyed to game state"
     },
     "Launch peak is an estimate: market size × today's topic multiplier for a quality-100 launch, before fit, hype, and the adoption ramp." : {
@@ -3419,7 +3427,7 @@
         }
       }
     },
-    "Look at the desk" : {
+    "Look at the papers" : {
 
     },
     "Loyal people turn down rival offers and hold on through rough patches." : {
@@ -3427,6 +3435,9 @@
     },
     "Loyalty" : {
       "comment" : "Decision sheet stat: how likely the person is to stay"
+    },
+    "MORNING PAPERS" : {
+      "comment" : "Bitmap heading on the front door's morning papers card. Uppercase: the pixel face has no lowercase"
     },
     "Market Report" : {
 
@@ -3504,6 +3515,9 @@
     "More ways to play" : {
 
     },
+    "Morning papers" : {
+
+    },
     "Most on the table: %@. %@" : {
       "localizations" : {
         "en" : {
@@ -3535,8 +3549,8 @@
     "NO BURN" : {
       "comment" : "HUD runway readout when the company spends nothing. Bitmap face, uppercase"
     },
-    "NO DESK YET" : {
-      "comment" : "Bitmap heading on the morning desk when there is no company to have a morning about. Uppercase: the pixel face has no lowercase"
+    "NO PAPERS YET" : {
+      "comment" : "Bitmap heading on the morning papers when there is no company to have a morning about. Uppercase: the pixel face has no lowercase"
     },
     "NOTICE" : {
       "comment" : "Bitmap kicker: somebody has handed in notice. Uppercase A-Z only"
@@ -3833,6 +3847,9 @@
     "Nothing is on fire." : {
 
     },
+    "Nothing is waiting on you. The clock can run." : {
+      "comment" : "Waiting on you: the empty inbox"
+    },
     "Nothing of yours targets this market yet." : {
 
     },
@@ -3927,8 +3944,14 @@
     "On show: %@" : {
 
     },
+    "On the desk this week" : {
+      "comment" : "Waiting on you: heading over the Business desk's rows due within seven days"
+    },
     "On the market" : {
 
+    },
+    "On the phone" : {
+      "comment" : "Waiting on you: heading over the phone threads asking something"
     },
     "On the run" : {
 
@@ -3976,11 +3999,17 @@
     "One message, one decision, one tap. A minute, and out." : {
 
     },
+    "One pace for the whole team: every build here, and everything else they work on." : {
+
+    },
     "One purchase for the chapters. There is a small shop besides — a month of cash, a second chance after a bankruptcy, a fourth save, a few things for the flat — and nothing in it is needed to finish the game, and nothing bought reaches a leaderboard. Your save is exactly where you left it either way." : {
 
     },
     "One thing from the last company" : {
       "comment" : "Onboarding page heading"
+    },
+    "Open" : {
+
     },
     "Open %@'s ledger" : {
 
@@ -3995,9 +4024,6 @@
 
     },
     "Open the custom page" : {
-
-    },
-    "Open the desk" : {
 
     },
     "Open the fortnight" : {
@@ -4033,6 +4059,12 @@
     "Opens each child's memory ledger and the evening and internship actions" : {
 
     },
+    "Opens everything waiting on you" : {
+
+    },
+    "Opens that week's report again" : {
+
+    },
     "Opens the App Store to buy the fourth slot" : {
       "comment" : "Spoken hint on the locked fourth save slot"
     },
@@ -4043,6 +4075,12 @@
 
     },
     "Opens the build" : {
+
+    },
+    "Opens the burn rate, the runway and all the money" : {
+
+    },
+    "Opens the chapter's goals" : {
 
     },
     "Opens the city map" : {
@@ -4057,7 +4095,7 @@
     "Opens the incident room" : {
 
     },
-    "Opens the journal; swipe the notice to see the next one" : {
+    "Opens the journal" : {
 
     },
     "Opens the launch week room on the Products tab" : {
@@ -4069,13 +4107,16 @@
     "Opens the money sheet" : {
 
     },
-    "Opens the morning desk" : {
+    "Opens the morning papers" : {
 
     },
     "Opens the new-game flow on the custom page with this code filled in" : {
 
     },
     "Opens the question" : {
+
+    },
+    "Opens the section" : {
 
     },
     "Opens the system share sheet with the card as a 1080 by 1350 image" : {
@@ -4087,6 +4128,9 @@
     "Opens the weekly report" : {
 
     },
+    "Opens the weekly report again" : {
+
+    },
     "Opens their memory ledger" : {
 
     },
@@ -4094,6 +4138,9 @@
       "comment" : "Spoken hint on a save slot the player is not in"
     },
     "Opens this week's newspaper" : {
+
+    },
+    "Opens what is waiting on you; swipe the notice to see the next one" : {
 
     },
     "Operating" : {
@@ -4143,6 +4190,9 @@
     },
     "Owned" : {
 
+    },
+    "PAPERS READ" : {
+      "comment" : "Bitmap stamp on the morning papers once all three are done. Uppercase: the pixel face has no lowercase"
     },
     "POACH" : {
       "comment" : "Bitmap kicker: a rival is trying to hire somebody away. Uppercase A-Z only"
@@ -4378,6 +4428,9 @@
     "Quality" : {
       "comment" : "Launch day figure: the build quality score out of 100"
     },
+    "Questions" : {
+      "comment" : "Waiting on you: heading over the queue's questions and the doors"
+    },
     "R&D" : {
 
     },
@@ -4400,6 +4453,9 @@
 
     },
     "Read the ending" : {
+
+    },
+    "Read the papers" : {
 
     },
     "Read the report" : {
@@ -4482,6 +4538,9 @@
     },
     "Reply" : {
       "comment" : "Bitmap heading over the answer buttons inside a phone thread. Uppercase A-Z only: the pixel face has no lowercase and no accents"
+    },
+    "Report" : {
+
     },
     "Representation" : {
 
@@ -4748,6 +4807,9 @@
       "comment" : "Ledger bucket: hosting costs"
     },
     "Services" : {
+
+    },
+    "Set on the Products tab" : {
 
     },
     "Set to" : {
@@ -5185,9 +5247,6 @@
     "THE BENCH" : {
 
     },
-    "THE DESK" : {
-      "comment" : "Bitmap heading on the front door's morning desk card. Uppercase: the pixel face has no lowercase"
-    },
     "THE INCUMBENT" : {
 
     },
@@ -5255,6 +5314,9 @@
     "Team pace" : {
 
     },
+    "Team pace, set at the top" : {
+
+    },
     "Technical debt" : {
       "comment" : "Money sheet row: the worst codebase debt score"
     },
@@ -5264,10 +5326,7 @@
     "That is everything they are going to hear." : {
 
     },
-    "That is the desk. See you tomorrow." : {
-
-    },
-    "That was a hospital stay. The doctor is under Assets, next to whatever put you there." : {
+    "That was a hospital stay. The doctor will see you, and has opinions about whatever put you there." : {
       "comment" : "Coach tip keyed to game state"
     },
     "That's the hearing." : {
@@ -5368,18 +5427,6 @@
     "The day is gone" : {
 
     },
-    "The desk" : {
-
-    },
-    "The desk belongs to a company. Start one, or open a save, and it will be here in the morning." : {
-
-    },
-    "The desk is cleared · come back tomorrow" : {
-      "comment" : "Front door, the Continue card's desk line when the morning desk is done"
-    },
-    "The desk is set" : {
-      "comment" : "Title of the one daily notification the morning desk sends"
-    },
     "The doctor" : {
       "comment" : "Button on a coach tip that opens the Assets screen, where the doctor is"
     },
@@ -5465,7 +5512,7 @@
       "comment" : "Furnish sheet: the heading of the decor pack sold through the App Store, with its price"
     },
     "The log" : {
-
+      "comment" : "Waiting on you: heading over the journal and the weekly report links"
     },
     "The market" : {
       "comment" : "Button on a launch-day reason: go to the market board"
@@ -5478,6 +5525,9 @@
     },
     "The market wants nothing in particular this quarter" : {
 
+    },
+    "The morning papers are in" : {
+      "comment" : "Title of the one daily notification the morning papers send"
     },
     "The next batch arrives in %lld day%@." : {
       "localizations" : {
@@ -5500,6 +5550,15 @@
     },
     "The overdraft is written off and a month of cash goes in. The loan is still yours, so is whatever the bank already took, and the trade press will remember. From here the company is unranked." : {
       "comment" : "Bankruptcy post-mortem: what the receiver's call does, above its button"
+    },
+    "The papers are read · come back tomorrow" : {
+      "comment" : "Front door, the Continue card's morning papers line when all three are done"
+    },
+    "The papers are read. See you tomorrow." : {
+
+    },
+    "The papers belong to a company. Start one, or open a save, and they will be here in the morning." : {
+
     },
     "The phone" : {
 
@@ -5578,6 +5637,9 @@
     "The team" : {
       "comment" : "Button on a launch-day reason: go to the roster"
     },
+    "The team's pace" : {
+
+    },
     "The topic is a poor match for the type (×%@)." : {
 
     },
@@ -5592,6 +5654,12 @@
     },
     "The wedding costs %@ out of your own wallet." : {
 
+    },
+    "The weekly closes are in the weekly report" : {
+      "comment" : "Phone row: the office thread when it holds nothing but weekly closes"
+    },
+    "The weekly closes are in the weekly report." : {
+      "comment" : "Phone thread: a line where the office's weekly close messages used to be"
     },
     "The weekly report will open on its own at the end of each week again." : {
 
@@ -5947,6 +6015,9 @@
     "WAITING" : {
 
     },
+    "WAITING ON YOU" : {
+      "comment" : "Bitmap heading on the inbox sheet. Uppercase: the pixel face has no lowercase"
+    },
     "WHAT THEY HAVE" : {
 
     },
@@ -5961,6 +6032,9 @@
     },
     "Waiting for approval. It arrives by itself when it comes through." : {
       "comment" : "Shop: Ask to Buy is pending"
+    },
+    "Waiting on you" : {
+
     },
     "Walk away — %@ · Life %lld" : {
       "localizations" : {
@@ -6020,7 +6094,7 @@
 
     },
     "Week %lld report" : {
-
+      "comment" : "Waiting on you: reopens the latest weekly report"
     },
     "Week %lld so far" : {
 
@@ -6374,6 +6448,9 @@
     "distress" : {
       "comment" : "Buyout kind: a lowball bid while you are failing"
     },
+    "due today" : {
+      "comment" : "Waiting on you: a desk row or a phone thread due today"
+    },
     "faded" : {
 
     },
@@ -6464,6 +6541,9 @@
 
     },
     "on" : {
+
+    },
+    "on Products" : {
 
     },
     "on quality at launch" : {

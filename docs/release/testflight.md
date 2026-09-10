@@ -22,7 +22,7 @@ capabilities are ticked on the App ID:
 |---|---|---|
 | **iCloud (Key-Value storage)** | R2 syncs the three save slots through `NSUbiquitousKeyValueStore`. KVS needs **no** CloudKit container — tick iCloud, enable Key-value storage, leave containers empty. | `com.apple.developer.ubiquity-kvstore-identifier` = `$(TeamIdentifierPrefix)$(CFBundleIdentifier)` |
 | **Game Center** | R3's achievements and leaderboards. | `com.apple.developer.game-center` |
-| **In-App Purchase** | R6's one unlock. No entitlement file entry — it is a capability on the App ID only. | — |
+| **In-App Purchase** | R6's unlock plus the six shop items of iteration 13 (see `iap-review.md`). No entitlement file entry — it is a capability on the App ID only. | — |
 
 After ticking them, regenerate the provisioning profile (automatic signing
 does this on the next archive) and confirm the archive's entitlements in
@@ -159,11 +159,24 @@ Paste this into *App Review Information → Notes*:
 
 > Startup Studio is a single-player, offline tycoon game. Chapter 1 is
 > free and complete: you can found a company, hire, build and ship a
-> product, and read the reviews. The one in-app purchase
-> (`com.alpsenel.startupstudio.fullgame`, non-consumable) unlocks
-> everything from chapter 2 onward; the paywall appears when chapter 2
-> opens. Nothing is ever deleted or hidden by the lock — an unentitled
-> player can open every screen and read every save; only the clock stops.
+> product, and read the reviews. The in-app purchase
+> `com.alpsenel.startupstudio.fullgame` (non-consumable) unlocks every
+> chapter after it; the paywall appears when chapter 2 opens. Nothing is
+> ever deleted or hidden by the lock — an unentitled player can open every
+> screen and read every save; only the clock stops.
+>
+> Besides it there is a small shop of six items, each shown with its price
+> next to what it buys and nothing chosen at random: two cash packs on the
+> Money sheet (tap the cash in the top bar), a fourth save slot on the
+> title screen (Saves), a decor pack on Life → Furnish, a named veteran
+> candidate on Team → Hiring, and "The receiver's call" on the Bankrupt
+> screen. None of them is needed to finish the game; the cash, the veteran
+> and the receiver's call make that company unranked, and the shop is
+> closed in the shared daily, season and league companies. The receiver's
+> call only appears after a bankruptcy; the quickest route by playing is a
+> Hard company that hires three people before shipping anything, about 25
+> minutes at ×4 speed. See `docs/release/iap-review.md` for the per-product
+> notes and screenshots.
 >
 > Reaching chapter 2 by playing takes roughly 30 minutes at ×4 speed. If
 > you would rather not, the attached build's title screen has a
@@ -210,7 +223,7 @@ Run these in order. Anything that fails here fails in review.
 - [ ] Screenshots uploaded for **6.9" iPhone** and **13" iPad** (see
       [`screenshots.md`](screenshots.md)), description, keywords, support
       URL and privacy policy URL filled in.
-- [ ] The IAP attached, the 56 Game Center items attached, the privacy
+- [ ] All seven in-app purchases attached, the 56 Game Center items attached, the privacy
       answers saved, the age rating saved.
 
 ## 10. What is still outside this checklist
