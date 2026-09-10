@@ -254,7 +254,12 @@ struct OfficeCard: View {
     }
 
     private var showsTapHint: Bool {
-        showsTapHintForPreview || !tapHintDismissed
+        // MARK: U1 (ux: the first-hour fixes)
+        // C3: the first-time line is a tip on HQ's rail now
+        // (`CoachTip.officeTap`), so the card draws it only for a preview.
+        // A tap that lands still dismisses it, by the same id.
+        showsTapHintForPreview
+        // MARK: end U1
     }
 
     private func dismissTapHint() {

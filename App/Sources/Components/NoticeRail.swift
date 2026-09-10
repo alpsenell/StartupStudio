@@ -113,6 +113,16 @@ struct NoticeRail: View {
     @State private var cycle = 0
     @State private var dismissedTips: Set<String> = GameSettings.dismissedTips
     @State private var showingJournal = false
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C3: the notice whose line is open to its full text; a tap on the
+    /// line toggles it, and a change of notice closes it.
+    @State private var expandedID: String?
+    /// C3: the tab whose HUD this rail sits under; `nil` outside the tab
+    /// bar (previews, snapshots), where every tip may show as before.
+    @Environment(\.railTab) private var railTab
+    /// C3: the tips already said this session.
+    private var tipLedger: RailTipLedger { RailTipLedger.shared }
+    // MARK: end U1
 
     private var copy: EventCopy {
         EventCopy(state: engine.state, content: engine.content, balance: engine.balance)
@@ -203,6 +213,10 @@ struct NoticeRail: View {
     /// The tip for the player's most recently activated goal, unless they
     /// dismissed it or finished the goal.
     private var activeTip: CoachTip? {
+        // MARK: U1 (ux: the first-hour fixes)
+        // C3: under a tab, only that tab's tips, each once a session.
+        if railTab != nil { return firstHourTip }
+        // MARK: end U1
         let activeGoals = ProgressionReader.activeGoalIDs(in: engine.state)
         let goalTip = activeGoals.isEmpty ? nil : CoachTip.all.first {
             activeGoals.contains($0.goalID) && !dismissedTips.contains($0.id)
@@ -266,6 +280,9 @@ struct NoticeRail: View {
         }
         .animation(Theme.Motion.weighted, value: shown?.id)
         .onChange(of: queue.first?.id) { _, _ in cycle = 0 }
+        // MARK: U1 (ux: the first-hour fixes)
+        .onChange(of: shown?.id) { _, _ in expandedID = nil }
+        // MARK: end U1
         // The tour's exit dismisses the six tips in settings; the rail's
         // copy was read before that and has to catch up.
         .onChange(of: session?.tutorial?.isComplete) { _, complete in
@@ -291,7 +308,9 @@ struct NoticeRail: View {
             }
         }
         .padding(.horizontal, Theme.Spacing.lg)
-        .padding(.vertical, Theme.Spacing.sm)
+        // U1 (C3): one line of text between the 34-point buttons, so the
+        // rail keeps only a hairline of padding above and below them.
+        .padding(.vertical, Theme.Spacing.xs)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(tint(for: notice).opacity(0.12))
         .overlay(alignment: .leading) {
@@ -340,9 +359,10 @@ struct NoticeRail: View {
 
     @ViewBuilder
     private func content(for notice: RailNotice) -> some View {
+        // U1 (C3): every line takes the notice's id, so a tap can open it.
         switch notice.kind {
         case .pause(let headline, let more):
-            pauseRow(headline: headline, more: more)
+            pauseRow(headline: headline, more: more, noticeID: notice.id)
         case .deferred(let title, let daysLeft, let category):
             deferredRow(
                 title: title, daysLeft: daysLeft, category: category,
@@ -351,11 +371,11 @@ struct NoticeRail: View {
         case .report(let week):
             reportRow(week: week)
         case .event(let toast):
-            eventRow(toast)
+            eventRow(toast, noticeID: notice.id)
         case .tip(let tip):
-            tipRow(tip)
+            tipRow(tip, noticeID: notice.id)
         case .tour(let step):
-            tourRow(step)
+            tourRow(step, noticeID: notice.id)
         }
     }
 
@@ -363,17 +383,19 @@ struct NoticeRail: View {
     /// card under the tab bar carrying the button. The line reads the
     /// state, because the ship beat says something different when nothing
     /// is building.
-    private func tourRow(_ step: TutorialStep) -> some View {
+    private func tourRow(_ step: TutorialStep, noticeID: String) -> some View {
         let line = TutorialScript.railLine(for: step, state: engine.state)
         return HStack(alignment: .center, spacing: Theme.Spacing.sm) {
             Image(systemName: "hand.point.up.left.fill")
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 22)
-            Text(line)
-                .font(.footnote)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
+            oneLine(
+                Text(line)
+                    .font(.footnote)
+                    .foregroundStyle(.primary),
+                noticeID: noticeID
+            )
             Spacer(minLength: 0)
         }
         .frame(minHeight: 34)
@@ -381,7 +403,7 @@ struct NoticeRail: View {
         .accessibilityLabel("Tour, \(step.title): \(line)")
     }
 
-    private func pauseRow(headline: GameEvent, more: Int) -> some View {
+    private func pauseRow(headline: GameEvent, more: Int, noticeID: String) -> some View {
         let line = copy.line(for: headline)
         // A story question's feed line ends "— 5 days to answer", which is
         // true in the journal and false here: the clock is stopped for
@@ -400,10 +422,12 @@ struct NoticeRail: View {
                 .frame(width: 22)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(message)
-                    .font(.system(.footnote, design: .rounded).weight(.semibold))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
+                oneLine(
+                    Text(message)
+                        .font(.system(.footnote, design: .rounded).weight(.semibold))
+                        .multilineTextAlignment(.leading),
+                    noticeID: noticeID
+                )
                 if more > 0 {
                     Text("+\(more) more this day")
                         .font(.caption2)
@@ -429,21 +453,29 @@ struct NoticeRail: View {
                 .buttonStyle(.borderless)
             }
 
-            Button {
-                Haptics.commit()
-                Sounds.play(.tap)
-                engine.setSpeed(.x1)
-            } label: {
-                Label("Resume", systemImage: "play.fill")
-                    .labelStyle(.iconOnly)
-                    .font(.footnote.weight(.bold))
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, Theme.Spacing.sm)
+            // MARK: U1 (ux: the first-hour fixes)
+            // C3: the speed control is the one control for time. While its
+            // dot already says something stopped the clock, the rail does
+            // not carry a second play button.
+            if !speedControlCarriesTheDot {
+                Button {
+                    Haptics.commit()
+                    Sounds.play(.tap)
+                    engine.setSpeed(.x1)
+                } label: {
+                    Label("Resume", systemImage: "play.fill")
+                        .labelStyle(.iconOnly)
+                        .font(.footnote.weight(.bold))
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.vertical, Theme.Spacing.sm)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
+                .accessibilityLabel("Resume time")
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
-            .accessibilityLabel("Resume time")
+            // MARK: end U1
         }
+        .frame(minHeight: 34)
         .accessibilityLabel("Time is paused: \(message)")
     }
 
@@ -466,9 +498,11 @@ struct NoticeRail: View {
                 .frame(width: 22)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(.system(.footnote, design: .rounded).weight(.semibold))
-                    .lineLimit(1)
+                oneLine(
+                    Text(title)
+                        .font(.system(.footnote, design: .rounded).weight(.semibold)),
+                    noticeID: noticeID ?? title
+                )
                 Text(when)
                     .font(.caption2)
                     .monospacedDigit()
@@ -549,33 +583,37 @@ struct NoticeRail: View {
     /// The newest toast. The message stays in the system face because a
     /// full sentence in the 5×7 bitmap font does not fit a phone width;
     /// the ink bar, the icon and the tint are the rail's chrome.
-    private func eventRow(_ toast: Toast) -> some View {
+    private func eventRow(_ toast: Toast, noticeID: String) -> some View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: toast.icon)
                 .font(.footnote.weight(.bold))
                 .foregroundStyle(toast.tint)
                 .frame(width: 22)
-            Text(toast.message)
-                .font(.system(.footnote, design: .rounded).weight(.medium))
-                .foregroundStyle(.primary)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
+            oneLine(
+                Text(toast.message)
+                    .font(.system(.footnote, design: .rounded).weight(.medium))
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading),
+                noticeID: noticeID
+            )
             Spacer(minLength: 0)
         }
         .frame(minHeight: 34)
         .accessibilityLabel(toast.message)
     }
 
-    private func tipRow(_ tip: CoachTip) -> some View {
+    private func tipRow(_ tip: CoachTip, noticeID: String) -> some View {
         HStack(alignment: .center, spacing: Theme.Spacing.sm) {
             Image(systemName: tip.systemImage)
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(Theme.accent)
                 .frame(width: 22)
-            Text(tip.message)
-                .font(.footnote)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
+            oneLine(
+                Text(tip.message)
+                    .font(.footnote)
+                    .foregroundStyle(.primary),
+                noticeID: noticeID
+            )
             Spacer(minLength: 0)
             if let route = tip.route, let label = tip.routeLabel, let onRoute {
                 Button {
@@ -597,12 +635,24 @@ struct NoticeRail: View {
                 Image(systemName: "xmark")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 36, height: 34) // U1 (C3): the rail's 34-point line
                     .contentShape(Rectangle())
             }
             .buttonStyle(.pressableRow)
             .accessibilityLabel("Dismiss tip")
         }
+        // MARK: U1 (ux: the first-hour fixes)
+        // C3: a tip on screen for three seconds has been said; once it
+        // leaves (another tab, another notice) it does not come back this
+        // session. Only under a tab: a preview keeps its tip.
+        .task(id: tip.id) {
+            guard railTab != nil else { return }
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            tipLedger.markSeen(tip.id)
+        }
+        .onDisappear { tipLedger.left(tip.id) }
+        // MARK: end U1
     }
 
     private func dismiss(_ tip: CoachTip) {
@@ -660,6 +710,107 @@ enum QueueRailAnswer: Equatable {
     /// Walk into the room the question is answered in.
     case route(Route)
 }
+
+// MARK: U1 (ux: the first-hour fixes)
+
+/// C3: the rail is one line. Each notice's text is clipped to a line,
+/// and a tap on it opens the full text in place.
+extension NoticeRail {
+    fileprivate func oneLine(_ text: some View, noticeID: String) -> some View {
+        let open = expandedID == noticeID
+        return text
+            .lineLimit(open ? nil : 1)
+            .fixedSize(horizontal: false, vertical: open)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(Theme.Motion.selection) { expandedID = open ? nil : noticeID }
+            }
+            .accessibilityHint(open ? "" : "Shows the whole line")
+    }
+
+    /// The same three reasons `TopHUD` puts a dot on the speed control
+    /// for: the clock stopped for something, a report is unread, a
+    /// deferred question is counting down.
+    fileprivate var speedControlCarriesTheDot: Bool {
+        !engine.lastPauseEvents.isEmpty
+            || shell.pendingReportWeek != nil
+            || shell.deferredChoiceID != nil
+    }
+
+    /// C3: the tip for this tab. A tip shows on the tab its button goes to
+    /// — HQ when it has none — at most once a session, and the office's
+    /// first-time line is one of HQ's tips now. The goal tips lead, then
+    /// the office, then J1's state and door tips, in their own order.
+    fileprivate var firstHourTip: CoachTip? {
+        guard let railTab else { return nil }
+        let excluded = dismissedTips
+            .union(GameSettings.dismissedTips)
+            .union(tipLedger.said)
+        func here(_ tip: CoachTip) -> Bool {
+            RailTipLedger.tab(for: tip) == railTab && !excluded.contains(tip.id)
+        }
+        let activeGoals = Set(ProgressionReader.activeGoalIDs(in: engine.state))
+        if let tip = CoachTip.all.first(where: { activeGoals.contains($0.goalID) && here($0) }) {
+            return tip
+        }
+        if here(.officeTap) { return .officeTap }
+        let elsewhere = (CoachTip.doorTips + CoachTip.stateKeyed).filter { !here($0) }.map(\.id)
+        return CoachTip.stateTip(in: engine.state, dismissed: excluded.union(elsewhere))
+    }
+}
+
+/// C3: which tab a rail sits under. Set per tab in `AppRootView`.
+private struct RailTabKey: EnvironmentKey {
+    static let defaultValue: GameTab? = nil
+}
+
+extension EnvironmentValues {
+    var railTab: GameTab? {
+        get { self[RailTabKey.self] }
+        set { self[RailTabKey.self] = newValue }
+    }
+}
+
+/// C3: the coach tips said this session. Not saved: a new launch may say
+/// a tip again, until it is dismissed for good with its X.
+@MainActor
+@Observable
+final class RailTipLedger {
+    static let shared = RailTipLedger()
+
+    /// Shown for long enough and then gone; these stay off the rail.
+    private(set) var said: Set<String> = []
+    /// On screen for three seconds; said once it leaves.
+    @ObservationIgnored private var seen: Set<String> = []
+
+    func markSeen(_ id: String) { seen.insert(id) }
+
+    func left(_ id: String) {
+        guard seen.contains(id) else { return }
+        said.insert(id)
+    }
+
+    /// The tab a tip concerns: where its button goes, or HQ.
+    static func tab(for tip: CoachTip) -> GameTab {
+        tip.route?.tab ?? .hq
+    }
+}
+
+extension CoachTip {
+    /// The office's first-time line, which used to sit under the scene as a
+    /// second tip strip. Same id, so an office already dismissed stays
+    /// dismissed, and the first tap on the scene still dismisses it.
+    static let officeTap = CoachTip(
+        // `OfficeTapHint.tipID`, spelled out: that one is main-actor
+        // isolated, and this catalog is not.
+        id: "tip.office_tap",
+        goalID: "office.tap",
+        message: String(localized: "Tap anyone — or the whiteboard, the coffee machine, the door.", comment: "Coach tip on HQ's rail the first time: the office scene can be tapped"),
+        systemImage: "hand.tap.fill"
+    )
+}
+
+// MARK: end U1
 
 extension NoticeRail {
 
