@@ -210,8 +210,15 @@ struct TeamScreen: View {
                 }
                 .accessibilityLabel("Open hiring")
 
-                teamDinnerRow
-                bulkAssignRow
+                // MARK: U1 (ux: the first-hour fixes)
+                // C8: the whole-team moves appear once there is a team —
+                // headcount 2. A solo founder no longer sees a dinner
+                // drawn disabled ("Hire someone first").
+                if engine.state.headcount >= 2 {
+                    teamDinnerRow
+                    bulkAssignRow
+                }
+                // MARK: end U1
                 // Departments form by hiring the matching role, so the
                 // card lives where the hiring happens (it led HQ before).
                 DepartmentsCard(engine: engine)

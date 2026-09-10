@@ -87,31 +87,61 @@ struct TitleMenu {
     var enabledRows: [Row] { rows.filter(\.isEnabled) }
 }
 
-/// The enabled rows as a row of bordered buttons; nothing at all when
-/// none is.
+// MARK: U1 (ux: the first-hour fixes)
+
+/// The enabled rows in three groups — *Today*, *Set up*, *Remember* — as
+/// the body of the front door's *More ways to play* sheet (iteration 13,
+/// C9). Nothing at all when every row is off.
+///
+/// `TitleMenu`'s nine rows and their order are unchanged (two tests pin
+/// them); this view only chooses where each is drawn. *The desk* row is
+/// the front door's own desk card said twice, so it is not drawn here:
+/// the Continue card carries the desk as one line.
 struct TitleMenuView: View {
     let menu: TitleMenu
+    /// What a tap does with the row. By default it runs the row's action;
+    /// the sheet closes itself first and runs it after.
+    var onPick: (TitleMenu.Row) -> Void = { $0.action() }
+
+    /// The three groups, by row id, in the order they are drawn.
+    static let groups: [(title: String, ids: [TitleMenu.Row.ID])] = [
+        (String(localized: "Today", comment: "Bitmap heading in the More ways to play sheet: the daily, the season and the league. Uppercased by the pixel face"), [.daily, .season, .league]),
+        (String(localized: "Set up", comment: "Bitmap heading in the More ways to play sheet: scenarios, a custom company and a company from a code. Uppercased by the pixel face"), [.scenarios, .custom, .fromCode]),
+        (String(localized: "Remember", comment: "Bitmap heading in the More ways to play sheet: the Hall of Fame and the dynasty. Uppercased by the pixel face"), [.hall, .dynasty]),
+    ]
+
+    /// Every enabled row a group draws.
+    static func drawnRows(of menu: TitleMenu) -> [TitleMenu.Row] {
+        let drawn = Set(groups.flatMap(\.ids))
+        return menu.enabledRows.filter { drawn.contains($0.id) }
+    }
 
     var body: some View {
-        if !menu.enabledRows.isEmpty {
-            // Four rows read as two pairs; three or fewer as one line.
-            let columns = Array(repeating: GridItem(.flexible(), spacing: Theme.Spacing.sm), count: menu.enabledRows.count > 3 ? 2 : menu.enabledRows.count)
-            LazyVGrid(columns: columns, spacing: Theme.Spacing.sm) {
-                ForEach(menu.enabledRows) { row in
-                    Button {
-                        Haptics.tap()
-                        Sounds.play(.tap)
-                        row.action()
-                    } label: {
-                        Label(row.title, systemImage: row.systemImage)
-                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Theme.Spacing.xs)
+        VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
+            ForEach(Self.groups, id: \.title) { group in
+                let rows = group.ids.compactMap { id in menu.enabledRows.first { $0.id == id } }
+                if !rows.isEmpty {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                        PixelSectionTitle(title: group.title)
+                        ForEach(rows) { row in
+                            Button {
+                                Haptics.tap()
+                                Sounds.play(.tap)
+                                onPick(row)
+                            } label: {
+                                Label(row.title, systemImage: row.systemImage)
+                                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, Theme.Spacing.xs)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(Theme.accent)
+                        }
                     }
-                    .buttonStyle(.bordered)
-                    .tint(Theme.accent)
                 }
             }
         }
     }
 }
+
+// MARK: end U1

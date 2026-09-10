@@ -486,6 +486,29 @@ struct TitleScreenContent: View {
     var deskFlourish: Bool = false
     // MARK: end of Iteration 10 — M5
 
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C9: the slots, folded behind the Continue card's Saves button.
+    @State private var showingSaves = false
+    /// C9: the More ways to play sheet, and the row picked in it. The row
+    /// runs once the sheet is down, so the room it opens can come up.
+    @State private var showingMoreWays = false
+    @State private var pickedRow: TitleMenu.Row.ID?
+
+    /// The slots stay on the door when there is no Continue card to fold
+    /// them behind (a fresh install, an empty current slot), and whenever a
+    /// save is damaged or needs a newer app: that is worth seeing.
+    private var slotsForcedOpen: Bool {
+        current == nil || slots.contains { row in
+            switch row.contents {
+            case .corrupt, .futureFormat: true
+            case .empty, .saved: false
+            }
+        }
+    }
+
+    private var showsSlots: Bool { slotsForcedOpen || showingSaves }
+    // MARK: end U1
+
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
             hero
@@ -498,22 +521,91 @@ struct TitleScreenContent: View {
                     .frame(maxWidth: .infinity)
                     .accessibilityLabel(notice)
             }
+            // MARK: U1 (ux: the first-hour fixes)
+            // C9: three choices. Continue — with the morning desk folded in
+            // as one line and the slots behind a small Saves button — New
+            // company, and More ways to play. The nine menu rows are the
+            // same data (`TitleMenu`); only where they are drawn changed.
             if let current {
-                ContinueCard(summary: current, action: onContinue)
+                ContinueCard(
+                    summary: current,
+                    action: onContinue,
+                    desk: desk,
+                    savesOpen: slotsForcedOpen ? nil : showingSaves,
+                    onSaves: {
+                        Haptics.tap()
+                        withAnimation(Theme.Motion.entrance) { showingSaves.toggle() }
+                    }
+                )
             }
-            // MARK: Iteration 10 — M5 (morning desk)
-            if let desk { desk }
-            // MARK: end of Iteration 10 — M5
             newCompanyButton
-            TitleMenuView(menu: menu)
-            SlotList(
-                slots: slots,
-                currentSlot: current == nil ? nil : currentSlot,
-                onOpen: onOpenSlot,
-                onDelete: onDeleteSlot
-            )
+            moreWaysButton
+            if showsSlots {
+                SlotList(
+                    slots: slots,
+                    currentSlot: current == nil ? nil : currentSlot,
+                    onOpen: onOpenSlot,
+                    onDelete: onDeleteSlot
+                )
+                .transition(Theme.Motion.transition(.opacity))
+            }
+            // MARK: end U1
+        }
+        // MARK: U1 (ux: the first-hour fixes)
+        .onAppear {
+            if DebugLaunch.opensSaves { showingSaves = true }
+            if DebugLaunch.opensMoreWays { showingMoreWays = true }
+        }
+        .sheet(isPresented: $showingMoreWays, onDismiss: runPickedRow) {
+            NavigationStack {
+                ScrollView {
+                    TitleMenuView(menu: menu) { row in
+                        pickedRow = row.id
+                        showingMoreWays = false
+                    }
+                    .padding(Theme.Spacing.lg)
+                }
+                .background(Theme.screenBackground)
+                .navigationTitle("More ways to play")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { showingMoreWays = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
+        // MARK: end U1
+    }
+
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C9: the third choice. Absent while every row is off.
+    @ViewBuilder
+    private var moreWaysButton: some View {
+        if !TitleMenuView.drawnRows(of: menu).isEmpty {
+            Button {
+                Haptics.tap()
+                Sounds.play(.tap)
+                showingMoreWays = true
+            } label: {
+                Label("More ways to play", systemImage: "square.grid.2x2")
+                    .font(.system(.headline, design: .rounded))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.xs)
+            }
+            .buttonStyle(.bordered)
+            .tint(Theme.accent)
+            .accessibilityHint("Today's company, the season, the league, scenarios, a custom company, a code, the Hall of Fame and the dynasty")
         }
     }
+
+    private func runPickedRow() {
+        guard let id = pickedRow, let row = menu.enabledRows.first(where: { $0.id == id }) else { return }
+        pickedRow = nil
+        row.action()
+    }
+    // MARK: end U1
 
     /// The office after hours, in the pixel frame every scene card has.
     private var hero: some View {
@@ -595,6 +687,14 @@ struct TitleScreenContent: View {
 private struct ContinueCard: View {
     let summary: SaveSummary
     let action: () -> Void
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C9: the morning desk, drawn as one line on this card.
+    var desk: MorningDeskCard? = nil
+    /// C9: whether the slots are showing; `nil` draws no Saves button
+    /// (they are on the door already).
+    var savesOpen: Bool? = nil
+    var onSaves: () -> Void = {}
+    // MARK: end U1
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -612,19 +712,72 @@ private struct ContinueCard: View {
                         facts
                     }
                 }
-                Button(action: action) {
-                    Label(
-                        summary.endingKind == nil ? "Continue" : "Read the ending",
-                        systemImage: summary.endingKind == nil ? "play.fill" : "book.fill"
-                    )
-                    .font(.system(.headline, design: .rounded))
+                // MARK: U1 (ux: the first-hour fixes)
+                if let desk {
+                    deskLine(desk)
                 }
-                .buttonStyle(PixelButtonStyle())
+                let buttons = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(spacing: Theme.Spacing.sm))
+                    : AnyLayout(HStackLayout(spacing: Theme.Spacing.sm))
+                buttons {
+                    Button(action: action) {
+                        Label(
+                            summary.endingKind == nil ? "Continue" : "Read the ending",
+                            systemImage: summary.endingKind == nil ? "play.fill" : "book.fill"
+                        )
+                        .font(.system(.headline, design: .rounded))
+                    }
+                    .buttonStyle(PixelButtonStyle())
+                    if let savesOpen {
+                        Button(action: onSaves) {
+                            Label("Saves", systemImage: savesOpen ? "chevron.up" : "chevron.down")
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                .padding(.vertical, Theme.Spacing.xs)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(Theme.accent)
+                        .fixedSize()
+                        .accessibilityHint(savesOpen ? "Hides the save slots" : "Shows the save slots")
+                    }
+                }
+                // MARK: end U1
             }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityLabel)
     }
+
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C9: "3 things on the desk · Priya is waiting on an answer." — the
+    /// front door's second card, as one line that opens the same sheet.
+    private func deskLine(_ desk: MorningDeskCard) -> some View {
+        let waiting = DeskPart.allCases.count - desk.done.count
+        let line: String = switch waiting {
+        case ...0: String(localized: "The desk is cleared · come back tomorrow", comment: "Front door, the Continue card's desk line when the morning desk is done")
+        case 1: String(localized: "1 thing on the desk · \(desk.summary)", comment: "Front door, the Continue card's desk line: one thing waiting, then what it is")
+        default: String(localized: "\(waiting) things on the desk · \(desk.summary)", comment: "Front door, the Continue card's desk line: how many things are waiting, then the first")
+        }
+        return Button(action: desk.onOpen) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: waiting > 0 ? "tray.full.fill" : "checkmark.circle.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.pixelAccent)
+                Text(line)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.pixelInk)
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Theme.pixelInk.opacity(0.5))
+            }
+            .frame(minHeight: 34)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.pressableRow)
+        .accessibilityHint("Opens the morning desk")
+    }
+    // MARK: end U1
 
     private var portrait: some View {
         PixelPortrait(seed: summary.founderAppearanceSeed ?? 0, isFounder: true, size: 56)

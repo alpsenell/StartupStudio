@@ -357,6 +357,9 @@ struct AppRootView: View {
         return TabView(selection: Binding(get: { router.tab }, set: { router.tab = $0 })) {
             if visible.contains(.hq) {
                 HQScreen(engine: engine) { session.requestOnboarding() }
+                    // MARK: U1 (ux: the first-hour fixes) — C3: the rail's tab
+                    .environment(\.railTab, .hq)
+                    // MARK: end U1
                     .tutorialCardInset(session: session, engine: engine)
                     .gameColumn()
                     .tabItem { Label("HQ", systemImage: "building.2") }
@@ -365,19 +368,28 @@ struct AppRootView: View {
 
             if visible.contains(.life) {
                 LifeScreen(engine: engine)
+                    // MARK: U1 (ux: the first-hour fixes) — C3: the rail's tab
+                    .environment(\.railTab, .life)
+                    // MARK: end U1
                     .tutorialCardInset(session: session, engine: engine)
                     .gameColumn()
                     .tabItem { Label("Life", systemImage: "heart.fill") }
                     // MARK: Iteration 9 — L1 (phone)
-                    // Unread texts, the same badge the Team tab wears for
-                    // people who need answering.
-                    .badge(engine.state.life.phone.unreadCount)
+                    // MARK: U1 (ux: the first-hour fixes) — C6
+                    // What needs the founder on Life: threads asking, doors
+                    // open, and Life's own questions. It used to be every
+                    // unread text, weekly closes and all (102 on the campus).
+                    .badge(TabBadge.life(in: engine.state, content: engine.content))
+                    // MARK: end U1
                     // MARK: end L1
                     .tag(GameTab.life)
             }
 
             if visible.contains(.team) {
                 TeamScreen(engine: engine)
+                    // MARK: U1 (ux: the first-hour fixes) — C3: the rail's tab
+                    .environment(\.railTab, .team)
+                    // MARK: end U1
                     .tutorialCardInset(session: session, engine: engine)
                     .gameColumn()
                     .tabItem { Label("Team", systemImage: "person.2.fill") }
@@ -389,6 +401,9 @@ struct AppRootView: View {
             // bar at five tabs.
             if visible.contains(.products) {
                 ProductsScreen(engine: engine)
+                    // MARK: U1 (ux: the first-hour fixes) — C3: the rail's tab
+                    .environment(\.railTab, .products)
+                    // MARK: end U1
                     .tutorialCardInset(session: session, engine: engine)
                     .gameColumn()
                     .tabItem { Label("Products", systemImage: "shippingbox.fill") }
@@ -397,9 +412,16 @@ struct AppRootView: View {
 
             if visible.contains(.business) {
                 BusinessScreen(engine: engine)
+                    // MARK: U1 (ux: the first-hour fixes) — C3: the rail's tab
+                    .environment(\.railTab, .business)
+                    // MARK: end U1
                     .tutorialCardInset(session: session, engine: engine)
                     .gameColumn()
                     .tabItem { Label("Business", systemImage: "briefcase.fill") }
+                    // MARK: U1 (ux: the first-hour fixes) — C6
+                    // Desk rows due inside a week.
+                    .badge(TabBadge.business(in: engine.state, balance: engine.balance, content: engine.content))
+                    // MARK: end U1
                     .tag(GameTab.business)
             }
         }

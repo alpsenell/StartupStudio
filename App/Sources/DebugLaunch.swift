@@ -1470,6 +1470,35 @@ extension DebugLaunch {
     }
     // MARK: end P3
     // MARK: U1 (ux: the first-hour fixes)
+    /// `-autoSheetMedium`: every decision sheet opens at its half-height
+    /// detent, even one that would open full (C4), so a headless pass can
+    /// photograph the question where the drag would leave it.
+    static var opensSheetsAtMedium: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoSheetMedium")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoMoreWays`: the front door opens its More ways to play sheet;
+    /// `-autoSaves`: the front door shows its slots. Neither can be tapped
+    /// by a headless pass (C9).
+    static var opensMoreWays: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoMoreWays")
+        #else
+        return false
+        #endif
+    }
+
+    static var opensSaves: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoSaves")
+        #else
+        return false
+        #endif
+    }
     // MARK: end U1
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12

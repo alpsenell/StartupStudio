@@ -8,22 +8,62 @@ import TycoonEngine
 struct DepartmentsCard: View {
     let engine: GameEngine
 
+    // MARK: U1 (ux: the first-hour fixes)
+    /// C8: a department is drawn in full once it exists or once the office
+    /// is big enough for the hire that forms it. The rest are one line.
+    private var formable: [Department] {
+        let tier = engine.state.company.officeTier
+        return Department.allCases.filter {
+            engine.state.hasDepartment($0) || tier.rank >= $0.minOfficeTier.rank
+        }
+    }
+
+    private var later: [Department] {
+        Department.allCases.filter { !formable.contains($0) }
+    }
+
+    /// "Departments open at the Loft" for a garage founder, who can form
+    /// none; "Operations opens at the Studio" once the Loft has formed the
+    /// first two.
+    private var laterLine: String {
+        let tier = later.map(\.minOfficeTier).min { $0.rank < $1.rank } ?? .loft
+        if formable.isEmpty {
+            return String(localized: "Departments open at the \(tier.displayName)", comment: "Team tab, one line while no department can be formed yet: the office tier that allows the first ones")
+        }
+        let names = later.map(\.cardTitle).joined(separator: " and ")
+        return later.count == 1
+            ? String(localized: "\(names) opens at the \(tier.displayName)", comment: "Team tab, under the departments: the one department the office is still too small for, and the office tier that allows it")
+            : String(localized: "\(names) open at the \(tier.displayName)", comment: "Team tab, under the departments: the departments the office is still too small for, and the office tier that allows them")
+    }
+    // MARK: end U1
+
     var body: some View {
-        CardView("Departments", systemImage: "person.3.sequence.fill") {
-            VStack(spacing: 0) {
-                ForEach(Array(Department.allCases.enumerated()), id: \.element) { index, department in
-                    DepartmentRow(
-                        department: department,
-                        staff: staffNames(for: department),
-                        isActive: engine.state.hasDepartment(department),
-                        officeTier: engine.state.company.officeTier
-                    )
-                    if index < Department.allCases.count - 1 {
-                        Divider()
+        // MARK: U1 (ux: the first-hour fixes)
+        // C8: a solo garage founder sees one line, not three locked rows.
+        if formable.isEmpty {
+            DepartmentsLaterLine(text: laterLine)
+        } else {
+            CardView("Departments", systemImage: "person.3.sequence.fill") {
+                VStack(spacing: 0) {
+                    ForEach(Array(formable.enumerated()), id: \.element) { index, department in
+                        DepartmentRow(
+                            department: department,
+                            staff: staffNames(for: department),
+                            isActive: engine.state.hasDepartment(department),
+                            officeTier: engine.state.company.officeTier
+                        )
+                        if index < formable.count - 1 || !later.isEmpty {
+                            Divider()
+                        }
+                    }
+                    if !later.isEmpty {
+                        DepartmentsLaterLine(text: laterLine)
+                            .padding(.vertical, Theme.Spacing.sm)
                     }
                 }
             }
         }
+        // MARK: end U1
     }
 
     /// Everyone whose role belongs to the department, in hire order.
@@ -34,6 +74,28 @@ struct DepartmentsCard: View {
             .map(\.name)
     }
 }
+
+// MARK: U1 (ux: the first-hour fixes)
+/// C8: the departments the office cannot hold yet, as one quiet line.
+private struct DepartmentsLaterLine: View {
+    let text: String
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: "person.3.sequence.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 24)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+// MARK: end U1
 
 private struct DepartmentRow: View {
     let department: Department

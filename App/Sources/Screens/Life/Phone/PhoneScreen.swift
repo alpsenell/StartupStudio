@@ -56,7 +56,8 @@ struct PhoneScreenContent: View {
             PhoneHandset(
                 title: String(localized: "Messages", comment: "Bitmap title over the phone: the status bar and the share card. Uppercase A-Z only: the pixel face has no lowercase and no accents"),
                 subtitle: state.calendar.shortLabel,
-                unread: state.life.phone.unreadCount
+                // U1 (C6): the handset's total leaves the weekly closes out.
+                unread: TabBadge.unread(state.life.phone)
             ) {
                 if threads.isEmpty {
                     Text("Nobody has texted you. That is either peace or a warning.")
