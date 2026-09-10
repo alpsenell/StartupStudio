@@ -16,23 +16,35 @@ struct CrimeCard: View {
 
     var body: some View {
         let state = engine.state
-        CardView("The other ledger", systemImage: "scalemass.fill") {
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                if let pending = state.crime.pendingCase {
-                    pendingCase(pending, state: state)
-                } else if state.crime.record.isEmpty {
-                    clean
-                } else {
-                    record(state)
-                }
+        Group {
+            // MARK: V1 (ux: Life folded, rooms dormant) — C2
+            // Nothing on Life until the room has something in it (a
+            // door, an event, a case, a first post): until then it is a
+            // quiet row under "Other rooms". The modifiers below stay on
+            // the stand-in, so the card's debug hooks still run.
+            if LifeRoom.crime.isOpen(in: engine.state, balance: engine.balance) {
+                CardView("The other ledger", systemImage: "scalemass.fill") {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                        if let pending = state.crime.pendingCase {
+                            pendingCase(pending, state: state)
+                        } else if state.crime.record.isEmpty {
+                            clean
+                        } else {
+                            record(state)
+                        }
 
-                Button(
-                    state.crime.pendingCase == nil ? "Open the ledger" : "Prepare",
-                    systemImage: "folder.fill.badge.person.crop"
-                ) { onOpen() }
-                    .buttonStyle(.pressable)
-                    .font(.footnote.weight(.semibold))
+                        Button(
+                            state.crime.pendingCase == nil ? "Open the ledger" : "Prepare",
+                            systemImage: "folder.fill.badge.person.crop"
+                        ) { onOpen() }
+                            .buttonStyle(.pressable)
+                            .font(.footnote.weight(.semibold))
+                    }
+                }
+            } else {
+                LifeRoomDormant()
             }
+            // MARK: end V1
         }
         // The screenshot pass runs from the card, not the route: it
         // commits, confesses, waits for the listing and then pushes the

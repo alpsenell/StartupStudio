@@ -128,10 +128,15 @@ extension CoachTip {
             route: .pitch,
             routeLabel: String(localized: "Pitch room", comment: "Button on a coach tip that opens the screen it is about")
         ),
+        // MARK: V1 (ux: Life folded, rooms dormant) — C2. Four tips used
+        // to give directions ("under Assets", "under Life"). The rooms
+        // they pointed at are rows on Life now, and the button is the
+        // direction, so the copy says what happened and nothing about
+        // where. Ids, triggers and routes are unchanged.
         CoachTip(
             id: "tip.state.hospital",
             goalID: CoachTrigger.hospital,
-            message: String(localized: "That was a hospital stay. The doctor is under Assets, next to whatever put you there.", comment: "Coach tip keyed to game state"),
+            message: String(localized: "That was a hospital stay. The doctor will see you, and has opinions about whatever put you there.", comment: "Coach tip keyed to game state"),
             systemImage: "cross.case.fill",
             route: .assets,
             routeLabel: String(localized: "The doctor", comment: "Button on a coach tip that opens the Assets screen, where the doctor is")
@@ -139,7 +144,7 @@ extension CoachTip {
         CoachTip(
             id: "tip.state.burnout",
             goalID: CoachTrigger.burnout,
-            message: String(localized: "Burnout. The doctor is under Assets. The schedule that did it is on the Life tab.", comment: "Coach tip keyed to game state"),
+            message: String(localized: "Burnout. The doctor will see you. The schedule that did it is still the schedule.", comment: "Coach tip keyed to game state"),
             systemImage: "flame.fill",
             route: .assets,
             routeLabel: String(localized: "The doctor", comment: "Button on a coach tip that opens the Assets screen, where the doctor is")
@@ -163,7 +168,7 @@ extension CoachTip {
         CoachTip(
             id: "tip.state.launch_party",
             goalID: CoachTrigger.launchParty,
-            message: String(localized: "Launch parties run late. What they cost — the habits, the doctor, the money — is under Assets.", comment: "Coach tip keyed to game state"),
+            message: String(localized: "Launch parties run late. What they cost — the habits, the doctor, the money — adds up somewhere.", comment: "Coach tip keyed to game state"),
             systemImage: "wineglass.fill",
             route: .assets,
             routeLabel: String(localized: "Assets", comment: "Button on a coach tip that opens the screen it is about")
@@ -179,11 +184,12 @@ extension CoachTip {
         CoachTip(
             id: "tip.state.good_review",
             goalID: CoachTrigger.goodReview,
-            message: String(localized: "A review worth repeating. The feed, under Life, is where you repeat it.", comment: "Coach tip keyed to game state"),
+            message: String(localized: "A review worth repeating. Somebody should repeat it, and it may as well be you.", comment: "Coach tip keyed to game state"),
             systemImage: "megaphone.fill",
             route: .feed,
             routeLabel: String(localized: "The feed", comment: "Button on a coach tip that opens the screen it is about")
         ),
+        // MARK: end V1
         CoachTip(
             id: "tip.state.market_boom",
             goalID: CoachTrigger.marketBoom,

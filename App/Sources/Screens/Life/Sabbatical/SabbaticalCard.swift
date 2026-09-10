@@ -24,14 +24,26 @@ struct SabbaticalCard: View {
 
     var body: some View {
         let state = engine.state
-        CardView("Stepping away", systemImage: "airplane.departure") {
-            if let sabbatical = state.life.sabbatical, sabbatical.isActive {
-                away(sabbatical, state: state)
-            } else if let report = state.life.sabbatical?.report {
-                back(report)
+        Group {
+            // MARK: V1 (ux: Life folded, rooms dormant) — C2
+            // Nothing on Life until the room has something in it (a
+            // door, an event, a case, a first post): until then it is a
+            // quiet row under "Other rooms". The modifiers below stay on
+            // the stand-in, so the card's debug hooks still run.
+            if LifeRoom.sabbatical.isOpen(in: engine.state, balance: engine.balance) {
+                CardView("Stepping away", systemImage: "airplane.departure") {
+                    if let sabbatical = state.life.sabbatical, sabbatical.isActive {
+                        away(sabbatical, state: state)
+                    } else if let report = state.life.sabbatical?.report {
+                        back(report)
+                    } else {
+                        pitch(state)
+                    }
+                }
             } else {
-                pitch(state)
+                LifeRoomDormant()
             }
+            // MARK: end V1
         }
         .sheet(isPresented: $showingReport) {
             if let report = engine.state.life.sabbatical?.report {

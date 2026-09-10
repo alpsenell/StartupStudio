@@ -1508,6 +1508,31 @@ extension DebugLaunch {
     }
     // MARK: end U1
     // MARK: V1 (ux: Life folded, rooms dormant)
+    /// `-autoLifeOffset <points>`: Life's root content starts that many
+    /// points further up, so a headless pass can photograph below the
+    /// fold (`simctl` cannot scroll). Zero without the flag.
+    static var lifeOffset: CGFloat {
+        #if DEBUG
+        return CGFloat(UserDefaults.standard.double(forKey: "autoLifeOffset"))
+        #else
+        return 0
+        #endif
+    }
+
+    /// `-autoLifeFolds open|closed`: every fold on Life (sections, room
+    /// rows, the other rooms) open or closed for this launch, whatever
+    /// the install remembers. `nil` without the flag.
+    static var lifeFolds: Bool? {
+        #if DEBUG
+        switch UserDefaults.standard.string(forKey: "autoLifeFolds") {
+        case "open": return true
+        case "closed": return false
+        default: return nil
+        }
+        #else
+        return nil
+        #endif
+    }
     // MARK: end V1
     // MARK: V2 (ux: one inbox, one home per thing)
     // MARK: end V2

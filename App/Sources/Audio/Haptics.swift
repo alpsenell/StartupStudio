@@ -142,6 +142,23 @@ enum GameSettings {
         set { UserDefaults.standard.set(newValue, forKey: tutorialCompletedKey) }
     }
 
+    // MARK: V1 (ux: Life folded, rooms dormant)
+
+    /// Iteration 14 — V1. Whether one of Life's folds is open: a section
+    /// ("people"), a room's row ("room.crime"), or the dormant rooms'
+    /// group. Per install, like tip dismissal — nothing the player folded
+    /// pops back open on the next launch. `fallback` is the fold's own
+    /// default, used until the player first touches it.
+    static func lifeFoldIsOpen(_ id: String, default fallback: Bool) -> Bool {
+        bool(forKey: "settings.lifeFold." + id, default: fallback)
+    }
+
+    static func setLifeFold(_ id: String, isOpen: Bool) {
+        UserDefaults.standard.set(isOpen, forKey: "settings.lifeFold." + id)
+    }
+
+    // MARK: end V1
+
     private static func bool(forKey key: String, default fallback: Bool) -> Bool {
         UserDefaults.standard.object(forKey: key) as? Bool ?? fallback
     }

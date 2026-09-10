@@ -13,6 +13,13 @@ struct AgendaCard: View {
     let onOpen: () -> Void
     /// Follows one row to the screen that answers it.
     let onRoute: (Route) -> Void
+    // MARK: V1 (ux: Life folded, rooms dormant)
+    /// Iteration 14 — V1, C1. Drawn inside "Your week" rather than as a
+    /// card of its own: the same rows and the same way into the fourteen
+    /// days, without the second header and paper. Standalone (the
+    /// default) is unchanged.
+    var nested = false
+    // MARK: end V1
 
     /// The next three things. Three is what fits above "Your week" without
     /// pushing it off the first screen.
@@ -24,7 +31,17 @@ struct AgendaCard: View {
     }
 
     var body: some View {
-        CardView("The fortnight", systemImage: "calendar") {
+        // MARK: V1 (ux: Life folded, rooms dormant)
+        if nested {
+            rows
+        } else {
+            CardView("The fortnight", systemImage: "calendar") { rows }
+        }
+        // MARK: end V1
+    }
+
+    private var rows: some View {
+        Group {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 if next.isEmpty {
                     Text("Nothing is due for two weeks.")
