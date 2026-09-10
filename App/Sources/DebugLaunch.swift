@@ -1274,6 +1274,21 @@ extension DebugLaunch {
     // `-autoPriceWar` and `-autoCopied`. Nothing to add here.
     // MARK: end J3
     // MARK: J4 (house field)
+    /// `-autoHouseField week|day` (bare: `week`): plays the house field for
+    /// this week's tier, or today's daily, files a made-up finished year
+    /// for the player between the house's ninth and tenth, and opens the
+    /// League sheet (or today's card) on it — so the table and the
+    /// "directly above you" line need no play-through. Launch it without
+    /// `-autoSpeed`, which skips the front door. DEBUG only.
+    static var houseFieldArgument: String? {
+        #if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("-autoHouseField") else { return nil }
+        guard let value = value(after: "-autoHouseField"), !value.hasPrefix("-") else { return "week" }
+        return value.lowercased() == "day" ? "day" : "week"
+        #else
+        return nil
+        #endif
+    }
     // MARK: end J4
     // MARK: J5 (announce)
 

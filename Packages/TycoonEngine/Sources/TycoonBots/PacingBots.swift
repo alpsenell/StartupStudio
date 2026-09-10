@@ -13,31 +13,31 @@ import TycoonEngine
 
 /// Shared helpers: crew assignment, the "would I put my name on this?"
 /// gates, focus that follows the work, and value hiring.
-enum BotHelp {
+public enum BotHelp {
     /// Topics rotated through so a bot's tenth product isn't its ninth
     /// again — launch saturation punishes that, and a player would notice.
-    static let topics = ["fitness", "finance", "productivity", "travel", "music", "health"]
+    public static let topics = ["fitness", "finance", "productivity", "travel", "music", "health"]
 
-    static func topic(forProductNumber number: Int) -> String {
+    public static func topic(forProductNumber number: Int) -> String {
         topics[number % topics.count]
     }
 
     /// Puts every employee on `assignment` (skipping those already there).
-    static func assignAll(_ state: GameState, to assignment: Assignment) -> [GameAction] {
+    public static func assignAll(_ state: GameState, to assignment: Assignment) -> [GameAction] {
         state.employees
             .filter { $0.assignment != assignment }
             .map { .assign(employeeID: $0.id, to: assignment) }
     }
 
     /// Whether every point pool of an in-development product is full.
-    static func isComplete(_ product: Product, _ content: ContentCatalog) -> Bool {
+    public static func isComplete(_ product: Product, _ content: ContentCatalog) -> Bool {
         looksShippable(product, nil, content, polish: 1.0)
     }
 
     /// Whether an in-development product clears the ship gate *and* looks
     /// finished enough that a founder would put their name on it: the code
     /// gate, plus `polish` of every pool.
-    static func looksShippable(
+    public static func looksShippable(
         _ product: Product,
         _ balance: BalanceConfig?,
         _ content: ContentCatalog,
@@ -55,7 +55,7 @@ enum BotHelp {
     /// A focus split matching what a product still needs, so a bot never
     /// pours a third of its days into a pool that is already full — the
     /// thing any player learns in their first hour.
-    static func focusForRemainingWork(
+    public static func focusForRemainingWork(
         _ product: Product,
         _ content: ContentCatalog
     ) -> PhaseFocus {
@@ -71,7 +71,7 @@ enum BotHelp {
 
     /// The candidate offering the most skill per dollar — what a founder
     /// counting the runway actually hires.
-    static func bestValueCandidate(_ state: GameState) -> Candidate? {
+    public static func bestValueCandidate(_ state: GameState) -> Candidate? {
         state.candidatePool.max {
             $0.skills.total / Double(max(1, $0.weeklySalary))
                 < $1.skills.total / Double(max(1, $1.weeklySalary))
@@ -80,7 +80,7 @@ enum BotHelp {
 
     /// The best affordable contract offer: the highest payout whose penalty
     /// could not sink the company on its own.
-    static func bestOffer(_ state: GameState) -> ContractOffer? {
+    public static func bestOffer(_ state: GameState) -> ContractOffer? {
         state.contractOffers
             .filter { $0.penalty <= state.company.cash }
             .max { $0.payout < $1.payout }
@@ -106,7 +106,7 @@ enum BotHelp {
     /// planned, so a bot that never plans one can never complete chapter
     /// 2's `g2_take_a_weekend` — and, four goals being the gate, can never
     /// see chapter 3 at all.
-    static func weekendPlan(_ state: GameState) -> [GameAction] {
+    public static func weekendPlan(_ state: GameState) -> [GameAction] {
         guard !state.life.isAway(day: state.day) else { return [] }
         let monthly = state.weekOfYear.isMultiple(of: 4)
         let wanted: WeekendActivity = monthly
@@ -120,10 +120,12 @@ enum BotHelp {
 /// mobile app at a time and ships once the code gate clears and the rest is
 /// 70% there — a founder who cares, but who cannot afford to gold-plate.
 /// Measures "how long is the first product, and is it any good?".
-struct SoloSlowBot: BotPolicy {
-    let name = "solo-slow"
+public struct SoloSlowBot: BotPolicy {
+    public let name = "solo-slow"
 
-    func actions(
+    public init() {}
+
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -154,9 +156,9 @@ struct SoloSlowBot: BotPolicy {
 /// to spare, and ships at 85% — but pays over the market rate, answers
 /// resignation notices, and takes one weekend a month, so it measures "can
 /// you grow fast if you *do* look after people?".
-struct CrunchHireBot: BotPolicy {
+public struct CrunchHireBot: BotPolicy {
     /// How the bot answers an unhappy employee.
-    enum RaisePolicy {
+    public enum RaisePolicy: Sendable {
         /// What a founder counting the runway does: pay a generous
         /// multiple of what the market says the person is worth.
         case marketAnchored
@@ -166,26 +168,26 @@ struct CrunchHireBot: BotPolicy {
         case compounding
     }
 
-    var name = "crunch-hire"
-    var raises: RaisePolicy = .marketAnchored
+    public var name = "crunch-hire"
+    public var raises: RaisePolicy = .marketAnchored
     /// Weeks of payroll kept in the bank before hiring. Unchanged by the
     /// balance pass: at 40 seeds the strategy's failure rate is flat
     /// between 10 and 16 weeks (42–57%) and chaotic within it, so there is
     /// no honest reason to move it.
-    var hireRunwayWeeks = 12
+    public var hireRunwayWeeks = 12
     /// Headcount at which the studio graduates from mobile apps to the
     /// bigger, better-paying web builds. Two: the day it is not just the
     /// founder any more. A web app is 1.5× the points of a mobile app for
     /// 2.2× the lifetime revenue, so the moment there is a second pair of
     /// hands it is the better build — and a bot that waits for four hands
     /// waits forever, because mobile apps alone never pay for the third.
-    var bigProductHeadcount = 2
+    public var bigProductHeadcount = 2
     /// Whether a bigger office is bought when the current one runs out of
     /// desks — what it is *for* — rather than the day the sticker price
     /// becomes affordable. False: "growth at any cost" means the letterhead
     /// too, and measured, waiting for a full loft means the studio is
     /// reached on 4 seeds in 40 rather than 25.
-    var upgradeWhenFull = false
+    public var upgradeWhenFull = false
     let raiseMoraleFloor = 45.0
     /// What "a good employer" pays: this much of the candidate-market rate
     /// for the person's skills. Above `staff.wellPaidThreshold` (1.15), so
@@ -194,7 +196,21 @@ struct CrunchHireBot: BotPolicy {
     /// last number they happened to write down.
     let payPremium = 1.3
 
-    func actions(
+    public init(
+        name: String = "crunch-hire",
+        raises: RaisePolicy = .marketAnchored,
+        hireRunwayWeeks: Int = 12,
+        bigProductHeadcount: Int = 2,
+        upgradeWhenFull: Bool = false
+    ) {
+        self.name = name
+        self.raises = raises
+        self.hireRunwayWeeks = hireRunwayWeeks
+        self.bigProductHeadcount = bigProductHeadcount
+        self.upgradeWhenFull = upgradeWhenFull
+    }
+
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -281,10 +297,12 @@ struct CrunchHireBot: BotPolicy {
 /// `cloud_infrastructure`, then put the whole studio on one SaaS platform,
 /// finish it properly, and live off the subscriptions with a couple of
 /// people on the support desk holding churn down.
-struct SaaSBuilderBot: BotPolicy {
-    let name = "saas-builder"
+public struct SaaSBuilderBot: BotPolicy {
+    public let name = "saas-builder"
+
+    public init() {}
     /// The research path to the tech that unlocks `saas_platform`.
-    static let path = [
+    public static let path = [
         "code_reviews", "version_control", "automated_testing",
         "agile_sprints", "cloud_infrastructure",
     ]
@@ -297,7 +315,7 @@ struct SaaSBuilderBot: BotPolicy {
     /// People kept on the support desk once the platform is live.
     let supportDeskSize = 2
 
-    func actions(
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -433,10 +451,12 @@ struct SaaSBuilderBot: BotPolicy {
 /// The bad boss: crunches forever, hires whoever is cheapest, ships at half
 /// done, and never praises, raises, promotes, or takes anyone for coffee.
 /// The control group for "do people actually leave?".
-struct NeglectfulBot: BotPolicy {
-    let name = "neglectful"
+public struct NeglectfulBot: BotPolicy {
+    public let name = "neglectful"
 
-    func actions(
+    public init() {}
+
+    public func actions(
         for state: GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -486,7 +506,7 @@ extension CrunchHireBot {
     /// Kept as a control: growth plus crunch is survivable, mismanaging
     /// payroll on top of it is not, and the only difference between this
     /// bot and `crunch-hire` is those four lines.
-    static var runawayRaise: CrunchHireBot {
+    public static var runawayRaise: CrunchHireBot {
         CrunchHireBot(name: "runaway-raise", raises: .compounding)
     }
 }

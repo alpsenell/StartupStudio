@@ -94,6 +94,10 @@ struct DailyCard: View {
 struct DailyResultCard: View {
     let challenge: DailyChallenge
     let entry: DailyLedger.Entry
+    // MARK: J4 (house field)
+    /// Who finished directly above on the day's seed, and how they play.
+    var above: HouseFieldAbove?
+    // MARK: end J4
 
     var body: some View {
         PixelPanel {
@@ -129,6 +133,12 @@ struct DailyResultCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+
+                // MARK: J4 (house field)
+                if let above {
+                    HouseFieldAboveLine(above: above)
+                }
+                // MARK: end J4
 
                 // Iteration 8: the year as squares, and the text that
                 // pastes anywhere with the code on the end.
@@ -192,6 +202,9 @@ struct DailyResultCard: View {
 /// challenge, the attempt under way, or the result.
 struct DailySheet: View {
     let entry: DailyEntry
+    // MARK: J4 (house field)
+    var above: HouseFieldAbove?
+    // MARK: end J4
     var onPlay: (DailyChallenge) -> Void = { _ in }
     var onClose: () -> Void = {}
 
@@ -222,7 +235,9 @@ struct DailySheet: View {
         case .resume(let challenge, let day):
             DailyCard(challenge: challenge, resumingFromDay: day) { onPlay(challenge) }
         case .result(let challenge, let result):
-            DailyResultCard(challenge: challenge, entry: result)
+            // MARK: J4 (house field)
+            DailyResultCard(challenge: challenge, entry: result, above: above)
+            // MARK: end J4
         }
     }
 }

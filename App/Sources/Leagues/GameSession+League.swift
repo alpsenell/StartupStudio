@@ -51,6 +51,10 @@ struct LeagueView: Equatable, Identifiable {
     /// Set the first time the player opens the screen after a week
     /// settled: what last week did to their tier.
     var settlement: Settlement?
+    // MARK: J4 (house field)
+    /// How each house founder in the table plays, by the name on the row.
+    var houseLines: [String: String] = [:]
+    // MARK: end J4
 
     var id: String { "\(week.week)-\(entry.id)" }
 
@@ -61,12 +65,25 @@ struct LeagueView: Equatable, Identifiable {
         case ghosts
         /// Nobody else yet.
         case none
+        // MARK: J4 (house field)
+        /// Nobody real yet: the house's nineteen, on the same seed.
+        case house
+        /// The tier's board, filled to twenty with house founders.
+        case boardAndHouse
+        /// The players this phone has seen, filled with house founders.
+        case ghostsAndHouse
+        // MARK: end J4
 
         var line: String {
             switch self {
             case .board: "From your tier's board on Game Center."
             case .ghosts: "The players in your tier this phone has seen."
             case .none: "Nobody in your tier has finished this week yet."
+            // MARK: J4 (house field)
+            case .house: "Nineteen house founders played this seed, each one way. Beat four of them to go up."
+            case .boardAndHouse: "From your tier's board on Game Center, filled to twenty with house founders."
+            case .ghostsAndHouse: "The players this phone has seen, and house founders to make twenty."
+            // MARK: end J4
             }
         }
     }
@@ -146,6 +163,9 @@ extension GameSession {
         )
         view.standings = standings
         view.source = source
+        // MARK: J4 (house field)
+        view.houseLines = houseFieldLines(key: LeagueGhostKey.key(week: week.week, tier: record.tier))
+        // MARK: end J4
         return view
     }
 
@@ -155,6 +175,12 @@ extension GameSession {
     func leagueStandings(
         week: LeagueWeek, tier: LeagueTier, now: Date = Date()
     ) async -> ([LeagueStanding], LeagueView.Source) {
+        // MARK: J4 (house field)
+        // The house plays the tier's week first, if this phone lacks it —
+        // which is also what settles a week nobody else turned up for.
+        await ensureHouseField(week: week, tier: tier)
+        let key = LeagueGhostKey.key(week: week.week, tier: tier)
+        // MARK: end J4
         let mine = leagueLedger.entry(forWeek: week.week)?.score
         let name = leagueDisplayName
         let weeksAgo = max(0, LeagueWeek.weekNumber(for: now) - week.week)
@@ -164,12 +190,31 @@ extension GameSession {
         if !board.isEmpty {
             let others = board.filter { !$0.isLocalPlayer }.map(\.standing)
             let own = mine ?? board.first(where: \.isLocalPlayer)?.score
-            return (LeagueTable.standings(you: name, score: own, others: others), .board)
+            // MARK: J4 (house field)
+            // Real players first; house founders fill the table to twenty.
+            let house = houseFieldFill(key: key, besides: others.count)
+            return (
+                LeagueTable.standings(you: name, score: own, others: others + house),
+                house.isEmpty ? .board : .boardAndHouse
+            )
+            // MARK: end J4
         }
-        let ghosts = leagueGhosts(week: week.week, tier: tier)
-        let others = ghosts.map { LeagueStanding(name: $0.player, score: $0.finalNetWorth) }
-        let standings = LeagueTable.standings(you: name, score: mine, others: others)
-        return (standings, others.isEmpty ? .none : .ghosts)
+        // MARK: J4 (house field)
+        // The players this phone has seen — never its own year, which the
+        // ledger folds in as "you" — then the house to make twenty.
+        let real = houseFieldRealPlayers(
+            key: key, companyName: Self.houseFieldSetup(week: week).companyName
+        )
+        let house = houseFieldFill(key: key, besides: real.count)
+        let standings = LeagueTable.standings(you: name, score: mine, others: real + house)
+        let source: LeagueView.Source = switch (real.isEmpty, house.isEmpty) {
+        case (true, true): .none
+        case (false, true): .ghosts
+        case (true, false): .house
+        case (false, false): .ghostsAndHouse
+        }
+        return (standings, source)
+        // MARK: end J4
     }
 
     /// The name the player's own row carries.
@@ -357,6 +402,10 @@ extension GameSession {
     /// cloud exists. Called from the front door beside the daily's.
     func refreshLeagueGhosts(week: Int, tier: LeagueTier) async {
         await CloudGhostStore.refresh(day: LeagueGhostKey.key(week: week, tier: tier), into: ghostStore)
+        // MARK: J4 (house field)
+        // The first front-door open of a new week plays the tier's field.
+        await ensureHouseField(week: LeagueWeek.forWeek(week), tier: tier)
+        // MARK: end J4
     }
 
     static var leagueAppVersion: String {

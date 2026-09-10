@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 /// The Category Fight (iteration 5, WS-A): the phantom price war, the
 /// share floor standing buys, the six-week challenge and the weekly

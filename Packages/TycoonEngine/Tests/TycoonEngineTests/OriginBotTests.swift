@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 import TycoonEngine
+import TycoonBots
 
 /// The PM's neutrality tell for origins (meta #3): `SoloSlowBot` on each
 /// origin over the ten pacing seeds. An origin that wins on *both*

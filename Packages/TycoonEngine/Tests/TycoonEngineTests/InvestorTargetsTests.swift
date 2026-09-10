@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 import TycoonEngine
+import TycoonBots
 
 /// The investor and board contract: what taking money buys, what it costs,
 /// and what the board does about a founder who stops delivering.

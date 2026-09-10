@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 // "Build It For Them", measured: three founders who play the same game and
 // differ only in what they do when a rival's cheque lands on the sheet.

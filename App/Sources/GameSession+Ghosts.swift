@@ -11,6 +11,13 @@ extension GameSession {
     /// cloud exists. Called from the front door, ahead of Play.
     func refreshGhosts(forDailyDay day: Int) async {
         await CloudGhostStore.refresh(day: day - 1, into: ghostStore)
+        // MARK: J4 (house field)
+        // Real players first; then the house plays yesterday's seed (the
+        // four rivals today's company is founded against) and today's
+        // (the result card's field), each only if this phone lacks it.
+        await ensureHouseField(daily: DailyChallenge.forDay(day - 1))
+        await ensureHouseField(daily: DailyChallenge.forDay(day))
+        // MARK: end J4
     }
 
     /// How many ghosts stand in for rivals: the whole field.

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 import TycoonEngine
+import TycoonBots
 
 /// The two WS-B bots, measured. Neither is in a pinned suite — no pacing
 /// or investor gate ever calls `acceptBuyoutEarnOut` or `buyBackRound` —

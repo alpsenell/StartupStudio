@@ -30,6 +30,9 @@ targets:
     dependencies:
       - package: TycoonEngine
         product: TycoonEngine
+      # Iteration 12 (J4): the harness's bots, which play the house field.
+      - package: TycoonEngine
+        product: TycoonBots
       - package: TycoonContent
         product: TycoonContent
       - package: TycoonSave

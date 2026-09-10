@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 import TycoonEngine
+import TycoonBots
 
 /// The pacing contract. Every gate here is a *design target* for the shipped
 /// `Balance.json`, measured over ten seeds of two game years so one lucky

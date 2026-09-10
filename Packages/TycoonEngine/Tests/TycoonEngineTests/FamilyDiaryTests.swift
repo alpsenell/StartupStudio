@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 // The date in the diary (WS-E, iteration 5): three effects that reach the
 // numbers that end a relationship, an option that greys out when the

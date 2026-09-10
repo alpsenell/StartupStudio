@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import TycoonContent
 @testable import TycoonEngine
+import TycoonBots
 
 /// Writes the three store-screenshot saves in `App/Resources/Fixtures/`
 /// (iteration 7, R8).
