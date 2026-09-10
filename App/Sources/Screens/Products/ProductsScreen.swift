@@ -115,6 +115,9 @@ struct ProductsScreen: View {
         // MARK: K2 (product lifecycle) — `-autoRoute k2-…`.
         .lifecycleAutoRoute(engine: engine, router: router)
         // MARK: end K2
+        // MARK: S3 (product names) — `-autoRoute s3-names…`.
+        .productNameAutoRoute(engine: engine)
+        // MARK: end S3
     }
 
     /// Deep links into this tab: R&D picks the segment, a product id

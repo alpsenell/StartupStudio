@@ -1,0 +1,73 @@
+{
+  "stemsByTopic": {
+    "fitness": ["Fit", "Stride", "Rep", "Sweat", "Flex", "Lift", "Pace", "Pulse", "Burn", "Tone", "Sprint", "Gym"],
+    "finance": ["Fin", "Coin", "Cash", "Penny", "Budget", "Buck", "Nickel", "Wallet", "Fund", "Tally", "Dime", "Purse"],
+    "social": ["Social", "Chat", "Buzz", "Friend", "Circle", "Crowd", "Hello", "Vibe", "Tribe", "Chirp", "Mingle", "Gather"],
+    "travel": ["Trip", "Jet", "Roam", "Wander", "Voyage", "Nomad", "Globe", "Atlas", "Passport", "Compass", "Trek", "Tour"],
+    "food_delivery": ["Bite", "Chow", "Munch", "Dish", "Feast", "Crumb", "Snack", "Nosh", "Plate", "Spoon", "Morsel", "Supper"],
+    "education": ["Learn", "Study", "Quiz", "Tutor", "Brain", "Scholar", "Class", "Mentor", "Lesson", "Chalk", "Owl", "Primer"],
+    "music": ["Tune", "Beat", "Chord", "Melody", "Riff", "Groove", "Tempo", "Note", "Jam", "Harmony", "Bass", "Vinyl"],
+    "gaming": ["Play", "Pixel", "Arcade", "Level", "Loot", "Boss", "Joy", "Combo", "Dungeon", "Retro", "Glitch", "Respawn"],
+    "productivity": ["Task", "Focus", "Todo", "Plan", "Agenda", "Memo", "Tick", "Done", "List", "Jot", "Clock", "Habit"],
+    "health": ["Vita", "Care", "Heal", "Well", "Med", "Cure", "Pill", "Remedy", "Vital", "Nurse", "Tonic", "Balm"],
+    "dating": ["Match", "Crush", "Flirt", "Heart", "Spark", "Date", "Cupid", "Swoon", "Amour", "Kismet", "Charm", "Wink"],
+    "logistics": ["Ship", "Cargo", "Freight", "Route", "Haul", "Parcel", "Crate", "Depot", "Dock", "Fleet", "Lorry", "Waybill"]
+  },
+  "suffixesByType": {
+    "mobile_app": ["Go", "Track", "Snap", "Dash", "Pal", "Buddy", "Tap", "Pocket", "Ping", "Loop", "Mate", "Swipe"],
+    "web_app": ["Hub", "Board", "Space", "Link", "Page", "Nest", "Spot", "Portal", "Deck", "Room", "Web", "Lane"],
+    "desktop_tool": ["Studio", "Bench", "Works", "Forge", "Shop", "Lab", "Kit", "Craft", "Press", "Mill", "Box", "Pad"],
+    "game": ["Quest", "Rush", "Land", "Saga", "Blitz", "Party", "Hero", "Clash", "Tales", "Mania", "Royale", "Frenzy"],
+    "saas_platform": ["Base", "Stack", "Cloud", "HQ", "Flow", "Sync", "Metrics", "Ops", "Grid", "Scale", "Pipe", "Logic"],
+    "enterprise_tool": ["Suite", "Core", "Desk", "Central", "Point", "Gate", "Vault", "Force", "Bridge", "Wise", "Line", "Office"]
+  },
+  "words": [
+    "Acorn", "Aurora", "Basil", "Birch", "Bolt", "Bramble", "Breeze", "Cairn",
+    "Canopy", "Cedar", "Cobalt", "Comet", "Coral", "Cove", "Crest", "Dune",
+    "Fable", "Falcon", "Fern", "Fjord", "Flint", "Gale", "Garnet", "Glade",
+    "Harvest", "Hazel", "Heron", "Indigo", "Iris", "Ivy", "Jasper", "Juniper",
+    "Kestrel", "Lark", "Laurel", "Lumen", "Lynx", "Magnet", "Maple", "Marble",
+    "Meteor", "Moss", "Nectar", "Oak", "Onyx", "Opal", "Otter", "Paper",
+    "Pebble", "Pepper", "Pine", "Plume", "Prism", "Quill", "Raven", "Reef",
+    "Rocket", "Saffron", "Sage", "Sequoia", "Sierra", "Solstice", "Sparrow", "Spruce",
+    "Starling", "Sunday", "Thistle", "Thunder", "Topaz", "Tulip", "Umber", "Velvet",
+    "Vesper", "Walnut", "Wave", "Whistle", "Yonder", "Zephyr", "Kettle", "Mango"
+  ],
+  "prefixes": [
+    "Hyper", "Neo", "Omni", "Micro", "Mega", "Ultra", "Snap", "Quick",
+    "True", "Open", "Smart", "Bright", "Clear", "Easy", "Every", "My",
+    "Pocket", "Zen", "Blue", "Nova", "Iron", "Rapid", "Happy", "Little",
+    "Daily", "Next", "Super", "Pure", "Wild", "Tiny", "Good", "Sunny"
+  ],
+  "tails": [
+    "Pro", "HQ", "Labs", "Plus", "Lite", "Max", "Go", "Club", "Daily", "Now", "Hub", "One"
+  ],
+  "patterns": [
+    { "template": "{stem}{suffix}", "weight": 5 },
+    { "template": "{prefix}{stem}", "weight": 3 },
+    { "template": "{stem}{suffix} {tail}", "weight": 2 },
+    { "template": "{word}{suffix}", "weight": 2 },
+    { "template": "{word} {word}", "weight": 2 },
+    { "template": "{stem} {tail}", "weight": 1 },
+    { "template": "{word} {tail}", "weight": 1 },
+    { "template": "{prefix}{suffix}", "weight": 1 },
+    { "template": "{word} {stem}", "weight": 1 }
+  ],
+  "sequelTails": ["Next", "Reloaded", "Forever"],
+  "banned": [
+    "Fitbit", "MyFitnessPal", "Strava", "Peloton", "Noom", "Zwift", "Runkeeper", "FitOn",
+    "Venmo", "PayPal", "Mint", "Robinhood", "Coinbase", "Stripe", "Square", "CashApp",
+    "Slack", "Zoom", "Discord", "Snapchat", "Instagram", "TikTok", "WhatsApp", "Telegram",
+    "Uber", "Airbnb", "Expedia", "Kayak", "Hopper", "TripAdvisor", "Booking", "TripIt",
+    "DoorDash", "Grubhub", "Instacart", "Deliveroo", "Postmates", "Seamless",
+    "Duolingo", "Coursera", "Udemy", "Quizlet", "LearnDash", "Brainly", "Chegg",
+    "Spotify", "Shazam", "Tidal", "Pandora", "SoundCloud", "Bandcamp", "GarageBand", "TuneIn",
+    "Steam", "Twitch", "Roblox", "PlayStation", "Xbox", "GameStop", "Fortnite", "Minecraft",
+    "Trello", "Notion", "Asana", "Todoist", "Evernote", "Basecamp", "ClickUp", "Monday",
+    "Headspace", "Calm", "Zocdoc", "WebMD", "Hims", "CareFirst",
+    "Tinder", "Bumble", "Hinge", "Grindr", "Match", "OkCupid", "Feeld",
+    "ShipBob", "Flexport", "ShipStation", "Convoy", "FedEx", "Freightos",
+    "Salesforce", "Workday", "Jira", "Confluence", "Dropbox", "Box", "Figma", "Canva",
+    "GitHub", "GitLab", "SharePoint", "Office", "Teams", "Outlook", "Meta", "Apple"
+  ]
+}

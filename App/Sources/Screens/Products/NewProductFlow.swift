@@ -54,6 +54,19 @@ struct NewProductFlow: View {
     /// feature board — the last step of starting a product is saying what
     /// it *is*, and the board cannot exist before the product does.
     @State private var startedProductID: UUID?
+    // MARK: S3 (product names)
+    /// The Hall of Fame lives on the session's ledger; its names stay out
+    /// of the suggestions.
+    @Environment(\.gameSession) private var session
+    /// How many times Shuffle was pressed: the batch index the seed hashes.
+    @State private var nameReroll = 0
+    /// The batch Shuffle replaced, kept out of the next one so three new
+    /// names always come.
+    @State private var shuffledAway: [String] = []
+    /// The product a v2 is being started for. Its sequels lead the chips
+    /// while the type and topic are still its own.
+    @State private var sequelParentID: UUID?
+    // MARK: end S3
 
     /// - Parameter initialTopicID: a topic to arrive with already selected,
     ///   for deep links from the market screens (`Route.newProduct`). The
@@ -62,8 +75,11 @@ struct NewProductFlow: View {
         engine: GameEngine,
         initialTopicID: String? = nil,
         // MARK: K2 (product lifecycle)
-        successorOf: UUID? = nil
+        successorOf: UUID? = nil,
         // MARK: end K2
+        // MARK: S3 (product names) — the debug landing on the name step.
+        landingOnName: ProductNameLanding? = nil
+        // MARK: end S3
     ) {
         self.engine = engine
         _selectedTopicID = State(initialValue: initialTopicID)
@@ -76,11 +92,39 @@ struct NewProductFlow: View {
             _selectedCodebaseID = State(
                 initialValue: engine.state.availableCodebases(typeID: parent.typeID).first?.id
             )
-            _name = State(initialValue: Self.lifecycleName(for: parent))
-            _nameEdited = State(initialValue: true)
+            // MARK: S3 (product names) — the sequels lead: "Round 2",
+            // "Round II", "Round Next".
+            _sequelParentID = State(initialValue: parent.id)
+            _name = State(
+                initialValue: engine.state.sequelNameSuggestions(parentID: parent.id, content: engine.content).first
+                    ?? Self.lifecycleName(for: parent)
+            )
+            // MARK: end S3
             _step = State(initialValue: .details)
         }
         // MARK: end K2
+        // MARK: S3 (product names)
+        if let landingOnName {
+            _selectedTypeID = State(initialValue: landingOnName.typeID)
+            _selectedTopicID = State(initialValue: landingOnName.topicID)
+            _nameReroll = State(initialValue: landingOnName.rerolls)
+            let away = landingOnName.rerolls > 0
+                ? engine.state.productNameSuggestions(
+                    typeID: landingOnName.typeID, topicID: landingOnName.topicID,
+                    reroll: landingOnName.rerolls - 1, content: engine.content
+                )
+                : []
+            _shuffledAway = State(initialValue: away)
+            let first = engine.state.productNameSuggestions(
+                typeID: landingOnName.typeID, topicID: landingOnName.topicID,
+                reroll: landingOnName.rerolls, content: engine.content,
+                alsoTaken: Set(away)
+            ).first ?? ""
+            _name = State(initialValue: landingOnName.typedName ?? first)
+            _nameEdited = State(initialValue: landingOnName.typedName != nil)
+            _step = State(initialValue: .details)
+        }
+        // MARK: end S3
     }
 
     // MARK: K2 (product lifecycle)
@@ -99,8 +143,14 @@ struct NewProductFlow: View {
         selectedTypeID = parent.typeID
         selectedTopicID = parent.topicID
         selectedCodebaseID = engine.state.availableCodebases(typeID: parent.typeID).first?.id
-        name = Self.lifecycleName(for: parent)
-        nameEdited = true
+        // MARK: S3 (product names) — the sequels lead, and a v2 picked
+        // from the chips is still a suggestion, not the player's own words.
+        sequelParentID = parent.id
+        nameReroll = 0
+        shuffledAway = []
+        name = nameSuggestions.first ?? Self.lifecycleName(for: parent)
+        nameEdited = false
+        // MARK: end S3
         withAnimation(Theme.Motion.entrance) { step = .details }
     }
 
@@ -168,7 +218,12 @@ struct NewProductFlow: View {
             DetailsStep(
                 name: $name,
                 focus: $focus,
-                suggestion: suggestion,
+                // MARK: S3 (product names)
+                suggestions: nameSuggestions,
+                refusal: nameClaim?.refusal,
+                pickName: pickName,
+                shuffleNames: shuffleNames,
+                // MARK: end S3
                 forecast: preStartForecast,
                 matching: selectedTypeID.flatMap { engine.content.productType($0) }.map { PhaseFocus.matching(type: $0) },
                 boardSlots: boardSlots
@@ -286,6 +341,9 @@ struct NewProductFlow: View {
 
     private var canStart: Bool {
         !trimmedName.isEmpty && selectedTypeID != nil && selectedTopicID != nil
+            // MARK: S3 (product names) — a name the run already has is refused.
+            && nameClaim == nil
+            // MARK: end S3
     }
 
     private func advance() {
@@ -297,7 +355,9 @@ struct NewProductFlow: View {
             selectedCodebaseID = nil
         }
         if next == .details, !nameEdited {
-            name = suggestion
+            // MARK: S3 (product names)
+            name = nameSuggestions.first ?? ""
+            // MARK: end S3
         }
         withAnimation(Theme.Motion.entrance) {
             step = next
@@ -328,35 +388,53 @@ struct NewProductFlow: View {
     }
 
     // MARK: - Name suggestion
+    // MARK: S3 (product names)
 
-    /// Tiny local flavor generator: a topic stem plus a type-flavored
-    /// suffix, e.g. fitness + mobile app -> "FitTrack". Deterministic by
-    /// design — no engine RNG involved.
-    private var suggestion: String {
-        guard let typeID = selectedTypeID, let topicID = selectedTopicID else { return "" }
-
-        let stems: [String: String] = [
-            "fitness": "Fit", "finance": "Fin", "social": "Social",
-            "travel": "Trip", "food_delivery": "Bite", "education": "Learn",
-            "music": "Tune", "gaming": "Play", "productivity": "Task",
-            "health": "Vita", "dating": "Match", "logistics": "Ship",
-        ]
-        let suffixesByType: [String: [String]] = [
-            "mobile_app": ["Go", "Track", "Snap", "Dash"],
-            "web_app": ["Hub", "Board", "Space", "Link"],
-            "desktop_tool": ["Studio", "Bench", "Works", "Forge"],
-            "game": ["Quest", "Rush", "Land", "Saga"],
-            "saas_platform": ["Base", "Stack", "Cloud", "HQ"],
-            "enterprise_tool": ["Suite", "Core", "Ops", "Desk"],
-        ]
-
-        let stem = stems[topicID]
-            ?? engine.content.topic(topicID)?.name.split(separator: " ").first.map(String.init)
-            ?? "Nova"
-        let suffixes = suffixesByType[typeID] ?? ["One", "Pro", "Kit"]
-        let index = (topicID.count + typeID.count) % suffixes.count
-        return stem + suffixes[index]
+    /// The three names the chips offer: a v2's sequels while the type and
+    /// topic are its parent's and Shuffle has not been pressed, otherwise
+    /// `ProductNameGenerator` over `ProductNames.json`, seeded from the run
+    /// and the reroll index — never the engine's RNG — and clear of every
+    /// name in the run, the Hall of Fame and the batch just shuffled away.
+    private var nameSuggestions: [String] {
+        guard let typeID = selectedTypeID, let topicID = selectedTopicID else { return [] }
+        let hall = Set((session?.ledger.hall ?? []).map(\.productName))
+        if nameReroll == 0, let parentID = sequelParentID,
+           let parent = engine.state.product(id: parentID),
+           parent.typeID == typeID, parent.topicID == topicID {
+            let sequels = engine.state.sequelNameSuggestions(
+                parentID: parentID, content: engine.content, alsoTaken: hall
+            )
+            if !sequels.isEmpty { return sequels }
+        }
+        return engine.state.productNameSuggestions(
+            typeID: typeID, topicID: topicID, reroll: nameReroll,
+            content: engine.content, alsoTaken: hall.union(shuffledAway)
+        )
     }
+
+    /// Who already has the typed name, for the refusal under the field.
+    private var nameClaim: ProductNameClaim? {
+        engine.state.productNameClaim(trimmedName)
+    }
+
+    /// A chip tapped: the field takes it, and it is a suggestion again —
+    /// the next Shuffle may replace it.
+    private func pickName(_ picked: String) {
+        name = picked
+        nameEdited = false
+    }
+
+    /// Three different names for the same product. A name the player
+    /// typed stays in the field; only the chips move.
+    private func shuffleNames() {
+        shuffledAway = nameSuggestions
+        nameReroll += 1
+        if !nameEdited, let first = nameSuggestions.first {
+            name = first
+        }
+    }
+
+    // MARK: end S3
 }
 
 // MARK: - Step indicator
@@ -951,7 +1029,13 @@ private struct TopicCell: View {
 private struct DetailsStep: View {
     @Binding var name: String
     @Binding var focus: PhaseFocus
-    let suggestion: String
+    // MARK: S3 (product names)
+    let suggestions: [String]
+    /// "You already have a Round 6." — why Start is off, `nil` when free.
+    let refusal: String?
+    let pickName: (String) -> Void
+    let shuffleNames: () -> Void
+    // MARK: end S3
     /// The crew's best case on this type and topic, with the one-line fix.
     let forecast: ShipForecast?
     /// The split the type demands, offered as the starting focus.
@@ -968,19 +1052,38 @@ private struct DetailsStep: View {
             }
 
             CardView("Name", systemImage: "textformat") {
-                TextField("Product name", text: $name)
-                    .font(.system(.title3, design: .rounded).weight(.semibold))
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
-                    .submitLabel(.done)
-                    .onChange(of: name) { _, newValue in
-                        // A programmatic prefill matches the suggestion;
-                        // anything else means the user took over.
-                        if newValue != suggestion {
-                            onNameEdited()
+                // MARK: S3 (product names)
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    TextField("Product name", text: $name)
+                        .font(.system(.title3, design: .rounded).weight(.semibold))
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onChange(of: name) { _, newValue in
+                            // A programmatic prefill is one of the
+                            // suggestions; anything else means the user
+                            // took over.
+                            if !suggestions.contains(newValue) {
+                                onNameEdited()
+                            }
                         }
+                        .accessibilityLabel("Product name")
+                    if let refusal {
+                        Label(refusal, systemImage: "exclamationmark.circle.fill")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.warning)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .accessibilityLabel("Product name")
+                    if !suggestions.isEmpty {
+                        ProductNameChips(
+                            suggestions: suggestions,
+                            current: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                            pick: pickName,
+                            shuffle: shuffleNames
+                        )
+                    }
+                }
+                // MARK: end S3
             }
 
             CardView("Starting focus", systemImage: "slider.horizontal.3") {
