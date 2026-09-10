@@ -89,11 +89,20 @@ struct TitleScreen: View {
                 deskFlourish: DeskRewards.hasFlourish(bestStreak: session.ledger.deskBestStreak)
                 // MARK: end of Iteration 10 — M5
             )
+            // MARK: P2 (purchases: StoreKit and the session)
+            // The locked fourth slot and the purchases waiting for a
+            // company: the only shop presence on the door (§5).
+            .environment(\.shopFrontDoor, ShopFrontDoor.make(session: session))
+            // MARK: end P2
             .padding(Theme.Spacing.lg)
             .opacity(arrived ? 1 : 0)
             .offset(y: arrived || Theme.Motion.isReduced ? 0 : 12)
         }
         .scrollBounceBehavior(.basedOnSize)
+        // MARK: P2 (purchases: StoreKit and the session)
+        // `-autoSlots` (DEBUG): open on the slot rows, for the screenshot.
+        .defaultScrollAnchor(DebugLaunch.scrollsDoorToSlots ? .bottom : nil)
+        // MARK: end P2
         .background(Theme.screenBackground.ignoresSafeArea())
         // Iteration 7 (R6): once per install, after the first biography.
         .reviewPromptOnReturn(session: session)
@@ -682,6 +691,12 @@ private struct SlotList: View {
                     onDelete: { onDelete(row.slot) }
                 )
             }
+            // MARK: P2 (purchases: StoreKit and the session)
+            // The locked fourth slot and the parked line, under the three
+            // rows. Drawn from the environment, so the snapshots (no
+            // session) are the three rows they always were.
+            ShopFrontDoorRows()
+            // MARK: end P2
         }
     }
 }

@@ -93,6 +93,15 @@ final class GameSession {
 
     // MARK: end of Iteration 10
 
+    // MARK: P2 (purchases: StoreKit and the session)
+    /// Prices, owned things, purchases waiting for a company
+    /// (`GameSession+Shop.swift`).
+    var shop: ShopState = ShopState()
+    /// The shop in the shape P3's surfaces read (`ShopSurfaceStore.swift`),
+    /// one instance for the app's life so the environment value is stable.
+    @ObservationIgnored lazy var shopSurfaceStore = ShopSurfaceStore(session: self)
+    // MARK: end P2
+
     /// The gates composed into `engine.advanceGate`, by `installGate`.
     private(set) var gates: [any AdvanceGate] = []
     /// Fanned out from `engine.eventSink`, keyed by lane (`"tour"`,
@@ -126,7 +135,11 @@ final class GameSession {
     ///   - remembersSlot: whether opening a slot is remembered for next launch.
     init(saveDirectory: URL? = nil, slot: Int? = nil, remembersSlot: Bool = true) {
         let store = SaveStore<GameState>(
-            directory: saveDirectory, currentFormatVersion: Self.saveFormatVersion
+            directory: saveDirectory, currentFormatVersion: Self.saveFormatVersion,
+            // MARK: P2 (purchases): four slots always; the fourth opens
+            // when it is owned (`iteration-13-iap.md` §4.3).
+            slotCount: ShopCatalog.slotCount
+            // MARK: end P2
         )
         self.store = store
         self.saveDirectory = saveDirectory
@@ -272,6 +285,10 @@ final class GameSession {
             }
             engine.eventSink = sink
         }
+        // MARK: P2 (purchases): a parked grant goes to the next company
+        // that can take it.
+        shopEngineDidChange()
+        // MARK: end P2
     }
 
     // MARK: - The front door
@@ -279,6 +296,10 @@ final class GameSession {
     /// Continue the current slot's game: the door closes.
     func continueGame() {
         guard hasCurrentGame else { return }
+        // MARK: P2 (purchases): a refunded fourth slot keeps its save and
+        // stays shut until it is owned again.
+        guard isDetached || !isShopLockedSlot(currentSlot) else { return }
+        // MARK: end P2
         isAtFrontDoor = false
     }
 
@@ -303,6 +324,9 @@ final class GameSession {
     /// new-game flow into it; a slot that will not read stays where it is
     /// and says why.
     func openSlot(_ slot: Int) {
+        // MARK: P2 (purchases): the locked fourth slot opens nothing.
+        guard !isShopLockedSlot(slot) else { return }
+        // MARK: end P2
         guard slot != currentSlot || !hasCurrentGame else {
             continueGame()
             return
@@ -511,12 +535,19 @@ final class GameSession {
     /// existed is summarized from its state.
     func refreshSlots() {
         slots = store.slots(summarize: SaveSummary.init(state:))
+        // MARK: P2 (purchases): the fourth slot lists only when owned; a
+        // locked one is the front door's shop row instead.
+        slots = shopFilterSlots(slots)
+        // MARK: end P2
     }
 
     /// The Continue card's facts about the current game, off the live
     /// state rather than the file, so a run just left is up to date.
     var currentSummary: SaveSummary? {
-        hasCurrentGame ? SaveSummary(state: engine.state) : nil
+        // MARK: P2 (purchases): no Continue into a locked fourth slot.
+        if !isDetached, isShopLockedSlot(currentSlot) { return nil }
+        // MARK: end P2
+        return hasCurrentGame ? SaveSummary(state: engine.state) : nil
     }
 
     /// The slot is captured, not read back, so an engine on its way out

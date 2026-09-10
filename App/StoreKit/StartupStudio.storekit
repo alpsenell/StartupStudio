@@ -18,6 +18,96 @@
       "productID" : "com.alpsenel.startupstudio.fullgame",
       "referenceName" : "Full game",
       "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "6E1F0A31",
+      "localizations" : [
+        {
+          "description" : "Reverses one bankruptcy: the overdraft is written off and a month of cash goes in. Unranks the company.",
+          "displayName" : "The receiver's call",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.alpsenel.startupstudio.secondchance",
+      "referenceName" : "Second chance",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "6E1F0A32",
+      "localizations" : [
+        {
+          "description" : "A fourth save slot on the front door, synced through iCloud like the other three.",
+          "displayName" : "A fourth slot",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.alpsenel.startupstudio.slot4",
+      "referenceName" : "Fourth slot",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "6E1F0A33",
+      "localizations" : [
+        {
+          "description" : "Six things for the founder's flat: two for the wall, two for a shelf, two for the floor. No effect on the game.",
+          "displayName" : "The loft pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.alpsenel.startupstudio.decor.loft",
+      "referenceName" : "Loft pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "6E1F0A34",
+      "localizations" : [
+        {
+          "description" : "Four weeks of the company's burn in cash, at least $8,000 and at most $250,000. Unranks the company.",
+          "displayName" : "A month of runway",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.alpsenel.startupstudio.cash.month",
+      "referenceName" : "Cash — month",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "6E1F0A35",
+      "localizations" : [
+        {
+          "description" : "Thirteen weeks of the company's burn in cash, at least $26,000 and at most $1,000,000. Unranks the company.",
+          "displayName" : "A quarter of runway",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.alpsenel.startupstudio.cash.quarter",
+      "referenceName" : "Cash — quarter",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "6E1F0A36",
+      "localizations" : [
+        {
+          "description" : "The lead-level candidate shown on the hire sheet joins your pool, both traits known. Unranks the company.",
+          "displayName" : "A veteran",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.alpsenel.startupstudio.veteran",
+      "referenceName" : "Veteran",
+      "type" : "Consumable"
     }
   ],
   "settings" : {

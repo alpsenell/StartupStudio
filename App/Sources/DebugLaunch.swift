@@ -1396,6 +1396,39 @@ extension DebugLaunch {
     #endif
     // MARK: end P1
     // MARK: P2 (purchases: StoreKit and the session)
+    /// `-autoShop <productID>`: one purchase through the scheme's store —
+    /// the local `.storekit` file on the simulator — once the shop has
+    /// loaded (`GameSession+Shop.swift`). The full id or its suffix
+    /// (`cash.month`, `secondchance`, `veteran`, `slot4`, `decor.loft`).
+    /// The pre-check is skipped, so on a build whose engine refuses the
+    /// grant the transaction parks and the front door counts it.
+    ///
+    /// Fixture: `-autoFixture release-bankruptcy` installs a company one
+    /// day from the bankruptcy ending into slot 0 (App Review, and the
+    /// post-mortem's screenshot): continue and let one day run.
+    static var autoShopProductID: String? {
+        value(after: "-autoShop")
+    }
+
+    /// `-autoSlots`: the front door opens scrolled to the save slots, so
+    /// the locked fourth row can be photographed without a swipe.
+    static var scrollsDoorToSlots: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoSlots")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoPurchases`: with `-autoRoute settings`, the Purchases list
+    /// opens over Settings.
+    static var opensPurchases: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoPurchases")
+        #else
+        return false
+        #endif
+    }
     // MARK: end P2
     // MARK: P3 (purchases: surfaces and copy)
     // MARK: end P3

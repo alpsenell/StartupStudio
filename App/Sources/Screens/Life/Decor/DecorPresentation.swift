@@ -29,11 +29,19 @@ enum DecorPresentation {
 
     /// Every decor id the player may place right now: the possessions they
     /// bought, plus whatever the ledger has earned them.
-    static func available(life: LifeState, ledger: LegacyLedger) -> [DecorItem] {
+    ///
+    /// Iteration 13 (P2): `owned` is the App Store's owned product ids
+    /// (`GameSession.shop.owned`); the loft pack's items are offered only
+    /// while it is owned. A refund stops new placements — what is already
+    /// placed stays, because the scene draws `life.decor`, not this list.
+    static func available(life: LifeState, ledger: LegacyLedger, owned: Set<String> = []) -> [DecorItem] {
         let earned = ledger.availableDecor
         return HomeDecor.catalog.filter { item in
             switch item.source {
             case .shop: life.possessions.contains(item.id)
+            // MARK: P2 (purchases: StoreKit and the session)
+            case .purchased: owned.contains(ShopProduct.loftPack.productID)
+            // MARK: end P2
             default: earned.contains(item.id)
             }
         }

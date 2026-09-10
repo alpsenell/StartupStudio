@@ -39,6 +39,12 @@ enum ReleaseFixture {
     ///   house, a teenager and a toddler, and their memory ledgers.
     static let laneFixtures = [
         "l3-family-day900",
+        // MARK: P2 (purchases: StoreKit and the session)
+        // `release-bankruptcy`: a standard company one day from the
+        // bankruptcy ending, for App Review's receiver's call and the
+        // post-mortem's screenshot (`iteration-13-lanes/p2.md`).
+        "release-bankruptcy",
+        // MARK: end P2
     ]
 
     /// The bundled JSON for `name`, or `nil` when it is not in this build

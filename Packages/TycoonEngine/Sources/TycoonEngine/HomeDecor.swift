@@ -84,6 +84,12 @@ public enum DecorSource: Equatable, Sendable {
     /// Bought with the founder's own money, off the Assets screen.
     case asset
     // MARK: end of Iteration 11 — N3
+    // MARK: P3 (purchases: surfaces and copy)
+    /// The loft pack, a non-consumable from the App Store. The engine
+    /// never checks ownership (it cannot see the store); the app offers
+    /// the six only when the store says they are owned.
+    case purchased
+    // MARK: end P3
 
     public var caption: String {
         switch self {
@@ -99,6 +105,9 @@ public enum DecorSource: Equatable, Sendable {
         // MARK: Iteration 11 — N3
         case .asset: "Yours, and insured"
         // MARK: end of Iteration 11 — N3
+        // MARK: P3 (purchases: surfaces and copy)
+        case .purchased: "Bought from the App Store"
+        // MARK: end P3
         }
     }
 }

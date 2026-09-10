@@ -60,10 +60,15 @@ actor Entitlements: EntitlementSource {
         AsyncStream { continuation in
             let task = Task {
                 for await result in Transaction.updates {
-                    if case .verified(let transaction) = result {
-                        // Finish everything verified, whether or not it is
-                        // ours: an unfinished transaction is redelivered
-                        // at every launch.
+                    if case .verified(let transaction) = result,
+                       // Iteration 13 (P2): finish what is owned or
+                       // unknown — the unlock, the slot, the pack, an id
+                       // this build does not sell — so it is not
+                       // redelivered at every launch. A consumable is left
+                       // for `ShopClient` and `GameSession.applyGrant`,
+                       // which finish it once the grant is in the save:
+                       // finished here, it would be money taken for nothing.
+                       !ShopCatalog.isConsumable(transaction.productID) {
                         await transaction.finish()
                     }
                     continuation.yield(await self.isEntitled())
