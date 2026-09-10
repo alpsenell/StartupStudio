@@ -88,6 +88,9 @@ struct LifeScreen: View {
         // MARK: U1 (ux: the first-hour fixes)
         // MARK: end U1
         // MARK: V1 (ux: Life folded, rooms dormant)
+        /// A person who had a card and no page: People's row pushes the
+        /// card, on its own (`LifeCardPageView`).
+        case lifeCard(LifeCardPage)
         // MARK: end V1
         // MARK: V2 (ux: one inbox, one home per thing)
         // MARK: end V2
@@ -104,87 +107,120 @@ struct LifeScreen: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
-                    // The fortnight leads: it is the only card that answers
-                    // "what is coming" — everything under it answers "what
-                    // is true now".
-                    AgendaCard(
-                        engine: engine,
-                        onOpen: { path = [.agenda] },
-                        onRoute: { router.go($0) }
-                    )
-                    ThisWeekCard(engine: engine)
-                    // Iteration 9 — L1: the phone card goes here, under the
-                    // week, because a message is the next thing to answer.
-                    // MARK: L1 (phone)
-                    PhoneCard(
-                        engine: engine,
-                        onOpen: { path = [.phone] },
-                        onOpenThread: { path = [.phone, .phoneThread($0)] }
-                    )
+                    // MARK: V1 (ux: Life folded, rooms dormant) — the five sections
+                    // Iteration 14 — C1. Twenty-five peers under four
+                    // headers became five folded sections: the week, the
+                    // people, the money and the home, the founder's own
+                    // sheet, and the rooms. Every card below is still the
+                    // card it was; a section is what it folds into, and a
+                    // row is what a person or a room folds into. Pushes do
+                    // not depend on any of this: `consumeRoute` is as it
+                    // was.
+                    let state = engine.state
+                    let rooms = LifeRoom.allCases
+                    let openRooms = rooms.filter { $0.isOpen(in: state, balance: engine.balance) }
+                    let waitingRooms = openRooms.filter { $0.isWaiting(in: state, balance: engine.balance) }
+                    let dormantRooms = rooms.filter { !$0.isOpen(in: state, balance: engine.balance) }
+                    let doors = state.doors.open(on: state.day).count
+                    let asking = LifeSummary.asking(state, content: engine.content)
 
-                    BusinessSectionHeader(title: "This week", systemImage: "calendar")
-                    ActivitiesCard(engine: engine)
-                    WeekendCard(engine: engine)
-                    WeekendRecapCard(engine: engine)
-                    // The networking floor and the address book. Placed
-                    // after the weekend plan, which is what opens a room.
-                    NetworkingCard(engine: engine)
+                    // This week: the fortnight and "Your week" as one card
+                    // (both types kept, the fortnight nested), then what
+                    // has to be answered, then today's activities.
+                    LifeSection(.thisWeek, summary: LifeSummary.thisWeek(engine), badge: doors) {
+                        ThisWeekCard(
+                            engine: engine,
+                            fortnight: AgendaCard(
+                                engine: engine,
+                                onOpen: { path = [.agenda] },
+                                onRoute: { router.go($0) },
+                                nested: true
+                            )
+                        )
+                        // MARK: J1 (doors)
+                        // The doors waiting on an answer, under the week
+                        // they are due in. Nothing at all while none is
+                        // open.
+                        DoorsCard(engine: engine) { path = [.door($0)] }
+                        // MARK: end J1
+                        // MARK: W4 (inside)
+                        // Nothing at all until a court has sent the founder
+                        // down; the card draws itself only while
+                        // `state.prison` is non-nil.
+                        InsideCard(engine: engine) { path = [.inside] }
+                        ActivitiesCard(engine: engine)
+                        // The weekend's plan and last weekend's recap, one
+                        // row: "Your week" already says what is planned,
+                        // and the eight-option grid is a Friday decision.
+                        LifeUnfold(
+                            "weekend",
+                            title: "The weekend",
+                            systemImage: "sun.horizon.fill",
+                            value: "\(state.life.plannedActivity.displayName) planned"
+                        ) {
+                            VStack(spacing: Theme.Spacing.lg) {
+                                WeekendCard(engine: engine)
+                                WeekendRecapCard(engine: engine)
+                            }
+                        }
+                    } hooks: {
+                        InsideCard(engine: engine) { path = [.inside] }
+                    }
 
-                    BusinessSectionHeader(title: "People", systemImage: "person.2.fill")
-                    PartnerCard(engine: engine)
-                    FamilyCard(engine: engine)
-                    // Iteration 9 — L3 owns FamilyCard.swift (the children
-                    // draw there); L4 adds the friends card after it.
-                    // MARK: L3 (children)
-                    ChildrenLink(onOpen: { path = [.children] })
-                    // MARK: L4 (friends)
-                    FriendsCard(engine: engine) { path = [.friends] }
+                    // People: one row each, one number each, each pushing
+                    // its page. L1's phone, L4's friends, the partner, the
+                    // family (L3's children are on its page) and the
+                    // networking floor.
+                    LifeSection(.people, summary: LifeSummary.people(engine), badge: asking) {
+                        peopleRows
+                    }
 
-                    BusinessSectionHeader(title: "Money and home", systemImage: "house.fill")
-                    MoneyCard(engine: engine)
-                    HomeCard(engine: engine)
-                    PossessionsCard(engine: engine)
-                    // Iteration 9 — L7 owns HomeCard.swift and
-                    // ShoppingSheet.swift (furnishing opens from the home).
-                    // MARK: L7 (furnish)
+                    // Money and home. `-autoRoute city|furnish|loftpack`
+                    // open their sheets from the home card, so a launch
+                    // that asks for one opens the section with it.
+                    LifeSection(
+                        .moneyHome,
+                        summary: LifeSummary.money(engine),
+                        forcedOpen: DebugLaunch.launchRoute.map { ["city", "furnish", "loftpack"].contains($0) } ?? false
+                    ) {
+                        MoneyCard(engine: engine)
+                        // MARK: L7 (furnish)
+                        HomeCard(engine: engine)
+                        PossessionsCard(engine: engine)
+                    }
 
-                    BusinessSectionHeader(title: "You", systemImage: "person.fill")
-                    FounderSkillsCard(engine: engine)
-                    LifeMetersCard(engine: engine)
-                    // Iteration 9 — the founder's own sheet grows three
-                    // cards, in this order.
-                    // MARK: L2 (life score)
-                    LifeScoreCard(engine: engine, onOpen: { path = [.lifeScore] })
-                    // MARK: L5 (side project)
-                    SideProjectCard(engine: engine) { path = [.sideProject] }
-                    // MARK: L6 (sabbatical)
-                    SabbaticalCard(engine: engine, onOpen: { path = [.sabbatical] })
-                    // MARK: Iteration 11 — new cards, in this order
-                    // MARK: N1 (crime and the courtroom)
-                    CrimeCard(engine: engine) { path = [.crime] }
-                    // MARK: N3 (assets, vices and the doctor)
-                    // The founder's own balance sheet. It is money, but
-                    // it is also the doctor and the habits, so it sits in
-                    // *You* — under the meters it moves — with the
-                    // wallet's own card linking across to it.
-                    AssetsCard(engine: engine, onOpen: { path = [.assets] })
-                    // MARK: N4 (fame and the feed)
-                    FameCard(engine: engine) { path = [.feed] }
-                    // MARK: Iteration 11, wave two — new cards
-                    // MARK: W2 (family drama)
-                    // The half of the family the Family card does not show:
-                    // the people you did not choose, and the paperwork.
-                    FamilyDramaCard(engine: engine) { path = [.family] }
-                    // MARK: W4 (inside)
-                    // Nothing at all until a court has sent the founder
-                    // down; the card draws itself only while
-                    // `state.prison` is non-nil.
-                    InsideCard(engine: engine) { path = [.inside] }
-                    // MARK: J1 (doors)
-                    // The doors waiting on an answer. Nothing at all while
-                    // none is open.
-                    DoorsCard(engine: engine) { path = [.door($0)] }
-                    // MARK: end J1
+                    // You: the attributes and the meters.
+                    LifeSection(.you, summary: LifeSummary.you(engine)) {
+                        FounderSkillsCard(engine: engine)
+                        LifeMetersCard(engine: engine)
+                    }
+
+                    // More of your life: the rooms (L2, L5, L6, N1, N3,
+                    // N4, W2). C2: an open room is a row that unfolds to
+                    // its card, lit while it waits on you, those that wait
+                    // first; a room nobody has opened is a quiet row under
+                    // "Other rooms". Every card stays in the hierarchy
+                    // (drawn, folded or as a hook) so its debug hooks run.
+                    LifeSection(
+                        .more,
+                        summary: LifeSummary.more(
+                            open: openRooms.count, waiting: waitingRooms.count,
+                            dormant: dormantRooms.count, doors: 0
+                        ),
+                        badge: waitingRooms.count
+                    ) {
+                        ForEach(waitingRooms + openRooms.filter { !waitingRooms.contains($0) }) { room in
+                            LifeRoomBlock(room: room, engine: engine) { roomCard(room) }
+                        }
+                        if !dormantRooms.isEmpty {
+                            LifeOtherRooms(rooms: dormantRooms, onOpen: { path = [$0.destination] }) {
+                                ForEach(dormantRooms) { roomCard($0) }
+                            }
+                        }
+                    } hooks: {
+                        ForEach(rooms) { roomCard($0) }
+                    }
+                    // MARK: end V1 — the five sections
                     // MARK: J2 (record)
                     // MARK: end J2
                     // MARK: J3 (rivals and the market)
@@ -216,6 +252,15 @@ struct LifeScreen: View {
                     // MARK: end of Iteration 11
                 }
                 .padding(Theme.Spacing.lg)
+                // MARK: V1 (ux: Life folded, rooms dormant)
+                // L3's children route: a zero-height view that pushes the
+                // children's page on `.children`. It used to sit between
+                // two cards; it keeps its place in the hierarchy here,
+                // whatever is folded.
+                .background { ChildrenLink(onOpen: { path = [.children] }) }
+                // `-autoLifeOffset`: photograph below the fold.
+                .offset(y: -DebugLaunch.lifeOffset)
+                // MARK: end V1
             }
             // The HUD inset lives on the stack's root content (not on the
             // NavigationStack) so the root scrolls below it and any pushed
@@ -298,6 +343,8 @@ struct LifeScreen: View {
                 // MARK: U1 (ux: the first-hour fixes)
                 // MARK: end U1
                 // MARK: V1 (ux: Life folded, rooms dormant)
+                case .lifeCard(let page):
+                    LifeCardPageView(engine: engine, page: page)
                 // MARK: end V1
                 // MARK: V2 (ux: one inbox, one home per thing)
                 // MARK: end V2
@@ -315,6 +362,85 @@ struct LifeScreen: View {
             }
         }
     }
+
+    // MARK: V1 (ux: Life folded, rooms dormant)
+    /// People's five rows: one line and one number each, lit while the
+    /// person is waiting on you.
+    @ViewBuilder
+    private var peopleRows: some View {
+        let state = engine.state
+        let family = state.life.family
+        let asking = LifeSummary.asking(state, content: engine.content)
+        let unread = TabBadge.unread(state.life.phone)
+        let threads = state.life.phone.threads.count
+        // MARK: L1 (phone)
+        // Like the card it replaces, nothing until somebody has written.
+        if threads > 0 {
+            LifeRow(
+                title: "Phone",
+                systemImage: "bubble.left.and.bubble.right.fill",
+                value: asking > 0 ? "\(asking) asking"
+                    : unread > 0 ? "\(unread) unread"
+                    : "\(threads) thread\(threads == 1 ? "" : "s")",
+                isLit: asking > 0
+            ) { path = [.phone] }
+        }
+        if family.stage != .single {
+            LifeRow(
+                title: family.partnerName ?? "Your partner",
+                systemImage: "heart.fill",
+                value: "\(Int(family.affection.rounded())) ♥ · \(family.stage.displayName)",
+                isLit: family.affection < 35
+            ) { path = [.lifeCard(.partner)] }
+        }
+        // MARK: L3 (children) — on the family's page
+        let kids = family.children.count
+        let relationships = Int(state.life.meters.relationships.rounded())
+        LifeRow(
+            title: "Family",
+            systemImage: "figure.and.child.holdinghands",
+            value: kids > 0
+                ? "\(kids) kid\(kids == 1 ? "" : "s")"
+                : "\(family.stage.displayName) · ♥ \(relationships)"
+        ) { path = [.lifeCard(.family)] }
+        // MARK: L4 (friends)
+        let friends = state.friendRoster(content: engine.content).count
+        LifeRow(
+            title: "Friends",
+            systemImage: "person.3.fill",
+            value: "\(friends) friend\(friends == 1 ? "" : "s")"
+        ) { path = [.friends] }
+        let networking = state.networking
+        LifeRow(
+            title: "Networking",
+            systemImage: "person.2.wave.2.fill",
+            value: networking.pendingEvent.map { "At the \($0.venue.displayName)" }
+                ?? "\(networking.contacts.count(where: \.isOpen)) contacts",
+            isLit: networking.pendingEvent != nil
+        ) { path = [.lifeCard(.networking)] }
+    }
+
+    /// A room's card, with the push its own button makes.
+    @ViewBuilder
+    private func roomCard(_ room: LifeRoom) -> some View {
+        switch room {
+        // MARK: N1 (crime and the courtroom)
+        case .crime: CrimeCard(engine: engine) { path = [.crime] }
+        // MARK: N3 (assets, vices and the doctor)
+        case .assets: AssetsCard(engine: engine, onOpen: { path = [.assets] })
+        // MARK: N4 (fame and the feed)
+        case .fame: FameCard(engine: engine) { path = [.feed] }
+        // MARK: W2 (family drama)
+        case .familyDrama: FamilyDramaCard(engine: engine) { path = [.family] }
+        // MARK: L5 (side project)
+        case .sideProject: SideProjectCard(engine: engine) { path = [.sideProject] }
+        // MARK: L6 (sabbatical)
+        case .sabbatical: SabbaticalCard(engine: engine, onOpen: { path = [.sabbatical] })
+        // MARK: L2 (life score)
+        case .lifeScore: LifeScoreCard(engine: engine, onOpen: { path = [.lifeScore] })
+        }
+    }
+    // MARK: end V1
 
     /// Deep links into this tab: `.agenda` pushes the fortnight, and
     /// `.life` — which the agenda's own diary rows send — means "the Life

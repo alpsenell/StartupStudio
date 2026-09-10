@@ -9,6 +9,12 @@ import TycoonEngine
 /// evening sit under it; the pips are repeated on each of them.
 struct ThisWeekCard: View {
     let engine: GameEngine
+    // MARK: V1 (ux: Life folded, rooms dormant)
+    /// Iteration 14 — C1: the fortnight, drawn at the top of this card
+    /// when Life nests the two ("This week" leads with one card, not
+    /// two). `nil`, the default, draws "Your week" alone, as before.
+    var fortnight: AgendaCard?
+    // MARK: end V1
 
     @Environment(GameShell.self) private var injectedShell: GameShell?
     /// See `GameShell.shared`: read optionally, because SwiftUI
@@ -28,6 +34,12 @@ struct ThisWeekCard: View {
 
         CardView("Your week", systemImage: "calendar") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                // MARK: V1 (ux: Life folded, rooms dormant)
+                if let fortnight {
+                    fortnight
+                    Divider()
+                }
+                // MARK: end V1
                 EveningPips(engine: engine)
 
                 Divider()
