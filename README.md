@@ -137,7 +137,12 @@ Five tabs over the persistent cash/date/speed HUD:
   sold up, acquisition, IPO, ousted, and *Still yours* — and all six land
   on the same founder biography: the chapters and the day each opened, the best thing you
   shipped with its best review quoted, your longest-serving employee, your
-  family, and the money.
+  family, and the money. Besides the one purchase for the chapters there
+  is a small shop — a month or a quarter of cash, the receiver's call
+  after a bankruptcy, a veteran hire shown before you buy, a fourth save,
+  a pack of things for the flat — and nothing in it is needed to finish
+  the game, nothing bought reaches a leaderboard, and the biography says
+  what was bought.
 - **The weekly report.** An end-of-week debrief — cash in and out by
   category, per-product sales with sparklines, morale and its direction,
   your own meters, what happened, and what is due next week. It opens

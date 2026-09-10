@@ -33,6 +33,12 @@ Organizer → *Show in Finder* → *Info.plist* / `codesign -d --entitlements`.
 - One non-consumable: **`com.alpsenel.startupstudio.fullgame`**. The id is
   asserted by the app suite (`UnlockState.productID`), so it has to match
   exactly.
+- Iteration 13 adds a small shop beside it — six products, listed with
+  their types in `docs/product/iteration-13-iap.md` §4.4 — and none of it
+  is needed to finish the game: bought cash, the receiver's call and the
+  veteran make the company unranked (say so in each store description),
+  the fourth slot and the loft pack touch no run, and every price the
+  game shows is the storefront's own `displayPrice`.
 - Reference name, display name, description, price tier, and the review
   screenshot — all required before the state can leave *Missing Metadata*.
 - The product must reach **Ready to Submit** and be **attached to the
@@ -121,7 +127,7 @@ The answers, with the reason each one is what it is:
 | Horror/Fear Themes | None | — |
 | Mature/Suggestive Themes | None | — |
 | Medical/Treatment Information | None | Burnout and hospital stays are game states, not advice. |
-| **Gambling** | **No** | Worth being deliberate about: the market board, investors and rivals are a simulation with a seeded, deterministic model — no wagering, no simulated casino, no chance-based purchase. There are **no loot boxes**: the one IAP is a non-consumable unlock of the whole game. |
+| **Gambling** | **No** | Worth being deliberate about: the market board, investors and rivals are a simulation with a seeded, deterministic model — no wagering, no simulated casino, no chance-based purchase. There are **no loot boxes**: the unlock is a non-consumable, and every shop item (iteration 13) shows exactly what it grants — the dollar figure, the named veteran with both traits — before the purchase. |
 | Contests | No | — |
 | Unrestricted Web Access | No | The app has no browser and no web view. |
 | Made for Kids | No | — |

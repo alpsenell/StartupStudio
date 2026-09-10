@@ -1198,8 +1198,8 @@ struct EventCopy {
         // MARK: P2 (purchases: StoreKit and the session)
         // MARK: end P2
         // MARK: P3 (purchases: surfaces and copy)
-        case .purchaseApplied:
-            fallbackEntry(for: event)
+        case .purchaseApplied(let kind, let amount, let day):
+            ShopEventCopy.line(kind: kind, amount: amount, day: day)
         // MARK: end P3
         // MARK: U1 (ux: the first-hour fixes)
         // MARK: end U1

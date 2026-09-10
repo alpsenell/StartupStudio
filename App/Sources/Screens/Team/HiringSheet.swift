@@ -53,6 +53,11 @@ struct HiringSheet: View {
                             capFooter
                         }
                     }
+                    // MARK: P3 (purchases: surfaces and copy)
+                    // The last row: this fortnight's veteran, whole, with
+                    // the price where Interview would be.
+                    ShopVeteranRow(engine: engine, atCap: atCap)
+                    // MARK: end P3
                 }
                 .padding(Theme.Spacing.lg)
             }

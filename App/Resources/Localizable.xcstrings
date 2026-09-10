@@ -234,6 +234,9 @@
     "%@ has the keys" : {
 
     },
+    "%@ into company cash" : {
+      "comment" : "What a cash pack puts in the company, said before the tap. The argument is a dollar figure with a plus sign"
+    },
     "%@ is %@" : {
       "localizations" : {
         "en" : {
@@ -339,6 +342,9 @@
     },
     "%@ sold" : {
 
+    },
+    "%@ stops posting to leaderboards from today. Achievements still count." : {
+      "comment" : "Message of the one confirmation before the first bought money in a ranked company. The argument is the company name"
     },
     "%@ subscribers" : {
 
@@ -650,6 +656,17 @@
         }
       }
     },
+    "%@, %@, joins the hiring pool at %@ a week" : {
+      "comment" : "VoiceOver: what buying the veteran does. Arguments are a name, a role and a weekly salary",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, joins the hiring pool at %3$@ a week"
+          }
+        }
+      }
+    },
     "%@, %@, scores %lld" : {
       "localizations" : {
         "en" : {
@@ -759,6 +776,9 @@
           }
         }
       }
+    },
+    "%@, from the App Store" : {
+      "comment" : "VoiceOver: the price of a shop item. The argument is the storefront price"
     },
     "%@, locked. %@. %@" : {
       "localizations" : {
@@ -883,7 +903,7 @@
 
     },
     "%@/wk" : {
-      "comment" : "Money per week. wk is short for week"
+      "comment" : "A candidate's weekly salary. wk is short for week\nMoney per week. wk is short for week"
     },
     "%@/wk · hired day %lld" : {
       "localizations" : {
@@ -1392,6 +1412,17 @@
         }
       }
     },
+    "%lld weeks of runway came in from outside the story: %@." : {
+      "comment" : "Journal line after buying cash. Arguments are a number of weeks and a dollar figure with a plus sign",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld weeks of runway came in from outside the story: %2$@."
+          }
+        }
+      }
+    },
     "%lld wk" : {
       "comment" : "Runway readout: weeks of cash left. wk is short for weeks"
     },
@@ -1517,6 +1548,9 @@
     "A STRING" : {
       "comment" : "Bitmap kicker: the people whose money you took want something. Uppercase A-Z only"
     },
+    "A bought hire makes this company unranked, like an heirloom. Achievements still count." : {
+      "comment" : "Hire sheet, the veteran card: what buying the veteran does to the leaderboards"
+    },
     "A caretaker needs %lld weeks on the payroll and a bond of %lld. Coffees, one-on-ones and evenings out are how you get there." : {
       "localizations" : {
         "en" : {
@@ -1574,6 +1608,15 @@
     "A misfire" : {
       "comment" : "One-word verdict under the average review score, best to worst"
     },
+    "A month of cash: %@" : {
+      "comment" : "Receiver's call: the cash it puts in after clearing the overdraft. The argument is a dollar figure with a plus sign"
+    },
+    "A month of runway" : {
+      "comment" : "Shop item on the money sheet: four weeks of company burn in cash"
+    },
+    "A month of runway came in from outside the story: %@." : {
+      "comment" : "Journal line after buying a month of cash. The argument is a dollar figure with a plus sign"
+    },
     "A new batch arrives today." : {
 
     },
@@ -1591,6 +1634,12 @@
     },
     "A product reviewed at %lld or better goes in here, from any company you ever ran, when that company ends." : {
 
+    },
+    "A quarter of runway" : {
+      "comment" : "Shop item on the money sheet: thirteen weeks of company burn in cash"
+    },
+    "A quarter of runway came in from outside the story: %@." : {
+      "comment" : "Journal line after buying a quarter of cash. The argument is a dollar figure with a plus sign"
     },
     "A review worth repeating. The feed, under Life, is where you repeat it." : {
       "comment" : "Coach tip keyed to game state"
@@ -1615,6 +1664,12 @@
     },
     "A unit is %@ today. It moves once a week and it does not care what you think." : {
 
+    },
+    "A veteran" : {
+      "comment" : "Hire sheet: the heading over the one candidate sold through the App Store\nShop item on the hire sheet: one lead-level candidate, shown before you buy"
+    },
+    "A veteran joined the hiring pool from outside the story." : {
+      "comment" : "Journal line after buying the veteran candidate"
     },
     "A wallet, a salary and a rented home. There is a whole other column and nothing is in it yet." : {
 
@@ -1812,6 +1867,9 @@
     "Back" : {
 
     },
+    "Back from the receiver: %@. The loan is still yours." : {
+      "comment" : "Journal line after the receiver's call reversed a bankruptcy. The argument is a dollar figure with a plus sign"
+    },
     "Back to %@" : {
 
     },
@@ -1913,6 +1971,26 @@
     "Both of you ran %@ from the same first day." : {
 
     },
+    "Bought in: %@ over %lld purchases." : {
+      "comment" : "Founder biography, money card: what the run bought from the App Store. Arguments are a dollar figure and a count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bought in: %1$@ over %2$lld purchases."
+          }
+        }
+      }
+    },
+    "Bought in: %@ over 1 purchase." : {
+      "comment" : "Founder biography, money card: what the run bought from the App Store, one purchase. The argument is a dollar figure"
+    },
+    "Bought money makes this company unranked — no leaderboards from here on, like an heirloom. Achievements, the ledger and the Hall of Fame carry on." : {
+      "comment" : "Money sheet, App Store card: the rule above the two cash packs, shown in every standard company"
+    },
+    "Bring them in" : {
+      "comment" : "Button on the veteran's card on the hire sheet; the price follows it after a middle dot"
+    },
     "Build" : {
 
     },
@@ -1957,6 +2035,9 @@
     "Buy" : {
 
     },
+    "Buy and leave the boards" : {
+      "comment" : "Confirms the first bought money in a ranked company"
+    },
     "Buy out %@ for %@" : {
       "localizations" : {
         "en" : {
@@ -1979,6 +2060,15 @@
     },
     "Buy out %@?" : {
 
+    },
+    "Buy the loft pack, asking the App Store for the price" : {
+      "comment" : "VoiceOver: the loft pack's buy button before its price arrives"
+    },
+    "Buy the loft pack, six things for the flat, %@, from the App Store" : {
+      "comment" : "VoiceOver: the loft pack's buy button, with its price"
+    },
+    "Buy the pack" : {
+      "comment" : "Furnish sheet: the button under the loft pack; its price is on the heading above"
     },
     "Buy them out — %@" : {
 
@@ -2014,7 +2104,7 @@
 
     },
     "Cancel" : {
-
+      "comment" : "Cancels the first bought money in a ranked company"
     },
     "Cancel research on %@" : {
 
@@ -3134,6 +3224,9 @@
     "Leave it there" : {
 
     },
+    "Leave the boards?" : {
+      "comment" : "Title of the one confirmation before the first bought money in a ranked company"
+    },
     "Legal got to it first, which is why it is not worse." : {
 
     },
@@ -3542,8 +3635,14 @@
     "None" : {
 
     },
+    "Not at this stake" : {
+      "comment" : "Disabled shop button at stake 2 or higher, No credit"
+    },
     "Not chosen" : {
 
+    },
+    "Not in a shared company" : {
+      "comment" : "Disabled shop button in a daily, season or league company"
     },
     "Not in the store" : {
 
@@ -3748,7 +3847,7 @@
     "One message, one decision, one tap. A minute, and out." : {
 
     },
-    "One purchase. No subscription, and nothing else in the game is for sale. Your save is exactly where you left it either way." : {
+    "One purchase for the chapters. There is a small shop besides — a month of cash, a second chance after a bankruptcy, a fourth save, a few things for the flat — and nothing in it is needed to finish the game, and nothing bought reaches a leaderboard. Your save is exactly where you left it either way." : {
 
     },
     "One thing from the last company" : {
@@ -3897,6 +3996,9 @@
     },
     "Outstanding" : {
       "comment" : "Money sheet row: loan principal still owed"
+    },
+    "Overdraft written off: %@" : {
+      "comment" : "Receiver's call: the negative cash the purchase clears. The argument is a dollar figure"
     },
     "Overdrawn by %@" : {
 
@@ -4631,6 +4733,9 @@
     "Simulation speed" : {
 
     },
+    "Six things for the flat: two for the wall, two for a shelf, two for the floor. They change the picture and nothing else." : {
+      "comment" : "Furnish sheet: what the loft pack is"
+    },
     "Skip the tour" : {
 
     },
@@ -4722,6 +4827,9 @@
           }
         }
       }
+    },
+    "Stake 2, No credit: the bank won't lend, and neither will we." : {
+      "comment" : "Footnote under a disabled shop button at stake 2, No credit"
     },
     "Stakes" : {
       "comment" : "Decision sheet stat label: how much bigger a story's money is at this company's size\nOnboarding step name: origin and difficulty"
@@ -4925,6 +5033,9 @@
     "Take the money" : {
       "comment" : "Answer to a term sheet: accept the investment"
     },
+    "Take the receiver's call" : {
+      "comment" : "Button on the bankruptcy post-mortem; the price follows it after a middle dot"
+    },
     "Tap a district for its report. Bigger districts are hotter markets; greener ones are more yours." : {
 
     },
@@ -5004,6 +5115,9 @@
     },
     "The %@ at night, the lights still on" : {
 
+    },
+    "The App Store" : {
+      "comment" : "Money sheet card: the two cash packs sold through the App Store"
     },
     "The answer itself is still yours — this only changed what you're answering." : {
 
@@ -5156,6 +5270,12 @@
     "The line you will run" : {
 
     },
+    "The loft pack" : {
+      "comment" : "Shop item on the furnish sheet: six decor items for the flat"
+    },
+    "The loft pack · %@" : {
+      "comment" : "Furnish sheet: the heading of the decor pack sold through the App Store, with its price"
+    },
     "The log" : {
 
     },
@@ -5190,6 +5310,9 @@
     "The other ledger" : {
 
     },
+    "The overdraft is written off and a month of cash goes in. The loan is still yours, so is whatever the bank already took, and the trade press will remember. From here the company is unranked." : {
+      "comment" : "Bankruptcy post-mortem: what the receiver's call does, above its button"
+    },
     "The phone" : {
 
     },
@@ -5211,6 +5334,9 @@
     },
     "The products" : {
       "comment" : "Heading of the onboarding panel about the products"
+    },
+    "The receiver's call" : {
+      "comment" : "Shop item on the bankruptcy post-mortem: reverses the bankruptcy once"
     },
     "The rest of it, day by day, the way it was written down." : {
 
@@ -5323,6 +5449,9 @@
     },
     "They clear their desk today. Their friends will notice." : {
       "comment" : "Detail under the let-them-go answer to a resignation"
+    },
+    "They join the pool above, both traits known. Hiring them is still up to you." : {
+      "comment" : "Under the veteran's button in an unranked company"
     },
     "They keep their %lld%%. Firing a co-founder doesn't buy it back." : {
 
@@ -5477,6 +5606,9 @@
           }
         }
       }
+    },
+    "Today's company is the same for everyone, and your year leaves a ghost for the next player. Money from outside it would be a different game. The shop opens in a company of your own." : {
+      "comment" : "Footnote under a disabled shop button in a daily, season or league company"
     },
     "Today, day %lld" : {
 
@@ -5929,6 +6061,9 @@
     "Your name goes on the incorporation papers and on every review." : {
       "comment" : "Onboarding page subheading under the heading above"
     },
+    "Your office is full. Make room before you pay for anyone." : {
+      "comment" : "Under the veteran's disabled button when the office is at its headcount cap"
+    },
     "Your office · owned" : {
 
     },
@@ -6023,6 +6158,9 @@
     },
     "answers itself today" : {
       "comment" : "Notice rail: a deferred question whose deadline is today"
+    },
+    "asking the App Store for the price" : {
+      "comment" : "VoiceOver: a shop item whose price has not arrived yet"
     },
     "d%lld" : {
 
@@ -6131,6 +6269,9 @@
     "projected quality" : {
 
     },
+    "puts in %@" : {
+      "comment" : "VoiceOver: what the receiver's call does when cash was not negative. The argument is a dollar figure"
+    },
     "reputation" : {
 
     },
@@ -6199,6 +6340,17 @@
     },
     "when you come home" : {
       "comment" : "Decision sheet stat: the confrontation has no deadline"
+    },
+    "writes off %@ and puts in %@" : {
+      "comment" : "VoiceOver: what the receiver's call does, before its price. Arguments are dollar figures",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "writes off %1$@ and puts in %2$@"
+          }
+        }
+      }
     },
     "you have nothing on the market there" : {
       "comment" : "Fills a sentence comparing your product with a rival when you have none in that topic"

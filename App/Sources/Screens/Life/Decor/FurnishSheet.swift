@@ -41,8 +41,23 @@ struct FurnishSheet: View {
         return Dictionary(uniqueKeysWithValues: life.decor.placed(in: tier).map { ($0.slot, $0.itemID) })
     }
 
+    // MARK: P3 (purchases: surfaces and copy)
+    @Environment(\.shopSurface) private var injectedShop
+
+    /// What the store says is owned; empty without one, so a sheet that
+    /// never met the store shelves exactly what it did.
+    private var shopOwned: Set<String> {
+        ShopSurfaceResolver.resolve(injectedShop)?.owned ?? []
+    }
+    // MARK: end P3
+
     private var shelf: [DecorItem] {
-        DecorPresentation.available(life: life, ledger: session?.ledger ?? .empty)
+        // MARK: P3 (purchases: surfaces and copy) — the owned pack joins the shelf.
+        ShopLoftPack.shelf(
+            DecorPresentation.available(life: life, ledger: session?.ledger ?? .empty),
+            owned: shopOwned
+        )
+        // MARK: end P3
     }
 
     private var selected: DecorSlot? {
@@ -57,6 +72,9 @@ struct FurnishSheet: View {
                     slotRow
                     Divider()
                     shelfSection
+                    // MARK: P3 (purchases: surfaces and copy)
+                    ShopLoftPackSection()
+                    // MARK: end P3
                 }
                 .padding(Theme.Spacing.lg)
             }
@@ -358,8 +376,9 @@ private struct ShelfRow: View {
     }
 }
 
-/// A decor sprite at an integer scale, crisp, centred.
-private struct DecorSwatch: View {
+/// A decor sprite at an integer scale, crisp, centred. Internal since
+/// iteration 13 (P3): the loft pack section draws its six with it.
+struct DecorSwatch: View {
     let itemID: String
 
     var body: some View {

@@ -120,7 +120,8 @@ struct PaywallContent: View {
                     .font(.body)
                     .foregroundStyle(Theme.pixelInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("One purchase. No subscription, and nothing else in the game is for sale. Your save is exactly where you left it either way.")
+                // MARK: P3 (purchases: surfaces and copy) — the spec's §6 line.
+                Text("One purchase for the chapters. There is a small shop besides — a month of cash, a second chance after a bankruptcy, a fourth save, a few things for the flat — and nothing in it is needed to finish the game, and nothing bought reaches a leaderboard. Your save is exactly where you left it either way.")
                     .font(.footnote)
                     .foregroundStyle(Theme.pixelInk.opacity(0.7))
                     .fixedSize(horizontal: false, vertical: true)

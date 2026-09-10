@@ -84,6 +84,12 @@ public enum DecorSource: Equatable, Sendable {
     /// Bought with the founder's own money, off the Assets screen.
     case asset
     // MARK: end of Iteration 11 — N3
+    // MARK: P3 (purchases: surfaces and copy)
+    /// The loft pack, a non-consumable from the App Store. The engine
+    /// never checks ownership (it cannot see the store); the app offers
+    /// the six only when the store says they are owned.
+    case purchased
+    // MARK: end P3
 
     public var caption: String {
         switch self {
@@ -99,6 +105,9 @@ public enum DecorSource: Equatable, Sendable {
         // MARK: Iteration 11 — N3
         case .asset: "Yours, and insured"
         // MARK: end of Iteration 11 — N3
+        // MARK: P3 (purchases: surfaces and copy)
+        case .purchased: "Bought from the App Store"
+        // MARK: end P3
         }
     }
 }
@@ -347,8 +356,49 @@ public enum HomeDecor {
 
     // MARK: end of Iteration 11 — N3
 
+    // MARK: P3 (purchases: surfaces and copy)
+
+    /// The loft pack: six things for the flat, bought once from the App
+    /// Store (`com.alpsenel.startupstudio.decor.loft`). Two for the wall,
+    /// two for a shelf, two for the floor. No effect on anything.
+    ///
+    /// In the catalog so a placed one resolves to a name and a sprite, but
+    /// nothing ever places one unless the app says the pack is owned — so
+    /// a save that never bought it holds, and draws, what it always did.
+    public static let loftPackItems: [DecorItem] = [
+        DecorItem(
+            id: "neonSign", name: "The neon cup", kind: .wall, source: .purchased,
+            note: "It buzzes. You tell guests that is the point."
+        ),
+        DecorItem(
+            id: "filmPoster", name: "Film poster", kind: .wall, source: .purchased,
+            note: "A film you have told people you have seen."
+        ),
+        DecorItem(
+            id: "bonsai", name: "Bonsai", kind: .shelf, source: .purchased,
+            note: "Older than the company. Likely to outlive it."
+        ),
+        DecorItem(
+            id: "vintageRadio", name: "Valve radio", kind: .shelf, source: .purchased,
+            note: "Picks up one station, and it is always the news."
+        ),
+        DecorItem(
+            id: "arcadeCabinet", name: "Arcade cabinet", kind: .floor, source: .purchased,
+            note: "The high score is yours. Nobody else has had the time."
+        ),
+        DecorItem(
+            id: "standingLamp", name: "Standing lamp", kind: .floor, source: .purchased,
+            note: "The one warm light in the flat after midnight."
+        ),
+    ]
+
+    // MARK: end P3
+
     /// Everything, shop and earned.
     public static let catalog: [DecorItem] = shopItems + earnedItems + assetItems
+        // MARK: P3 (purchases: surfaces and copy)
+        + loftPackItems
+        // MARK: end P3
 
     public static func item(_ id: String) -> DecorItem? {
         catalog.first { $0.id == id }

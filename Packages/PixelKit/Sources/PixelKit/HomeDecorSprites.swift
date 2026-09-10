@@ -43,6 +43,12 @@ extension SpriteLibrary {
         case petCat = "asset_cat"
         case petTortoise = "asset_tortoise"
         // MARK: end of Iteration 11 — N3
+        // MARK: P3 (purchases: surfaces and copy)
+        // The loft pack, bought from the App Store: two for the wall, two
+        // for a shelf, two for the floor. Drawn only where placed, and only
+        // an owned pack is ever placed.
+        case neonSign, filmPoster, bonsai, vintageRadio, arcadeCabinet, standingLamp
+        // MARK: end P3
     }
 
     public static func homeDecor(_ name: HomeDecorName) -> PixelSprite {
@@ -82,8 +88,191 @@ extension SpriteLibrary {
         case .petCat: cat(.sleeping)
         case .petTortoise: assetTortoise()
         // MARK: end of Iteration 11 — N3
+        // MARK: P3 (purchases: surfaces and copy)
+        case .neonSign: loftNeonSignSprite()
+        case .filmPoster: loftFilmPosterSprite()
+        case .bonsai: loftBonsaiSprite()
+        case .vintageRadio: loftRadioSprite()
+        case .arcadeCabinet: loftArcadeSprite()
+        case .standingLamp: loftLampSprite()
+        // MARK: end P3
         }
     }
+
+    // MARK: P3 (purchases: surfaces and copy) — the loft pack
+
+    /// A neon coffee cup on a dark board, 14×13. Two frames: the steam
+    /// tube flickers.
+    private static func loftNeonSignSprite() -> PixelSprite {
+        func frame(_ s: Character) -> [String] {
+            [
+                "OOOOOOOOOOOOOO",
+                "OKKKKKKKKKKKKO",
+                "OKKK\(s)KK\(s)KKKKKO",
+                "OKK\(s)KK\(s)KKKKKKO",
+                "OKKKKKKKKKKKKO",
+                "OKpppppppKKKKO",
+                "OKpKKKKKpppKKO",
+                "OKpKKKKKpKpKKO",
+                "OKpKKKKKpppKKO",
+                "OKKpKKKpKKKKKO",
+                "OKKKpppKKKKKKO",
+                "OKKKKKKKKKKKKO",
+                "OOOOOOOOOOOOOO",
+            ]
+        }
+        return PixelSprite(frames: [frame("p"), frame("g")], palette: [
+            "O": Palettes.outline,
+            "K": Palettes.ink[3],
+            "p": Palettes.plum[1],
+            "g": Palettes.plum[3],
+        ])
+    }
+
+    /// A framed film poster, 14×18: a clapperboard on a night-blue sheet
+    /// and two gold title bands.
+    private static func loftFilmPosterSprite() -> PixelSprite {
+        let grid = [
+            "OOOOOOOOOOOOOO",
+            "OPPPPPPPPPPPPO",
+            "OPWOWOWOWOWOPO",
+            "OPOOOOOOOOOOPO",
+            "OPWWWWWWWWWWPO",
+            "OPWOOWWOOWWWPO",
+            "OPWWWWWWWWWWPO",
+            "OPWOOOOWWWWWPO",
+            "OPWWWWWWWWWWPO",
+            "OPOOOOOOOOOOPO",
+            "OPPPPPPPPPPPPO",
+            "OPPPPPPPPPPPPO",
+            "OPPGGGGGGGGPPO",
+            "OPPPPPPPPPPPPO",
+            "OPPPGGGGGGPPPO",
+            "OPPPPPPPPPPPPO",
+            "OPPPPPPPPPPPPO",
+            "OOOOOOOOOOOOOO",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "P": Palettes.indigo[4],
+            "W": Palettes.stone[0],
+            "G": Palettes.gold[1],
+        ])
+    }
+
+    /// A bonsai in a shallow terracotta pot, 12×11.
+    private static func loftBonsaiSprite() -> PixelSprite {
+        let grid = [
+            "   MMMM     ",
+            " MMmMMMMM   ",
+            "MMMMMMmMMM  ",
+            " MMM MMMMMM ",
+            "  M  T MMM  ",
+            "     T      ",
+            "    TT      ",
+            "     T      ",
+            "OOOOOOOOOOOO",
+            " OCCCCCCCCO ",
+            "  OOOOOOOO  ",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "M": Palettes.moss[2],
+            "m": Palettes.moss[1],
+            "T": Palettes.sand[3],
+            "C": Palettes.ember[3],
+        ])
+    }
+
+    /// A valve radio in a wooden case, 12×8. Two frames: the needle drifts
+    /// along the dial, looking for a second station.
+    private static func loftRadioSprite() -> PixelSprite {
+        func frame(_ dial: String) -> [String] {
+            [
+                " OOOOOOOOOO ",
+                "OWWWWWWWWWWO",
+                "OWSSSSWDDDWO",
+                "OWSsSsW\(dial)WO",
+                "OWSSSSWDDDWO",
+                "OWSsSsWWWWWO",
+                "OWSSSSWkWkWO",
+                "OOOOOOOOOOOO",
+            ]
+        }
+        return PixelSprite(frames: [frame("DlD"), frame("lDD")], palette: [
+            "O": Palettes.outline,
+            "W": Palettes.sand[2],
+            "S": Palettes.sand[4],
+            "s": Palettes.sand[3],
+            "D": Palettes.gold[0],
+            "l": Palettes.ember[3],
+            "k": Palettes.ink[3],
+        ])
+    }
+
+    /// An arcade cabinet, 11×18: marquee, screen, stick and two buttons,
+    /// the coin door. Two frames: the attract mode moves.
+    private static func loftArcadeSprite() -> PixelSprite {
+        func frame(_ top: String, _ bottom: String) -> [String] {
+            [
+                "OOOOOOOOOOO",
+                "OMMMMMMMMMO",
+                "OMmMmMmMmMO",
+                "OOOOOOOOOOO",
+                "OBOOOOOOOBO",
+                "OBOSSSSSOBO",
+                "OBO\(top)OBO",
+                "OBO\(bottom)OBO",
+                "OBOSSSSSOBO",
+                "OBOOOOOOOBO",
+                "OBBBBBBBBBO",
+                "OBKkBBrBrBO",
+                "OOOOOOOOOOO",
+                " OBBBBBBBO ",
+                " OBBBBBBBO ",
+                " OBBCCCBBO ",
+                " OBBBBBBBO ",
+                " OOOOOOOOO ",
+            ]
+        }
+        return PixelSprite(frames: [frame("SsSSS", "SSSxS"), frame("SSSsS", "SxSSS")], palette: [
+            "O": Palettes.outline,
+            "M": Palettes.ember[2],
+            "m": Palettes.gold[1],
+            "B": Palettes.indigo[3],
+            "S": Palettes.teal[4],
+            "s": Palettes.teal[1],
+            "x": Palettes.gold[1],
+            "K": Palettes.ink[2],
+            "k": Palettes.ember[2],
+            "r": Palettes.plum[1],
+            "C": Palettes.gold[2],
+        ])
+    }
+
+    /// A standing lamp, 9×20: a lit shade, a thin pole, a round foot.
+    private static func loftLampSprite() -> PixelSprite {
+        let pole = "    S    "
+        let grid = [
+            "  OOOOO  ",
+            " OYYYYYO ",
+            " OYYYYYO ",
+            "OYYYYYYYO",
+            "OOOOOOOOO",
+            "   gSg   ",
+        ] + Array(repeating: pole, count: 12) + [
+            "  OOOOO  ",
+            " OOOOOOO ",
+        ]
+        return PixelSprite(frames: [grid], palette: [
+            "O": Palettes.outline,
+            "Y": Palettes.gold[0],
+            "S": Palettes.stone[3],
+            "g": Palettes.translucent(Palettes.gold[1], 140),
+        ])
+    }
+
+    // MARK: end P3
 
     /// The plank a shelf slot draws under whatever is standing on it —
     /// 16×3, and only when the slot is filled, so an empty wall is empty.

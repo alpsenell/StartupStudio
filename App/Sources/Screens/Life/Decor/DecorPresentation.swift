@@ -60,7 +60,11 @@ enum DecorPresentation {
     static func showroom(tier: HomeTier) -> [String: SpriteLibrary.HomeDecorName] {
         var out: [String: SpriteLibrary.HomeDecorName] = [:]
         var pools: [DecorSlotKind: [DecorItem]] = [:]
-        for item in HomeDecor.catalog where sprite(for: item.id) != nil {
+        // MARK: P3 (purchases: surfaces and copy)
+        // The loft pack is never in the showroom: a debug pass that never
+        // bought it photographs the room it always did.
+        for item in HomeDecor.catalog where sprite(for: item.id) != nil && item.source != .purchased {
+        // MARK: end P3
             pools[item.kind, default: []].append(item)
         }
         var used: [DecorSlotKind: Int] = [:]
