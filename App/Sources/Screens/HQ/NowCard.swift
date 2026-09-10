@@ -43,7 +43,7 @@ struct NowCard: View {
                     IncidentNowRow(engine: engine)
                     // MARK: end M3
                     if let goal {
-                        goalRow(goal)
+                        goalRow(goal, buildID: build?.id)
                     } else if dayZero {
                         dayZeroRow
                     }
@@ -114,25 +114,32 @@ struct NowCard: View {
 
     // MARK: - The build in flight
 
+    // MARK: V3 (ux: card weights, the Now card)
+    // C11: one segmented phase bar and the sentence the three bars never
+    // said — when it ships — read off the engine's own `BuildETA`. The
+    // numbers per phase stay on Products.
     private func buildRow(_ product: Product, progress: DevProgress) -> some View {
         let type = engine.content.productType(product.typeID)
+        let eta = engine.state.buildETA(productID: product.id, balance: engine.balance, content: engine.content)
+        let sentence = NowBuildETA.sentence(eta)
         return Button {
             Haptics.tap()
             router.go(.product(product.id))
         } label: {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 HStack(spacing: Theme.Spacing.sm) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(product.name)
-                            .font(.system(.headline, design: .rounded))
-                            .foregroundStyle(.primary)
-                        if let type {
-                            Label(type.name, systemImage: type.iconSystemName)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                    // The type as its icon, so the ETA below has the line.
+                    if let type {
+                        Image(systemName: type.iconSystemName)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
                     }
-                    Spacer()
+                    Text(product.name)
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    Spacer(minLength: Theme.Spacing.sm)
                     StatPill(
                         systemImage: "ladybug.fill",
                         value: "\(progress.openBugs) bug\(progress.openBugs == 1 ? "" : "s")",
@@ -142,18 +149,36 @@ struct NowCard: View {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.tertiary)
                 }
-                TriPhaseProgress(progress: progress, type: type, compact: true)
+                SegmentedPhaseBar(progress: progress, type: type)
+                Text(sentence)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(NowBuildETA.isStalled(eta) ? Theme.warning : Theme.accent)
+                    .contentTransition(.numericText())
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .contentShape(Rectangle())
         }
         .buttonStyle(.pressableRow)
-        .accessibilityLabel("In development: \(product.name), \(progress.openBugs) open bugs")
+        .accessibilityLabel(
+            "In development: \(product.name)"
+                + (type.map { ", \($0.name)" } ?? "")
+                + ". \(sentence). \(progress.openBugs) open bugs"
+        )
         .accessibilityHint("Opens the build")
     }
 
+    /// Whether the goal's button would open the build the row above
+    /// already opens ("Ship it" → Open the build). The action stays in the
+    /// table; the card just doesn't draw the same tap twice.
+    private static func duplicatesBuildRow(_ action: NowAction.Action, buildID: UUID?) -> Bool {
+        guard let buildID, case .product(let id) = action.route else { return false }
+        return id == buildID
+    }
+    // MARK: end V3
+
     // MARK: - The goal
 
-    private func goalRow(_ goal: GoalProgress) -> some View {
+    private func goalRow(_ goal: GoalProgress, buildID: UUID?) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
                 Text(goal.title)
@@ -175,7 +200,8 @@ struct NowCard: View {
                 .tint(goal.fraction >= 1 ? Theme.positiveCash : Theme.accent)
                 .animation(Theme.Motion.valueChange, value: goal.fraction)
 
-            if let action = NowAction.action(for: goal.id, state: engine.state) {
+            if let action = NowAction.action(for: goal.id, state: engine.state),
+               !Self.duplicatesBuildRow(action, buildID: buildID) {
                 Button {
                     Haptics.tap()
                     Sounds.play(.tap)
@@ -200,6 +226,35 @@ struct NowCard: View {
         .accessibilityLabel("Next: \(goal.title). \(goal.detail)")
     }
 }
+
+// MARK: V3 (ux: card weights, the Now card)
+
+/// The Now card's one sentence about the build in flight, read off
+/// `BuildETA` — the same projection the war room counts down from.
+enum NowBuildETA {
+    static func sentence(_ eta: BuildETA?) -> String {
+        guard let eta else { return "No ship date yet" }
+        if eta.isComplete { return "Ready to ship" }
+        guard let days = eta.daysToComplete else { return "Stalled: nobody is on the build" }
+        if eta.daysToShippable == 0 {
+            // Code is past the gate: it could go now, rougher.
+            return days <= 1 ? "Could ship now · done tomorrow" : "Could ship now · done in about \(days) days"
+        }
+        switch days {
+        case 0: return "Ready to ship"
+        case 1: return "Ships tomorrow"
+        default: return "Ships in about \(days) days"
+        }
+    }
+
+    /// Nothing is moving: nobody on the build, or no type to measure.
+    static func isStalled(_ eta: BuildETA?) -> Bool {
+        guard let eta else { return true }
+        return !eta.isComplete && eta.daysToComplete == nil
+    }
+}
+
+// MARK: end V3
 
 /// The action a goal implies, as a button. Keyed on the goal ids in
 /// `Goals.json` the same way `CoachTip` is; a goal with no obvious tap
