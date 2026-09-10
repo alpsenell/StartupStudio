@@ -308,6 +308,11 @@ extension Route {
         // MARK: P2 (purchases: StoreKit and the session)
         // MARK: end P2
         // MARK: P3 (purchases: surfaces and copy)
+        // The hire sheet with the veteran's row, and the furnish sheet with
+        // the loft pack. `shop` and `receiver` are sheets over the HUD,
+        // started by `ShopAutoRoute` (Store/ShopSurfaceDebug.swift).
+        case "veteran": .hiring
+        case "loftpack": .furnish
         // MARK: end P3
         // MARK: U1 (ux: the first-hour fixes)
         // MARK: end U1
@@ -1431,6 +1436,38 @@ extension DebugLaunch {
     }
     // MARK: end P2
     // MARK: P3 (purchases: surfaces and copy)
+    /// `-autoShop`, or any of `-autoRoute shop|receiver|veteran|loftpack`:
+    /// the shop surfaces read `ShopSurfacePreview` (the spec's US prices)
+    /// when no store is injected. See `ShopSurfaceDebug`.
+    static var autoShop: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoShop")
+            || autoRouteName.map(ShopSurfaceDebug.routes.contains) == true
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoShopOwned`: the preview store owns the loft pack; with
+    /// `-autoRoute loftpack` its six items are placed in the room.
+    static var autoShopOwned: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoShopOwned")
+        #else
+        return false
+        #endif
+    }
+
+    /// `-autoShopGrants`: with `-autoRoute receiver`, the scratch bankrupt
+    /// copy carries two cash grants, and the pass lands on the biography's
+    /// "Bought in" line instead of the receiver's call.
+    static var autoShopGrants: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoShopGrants")
+        #else
+        return false
+        #endif
+    }
     // MARK: end P3
     // MARK: U1 (ux: the first-hour fixes)
     // MARK: end U1

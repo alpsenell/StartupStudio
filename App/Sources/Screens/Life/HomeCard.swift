@@ -31,7 +31,10 @@ struct HomeCard: View {
     // A headless pass cannot tap either: `-autoRoute furnish` opens the
     // sheet on launch, the way `-autoRoute city` opens the map.
     #if DEBUG
+    // MARK: P3 (purchases: surfaces and copy) — `-autoRoute loftpack` too.
     @State private var showingFurnish = DebugLaunch.launchRoute == "furnish"
+        || DebugLaunch.launchRoute == "loftpack"
+    // MARK: end P3
     #else
     @State private var showingFurnish = false
     #endif

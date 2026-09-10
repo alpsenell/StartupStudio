@@ -99,7 +99,14 @@ struct MoneySheetContent: View {
                 }
             }
 
-            CardView(String(localized: "You", comment: "Card and step heading for the founder as a person - their money, their meters, their name"), systemImage: "person.fill") {
+            // MARK: P3 (purchases: surfaces and copy)
+            // The fourth card, after the other outside money: two cash
+            // packs, the grant in dollars and the price on each. Absent
+            // without a store.
+            ShopAppStoreCard(engine: engine)
+            // MARK: end P3
+
+            CardView(String(localized: "You",comment: "Card and step heading for the founder as a person - their money, their meters, their name"), systemImage: "person.fill") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                     row(String(localized: "Wallet", comment: "Money sheet row: the founder own money"), life.wallet.money, tint: life.wallet < 0 ? Theme.negativeCash : .primary)
                     row(String(localized: "Salary", comment: "Money sheet row: what the founder pays themselves"), String(localized: "\(life.founderSalary.money)/wk", comment: "Money per week. wk is short for week"), tint: .primary)

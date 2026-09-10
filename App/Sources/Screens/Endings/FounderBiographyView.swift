@@ -90,6 +90,10 @@ struct FounderBiographyView: View {
             if !info.kind.isSuccess {
                 postMortemCard
             }
+            // MARK: P3 (purchases: surfaces and copy)
+            // Bankruptcy only, and only when the rule would take it.
+            ShopReceiverCall(engine: engine, info: info)
+            // MARK: end P3
             chaptersCard
             if let product = bestProduct { productCard(product) }
             if let longest = longestServing { peopleCard(longest) }
@@ -506,6 +510,15 @@ struct FounderBiographyView: View {
                         )
                     }
                     row("Reached", state.company.officeTier.displayName)
+                    // MARK: P3 (purchases: surfaces and copy)
+                    if let bought = ShopBoughtLine.text(state.purchases) {
+                        Text(bought)
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .fixedSize(horizontal: false, vertical: true)
+                            .shopDebugScrollTarget("receiver", when: DebugLaunch.autoShopGrants)
+                    }
+                    // MARK: end P3
                 }
             }
             .accessibilityElement(children: .contain)

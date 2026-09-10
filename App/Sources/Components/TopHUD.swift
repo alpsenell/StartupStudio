@@ -45,6 +45,11 @@ struct TopHUD: View {
             if !engine.state.doors.armed { engine.send(.armDoors) }
         }
         // MARK: end J1
+        // MARK: P3 (purchases: surfaces and copy)
+        // DEBUG only (`-autoRoute shop|receiver|loftpack`); `self` in a
+        // release build.
+        .shopAutoRoute(engine: engine)
+        // MARK: end P3
     }
 
     private var bar: some View {
