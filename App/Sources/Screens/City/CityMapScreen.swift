@@ -34,7 +34,7 @@ struct CityMapScreen: View {
     // MARK: end S4
 
     /// The phone's pixel scale, and the floor everywhere: 320 × 3 = 960
-    /// points, panned inside the ScrollView on every iPhone.
+    /// points (S4's city), panned inside the ScrollView on every iPhone.
     private static let phoneMapScale = 3
 
     /// The map's integer pixel scale for a view this wide (R8).
@@ -49,21 +49,36 @@ struct CityMapScreen: View {
     /// and a scale pinned at 3 left the city floating small in the middle
     /// of it. Above 5 the districts stop reading as one city, so that is
     /// the ceiling.
+    ///
+    /// S4 (city): the ladder is keyed to the 224-pixel width the city had
+    /// when it was pinned, not to today's 320, so every device keeps the
+    /// scale it had (3 on every phone, 4 on a 13" iPad) and the bigger city
+    /// pans under the finger at that scale rather than shrinking.
     static func mapScale(forWidth width: CGFloat) -> Int {
-        let sceneWidth = CityMapComposer.sceneSize().width
+        let sceneWidth = scaleReferenceWidth
         guard width.isFinite, width > 0, sceneWidth > 0 else { return phoneMapScale }
         return min(5, max(phoneMapScale, Int(width) / sceneWidth))
     }
 
     /// Room under the map for the district panel, so every district can be
     /// scrolled clear of it. Expressed in *scene rows* rather than points
-    /// (380 points at the phone's scale 3 — S4's panel carries a "who's
-    /// here" block — and the same rows of clearance at every larger
-    /// scale), so a bigger map keeps the same margin around its own bottom
-    /// edge.
+    /// (280 points at the phone's scale 3, and the same rows of clearance
+    /// at every larger scale), so a bigger map keeps the same margin
+    /// around its own bottom edge.
     static func panelClearance(scale: Int) -> CGFloat {
-        (380.0 / CGFloat(phoneMapScale) * CGFloat(scale)).rounded()
+        (280.0 / CGFloat(phoneMapScale) * CGFloat(scale)).rounded()
     }
+
+    // MARK: S4 (city)
+    /// The scene width the scale ladder was pinned against (the old city).
+    static let scaleReferenceWidth = 224
+
+    /// The panel's "who's here" block, on top of `panelClearance`: 100
+    /// points at the phone's scale, in scene rows like the rest.
+    static func whoIsHereClearance(scale: Int) -> CGFloat {
+        (100.0 / CGFloat(phoneMapScale) * CGFloat(scale)).rounded()
+    }
+    // MARK: end S4
 
     init(engine: GameEngine, initialDistrict: DistrictID? = nil) {
         self.engine = engine
@@ -110,7 +125,7 @@ struct CityMapScreen: View {
                             // MARK: end S4
                         }
                         // Keep every district reachable above the panel.
-                        .padding(.bottom, Self.panelClearance(scale: scale))
+                        .padding(.bottom, Self.panelClearance(scale: scale) + Self.whoIsHereClearance(scale: scale))
                     }
                     // The canvas is one picture; the districts laid over it
                     // are the things in it.
