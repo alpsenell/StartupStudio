@@ -151,6 +151,15 @@ public enum FounderStanding {
         score += Double(guiltyVerdicts(state)) * config.nameGuiltyVerdict
         score -= Double(fameLevel) * config.nameFameLevel
         score -= Double(vouching) * config.nameAlumnusVouch
+        // MARK: K1 (founder money)
+        // The company had to bail its founder out, and the founder said
+        // yes in public: it is on the name for a year. Zero for every run
+        // that never took the rescue on the landlord's question.
+        if let taken = state.economy.founderMoney.rescueTakenDay,
+           state.day - taken < balance.founderMoney.rescueStandingDays {
+            score += balance.founderMoney.rescueStandingName
+        }
+        // MARK: end K1
         // The clamp is the identity: a clean founder with alumni who like
         // them reads zero, not below it.
         let clamped = min(100, max(0, score))

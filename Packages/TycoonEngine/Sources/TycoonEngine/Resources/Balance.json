@@ -2069,5 +2069,13 @@
       "poolMax": 10.0,
       "poachUnvestedWeight": 20.0
     }
+  },
+  "founderMoney": {
+    "dividendRunwayWeeks": 8,
+    "dividendIntervalDays": 91,
+    "dividendBoardPressure": 10.0,
+    "dividendPayWeeks": 13,
+    "rescueStandingName": 4.0,
+    "rescueStandingDays": 364
   }
 }

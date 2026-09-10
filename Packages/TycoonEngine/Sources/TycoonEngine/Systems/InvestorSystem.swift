@@ -531,6 +531,14 @@ enum InvestorSystem {
             category: .other,
             label: "\(offer.investorName) round"
         ))
+        // MARK: K1 (founder money)
+        // The director's loan sits ahead of the new money: it is repaid
+        // out of the cheque before the company sees the rest. Nothing
+        // happens (and nothing is posted) when the founder lent nothing.
+        let founderMoneyRepaid = FounderMoneySystem.repayFromRound(
+            cheque: offer.amount, investorName: offer.investorName, state: &state
+        )
+        // MARK: end K1
         state.investors.equityRemaining = max(0, state.investors.equityRemaining - offer.equity)
         state.investors.rounds.append(RaisedRound(
             investorID: offer.investorID,
@@ -569,6 +577,9 @@ enum InvestorSystem {
         return [.investmentAccepted(
             investorID: offer.investorID, amount: offer.amount, equity: offer.equity, day: state.day
         )]
+            // MARK: K1 (founder money)
+            + founderMoneyRepaid
+            // MARK: end K1
     }
 
     /// Takes a strategic buyout as an earn-out: `earnOutUpfrontShare` of

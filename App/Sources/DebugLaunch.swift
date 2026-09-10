@@ -1576,6 +1576,15 @@ extension DebugLaunch {
     // MARK: V3 (ux: card weights, the Now card)
     // MARK: end V3
     // MARK: K1 (founder money)
+    /// `-autoFounderMoney loan|dividend|paid|rescue`: the seed
+    /// `FounderMoneyDebug` sends a beat after launch. `nil` in release.
+    static var founderMoneySeed: String? {
+        #if DEBUG
+        return value(after: "-autoFounderMoney")
+        #else
+        return nil
+        #endif
+    }
     // MARK: end K1
     // MARK: K2 (product lifecycle)
     // MARK: end K2
