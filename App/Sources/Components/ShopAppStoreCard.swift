@@ -21,6 +21,7 @@ struct ShopAppStoreCard: View {
     var body: some View {
         if let shop = ShopSurfaceResolver.resolve(injected) {
             card(shop)
+                .shopDebugScrollTarget("shop")
                 .shopLeaveBoardsDialog(pending: $pending, companyName: engine.state.company.name) { item in
                     shop.buy(item)
                 }
