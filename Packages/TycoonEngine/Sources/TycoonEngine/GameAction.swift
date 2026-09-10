@@ -593,6 +593,20 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// game sends it.
     case queueDebugSeed(kind: String, value: String)
     // MARK: end J6
+    // MARK: P1 (purchases: engine)
+    /// A verified App Store transaction, in game terms. Idempotent by
+    /// `transactionID`; refused by `PurchaseRule`; never sent by a bot or a
+    /// fixture, so an unbought run is byte-identical. Handled before the
+    /// game-over guard because the second chance answers an ended game.
+    case applyPurchase(kind: PurchaseKind, transactionID: UInt64)
+    // MARK: end P1
+    // MARK: P2 (purchases: StoreKit and the session)
+    // MARK: end P2
+    // MARK: P3 (purchases: surfaces and copy)
+    // MARK: end P3
+    // MARK: U1 (ux: the first-hour fixes)
+    // MARK: end U1
+    // MARK: end of Iteration 13
     // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two
 }

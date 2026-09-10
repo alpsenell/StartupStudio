@@ -271,6 +271,15 @@ struct BusinessScreen: View {
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6
+        // MARK: P1 (purchases: engine)
+        // MARK: end P1
+        // MARK: P2 (purchases: StoreKit and the session)
+        // MARK: end P2
+        // MARK: P3 (purchases: surfaces and copy)
+        // MARK: end P3
+        // MARK: U1 (ux: the first-hour fixes)
+        // MARK: end U1
+        // MARK: end of Iteration 13
         // MARK: end of Iteration 12
         // MARK: end of Iteration 11, wave two
         switch router.pendingPush {

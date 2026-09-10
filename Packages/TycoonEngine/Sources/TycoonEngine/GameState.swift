@@ -679,6 +679,17 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: end J5
     // MARK: J6 (queue)
     // MARK: end J6
+    // MARK: P1 (purchases: engine)
+    /// A purchase landed: what, how much was posted (0 for the veteran), when.
+    case purchaseApplied(kind: PurchaseKind, amount: Int, day: Int)
+    // MARK: end P1
+    // MARK: P2 (purchases: StoreKit and the session)
+    // MARK: end P2
+    // MARK: P3 (purchases: surfaces and copy)
+    // MARK: end P3
+    // MARK: U1 (ux: the first-hour fixes)
+    // MARK: end U1
+    // MARK: end of Iteration 13
     // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two
 }
@@ -815,6 +826,10 @@ extension GameEvent {
         case .announceMade, .announceKept:
             .info
         // MARK: end J5
+        // MARK: P1 (purchases: engine)
+        case .purchaseApplied:
+            .info
+        // MARK: end P1
 
         // MARK: WS-F
 
@@ -1231,6 +1246,18 @@ public struct GameState: Codable, Equatable, Sendable {
     // MARK: end J5
     // MARK: J6 (queue)
     // MARK: end J6
+    // MARK: P1 (purchases: engine)
+    /// What this company bought from the App Store. `.empty` on every run
+    /// that bought nothing, and then not encoded (`PurchaseLog`).
+    public var purchases: PurchaseLog = .empty
+    // MARK: end P1
+    // MARK: P2 (purchases: StoreKit and the session)
+    // MARK: end P2
+    // MARK: P3 (purchases: surfaces and copy)
+    // MARK: end P3
+    // MARK: U1 (ux: the first-hour fixes)
+    // MARK: end U1
+    // MARK: end of Iteration 13
     // MARK: end of Iteration 12
     /// What the staff remember about the founder's answers: the rules
     /// they became and who was told no (WS-D). Empty until somebody asks.
@@ -1556,6 +1583,16 @@ extension GameState {
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6
+        // MARK: P1 (purchases: engine)
+        case purchases
+        // MARK: end P1
+        // MARK: P2 (purchases: StoreKit and the session)
+        // MARK: end P2
+        // MARK: P3 (purchases: surfaces and copy)
+        // MARK: end P3
+        // MARK: U1 (ux: the first-hour fixes)
+        // MARK: end U1
+        // MARK: end of Iteration 13
         // MARK: end of Iteration 12
     }
 
@@ -1659,6 +1696,16 @@ extension GameState {
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6
+        // MARK: P1 (purchases: engine)
+        purchases = try container.decodeIfPresent(PurchaseLog.self, forKey: .purchases) ?? .empty
+        // MARK: end P1
+        // MARK: P2 (purchases: StoreKit and the session)
+        // MARK: end P2
+        // MARK: P3 (purchases: surfaces and copy)
+        // MARK: end P3
+        // MARK: U1 (ux: the first-hour fixes)
+        // MARK: end U1
+        // MARK: end of Iteration 13
         // MARK: end of Iteration 12
         lockedTopics = Dictionary(
             (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
@@ -1781,6 +1828,18 @@ extension GameState {
         // MARK: end J5
         // MARK: J6 (queue)
         // MARK: end J6
+        // MARK: P1 (purchases: engine)
+        if !purchases.isEmpty {
+            try container.encode(purchases, forKey: .purchases)
+        }
+        // MARK: end P1
+        // MARK: P2 (purchases: StoreKit and the session)
+        // MARK: end P2
+        // MARK: P3 (purchases: surfaces and copy)
+        // MARK: end P3
+        // MARK: U1 (ux: the first-hour fixes)
+        // MARK: end U1
+        // MARK: end of Iteration 13
         // MARK: end of Iteration 12
     }
 }
