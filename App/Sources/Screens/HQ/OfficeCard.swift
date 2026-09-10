@@ -92,6 +92,15 @@ struct OfficeCard: View {
             }
             // MARK: end Iteration 11 — N5
 
+            // MARK: V3 (ux: card weights, the Now card)
+            // C11: the frame is the scene's own size at the largest
+            // whole-pixel scale the card allows — reaching into the card's
+            // padding for it — and hugs the scene, so there is no paper
+            // letterbox around a 1× studio any more.
+            OfficeSceneFit(
+                scene: SceneComposer.sceneSize(for: tierStyle),
+                chrome: Theme.Spacing.xs * 2
+            ) {
             PixelPanel(contentPadding: Theme.Spacing.xs) {
                 // Equatable input + EquatableView: HQ observes `state`,
                 // which mutates 4x a second at 4x speed. Without this the
@@ -108,7 +117,6 @@ struct OfficeCard: View {
                     )
                 )
             }
-            .frame(maxWidth: .infinity)
             // R4: a small camera on the frame shares the office photo.
             .overlay(alignment: .topTrailing) {
                 Button {
@@ -130,6 +138,9 @@ struct OfficeCard: View {
                 .padding(Theme.Spacing.sm + 3)
                 .accessibilityLabel("Share a photo of the office")
             }
+            }
+            .padding(.horizontal, -OfficeSceneFit.bleed)
+            // MARK: end V3
 
             if showsTapHint {
                 OfficeTapHint { dismissTapHint() }
@@ -805,3 +816,61 @@ private struct OfficeScenePanel: View, Equatable {
         lhs.input == rhs.input && lhs.sceneLabel == rhs.sceneLabel
     }
 }
+
+// MARK: V3 (ux: card weights, the Now card)
+
+/// Sizes the office's pixel frame to the scene rather than to the card
+/// (C11): the scene takes the largest whole-pixel scale that fits the
+/// width it is offered, and the frame is exactly that scene plus its
+/// chrome, centred. The layout itself still reports the full width, so the
+/// card around it lays out as before.
+///
+/// PixelKit's own fit (`PixelSceneGeometry`, `.fitWidth`) then receives a
+/// view exactly `scene × scale` wide and lands on the same scale, so the
+/// taps and the VoiceOver regions map through the same geometry as ever.
+struct OfficeSceneFit: Layout {
+    /// How far the frame may reach into the card's padding on each side:
+    /// all of it but a paper-thin `xs`. On an iPhone 17 this is the margin
+    /// that lets the studio draw at 2× instead of 1×.
+    static let bleed: CGFloat = Theme.Spacing.lg - Theme.Spacing.xs
+
+    let scene: SceneComposer.SceneSize
+    /// What the frame adds around the scene on each axis, in total
+    /// (the panel's padding on both sides; its border sits inside that).
+    let chrome: CGFloat
+
+    /// The largest whole-pixel scale at which the scene fits `width`.
+    static func scale(sceneWidth: Int, width: CGFloat, chrome: CGFloat) -> Int {
+        guard sceneWidth > 0, width.isFinite else { return 1 }
+        return max(1, Int(((width - chrome) / CGFloat(sceneWidth)).rounded(.down)))
+    }
+
+    private func frameSize(forWidth width: CGFloat) -> CGSize {
+        let scale = CGFloat(Self.scale(sceneWidth: scene.width, width: width, chrome: chrome))
+        return CGSize(
+            width: CGFloat(scene.width) * scale + chrome,
+            height: CGFloat(scene.height) * scale + chrome
+        )
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let offered = proposal.width.flatMap { $0.isFinite ? $0 : nil }
+        let width = offered ?? CGFloat(scene.width) * 2 + chrome
+        let frame = frameSize(forWidth: width)
+        return CGSize(width: max(width, frame.width), height: frame.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let frame = frameSize(forWidth: bounds.width)
+        // Whole points, so the scene's pixels land on pixel boundaries.
+        let origin = CGPoint(
+            x: (bounds.minX + (bounds.width - frame.width) / 2).rounded(.down),
+            y: bounds.minY
+        )
+        for subview in subviews {
+            subview.place(at: origin, anchor: .topLeading, proposal: ProposedViewSize(frame))
+        }
+    }
+}
+
+// MARK: end V3
