@@ -540,6 +540,11 @@ public struct RivalsState: Codable, Equatable, Sendable {
     /// The first weekly check on which the player held both of the
     /// incumbent's topics; `nil` whenever they do not. Its retreat clock.
     public var incumbentHeldSinceDay: Int?
+    // MARK: K4 (deals and exits)
+    /// The for-sale sign, while it stands (`DealListing`, `Deals.swift`).
+    /// `nil` on every run that never lists, and then not encoded.
+    public var listing: DealListing?
+    // MARK: end K4
 
     public init(
         rivals: [Rival],
@@ -632,6 +637,9 @@ extension RivalsState {
         case rivals, pendingPoach, pendingBuyout, lastPoachDay, lastBuyoutDay
         case playerShare, lastBuyoutWasStrategic
         case challenges, lastChallengeDay, incumbentFoundedDay, incumbentHeldSinceDay
+        // MARK: K4 (deals and exits)
+        case listing
+        // MARK: end K4
     }
 
     private struct ShareEntry: Codable {
@@ -667,6 +675,9 @@ extension RivalsState {
             incumbentFoundedDay: try container.decodeIfPresent(Int.self, forKey: .incumbentFoundedDay),
             incumbentHeldSinceDay: try container.decodeIfPresent(Int.self, forKey: .incumbentHeldSinceDay)
         )
+        // MARK: K4 (deals and exits)
+        listing = try container.decodeIfPresent(DealListing.self, forKey: .listing)
+        // MARK: end K4
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -696,5 +707,8 @@ extension RivalsState {
         }
         try container.encodeIfPresent(incumbentFoundedDay, forKey: .incumbentFoundedDay)
         try container.encodeIfPresent(incumbentHeldSinceDay, forKey: .incumbentHeldSinceDay)
+        // MARK: K4 (deals and exits)
+        try container.encodeIfPresent(listing, forKey: .listing)
+        // MARK: end K4
     }
 }

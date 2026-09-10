@@ -191,6 +191,13 @@ public struct LegacyLedger: Codable, Equatable, Sendable {
                     skills: employee.skills, revealedTraits: employee.traits, rapport: 70, role: employee.role
                 )
             }
+        // MARK: K4 (deals and exits)
+        // Riding the grace period to the receiver costs the people: the
+        // ledger carries them at `deals.bankruptcyRapportHaircut` less.
+        if over.kind == .bankruptcy {
+            recorded.dealBankruptcyHaircut(balance.deals.bankruptcyRapportHaircut)
+        }
+        // MARK: end K4
         recorded.lineage = state.lineage
         recorded.stake = state.rules.stake > 0 ? state.rules.stake : nil
         // MARK: Iteration 9 — L2 (life score)
@@ -407,6 +414,12 @@ public struct LegacyPerson: Codable, Equatable, Sendable, Identifiable {
     /// their archetype implies. Decodes as `nil` from a ledger written
     /// before it was recorded; the skills then say.
     public var role: EmployeeRole?
+    // MARK: K4 (deals and exits)
+    /// The rapport a bankruptcy took off them (`dealBankruptcyHaircut`);
+    /// they arrive in the next company that much cooler. `nil` for
+    /// everybody else, and then not written.
+    public var carriedHaircut: Double?
+    // MARK: end K4
 
     public init(
         id: UUID, name: String, appearanceSeed: UInt64, skills: SkillSet,
@@ -530,6 +543,13 @@ extension GameState {
                 leftReason: .formerCompany,
                 leftRole: role
             ))
+            // MARK: K4 (deals and exits)
+            // Somebody carried out of a bankruptcy arrives cooler.
+            if let haircut = person.carriedHaircut,
+               let index = networking.contacts.lastIndex(where: { $0.id == person.id }) {
+                networking.contacts[index].rapport = max(0, Self.heirloomRapport - haircut)
+            }
+            // MARK: end K4
 
         case .perk(let id):
             progression.perks.insert(id)

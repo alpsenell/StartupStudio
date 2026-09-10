@@ -702,6 +702,15 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: K3 (the ladder)
     // MARK: end K3
     // MARK: K4 (deals and exits)
+    /// The for-sale sign went up, asking `ask` (`multiple` × valuation).
+    case dealListed(ask: Int, multiple: Double, day: Int)
+    /// The sign came down after `weeks` whole weeks.
+    case dealSignTakenDown(weeks: Int, day: Int)
+    /// Sold up before the receiver, `daysInDebt` days into the red.
+    case dealSoldUp(buyer: String, amount: Int, daysInDebt: Int, day: Int)
+    /// A rival bought with paper: their founder took `equity` points and a
+    /// board seat.
+    case dealPaperSigned(rivalID: UUID, name: String, founder: String, equity: Double, day: Int)
     // MARK: end K4
     // MARK: K5 (hand over the keys)
     // MARK: end K5

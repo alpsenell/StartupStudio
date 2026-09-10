@@ -254,6 +254,11 @@ enum EmployeeSystem {
             delta -= economy.founderAwayMoralePenalty
         }
         delta += founderMoraleDelta(state, balance)
+        // MARK: K4 (deals and exits)
+        // The office reads the papers: a for-sale sign drags the target a
+        // point a week, capped. Exactly 0 while no sign stands.
+        delta -= state.dealMoraleTargetDrag(balance: balance)
+        // MARK: end K4
         return delta
     }
 

@@ -619,6 +619,20 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: K3 (the ladder)
     // MARK: end K3
     // MARK: K4 (deals and exits)
+    /// Iteration 15 — K4 (A2): hang the for-sale sign at `askMultiple` ×
+    /// today's valuation, snapped to tenths inside `deals.askMin…askMax`.
+    /// Rivals bid every `deals.bidIntervalDays` on the `pendingBuyout`
+    /// path while the office bleeds. Sent only from the app.
+    case listForSale(askMultiple: Double)
+    /// Takes the sign down. The bleed stops; a bid already on the desk
+    /// stands until it lapses.
+    case takeDownSign
+    /// K4 (A4): sell to the strongest rival at the distress price today,
+    /// from the first day in the red. Ends the run as *Sold up*.
+    case sellUp
+    /// K4 (C5): buy a rival for equity instead of cash. Their founder
+    /// takes a board seat and joins the address book.
+    case acquireRivalForStock(rivalID: UUID)
     // MARK: end K4
     // MARK: K5 (hand over the keys)
     // MARK: end K5
