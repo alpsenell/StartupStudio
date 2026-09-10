@@ -741,8 +741,14 @@ enum NarrativeSystem {
         var events: [GameEvent] = []
         for effect in effects {
             switch effect {
-            case .cash(let amount):
-                guard amount != 0 else { continue }
+            // MARK: J6 (queue)
+            // Late-game money has teeth: a story's money is scaled by the
+            // company's burn (`QueueStakes`), exactly 1.0 under the key's
+            // reference, so the garage never so much as rounds.
+            case .cash(let listed):
+                guard listed != 0 else { continue }
+                let amount = QueueStakes.scaled(listed, by: state.queueEventStakes(balance: balance))
+            // MARK: end J6
                 state.company.cash += amount
                 state.ledger.post(LedgerEntry(
                     day: state.day, amount: amount, category: .other, label: label

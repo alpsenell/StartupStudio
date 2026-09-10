@@ -17,6 +17,19 @@ public final class GameEngine {
     /// moment the player changes speed.
     public private(set) var lastPauseEvents: [GameEvent] = []
 
+    // MARK: J6 (queue)
+
+    /// The days of the last week's critical stops, so a third question in
+    /// seven days waits on the rail instead of stopping the clock
+    /// (`QueueCap`). Not saved: a resumed engine starts paused anyway.
+    @ObservationIgnored private var queueCriticalPauseDays: [Int] = []
+    /// What the cap let through without stopping the clock, and a counter
+    /// the app watches to move those questions' sheets onto the rail.
+    public private(set) var queueHeldEvents: [GameEvent] = []
+    public private(set) var queueHoldCount = 0
+
+    // MARK: end J6
+
     /// Persistence hook. The engine calls it with the fresh state:
     /// 1. after any tick or `send` that produced at least one event,
     /// 2. on every 60th tick regardless of events,
@@ -125,6 +138,7 @@ public final class GameEngine {
     public func send(_ action: GameAction) -> [GameEvent] {
         let events = Reducer.apply(action, to: &state, balance: balance, content: content)
         if !events.isEmpty {
+            queueStopForRooms(events) // J6 (queue)
             // Iteration 7 (R5): the tick that ended the run cancelled the
             // loop for good and left `speed` where the player had it. If
             // this action cleared the game over — "Keep running it" is the
@@ -212,13 +226,15 @@ public final class GameEngine {
         tickCount += 1
         if state.gameOver != nil {
             cancelTickLoop()
-        } else if !state.economy.pauseEvents.isEmpty, state.speed != .paused {
+        } else if !state.economy.pauseEvents.isEmpty, state.speed != .paused,
+                  !queueHoldsTodaysStop() { // J6 (queue): see `QueueCap`
             // `PausePolicy` already graded the day and spent the pause
             // budget; the speed control resumes. The reasons are kept so
             // the UI can say why.
             lastPauseEvents = state.economy.pauseEvents
             state.speed = .paused
             cancelTickLoop()
+            queueNoteStop(state.economy.pauseEvents) // J6 (queue)
         }
         if !events.isEmpty || tickCount.isMultiple(of: 60) {
             autosave?(state)
@@ -227,6 +243,42 @@ public final class GameEngine {
             eventSink?(events)
         }
     }
+
+    // MARK: J6 (queue)
+
+    /// Past two critical stops this week, a stop whose every reason can
+    /// wait does not happen: the question goes to the rail with its real
+    /// deadline and the clock keeps running. Live clock only — the
+    /// headless tick grades the day exactly as it always did.
+    private func queueHoldsTodaysStop() -> Bool {
+        let pausing = state.economy.pauseEvents
+        guard QueueCap.holds(
+            pausing, recentCriticalPauseDays: queueCriticalPauseDays, day: state.day
+        ) else { return false }
+        queueHeldEvents = pausing
+        queueHoldCount += 1
+        return true
+    }
+
+    /// Remembers a stop that had a critical reason in it.
+    private func queueNoteStop(_ pausing: [GameEvent]) {
+        guard pausing.contains(where: { $0.severity == .critical }) else { return }
+        queueCriticalPauseDays.append(state.day)
+        queueCriticalPauseDays.removeAll { state.day - $0 >= QueueCap.windowDays }
+    }
+
+    /// A room the player's own action opened stops the clock the way a
+    /// tick's reason does: `PausePolicy` names it, the rail says why.
+    private func queueStopForRooms(_ events: [GameEvent]) {
+        let rooms = PausePolicy.roomPausingEvents(events)
+        guard !rooms.isEmpty, state.gameOver == nil else { return }
+        state.economy.pauseEvents = rooms
+        lastPauseEvents = rooms
+        state.speed = .paused
+        cancelTickLoop()
+    }
+
+    // MARK: end J6
 
     /// Whether the real-time loop is currently scheduled. Internal for tests.
     var isTickLoopRunning: Bool { tickTask != nil }

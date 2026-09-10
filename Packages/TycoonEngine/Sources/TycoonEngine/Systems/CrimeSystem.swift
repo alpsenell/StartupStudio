@@ -706,7 +706,10 @@ enum CrimeSystem {
             )
         }
         // MARK: end of Iteration 11, wave two — W2
-        state.speed = .paused
+        // MARK: J6 (queue)
+        // A room the player's own action opened: `GameEngine.send` stops the
+        // clock through `PausePolicy.roomPausingEvents`, with the reason kept.
+        // MARK: end J6
         return [.crimeHearingOpened(offence: pending.kind, day: state.day)]
     }
 

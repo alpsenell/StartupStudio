@@ -556,6 +556,11 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: J5 (announce)
     // MARK: end J5
     // MARK: J6 (queue)
+    /// `-autoQueue`, `-autoChild <stage>`, `-autoCampus` and
+    /// `-autoStakes <eventID>`: dresses one situation for a screenshot
+    /// (`QueueDebugSeed`). Applied only in debug builds; nothing in the
+    /// game sends it.
+    case queueDebugSeed(kind: String, value: String)
     // MARK: end J6
     // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two

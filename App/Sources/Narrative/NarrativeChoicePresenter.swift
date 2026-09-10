@@ -28,6 +28,11 @@ enum NarrativeChoicePresenter {
         let choices = content.event(pending.id)?.choices
             ?? content.lifeEvent(pending.id)?.choices
             ?? []
+        // MARK: J6 (queue)
+        // Late-game money has teeth: the button reads what the ledger will
+        // post at today's stakes (`QueueStakes`), and says so above 1×.
+        let stakes = state.queueEventStakes(balance: balance)
+        // MARK: end J6
 
         return DecisionPrompt(
             id: "narrative-\(pending.id)-\(pending.raisedDay)",
@@ -37,12 +42,12 @@ enum NarrativeChoicePresenter {
             message: message(for: pending, daysLeft: daysLeft, autoLabel: autoLabel),
             stats: [
                 ("Answer within", daysLeft == 0 ? "today" : "\(daysLeft) day\(daysLeft == 1 ? "" : "s")")
-            ],
+            ] + queueStakesStat(stakes), // J6 (queue)
             options: pending.options.map { option in
                 DecisionPrompt.Option(
                     label: option.label,
-                    detail: option.detail,
-                    cashDelta: cashDelta(for: option, in: choices),
+                    detail: queueDetail(option.detail, option: option, in: choices, stakes: stakes), // J6 (queue)
+                    cashDelta: cashDelta(for: option, in: choices, stakes: stakes), // J6 (queue)
                     disabledReason: option.disabledReason,
                     action: .resolveChoice(eventID: pending.id, optionIndex: option.index)
                 )
@@ -55,14 +60,55 @@ enum NarrativeChoicePresenter {
     /// The lump sum an option moves in or out of the company, or `nil`
     /// when it moves none — the after-state line is only worth its space
     /// when there is a number in it.
-    private static func cashDelta(for option: ChoiceOption, in choices: [EventChoice]) -> Int? {
+    private static func cashDelta(
+        for option: ChoiceOption, in choices: [EventChoice], stakes: Double = 1 // J6 (queue)
+    ) -> Int? {
         guard let choice = choices.first(where: { $0.id == option.id }) else { return nil }
         let total = choice.effects.reduce(0) { sum, effect in
-            if case .cash(let amount) = effect { return sum + amount }
+            // J6 (queue): each effect scaled as `NarrativeSystem.apply` scales it.
+            if case .cash(let amount) = effect { return sum + QueueStakes.scaled(amount, by: stakes) }
             return sum
         }
         return total == 0 ? nil : total
     }
+
+    // MARK: J6 (queue)
+
+    /// "Stakes ×1.7" under the deadline, when the company's burn has made a
+    /// story's money bigger than it is written. Nothing at 1×.
+    private static func queueStakesStat(_ stakes: Double) -> [(label: String, value: String)] {
+        guard stakes > 1 else { return [] }
+        return [(
+            String(localized: "Stakes", comment: "Decision sheet stat label: how much bigger a story's money is at this company's size"),
+            "×" + String(format: "%.1f", stakes)
+        )]
+    }
+
+    /// The hand-written line under an answer names the written price
+    /// ("−$1,200 · it ends today"). Above 1× that figure — and only that
+    /// figure — becomes the one the ledger will post, so the button never
+    /// says one number and charges another.
+    private static func queueDetail(
+        _ detail: String?,
+        option: ChoiceOption,
+        in choices: [EventChoice],
+        stakes: Double
+    ) -> String? {
+        guard stakes != 1, var text = detail,
+              let choice = choices.first(where: { $0.id == option.id })
+        else { return detail }
+        for effect in choice.effects {
+            guard case .cash(let amount) = effect, amount != 0 else { continue }
+            let scaled = QueueStakes.scaled(amount, by: stakes)
+            // The catalog writes "$1,200"; a generated line writes "$1200".
+            text = text
+                .replacingOccurrences(of: abs(amount).money, with: abs(scaled).money)
+                .replacingOccurrences(of: "$\(abs(amount))", with: "$\(abs(scaled))")
+        }
+        return text
+    }
+
+    // MARK: end J6
 
     /// The bitmap word over the title, from the beat's category.
     static func kicker(for category: String) -> String {

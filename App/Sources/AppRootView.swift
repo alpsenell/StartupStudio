@@ -222,10 +222,24 @@ struct AppRootView: View {
             // again, or days tick behind a modal nobody can dismiss.
             .onChange(of: shell.showingWeeklyReport) { _, showing in
                 guard !showing, engine.state.speed != .paused,
-                      let prompt = currentPrompt(), prompt.id != shell.deferredChoiceID
+                      let prompt = currentPrompt(), !shell.isDeferred(prompt.id) // J6 (queue)
                 else { return }
                 engine.setSpeed(.paused)
             }
+            // MARK: J6 (queue)
+            // Past two critical stops in a week the engine lets a question
+            // through without stopping the clock (`QueueCap`); its sheet
+            // goes straight to the rail, with the deadline that is really
+            // counting down.
+            .onChange(of: engine.queueHoldCount) { _, _ in
+                shell.holdForCap(DecisionPrompt.queue(
+                    in: engine.state, content: engine.content, balance: engine.balance
+                ))
+            }
+            .task {
+                await QueueDebug.startIfAsked(current: { session.engine }, shell: shell)
+            }
+            // MARK: end J6
             // Toasts are no longer overlaid here: the notice rail under
             // each tab's HUD shows the newest one as its transient line,
             // so an acknowledgement can never land across the pause
@@ -508,11 +522,11 @@ struct AppRootView: View {
                 shell.deferBeatIfHeadless(prompt, engine: session.engine)
                 if GameShell.headlessPassAnswersOnThePhone { return nil }
                 // MARK: end L1
-                return prompt.id == shell.deferredChoiceID ? nil : prompt
+                return shell.isDeferred(prompt.id) ? nil : prompt // J6 (queue)
             },
             set: { newValue in
                 guard newValue == nil, let prompt = currentPrompt(),
-                      prompt.isDeferrable, shell.deferredChoiceID != prompt.id
+                      prompt.isDeferrable, !shell.isDeferred(prompt.id) // J6 (queue)
                 else { return }
                 shell.postpone(prompt, engine: session.engine)
             }
@@ -520,11 +534,15 @@ struct AppRootView: View {
     }
 
     private func currentPrompt() -> DecisionPrompt? {
-        DecisionPrompt.pending(
+        // MARK: J6 (queue)
+        // The first question in the queue the founder has not put off — a
+        // deferred one no longer hides the questions behind it.
+        DecisionPrompt.queue(
             in: session.engine.state,
             content: session.engine.content,
             balance: session.engine.balance
-        )
+        ).first { !shell.isDeferred($0.id) }
+        // MARK: end J6
     }
 
     /// One-time dismissible notice when the save failed to load.

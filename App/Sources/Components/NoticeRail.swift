@@ -32,6 +32,11 @@ struct RailNotice: Identifiable, Equatable {
     let kind: Kind
     /// Lower leads.
     let priority: Int
+    /// Iteration 12 (J6): what a queued question's button does — bring its
+    /// sheet back, or walk into its room. `nil` is the original deferred
+    /// story beat's recall, so `deferred(id:title:daysLeft:category:)`
+    /// callers are unchanged.
+    var answer: QueueRailAnswer? = nil
 
     static func pause(_ headline: GameEvent, more: Int) -> RailNotice {
         RailNotice(id: "pause", kind: .pause(headline: headline, more: more), priority: 0)
@@ -46,6 +51,22 @@ struct RailNotice: Identifiable, Equatable {
             id: "deferred-\(id)",
             kind: .deferred(title: title, daysLeft: daysLeft, category: category),
             priority: 2
+        )
+    }
+
+    /// Iteration 12 (J6): a question on the queue, drawn as a deferred row
+    /// — its real deadline, or "waiting on you" when it has none — with
+    /// the button that answers it.
+    static func queued(_ entry: QueueEntry, day: Int, answer: QueueRailAnswer) -> RailNotice {
+        RailNotice(
+            id: "deferred-\(entry.id)",
+            kind: .deferred(
+                title: entry.title,
+                daysLeft: entry.daysLeft(on: day) ?? -1,
+                category: entry.category
+            ),
+            priority: 2,
+            answer: answer
         )
     }
 
@@ -114,19 +135,12 @@ struct NoticeRail: View {
             notices.append(.pause(headline, more: engine.lastPauseEvents.count - 1))
         }
 
-        // A story question the player put off: the clock is running and the
-        // deadline is real, so the countdown belongs on the rail.
-        if shell.deferredChoiceID != nil, state.speed != .paused,
-           let pending = state.narrative.pendingChoice {
-            notices.append(
-                .deferred(
-                    id: pending.id,
-                    title: pending.title,
-                    daysLeft: max(0, pending.respondByDay - state.day),
-                    category: pending.category
-                )
-            )
-        }
+        // Iteration 12 (J6): every question the game is asking that is not
+        // on screen — a sheet the founder put off (while the clock runs,
+        // with the deadline that is really counting down), or a room with
+        // a question in it. One row each, in the queue's order. The story
+        // beat that used to be the only thing here is one of them.
+        notices.append(contentsOf: queueNotices(state))
 
         // Iteration 7 (R1): the tour's beat, after a pause and before a
         // deferred question. Silent across the ship beat's wait.
@@ -148,6 +162,33 @@ struct NoticeRail: View {
             notices.append(.tip(tip))
         }
         return notices
+    }
+
+    /// Iteration 12 (J6): the queue's rows. A sheet is here only once it
+    /// has been put off and only while the clock runs (a stopped clock is
+    /// the sheet's own moment); a room is here whenever it is open.
+    private func queueNotices(_ state: GameState) -> [RailNotice] {
+        let items = DecisionPrompt.queueItems(in: state, content: engine.content, balance: engine.balance)
+        return items.compactMap { item in
+            if let prompt = item.prompt {
+                guard shell.isDeferred(prompt.id), state.speed != .paused else { return nil }
+                return .queued(item.entry, day: state.day, answer: .recall(promptID: prompt.id))
+            }
+            guard let route = queueRoute(for: item.entry.kind) else { return nil }
+            return .queued(item.entry, day: state.day, answer: .route(route))
+        }
+    }
+
+    /// The room a queued question is answered in.
+    private func queueRoute(for kind: QueueKind) -> Route? {
+        switch kind {
+        case .dirtyMoneyOffer: .dirtyMoney
+        case .funeral: .family
+        case .legalCase: .crimeLedger
+        case .hearing: .courtroom
+        case .cancellation: .feed
+        default: nil
+        }
     }
 
     private var tourIsRunning: Bool {
@@ -264,7 +305,7 @@ struct NoticeRail: View {
         case .pause(let headline, let more):
             pauseRow(headline: headline, more: more)
         case .deferred(let title, let daysLeft, let category):
-            deferredRow(title: title, daysLeft: daysLeft, category: category)
+            deferredRow(title: title, daysLeft: daysLeft, category: category, answer: notice.answer)
         case .report(let week):
             reportRow(week: week)
         case .event(let toast):
@@ -364,8 +405,13 @@ struct NoticeRail: View {
         .accessibilityLabel("Time is paused: \(message)")
     }
 
-    private func deferredRow(title: String, daysLeft: Int, category: String?) -> some View {
+    private func deferredRow(
+        title: String, daysLeft: Int, category: String?, answer: QueueRailAnswer? = nil
+    ) -> some View {
         let when = switch daysLeft {
+        // Iteration 12 (J6): a question with no deadline — the partner
+        // waiting up, a funeral, an old post — says so instead of counting.
+        case ..<0: String(localized: "waiting on you", comment: "Notice rail: a question with no deadline, waiting for the founder")
         case 0: String(localized: "answers itself today", comment: "Notice rail: a deferred question whose deadline is today")
         case 1: String(localized: "1 day left", comment: "Notice rail: a deferred question with one day of its deadline left")
         default: String(localized: "\(daysLeft) days left", comment: "Notice rail: days left on a deferred question. Always 2 or more")
@@ -391,7 +437,12 @@ struct NoticeRail: View {
             Button {
                 Haptics.commit()
                 Sounds.play(.tap)
-                shell.recallDeferredChoice()
+                // Iteration 12 (J6): the queued question's own answer.
+                switch answer {
+                case .recall(let promptID): shell.recall(promptID: promptID)
+                case .route(let route): onRoute?(route)
+                case nil: shell.recallDeferredChoice()
+                }
             } label: {
                 Text("Answer")
                     .font(.footnote.weight(.bold))
@@ -539,10 +590,28 @@ struct NoticeRail: View {
             .research
         case .employeeQuit, .candidatesRefreshed:
             .hiring
+        // Iteration 12 (J6): wave two's stops, which used to name a
+        // reason and leave the room it was about three screens away.
+        case .dirtyMoneyOffered: .dirtyMoney
+        case .crimeCaseRaised: .crimeLedger
+        case .crimeHearingDue, .crimeHearingOpened: .courtroom
+        case .familyParentDied, .familyDivorced: .family
+        case .fameCancellationRaised: .feed
         default:
             nil
         }
     }
+}
+
+/// Iteration 12 (J6): what a queued question's rail button does.
+enum QueueRailAnswer: Equatable {
+    /// Bring the sheet the founder put off back to the root.
+    case recall(promptID: String)
+    /// Walk into the room the question is answered in.
+    case route(Route)
+}
+
+extension NoticeRail {
 
     private func severityRank(_ severity: EventSeverity) -> Int {
         switch severity {

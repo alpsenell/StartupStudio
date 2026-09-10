@@ -85,7 +85,10 @@ enum FamilyDramaSystem {
         state.life.phone.post(
             "We need to talk tonight. Not on here.", from: .partner, day: state.day
         )
-        state.speed = .paused
+        // MARK: J6 (queue)
+        // The clock stops through `PausePolicy`: `.familyAffairDiscovered`
+        // is critical, so the tick pauses on it with the reason kept.
+        // MARK: end J6
         return [.familyAffairDiscovered(day: state.day)]
     }
 
@@ -150,7 +153,9 @@ enum FamilyDramaSystem {
             state.life.awayUntilDay = state.day + config.funeralAwayDays
             state.life.awaySinceDay = state.day
             state.life.awayReason = "Funeral"
-            state.speed = .paused
+            // MARK: J6 (queue)
+            // `.familyParentDied` is critical: `PausePolicy` stops the clock.
+            // MARK: end J6
             events.append(.familyParentDied(
                 relation: relative.relation.rawValue, name: relative.name, day: state.day
             ))
@@ -405,7 +410,10 @@ enum FamilyDramaSystem {
         state.familyDrama.kin.removeAll { $0.kind?.isInLaw == true }
         state.life.meters.apply(mood: config.divorceMood)
         state.narrative.flags.insert(FamilyDrama.divorcedFlag)
-        state.speed = .paused
+        // MARK: J6 (queue)
+        // A room the player's own action opened: `GameEngine.send` stops the
+        // clock through `PausePolicy.roomPausingEvents`, with the reason kept.
+        // MARK: end J6
 
         events.append(.familyDivorced(
             exName: exName,

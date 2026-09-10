@@ -1950,6 +1950,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: J5 (announce)
     // MARK: end J5
     // MARK: J6 (queue)
+
+    /// Iteration 12 — J6: the two pacing keys, event stakes and the campus
+    /// rent (`BalanceConfig+Queue.swift`). Inline default with both off,
+    /// so `"queuePacing"` is an optional key; the shipped file turns them on.
+    public var queuePacing: QueuePacingBalance = .default
+
     // MARK: end J6
     // MARK: end of Iteration 12
 

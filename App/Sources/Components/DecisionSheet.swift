@@ -306,32 +306,11 @@ extension DecisionPrompt {
         content: ContentCatalog,
         balance: BalanceConfig
     ) -> DecisionPrompt? {
-        if let poach = state.rivals.pendingPoach {
-            return poachPrompt(poach, state: state)
-        }
-        if let buyout = state.rivals.pendingBuyout {
-            return buyoutPrompt(buyout, state: state, balance: balance)
-        }
-        // A rival launched into a category the player holds (WS-A). The
-        // fight settles itself in six weeks; the sheet is the moment to
-        // decide whether it is worth defending.
-        if let challenge = state.rivals.pendingChallenge {
-            return challengePrompt(challenge, state: state, content: content, balance: balance)
-        }
-        if let staffEvent = state.pendingStaffEvent {
-            return staffEventPrompt(staffEvent, state: state, content: content, balance: balance)
-        }
-        // Somebody handed in notice. It is a critical pause with a
-        // deadline and a real answer, so it has to reach a sheet.
-        if let resignation = state.economy.pendingResignation {
-            return resignationPrompt(resignation, state: state, balance: balance)
-        }
-        // A term sheet pauses the clock, so the question has to be on
-        // screen whatever tab the player was on.
-        if let offer = state.investors.pendingOffer {
-            return investmentPrompt(offer, state: state, content: content)
-        }
-        return NarrativeChoicePresenter.prompt(for: state, content: content, balance: balance)
+        // MARK: J6 (queue)
+        // One queue for every question: the first sheet in `QueueBoard`'s
+        // order. A new kind of sheet goes in `queuePrompt(for:)` below.
+        queue(in: state, content: content, balance: balance).first
+        // MARK: end J6
     }
 
     /// The staff moment on screen. Wording, both answers and their
@@ -768,4 +747,79 @@ extension DecisionPrompt {
             portraitSeed: rival?.appearanceSeed
         )
     }
+
+    // MARK: J6 (queue)
+
+    /// Iteration 12 — J6. Every question the game is asking, in the
+    /// queue's order (`QueueBoard`): a sheet for each one answered with a
+    /// button, and for a room the entry alone — the rail walks the founder
+    /// into it. Offers, notices, strings and the confrontation used to sit
+    /// in a fixed order where the first hid the rest; now the soonest
+    /// deadline leads and the others wait behind it, visibly.
+    static func queueItems(
+        in state: GameState,
+        content: ContentCatalog,
+        balance: BalanceConfig
+    ) -> [QueueItem] {
+        QueueBoard.entries(in: state).map { entry in
+            QueueItem(
+                entry: entry,
+                prompt: queuePrompt(for: entry, state: state, content: content, balance: balance)
+            )
+        }
+    }
+
+    /// The sheets alone, in the queue's order.
+    static func queue(
+        in state: GameState,
+        content: ContentCatalog,
+        balance: BalanceConfig
+    ) -> [DecisionPrompt] {
+        queueItems(in: state, content: content, balance: balance).compactMap(\.prompt)
+    }
+
+    /// The sheet for one entry. "Let me think" works on every one of them:
+    /// each either has a deadline the engine answers for the founder, or
+    /// waits for them, so putting it on the rail is always a real choice.
+    private static func queuePrompt(
+        for entry: QueueEntry,
+        state: GameState,
+        content: ContentCatalog,
+        balance: BalanceConfig
+    ) -> DecisionPrompt? {
+        guard entry.surface == .sheet else { return nil }
+        var prompt: DecisionPrompt? = switch entry.kind {
+        case .poach:
+            state.rivals.pendingPoach.flatMap { poachPrompt($0, state: state) }
+        case .buyout:
+            state.rivals.pendingBuyout.flatMap { buyoutPrompt($0, state: state, balance: balance) }
+        case .challenge:
+            // A rival launched into a category the player holds (WS-A).
+            state.rivals.pendingChallenge.flatMap {
+                challengePrompt($0, state: state, content: content, balance: balance)
+            }
+        case .staff:
+            state.pendingStaffEvent.flatMap {
+                staffEventPrompt($0, state: state, content: content, balance: balance)
+            }
+        case .resignation:
+            state.economy.pendingResignation.flatMap {
+                resignationPrompt($0, state: state, balance: balance)
+            }
+        case .termSheet:
+            state.investors.pendingOffer.flatMap { investmentPrompt($0, state: state, content: content) }
+        case .story:
+            NarrativeChoicePresenter.prompt(for: state, content: content, balance: balance)
+        case .dirtyMoneyDemand:
+            queueDemandPrompt(state: state, balance: balance)
+        case .confrontation:
+            queueConfrontationPrompt(state: state)
+        case .dirtyMoneyOffer, .funeral, .legalCase, .hearing, .cancellation:
+            nil
+        }
+        prompt?.isDeferrable = true
+        return prompt
+    }
+
+    // MARK: end J6
 }

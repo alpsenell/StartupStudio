@@ -885,6 +885,14 @@ public enum Reducer {
         // MARK: J5 (announce)
         // MARK: end J5
         // MARK: J6 (queue)
+        case let .queueDebugSeed(kind, value):
+            #if DEBUG
+            events = QueueDebugSeed.apply(
+                kind: kind, value: value, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
         // MARK: end J6
         // MARK: end of Iteration 12
         // MARK: end of Iteration 11, wave two

@@ -963,6 +963,25 @@ public enum PausePolicy {
         return pausing
     }
 
+    // MARK: J6 (queue)
+
+    /// Iteration 12 — J6. The events a player's own *action* raises that
+    /// open a room the clock has to stop for: the courtroom, the parole
+    /// board, the settlement. Their systems used to write `state.speed`
+    /// themselves, which the pause budget, `lastPauseEvents` and the rail
+    /// never saw. `GameEngine.send` asks this and stops the clock the way a
+    /// tick does, with the reason kept. A tick never raises these.
+    public static func roomPausingEvents(_ events: [GameEvent]) -> [GameEvent] {
+        events.filter { event in
+            switch event {
+            case .crimeHearingOpened, .insideParoleOpened, .familyDivorced: true
+            default: false
+            }
+        }
+    }
+
+    // MARK: end J6
+
     /// Whether a notable event is about this studio at all.
     private static func isRelevant(_ event: GameEvent, to state: GameState) -> Bool {
         switch event {
@@ -1318,7 +1337,14 @@ public struct GameState: Codable, Equatable, Sendable {
     /// (`CitySystem` posts property tax instead).
     public func officeWeeklyRent(balance: BalanceConfig) -> Int {
         guard !city.ownership.isOwned else { return 0 }
-        let rent = Double(balance.office(company.officeTier).weeklyRent)
+        // MARK: J6 (queue)
+        // The campus's rent follows its headcount when the key is on
+        // (`queueCampusRent`); every other tier, and the campus with the
+        // key off, pays its listed rent.
+        let listed = queueCampusRent(balance: balance)
+            ?? Double(balance.office(company.officeTier).weeklyRent)
+        // MARK: end J6
+        let rent = listed
             * balance.city.district(city.district).rentMultiplier
         guard hasDepartment(.ops) else { return Int(rent.rounded()) }
         return Int((rent * balance.company.opsRentFactor).rounded())

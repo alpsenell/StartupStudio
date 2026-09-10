@@ -1169,6 +1169,11 @@ extension DebugLaunch {
     // MARK: J5 (announce)
     // MARK: end J5
     // MARK: J6 (queue)
+    // Parsed in `QueueDebug` (`Components/QueuePrompts.swift`), started from
+    // the root: `-autoQueue [eventID]` (a story and the confrontation, both
+    // put off onto the rail), `-autoChild baby|toddler|school|teen|grown`,
+    // `-autoCampus`, and `-autoStakes [eventID]` (the campus, a founder at
+    // $5,000 a week and a story with money in it). Nothing to add here.
     // MARK: end J6
     // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two

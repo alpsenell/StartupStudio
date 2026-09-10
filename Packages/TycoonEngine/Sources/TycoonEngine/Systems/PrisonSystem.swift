@@ -383,7 +383,10 @@ enum PrisonSystem {
             lastLine: "\"You have read the file. Is there anything in it that is wrong?\""
         )
         state.prison = prison
-        state.speed = .paused
+        // MARK: J6 (queue)
+        // A room the player's own action opened: `GameEngine.send` stops the
+        // clock through `PausePolicy.roomPausingEvents`, with the reason kept.
+        // MARK: end J6
         return [.insideParoleOpened(day: state.day)]
     }
 

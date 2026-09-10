@@ -55,8 +55,42 @@ final class GameShell {
 
     /// Brings a deferred decision sheet back.
     func recallDeferredChoice() {
+        if let id = deferredChoiceID { deferredQueueIDs.remove(id) } // J6 (queue)
         deferredChoiceID = nil
     }
+
+    // MARK: J6 (queue)
+
+    /// Iteration 12 — J6. Every question put off, by its prompt's id — a
+    /// story beat, an offer, a notice, a string, the confrontation. The
+    /// root presents none of them; the rail carries each with its real
+    /// deadline, and its button brings the one it names back.
+    /// `deferredChoiceID` stays the most recent of them for the readers
+    /// that predate the queue (the HUD's attention dot).
+    var deferredQueueIDs: Set<String> = []
+
+    /// Whether the question behind `promptID` is waiting on the rail.
+    func isDeferred(_ promptID: String) -> Bool {
+        deferredQueueIDs.contains(promptID) || promptID == deferredChoiceID
+    }
+
+    /// Brings one deferred question back to the root.
+    func recall(promptID: String) {
+        deferredQueueIDs.remove(promptID)
+        if deferredChoiceID == promptID { deferredChoiceID = nil }
+    }
+
+    /// The engine let a stop through past the week's two (`QueueCap`): the
+    /// questions go straight to the rail, as if "Let me think" had been
+    /// said for each, and the clock keeps the speed it had.
+    func holdForCap(_ prompts: [DecisionPrompt]) {
+        for prompt in prompts where prompt.isDeferrable && !isDeferred(prompt.id) {
+            deferredQueueIDs.insert(prompt.id)
+            deferredChoiceID = prompt.id
+        }
+    }
+
+    // MARK: end J6
 
     // MARK: Iteration 9 — L1 (phone)
 
@@ -77,7 +111,7 @@ final class GameShell {
 
     func deferBeatIfHeadless(_ prompt: DecisionPrompt, engine: GameEngine) {
         #if DEBUG
-        guard prompt.isDeferrable, deferredChoiceID != prompt.id,
+        guard prompt.isDeferrable, !isDeferred(prompt.id), // J6 (queue)
               ProcessInfo.processInfo.arguments.contains("-autoDeferBeats")
         else { return }
         postpone(prompt, engine: engine)
@@ -95,6 +129,7 @@ final class GameShell {
     /// rail with its real countdown, and starts the clock again.
     func postpone(_ prompt: DecisionPrompt, engine: GameEngine) {
         guard prompt.isDeferrable else { return }
+        deferredQueueIDs.insert(prompt.id) // J6 (queue)
         deferredChoiceID = prompt.id
         engine.setSpeed(lastRunningSpeed == .paused ? .x1 : lastRunningSpeed)
         Haptics.tap()
@@ -254,6 +289,7 @@ final class GameShell {
         pendingReportWeek = nil
         launchDayProductID = nil
         deferredChoiceID = nil
+        deferredQueueIDs = [] // J6 (queue)
         previousMorale = nil
         previousMeters = nil
     }

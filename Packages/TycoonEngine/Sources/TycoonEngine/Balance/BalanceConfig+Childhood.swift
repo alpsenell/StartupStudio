@@ -16,9 +16,17 @@ public struct ChildhoodBalance: Equatable, Sendable {
     /// stages; past the last one they are grown.
     ///
     /// Kids grow faster than companies on purpose. At 364 days to the
-    /// game year these read as: baby for half a year, toddler until 18
-    /// months, school until three years, teen until five — so a child born
-    /// in the garage is a teenager by the campus.
+    /// game year these read as: baby for a quarter, toddler until nine
+    /// months, school until eighteen months, teen until two and a half
+    /// years — so a child born in the garage is a teenager by the campus.
+    ///
+    /// Iteration 12 (J6): `[90, 270, 540, 900]`, halved from
+    /// `[180, 540, 1100, 1800]`. The earliest births land around day 200,
+    /// and at the old clock a teen arrived around day 1300 and a grown
+    /// child around day 2000, so the intern summer, `kid_teen_door`,
+    /// `kid_moves_out`, disowning and the grown vignettes almost never
+    /// played. Ages are still read off the stage (`Child.stage(on:)`),
+    /// never off a number of years.
     public var stageDays: [Int]
     /// The engine's year, for the age label.
     public var yearDays: Int
@@ -67,7 +75,7 @@ public struct ChildhoodBalance: Equatable, Sendable {
     public var internSkills: SkillSet
 
     public init(
-        stageDays: [Int] = [180, 540, 1100, 1800],
+        stageDays: [Int] = [90, 270, 540, 900], // J6: was [180, 540, 1100, 1800]
         yearDays: Int = 364,
         bondGraceDays: Int = 14,
         bondDecayPerDay: Double = 0.08,
