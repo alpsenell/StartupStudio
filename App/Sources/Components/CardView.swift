@@ -2,18 +2,35 @@ import SwiftUI
 
 /// Reusable card container with a small section header (title + optional
 /// SF Symbol) above arbitrary content.
+// Iteration 14 — V3 (weights). The three weights the audit asks for. The
+// scaffold declares the contract so V1 and V2 can ask for `.row` and
+// `.quiet` from day one; V3 gives the two new cases their look. Until
+// then every style renders as `.primary`, which is what every existing
+// caller gets by default.
+enum CardStyle: Equatable, Sendable {
+    /// Full size, one per tab: Now, Your week, the desk.
+    case primary
+    /// Title, one number and a chevron, 56 pt.
+    case row
+    /// A single secondary line in a grouped list.
+    case quiet
+}
+
 struct CardView<Content: View>: View {
     private let title: String
     private let systemImage: String?
+    private let style: CardStyle
     private let content: Content
 
     init(
         _ title: String,
         systemImage: String? = nil,
+        style: CardStyle = .primary,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
         self.systemImage = systemImage
+        self.style = style
         self.content = content()
     }
 

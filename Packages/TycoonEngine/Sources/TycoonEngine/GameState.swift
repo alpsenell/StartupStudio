@@ -689,6 +689,13 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: end P3
     // MARK: U1 (ux: the first-hour fixes)
     // MARK: end U1
+    // MARK: V1 (ux: Life folded, rooms dormant)
+    // MARK: end V1
+    // MARK: V2 (ux: one inbox, one home per thing)
+    // MARK: end V2
+    // MARK: V3 (ux: card weights, the Now card)
+    // MARK: end V3
+    // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two
@@ -1270,6 +1277,13 @@ public struct GameState: Codable, Equatable, Sendable {
     // MARK: end P3
     // MARK: U1 (ux: the first-hour fixes)
     // MARK: end U1
+    // MARK: V1 (ux: Life folded, rooms dormant)
+    // MARK: end V1
+    // MARK: V2 (ux: one inbox, one home per thing)
+    // MARK: end V2
+    // MARK: V3 (ux: card weights, the Now card)
+    // MARK: end V3
+    // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12
     /// What the staff remember about the founder's answers: the rules
@@ -1605,6 +1619,13 @@ extension GameState {
         // MARK: end P3
         // MARK: U1 (ux: the first-hour fixes)
         // MARK: end U1
+        // MARK: V1 (ux: Life folded, rooms dormant)
+        // MARK: end V1
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // MARK: end V2
+        // MARK: V3 (ux: card weights, the Now card)
+        // MARK: end V3
+        // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
     }
@@ -1718,6 +1739,13 @@ extension GameState {
         // MARK: end P3
         // MARK: U1 (ux: the first-hour fixes)
         // MARK: end U1
+        // MARK: V1 (ux: Life folded, rooms dormant)
+        // MARK: end V1
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // MARK: end V2
+        // MARK: V3 (ux: card weights, the Now card)
+        // MARK: end V3
+        // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
         lockedTopics = Dictionary(
@@ -1852,6 +1880,13 @@ extension GameState {
         // MARK: end P3
         // MARK: U1 (ux: the first-hour fixes)
         // MARK: end U1
+        // MARK: V1 (ux: Life folded, rooms dormant)
+        // MARK: end V1
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // MARK: end V2
+        // MARK: V3 (ux: card weights, the Now card)
+        // MARK: end V3
+        // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
     }

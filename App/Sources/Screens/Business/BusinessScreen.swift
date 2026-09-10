@@ -296,6 +296,13 @@ struct BusinessScreen: View {
         // MARK: end P3
         // MARK: U1 (ux: the first-hour fixes)
         // MARK: end U1
+        // MARK: V1 (ux: Life folded, rooms dormant)
+        // MARK: end V1
+        // MARK: V2 (ux: one inbox, one home per thing)
+        // MARK: end V2
+        // MARK: V3 (ux: card weights, the Now card)
+        // MARK: end V3
+        // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
         // MARK: end of Iteration 11, wave two
