@@ -964,6 +964,10 @@ extension DecisionPrompt {
         case .priceWar:
             // Iteration 12 merge — J3's sheet, seated in J6's queue.
             PriceWarPrompt.pending(in: state, content: content, balance: balance)
+        // MARK: K1 (founder money)
+        case .rescue:
+            founderMoneyRescuePrompt(state: state, balance: balance)
+        // MARK: end K1
         case .dirtyMoneyOffer, .funeral, .legalCase, .hearing, .cancellation:
             nil
         }

@@ -1210,6 +1210,28 @@ struct EventCopy {
         // MARK: V3 (ux: card weights, the Now card)
         // MARK: end V3
         // MARK: K1 (founder money)
+        case .founderMoneyLoanMade(let amount, let day):
+            ("arrow.right.circle.fill", "Lent the company \(amount.money) of your own money", day, Theme.accent)
+        case .founderMoneyLoanRepaid(let amount, let fromRound, let day):
+            (
+                "arrow.left.circle.fill",
+                fromRound
+                    ? "The new round repaid your \(amount.money) loan before the company saw a cent"
+                    : "The company repaid \(amount.money) of your loan",
+                day,
+                Theme.positiveCash
+            )
+        case .founderMoneyDividend(let amount, let take, let pressure, let day):
+            (
+                "chart.pie.fill",
+                pressure > 0
+                    ? "Paid a \(amount.money) dividend and took \(take.money) home. The board added \(pressure) to its pressure"
+                    : "Paid a \(amount.money) dividend and took \(take.money) home",
+                day,
+                Theme.warning
+            )
+        case .founderMoneyRescueAnswered(let answer, let salary, let day):
+            founderMoneyRescueLine(answer, salary: salary, day: day)
         // MARK: end K1
         // MARK: K2 (product lifecycle)
         // MARK: end K2
@@ -1242,6 +1264,21 @@ struct EventCopy {
     // MARK: Iteration 11 — N5 (office secrets)
 
     // MARK: Iteration 11, wave two — W1 (dirty money)
+
+    // MARK: K1 (founder money)
+    private func founderMoneyRescueLine(
+        _ answer: FounderMoneyRescueAnswer, salary: Int, day: Int
+    ) -> (icon: String, message: String, day: Int, tint: Color) {
+        switch answer {
+        case .take:
+            ("house.fill", "The company is covering you at \(salary.money)/wk until you are square. The team can read a payslip", day, Theme.warning)
+        case .moveDown:
+            ("box.truck.fill", "Told the landlord you would move somewhere cheaper", day, Theme.negativeCash)
+        case .sell:
+            ("key.fill", "Went to sell something before the landlord calls", day, Theme.warning)
+        }
+    }
+    // MARK: end K1
 
     private func dirtyMoneyName(_ backer: String) -> String {
         DirtyMoneyBacker(rawValue: backer)?.displayName ?? "somebody"

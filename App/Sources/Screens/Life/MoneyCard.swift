@@ -83,6 +83,13 @@ struct MoneyCard: View {
                 AssetsMoneyNote(engine: engine)
                 // MARK: end of Iteration 11 — N3
 
+                // MARK: K1 (founder money)
+                // The loan, the dividend still read as pay, the landlord's
+                // question — one line each, and the link below goes to
+                // where they are answered.
+                FounderMoneyLifeNote(engine: engine)
+                // MARK: end K1
+
                 MoneySheetLink(engine: engine)
                 Text("The company pays your salary out of cash each week; rent comes out of your wallet.")
                     .font(.caption)

@@ -106,6 +106,12 @@ struct MoneySheetContent: View {
             ShopAppStoreCard(engine: engine)
             // MARK: end P3
 
+            // MARK: K1 (founder money)
+            // The director's loan and the dividend: the founder's own money
+            // in the company, with every price printed before the tap.
+            FounderMoneyCard(engine: engine)
+            // MARK: end K1
+
             CardView(String(localized: "You",comment: "Card and step heading for the founder as a person - their money, their meters, their name"), systemImage: "person.fill") {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                     row(String(localized: "Wallet", comment: "Money sheet row: the founder own money"), life.wallet.money, tint: life.wallet < 0 ? Theme.negativeCash : .primary)

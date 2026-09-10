@@ -220,6 +220,10 @@ struct NoticeRail: View {
         case .legalCase: .crimeLedger
         case .hearing: .courtroom
         case .cancellation: .feed
+        // MARK: K1 (founder money)
+        // "Sell something": the question waits in the assets room.
+        case .rescue: .assets
+        // MARK: end K1
         default: nil
         }
     }
