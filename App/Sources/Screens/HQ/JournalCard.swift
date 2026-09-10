@@ -234,6 +234,12 @@ struct WeekGroup: View {
     }
 
     // MARK: V3 (ux: card weights, the Now card)
+    /// The one "Week N" pixel title, drawn plain or inside the report
+    /// button — one literal, so the strings audit's pin holds.
+    private var weekTitle: some View {
+        PixelText(text: "Week \(week)", scale: 2, color: .secondary)
+    }
+
     @ViewBuilder
     private var heading: some View {
         if let onOpenReport {
@@ -242,7 +248,7 @@ struct WeekGroup: View {
                 onOpenReport(week)
             } label: {
                 HStack(spacing: Theme.Spacing.sm) {
-                    PixelText(text: "Week \(week)", scale: 2, color: .secondary)
+                    weekTitle
                     Spacer(minLength: Theme.Spacing.sm)
                     Text("Report")
                         .font(.footnote.weight(.semibold))
@@ -257,7 +263,7 @@ struct WeekGroup: View {
             .accessibilityLabel("Week \(week) report")
             .accessibilityHint("Opens that week's report again")
         } else {
-            PixelText(text: "Week \(week)", scale: 2, color: .secondary)
+            weekTitle
                 .accessibilityAddTraits(.isHeader)
         }
     }
