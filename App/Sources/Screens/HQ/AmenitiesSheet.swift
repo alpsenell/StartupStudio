@@ -5,6 +5,11 @@ import TycoonEngine
 /// amenity (icon, effect, build cost, weekly upkeep, unlock tier) with a
 /// Build button. The engine enforces tier, cash, and ownership; the UI
 /// explains why a button is disabled.
+///
+/// Iteration 15 — K6: a built game room, cafeteria or gym also takes a
+/// break (`.callBreak`), with its price on the button and what it does to
+/// the Now card's ship date printed under it. A tap on the amenity in the
+/// office opens this sheet — the break has one home.
 struct AmenitiesSheet: View {
     let engine: GameEngine
 
@@ -14,6 +19,12 @@ struct AmenitiesSheet: View {
     /// updates this property for presented content before the
     /// environment is installed and the non-optional form traps there.
     private var shell: GameShell { injectedShell ?? .shared }
+
+    // MARK: K6 (home and rooms)
+    /// Tomorrow's Now-card sentence with and without a break, re-read once
+    /// a day while the sheet is open.
+    @State private var breakPreview: RoomBreakPreview?
+    // MARK: end K6
 
     var body: some View {
         NavigationStack {
@@ -32,7 +43,10 @@ struct AmenitiesSheet: View {
                             officeTier: engine.state.company.officeTier,
                             cash: engine.state.company.cash,
                             opsActive: engine.state.hasDepartment(.ops),
-                            balance: engine.balance
+                            balance: engine.balance,
+                            // MARK: K6 (home and rooms)
+                            roomBreak: roomBreak(for: amenity)
+                            // MARK: end K6
                         ) {
                             shell.toasts.send(
                                 .buildAmenity(amenity),
@@ -64,8 +78,104 @@ struct AmenitiesSheet: View {
         }
         // Opening day: a success haptic when a new amenity lands.
         .sensoryFeedback(.success, trigger: engine.state.amenities.count)
+        // MARK: K6 (home and rooms)
+        .task(id: engine.state.day) {
+            breakPreview = RoomBreakPreview.make(engine: engine)
+        }
+        // MARK: end K6
+    }
+
+    // MARK: K6 (home and rooms)
+
+    /// The break row for a built game room, cafeteria or gym; `nil` for
+    /// the shuttle and anything not built.
+    private func roomBreak(for amenity: Amenity) -> AmenityBreakRow? {
+        guard GameState.breakAmenities.contains(amenity), engine.state.hasAmenity(amenity) else { return nil }
+        let config = engine.balance.home
+        var parts = ["everyone +\(Int(config.breakMorale.rounded())) morale"]
+        if amenity == .gym { parts.append("+\(Int(config.breakGymEnergy.rounded())) your energy") }
+        parts.append("a day's work on every build ×\(String(format: "%g", config.breakDayFactor))")
+        return AmenityBreakRow(
+            title: "Call a break · " + parts.joined(separator: " · "),
+            preview: breakPreview?.line,
+            blocker: engine.state.roomBreakBlocker(amenity, balance: engine.balance),
+            call: { callBreak(amenity) }
+        )
+    }
+
+    private func callBreak(_ amenity: Amenity) {
+        let day = engine.state.day
+        engine.send(.callBreak(amenity: amenity))
+        guard engine.state.lastBreakDay == day else {
+            Haptics.warning()
+            shell.toasts.show(
+                engine.state.roomBreakBlocker(amenity, balance: engine.balance) ?? "No break today.",
+                icon: "hand.raised.fill",
+                tint: Theme.warning,
+                severity: .notable
+            )
+            return
+        }
+        Haptics.commit()
+        shell.toasts.show(
+            "Break in the \(amenity.displayName.lowercased()). Everyone's a little happier; tomorrow's builds go slower.",
+            icon: amenity.systemImage,
+            tint: Theme.accent
+        )
+    }
+    // MARK: end K6
+}
+
+// MARK: K6 (home and rooms)
+
+/// What a break would do to the Now card's sentence tomorrow: one day of
+/// the real reducer on two copies of the state, one with the break and one
+/// without. The copies are thrown away and nothing is sent — the preview
+/// is the same arithmetic the next tick will do, so it cannot promise what
+/// the day will not deliver.
+struct RoomBreakPreview: Equatable {
+    let productName: String
+    let without: String
+    let with: String
+
+    var line: String {
+        without == with
+            ? "\(productName): \(without) either way"
+            : "\(productName): \(without) → with a break, \(with.prefix(1).lowercased() + with.dropFirst())"
+    }
+
+    @MainActor
+    static func make(engine: GameEngine) -> RoomBreakPreview? {
+        let state = engine.state
+        guard let product = state.productInDevelopment,
+              let amenity = GameState.breakAmenities.first(where: {
+                  state.roomBreakBlocker($0, balance: engine.balance) == nil
+              })
+        else { return nil }
+        var plain = state
+        var broke = state
+        Reducer.apply(.callBreak(amenity: amenity), to: &broke, balance: engine.balance, content: engine.content)
+        guard broke.lastBreakDay == state.day else { return nil }
+        Reducer.tick(&plain, balance: engine.balance, content: engine.content)
+        Reducer.tick(&broke, balance: engine.balance, content: engine.content)
+        let without = plain.buildETA(productID: product.id, balance: engine.balance, content: engine.content)
+        let with = broke.buildETA(productID: product.id, balance: engine.balance, content: engine.content)
+        return RoomBreakPreview(
+            productName: product.name,
+            without: NowBuildETA.sentence(without),
+            with: NowBuildETA.sentence(with)
+        )
     }
 }
+
+/// The break under a built game room, cafeteria or gym.
+private struct AmenityBreakRow {
+    let title: String
+    let preview: String?
+    let blocker: String?
+    let call: () -> Void
+}
+// MARK: end K6
 
 // MARK: - Amenity card
 
@@ -83,6 +193,9 @@ private struct AmenityCard: View {
     let cash: Int
     let opsActive: Bool
     let balance: BalanceConfig
+    // MARK: K6 (home and rooms)
+    let roomBreak: AmenityBreakRow?
+    // MARK: end K6
     let build: () -> Void
 
     private var tierLocked: Bool { officeTier.rank < minTier.rank }
@@ -142,6 +255,32 @@ private struct AmenityCard: View {
                     .monospacedDigit()
                     .foregroundStyle(.tertiary)
             }
+
+            // MARK: K6 (home and rooms)
+            if let roomBreak {
+                Divider()
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Button(action: roomBreak.call) {
+                        Text(roomBreak.title)
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(PixelButtonStyle(fill: Theme.pixelPaper))
+                    .disabled(roomBreak.blocker != nil)
+                    .opacity(roomBreak.blocker == nil ? 1 : 0.55)
+                    Text(roomBreak.blocker ?? roomBreak.preview ?? "Nothing in development: the break costs no ship date.")
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(roomBreak.blocker == nil ? Color.secondary : Theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Once a week.")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .accessibilityElement(children: .combine)
+            }
+            // MARK: end K6
         }
         .cardStyle()
     }

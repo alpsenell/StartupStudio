@@ -16,12 +16,25 @@ struct EveningPips: View {
     var compact = false
 
     private var total: Int? {
-        engine.balance.life.evenings(for: engine.state.life.schedule)
+        // MARK: K6 (home and rooms) — a far commute's evening comes off the row
+        engine.balance.life.evenings(for: engine.state.life.schedule).map { $0 - commuteLost }
+        // MARK: end K6
     }
 
     private var left: Int? {
         engine.state.eveningsLeftThisWeek(engine.balance)
     }
+
+    // MARK: K6 (home and rooms)
+    /// Evenings the commute takes this week; 0 with no home district.
+    private var commuteLost: Int {
+        engine.state.homeCommute(balance: engine.balance)?.eveningsLost ?? 0
+    }
+
+    private var countText: String {
+        commuteLost > 0 ? "\(left ?? 0) of \(total ?? 0) left · −\(commuteLost) commute" : "\(left ?? 0) of \(total ?? 0) left"
+    }
+    // MARK: end K6
 
     var body: some View {
         if let total, let left {
@@ -39,7 +52,7 @@ struct EveningPips: View {
                             .frame(width: 10, height: 10)
                     }
                 }
-                Text("\(left) of \(total) left")
+                Text(countText) // K6: "· −1 commute" once a far home eats one
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(left == 0 ? Theme.warning : .secondary)
                     .contentTransition(.numericText())

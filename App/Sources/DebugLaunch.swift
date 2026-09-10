@@ -1584,6 +1584,30 @@ extension DebugLaunch {
     // MARK: K5 (hand over the keys)
     // MARK: end K5
     // MARK: K6 (home and rooms)
+    /// K6's launch flags, applied once the Home card appears. Each sends the
+    /// real action, so a refused one (already there, on cooldown) is a
+    /// no-op and a relaunch is harmless:
+    /// - `-autoK6Home <district>`: `.moveHome` there (wallet and evening paid);
+    /// - `-autoK6Holiday`: `.planFamilyHoliday`;
+    /// - `-autoK6Break <amenity>`: `.callBreak` in it.
+    /// The routes are read as strings by the cards themselves:
+    /// `-autoRoute k6-move` (the move sheet), `k6-today` (the Today sheet),
+    /// `k6-break` (the amenities sheet from the office card). Debug only.
+    @MainActor
+    static func startK6(engine: GameEngine) {
+        #if DEBUG
+        let defaults = UserDefaults.standard
+        if let raw = defaults.string(forKey: "autoK6Home"), let district = DistrictID(rawValue: raw) {
+            _ = engine.send(.moveHome(district: district))
+        }
+        if ProcessInfo.processInfo.arguments.contains("-autoK6Holiday") {
+            _ = engine.send(.planFamilyHoliday)
+        }
+        if let raw = defaults.string(forKey: "autoK6Break"), let amenity = Amenity(rawValue: raw) {
+            _ = engine.send(.callBreak(amenity: amenity))
+        }
+        #endif
+    }
     // MARK: end K6
     // MARK: K7 (partner and diary)
     // MARK: end K7

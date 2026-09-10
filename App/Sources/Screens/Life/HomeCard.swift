@@ -40,6 +40,19 @@ struct HomeCard: View {
     #endif
     // MARK: end of Iteration 9 — L7
 
+    // MARK: K6 (home and rooms)
+    /// What a tap in the room opened (`HomeTapDestination`).
+    @State private var destination: HomeTapDestination?
+    /// The same-day activity a fixture stands for, asked before it is done.
+    @State private var instantAsk: InstantActivity?
+    #if DEBUG
+    /// `-autoRoute k6-move` opens the move sheet on launch.
+    @State private var showingMove = DebugLaunch.launchRoute == "k6-move"
+    #else
+    @State private var showingMove = false
+    #endif
+    // MARK: end K6
+
     var body: some View {
         let state = engine.state
         let life = state.life
@@ -64,7 +77,11 @@ struct HomeCard: View {
                     tier: tierStyle, occupants: occupants, activity: activity, mood: mood,
                     signals: signals,
                     decor: DecorPresentation.sceneDecor(life: life, tier: drawnTier),
-                    decorLabel: { DecorPresentation.spokenSlot($0, life: life, tier: drawnTier) }
+                    decorLabel: { DecorPresentation.spokenSlot($0, life: life, tier: drawnTier) },
+                    // MARK: K6 (home and rooms) — the room answers a tap
+                    onTapRegion: { handleTap($0) },
+                    accessibilityHint: { HomeTapDestination.hint(for: $0, state: engine.state) }
+                    // MARK: end K6
                 )
                 .frame(maxWidth: .infinity)
                 .accessibilityLabel(sceneAccessibilityLabel)
@@ -86,6 +103,16 @@ struct HomeCard: View {
                 AwayBanner(reason: life.awayReason, untilDay: life.awayUntilDay, day: state.day)
             }
 
+            // MARK: K6 (home and rooms) — where the home is, and what it costs
+            Divider()
+            HomeWhereRow(summary: whereSummary) {
+                showingMove = true
+            }
+            .sheet(isPresented: $showingMove) {
+                HomeMoveSheet(engine: engine)
+            }
+            // MARK: end K6
+
             Divider()
             HomeCityRow(district: engine.state.city.district) {
                 showingCityMap = true
@@ -99,7 +126,8 @@ struct HomeCard: View {
                 HomeUpgradeRow(
                     next: next,
                     upgradeCost: homeUpgradeCost(next, balance: engine.balance),
-                    weeklyRent: homeWeeklyRent(next, balance: engine.balance),
+                    // K6: the next home's rent in the district it will be in.
+                    weeklyRent: engine.state.homeWeeklyRent(in: life.homeDistrict, tier: next, balance: engine.balance),
                     wallet: life.wallet
                 ) {
                     confirmingUpgrade = true
@@ -127,18 +155,121 @@ struct HomeCard: View {
             Button("Stay", role: .cancel) {}
         } message: {
             if let next = life.home.next {
+                // K6: both rents in the home's district.
                 Text(
-                    "Rent goes from \(homeWeeklyRent(life.home, balance: engine.balance).money) to \(homeWeeklyRent(next, balance: engine.balance).money) a week, out of your own wallet."
+                    "Rent goes from \(engine.state.homeWeeklyRent(balance: engine.balance).money) to \(engine.state.homeWeeklyRent(in: life.homeDistrict, tier: next, balance: engine.balance).money) a week, out of your own wallet."
                 )
             }
         }
+        // MARK: K6 (home and rooms) — what a tap in the room opened
+        .sheet(item: $destination) { destination in
+            switch destination {
+            case .today:
+                TodaySheet(engine: engine)
+            case .people(let target):
+                PeopleMenuSheet(engine: engine, target: target)
+            case .work:
+                WorkScheduleSheet(engine: engine)
+            case .sabbatical:
+                HomeScreenSheet { SabbaticalScreen(engine: engine) }
+            case .family:
+                HomeScreenSheet { LifeCardPageView(engine: engine, page: .family) }
+            case .meters(let line):
+                HomeMetersSheet(engine: engine, line: line)
+            case .instant, .furnish, .city:
+                EmptyView()
+            }
+        }
+        .confirmationDialog(
+            instantAsk.map { "\($0.displayName) tonight?" } ?? "",
+            isPresented: Binding(
+                get: { instantAsk != nil },
+                set: { if !$0 { instantAsk = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: instantAsk
+        ) { activity in
+            if engine.state.instantActivityBlocker(activity, balance: engine.balance) == nil {
+                Button(instantButtonTitle(activity)) {
+                    shell.toasts.send(
+                        .doInstantActivity(activity),
+                        to: engine,
+                        rejected: "Not tonight — \(activity.displayName.lowercased()) is out of reach."
+                    )
+                }
+            }
+            Button("Not tonight", role: .cancel) {}
+        } message: { activity in
+            Text(instantMessage(activity))
+        }
+        .task { DebugLaunch.startK6(engine: engine) }
+        // MARK: end K6
     }
+
+    // MARK: K6 (home and rooms)
+
+    /// The scene says what was touched; `HomeTapDestination` says what it
+    /// means; this opens it.
+    private func handleTap(_ kind: HomeHitRegion.Kind) {
+        guard let target = HomeTapDestination.destination(for: kind, state: engine.state) else { return }
+        Haptics.tap()
+        switch target {
+        case .instant(let activity): instantAsk = activity
+        case .furnish: showingFurnish = true
+        case .city: showingCityMap = true
+        default: destination = target
+        }
+    }
+
+    /// "Cinema · $40 · −1 evening of 3": the price and the week on the button.
+    private func instantButtonTitle(_ activity: InstantActivity) -> String {
+        var parts = [activity.displayName]
+        if let def = engine.balance.instantLife.activity(activity), def.cost > 0 {
+            parts.append(def.cost.money)
+        }
+        if let total = engine.state.eveningsPerWeek(engine.balance) {
+            parts.append("−1 evening of \(total)")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    /// Why not, or what it does.
+    private func instantMessage(_ activity: InstantActivity) -> String {
+        if let blocker = engine.state.instantActivityBlocker(activity, balance: engine.balance) {
+            return blocker
+        }
+        guard let def = engine.balance.instantLife.activity(activity) else { return "" }
+        var parts: [String] = []
+        func term(_ value: Double, _ label: String) {
+            guard value != 0 else { return }
+            parts.append("\(value > 0 ? "+" : "")\(Int(value)) \(label)")
+        }
+        term(def.energy, "energy")
+        term(def.health, "health")
+        term(def.mood, "mood")
+        term(def.relationships, "social")
+        let left = engine.state.eveningsLeftThisWeek(engine.balance)
+        return parts.joined(separator: " · ")
+            + (left.map { " · \($0) evening\($0 == 1 ? "" : "s") left this week" } ?? "")
+    }
+
+    /// "Suburbs · $84/wk · far · −1 evening of 3".
+    private var whereSummary: String {
+        let state = engine.state
+        let rent = state.homeWeeklyRent(balance: engine.balance)
+        guard let district = state.life.homeDistrict,
+              let commute = state.homeCommute(balance: engine.balance)
+        else { return "No district · \(rent.money)/wk · pick one" }
+        return "\(district.displayName) · \(rent.money)/wk · \(commute.line)"
+    }
+    // MARK: end K6
 
     /// The meters the picture used to ignore: relationships, health and
     /// the wallet against next week's rent. Read, never changed.
     private var signals: HomeSignals {
         let life = engine.state.life
-        let rent = homeWeeklyRent(life.home, balance: engine.balance)
+        // K6: the rent where the founder actually lives.
+        let rent = engine.state.homeWeeklyRent(balance: engine.balance)
         return HomeSignals(
             relationshipsLow: life.family.stage != .single && life.meters.relationships < 35,
             healthLow: life.meters.health < 40,
@@ -404,6 +535,44 @@ private struct HomeTierPill: View {
         .accessibilityLabel("Home: \(tier.displayName)")
     }
 }
+
+// MARK: K6 (home and rooms)
+
+/// Where the founder lives: the district, the rent there and the commute,
+/// opening the move sheet with both prices on every district.
+private struct HomeWhereRow: View {
+    let summary: String
+    let open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Where you live")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(.primary)
+                    Text(summary)
+                        .font(.subheadline)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.pressableRow)
+        .accessibilityLabel("Where you live, \(summary)")
+        .accessibilityHint("Opens the districts, with the rent and the commute of each")
+    }
+}
+// MARK: end K6
 
 /// The city, from the home: district and home are one decision for the
 /// founder, and the map used to be reachable only from HQ's office card.

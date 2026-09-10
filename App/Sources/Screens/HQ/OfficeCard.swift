@@ -14,7 +14,15 @@ import TycoonEngine
 struct OfficeCard: View {
     let engine: GameEngine
 
+    // MARK: K6 (home and rooms) — `-autoRoute k6-break` opens the amenities on launch
+    #if DEBUG
+    @State private var showingAmenities = DebugLaunch.launchRoute == "k6-break"
+    #else
     @State private var showingAmenities = false
+    #endif
+    /// The morning papers need the session, like the HUD's date does.
+    @Environment(\.gameSession) private var session
+    // MARK: end K6
     @State private var showingCityMap = false
     @State private var confirmingUpgrade = false
     /// What a tap on the scene opened.
@@ -219,6 +227,9 @@ struct OfficeCard: View {
         // switching tabs first. Debug only.
         .task { DebugLaunch.startAutoSecret(engine: engine) }
         // MARK: end Iteration 11 — N5
+        // MARK: K6 (home and rooms) — `-autoK6Break` and friends, from HQ too
+        .task { DebugLaunch.startK6(engine: engine) }
+        // MARK: end K6
         .sheet(isPresented: $showingAmenities) {
             AmenitiesSheet(engine: engine)
         }
@@ -242,6 +253,23 @@ struct OfficeCard: View {
                 HiringSheet(engine: engine)
             case .work:
                 WorkScheduleSheet(engine: engine)
+            // MARK: K6 (home and rooms)
+            case .morningDesk:
+                if let session {
+                    MorningDeskSheet(
+                        session: session,
+                        onOpen: { route in
+                            self.destination = nil
+                            router?.go(route)
+                        },
+                        isAtFrontDoor: false,
+                        onClose: { self.destination = nil }
+                    )
+                }
+            case .city, .amenities:
+                // Opened as the cover and the sheet they already have.
+                EmptyView()
+            // MARK: end K6
             }
         }
     }
@@ -260,7 +288,13 @@ struct OfficeCard: View {
         }
         guard let target = OfficeTapDestination.destination(for: kind, state: engine.state) else { return }
         Haptics.tap()
-        destination = target
+        // MARK: K6 (home and rooms) — the window and the amenities open what they already opened
+        switch target {
+        case .city: showingCityMap = true
+        case .amenities: showingAmenities = true
+        default: destination = target
+        }
+        // MARK: end K6
         if !tapHintDismissed { dismissTapHint() }
     }
 
@@ -362,6 +396,9 @@ struct OfficeCard: View {
         )
         input.pressure = pressure
         input.pressed = pressedForPreview
+        // MARK: K6 (home and rooms) — the plants, the windows and the amenities answer a tap
+        input.roomRegions = true
+        // MARK: end K6
         return input
     }
 

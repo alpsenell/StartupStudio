@@ -2,11 +2,58 @@ import PixelKit
 import SwiftUI
 import TycoonEngine
 
+// MARK: K6 (home and rooms)
+/// Today's activities, on the Life tab: one row that opens the Today sheet.
+///
+/// Iteration 15 — A8 ("one home per thing"): the grid below used to be
+/// this card. It is now the sheet the founder's own figure opens in the
+/// home, and this row opens the same sheet, so the grid has one home and
+/// two doors. The row keeps the card's place and name in "This week".
+struct ActivitiesCard: View {
+    let engine: GameEngine
+
+    #if DEBUG
+    /// `-autoRoute k6-today` opens the sheet on launch.
+    @State private var showingToday = DebugLaunch.launchRoute == "k6-today"
+    #else
+    @State private var showingToday = false
+    #endif
+
+    var body: some View {
+        LifeRow(
+            title: "Today",
+            systemImage: "figure.walk.circle.fill",
+            value: summary
+        ) {
+            showingToday = true
+        }
+        .sheet(isPresented: $showingToday) {
+            TodaySheet(engine: engine)
+        }
+    }
+
+    /// The evenings left, and where else the grid opens from.
+    private var summary: String {
+        let state = engine.state
+        guard !state.life.isAway(day: state.day) else { return "You are away" }
+        guard let left = state.eveningsLeftThisWeek(engine.balance) else {
+            return "Tap yourself at home, too"
+        }
+        return left == 0
+            ? "No evenings left this week"
+            : "\(left) evening\(left == 1 ? "" : "s") left · or tap yourself at home"
+    }
+}
+// MARK: end K6
+
 /// Same-day life actions (BitLife-style): a two-column grid of instant
 /// activities plus the shop. Tapping an activity sends the action right
 /// away and plays its little pixel vignette; the engine owns every gate,
 /// this card mirrors them only to disable buttons with reasons.
-struct ActivitiesCard: View {
+///
+/// Iteration 15 — K6: the grid that was `ActivitiesCard`, now drawn in the
+/// Today sheet (`TodaySheet`).
+struct ActivitiesGrid: View {
     let engine: GameEngine
 
     @State private var playing: PlayingActivity?

@@ -33,6 +33,16 @@ struct DistrictDetailPanel: View {
                         .padding(.vertical, 2)
                         .background(Theme.accent.opacity(0.15), in: Capsule())
                 }
+                // MARK: K6 (home and rooms)
+                if district == state.life.homeDistrict {
+                    Label("Your home", systemImage: "house.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.positiveCash)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, 2)
+                        .background(Theme.positiveCash.opacity(0.15), in: Capsule())
+                }
+                // MARK: end K6
                 Spacer(minLength: 0)
             }
 
@@ -63,6 +73,16 @@ struct DistrictDetailPanel: View {
             }
 
             actionRow(isCurrent: isCurrent)
+
+            // MARK: K6 (home and rooms)
+            // The office's address is also the founder's commute: a move
+            // prints what it would do to the week before it is made.
+            Text(commuteLine(isCurrent: isCurrent))
+                .font(.caption)
+                .monospacedDigit()
+                .foregroundStyle(officeCommute?.eveningsLost ?? 0 > 0 ? Theme.warning : .secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            // MARK: end K6
         }
         .padding(Theme.Spacing.md)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
@@ -109,11 +129,33 @@ struct DistrictDetailPanel: View {
         case .buy:
             "The weekly rent stops, and the building becomes an asset you can sell later."
         case .relocate:
-            engine.state.city.ownership.isOwned
+            (engine.state.city.ownership.isOwned
                 ? "Your current office is sold for \(engine.state.city.propertyValue.money) first, and the team packs up."
-                : "The team packs up and rent becomes \(weeklyRent.money) a week."
+                : "The team packs up and rent becomes \(weeklyRent.money) a week.")
+                // MARK: K6 (home and rooms)
+                + " " + commuteLine(isCurrent: false)
+                // MARK: end K6
         }
     }
+
+    // MARK: K6 (home and rooms)
+
+    /// The founder's commute with the office in this district, or `nil`
+    /// while the home has no district (and so no commute).
+    private var officeCommute: HomeCommute? {
+        engine.state.commute(home: engine.state.life.homeDistrict, office: district, balance: engine.balance)
+    }
+
+    /// "Your commute: far · −1 evening of 3", the line the relocation
+    /// prints before it is made (and the current office prints as it is).
+    private func commuteLine(isCurrent: Bool) -> String {
+        guard let commute = officeCommute else {
+            return "Your commute: your home has no district yet, so none."
+        }
+        let lead = isCurrent ? "Your commute" : "Your commute from \(commute.home.displayName) if you move here"
+        return "\(lead): \(commute.line)."
+    }
+    // MARK: end K6
 
     private func commit(_ move: PropertyMove) {
         pendingMove = nil
