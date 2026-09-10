@@ -177,6 +177,11 @@ struct OfficeCard: View {
                     confirmingUpgrade = true
                 }
             }
+            // MARK: S2 (office downgrade)
+            // The move down beside the move up, and the amenities in
+            // storage since the last one (`OfficeDowngradeRow.swift`).
+            OfficeDowngradeSection(engine: engine)
+            // MARK: end S2
         }
         .cardStyle()
         // Moving day: the scene above re-renders with the new tier; add a

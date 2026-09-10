@@ -45,8 +45,11 @@ struct AmenitiesSheet: View {
                             opsActive: engine.state.hasDepartment(.ops),
                             balance: engine.balance,
                             // MARK: K6 (home and rooms)
-                            roomBreak: roomBreak(for: amenity)
+                            roomBreak: roomBreak(for: amenity),
                             // MARK: end K6
+                            // MARK: S2 (office downgrade)
+                            inStorage: engine.state.officeStoredAmenities.contains(amenity)
+                            // MARK: end S2
                         ) {
                             shell.toasts.send(
                                 .buildAmenity(amenity),
@@ -196,6 +199,10 @@ private struct AmenityCard: View {
     // MARK: K6 (home and rooms)
     let roomBreak: AmenityBreakRow?
     // MARK: end K6
+    // MARK: S2 (office downgrade)
+    /// Built, then boxed up by a move down: kept, dormant, back at its tier.
+    var inStorage = false
+    // MARK: end S2
     let build: () -> Void
 
     private var tierLocked: Bool { officeTier.rank < minTier.rank }
@@ -239,7 +246,12 @@ private struct AmenityCard: View {
             }
 
             Button(action: build) {
-                Label(isOwned ? "Built ✓" : "Build", systemImage: isOwned ? "checkmark" : "hammer.fill")
+                // MARK: S2 (office downgrade) — a stored amenity says so on the button
+                Label(
+                    isOwned ? "Built ✓" : inStorage ? "In storage" : "Build",
+                    systemImage: isOwned ? "checkmark" : inStorage ? "shippingbox.fill" : "hammer.fill"
+                )
+                // MARK: end S2
                     .font(.system(.headline, design: .rounded))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Theme.Spacing.xs)
@@ -307,6 +319,11 @@ private struct AmenityCard: View {
     /// Why Build is disabled — `nil` when it's tappable or already built.
     private var disabledReason: String? {
         if isOwned { return nil }
+        // MARK: S2 (office downgrade)
+        if inStorage {
+            return "In storage since the move down: no upkeep, no effect. It comes back out at the \(minTier.displayName), free"
+        }
+        // MARK: end S2
         if tierLocked { return "Needs the \(minTier.displayName)" }
         if !canAfford { return "Need \(shortfall.money) more" }
         return nil

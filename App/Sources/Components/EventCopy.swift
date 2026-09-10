@@ -1298,6 +1298,14 @@ struct EventCopy {
         case .diaryDateKept(_, let label, let day):
             ("calendar.badge.checkmark", "You kept the date: \(label). The launch party went on without you.", day, Theme.romance)
         // MARK: end K7
+        // MARK: S2 (office downgrade)
+        case .officeDowngraded(let tier, let day):
+            (
+                "shippingbox.fill",
+                "Moved down to the \(tier.displayName). The rent is smaller, and so, the team suspects, is the company.",
+                day, Theme.warning
+            )
+        // MARK: end S2
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13

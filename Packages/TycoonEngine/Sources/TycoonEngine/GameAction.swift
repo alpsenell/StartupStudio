@@ -717,6 +717,18 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// game sends it.
     case partnerDebugSeed(stage: String)
     // MARK: end K7
+    // MARK: S2 (office downgrade)
+    /// Move one office tier down: the rent difference saved every week,
+    /// an owned office sold at today's value, for a moving cost, a
+    /// quarter's morale drag and a reputation dent. Refused for the
+    /// reasons `GameState.officeDowngradeBlocker` names. No bot sends it.
+    case downgradeOffice
+    /// `-autoRoute s2-downgrade|s2-refused`: dresses the loaded save so the
+    /// move down is legal (`legal`) or leaves it as it is (`refused`), for
+    /// a screenshot (`OfficeDowngradeDebugSeed`). Applied only in debug
+    /// builds; nothing in the game sends it.
+    case officeDowngradeDebugSeed(scenario: String)
+    // MARK: end S2
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13

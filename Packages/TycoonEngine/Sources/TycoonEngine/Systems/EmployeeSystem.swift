@@ -273,6 +273,11 @@ enum EmployeeSystem {
         // point a week, capped. Exactly 0 while no sign stands.
         delta -= state.dealMoraleTargetDrag(balance: balance)
         // MARK: end K4
+        // MARK: S2 (office downgrade)
+        // A smaller office reads as a company shrinking, for a quarter.
+        // Exactly 0 on a run that never moved down.
+        delta -= state.officeDowngradeMoraleDrag(balance: balance)
+        // MARK: end S2
         return delta
     }
 

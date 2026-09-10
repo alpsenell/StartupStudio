@@ -117,6 +117,11 @@ enum FinanceSystem {
         )
         state.company.officeTier = next
         state.milestonesReached.insert(next.rawValue)
+        // MARK: S2 (office downgrade)
+        // What the last move down put into storage comes back out, if the
+        // new office can hold it. Nothing on a run that never moved down.
+        OfficeDowngradeSystem.unpackStorage(state: &state, balance: balance)
+        // MARK: end S2
         events.append(.officeUpgraded(tier: next, day: state.day))
         // A co-founder on $0 starts drawing pay the day the office can
         // afford them (WS-H). Nothing to do in a company without one.
