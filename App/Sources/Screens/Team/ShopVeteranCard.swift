@@ -33,6 +33,7 @@ struct ShopVeteranRow: View {
                 ShopVeteranCard(engine: engine, veteran: veteran, shop: shop, atCap: atCap, pending: $pending)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .shopDebugScrollTarget("veteran")
             .shopLeaveBoardsDialog(pending: $pending, companyName: engine.state.company.name) { item in
                 shop.buy(item)
             }

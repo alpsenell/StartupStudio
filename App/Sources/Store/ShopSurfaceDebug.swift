@@ -27,7 +27,38 @@ extension View {
     }
 }
 
+extension View {
+    /// DEBUG: on `-autoRoute <route>`, scroll the enclosing scroll view so
+    /// this surface is on screen — the simulator cannot be swiped from the
+    /// command line, and all three surfaces sit below the fold.
+    func shopDebugScrollTarget(_ route: String, when condition: Bool = true) -> some View {
+        #if DEBUG
+        background { ShopDebugScroller(route: route, condition: condition) }
+        #else
+        self
+        #endif
+    }
+}
+
 #if DEBUG
+private struct ShopDebugScroller: View {
+    let route: String
+    let condition: Bool
+    private static let anchor = "p3.shop.debugAnchor"
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            Color.clear
+                .id(Self.anchor)
+                .task {
+                    guard condition, DebugLaunch.autoRouteName == route else { return }
+                    try? await Task.sleep(for: .seconds(1.5))
+                    proxy.scrollTo(Self.anchor, anchor: .center)
+                }
+        }
+    }
+}
+
 enum ShopSurfaceDebug {
     static let routes: Set<String> = ["shop", "receiver", "veteran", "loftpack"]
 
@@ -54,6 +85,14 @@ enum ShopSurfaceDebug {
         guard let info = try? JSONDecoder().decode(GameOverInfo.self, from: Data(json.utf8)) else { return nil }
         state.gameOver = info
         state.speed = .paused
+        // `-autoShopGrants`: two purchases written in, for the biography's
+        // "Bought in" line. Drawn only; never saved.
+        if DebugLaunch.autoShopGrants {
+            state.purchases = PurchaseLog(grants: [
+                PurchaseGrant(transactionID: 1, kind: .cash(weeks: 4), day: max(0, state.day - 60), amount: 78_400),
+                PurchaseGrant(transactionID: 2, kind: .cash(weeks: 13), day: max(0, state.day - 20), amount: 254_000),
+            ])
+        }
         return GameEngine(state: state, balance: engine.balance, content: engine.content)
     }
 

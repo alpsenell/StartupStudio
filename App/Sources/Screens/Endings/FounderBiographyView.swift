@@ -516,6 +516,7 @@ struct FounderBiographyView: View {
                             .font(.caption.weight(.semibold))
                             .monospacedDigit()
                             .fixedSize(horizontal: false, vertical: true)
+                            .shopDebugScrollTarget("receiver", when: DebugLaunch.autoShopGrants)
                     }
                     // MARK: end P3
                 }

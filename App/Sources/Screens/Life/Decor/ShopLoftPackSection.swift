@@ -15,6 +15,7 @@ struct ShopLoftPackSection: View {
         if let shop = ShopSurfaceResolver.resolve(injected),
            !shop.owned.contains(ShopSurfaceItem.loftPack.productID) {
             section(shop)
+                .shopDebugScrollTarget("loftpack")
         }
     }
 

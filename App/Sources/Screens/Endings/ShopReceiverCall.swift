@@ -22,6 +22,7 @@ struct ShopReceiverCall: View {
            PurchaseRule.refusal(.secondChance, state: engine.state) == nil,
            let shop = ShopSurfaceResolver.resolve(injected) {
             panel(shop)
+                .shopDebugScrollTarget("receiver", when: !DebugLaunch.autoShopGrants)
                 .shopLeaveBoardsDialog(pending: $pending, companyName: engine.state.company.name) { item in
                     shop.buy(item)
                 }

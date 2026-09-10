@@ -1373,6 +1373,17 @@ extension DebugLaunch {
         return false
         #endif
     }
+
+    /// `-autoShopGrants`: with `-autoRoute receiver`, the scratch bankrupt
+    /// copy carries two cash grants, and the pass lands on the biography's
+    /// "Bought in" line instead of the receiver's call.
+    static var autoShopGrants: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-autoShopGrants")
+        #else
+        return false
+        #endif
+    }
     // MARK: end P3
     // MARK: U1 (ux: the first-hour fixes)
     // MARK: end U1
