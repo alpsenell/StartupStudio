@@ -32,7 +32,7 @@ its reason), plus:
 Committed at `scaffold-14`: marker regions `// MARK: V1|V2|V3` /
 `// MARK: end …` before every `// MARK: end of Iteration 13` line in the
 shared files, and one shared component contract: `CardView` gains a
-`style: CardStyle` parameter (`.primary`, the default, unchanged; `.row`;
+`weight: CardWeight` parameter (the theme already owns a `CardStyle` modifier) (`.primary`, the default, unchanged; `.row`;
 `.quiet`) whose two new cases render as `.primary` until V3 gives them
 their look. V1 and V2 may use the new styles from day one; the visuals
 land with V3.
