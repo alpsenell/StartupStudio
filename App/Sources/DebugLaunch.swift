@@ -331,7 +331,7 @@ extension Route {
         // MARK: K4 (deals and exits)
         // MARK: end K4
         // MARK: K5 (hand over the keys)
-        case "k5keys", "k5after": .lifeScore
+        case "k5keys", "k5after", "k5card", "k5shut": .lifeScore
         // MARK: end K5
         // MARK: K6 (home and rooms)
         // MARK: end K6
@@ -1600,7 +1600,16 @@ extension DebugLaunch {
         #endif
     }
 
-    static var preparesHandOver: Bool { opensHandOverSheet || handsOverOnLaunch }
+    static var preparesHandOver: Bool {
+        opensHandOverSheet || handsOverOnLaunch || autoRouteName == "k5card"
+    }
+
+    /// Every K5 pass lands scrolled to the Walking-away card, where the two
+    /// doors are; `k5shut` is the shipped fixture, unprepared, with the
+    /// door shut by its board.
+    static var k5ScrollsToWalkAway: Bool {
+        ["k5keys", "k5after", "k5card", "k5shut"].contains(autoRouteName ?? "")
+    }
 
     /// The fixture with its seated rounds bought out for nothing and its
     /// longest-serving person at bond 60 — the preparation K5's

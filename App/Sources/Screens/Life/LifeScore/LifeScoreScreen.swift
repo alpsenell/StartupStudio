@@ -13,10 +13,12 @@ struct LifeScoreScreen: View {
     let engine: GameEngine
 
     // MARK: K5 (hand over the keys)
-    @State private var handingOver = DebugLaunch.opensHandOverSheet
+    @State private var handingOver = false
     // MARK: end K5
 
     var body: some View {
+        // MARK: K5 (hand over the keys) — the reader is for the debug passes
+        ScrollViewReader { proxy in
         ScrollView {
             LifeScoreContent(
                 score: LifeScore.score(engine.state, balance: engine.balance),
@@ -38,6 +40,28 @@ struct LifeScoreScreen: View {
         // MARK: K5 (hand over the keys)
         .sheet(isPresented: $handingOver) {
             HandOverSheet(engine: engine) { handingOver = false }
+        }
+        .task {
+            // Screenshot passes only (`-autoRoute k5…`): the queue's
+            // sheets are answered from here, since the Life tab never
+            // builds HQ's root that starts it; the screen scrolls to the
+            // two doors; and the hand-over sheet opens once no question
+            // is up (a second sheet over the queue's is silently dropped).
+            guard DebugLaunch.k5ScrollsToWalkAway else { return }
+            DebugLaunch.startAutoAnswering(engine: engine)
+            for _ in 0..<60 {
+                try? await Task.sleep(for: .milliseconds(200))
+                proxy.scrollTo(LifeScoreContent.walkAwayAnchor, anchor: .bottom)
+                let asking = DecisionPrompt.pending(
+                    in: engine.state, content: engine.content, balance: engine.balance
+                ) != nil
+                if DebugLaunch.opensHandOverSheet, !asking, !handingOver {
+                    try? await Task.sleep(for: .milliseconds(400))
+                    handingOver = true
+                    return
+                }
+            }
+        }
         }
         // MARK: end K5
     }
@@ -112,8 +136,13 @@ struct LifeScoreContent: View {
             header
             breakdownCard
             walkAwayCard
+                .id(Self.walkAwayAnchor) // K5: the debug passes scroll here
         }
     }
+
+    // MARK: K5 (hand over the keys)
+    static let walkAwayAnchor = "k5.walkAway"
+    // MARK: end K5
 
     // MARK: - The number
 
