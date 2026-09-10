@@ -696,6 +696,16 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: V3 (ux: card weights, the Now card)
     // MARK: end V3
     // MARK: K1 (founder money)
+    /// The founder lent the company money from their wallet.
+    case founderMoneyLoanMade(amount: Int, day: Int)
+    /// Some of the director's loan came back — on demand, or out of a new
+    /// round before the cheque landed.
+    case founderMoneyLoanRepaid(amount: Int, fromRound: Bool, day: Int)
+    /// A dividend: what the company paid, what the founder took home, and
+    /// what the board added to its pressure for it.
+    case founderMoneyDividend(amount: Int, take: Int, boardPressure: Int, day: Int)
+    /// The founder answered the landlord.
+    case founderMoneyRescueAnswered(answer: FounderMoneyRescueAnswer, salary: Int, day: Int)
     // MARK: end K1
     // MARK: K2 (product lifecycle)
     // MARK: end K2
@@ -1580,6 +1590,11 @@ public struct GameState: Codable, Equatable, Sendable {
     public func companyValuation(balance: BalanceConfig) -> Int {
         let rivalBalance = balance.rivals
         var value = Double(company.cash - loanBalance)
+        // MARK: K1 (founder money)
+        // The director's loan is owed like the bank's: a liability, not
+        // equity. Exactly zero in a run where nobody lent.
+        value -= Double(economy.founderMoney.directorLoan)
+        // MARK: end K1
         for product in products {
             guard case .released(let info) = product.stage, !info.offMarket else { continue }
             let recent = info.weeklySales.suffix(4).reduce(0) { $0 + $1.revenue }

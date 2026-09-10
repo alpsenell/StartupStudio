@@ -2052,5 +2052,13 @@
     "veteranSkillSpread": 10.0,
     "veteranSalaryFactor": 1.4,
     "secondChanceReputationCost": 5.0
+  },
+  "founderMoney": {
+    "dividendRunwayWeeks": 8,
+    "dividendIntervalDays": 91,
+    "dividendBoardPressure": 10.0,
+    "dividendPayWeeks": 13,
+    "rescueStandingName": 4.0,
+    "rescueStandingDays": 364
   }
 }

@@ -96,10 +96,24 @@ extension GameState {
     /// for would undo the floor the debt spiral was deliberately given.
     /// A team resents a founder who helped themselves, not one the company
     /// had to rescue.
+    ///
+    /// Iteration 15 (K1): the exemption now covers only the rescue the
+    /// company *imposed* — the automatic one every bot run still gets. A
+    /// rescue the founder chose on the landlord's question
+    /// (`FounderMoneyState.rescueTakenDay`) is pay like any other, and a
+    /// dividend's take reads as pay for `dividendPayWeeks`.
     public func founderPayExcess(balance: BalanceConfig) -> Double {
         guard let median = teamMedianSalary, median > 0 else { return 0 }
-        guard economy.rescueSalary != life.founderSalary else { return 0 }
-        let ratio = Double(life.founderSalary) / Double(median)
+        // MARK: K1 (founder money)
+        guard economy.rescueSalary != life.founderSalary
+            || economy.founderMoney.rescueTakenDay != nil
+        else { return 0 }
+        // The household draw: the salary, then each thing that reads as
+        // pay beside it, one line apiece.
+        var pay = life.founderSalary
+        pay += founderMoneyDividendWeeklyPay(balance: balance)
+        // MARK: end K1
+        let ratio = Double(pay) / Double(median)
         return max(0, ratio - balance.economy.founderPayFairRatio)
     }
 

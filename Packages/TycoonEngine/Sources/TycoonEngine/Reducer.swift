@@ -1015,6 +1015,20 @@ public enum Reducer {
         // MARK: V3 (ux: card weights, the Now card)
         // MARK: end V3
         // MARK: K1 (founder money)
+        case let .lendToCompany(amount):
+            events = FounderMoneySystem.lend(amount: amount, state: &state)
+        case let .repayDirectorLoan(amount):
+            events = FounderMoneySystem.repay(amount: amount, state: &state)
+        case let .declareDividend(amount):
+            events = FounderMoneySystem.declareDividend(amount: amount, state: &state, balance: balance)
+        case let .answerRescue(answer):
+            events = FounderMoneySystem.answerRescue(answer, state: &state, balance: balance)
+        case let .founderMoneyDebugSeed(kind):
+            #if DEBUG
+            events = FounderMoneySystem.debugSeed(kind, state: &state, balance: balance)
+            #else
+            events = []
+            #endif
         // MARK: end K1
         // MARK: K2 (product lifecycle)
         // MARK: end K2

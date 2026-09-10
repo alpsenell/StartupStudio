@@ -35,6 +35,11 @@ public enum QueueKind: String, Codable, Equatable, Sendable, CaseIterable {
     case legalCase, hearing, cancellation
     // Iteration 12 merge — J3's price war, seated in J6's queue.
     case priceWar
+    // MARK: K1 (founder money)
+    /// The landlord's question: take the company's rescue, move down, or
+    /// sell something (armed runs only).
+    case rescue
+    // MARK: end K1
 }
 
 /// How the app answers a question: a sheet over whatever tab is open, or a
@@ -260,6 +265,24 @@ public enum QueueBoard {
                 surface: .room
             ))
         }
+        // MARK: K1 (founder money)
+        let founderMoney = state.economy.founderMoney
+        if let by = founderMoney.rescueRespondByDay {
+            entries.append(QueueEntry(
+                id: "rescue-\(by)",
+                kind: .rescue, severity: .critical,
+                title: founderMoney.rescueSelling
+                    ? "Sell something before the landlord calls"
+                    : "The landlord wants the arrears",
+                category: "money",
+                raisedDay: state.economy.evictionWarningDay, respondByDay: by,
+                defaultLine: founderMoney.rescueSelling
+                    ? "Counts only if your wallet is back above the line by then."
+                    : "Unanswered, you move somewhere cheaper.",
+                surface: founderMoney.rescueSelling ? .room : .sheet
+            ))
+        }
+        // MARK: end K1
         if let cancellation = state.fame.cancellation, cancellation.response == nil {
             entries.append(QueueEntry(
                 id: "cancellation-\(cancellation.raisedDay)",

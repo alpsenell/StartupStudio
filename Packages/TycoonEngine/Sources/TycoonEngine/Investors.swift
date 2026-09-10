@@ -582,7 +582,13 @@ extension GameState {
         // is the number it always read.
         let things = assetResaleValue(balance: balance)
         // MARK: end of Iteration 11 — N3
-        return life.wallet + things + Int(slice.rounded())
+        // MARK: K1 (founder money)
+        // What the company owes the founder is theirs (the valuation
+        // carries it as a liability), so lending moves the number by
+        // nothing. Zero when nobody lent.
+        let owed = economy.founderMoney.directorLoan
+        // MARK: end K1
+        return life.wallet + things + Int(slice.rounded()) + owed
     }
 
     /// Products currently on the market that bill monthly — the third IPO

@@ -1999,6 +1999,14 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: V3 (ux: card weights, the Now card)
     // MARK: end V3
     // MARK: K1 (founder money)
+
+    /// Iteration 15 — K1: the dividend's runway floor, interval, board
+    /// pressure and pay window, and the chosen rescue's mark on the name
+    /// (`BalanceConfig+FounderMoney.swift`). Inline default with the
+    /// shipped numbers, so `"founderMoney"` is an optional key; read only
+    /// behind an action the app sends or `doors.armed`.
+    public var founderMoney: FounderMoneyBalance = .default
+
     // MARK: end K1
     // MARK: K2 (product lifecycle)
     // MARK: end K2

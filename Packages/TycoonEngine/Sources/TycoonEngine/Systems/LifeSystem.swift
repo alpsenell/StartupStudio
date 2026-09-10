@@ -309,10 +309,27 @@ enum LifeSystem {
                 )
                 state.economy.rescueSalary = nil
             }
+            // MARK: K1 (founder money)
+            // Back above the line by the deadline: whatever the founder
+            // answered, the landlord's question is withdrawn with the
+            // warning. Only ever set in an armed run.
+            if state.economy.founderMoney.isRescueOpen {
+                state.economy.founderMoney.rescueRespondByDay = nil
+                state.economy.founderMoney.rescueSelling = false
+            }
+            // MARK: end K1
             return []
         }
         guard let warned = state.economy.evictionWarningDay else {
             state.economy.evictionWarningDay = day
+            // MARK: K1 (founder money)
+            // A person is playing (`doors.armed`, never raised by a bot):
+            // the warning arrives with a question on the queue, answered
+            // by the end of the grace period.
+            if state.doors.armed {
+                state.economy.founderMoney.rescueRespondByDay = day + max(1, economy.evictionGraceDays)
+            }
+            // MARK: end K1
             return [.evictionWarning(untilDay: day + economy.evictionGraceDays, day: day)]
         }
         // Re-checked every grace period, not once. The warning stands
@@ -325,6 +342,15 @@ enum LifeSystem {
         guard elapsed > 0, elapsed.isMultiple(of: max(1, economy.evictionGraceDays)) else {
             return []
         }
+        // MARK: K1 (founder money)
+        // In an armed run the rescue is the founder's choice, never the
+        // landlord's: the deadline moves them down if they did not answer,
+        // and asks again while the hole stands. Every bot run takes the
+        // automatic path below, exempt, exactly as before.
+        if state.doors.armed {
+            return FounderMoneySystem.rescueDeadline(&state, balance)
+        }
+        // MARK: end K1
 
         // The company bails them out if it can carry the salary — and the
         // salary is sized to *clear the hole*, not merely to cover the
@@ -332,15 +358,11 @@ enum LifeSystem {
         // not a rescue, it is a rounding error: it would take fifteen
         // years. This pays the weekly costs plus the overdraft amortised
         // over `evictionRecoveryWeeks`, capped at `founderSalaryMax`.
-        let rent = balance.life.home(state.life.home).weeklyRent
-        let weeklyCosts = livingCosts(state, balance)
-        let deficit = max(0, -state.life.wallet)
-        let amortised = weeklyCosts
-            + Int((Double(deficit) / Double(max(1, economy.evictionRecoveryWeeks))).rounded())
-        let rescue = min(
-            balance.life.founderSalaryMax,
-            max(state.life.founderSalary, rent * 2, amortised)
-        )
+        // MARK: K1 (founder money)
+        // The formula lifted into `evictionRescueSalary`, unchanged, so the
+        // chosen rescue offers the founder the same number.
+        let rescue = evictionRescueSalary(state, balance)
+        // MARK: end K1
         // Affordable means the company could carry it for a quarter on
         // today's balance, not merely make this week's payment.
         if state.company.cash >= rescue * GameState.daysPerWeek * 2,
@@ -355,6 +377,25 @@ enum LifeSystem {
         state.life.meters.apply(mood: -balance.life.breakupMoodPenalty / 2)
         return [.homeDowngraded(tier: cheaper, day: day)]
     }
+
+    // MARK: K1 (founder money)
+    /// The weekly salary a rescue pays: the weekly costs plus the
+    /// overdraft amortised over `evictionRecoveryWeeks`, never less than
+    /// twice the rent or the salary already paid, capped at
+    /// `founderSalaryMax`.
+    static func evictionRescueSalary(_ state: GameState, _ balance: BalanceConfig) -> Int {
+        let economy = balance.economy
+        let rent = balance.life.home(state.life.home).weeklyRent
+        let weeklyCosts = livingCosts(state, balance)
+        let deficit = max(0, -state.life.wallet)
+        let amortised = weeklyCosts
+            + Int((Double(deficit) / Double(max(1, economy.evictionRecoveryWeeks))).rounded())
+        return min(
+            balance.life.founderSalaryMax,
+            max(state.life.founderSalary, rent * 2, amortised)
+        )
+    }
+    // MARK: end K1
 
     /// What the founder's week costs them before they eat: rent and the
     /// children.

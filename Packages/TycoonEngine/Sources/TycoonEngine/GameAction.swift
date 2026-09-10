@@ -613,6 +613,20 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: V3 (ux: card weights, the Now card)
     // MARK: end V3
     // MARK: K1 (founder money)
+    /// Iteration 15 — K1: lend the company `amount` from the wallet. Owed
+    /// back on demand and repaid out of the next accepted round first.
+    /// Refused at stake 2 (no credit) and past what the wallet holds.
+    case lendToCompany(amount: Int)
+    /// Repay up to `amount` of the director's loan out of company cash.
+    case repayDirectorLoan(amount: Int)
+    /// Pay `amount` out to the cap table; the founder takes
+    /// `equityRemaining`% of it home. See `FounderMoneySystem`.
+    case declareDividend(amount: Int)
+    /// Answer the landlord's question (armed runs only).
+    case answerRescue(FounderMoneyRescueAnswer)
+    /// DEBUG only: `-autoFounderMoney <kind>` dresses a screenshot.
+    /// Ignored in a release build.
+    case founderMoneyDebugSeed(kind: String)
     // MARK: end K1
     // MARK: K2 (product lifecycle)
     // MARK: end K2

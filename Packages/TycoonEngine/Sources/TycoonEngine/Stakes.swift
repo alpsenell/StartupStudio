@@ -90,6 +90,12 @@ public enum StakeLadder {
             level >= 2
         case .setWorkPace(let pace):
             level >= 5 && pace == .crunch
+        // MARK: K1 (founder money)
+        // "No credit" covers the founder's own: at stake 2 the company
+        // lives on what it earns.
+        case .lendToCompany:
+            level >= 2
+        // MARK: end K1
         // MARK: P1 (purchases: engine)
         // "The bank won't lend, and neither will we." The veteran is not
         // money, so a stake leaves it alone.

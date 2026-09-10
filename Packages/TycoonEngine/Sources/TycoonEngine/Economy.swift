@@ -174,6 +174,15 @@ public struct EconomyState: Codable, Equatable, Sendable {
 
     // MARK: end M3
 
+    // MARK: K1 (founder money)
+
+    /// The director's loan, the last dividend and the landlord's question
+    /// (`FounderMoney.swift`). `.empty` for every run that never lent,
+    /// paid out or was asked, and encoded only when it is not.
+    public var founderMoney: FounderMoneyState
+
+    // MARK: end K1
+
     public init(
         workPace: WorkPace = .normal,
         pendingResignation: PendingResignation? = nil,
@@ -192,8 +201,11 @@ public struct EconomyState: Codable, Equatable, Sendable {
         lastNonCriticalPauseDay: Int? = nil,
         pauseEvents: [GameEvent] = [],
         // MARK: Iteration 10 — M3 (incident room)
-        incidents: IncidentLog = .empty
+        incidents: IncidentLog = .empty,
         // MARK: end M3
+        // MARK: K1 (founder money)
+        founderMoney: FounderMoneyState = .empty
+        // MARK: end K1
     ) {
         self.workPace = workPace
         self.pendingResignation = pendingResignation
@@ -214,6 +226,9 @@ public struct EconomyState: Codable, Equatable, Sendable {
         // MARK: Iteration 10 — M3 (incident room)
         self.incidents = incidents
         // MARK: end M3
+        // MARK: K1 (founder money)
+        self.founderMoney = founderMoney
+        // MARK: end K1
     }
 
     /// A fresh company's economy state.
@@ -243,6 +258,9 @@ extension EconomyState {
         // MARK: Iteration 10 — M3 (incident room)
         case incidents
         // MARK: end M3
+        // MARK: K1 (founder money)
+        case founderMoney
+        // MARK: end K1
     }
 
     private struct RecognitionEntry: Codable {
@@ -285,8 +303,13 @@ extension EconomyState {
             ),
             pauseEvents: try container.decodeIfPresent([GameEvent].self, forKey: .pauseEvents) ?? [],
             // MARK: Iteration 10 — M3 (incident room)
-            incidents: try container.decodeIfPresent(IncidentLog.self, forKey: .incidents) ?? .empty
+            incidents: try container.decodeIfPresent(IncidentLog.self, forKey: .incidents) ?? .empty,
             // MARK: end M3
+            // MARK: K1 (founder money)
+            founderMoney: try container.decodeIfPresent(
+                FounderMoneyState.self, forKey: .founderMoney
+            ) ?? .empty
+            // MARK: end K1
         )
     }
 
@@ -320,5 +343,11 @@ extension EconomyState {
             try container.encode(incidents, forKey: .incidents)
         }
         // MARK: end M3
+        // MARK: K1 (founder money)
+        // Encoded only when the founder lent, paid out or was asked.
+        if !founderMoney.isEmpty {
+            try container.encode(founderMoney, forKey: .founderMoney)
+        }
+        // MARK: end K1
     }
 }
