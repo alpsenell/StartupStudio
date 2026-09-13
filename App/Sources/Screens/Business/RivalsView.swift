@@ -37,6 +37,13 @@ struct RivalsView: View {
             DealSignCard(engine: engine)
         }
         // MARK: end K4
+        // MARK: T7 (press and stakes)
+        // What you own of them, at the top once you own something.
+        if !engine.state.rivals.stakes.isEmpty {
+            BusinessSectionHeader(title: "Your stakes", systemImage: "chart.pie.fill")
+            RivalHoldingsCard(engine: engine)
+        }
+        // MARK: end T7
         if !contestedTopics.isEmpty {
             BusinessSectionHeader(title: "Head to head", systemImage: "chart.bar.xaxis")
             ForEach(contestedTopics, id: \.topicID) { entry in
@@ -58,13 +65,6 @@ struct RivalsView: View {
                 RivalCard(engine: engine, rival: rival)
             }
         }
-        // MARK: T7 (press and stakes)
-        // What you own of them, once you own something.
-        if !engine.state.rivals.stakes.isEmpty {
-            BusinessSectionHeader(title: "Your stakes", systemImage: "chart.pie.fill")
-            RivalHoldingsCard(engine: engine)
-        }
-        // MARK: end T7
         // MARK: K4 (deals and exits)
         if engine.state.rivals.listing == nil && !DealDebug.cardLeads {
             BusinessSectionHeader(title: "Sell the company", systemImage: "signpost.right.fill")

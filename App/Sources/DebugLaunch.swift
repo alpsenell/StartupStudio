@@ -1805,11 +1805,24 @@ extension DebugLaunch {
         case "t7-stake", "t7-holdings", "t7-finances": "stake"
         case "t7-standing": "standing"
         case "t7-launch": "launch"
+        case "t7-plain": "ship"
         case "t7-exclusive": "exclusive"
         case "t7-paper": "paper"
         default: nil
         }
         if let scenario { _ = engine.send(.pressStakeDebugSeed(scenario: scenario)) }
+        // The launch sheet for the build the seed shipped today: a debug
+        // send does not pass through the toast centre that opens it.
+        if ["t7-plain", "t7-launch", "t7-exclusive"].contains(route),
+           let shipped = engine.state.products.first(where: {
+               if case .released(let info) = $0.stage { return info.launchDay == engine.state.day }
+               return false
+           }) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                GameShell.shared.launchDayProductID = shipped.id
+            }
+        }
         #endif
     }
     // MARK: end T7

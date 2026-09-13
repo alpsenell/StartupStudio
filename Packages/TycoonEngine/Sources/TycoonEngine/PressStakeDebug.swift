@@ -8,7 +8,8 @@ import TycoonContent
 #if DEBUG
 enum PressStakeDebugSeed {
     /// - `standing`: the four outlets at warm, friendly, cool and cold.
-    /// - `launch`: `standing`, then the most finished shippable build ships.
+    /// - `ship`: the most finished shippable build ships, nothing dressed.
+    /// - `launch`: `standing`, then the same ship.
     /// - `exclusive`: `launch`, with the first outlet given the exclusive.
     /// - `paper`: `exclusive`, then a week ticks so the issue prints it.
     /// - `stake`: 25% of the strongest rival, cash topped up to afford it.
@@ -25,7 +26,7 @@ enum PressStakeDebugSeed {
                 state.company.pressStanding[outlet] = standing
             }
         }
-        if ["launch", "exclusive", "paper"].contains(scenario) {
+        if ["ship", "launch", "exclusive", "paper"].contains(scenario) {
             let shippable = state.products.compactMap { product -> (UUID, Double)? in
                 guard case .development(let dev) = product.stage,
                       let type = content.productType(product.typeID),
@@ -35,7 +36,7 @@ enum PressStakeDebugSeed {
             }
             if let pick = shippable.max(by: { $0.1 < $1.1 }) {
                 events += ProductSystem.ship(productID: pick.0, state: &state, balance: balance, content: content)
-                if scenario != "launch", let first = outlets.first {
+                if scenario == "exclusive" || scenario == "paper", let first = outlets.first {
                     events += PressSystem.grantExclusive(
                         productID: pick.0, outlet: first, state: &state, balance: balance
                     )

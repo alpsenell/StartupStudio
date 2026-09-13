@@ -191,7 +191,7 @@ struct RivalHoldingsCard: View {
     let engine: GameEngine
 
     var body: some View {
-        CardView("Your stakes", systemImage: "chart.pie.fill") {
+        CardView("What you hold", systemImage: "chart.pie.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 ForEach(engine.state.rivals.stakes, id: \.rivalID) { stake in
                     let name = engine.state.rivals.rival(id: stake.rivalID)?.name ?? "—"
@@ -237,5 +237,22 @@ struct RivalStakeAssetCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+}
+
+/// `-autoRoute t7-stake|t7-offer`: whether the profile lifts its stake rows
+/// into a sheet, so a headless screenshot can see them. Always false in a
+/// release build and on every other route.
+enum RivalStakeDebug {
+    static func liftsRows(for rival: Rival, state: GameState) -> Bool {
+        #if DEBUG
+        switch DebugLaunch.launchRoute {
+        case "t7-stake": return state.rivalStake(in: rival.id) != nil
+        case "t7-offer": return state.rivals.rivals.max { $0.strength < $1.strength }?.id == rival.id
+        default: return false
+        }
+        #else
+        return false
+        #endif
     }
 }

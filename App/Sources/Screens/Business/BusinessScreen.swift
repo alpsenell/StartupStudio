@@ -365,6 +365,11 @@ struct BusinessScreen: View {
                 }
             case "t7-paper":
                 router.go(.newspaper)
+            case "t7-offer":
+                section = .rivals
+                if let rival = engine.state.rivals.rivals.max(by: { $0.strength < $1.strength }) {
+                    path.append(RivalRoute(rivalID: rival.id))
+                }
             default:
                 section = .rivals
             }

@@ -491,6 +491,11 @@ enum ProductSystem {
                 )
             ))
         }
+        // MARK: T7 (press and stakes) — every standing drifts toward 0 with
+        // each launch, after the loop has read it. Returns on its first line
+        // with an empty map (every bot, every fixture); draws nothing.
+        PressSystem.driftAfterLaunch(&state, balance)
+        // MARK: end T7
 
         // Adoption ramp: a marketing-savvy team (and launch hype) reaches
         // the sales peak faster. The average is over the whole payroll —

@@ -534,6 +534,16 @@ private struct RivalDealCard: View {
                 // A piece of them beside the whole: 5, 10 or 25%, or selling
                 // what you hold.
                 RivalStakeRows(engine: engine, rival: rival)
+                    // `-autoRoute t7-stake|t7-offer`: the rows lifted into a
+                    // sheet for a screenshot (J3's precedent); never in play.
+                    .sheet(isPresented: .constant(RivalStakeDebug.liftsRows(for: rival, state: engine.state))) {
+                        ScrollView {
+                            RivalStakeRows(engine: engine, rival: rival)
+                                .padding(Theme.Spacing.lg)
+                        }
+                        .background(Theme.screenBackground)
+                        .presentationDetents([.medium])
+                    }
                 // MARK: end T7
             }
         }
