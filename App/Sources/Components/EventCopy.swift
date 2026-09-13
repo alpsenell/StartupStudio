@@ -1347,6 +1347,28 @@ struct EventCopy {
             )
         // MARK: end T1
         // MARK: T2 (the build)
+        // Named in the event: a shelved or scrapped build is no longer in
+        // `products`, so `productName` would say "a product".
+        case let .buildShelved(_, name, hypeLost, crew, day):
+            (
+                "archivebox.fill",
+                "\(name) is on the shelf. "
+                    + (hypeLost >= 1 ? "\(Int(hypeLost.rounded())) hype went with it" : "Nobody had heard of it yet")
+                    + (crew > 0 ? ", and \(crew) \(crew == 1 ? "person is" : "people are") idle" : ""),
+                day,
+                Theme.warning
+            )
+        case let .buildUnshelved(_, name, day):
+            ("tray.and.arrow.up.fill", "\(name) is off the shelf and back in a build slot", day, Theme.accent)
+        case let .productScrapped(_, name, _, banked, day):
+            (
+                "trash.fill",
+                banked > 0
+                    ? "\(name) is scrapped. The codebase kept \(banked) point\(banked == 1 ? "" : "s") of it"
+                    : "\(name) is scrapped. The codebase had better already",
+                day,
+                Theme.warning
+            )
         // MARK: end T2
         // MARK: T3 (people)
         case let .severancePaid(_, name, weeks, amount, day):

@@ -56,6 +56,12 @@ public struct DevProgress: Codable, Equatable, Sendable {
     /// balance no matter what `crunchDebtPerDay` is set to — see
     /// `CodebaseSystem`.
     public var debtAccrued: Double
+    // MARK: T2 (the build)
+    /// The day this build went into the drawer (`shelveBuild`); `nil` for
+    /// every build in a slot, and then not encoded. The weekly shelf pass
+    /// decays a shelved build's points; taking it off the shelf clears it.
+    public var shelvedDay: Int?
+    // MARK: end T2
 
     public init(
         designPts: Double,
@@ -66,8 +72,14 @@ public struct DevProgress: Codable, Equatable, Sendable {
         hype: Double,
         crewSkillDaySum: Double = 0,
         crewSkillDays: Int = 0,
-        debtAccrued: Double = 0
+        debtAccrued: Double = 0,
+        // MARK: T2 (the build)
+        shelvedDay: Int? = nil
+        // MARK: end T2
     ) {
+        // MARK: T2 (the build)
+        self.shelvedDay = shelvedDay
+        // MARK: end T2
         self.designPts = designPts
         self.codePts = codePts
         self.polishPts = polishPts
@@ -95,6 +107,10 @@ extension DevProgress {
         case designPts, codePts, polishPts, openBugs, focus, hype
         case crewSkillDaySum, crewSkillDays
         case debtAccrued
+        // MARK: T2 (the build) — optional, so the synthesized encode
+        // writes it only for a build on the shelf.
+        case shelvedDay
+        // MARK: end T2
     }
 
     public init(from decoder: any Decoder) throws {
@@ -108,7 +124,10 @@ extension DevProgress {
             hype: try container.decode(Double.self, forKey: .hype),
             crewSkillDaySum: try container.decodeIfPresent(Double.self, forKey: .crewSkillDaySum) ?? 0,
             crewSkillDays: try container.decodeIfPresent(Int.self, forKey: .crewSkillDays) ?? 0,
-            debtAccrued: try container.decodeIfPresent(Double.self, forKey: .debtAccrued) ?? 0
+            debtAccrued: try container.decodeIfPresent(Double.self, forKey: .debtAccrued) ?? 0,
+            // MARK: T2 (the build)
+            shelvedDay: try container.decodeIfPresent(Int.self, forKey: .shelvedDay)
+            // MARK: end T2
         )
     }
 }

@@ -40,6 +40,11 @@ struct ProductsListView: View {
                 }
             }
 
+            // MARK: T2 (the build) — the drawer: shelved builds, with the
+            // way back into a slot and the scrap. Nothing while it is empty.
+            ShelfCard(engine: engine)
+            // MARK: end T2
+
             if !releasedProducts.isEmpty {
                 ReleasedProductsCard(engine: engine, entries: releasedProducts)
             }
@@ -218,42 +223,12 @@ private struct InDevelopmentCard: View {
                 WarRoomEntryButton(engine: engine, product: product)
             }
         }
-        .confirmationDialog(
-            "Ship \(product.name)?",
-            isPresented: $confirmingShip,
-            titleVisibility: .visible
-        ) {
-            Button("Ship it") {
-                shell.toasts.send(
-                    .ship(productID: product.id),
-                    to: engine,
-                    rejected: "It is not ready to ship yet."
-                )
-                // MARK: T7 (press and stakes) — the exclusive, if one was picked.
-                ExclusivePick.shared.grantAfterShip(productID: product.id, engine: engine)
-                // MARK: end T7
-            }
-            // MARK: K2 (product lifecycle) — ship it as a v2.
-            ForEach(engine.state.lifecycleReplaceableParents(for: product.id)) { parent in
-                Button(LifecycleShip.replaceLabel(parent: parent, state: engine.state, balance: engine.balance)) {
-                    shell.toasts.send(
-                        .shipReplacing(productID: product.id, parentID: parent.id),
-                        to: engine,
-                        rejected: engine.state.lifecycleReplaceRefusal(
-                            productID: product.id, parentID: parent.id,
-                            balance: engine.balance, content: engine.content
-                        )?.sentence ?? "It is not ready to ship yet."
-                    )
-                }
-            }
-            // MARK: end K2
-            Button("Keep working", role: .cancel) {}
-        } message: {
-            // MARK: K2 (product lifecycle)
-            Text("Development stops for good and the press reviews whatever is finished."
-                + (LifecycleShip.replaceMessage(for: product.id, state: engine.state) ?? ""))
-            // MARK: end K2
+        // MARK: T2 (the build) — P1: the ship dialog became a sheet that
+        // names the price; K2's answers are its rows.
+        .sheet(isPresented: $confirmingShip) {
+            ShipSheet(engine: engine, productID: product.id)
         }
+        // MARK: end T2
     }
 }
 

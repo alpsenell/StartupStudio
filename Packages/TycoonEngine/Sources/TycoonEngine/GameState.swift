@@ -848,6 +848,14 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case holderDividendDesks(names: [String], day: Int)
     // MARK: end T1
     // MARK: T2 (the build)
+    /// O3: a build went into the drawer: `hypeLost` gone, `crew` people
+    /// idle. Named, because the product has left `products`.
+    case buildShelved(productID: UUID, name: String, hypeLost: Double, crew: Int, day: Int)
+    /// O3: a shelved build came back into a slot.
+    case buildUnshelved(productID: UUID, name: String, day: Int)
+    /// P2 (its `productShelved`, renamed because the drawer took the
+    /// word): a build scrapped, `banked` points kept by the type's codebase.
+    case productScrapped(productID: UUID, name: String, typeID: String, banked: Int, day: Int)
     // MARK: end T2
     // MARK: T3 (people)
     /// A plain firing paid `weeks` of notice: `amount` out of the company.
@@ -1564,6 +1572,10 @@ public struct GameState: Codable, Equatable, Sendable {
     public var joins: JoinsState? = nil
     // MARK: end T1
     // MARK: T2 (the build)
+    /// O3: builds in the drawer — out of `products`, so out of every slot
+    /// count and every in-flight read. Empty on every run nobody shelved
+    /// in, and then not encoded.
+    public var shelf: [Product] = []
     // MARK: end T2
     // MARK: T3 (people)
     // MARK: end T3
@@ -1950,6 +1962,7 @@ extension GameState {
         case joins
         // MARK: end T1
         // MARK: T2 (the build)
+        case shelf
         // MARK: end T2
         // MARK: T3 (people)
         // MARK: end T3
@@ -2106,6 +2119,7 @@ extension GameState {
         joins = try container.decodeIfPresent(JoinsState.self, forKey: .joins)
         // MARK: end T1
         // MARK: T2 (the build)
+        shelf = try container.decodeIfPresent([Product].self, forKey: .shelf) ?? []
         // MARK: end T2
         // MARK: T3 (people)
         // MARK: end T3
@@ -2283,6 +2297,7 @@ extension GameState {
         try container.encodeIfPresent(joins, forKey: .joins)
         // MARK: end T1
         // MARK: T2 (the build)
+        if !shelf.isEmpty { try container.encode(shelf, forKey: .shelf) }
         // MARK: end T2
         // MARK: T3 (people)
         // MARK: end T3

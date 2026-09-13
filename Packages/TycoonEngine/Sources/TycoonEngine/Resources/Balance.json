@@ -2249,5 +2249,14 @@
     "poachFactor": 0.5,
     "countOffMarket": false,
     "dividendPayout": 0.2
+  },
+  "build": {
+    "parentAcquisition": 0.5,
+    "parentChurn": 1.5,
+    "shelveCrewMorale": -3.0,
+    "shelveDecayPerQuarter": 0.1,
+    "scrapBankFraction": 0.5,
+    "scrapCrewMorale": -4.0,
+    "scrapLastDays": 7
   }
 }

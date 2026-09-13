@@ -118,6 +118,9 @@ struct ProductsScreen: View {
         // MARK: S3 (product names) — `-autoRoute s3-names…`.
         .productNameAutoRoute(engine: engine)
         // MARK: end S3
+        // MARK: T2 (the build) — `-autoRoute t2-…`.
+        .buildAutoRoute(engine: engine, router: router)
+        // MARK: end T2
     }
 
     /// Deep links into this tab: R&D picks the segment, a product id

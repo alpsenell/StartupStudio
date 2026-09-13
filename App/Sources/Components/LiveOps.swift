@@ -140,4 +140,24 @@ enum LiveOps {
     }
 
     // MARK: end K2
+
+    // MARK: T2 (the build)
+
+    /// P1: what naming this tier at launch costs, for the ship sheet's
+    /// row: free today, the clock it starts, and the topic-share weight
+    /// the tier carries in the fight with rivals (`shareWeight`) — the one
+    /// thing a premium launch above its pivot gives up.
+    static func launchTierLine(_ tier: PriceTier, balance: BalanceConfig, day: Int) -> String {
+        let weight = balance.economy.priceTier(tier).shareWeight
+        let share = weight == 1
+            ? "full weight in the topic's share"
+            : "×\(weight.formatted(.number.precision(.fractionLength(0...2)).locale(Theme.gameLocale))) weight in the topic's share"
+        guard tier != .standard else {
+            return "Free, and free to change later · \(share)"
+        }
+        let cooldown = balance.lifecycle.changeCooldownDays
+        return "Free today · the next change waits \(cooldown) days, to day \(day + cooldown) · \(share)"
+    }
+
+    // MARK: end T2
 }

@@ -2070,6 +2070,12 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end T1
     // MARK: T2 (the build)
+
+    /// Iteration 17 — T2: shelve, scrap and the declared v2's parent decay
+    /// (`BalanceConfig+Build.swift`). Inline default, so `"build"` is an
+    /// optional key; read only behind actions no bot sends.
+    public var build: BuildBalance = .default
+
     // MARK: end T2
     // MARK: T3 (people)
 

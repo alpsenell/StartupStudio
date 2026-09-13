@@ -366,7 +366,21 @@ struct NewProductFlow: View {
 
     private func start() {
         guard let typeID = selectedTypeID, let topicID = selectedTopicID, canStart else { return }
-        let action: GameAction = if let codebaseID = selectedCodebaseID {
+        // MARK: T2 (the build) — J4: a v2 picked from the chips (or "Build
+        // its v2") and still of its parent's type and topic is declared:
+        // shipped beside the parent, it makes the parent the old version.
+        let declaredParent = sequelParentID.flatMap { id in
+            engine.state.product(id: id).flatMap { $0.typeID == typeID && $0.topicID == topicID ? id : nil }
+        }
+        // MARK: end T2
+        let action: GameAction = if let declaredParent {
+            // MARK: T2 (the build)
+            .startProductAsV2(
+                typeID: typeID, topicID: topicID, name: trimmedName,
+                focus: focus, codebaseID: selectedCodebaseID, parentID: declaredParent
+            )
+            // MARK: end T2
+        } else if let codebaseID = selectedCodebaseID {
             .startProductOnCodebase(
                 typeID: typeID, topicID: topicID, name: trimmedName,
                 focus: focus, codebaseID: codebaseID

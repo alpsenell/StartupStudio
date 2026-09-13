@@ -44,7 +44,10 @@ extension ProductSystem {
         parentID: UUID,
         state: inout GameState,
         balance: BalanceConfig,
-        content: ContentCatalog
+        content: ContentCatalog,
+        // MARK: T2 (the build) — P1: the price named on the ship sheet.
+        tier: PriceTier = .standard
+        // MARK: end T2
     ) -> [GameEvent] {
         guard state.lifecycleReplaceRefusal(
                   productID: productID, parentID: parentID, balance: balance, content: content
@@ -54,7 +57,10 @@ extension ProductSystem {
 
         let shipped = ship(
             productID: productID, state: &state, balance: balance, content: content,
-            excludingFromSaturation: parentID
+            excludingFromSaturation: parentID,
+            // MARK: T2 (the build)
+            tier: tier
+            // MARK: end T2
         )
         guard !shipped.isEmpty,
               let index = state.products.firstIndex(where: { $0.id == productID }),

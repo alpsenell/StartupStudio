@@ -49,14 +49,33 @@ struct ProductDetailScreen: View {
                     }
                     // The ship confirmation anchors to the button: bring
                     // it on screen before `shipButton` opens the dialog.
-                    if LifecycleDebug.peek(.shipDialog) {
+                    if LifecycleDebug.peek(.shipDialog) || BuildDebug.peek(.shipSheet) {
                         try? await Task.sleep(for: .milliseconds(300))
                         proxy.scrollTo("k2-ship", anchor: .bottom)
                     }
+                    // MARK: T2 (the build) — `-autoRoute t2-card|t2-parent`.
+                    if BuildDebug.consume(.card) {
+                        try? await Task.sleep(for: .seconds(1))
+                        withAnimation { proxy.scrollTo("t2-build", anchor: .top) }
+                    }
+                    if BuildDebug.consume(.parentCard) {
+                        try? await Task.sleep(for: .seconds(1))
+                        withAnimation { proxy.scrollTo("k2-lifecycle", anchor: .top) }
+                    }
+                    // MARK: end T2
                     #endif
                 }
                 }
                 // MARK: end K2
+            } else if let shelved = engine.state.shelvedBuild(id: productID) {
+                // MARK: T2 (the build) — a shelved build has left
+                // `products`; say where it went.
+                ContentUnavailableView(
+                    "On the shelf",
+                    systemImage: "archivebox",
+                    description: Text("\(shelved.name) is in the drawer. Take it off the shelf from the Products list.")
+                )
+                // MARK: end T2
             } else {
                 ContentUnavailableView(
                     "Product not found",
@@ -156,6 +175,11 @@ struct ProductDetailScreen: View {
             // MARK: K2 (product lifecycle) — a scroll target for `k2-replace`.
             .id("k2-ship")
             // MARK: end K2
+
+        // MARK: T2 (the build) — the two ways out that are not shipping.
+        BuildWayOutCard(engine: engine, product: product)
+            .id("t2-build")
+        // MARK: end T2
     }
 
     /// M1: the product's board, read. `nil` for anything not in
@@ -224,48 +248,18 @@ struct ProductDetailScreen: View {
             if canShip { ExclusiveRow(engine: engine, productID: product.id) }
             // MARK: end T7
         }
-        .confirmationDialog(
-            "Ship \(product.name)?",
-            isPresented: $confirmingShip,
-            titleVisibility: .visible
-        ) {
-            Button("Ship it") {
-                shell.toasts.send(
-                    .ship(productID: product.id),
-                    to: engine,
-                    rejected: "It is not ready to ship yet."
-                )
-                // MARK: T7 (press and stakes) — the exclusive, if one was picked.
-                ExclusivePick.shared.grantAfterShip(productID: product.id, engine: engine)
-                // MARK: end T7
-            }
-            // MARK: K2 (product lifecycle) — the third answer: ship it as
-            // the v2 of a live product of the same kind, with what carries
-            // printed on the button.
-            ForEach(engine.state.lifecycleReplaceableParents(for: product.id)) { parent in
-                Button(LifecycleShip.replaceLabel(parent: parent, state: engine.state, balance: engine.balance)) {
-                    shell.toasts.send(
-                        .shipReplacing(productID: product.id, parentID: parent.id),
-                        to: engine,
-                        rejected: engine.state.lifecycleReplaceRefusal(
-                            productID: product.id, parentID: parent.id,
-                            balance: engine.balance, content: engine.content
-                        )?.sentence ?? "It is not ready to ship yet."
-                    )
-                }
-            }
-            // MARK: end K2
-            Button("Keep working", role: .cancel) {}
-        } message: {
-            // MARK: K2 (product lifecycle)
-            Text(shipPreview(progress: progress)
-                + (LifecycleShip.replaceMessage(for: product.id, state: engine.state) ?? ""))
-            // MARK: end K2
+        // MARK: T2 (the build) — P1: the ship dialog became a sheet that
+        // names the price; K2's answers (ship, replace, run both) are its
+        // rows, with the pool readout on its paper.
+        .sheet(isPresented: $confirmingShip) {
+            ShipSheet(engine: engine, productID: product.id, preview: shipPreview(progress: progress))
         }
+        // MARK: end T2
         // MARK: K2 (product lifecycle) — `-autoRoute k2-replace`.
         .task {
             #if DEBUG
-            if LifecycleDebug.consume(.shipDialog) {
+            // T2: `-autoRoute t2-ship|t2-v2` opens the same sheet.
+            if LifecycleDebug.consume(.shipDialog) || BuildDebug.consume(.shipSheet) {
                 try? await Task.sleep(for: .seconds(1))
                 confirmingShip = true
             }

@@ -63,13 +63,27 @@ struct LifecycleCard: View {
     private var history: [String] {
         var lines: [String] = []
         if let parentID = product.parentID, let parent = state.product(id: parentID) {
-            lines.append("The v2 of \(parent.name), which it retired the day it shipped.")
+            // MARK: T2 (the build) — a declared v2 shipped beside its
+            // parent retired nothing.
+            lines.append(LifecycleShip.replaced(parent: parent, by: product)
+                ? "The v2 of \(parent.name), which it retired the day it shipped."
+                : "The v2 of \(parent.name), shipped beside it.")
+            // MARK: end T2
         }
         if let sunset = info.sunsetDay {
-            let successor = state.products.first { $0.parentID == product.id }
+            // T2: only a successor that retired it on its launch day
+            // replaced it; a v2 that ran beside it did not.
+            let successor = state.products.first {
+                $0.parentID == product.id && LifecycleShip.replaced(parent: product, by: $0)
+            }
             lines.append(successor.map { "Replaced by \($0.name) on \(GameCalendar(day: sunset).longLabel)." }
                 ?? "Discontinued on \(GameCalendar(day: sunset).longLabel).")
         }
+        // MARK: T2 (the build) — J4: why the old version's line is falling.
+        if let line = BuildCopy.oldVersionLine(product: product, state: state, balance: engine.balance) {
+            lines.append(line)
+        }
+        // MARK: end T2
         return lines
     }
 
@@ -309,9 +323,20 @@ struct LifecycleLaunchRow: View {
     let parentID: UUID
 
     var body: some View {
+        // MARK: T2 (the build) — a declared v2 shipped beside its parent
+        // replaced nothing; its launch day says what running both costs.
+        if let parent = engine.state.product(id: parentID), !LifecycleShip.replaced(parent: parent, by: product) {
+            BesideParentLaunchRow(engine: engine, product: product, parent: parent)
+        } else {
+            replacesCard
+        }
+        // MARK: end T2
+    }
+
+    private var replacesCard: some View {
         let parentName = engine.state.product(id: parentID)?.name ?? "the old one"
         let carried = product.releaseInfo?.subscribers ?? 0
-        CardView("Replaces \(parentName)", systemImage: "arrow.triangle.2.circlepath.circle.fill") {
+        return CardView("Replaces \(parentName)", systemImage: "arrow.triangle.2.circlepath.circle.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text(product.releaseInfo?.isSubscription == true
                      ? "\(carried) subscriber\(carried == 1 ? "" : "s") came across on day one."
@@ -338,6 +363,18 @@ enum LifecycleShip {
             ? "Replace \(parent.name) · \(carry.subscribers) subscribers carry"
             : "Replace \(parent.name) · it retires today"
     }
+
+    // MARK: T2 (the build)
+    /// Whether `child` replaced `parent` (`shipReplacing` retires the
+    /// parent on the successor's launch day) rather than being a v2
+    /// declared on it and shipped beside it.
+    static func replaced(parent: Product, by child: Product) -> Bool {
+        guard let sunset = parent.releaseInfo?.sunsetDay, let launch = child.releaseInfo?.launchDay else {
+            return false
+        }
+        return sunset == launch
+    }
+    // MARK: end T2
 
     /// The sentence the dialog's message gains when a replacement is on
     /// offer.
