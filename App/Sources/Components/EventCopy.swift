@@ -1383,6 +1383,24 @@ struct EventCopy {
             ExpoEventPresenter.entry(for: event, state: state) ?? fallbackEntry(for: event)
         // MARK: end T5
         // MARK: T6 (away)
+        case .staffAway(let employeeID, let reason, let untilDay, let day):
+            (
+                "airplane.departure",
+                "\(state.employee(id: employeeID)?.name ?? "Someone") is \(reason.awayPhrase) until \(GameState.awayDateLabel(untilDay - 1)). The build goes on without them.",
+                day, Theme.accent
+            )
+        case .staffBack(let employeeID, let reason, let day):
+            (
+                "airplane.arrival",
+                "\(state.employee(id: employeeID)?.name ?? "Someone") is back from \(reason.backPhrase).",
+                day, Theme.accent
+            )
+        case .launchWhileAway(let productID, let day):
+            (
+                "suitcase.fill",
+                "\(state.product(id: productID)?.name ?? "The build") went out while you were away: the hype a little thinner, and no party.",
+                day, Theme.warning
+            )
         // MARK: end T6
         // MARK: T7 (press and stakes)
         // MARK: end T7

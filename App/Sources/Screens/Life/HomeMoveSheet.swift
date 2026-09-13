@@ -119,6 +119,9 @@ struct HomeMoveSheet: View {
                             ?? "no salary to measure it by"
                     )
                     column("Evenings", value: evenings.value, detail: evenings.detail)
+                    // MARK: T6 (away) — J6: the third column, what is a walk from this home.
+                    column("Nearby", value: nearby(quote).value, detail: nearby(quote).detail)
+                    // MARK: end T6
                 }
                 Text(quote.blocker ?? "Move for \(quote.moveCost.money) and an evening")
                     .font(.caption.weight(.semibold))
@@ -160,6 +163,15 @@ struct HomeMoveSheet: View {
         }
         return ("−\(commute.eveningsLost) evening of \(base)", "far: the commute eats it, every week")
     }
+
+    // MARK: T6 (away)
+    /// "the hacker house", and whatever else stands near that home.
+    private func nearby(_ quote: HomeMoveQuote) -> (value: String, detail: String) {
+        let parts = engine.state.homeNearby(quote.district, balance: engine.balance)
+        guard let first = parts.first else { return ("—", "") }
+        return (first, parts.dropFirst().joined(separator: " · "))
+    }
+    // MARK: end T6
 
     private func accessibilityLabel(
         _ quote: HomeMoveQuote, evenings: (value: String, detail: String)

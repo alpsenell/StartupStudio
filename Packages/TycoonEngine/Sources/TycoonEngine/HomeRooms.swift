@@ -45,6 +45,25 @@ public struct HomeMoveQuote: Equatable, Sendable, Identifiable {
     public var id: DistrictID { district }
 }
 
+// MARK: T6 (away)
+
+extension NetworkingVenue {
+    /// The district the city map draws this room in. Mirrors PixelKit's
+    /// `CityVenueStyle.district` (the engine never imports PixelKit; the
+    /// raw values are shared, and so is this table).
+    public var district: DistrictID {
+        switch self {
+        case .coworkingMixer: .oldTown
+        case .rooftopParty: .downtown
+        case .demoDay: .techPark
+        case .hackerHouse: .suburbs
+        case .conferenceBar: .midtown
+        }
+    }
+}
+
+// MARK: end T6
+
 /// The family holiday, priced for the household there is today.
 public struct FamilyHolidayQuote: Equatable, Sendable {
     /// Partner (0 or 1) plus children.
@@ -181,6 +200,32 @@ extension GameState {
         let perDay = 2 * balance.relationships.affectionDrift
         return Int((perDay * Double(balance.life.vacationDays)).rounded())
     }
+
+    // MARK: T6 (away) — J6: what stands near each home
+
+    /// What is a walk from a home in `district`: the networking room the
+    /// map draws there and, in `away.schoolDistrict`, the park a
+    /// school-age child walks past (+`schoolBondPerWeek` bond a week).
+    public func homeNearby(_ district: DistrictID, balance: BalanceConfig) -> [String] {
+        var parts: [String] = []
+        if let venue = NetworkingVenue.allCases.first(where: { $0.district == district }) {
+            parts.append("the \(venue.displayName.lowercased())")
+        }
+        if district.rawValue == balance.away.schoolDistrict {
+            let bond = Int(balance.away.schoolBondPerWeek.rounded())
+            parts.append("the park on the school run (a school-age child's bond +\(bond) a week)")
+        }
+        return parts
+    }
+
+    /// Whether tonight's networking room stands in the founder's home
+    /// district: "a walk from home".
+    public var tonightsRoomIsNearHome: Bool {
+        guard let home = life.homeDistrict, let event = networking.pendingEvent else { return false }
+        return event.venue.district == home
+    }
+
+    // MARK: end T6
 
     // MARK: - The break
 

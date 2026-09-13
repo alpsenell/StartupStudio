@@ -21,7 +21,10 @@ struct PoliciesCard: View {
                         policy: policy,
                         name: name(of: policy),
                         rule: rule(of: policy),
-                        state: engine.state
+                        state: engine.state,
+                        // MARK: T6 (away)
+                        detail: holidayLine(policy)
+                        // MARK: end T6
                     ) {
                         policyToReverse = policy
                     }
@@ -90,6 +93,25 @@ struct PoliciesCard: View {
         return text
     }
 
+    // MARK: T6 (away)
+    /// The holiday rule, in what it does this year: who is away next, or
+    /// what the strict answer costs everybody.
+    private func holidayLine(_ policy: StaffPolicy) -> String? {
+        guard policy.kind == .holidayRequest else { return nil }
+        let config = engine.balance.away
+        guard policy.choice == .supportive else {
+            return "Nobody away · morale target \(Int(config.strictMoraleTarget)) for everyone · burnout talks ×\(String(format: "%.1f", config.strictBurnoutWeight))"
+        }
+        let next = engine.state.upcomingHolidays(balance: engine.balance).map { holiday in
+            let first = holiday.name.split(separator: " ").first.map(String.init) ?? holiday.name
+            return "\(first) \(GameState.awayDateLabel(holiday.from))–\(GameState.awayDateLabel(holiday.to))"
+        }
+        var line = "Morale target +\(Int(config.holidayMoraleTarget)) for everyone"
+        if !next.isEmpty { line = "Next away: " + next.joined(separator: " · ") + " · " + line.lowercased() }
+        return line
+    }
+    // MARK: end T6
+
     private var dialogPresented: Binding<Bool> {
         Binding(
             get: { policyToReverse != nil },
@@ -105,6 +127,9 @@ private struct PolicyRow: View {
     let name: String
     let rule: String
     let state: GameState
+    // MARK: T6 (away)
+    var detail: String? = nil
+    // MARK: end T6
     let reverse: () -> Void
 
     var body: some View {
@@ -125,6 +150,15 @@ private struct PolicyRow: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
+                // MARK: T6 (away)
+                if let detail {
+                    Text(detail)
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                // MARK: end T6
             }
 
             Spacer(minLength: Theme.Spacing.sm)

@@ -275,8 +275,16 @@ enum SocialSystem {
         guard !eligible.isEmpty else { return fallback }
 
         let remote = state.narrative.hasFlag(StaffPolicyFlag.remoteFriendly)
+        // MARK: T6 (away)
+        let burnoutFactor = state.awayBurnoutWeightFactor(balance: balance)
+        // MARK: end T6
         func weight(_ def: StaffEventDef) -> Int {
             let base = max(1, def.weight)
+            // MARK: T6 (away) — the holiday rule made strict: burnout talks ×1.5 (set only by a doors-armed player).
+            if def.id == StaffEventKind.burnoutWarning.rawValue, let factor = burnoutFactor {
+                return max(1, Int((Double(base) * factor).rounded()))
+            }
+            // MARK: end T6
             guard remote, def.id == StaffEventKind.teamConflict.rawValue else { return base }
             return max(1, Int((Double(base) * balance.staff.remoteConflictWeightFactor).rounded()))
         }

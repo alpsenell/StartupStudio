@@ -46,6 +46,11 @@ struct EmployeeManageSheet: View {
                         fireSection(employee)
                     }
                     // MARK: end T3
+                    // MARK: T6 (away) — DEBUG `-autoRoute t6-course`: the course section first.
+                    if DebugLaunch.autoRouteName == "t6-course" {
+                        StaffCourseSection(engine: engine, employee: employee)
+                    }
+                    // MARK: end T6
                     headerSection(employee)
                     traitSection(employee)
                     moraleSection(employee)
@@ -78,6 +83,11 @@ struct EmployeeManageSheet: View {
                         fireSection(employee)
                     }
                     // MARK: end T3
+                    // MARK: T6 (away) — *Send them on a course* beside the workshop.
+                    if DebugLaunch.autoRouteName != "t6-course" {
+                        StaffCourseSection(engine: engine, employee: employee)
+                    }
+                    // MARK: end T6
                 }
                 .navigationTitle(employee.name)
                 .navigationBarTitleDisplayMode(.inline)

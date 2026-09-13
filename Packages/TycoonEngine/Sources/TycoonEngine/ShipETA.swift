@@ -60,6 +60,13 @@ extension GameState {
         )
     }
 
+    // MARK: T6 (away)
+    // Somebody away from the desk is not in `EmployeeSystem.gatherCrewOutput`'s
+    // crew, so every ETA here (and `BuildETA`) already excludes them at
+    // today's rate: the day named is the day if they stayed away. The
+    // build card prints who and until when with `awayCrewLine`.
+    // MARK: end T6
+
     /// Every in-development build's ETA, soonest first. Builds nobody is
     /// working on are left out.
     public func shipETAs(balance: BalanceConfig, content: ContentCatalog) -> [ShipETA] {

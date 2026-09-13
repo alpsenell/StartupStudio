@@ -202,7 +202,14 @@ struct TeamScreen: View {
                     // MARK: end T4
                     // MARK: T5 (expo and pre-orders)
                     // MARK: end T5
-                    // MARK: T6 (away)
+                    // MARK: T6 (away) — `-autoAway <scenario>` dresses the game once;
+                    // `-autoRoute t6-course` opens the manage sheet on somebody away.
+                    DebugLaunch.startAway(engine: engine)
+                    if DebugLaunch.autoRouteName == "t6-course" {
+                        employeeToManage = engine.state.employees.first { $0.awayReason != nil }
+                            ?? engine.state.employees.first { !$0.isFounder && $0.assignment != .idle }
+                        return
+                    }
                     // MARK: end T6
                     // MARK: T7 (press and stakes)
                     // MARK: end T7
@@ -619,6 +626,9 @@ private struct EmployeeRow: View {
                             PartnerChip()
                         }
                         // MARK: end K7
+                        // MARK: T6 (away)
+                        AwayChip(employee: employee, day: engine.state.day)
+                        // MARK: end T6
                     }
                     HStack(spacing: Theme.Spacing.xs + 2) {
                         Text("\(employee.weeklySalary.money)/wk")

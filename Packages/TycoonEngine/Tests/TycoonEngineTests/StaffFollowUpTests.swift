@@ -424,7 +424,7 @@ struct StaffFollowUpTests {
             #expect(!policy.name.isEmpty)
             flags += [policy.supportiveFlag, policy.strictFlag]
         }
-        #expect(flags.count == 12)
+        #expect(flags.count == 14)
         #expect(Set(flags).count == flags.count)
     }
 }

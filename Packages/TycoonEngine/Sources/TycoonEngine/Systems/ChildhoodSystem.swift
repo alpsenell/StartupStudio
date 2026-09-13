@@ -31,6 +31,9 @@ public enum ChildhoodSystem {
         events += harvestMemories(&state, config, content)
         events += endFinishedSummers(&state, config)
         decayBonds(&state, config)
+        // MARK: T6 (away) — J6: a home near the park, a weekly bond with a school-age child. Returns at once with no home district.
+        AwaySystem.schoolNearHome(&state, balance)
+        // MARK: end T6
         return events
     }
 

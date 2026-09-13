@@ -35,6 +35,14 @@ struct LadderCrewLine: View {
             .accessibilityElement(children: .combine)
             .task { LadderDebug.dressIfAsked(engine) }
         }
+        // MARK: T6 (away) — who on this build is away, and until when (the ETA already leaves them out).
+        if let away = engine.state.awayCrewLine(productID: productID) {
+            Label(away, systemImage: "airplane.departure")
+                .font(.caption)
+                .foregroundStyle(Theme.warning)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        // MARK: end T6
     }
 
     static func sentence(_ crew: LadderCrew) -> String {

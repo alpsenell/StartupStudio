@@ -766,5 +766,26 @@
       "followUpEventID": "spy_confront_rivalhack",
       "followUpDelayDays": 28
     }
+  },
+  {
+    "id": "holiday_request",
+    "title": "{name} wants two weeks off",
+    "body": "They have not taken a day since they started, and they said so the way people do when they have been counting. Whatever you tell them is what everybody hears next.",
+    "headline": "{name} asked what the holiday policy is.",
+    "weight": 4,
+    "requires": { "minTenureDays": 120, "minHeadcount": 3, "flagsAll": ["holiday_askable"] },
+    "policy": { "name": "Holidays", "supportiveFlag": "holidays_scheduled", "strictFlag": "holidays_when_quiet" },
+    "supportive": {
+      "label": "Ten days a year, take them",
+      "detail": "Everyone away 10 days a year from their start date · morale target +4 · loyalty +8 for everyone",
+      "morale": 6,
+      "loyalty": 8
+    },
+    "strict": {
+      "label": "Take them when it's quiet",
+      "detail": "Nobody away · morale −6 · as the rule: morale target −3, burnout talks ×1.5",
+      "morale": -6,
+      "loyalty": -6
+    }
   }
 ]

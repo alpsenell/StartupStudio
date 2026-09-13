@@ -709,6 +709,9 @@ extension DecisionPrompt {
         case .officeUnion: "figure.stand.line.dotted.figure.stand"
         case .officeCoup: "hand.raised.slash.fill"
         // MARK: end Iteration 11 — N5
+        // MARK: T6 (away)
+        case .holidayRequest: "beach.umbrella.fill"
+        // MARK: end T6
         }
     }
 
