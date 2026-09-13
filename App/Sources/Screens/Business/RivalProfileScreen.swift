@@ -530,6 +530,10 @@ private struct RivalDealCard: View {
                 // Paper beside cash, and what this studio bids for a sign.
                 DealProfileRows(engine: engine, rival: rival)
                 // MARK: end K4
+                // MARK: T4 (publisher) — the builds this studio publishes
+                // for you, each opening its sheet and its buy-out.
+                PublisherProfileRows(engine: engine, rival: rival)
+                // MARK: end T4
             }
         }
         .confirmationDialog(

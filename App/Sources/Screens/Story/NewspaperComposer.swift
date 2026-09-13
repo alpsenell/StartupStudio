@@ -338,6 +338,16 @@ struct NewspaperComposer {
         default: break
         }
         // MARK: end K2
+        // MARK: T4 (publisher)
+        // A studio publishing the company's build is the week's news; a
+        // clawback is the correction, a buy-out the footnote.
+        switch dated.event {
+        case .publisherSigned: return severity * 10 + strand + 20
+        case .publisherClawedBack: return severity * 10 + strand + 15
+        case .publisherBoughtOut: return severity * 10 + strand + 10
+        default: break
+        }
+        // MARK: end T4
         return severity * 10 + strand
     }
 

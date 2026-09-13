@@ -20,6 +20,10 @@ struct AnnounceCard: View {
         CardView("Ship date", systemImage: "megaphone.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 content
+                // MARK: T4 (publisher) — the Financing row beside the date:
+                // shop the build to a publisher, or the deal that stands.
+                PublisherRow(engine: engine, product: product)
+                // MARK: end T4
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

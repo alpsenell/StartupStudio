@@ -1313,6 +1313,16 @@ struct EventCopy {
         // MARK: T3 (people)
         // MARK: end T3
         // MARK: T4 (publisher)
+        case let .publisherSigned(productID, rivalID, advance, share, forDay, day):
+            (
+                "banknote.fill",
+                "\(rivalName(rivalID)) put up \(advance.money) for \(productName(productID)) and a date, \(AnnounceEventPresenter.dateLabel(forDay, today: day)). \(PublisherCopy.percent(share)) of it is theirs now.",
+                day, Theme.accent
+            )
+        case let .publisherClawedBack(productID, rivalID, amount, day):
+            ("calendar.badge.exclamationmark", "\(productName(productID)) missed its date, and \(rivalName(rivalID)) clawed back \(amount.money) of the advance.", day, Theme.warning)
+        case let .publisherBoughtOut(productID, rivalID, price, day):
+            ("arrow.uturn.backward.circle.fill", "Bought \(productName(productID)) back from \(rivalName(rivalID)) for \(price.money). The share stops here.", day, Theme.accent)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
         // MARK: end T5
