@@ -1213,6 +1213,11 @@ enum EmployeeSystem {
         events.append(contentsOf: NetworkingSystem.departed(
             employee, reason: .fired, state: &state, balance: balance
         ))
+        // MARK: T1 (exits and joins) — firing the partner is a fight.
+        if employee.id == state.life.family.partnerEmployeeID {
+            events.append(contentsOf: RelationshipSystem.partnerFired(employee, state: &state, balance: balance))
+        }
+        // MARK: end T1
         return events
     }
 

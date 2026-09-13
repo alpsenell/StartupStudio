@@ -730,6 +730,25 @@ public enum GameAction: Codable, Equatable, Sendable {
     case officeDowngradeDebugSeed(scenario: String)
     // MARK: end S2
     // MARK: T1 (exits and joins)
+    /// Sells to the pending buyout for cash with the unvested options
+    /// answered: `accelerate` vests them today and pays them from the
+    /// price; `false` lets them lapse home to the founder. The buyout sheet
+    /// sends it. `.acceptBuyout` — the bots' action, unchanged in shape and
+    /// bytes — is this with `accelerate: false`.
+    case exitAcceptBuyout(accelerate: Bool)
+    /// The earn-out, with the unvested answered the same way. During an
+    /// earn-out a lapsed holder leaves at the next weekly pass.
+    case exitAcceptBuyoutEarnOut(accelerate: Bool)
+    /// Sells up before the receiver, with the unvested answered.
+    case exitSellUp(accelerate: Bool)
+    /// The morning after the founder fired their partner with cause:
+    /// `packBag` ends the marriage (the settlement follows); `false` stays
+    /// and pays for it again. Ignored with no question open.
+    case answerPartnerFiring(packBag: Bool)
+    /// `-autoRoute t1-…`: dresses the loaded save for a screenshot
+    /// (`ExitsDebugSeed`). Applied only in debug builds; nothing in the
+    /// game sends it.
+    case exitsDebugSeed(scenario: String)
     // MARK: end T1
     // MARK: T2 (the build)
     // MARK: end T2

@@ -262,6 +262,11 @@ public enum Reducer {
         // MARK: K7 (partner and diary)
         // MARK: end K7
         // MARK: T1 (exits and joins)
+
+        // The holders whose options lapsed at an earn-out's signing leave
+        // at the next weekly pass. Returns on its first line with nobody
+        // leaving, which is every run that never signed one; draws nothing.
+        ExitSystem.run,
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2
@@ -1137,6 +1142,22 @@ public enum Reducer {
             #endif
         // MARK: end S2
         // MARK: T1 (exits and joins)
+        case let .exitAcceptBuyout(accelerate):
+            events = RivalSystem.acceptBuyout(state: &state, accelerate: accelerate, balance: balance)
+        case let .exitAcceptBuyoutEarnOut(accelerate):
+            events = InvestorSystem.acceptBuyoutEarnOut(state: &state, balance: balance, accelerate: accelerate)
+        case let .exitSellUp(accelerate):
+            events = RivalSystem.dealSellUp(state: &state, balance: balance, accelerate: accelerate)
+        case let .answerPartnerFiring(packBag):
+            events = RelationshipSystem.answerPartnerFiring(
+                packBag: packBag, state: &state, balance: balance, content: content
+            )
+        case let .exitsDebugSeed(scenario):
+            #if DEBUG
+            events = ExitsDebugSeed.apply(scenario: scenario, state: &state, balance: balance, content: content)
+            #else
+            events = []
+            #endif
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2

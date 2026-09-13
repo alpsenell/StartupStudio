@@ -47,6 +47,12 @@ enum RelationshipSystem {
         }
         DiaryRoadmap.resolveLaunchBirthday(&state, balance)
         // MARK: end K7
+        // MARK: T1 (exits and joins)
+        // The morning after the founder fired their partner: with cause,
+        // the rest of the affection and a bag by the door. Returns on its
+        // first line on every run that never did — every bot.
+        events.append(contentsOf: partnerFiringMorning(&state, balance, content))
+        // MARK: end T1
         return events
     }
 

@@ -219,6 +219,12 @@ extension GameState {
         }
         guard family.partnerAppearanceSeed != nil, family.partnerName != nil else { return "Not available" }
         if partnerOnPayroll != nil { return "Already on the payroll" }
+        // MARK: T1 (exits and joins)
+        if let firing = joins?.partnerFiring, firing.answer == .stay,
+           firing.employeeID == PartnerDerivation.personID(family) {
+            return "You fired them for cause. They said never again"
+        }
+        // MARK: end T1
         if life.isAway(day: day) { return "You're away" }
         if headcount >= balance.office(company.officeTier).headcountCap {
             return "No desk free — upgrade the office"
@@ -245,7 +251,13 @@ extension GameState {
         guard employee.id == life.family.partnerEmployeeID, !employee.isFounder,
               life.family.stage != .single
         else { return 0 }
+        // MARK: T1 (exits and joins)
+        // The founder's dividend landed in their own household: it reads
+        // as pay to the rest of the room, not to them. Zero with no
+        // dividend in its pay window.
         return (life.family.affection - 50) * balance.partner.moraleAffectionFactor
+            + founderMoneyDividendPenaltyShare(balance: balance)
+        // MARK: end T1
     }
 
     /// The crunch half of the office drift, for the card's "−0.6 a day:

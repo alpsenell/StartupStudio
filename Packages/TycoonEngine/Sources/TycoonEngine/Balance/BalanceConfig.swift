@@ -2061,6 +2061,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end S2
     // MARK: T1 (exits and joins)
+
+    /// Iteration 17 — T1: the exit's lapsed holders, the partner's firing
+    /// and the holders' dividend (`BalanceConfig+Exits.swift`). Inline
+    /// default, so `"exits"` is an optional key; read only behind a grant,
+    /// a director's loan, a partner on payroll or a holder's dividend line.
+    public var exits: ExitsBalance = .default
+
     // MARK: end T1
     // MARK: T2 (the build)
     // MARK: end T2

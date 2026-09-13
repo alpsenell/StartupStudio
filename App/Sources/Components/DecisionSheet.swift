@@ -64,6 +64,12 @@ struct DecisionPrompt: Identifiable {
     var dealPostponeLabel: String?
     var dealPostponeDetail: String?
     // MARK: end K4
+    // MARK: T1 (exits and joins)
+    /// The buyout and sell-up sheets' options row: the loan back first,
+    /// the vested paid, the unvested answered before the tap. `nil` with no
+    /// loan and no holder — every sheet it was before.
+    var exitRow: ExitOptionsRow?
+    // MARK: end T1
 }
 
 /// The reusable modal for `DecisionPrompt`s, presented at the app root so
@@ -162,6 +168,10 @@ struct DecisionSheetContent: View {
     // MARK: end U1
 
     @Environment(\.dynamicTypeSize) private var typeSize
+    // MARK: T1 (exits and joins)
+    /// The options row's answer: lapse until the founder taps Accelerate.
+    @State private var exitAccelerate = false
+    // MARK: end T1
 
     /// At accessibility sizes three buttons are most of the screen, and
     /// pinning them leaves the question a hundred points to live in. There
@@ -329,10 +339,15 @@ struct DecisionSheetContent: View {
 
     private var answers: some View {
         VStack(spacing: Theme.Spacing.sm) {
+            // MARK: T1 (exits and joins) — the unvested, answered before the tap.
+            if let row = prompt.exitRow {
+                ExitOptionsRowView(row: row, accelerate: $exitAccelerate)
+            }
+            // MARK: end T1
             ForEach(prompt.options) { option in
                 VStack(spacing: Theme.Spacing.xs) {
                     Button {
-                        choose(option)
+                        choose(prompt.exitRow?.answering(option, accelerate: exitAccelerate) ?? option) // T1
                     } label: {
                         optionLabel(option)
                     }
@@ -895,7 +910,9 @@ extension DecisionPrompt {
             action: .declineBuyout
         ))
 
-        return DecisionPrompt(
+        // MARK: T1 (exits and joins) — the prompt takes the options row below.
+        var prompt = DecisionPrompt(
+        // MARK: end T1
             id: "buyout-\(offer.rivalID.uuidString)-\(offer.respondByDay)",
             systemImage: strategic ? "envelope.badge.fill" : "tag.fill",
             tint: strategic ? Theme.accent : Theme.warning,
@@ -911,6 +928,14 @@ extension DecisionPrompt {
             kicker: strategic ? String(localized: "BUYOUT OFFER", comment: "Bitmap kicker: a rival wants to buy the company. Uppercase A-Z only") : String(localized: "DISTRESS BID", comment: "Bitmap kicker: a lowball offer while the company is failing. Uppercase A-Z only"),
             portraitSeed: rival?.appearanceSeed
         )
+        // MARK: T1 (exits and joins)
+        // The loan back first, the vested paid, the unvested answered
+        // before the tap. No row with no loan and no holder.
+        prompt.exitRow = ExitOptionsRow.make(
+            price: offer.amount, state: state, balance: balance, offersEarnOut: strategic
+        )
+        return prompt
+        // MARK: end T1
     }
 
     // MARK: J6 (queue)
@@ -989,7 +1014,14 @@ extension DecisionPrompt {
         // MARK: end K1
         // MARK: K4 (deals and exits)
         case .sellUp:
-            dealSellUpPrompt(state: state, balance: balance)
+            // MARK: T1 (exits and joins) — the sell-up sheet carries the options row too.
+            dealSellUpPrompt(state: state, balance: balance).map {
+                ExitOptionsRow.attach(
+                    to: $0, price: state.dealSellUpOffer(balance: balance)?.amount,
+                    state: state, balance: balance, offersEarnOut: false
+                )
+            }
+            // MARK: end T1
         // MARK: end K4
         case .dirtyMoneyOffer, .funeral, .legalCase, .hearing, .cancellation:
             nil

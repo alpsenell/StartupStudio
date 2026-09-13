@@ -1307,6 +1307,40 @@ struct EventCopy {
             )
         // MARK: end S2
         // MARK: T1 (exits and joins)
+        case .exitSettled(let kind, let loan, let paid, let holders, let lapsed, let accelerated, let day):
+            (
+                "banknote.fill",
+                ExitOptionsRow.settledLine(
+                    kind: kind, loan: loan, paid: paid, holders: holders, lapsed: lapsed, accelerated: accelerated
+                ),
+                day, Theme.accent
+            )
+        case .exitHolderLeft(_, let name, let day):
+            (
+                "figure.walk.departure",
+                "\(name.split(separator: " ").first.map(String.init) ?? name) cleared their desk: the options lapsed at the signing, and so did the reason to stay.",
+                day, Theme.warning
+            )
+        case .partnerFired(_, let name, let day):
+            (
+                "heart.slash.fill",
+                "You fired \(name.split(separator: " ").first.map(String.init) ?? name). You will hear about it at home.",
+                day, Theme.romance
+            )
+        case .partnerFiringMorning(let day):
+            ("suitcase.fill", "A bag by the door this morning. They want to know which of you is using it.", day, Theme.romance)
+        case .partnerFiringAnswered(let packBag, let day):
+            (
+                packBag ? "door.left.hand.open" : "sofa.fill",
+                packBag ? "You packed the bag." : "You stayed. The bag went back in the wardrobe.",
+                day, Theme.romance
+            )
+        case .holderDividendDesks(let names, let day):
+            (
+                "person.2.fill",
+                "The dividend reached \(ExitOptionsRow.names(names)) at their desks: morale and loyalty up this week.",
+                day, Theme.positiveCash
+            )
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2

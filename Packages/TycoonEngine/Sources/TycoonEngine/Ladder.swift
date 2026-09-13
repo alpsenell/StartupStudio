@@ -85,13 +85,21 @@ extension Employee {
     /// Points vested on `day`: nothing before the cliff, straight-line to
     /// the full grant at `vestDays`.
     public func vestedEquity(day: Int, balance: BalanceConfig) -> Double {
+        vestedEquity(day: day, grants: balance.ladder.grants)
+    }
+
+    // MARK: T1 (exits and joins)
+    /// The same vesting read from the grant block alone, so an exit the
+    /// reducer settles without the whole balance vests exactly as the
+    /// rest of the game does.
+    public func vestedEquity(day: Int, grants: BalanceConfig.GrantBalance) -> Double {
         guard grantedEquity > 0, let grantDay else { return 0 }
-        let grants = balance.ladder.grants
         let held = day - grantDay
         guard held >= grants.cliffDays else { return 0 }
         guard grants.vestDays > 0 else { return grantedEquity }
         return grantedEquity * min(1, Double(held) / Double(grants.vestDays))
     }
+    // MARK: end T1
 
     /// Points that would come back to the founder if they left on `day`.
     public func unvestedEquity(day: Int, balance: BalanceConfig) -> Double {
@@ -354,3 +362,85 @@ extension EmployeeSystem {
         )]
     }
 }
+
+// MARK: T1 (exits and joins)
+
+/// What an exit at `price` does with the options and the director's loan,
+/// before anybody taps: each holder's vested points and their share of the
+/// price, the unvested still in the room, and the loan that comes out of
+/// the price first. The buyout and sell-up sheets print it;
+/// `ExitSystem.settle` pays exactly it.
+///
+/// The founder's share never pays a holder: the granted points were taken
+/// off `equityRemaining` the day they were granted. What the founder
+/// decides is the unvested: accelerated, they vest today and are paid;
+/// lapsed, they come home and are paid to the founder.
+public struct LadderExitSplit: Equatable, Sendable {
+    public var price: Int
+    /// The director's loan, repaid to the wallet before anything else.
+    public var loan: Int
+    /// Every option holder, on payroll or an alumnus who kept what vested.
+    public var holders: [ExitHolderLine]
+    /// The founder's slice today.
+    public var founderPercent: Double
+
+    public var vestedPoints: Double { holders.reduce(0) { $0 + $1.vested } }
+    public var unvestedPoints: Double { holders.reduce(0) { $0 + $1.unvested } }
+    /// What the vested points are paid from the price.
+    public var vestedPaid: Int { share(vestedPoints) }
+    /// What accelerating costs the founder: the unvested points' share.
+    public var accelerationCost: Int { share(unvestedPoints) }
+    /// Holders on payroll with something unvested.
+    public var unvestedHolders: [ExitHolderLine] { holders.filter { $0.unvested > 0 } }
+    public var hasUnvested: Bool { unvestedPoints > 0.000_1 }
+    /// Nothing to settle: no loan, no holder.
+    public var isEmpty: Bool { loan <= 0 && holders.isEmpty }
+
+    /// The founder's share of the price: their slice, plus the unvested
+    /// points when those lapse and come home.
+    public func founderProceeds(accelerate: Bool) -> Int {
+        share(founderPercent + (accelerate ? 0 : unvestedPoints))
+    }
+
+    /// `points` of the price, in dollars.
+    public func share(_ points: Double) -> Int {
+        Int((Double(price) * points / 100).rounded())
+    }
+}
+
+extension GameState {
+    /// The exit split at `price`, read today (see `LadderExitSplit`).
+    public func ladderExitSplit(price: Int, balance: BalanceConfig) -> LadderExitSplit {
+        ladderExitSplit(price: price, grants: balance.ladder.grants)
+    }
+
+    /// The same from the grant block alone. Empty — no loan, no holder —
+    /// on every run nobody granted options in or lent to, which is every
+    /// bot and every fixture.
+    func ladderExitSplit(price: Int, grants: BalanceConfig.GrantBalance) -> LadderExitSplit {
+        var holders: [ExitHolderLine] = []
+        for grant in networking.grants where grant.reason == .options && grant.percent > 0 {
+            var vested = grant.percent
+            var unvested = 0.0
+            var onPayroll = false
+            if let employee = employees.first(where: { $0.id == grant.id && !$0.isFounder }),
+               employee.grantedEquity > 0 {
+                onPayroll = true
+                vested = employee.vestedEquity(day: day, grants: grants)
+                unvested = max(0, employee.grantedEquity - vested)
+            }
+            holders.append(ExitHolderLine(
+                id: grant.id, name: grant.name, vested: vested, unvested: unvested,
+                paid: Int((Double(price) * vested / 100).rounded()), onPayroll: onPayroll
+            ))
+        }
+        return LadderExitSplit(
+            price: price,
+            loan: max(0, economy.founderMoney.directorLoan),
+            holders: holders,
+            founderPercent: investors.equityRemaining
+        )
+    }
+}
+
+// MARK: end T1

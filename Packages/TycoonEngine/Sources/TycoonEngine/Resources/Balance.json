@@ -2155,5 +2155,16 @@
     "friendBondGain": 2.0,
     "founderBondGain": 2.0,
     "doorPoachWeight": 60.0
+  },
+  "exits": {
+    "lapsedNamePenalty": 2.0,
+    "lapsedEarnOutMisses": 1,
+    "partnerFiredAffection": 25.0,
+    "partnerFiredWithCauseAffection": 40.0,
+    "partnerFiringStayAffection": 10.0,
+    "partnerFiringRespondDays": 3,
+    "holderDividendMorale": 6.0,
+    "holderDividendLoyalty": 5.0,
+    "holderDividendCauseDays": 7
   }
 }
