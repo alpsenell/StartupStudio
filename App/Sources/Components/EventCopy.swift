@@ -1311,6 +1311,24 @@ struct EventCopy {
         // MARK: T2 (the build)
         // MARK: end T2
         // MARK: T3 (people)
+        case let .severancePaid(_, name, weeks, amount, day):
+            ("banknote", "Paid \(SeveranceCopy.first(name)) \(weeks) week\(weeks == 1 ? "" : "s") of notice: \(amount.money). The door stays open.", day, Theme.warning)
+        case let .dismissalClaimFiled(_, name, amount, hearingDay, day):
+            (
+                "building.columns.fill",
+                "\(SeveranceCopy.first(name)) filed for wrongful dismissal: \(amount.money) to settle, or the tribunal on \(GameState.dateLabel(forDay: hearingDay)).",
+                day, Theme.negativeCash
+            )
+        case let .dismissalClaimHeard(name, won, award, day):
+            won
+                ? ("checkmark.seal.fill", "The tribunal found for you against \(SeveranceCopy.first(name)).", day, Theme.accent)
+                : ("building.columns.fill", "The tribunal found for \(SeveranceCopy.first(name)): \(award.money).", day, Theme.negativeCash)
+        case let .laidOff(count, severance, moraleHit, _, _, day):
+            (
+                "person.2.slash",
+                "Let \(count) \(count == 1 ? "person" : "people") go: \(severance.money) of notice, and everyone left \(SeveranceCopy.points(moraleHit)) morale.",
+                day, Theme.warning
+            )
         // MARK: end T3
         // MARK: T4 (publisher)
         // MARK: end T4

@@ -11,6 +11,9 @@ struct EmployeeManageSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingFire = false
+    // MARK: T3 (people)
+    @State private var confirmingCause = false
+    // MARK: end T3
     @State private var confirmingCut = false
     /// The custom weekly salary the stepper holds, seeded from the
     /// employee's current pay the first time the sheet opens.
@@ -38,6 +41,11 @@ struct EmployeeManageSheet: View {
                         SeatingDeskSection(engine: engine, employee: employee)
                     }
                     // MARK: end S1
+                    // MARK: T3 (people) — DEBUG `-autoRoute t3-fire`: the letting-go section first.
+                    if SeveranceDebug.liftsFireSection {
+                        fireSection(employee)
+                    }
+                    // MARK: end T3
                     headerSection(employee)
                     traitSection(employee)
                     moraleSection(employee)
@@ -65,7 +73,11 @@ struct EmployeeManageSheet: View {
                     }
                     // MARK: end S1
                     trainingSection(employee)
-                    fireSection(employee)
+                    // MARK: T3 (people)
+                    if !SeveranceDebug.liftsFireSection {
+                        fireSection(employee)
+                    }
+                    // MARK: end T3
                 }
                 .navigationTitle(employee.name)
                 .navigationBarTitleDisplayMode(.inline)
@@ -605,32 +617,75 @@ struct EmployeeManageSheet: View {
         }
     }
 
+    // MARK: T3 (people)
+    /// Two priced answers: notice (the company pays, the door stays open)
+    /// or cause (free, and the room, the recruiters and maybe a lawyer see
+    /// it).
     private func fireSection(_ employee: Employee) -> some View {
-        Section {
+        let state = engine.state
+        let notice = state.severanceNotice(employeeID: employeeID, balance: engine.balance)
+        let blocker = state.severanceNoticeBlocker(employeeID: employeeID, balance: engine.balance)
+        let stake = employee.isCofounder
+            ? "They keep their \(cofounderStake)%. Firing a co-founder doesn't buy it back. "
+            : ""
+        let causeDetail = SeveranceCopy.causeDetail(state: state, employeeID: employeeID, balance: engine.balance)
+        return Section {
             Button(role: .destructive) {
                 confirmingFire = true
             } label: {
-                Label("Fire \(employee.name)", systemImage: "person.badge.minus")
+                VStack(alignment: .leading, spacing: 2) {
+                    Label(SeveranceCopy.noticeTitle(notice, name: employee.name), systemImage: "person.badge.minus")
+                        .monospacedDigit()
+                    Text(blocker ?? SeveranceCopy.noticeDetail(notice))
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(blocker == nil ? Color.secondary : Theme.warning)
+                }
             }
+            .disabled(blocker != nil)
             .confirmationDialog(
-                "Fire \(employee.name)?",
+                SeveranceCopy.noticeTitle(notice, name: employee.name) + "?",
                 isPresented: $confirmingFire,
                 titleVisibility: .visible
             ) {
-                Button("Fire \(employee.name)", role: .destructive) {
-                    engine.send(.fire(employeeID: employeeID))
+                Button(notice.map { $0.amount > 0 ? "Pay \($0.amount.money) and let them go" : "Let them go" } ?? "Let them go", role: .destructive) {
+                    engine.send(.fire(employeeID: employeeID, payNotice: true))
                     dismiss()
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text(
-                    employee.isCofounder
-                        ? "They keep their \(cofounderStake)%. Firing a co-founder doesn't buy it back."
-                        : "No severance in the garage era."
-                )
+                Text(stake + SeveranceCopy.noticeDetail(notice) + ".")
             }
+
+            Button(role: .destructive) {
+                confirmingCause = true
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Label(SeveranceCopy.causeTitle(name: employee.name), systemImage: "door.left.hand.open")
+                    Text(causeDetail)
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .confirmationDialog(
+                SeveranceCopy.causeTitle(name: employee.name) + "?",
+                isPresented: $confirmingCause,
+                titleVisibility: .visible
+            ) {
+                Button("Fire them, with cause", role: .destructive) {
+                    engine.send(.interact(target: .employee(employeeID), interaction: SeveranceCopy.causeInteractionID))
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(stake + causeDetail + ".")
+            }
+        } header: {
+            Text("Letting them go")
         }
     }
+    // MARK: end T3
 
     /// What a co-founder owns, as the balance wrote it: the slice
     /// `equityRemaining` gave up on day 0.

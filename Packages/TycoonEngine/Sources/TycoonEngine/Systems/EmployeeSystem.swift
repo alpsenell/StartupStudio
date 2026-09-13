@@ -1196,10 +1196,26 @@ enum EmployeeSystem {
 
     /// Removes an employee from payroll. Ignored for unknown ids and for
     /// the founder, who can never be fired. Their friends take it hard.
-    static func fire(employeeID: UUID, state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+    ///
+    /// T3: with `payNotice` (the player's plain firing) the company pays
+    /// their notice first and the firing is refused when the cash is
+    /// short. Without it — the default, and every caller before T3 — the
+    /// old free firing, byte for byte.
+    static func fire(
+        employeeID: UUID, payNotice: Bool = false, state: inout GameState, balance: BalanceConfig
+    ) -> [GameEvent] {
         guard let index = state.employees.firstIndex(where: { $0.id == employeeID }),
               !state.employees[index].isFounder
         else { return [] }
+
+        // MARK: T3 (people)
+        var severance: [GameEvent] = []
+        if payNotice {
+            guard state.severanceNoticeBlocker(employeeID: employeeID, balance: balance) == nil
+            else { return [] }
+            severance = SeveranceSystem.payNotice(employeeID: employeeID, state: &state, balance: balance)
+        }
+        // MARK: end T3
 
         let employee = state.employees.remove(at: index)
         state.economy.lastRecognitionDay[employeeID] = nil
@@ -1213,6 +1229,9 @@ enum EmployeeSystem {
         events.append(contentsOf: NetworkingSystem.departed(
             employee, reason: .fired, state: &state, balance: balance
         ))
+        // MARK: T3 (people)
+        events.append(contentsOf: severance)
+        // MARK: end T3
         return events
     }
 

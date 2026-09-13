@@ -620,6 +620,12 @@ enum CrimeSystem {
               !pending.isFounderSuing,
               let index = state.crime.cases.firstIndex(where: { $0.id == pending.id })
         else { return [] }
+        // MARK: T3 (people)
+        // A wrongful-dismissal claim is the company's to pay, company first.
+        if pending.kind == SeveranceSystem.claimCaseKind {
+            return SeveranceSystem.settleClaim(index: index, state: &state, balance: balance)
+        }
+        // MARK: end T3
         let price = pending.settlementPrice
         guard state.life.wallet + state.company.cash >= price else { return [] }
 
@@ -825,6 +831,15 @@ enum CrimeSystem {
             )
         }
         // MARK: end of Iteration 11, wave two — W2
+        // MARK: T3 (people)
+        // A wrongful-dismissal claim is civil: an award or nothing, never a
+        // conviction and never a sentence.
+        if legalCase.kind == SeveranceSystem.claimCaseKind {
+            return SeveranceSystem.deliverClaim(
+                standing: standing, index: index, state: &state, balance: balance
+            )
+        }
+        // MARK: end T3
 
         if legalCase.isFounderSuing {
             return deliverSuit(

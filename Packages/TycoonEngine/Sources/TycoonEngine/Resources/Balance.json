@@ -2155,5 +2155,17 @@
     "friendBondGain": 2.0,
     "founderBondGain": 2.0,
     "doorPoachWeight": 60.0
+  },
+  "severance": {
+    "maxWeeks": 4,
+    "weeksPerQuarterTenure": 1,
+    "causeMoraleAll": -4.0,
+    "claimChance": 0.1,
+    "claimMoraleOver": 50.0,
+    "claimWeeksPay": 8,
+    "claimLostFactor": 1.5,
+    "layoffMoralePerHead": -2.0,
+    "layoffMoraleCap": -10.0,
+    "layoffReputationPerThree": 1.0
   }
 }

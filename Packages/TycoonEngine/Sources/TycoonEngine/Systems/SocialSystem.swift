@@ -296,6 +296,12 @@ enum SocialSystem {
         for employee: Employee,
         state: GameState
     ) -> Bool {
+        // MARK: T3 (people)
+        // J5: a seated person whose skills now read a rung above their
+        // title asks for it whatever their tenure. False for everybody
+        // while no seat is set, which is every bot and fixture.
+        if def.id == "promotionDemand", state.lessonOutgrewLevel(employee) { return true }
+        // MARK: end T3
         guard let gate = def.requires else { return true }
         if !gate.anyTrait.isEmpty, !gate.anyTrait.contains(where: employee.traits.contains) {
             return false
@@ -529,6 +535,19 @@ enum SocialSystem {
     /// Queues a second act for one person into the narrative schedule,
     /// kept in the order `NarrativeSystem` keeps it (day, id, source) with
     /// the person as the last tie-breaker.
+    // MARK: T3 (people)
+    /// J5: a taught student who has just crossed their rung asks for the
+    /// title tomorrow, through the ordinary `promotionDemand` second act.
+    /// Once: an ask already on the schedule is not queued twice.
+    static func lessonAsksForPromotion(_ employeeID: UUID, state: inout GameState) {
+        let id = StaffEventKind.promotionDemand.rawValue
+        guard !state.narrative.scheduled.contains(where: {
+            $0.eventID == id && $0.employeeID == employeeID
+        }) else { return }
+        scheduleFollowUp(id, delay: 1, employeeID: employeeID, state: &state)
+    }
+    // MARK: end T3
+
     private static func scheduleFollowUp(
         _ eventID: String,
         delay: Int,

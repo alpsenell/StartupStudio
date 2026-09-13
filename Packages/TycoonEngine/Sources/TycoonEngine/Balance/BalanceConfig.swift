@@ -2065,6 +2065,14 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: T2 (the build)
     // MARK: end T2
     // MARK: T3 (people)
+
+    /// Iteration 17 — T3: notice, the with-cause claim and the layoff
+    /// (`BalanceConfig+Severance.swift`). Inline default with the shipped
+    /// numbers, so `"severance"` is an optional key; read only behind the
+    /// player's own taps (the fire's `payNotice`, the with-cause
+    /// interaction, `.layOff`), which no bot sends.
+    public var severance: SeveranceBalance = .default
+
     // MARK: end T3
     // MARK: T4 (publisher)
     // MARK: end T4

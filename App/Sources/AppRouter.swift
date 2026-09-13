@@ -259,6 +259,9 @@ enum Route: Hashable {
     // MARK: T2 (the build)
     // MARK: end T2
     // MARK: T3 (people)
+    /// DEBUG `-autoRoute t3-…`: the Team tab, dressed for the lane's
+    /// screenshots (the layoff sheet, the priced fire answers, the claim).
+    case severance
     // MARK: end T3
     // MARK: T4 (publisher)
     // MARK: end T4
@@ -391,6 +394,7 @@ enum Route: Hashable {
         // MARK: T2 (the build)
         // MARK: end T2
         // MARK: T3 (people)
+        case .severance: .team
         // MARK: end T3
         // MARK: T4 (publisher)
         // MARK: end T4

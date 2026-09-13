@@ -26,6 +26,9 @@ struct OfficeDowngradeSection: View {
             if let quote {
                 Divider()
                 OfficeDowngradeRow(quote: quote) { showingSheet = true }
+                // MARK: T3 (people) — "Let N people go first" opens the layoff sheet.
+                SeveranceDowngradeLink(engine: engine, quote: quote)
+                // MARK: end T3
             }
             if !stored.isEmpty {
                 Divider()
