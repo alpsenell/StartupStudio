@@ -284,10 +284,19 @@ enum ExpoDebugSeed {
         var show = state.expoDay(balance: balance)
         if state.day > show { show = Expo.day(year: state.year + 1, config: config) }
 
+        // The ticks' own T5 events come back with the seed's, so the log
+        // (and the paper) has them; the rest of what the clock did is
+        // dropped — this is a screenshot, not a play-through.
+        var ticked: [GameEvent] = []
         func runClock(to target: Int) {
             var budget = 800
             while state.day < target, state.gameOver == nil, budget > 0 {
-                _ = Reducer.tick(&state, balance: balance, content: content)
+                ticked += Reducer.tick(&state, balance: balance, content: content).filter {
+                    switch $0 {
+                    case .expoShown, .expoEmptyBooth: true
+                    default: false
+                    }
+                }
                 budget -= 1
             }
         }
@@ -316,7 +325,7 @@ enum ExpoDebugSeed {
             )
         }
         if steps.contains("shown") { runClock(to: show) }
-        return events
+        return events + ticked
     }
 }
 

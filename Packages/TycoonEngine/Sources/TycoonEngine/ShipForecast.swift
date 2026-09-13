@@ -293,8 +293,13 @@ extension GameState {
     /// peak — is the launch week alone. `nil` for anything not in
     /// development. A pure projection: it moves nothing and draws nothing.
     /// Pre-orders are sold off it.
+    ///
+    /// `quality` reads the launch at another score than today's forecast —
+    /// pre-orders pass the finished build's (`crewCeiling`), because that
+    /// is what they sell.
     public func launchWindowEstimate(
         productID: UUID,
+        quality: Double? = nil,
         balance: BalanceConfig,
         content: ContentCatalog
     ) -> LaunchWindowEstimate? {
@@ -304,7 +309,7 @@ extension GameState {
               let forecast = shipForecast(productID: productID, balance: balance, content: content)
         else { return nil }
         let economy = balance.economy
-        let score = Int(forecast.quality.rounded())
+        let score = Int((quality ?? forecast.quality).rounded())
         let qHat = Double(score) / 100
         let hype = dev.hype * dealLaunchHypeFactor(balance: balance)
         let hypeBoost = 1 + hype * balance.hypeLaunchCarryFraction / balance.salesHypeDivisor

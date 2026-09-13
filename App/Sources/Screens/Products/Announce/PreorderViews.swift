@@ -24,35 +24,34 @@ struct PreorderRow: View {
                 PreorderSheet(engine: engine, productID: product.id)
             }
             .onChange(of: product.announcedDay, initial: true) { _, _ in
-                if refusal == nil, PreorderRoute.takeSheetRequest(for: product.id) { showingSheet = true }
+                if refusal == nil || product.preorders != nil,
+                   PreorderRoute.takeSheetRequest(for: product.id) {
+                    showingSheet = true
+                }
+            }
+            .onChange(of: product.preorders != nil) { _, opened in
+                if opened, PreorderRoute.takeSheetRequest(for: product.id) { showingSheet = true }
             }
     }
 
     @ViewBuilder
     private var content: some View {
         if let book = product.preorders {
-            VStack(alignment: .leading, spacing: 2) {
-                Label(
-                    "\(book.units) pre-ordered · \(book.cash.money) taken \(AnnounceEventPresenter.dateLabel(book.openedDay, today: state.day))",
-                    systemImage: "cart.fill"
-                )
-                .font(.footnote.weight(.semibold))
-                if book.refundedUnits > 0 {
-                    Text("\(book.refundedUnits) refunded when the date slipped (\(book.refundedCash.money)).")
-                        .font(.caption)
-                        .foregroundStyle(Theme.warning)
+            Button {
+                showingSheet = true
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Label(
+                        "\(book.units) pre-ordered · \(book.cash.money) taken \(AnnounceEventPresenter.dateLabel(book.openedDay, today: state.day))",
+                        systemImage: "cart.fill"
+                    )
+                    .font(.footnote.weight(.semibold))
+                    PreorderStatusLines(engine: engine, product: product, book: book)
                 }
-                if book.outstanding > 0 {
-                    let voiding = product.slips + 1 >= Announce.voidAfterSlips
-                    let units = book.refundUnits(voiding: voiding, balance: engine.balance)
-                    Text(voiding
-                        ? "The next miss refunds the other \(units) (\(book.refundCash(units: units).money)) and costs reputation −\(ExpoCopy.number(engine.balance.expo.preorders.voidReputation)) more."
-                        : "A miss refunds \(units) of them (\(book.refundCash(units: units).money)) the same day.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens the pre-orders: what was sold and what a slip gives back")
         } else if let refusal {
             if refusal == .subscription || refusal == .tooClose || refusal == .nothingToSell {
                 Text(refusal.sentence)
@@ -80,8 +79,39 @@ struct PreorderRow: View {
     }
 }
 
-/// The pre-order sheet: the launch week the forecast sees, what selling a
-/// slice of it now takes, and what a slip gives back. Two answers.
+/// What an open book still owes and what the next miss gives back.
+struct PreorderStatusLines: View {
+    let engine: GameEngine
+    let product: Product
+    let book: PreorderBook
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if book.refundedUnits > 0 {
+                Text("\(book.refundedUnits) refunded when the date slipped (\(book.refundedCash.money)).")
+                    .font(.caption)
+                    .foregroundStyle(Theme.warning)
+            }
+            if book.outstanding > 0, !book.isDelivered, case .development = product.stage {
+                let voiding = product.slips + 1 >= Announce.voidAfterSlips
+                let units = book.refundUnits(voiding: voiding, balance: engine.balance)
+                Text(voiding
+                    ? "The next miss refunds the other \(units) (\(book.refundCash(units: units).money)) and costs reputation −\(ExpoCopy.number(engine.balance.expo.preorders.voidReputation)) more."
+                    : "A miss refunds \(units) of them (\(book.refundCash(units: units).money)) the same day.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text("Sold on a \(Int(book.forecastQuality.rounded())): reviews under it read as overpromised.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// The pre-order sheet: the launch the forecast sees, what selling a slice
+/// of it now takes, and what a slip gives back. Two answers — or, once
+/// they are open, what was sold and what is still owed.
 struct PreorderSheet: View {
     let engine: GameEngine
     let productID: UUID
@@ -101,7 +131,9 @@ struct PreorderSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-                    if let product, let quote {
+                    if let product, let book = product.preorders {
+                        opened(product, book)
+                    } else if let product, let quote {
                         release(product, quote)
                         choices(product, quote)
                     }
@@ -148,6 +180,29 @@ struct PreorderSheet: View {
         }
     }
 
+    /// The book, once open: sold, taken, given back, still owed.
+    private func opened(_ product: Product, _ book: PreorderBook) -> some View {
+        PixelPanel(contentPadding: Theme.Spacing.md) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                PixelSectionTitle(title: "Pre-orders")
+                PixelText(text: product.name, scale: 3, color: Theme.pixelInk, shadow: true)
+                Text("\(book.units) sold at \(ExpoCopy.price(book.unitPrice)) on \(AnnounceEventPresenter.dateLabel(book.openedDay, today: state.day)): \(book.cash.money) taken.")
+                    .font(.callout)
+                    .foregroundStyle(Theme.pixelInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let date = product.announcedDay, case .development = product.stage {
+                    Text("Promised for \(AnnounceEventPresenter.dateLabel(date, today: state.day)), \(date - state.day) days out. The launch weeks deliver them.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.pixelInk.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Divider().overlay(Theme.pixelInk.opacity(0.3))
+                PreorderStatusLines(engine: engine, product: product, book: book)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     private func lines(_ quote: PreorderQuote) -> [(String, String, Color)] {
         let book = PreorderBook(
             units: quote.units, unitPrice: quote.unitPrice, cash: quote.cash,
@@ -172,7 +227,7 @@ struct PreorderSheet: View {
             ),
             (
                 "star.leadinghalf.filled",
-                "They are buying a \(Int(quote.forecastQuality.rounded())). If the reviews land under it, the forum calls it overpromised.",
+                "They are buying the finished build: a \(Int(quote.forecastQuality.rounded())), the best this crew can make. Ship it rough to keep the date and the reviews land under it: the forum calls it overpromised.",
                 Theme.warning
             ),
         ]

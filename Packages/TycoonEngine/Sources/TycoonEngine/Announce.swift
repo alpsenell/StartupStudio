@@ -210,8 +210,10 @@ public struct PreorderBook: Codable, Equatable, Sendable {
     /// The cash taken that day.
     public var cash: Int
     public var openedDay: Int
-    /// The quality the forecast promised when they were sold — the number
-    /// the reviews are held to on launch day ("overpromised").
+    /// The quality they were sold on — the forecast's best case with this
+    /// crew (`crewCeiling`) the day they opened — the number the reviews
+    /// are held to on launch day ("overpromised"). A build shipped rough to
+    /// keep the date lands under it.
     public var forecastQuality: Double
     /// Given back by slips so far.
     public var refundedUnits: Int
@@ -355,8 +357,13 @@ extension GameState {
     ) -> PreorderQuote? {
         guard let product = product(id: productID),
               let type = content.productType(product.typeID),
-              let window = launchWindowEstimate(productID: productID, balance: balance, content: content),
-              let forecast = shipForecast(productID: productID, balance: balance, content: content)
+              let forecast = shipForecast(productID: productID, balance: balance, content: content),
+              // What pre-orders sell is the finished build: the forecast's
+              // best case with this crew, not the half-built score today.
+              case let promised = forecast.crewCeiling * 100,
+              let window = launchWindowEstimate(
+                  productID: productID, quality: promised, balance: balance, content: content
+              )
         else { return nil }
         let config = balance.expo.preorders
         let standard = type.unitPrice * balance.economy.priceTier(.standard).priceFactor
@@ -364,14 +371,14 @@ extension GameState {
         let unitPrice = standard * config.price
         let book = PreorderBook(
             units: units, unitPrice: unitPrice, cash: Int((Double(units) * unitPrice).rounded()),
-            openedDay: day, forecastQuality: forecast.quality
+            openedDay: day, forecastQuality: promised
         )
         let firstRefund = book.refundUnits(voiding: false, balance: balance)
         return PreorderQuote(
             windowWeeks: window.weeks, windowUnits: window.units,
             units: units, unitPrice: unitPrice, standardPrice: standard,
             cash: book.cash, firstRefundUnits: firstRefund, firstRefundCash: book.refundCash(units: firstRefund),
-            forecastQuality: forecast.quality
+            forecastQuality: promised
         )
     }
 

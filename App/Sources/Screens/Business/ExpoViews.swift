@@ -56,7 +56,27 @@ struct ExpoNowRow: View {
             .onChange(of: router?.pendingPush, initial: true) { _, _ in
                 if router?.take(.expo) == true { showingSheet = true }
             }
+            .onAppear {
+                if ExpoRoute.takeLaunchRoute() { showingSheet = true }
+            }
         }
+    }
+}
+
+/// `-autoRoute t5-expo` with `-autoTab hq`: HQ pushes only its story routes
+/// from a launch flag, so the row reads its own, once.
+@MainActor
+enum ExpoRoute {
+    private static var took = false
+
+    static func takeLaunchRoute() -> Bool {
+        #if DEBUG
+        guard !took, Route.launchRoute == .expo else { return false }
+        took = true
+        return true
+        #else
+        return false
+        #endif
     }
 }
 
