@@ -34,8 +34,9 @@ enum BuildCopy {
         var parts: [String] = []
         let banked = Int(quote.banked.rounded())
         if banked > 0 {
-            parts.append(quote.codebaseName.map { "Banks \(banked) points into the \($0) codebase" }
-                ?? "Founds a \(typeName.lowercased()) codebase with \(banked) points")
+            let points = "\(banked) point\(banked == 1 ? "" : "s")"
+            parts.append(quote.codebaseName.map { "Banks \(points) into the \($0) codebase" }
+                ?? "Founds a \(typeName.lowercased()) codebase with \(points)")
         } else {
             parts.append("Banks nothing: the \(quote.codebaseName ?? typeName) codebase already holds more")
         }
@@ -315,10 +316,10 @@ private struct BuildAutoRoute: ViewModifier {
         try? await Task.sleep(for: .seconds(seconds))
     }
 
-    /// The fixture comes with a question waiting (the studio's hackathon
-    /// judge), and its sheet covers whatever the route opens. Answer each
-    /// with its first open option — `-autoAnswer`'s pick — without starting
-    /// the clock `-autoAnswer` would start.
+    /// A question waiting on the loaded save (a story choice, a poach, a
+    /// door) puts up a sheet that covers whatever the route opens. Answer
+    /// each with its first open option — `-autoAnswer`'s pick — without
+    /// starting the clock `-autoAnswer` would start. Usually a no-op.
     private func clearQuestions() async {
         for _ in 0..<10 {
             // The story queue's choice first (the hackathon judge is one),
@@ -355,7 +356,12 @@ private struct BuildAutoRoute: ViewModifier {
             BuildDebug.want(scenario == "ship" ? .shipSheet : .card)
             router.go(.product(build.id))
         case "shelf":
+            // Every build into the drawer, so the list leads with it (the
+            // drawer sits under the builds) and every row can come back out.
             engine.send(.buildDebugSeed(scenario: "shelve"))
+            for build in engine.state.productsInDevelopment {
+                engine.send(.shelveBuild(productID: build.id))
+            }
         case "v2":
             engine.send(.buildDebugSeed(scenario: "v2"))
             guard let build = engine.state.products.last, build.parentID != nil else { return }

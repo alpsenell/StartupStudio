@@ -143,9 +143,7 @@ struct ShipSheet: View {
                 Button { ship(replacing: parent.id) } label: {
                     ShipSheetRow(
                         title: "Replace \(parent.name) at \(tier.displayName)",
-                        cost: LifecycleShip.replaceLabel(parent: parent, state: state, balance: engine.balance)
-                            .replacingOccurrences(of: "Replace \(parent.name) · ", with: "")
-                            + " · \(parent.name) retires today",
+                        cost: replaceCost(parent),
                         caption: "One hosting bill, and this launch skips the saturation \(parent.name) would add.",
                         tint: Theme.positiveCash,
                         selected: false
@@ -155,6 +153,17 @@ struct ShipSheet: View {
                 .accessibilityLabel("Ship \(product.name) as the replacement of \(parent.name)")
             }
         }
+    }
+
+    /// K2's carry, said once: what comes across, and that the parent goes.
+    private func replaceCost(_ parent: Product) -> String {
+        guard let carry = state.lifecycleCarry(from: parent.id, balance: engine.balance) else {
+            return "\(parent.name) retires today"
+        }
+        let comes = carry.isSubscription
+            ? "\(carry.subscribers) of \(carry.parentSubscribers) subscribers carry"
+            : "its buzz carries"
+        return "\(comes) · \(parent.name) retires today"
     }
 
     /// J4: what the plain ship costs a live parent, when there is one.

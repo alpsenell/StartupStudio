@@ -1326,7 +1326,7 @@ struct EventCopy {
             (
                 "trash.fill",
                 banked > 0
-                    ? "\(name) is scrapped. The codebase kept \(banked) points of it"
+                    ? "\(name) is scrapped. The codebase kept \(banked) point\(banked == 1 ? "" : "s") of it"
                     : "\(name) is scrapped. The codebase had better already",
                 day,
                 Theme.warning
