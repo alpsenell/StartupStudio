@@ -151,7 +151,10 @@ struct LayoffSheet: View {
                 HStack(alignment: .center, spacing: Theme.Spacing.md) {
                     PixelIconTile(systemImage: "person.2.slash", tint: Theme.warning, size: 44)
                     VStack(alignment: .leading, spacing: 2) {
-                        PixelText(text: "\(quote.count) of \(total)", scale: 2, color: Theme.pixelInk)
+                        PixelText(
+                            text: String(localized: "\(quote.count) of \(total)", comment: "Layoff sheet header: people picked of the team"),
+                            scale: 2, color: Theme.pixelInk
+                        )
                         Text(needLine(quote))
                             .font(.caption.weight(.semibold))
                             .monospacedDigit()
