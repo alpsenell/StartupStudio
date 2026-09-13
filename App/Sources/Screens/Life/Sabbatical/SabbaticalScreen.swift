@@ -199,6 +199,20 @@ struct SabbaticalScreen: View {
                     .font(.footnote)
                     .monospacedDigit()
                     .foregroundStyle(state.life.wallet >= cost ? .secondary : Theme.warning)
+                // MARK: T6 (away) — J3: a launch inside the sabbatical, printed before the tap.
+                if let clash = state.launchClash(
+                    awayFrom: state.day,
+                    days: chosen * GameState.daysPerWeek,
+                    absence: "the sabbatical",
+                    balance: engine.balance,
+                    content: engine.content
+                ) {
+                    Label(clash, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(Theme.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                // MARK: end T6
 
                 Button {
                     guard let caretaker = selectedCaretaker(state) else { return }

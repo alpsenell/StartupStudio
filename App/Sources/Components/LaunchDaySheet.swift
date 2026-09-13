@@ -67,6 +67,18 @@ struct LaunchDaySheet: View {
                     // A launch on a diary date: the party, or the cake.
                     DiaryKeepDateRow(engine: engine, product: product)
                     // MARK: end K7
+                    // MARK: T6 (away) — J3: the launch went out without its founder.
+                    if release != nil, engine.state.launchedWhileAway(product.id) {
+                        Label(
+                            "You were away for this one. Hype ×\(String(format: "%.2f", engine.balance.away.launchHypeFactor)), and no party.",
+                            systemImage: "suitcase.fill"
+                        )
+                        .font(.callout)
+                        .foregroundStyle(Theme.warning)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                    // MARK: end T6
                     if let release {
                         if release.reviews.isEmpty {
                             waitingForReviews(release)

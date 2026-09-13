@@ -1785,6 +1785,37 @@ extension DebugLaunch {
     // MARK: T5 (expo and pre-orders)
     // MARK: end T5
     // MARK: T6 (away)
+    @MainActor private static var awayStarted = false
+    /// `-autoAway <scenario>`: dresses the running game through
+    /// `.awayDebugSeed` once, when the Team or Life tab first appears.
+    /// Scenarios: `course` (two builders on courses), `question` (the
+    /// holiday question on the table), `rule` / `strict` (the holiday rule
+    /// set), `launch` (the founder on vacation, doors armed), `home` (a
+    /// Midtown home), `clash` (a build due inside next weekend's week
+    /// away), `launchday` (`launch`, then the ready build shipped). Pair it
+    /// with `-autoTab team|life|products` and, for the move sheet,
+    /// `-autoRoute k6-move`. Debug only.
+    @MainActor
+    static func startAway(engine: GameEngine) {
+        #if DEBUG
+        guard !awayStarted,
+              let flag = ProcessInfo.processInfo.arguments.firstIndex(of: "-autoAway"),
+              ProcessInfo.processInfo.arguments.indices.contains(flag + 1)
+        else { return }
+        awayStarted = true
+        let scenario = ProcessInfo.processInfo.arguments[flag + 1].lowercased()
+        if scenario == "launchday" {
+            _ = engine.send(.awayDebugSeed(scenario: "launch"))
+            if let ready = engine.state.shipETAs(balance: engine.balance, content: engine.content)
+                .first(where: \.isReady) {
+                _ = engine.send(.ship(productID: ready.productID))
+                GameShell.shared.launchDayProductID = ready.productID
+            }
+            return
+        }
+        _ = engine.send(.awayDebugSeed(scenario: scenario))
+        #endif
+    }
     // MARK: end T6
     // MARK: T7 (press and stakes)
     // MARK: end T7

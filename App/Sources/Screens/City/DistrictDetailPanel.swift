@@ -106,6 +106,14 @@ struct DistrictDetailPanel: View {
                 .foregroundStyle(officeCommute?.eveningsLost ?? 0 > 0 ? Theme.warning : .secondary)
                 .fixedSize(horizontal: false, vertical: true)
             // MARK: end K6
+            // MARK: T6 (away) — J6: what a home here is a walk from.
+            if let nearby = nearbyLine {
+                Text(nearby)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            // MARK: end T6
         }
         .padding(Theme.Spacing.md)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
@@ -179,6 +187,22 @@ struct DistrictDetailPanel: View {
         return "\(lead): \(commute.line)."
     }
     // MARK: end K6
+
+    // MARK: T6 (away)
+    /// "A home here is a walk from the hacker house", and — when this is
+    /// the founder's home and tonight's room stands in it — "tonight's room
+    /// is a walk from home". `nil` when nothing stands near.
+    private var nearbyLine: String? {
+        let state = engine.state
+        let parts = state.homeNearby(district, balance: engine.balance)
+        guard !parts.isEmpty else { return nil }
+        var line = "A home here is a walk from \(parts.joined(separator: " and "))."
+        if district == state.life.homeDistrict, state.tonightsRoomIsNearHome {
+            line += " Tonight's room is a walk from home."
+        }
+        return line
+    }
+    // MARK: end T6
 
     private func commit(_ move: PropertyMove) {
         pendingMove = nil

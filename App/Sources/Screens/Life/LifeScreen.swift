@@ -732,7 +732,8 @@ struct LifeScreen: View {
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
         // MARK: end T5
-        // MARK: T6 (away)
+        // MARK: T6 (away) — `-autoAway <scenario>` dresses the game once.
+        DebugLaunch.startAway(engine: engine)
         // MARK: end T6
         // MARK: T7 (press and stakes)
         // MARK: end T7

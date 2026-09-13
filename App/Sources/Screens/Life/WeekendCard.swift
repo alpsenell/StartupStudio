@@ -79,7 +79,9 @@ struct WeekendCard: View {
                                     systemImage: "beach.umbrella.fill",
                                     cost: quote.cost,
                                     summary: familyHolidaySummary(quote),
-                                    note: nil,
+                                    // MARK: T6 (away) — the same clash: the family holiday is the same week away.
+                                    note: weekAwayClash,
+                                    // MARK: end T6
                                     isSelected: life.plannedActivity == .vacation && life.familyHoliday
                                 ) {
                                     planFamilyHoliday()
@@ -111,14 +113,37 @@ struct WeekendCard: View {
         // The drift runs doubled while the founder is gone; the row has
         // been charging it without saying so since iteration 9.
         case .vacation:
-            engine.state.vacationAffectionCost(balance: engine.balance).map {
-                $0 < 0 ? "Affection −\(-$0) while you are away" : "Affection +\($0) while you are away"
-            }
+            // MARK: T6 (away) — J3: the launch inside the week away, beside the affection.
+            [
+                engine.state.vacationAffectionCost(balance: engine.balance).map {
+                    $0 < 0 ? "Affection −\(-$0) while you are away" : "Affection +\($0) while you are away"
+                },
+                weekAwayClash,
+            ].compactMap { $0 }.joined(separator: " · ").nilIfEmpty
+            // MARK: end T6
         // MARK: end K6
         default:
             nil
         }
     }
+
+    // MARK: T6 (away)
+    /// J3: "Round 9 ships on day 4 of the week away · hype ×0.85, no party"
+    /// — a build whose ship gate falls inside the week the vacation (or the
+    /// family holiday) takes, from the Now card's ETA. `nil` when nothing
+    /// is due. The networking weekend never takes the founder away, so it
+    /// has no clash to print.
+    private var weekAwayClash: String? {
+        let state = engine.state
+        return state.launchClash(
+            awayFrom: state.nextWeekendResolveDay,
+            days: engine.balance.life.vacationDays,
+            absence: "the week away",
+            balance: engine.balance,
+            content: engine.content
+        )
+    }
+    // MARK: end T6
 
     // MARK: K6 (home and rooms)
 
@@ -150,6 +175,12 @@ struct WeekendCard: View {
     }
     // MARK: end K6
 }
+
+// MARK: T6 (away)
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
+}
+// MARK: end T6
 
 // MARK: - Activity cell
 
