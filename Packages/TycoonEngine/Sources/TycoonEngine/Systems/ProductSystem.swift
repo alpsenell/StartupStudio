@@ -437,6 +437,10 @@ enum ProductSystem {
         // A company with a for-sale sign up launches to a shrug. Exactly
         // ×1 while no sign stands.
         let hypeAtLaunch = dev.hype * state.dealLaunchHypeFactor(balance: balance)
+            // MARK: T6 (away) — the founder away on ship day (doors armed): ×0.85, and the log keeps it for the party and the launch sheet. Exactly ×1 at the desk and on every bot.
+            * state.awayLaunchHypeFactor(balance: balance)
+        AwaySystem.noteLaunch(productID: productID, state: &state, balance: balance)
+        // MARK: end T6
         // MARK: end K4
         let expected = balance.reviewExpectationBase
             + balance.reviewExpectationPerYear * Double(state.year - 1)

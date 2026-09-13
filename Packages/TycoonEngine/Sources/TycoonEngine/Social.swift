@@ -84,6 +84,13 @@ public enum StaffEventKind: String, Codable, Equatable, Sendable, CaseIterable {
     case officeCoup
 
     // MARK: end Iteration 11 — N5
+    // MARK: T6 (away)
+    /// Two weeks off, and the question of what the holiday policy is.
+    /// Rolled only for a person at the controls: its def requires the
+    /// `holiday_askable` flag, which `AwaySystem` raises only while
+    /// `doors.armed` — so no bot's staff-moment stream ever sees it.
+    case holidayRequest = "holiday_request"
+    // MARK: end T6
 }
 
 /// The founder's answer to a staff event.

@@ -152,6 +152,16 @@ public struct Employee: Codable, Equatable, Sendable, Identifiable {
     /// grievance over it.
     public var salaryBeforeGrant: Int?
     // MARK: end K3
+    // MARK: T6 (away)
+    /// Iteration 17 — T6: the person is away from the desk (a course, a
+    /// holiday) while `day < awayUntilDay`: no points, no research, no
+    /// growth, not counted for crowding or a lead's span. `nil` is "at
+    /// their desk", which is every save written before this and every
+    /// person nobody sent anywhere; not encoded then.
+    public var awayUntilDay: Int? = nil
+    /// Why, while `awayUntilDay` is set.
+    public var awayReason: EmployeeAway? = nil
+    // MARK: end T6
 
     /// `role` defaults to the pre-roles inference (founder, else the
     /// stronger of coding and design) so callers that predate roles keep
@@ -256,6 +266,9 @@ extension Employee {
         // MARK: K3 (the ladder)
         case leadSinceDay, grantedEquity, grantDay, salaryBeforeGrant
         // MARK: end K3
+        // MARK: T6 (away)
+        case awayUntilDay, awayReason
+        // MARK: end T6
     }
 
     public init(from decoder: any Decoder) throws {
@@ -288,6 +301,10 @@ extension Employee {
             salaryBeforeGrant: try container.decodeIfPresent(Int.self, forKey: .salaryBeforeGrant)
             // MARK: end K3
         )
+        // MARK: T6 (away) — absent keys decode as "at their desk".
+        awayUntilDay = try container.decodeIfPresent(Int.self, forKey: .awayUntilDay)
+        awayReason = try container.decodeIfPresent(EmployeeAway.self, forKey: .awayReason)
+        // MARK: end T6
     }
 
     // Hand-written encode so `isCofounder` is only written when it is
@@ -328,8 +345,33 @@ extension Employee {
         try container.encodeIfPresent(grantDay, forKey: .grantDay)
         try container.encodeIfPresent(salaryBeforeGrant, forKey: .salaryBeforeGrant)
         // MARK: end K3
+        // MARK: T6 (away) — written only while somebody is away.
+        try container.encodeIfPresent(awayUntilDay, forKey: .awayUntilDay)
+        try container.encodeIfPresent(awayReason, forKey: .awayReason)
+        // MARK: end T6
     }
 }
+
+// MARK: T6 (away)
+
+/// Why a person on payroll is away from the desk (iteration 17, T6).
+public enum EmployeeAway: Codable, Equatable, Sendable {
+    /// Sent on a course in `TrainableSkill`; back with the boost.
+    case course(TrainableSkill)
+    /// The holiday rule's ten days, from their hiring anniversary.
+    case holiday
+}
+
+extension Employee {
+    /// Whether this person is away from the desk on `day` (half-open: back
+    /// on `awayUntilDay` itself).
+    public func isAway(on day: Int) -> Bool {
+        guard let awayUntilDay else { return false }
+        return day < awayUntilDay
+    }
+}
+
+// MARK: end T6
 
 /// Someone in the hiring pool, waiting for an offer. Hiring carries every
 /// field (including the id and role) over into an `Employee`.

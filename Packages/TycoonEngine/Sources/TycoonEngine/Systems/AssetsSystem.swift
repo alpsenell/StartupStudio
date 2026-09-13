@@ -238,6 +238,9 @@ enum AssetsSystem {
             // MARK: K7 (partner and diary) — a date kept is a launch party skipped.
             value -= def.perLaunch * Double(DiaryRoadmap.partiesSkipped(state))
             // MARK: end K7
+            // MARK: T6 (away) — a launch the founder was away for is a party nobody threw (never counted twice with a kept date).
+            value -= def.perLaunch * Double(min(max(0, launches - DiaryRoadmap.partiesSkipped(state)), AwaySystem.partiesMissed(state)))
+            // MARK: end T6
             state.assets.setDependency(def.id, value)
         }
 

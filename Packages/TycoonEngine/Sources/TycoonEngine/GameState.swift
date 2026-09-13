@@ -819,6 +819,13 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: T5 (expo and pre-orders)
     // MARK: end T5
     // MARK: T6 (away)
+    /// Somebody on payroll left the desk: a course, or the holiday rule.
+    case staffAway(employeeID: UUID, reason: EmployeeAway, untilDay: Int, day: Int)
+    /// They are back (a course's boost already in their skill).
+    case staffBack(employeeID: UUID, reason: EmployeeAway, day: Int)
+    /// A product shipped while the founder was away (doors armed): hype
+    /// ×`away.launchHypeFactor`, no launch party.
+    case launchWhileAway(productID: UUID, day: Int)
     // MARK: end T6
     // MARK: T7 (press and stakes)
     // MARK: end T7

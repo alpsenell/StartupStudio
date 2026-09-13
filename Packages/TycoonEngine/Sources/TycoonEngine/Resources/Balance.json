@@ -2079,7 +2079,7 @@
     "rescueStandingDays": 364
   },
   "home": {
-    "farPairs": [["suburbs", "downtown"], ["suburbs", "techPark"], ["oldTown", "techPark"]],
+    "farPairs": [["suburbs", "downtown"], ["suburbs", "techPark"], ["oldTown", "techPark"], ["midtown", "oldTown"]],
     "commuteEvenings": 1,
     "commuteSchedules": ["normal", "crunch"],
     "moveRentWeeks": 2,
@@ -2155,5 +2155,19 @@
     "friendBondGain": 2.0,
     "founderBondGain": 2.0,
     "doorPoachWeight": 60.0
+  },
+  "away": {
+    "courseCost": 2400,
+    "courseDays": 10,
+    "courseSkillBoost": 9.0,
+    "awayMoraleTarget": 2.0,
+    "holidayDays": 10,
+    "holidayMoraleTarget": 4.0,
+    "holidayLoyalty": 8.0,
+    "strictMoraleTarget": -3.0,
+    "strictBurnoutWeight": 1.5,
+    "launchHypeFactor": 0.85,
+    "schoolDistrict": "midtown",
+    "schoolBondPerWeek": 1.0
   }
 }

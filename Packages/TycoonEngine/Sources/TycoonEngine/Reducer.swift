@@ -272,6 +272,11 @@ public enum Reducer {
         // MARK: T5 (expo and pre-orders)
         // MARK: end T5
         // MARK: T6 (away)
+        // Courses and holidays come back, the holiday rule's schedule, and
+        // the holiday question's doors gate. Walks the roster reading one
+        // optional on every bot and fixture — nobody is away, no rule is
+        // set, doors are never armed — and draws nothing.
+        AwaySystem.run,
         // MARK: end T6
         // MARK: T7 (press and stakes)
         // MARK: end T7
@@ -1147,6 +1152,14 @@ public enum Reducer {
         // MARK: T5 (expo and pre-orders)
         // MARK: end T5
         // MARK: T6 (away)
+        case let .sendOnCourse(employeeID, skill):
+            events = AwaySystem.sendOnCourse(employeeID: employeeID, skill: skill, state: &state, balance: balance)
+        case let .awayDebugSeed(scenario):
+            #if DEBUG
+            events = AwayDebugSeed.apply(scenario: scenario, state: &state, balance: balance, content: content)
+            #else
+            events = []
+            #endif
         // MARK: end T6
         // MARK: T7 (press and stakes)
         // MARK: end T7

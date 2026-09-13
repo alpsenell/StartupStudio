@@ -740,6 +740,15 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: T5 (expo and pre-orders)
     // MARK: end T5
     // MARK: T6 (away)
+    /// Sends a hired person on a course in `skill`: `away.courseCost`
+    /// (× People & HR's training factor) now, `away.courseDays` away from
+    /// the desk, `away.courseSkillBoost` in the skill the day they are
+    /// back. Refused for the founder, while they are already away, and
+    /// without the cash. No bot sends it.
+    case sendOnCourse(employeeID: UUID, skill: TrainableSkill)
+    /// DEBUG: dresses the running game for a T6 screenshot
+    /// (`AwayDebugSeed`). Applied only in debug builds.
+    case awayDebugSeed(scenario: String)
     // MARK: end T6
     // MARK: T7 (press and stakes)
     // MARK: end T7

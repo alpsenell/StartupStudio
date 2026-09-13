@@ -164,6 +164,9 @@ enum EmployeeSystem {
                 // MARK: K7 (partner and diary) — the partner on payroll reads affection.
                 + state.partnerMoraleTargetDelta(for: employee, balance: balance)
                 // MARK: end K7
+                // MARK: T6 (away) — away +2; the holiday rule +4, or −3 made strict. Exactly 0 with nobody away and no rule.
+                + state.awayMoraleTargetDelta(for: employee, balance: balance)
+                // MARK: end T6
             // MARK: K3 (the ladder)
             // A lead the founder promoted with nobody much to lead: a
             // drift in the target, never a jump. 0 for everyone else.
@@ -590,6 +593,9 @@ enum EmployeeSystem {
                   assignedID == productID else { continue }
             let isFounder = state.employees[index].isFounder
             if isFounder, founderAway { continue }
+            // MARK: T6 (away) — on a course or a holiday: no points, no growth, not a producer (so not crowding, not in a lead's span).
+            if state.employees[index].isAway(on: state.day) { continue }
+            // MARK: end T6
             let bond = SocialSystem.strongestBond(
                 for: state.employees[index].id, among: crewIDs, in: state
             )
@@ -711,6 +717,11 @@ enum EmployeeSystem {
                 crewSizes[id, default: 0] += 1
             }
         }
+        // MARK: T6 (away) — nobody away crowds a contract (a no-op while nobody is).
+        for employee in state.employees where employee.isAway(on: state.day) {
+            if case .contract(let id) = employee.assignment { crewSizes[id, default: 1] -= 1 }
+        }
+        // MARK: end T6
         // MARK: S1 (seating) — who is teaching today; empty with no plan.
         let seatingMentors = state.seatingMentorIDs(balance: balance)
         // MARK: end S1
@@ -721,6 +732,9 @@ enum EmployeeSystem {
             else { continue }
             let isFounder = state.employees[index].isFounder
             if isFounder, founderAway { continue }
+            // MARK: T6 (away)
+            if state.employees[index].isAway(on: state.day) { continue }
+            // MARK: end T6
             let crew = state.employees
                 .filter { if case .contract(let id) = $0.assignment { return id == contractID }; return false }
                 .map(\.id)
@@ -770,6 +784,9 @@ enum EmployeeSystem {
             guard state.employees[index].assignment == .research else { continue }
             let isFounder = state.employees[index].isFounder
             if isFounder, founderAway { continue }
+            // MARK: T6 (away) — no research points from somebody who is away.
+            if state.employees[index].isAway(on: state.day) { continue }
+            // MARK: end T6
             let factor = isFounder
                 ? founderFactor
                 : state.employees[index].performanceMultiplier(balance: balance)

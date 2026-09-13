@@ -2071,6 +2071,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: T5 (expo and pre-orders)
     // MARK: end T5
     // MARK: T6 (away)
+
+    /// Iteration 17 — T6: the course, the holiday rule, the launch without
+    /// its founder and the school near home (`BalanceConfig+Away.swift`).
+    /// Inline default, so `"away"` is an optional key; read only after the
+    /// player's own action.
+    public var away: AwayBalance = .default
+
     // MARK: end T6
     // MARK: T7 (press and stakes)
     // MARK: end T7
