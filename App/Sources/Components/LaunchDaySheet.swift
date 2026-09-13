@@ -392,7 +392,10 @@ struct ReviewCardView: View {
                 if isExclusive || byline != nil {
                     HStack(spacing: Theme.Spacing.sm) {
                         if isExclusive {
-                            PixelText(text: "EXCLUSIVE", scale: 1, color: Theme.pixelAccent)
+                            PixelText(
+                                text: String(localized: "EXCLUSIVE", comment: "Launch day: stamp on the review of the outlet that had the build first (bitmap face, A-Z only)"),
+                                scale: 1, color: Theme.pixelAccent
+                            )
                         }
                         if let byline {
                             Text(byline)
