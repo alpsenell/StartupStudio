@@ -270,6 +270,11 @@ public enum Reducer {
         // MARK: T4 (publisher)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+
+        // A booth booked for this year's expo is shown on the day. Returns
+        // on its first line with nothing booked, which is every run nobody
+        // played the expo in; draws nothing.
+        MarketingSystem.runExpo,
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6
@@ -1161,6 +1166,25 @@ public enum Reducer {
             events = PublisherSystem.buyOut(productID: productID, state: &state, balance: balance)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+        case let .showAtExpo(productID, booth, attendee):
+            events = MarketingSystem.showAtExpo(
+                productID: productID, booth: booth, attendee: attendee,
+                state: &state, balance: balance, content: content
+            )
+        case .skipExpo:
+            events = MarketingSystem.skipExpo(state: &state, balance: balance)
+        case let .openPreorders(productID):
+            events = AnnounceSystem.openPreorders(
+                productID: productID, state: &state, balance: balance, content: content
+            )
+        case let .expoDebugSeed(scenario):
+            #if DEBUG
+            events = ExpoDebugSeed.apply(
+                scenario: scenario, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6

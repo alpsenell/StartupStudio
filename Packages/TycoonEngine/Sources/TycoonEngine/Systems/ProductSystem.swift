@@ -451,6 +451,10 @@ enum ProductSystem {
             + balance.reviewExpectationPerYear * Double(state.year - 1)
             + balance.reviewExpectationRepFactor * state.company.reputation
             + balance.economy.expectationPerComplexity * (type.complexity - 1)
+            // MARK: T5 (expo and pre-orders) — the press saw the demo: +3 for
+            // a build shown at the expo, exactly +0 for every other.
+            + ExpoRules.expectationBump(for: state.products[index], balance: balance)
+            // MARK: end T5
         let baseScore = quality
             - balance.reviewShortfallPenalty * max(0, expected - quality)
             + hypeAtLaunch / balance.reviewHypeDivisor

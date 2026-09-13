@@ -2084,6 +2084,11 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
+    /// Iteration 17 — T5. The expo and pre-orders on an announced date
+    /// (`BalanceConfig+Expo.swift`). Inline default with the shipped
+    /// numbers, so `"expo"` is an optional key; read only behind
+    /// `.showAtExpo`, `.skipExpo` and `.openPreorders`, which no bot sends.
+    public var expo: ExpoBalance = .default
     // MARK: end T5
     // MARK: T6 (away)
     // MARK: end T6

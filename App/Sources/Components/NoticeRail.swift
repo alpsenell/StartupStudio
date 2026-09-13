@@ -224,6 +224,9 @@ struct NoticeRail: View {
         // "Sell something": the question waits in the assets room.
         case .rescue: .assets
         // MARK: end K1
+        // MARK: T5 (expo and pre-orders) — the expo is planned from the Now card's row.
+        case .expo: .expo
+        // MARK: end T5
         default: nil
         }
     }

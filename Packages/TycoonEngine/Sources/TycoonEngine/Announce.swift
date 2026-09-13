@@ -182,3 +182,231 @@ extension GameState {
 }
 
 // MARK: end J5
+
+// MARK: T5 (expo and pre-orders)
+
+/// Iteration 17 — T5 (genre G6 merged with player P4). Pre-orders on an
+/// announced date.
+///
+/// On an announced one-time build at least `preorders.minDaysBefore` (21)
+/// days from its date, the player can sell `preorders.fraction` (30%) of
+/// the forecast's launch — the units it sells until the adoption ramp
+/// peaks (`launchWindowEstimate`) — now at `preorders.price` (65%) of the
+/// standard price, in cash. The launch weeks deliver them: their first
+/// buyers are the pre-orders, already paid for, so their revenue counts
+/// only the rest until every pre-order is out
+/// (`AnnounceSystem.deliverPreorders`). A slip gives back
+/// `preorders.refundPerSlip` (a third) of them in cash on the day J5 takes
+/// its −4; the void gives back the rest and costs `preorders.
+/// voidReputation` (4) more. Once per product.
+///
+/// State is `Product.preorders`, written only by `.openPreorders`, which no
+/// bot sends.
+public struct PreorderBook: Codable, Equatable, Sendable {
+    /// Units sold the day pre-orders opened.
+    public var units: Int
+    /// What one of them paid.
+    public var unitPrice: Double
+    /// The cash taken that day.
+    public var cash: Int
+    public var openedDay: Int
+    /// The quality they were sold on — the forecast's best case with this
+    /// crew (`crewCeiling`) the day they opened — the number the reviews
+    /// are held to on launch day ("overpromised"). A build shipped rough to
+    /// keep the date lands under it.
+    public var forecastQuality: Double
+    /// Given back by slips so far.
+    public var refundedUnits: Int
+    public var refundedCash: Int
+    /// The day the launch weeks finished delivering them, `nil` until they
+    /// have.
+    public var deliveredDay: Int?
+    /// Delivered so far, out of the sales weeks already carved.
+    public var deliveredUnits: Int
+    /// Sales weeks carved so far (their first buyers were pre-orders).
+    public var deliveredWeeks: Int
+
+    public init(
+        units: Int,
+        unitPrice: Double,
+        cash: Int,
+        openedDay: Int,
+        forecastQuality: Double,
+        refundedUnits: Int = 0,
+        refundedCash: Int = 0,
+        deliveredDay: Int? = nil,
+        deliveredUnits: Int = 0,
+        deliveredWeeks: Int = 0
+    ) {
+        self.units = units
+        self.unitPrice = unitPrice
+        self.cash = cash
+        self.openedDay = openedDay
+        self.forecastQuality = forecastQuality
+        self.refundedUnits = refundedUnits
+        self.refundedCash = refundedCash
+        self.deliveredDay = deliveredDay
+        self.deliveredUnits = deliveredUnits
+        self.deliveredWeeks = deliveredWeeks
+    }
+
+    /// Sold and not refunded: what the launch owes.
+    public var outstanding: Int { max(0, units - refundedUnits) }
+    /// Still to go out with the launch weeks.
+    public var undelivered: Int { max(0, outstanding - deliveredUnits) }
+    public var isDelivered: Bool { deliveredDay != nil }
+
+    private enum CodingKeys: String, CodingKey {
+        case units, unitPrice, cash, openedDay, forecastQuality
+        case refundedUnits, refundedCash, deliveredDay, deliveredUnits, deliveredWeeks
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            units: try c.decode(Int.self, forKey: .units),
+            unitPrice: try c.decode(Double.self, forKey: .unitPrice),
+            cash: try c.decode(Int.self, forKey: .cash),
+            openedDay: try c.decode(Int.self, forKey: .openedDay),
+            forecastQuality: try c.decodeIfPresent(Double.self, forKey: .forecastQuality) ?? 0,
+            refundedUnits: try c.decodeIfPresent(Int.self, forKey: .refundedUnits) ?? 0,
+            refundedCash: try c.decodeIfPresent(Int.self, forKey: .refundedCash) ?? 0,
+            deliveredDay: try c.decodeIfPresent(Int.self, forKey: .deliveredDay),
+            deliveredUnits: try c.decodeIfPresent(Int.self, forKey: .deliveredUnits) ?? 0,
+            deliveredWeeks: try c.decodeIfPresent(Int.self, forKey: .deliveredWeeks) ?? 0
+        )
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(units, forKey: .units)
+        try c.encode(unitPrice, forKey: .unitPrice)
+        try c.encode(cash, forKey: .cash)
+        try c.encode(openedDay, forKey: .openedDay)
+        try c.encode(forecastQuality, forKey: .forecastQuality)
+        if refundedUnits != 0 { try c.encode(refundedUnits, forKey: .refundedUnits) }
+        if refundedCash != 0 { try c.encode(refundedCash, forKey: .refundedCash) }
+        try c.encodeIfPresent(deliveredDay, forKey: .deliveredDay)
+        if deliveredUnits != 0 { try c.encode(deliveredUnits, forKey: .deliveredUnits) }
+        if deliveredWeeks != 0 { try c.encode(deliveredWeeks, forKey: .deliveredWeeks) }
+    }
+}
+
+/// Why pre-orders cannot open. Rule 7: a refused action says why.
+public enum PreorderRefusal: String, Equatable, Sendable, CaseIterable {
+    case noSuchBuild
+    case shipped
+    case alreadyOpened
+    case notAnnounced
+    case subscription
+    case tooClose
+    case nothingToSell
+
+    public var sentence: String {
+        switch self {
+        case .noSuchBuild: "There is no build by that name."
+        case .shipped: "It is out. People buy it now; they do not pre-order it."
+        case .alreadyOpened: "Pre-orders are open already. Once per product."
+        case .notAnnounced: "Nobody pre-orders a build without a date. Announce one first."
+        case .subscription: "Subscriptions do not pre-sell. Nobody pays a year up front for a thing that does not exist."
+        case .tooClose: "Three weeks before the date, or it is not a pre-order, it is a sale."
+        case .nothingToSell: "The forecast sells nothing in the launch week. There is nothing to pre-sell."
+        }
+    }
+}
+
+/// What opening pre-orders would take today, as the sheet prints it and as
+/// the action applies it.
+public struct PreorderQuote: Equatable, Sendable {
+    /// The forecast's launch, from `launchWindowEstimate`: its weeks and
+    /// the units in them.
+    public var windowWeeks: Int
+    public var windowUnits: Int
+    public var units: Int
+    public var unitPrice: Double
+    /// The standard price the launch week would charge.
+    public var standardPrice: Double
+    public var cash: Int
+    /// What the first slip would give back.
+    public var firstRefundUnits: Int
+    public var firstRefundCash: Int
+    public var forecastQuality: Double
+}
+
+extension PreorderBook {
+    /// Units a slip gives back: `refundPerSlip` of those sold, or on the
+    /// void everything still owed.
+    public func refundUnits(voiding: Bool, balance: BalanceConfig) -> Int {
+        voiding
+            ? outstanding
+            : min(outstanding, Int((Double(units) * balance.expo.preorders.refundPerSlip).rounded()))
+    }
+
+    /// Cash for `units` of them, at what they paid.
+    public func refundCash(units: Int) -> Int {
+        Int((Double(units) * unitPrice).rounded())
+    }
+}
+
+extension GameState {
+    /// What pre-orders on `productID` would take if opened today; `nil`
+    /// for anything not in development or with no launch-week forecast.
+    /// Arithmetic only: `preorderRefusal` says whether it is allowed.
+    public func preorderQuote(
+        productID: UUID, balance: BalanceConfig, content: ContentCatalog
+    ) -> PreorderQuote? {
+        guard let product = product(id: productID),
+              let type = content.productType(product.typeID),
+              let forecast = shipForecast(productID: productID, balance: balance, content: content),
+              // What pre-orders sell is the finished build: the forecast's
+              // best case with this crew, not the half-built score today.
+              case let promised = forecast.crewCeiling * 100,
+              let window = launchWindowEstimate(
+                  productID: productID, quality: promised, balance: balance, content: content
+              )
+        else { return nil }
+        let config = balance.expo.preorders
+        let standard = type.unitPrice * balance.economy.priceTier(.standard).priceFactor
+        let units = max(0, Int(Double(window.units) * config.fraction))
+        let unitPrice = standard * config.price
+        let book = PreorderBook(
+            units: units, unitPrice: unitPrice, cash: Int((Double(units) * unitPrice).rounded()),
+            openedDay: day, forecastQuality: promised
+        )
+        let firstRefund = book.refundUnits(voiding: false, balance: balance)
+        return PreorderQuote(
+            windowWeeks: window.weeks, windowUnits: window.units,
+            units: units, unitPrice: unitPrice, standardPrice: standard,
+            cash: book.cash, firstRefundUnits: firstRefund, firstRefundCash: book.refundCash(units: firstRefund),
+            forecastQuality: promised
+        )
+    }
+
+    /// Why pre-orders cannot open on `productID` today, or `nil` when they
+    /// can.
+    public func preorderRefusal(
+        productID: UUID, balance: BalanceConfig, content: ContentCatalog
+    ) -> PreorderRefusal? {
+        guard let product = product(id: productID) else { return .noSuchBuild }
+        guard case .development = product.stage else { return .shipped }
+        if product.preorders != nil { return .alreadyOpened }
+        guard let date = product.announcedDay else { return .notAnnounced }
+        if content.productType(product.typeID)?.revenueModel == .subscription { return .subscription }
+        if date - day < balance.expo.preorders.minDaysBefore { return .tooClose }
+        guard let quote = preorderQuote(productID: productID, balance: balance, content: content),
+              quote.units > 0
+        else { return .nothingToSell }
+        return nil
+    }
+}
+
+extension Product {
+    /// Launch day's "overpromised": the reviews landed under the quality
+    /// the pre-orders were sold on. `false` without pre-orders or reviews.
+    public var preordersOverpromised: Bool {
+        guard let book = preorders, case .released(let info) = stage, !info.reviews.isEmpty else { return false }
+        return Double(info.averageReviewScore) < book.forecastQuality.rounded()
+    }
+}
+
+// MARK: end T5

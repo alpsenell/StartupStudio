@@ -67,6 +67,11 @@ struct LaunchDaySheet: View {
                     // A launch on a diary date: the party, or the cake.
                     DiaryKeepDateRow(engine: engine, product: product)
                     // MARK: end K7
+                    // MARK: T5 (expo and pre-orders)
+                    // What was pre-sold ships today, and whether the
+                    // reviews kept the forecast it was sold on.
+                    PreorderLaunchRow(engine: engine, product: product)
+                    // MARK: end T5
                     if let release {
                         if release.reviews.isEmpty {
                             waitingForReviews(release)

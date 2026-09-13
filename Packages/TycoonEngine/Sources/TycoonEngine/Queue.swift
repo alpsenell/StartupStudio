@@ -45,6 +45,11 @@ public enum QueueKind: String, Codable, Equatable, Sendable, CaseIterable {
     /// period. Last in the kind order, so no older tie moves.
     case sellUp
     // MARK: end K4
+    // MARK: T5 (expo and pre-orders)
+    /// Iteration 17 — T5 (G2): the year's expo, from four weeks out. A
+    /// room the Now card opens, never a sheet; last in the kind order.
+    case expo
+    // MARK: end T5
 }
 
 /// How the app answers a question: a sheet over whatever tab is open, or a
@@ -315,6 +320,27 @@ public enum QueueBoard {
             ))
         }
         // MARK: end K4
+        // MARK: T5 (expo and pre-orders)
+        // From four weeks out, the year's expo — while there is a build to
+        // show. Derived like everything here: nothing is stored until the
+        // founder books or skips it. Without a balance (the tab badge) the
+        // shipped dates are read, which is what the balance says anyway.
+        let expoConfig = balance?.expo ?? .default
+        if let left = state.expoDaysLeft(config: expoConfig), !state.productsInDevelopment.isEmpty {
+            let show = Expo.day(year: state.year, config: expoConfig)
+            let booked = state.expoBooking.flatMap { state.product(id: $0.productID)?.name }
+            entries.append(QueueEntry(
+                id: "expo-\(show)",
+                kind: .expo, severity: .notable,
+                title: left == 0 ? "The expo is today" : "Expo in \(left) day\(left == 1 ? "" : "s")",
+                category: "press",
+                raisedDay: show - expoConfig.noticeDays, respondByDay: show,
+                defaultLine: booked.map { "\($0) is booked. The demo reads its bugs on the day." }
+                    ?? "Unanswered, the show goes on without you.",
+                surface: .room
+            ))
+        }
+        // MARK: end T5
 
         return entries.sorted(by: precedes)
     }

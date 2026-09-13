@@ -42,6 +42,11 @@ struct NowCard: View {
                     // on every ordinary day, so the card reads as it did.
                     IncidentNowRow(engine: engine)
                     // MARK: end M3
+                    // MARK: T5 (expo and pre-orders)
+                    // The year's expo, from four weeks out. Renders nothing
+                    // outside the notice window, so the card reads as it did.
+                    ExpoNowRow(engine: engine)
+                    // MARK: end T5
                     if let goal {
                         goalRow(goal, buildID: build?.id)
                     } else if dayZero {

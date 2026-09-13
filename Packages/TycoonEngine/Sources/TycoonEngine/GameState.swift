@@ -835,6 +835,26 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case publisherBoughtOut(productID: UUID, rivalID: UUID, price: Int, day: Int)
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
+    /// A stand at this year's expo was booked for `productID` (or pointed
+    /// at it again, with `price` 0).
+    case expoBooked(productID: UUID, booth: ExpoBooth, attendee: ExpoAttendee, price: Int, day: Int)
+    /// The demo happened: what it did to the build's hype and the
+    /// company's reputation, whether it crashed, and whether anybody from
+    /// the company was at the stand.
+    case expoShown(
+        productID: UUID, booth: ExpoBooth, attendee: ExpoAttendee,
+        hype: Double, reputation: Double, crashed: Bool, staffed: Bool, day: Int
+    )
+    /// The booked build was no longer in development on the day.
+    case expoEmptyBooth(productID: UUID, day: Int)
+    /// The founder let this year's expo go.
+    case expoSkipped(day: Int)
+    /// Pre-orders opened on an announced build: `units` sold for `cash`.
+    case preordersOpened(productID: UUID, units: Int, cash: Int, day: Int)
+    /// A slip gave some of them back (`voided`: the rest, on the second).
+    case preordersRefunded(productID: UUID, units: Int, cash: Int, voided: Bool, day: Int)
+    /// The launch week delivered what was still owed.
+    case preordersDelivered(productID: UUID, units: Int, day: Int)
     // MARK: end T5
     // MARK: T6 (away)
     // MARK: end T6
@@ -1489,6 +1509,10 @@ public struct GameState: Codable, Equatable, Sendable {
     // MARK: T4 (publisher)
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
+    /// Iteration 17 — T5. The expo: the last year shown or skipped and a
+    /// booth paid for. `nil` on every run that never touched the show, and
+    /// then not encoded.
+    public var expo: ExpoState? = nil
     // MARK: end T5
     // MARK: T6 (away)
     // MARK: end T6
@@ -1870,6 +1894,7 @@ extension GameState {
         // MARK: T4 (publisher)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+        case expo
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6
@@ -2024,6 +2049,7 @@ extension GameState {
         // MARK: T4 (publisher)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+        expo = try container.decodeIfPresent(ExpoState.self, forKey: .expo)
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6
@@ -2199,6 +2225,7 @@ extension GameState {
         // MARK: T4 (publisher)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+        try container.encodeIfPresent(expo, forKey: .expo)
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6

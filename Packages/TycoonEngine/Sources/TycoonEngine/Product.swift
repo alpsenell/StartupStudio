@@ -373,6 +373,16 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
     /// written while `nil`.
     public var publisher: Publisher? = nil
     // MARK: end T4
+    // MARK: T5 (expo and pre-orders)
+    /// The day this build was shown at an expo while in development, `nil`
+    /// for every build that never was. Kept after launch: the copycat and
+    /// the reviewers read it. Not written while `nil`.
+    public var expoDay: Int? = nil
+    /// Pre-orders sold against its announced date, `nil` until the player
+    /// opens them. Kept after launch, delivered or refunded. Not written
+    /// while `nil`.
+    public var preorders: PreorderBook? = nil
+    // MARK: end T5
 
     public init(
         id: UUID,
@@ -429,6 +439,9 @@ extension Product {
         // MARK: T4 (publisher)
         case publisher
         // MARK: end T4
+        // MARK: T5 (expo and pre-orders)
+        case expoDay, preorders
+        // MARK: end T5
     }
 
     public init(from decoder: any Decoder) throws {
@@ -452,6 +465,10 @@ extension Product {
         // MARK: T4 (publisher)
         publisher = try container.decodeIfPresent(Publisher.self, forKey: .publisher)
         // MARK: end T4
+        // MARK: T5 (expo and pre-orders) — absent in every save that never showed or pre-sold.
+        expoDay = try container.decodeIfPresent(Int.self, forKey: .expoDay)
+        preorders = try container.decodeIfPresent(PreorderBook.self, forKey: .preorders)
+        // MARK: end T5
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -474,6 +491,10 @@ extension Product {
         // MARK: T4 (publisher) — only a published build has one.
         try container.encodeIfPresent(publisher, forKey: .publisher)
         // MARK: end T4
+        // MARK: T5 (expo and pre-orders) — only a build shown or pre-sold has them.
+        try container.encodeIfPresent(expoDay, forKey: .expoDay)
+        try container.encodeIfPresent(preorders, forKey: .preorders)
+        // MARK: end T5
     }
 }
 

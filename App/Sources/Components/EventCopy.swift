@@ -1343,6 +1343,10 @@ struct EventCopy {
             ("arrow.uturn.backward.circle.fill", "Bought \(productName(productID)) back from \(rivalName(rivalID)) for \(price.money). The share stops here.", day, Theme.accent)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+        // Every line is `ExpoEventPresenter`'s, in the lane's own file.
+        case .expoBooked, .expoShown, .expoEmptyBooth, .expoSkipped,
+             .preordersOpened, .preordersRefunded, .preordersDelivered:
+            ExpoEventPresenter.entry(for: event, state: state) ?? fallbackEntry(for: event)
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6

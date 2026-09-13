@@ -363,6 +363,10 @@ extension Route {
         // MARK: T4 (publisher)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+        // The Now card's expo sheet on HQ; the announced build's pre-order
+        // sheet on Products.
+        case "t5-expo": .expo
+        case "t5-preorders": .announce
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6
@@ -1784,6 +1788,34 @@ extension DebugLaunch {
     // MARK: T4 (publisher)
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
+
+    /// `-autoExpo <step[,step…]>` — `window`, `day`, `crash`, `booked`,
+    /// `shown` — dresses the loaded save through `.expoDebugSeed`
+    /// (`ExpoDebugSeed` in the engine). Debug builds only.
+    static var autoExpoScenario: String? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-autoExpo") else { return nil }
+        let next = arguments.indices.contains(index + 1) ? arguments[index + 1].lowercased() : ""
+        return next.hasPrefix("-") || next.isEmpty ? "window" : next
+        #else
+        return nil
+        #endif
+    }
+
+    /// `-autoPreorders [open|slip|void]`: announce the build `-autoAnnounce`
+    /// would (implied), open pre-orders on it, then miss the date once or
+    /// twice. Debug builds only.
+    static var autoPreordersMode: String? {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-autoPreorders") else { return nil }
+        let next = arguments.indices.contains(index + 1) ? arguments[index + 1].lowercased() : ""
+        return ["open", "slip", "void"].contains(next) ? next : "open"
+        #else
+        return nil
+        #endif
+    }
     // MARK: end T5
     // MARK: T6 (away)
     // MARK: end T6

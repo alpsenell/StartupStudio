@@ -21,7 +21,12 @@ enum AnnounceDebug {
     /// the best-reviewed release premium.
     static func start(engine: GameEngine) {
         #if DEBUG
-        let mode = DebugLaunch.autoAnnounceMode
+        // MARK: T5 (expo and pre-orders) — `-autoExpo` dresses the save;
+        // `-autoPreorders` implies `-autoAnnounce`.
+        ExpoDebug.start(engine: engine)
+        let preorders = DebugLaunch.autoPreordersMode
+        let mode = DebugLaunch.autoAnnounceMode ?? (preorders != nil ? .announce : nil)
+        // MARK: end T5
         let premium = DebugLaunch.autoPremium
         guard !started, mode != nil || premium else { return }
         started = true
@@ -39,6 +44,15 @@ enum AnnounceDebug {
                        balance: engine.balance, content: engine.content
                    ) {
                     _ = engine.send(.announceShipDate(productID: product.id, day: day))
+                    // MARK: T5 (expo and pre-orders) — open them before the
+                    // misses, so the misses refund them.
+                    if let preorders {
+                        _ = engine.send(.openPreorders(productID: product.id))
+                        if preorders != "open" { _ = engine.send(.announceForceSlip(productID: product.id)) }
+                        if preorders == "void" { _ = engine.send(.announceForceSlip(productID: product.id)) }
+                        return
+                    }
+                    // MARK: end T5
                     if mode != .announce {
                         _ = engine.send(.announceForceSlip(productID: product.id))
                     }

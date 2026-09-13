@@ -764,6 +764,21 @@ public enum GameAction: Codable, Equatable, Sendable {
     case buyOutPublisher(productID: UUID)
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
+    /// Iteration 17 — T5 (G2). Book this year's expo for a build in
+    /// development: a booth at the office tier's price or the hallway, with
+    /// the founder or a marketer at it. Paid now; pointing it at another
+    /// build or person is free until the day, and on the day it is shown.
+    /// Sent only from the app.
+    case showAtExpo(productID: UUID, booth: ExpoBooth, attendee: ExpoAttendee)
+    /// Let this year's expo go (a booth already paid for is not refunded).
+    case skipExpo
+    /// Iteration 17 — T5 (G6/P4). Sell part of an announced one-time
+    /// build's launch week now, at a discount; a slip refunds some.
+    case openPreorders(productID: UUID)
+    /// `-autoExpo <scenario>`: dresses the loaded save for a screenshot
+    /// (`ExpoDebugSeed`). Applied only in debug builds; nothing in the
+    /// game sends it.
+    case expoDebugSeed(scenario: String)
     // MARK: end T5
     // MARK: T6 (away)
     // MARK: end T6

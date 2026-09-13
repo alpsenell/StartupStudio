@@ -991,6 +991,10 @@ extension DecisionPrompt {
         case .sellUp:
             dealSellUpPrompt(state: state, balance: balance)
         // MARK: end K4
+        // MARK: T5 (expo and pre-orders) — a room (the Now card's row), never a sheet.
+        case .expo:
+            nil
+        // MARK: end T5
         case .dirtyMoneyOffer, .funeral, .legalCase, .hearing, .cancellation:
             nil
         }
