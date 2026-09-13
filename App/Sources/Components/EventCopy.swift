@@ -1306,6 +1306,21 @@ struct EventCopy {
                 day, Theme.warning
             )
         // MARK: end S2
+        // MARK: T1 (exits and joins)
+        // MARK: end T1
+        // MARK: T2 (the build)
+        // MARK: end T2
+        // MARK: T3 (people)
+        // MARK: end T3
+        // MARK: T4 (publisher)
+        // MARK: end T4
+        // MARK: T5 (expo and pre-orders)
+        // MARK: end T5
+        // MARK: T6 (away)
+        // MARK: end T6
+        // MARK: T7 (press and stakes)
+        // MARK: end T7
+        // MARK: end of Iteration 17
         // MARK: end of Iteration 15
         // MARK: S1 (seating)
         case .seatingMoved, .seatingCleared:

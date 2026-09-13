@@ -808,6 +808,21 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// The company moved one office tier down, to `tier`.
     case officeDowngraded(tier: OfficeTier, day: Int)
     // MARK: end S2
+    // MARK: T1 (exits and joins)
+    // MARK: end T1
+    // MARK: T2 (the build)
+    // MARK: end T2
+    // MARK: T3 (people)
+    // MARK: end T3
+    // MARK: T4 (publisher)
+    // MARK: end T4
+    // MARK: T5 (expo and pre-orders)
+    // MARK: end T5
+    // MARK: T6 (away)
+    // MARK: end T6
+    // MARK: T7 (press and stakes)
+    // MARK: end T7
+    // MARK: end of Iteration 17
     // MARK: end of Iteration 15
     // MARK: S1 (seating)
     /// Somebody changed desks. `swappedWithID` is whoever sat there before
@@ -1447,6 +1462,21 @@ public struct GameState: Codable, Equatable, Sendable {
     /// then not encoded.
     public var officeDowngrade: OfficeDowngradeState? = nil
     // MARK: end S2
+    // MARK: T1 (exits and joins)
+    // MARK: end T1
+    // MARK: T2 (the build)
+    // MARK: end T2
+    // MARK: T3 (people)
+    // MARK: end T3
+    // MARK: T4 (publisher)
+    // MARK: end T4
+    // MARK: T5 (expo and pre-orders)
+    // MARK: end T5
+    // MARK: T6 (away)
+    // MARK: end T6
+    // MARK: T7 (press and stakes)
+    // MARK: end T7
+    // MARK: end of Iteration 17
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
@@ -1813,6 +1843,21 @@ extension GameState {
         // MARK: S2 (office downgrade)
         case officeDowngrade
         // MARK: end S2
+        // MARK: T1 (exits and joins)
+        // MARK: end T1
+        // MARK: T2 (the build)
+        // MARK: end T2
+        // MARK: T3 (people)
+        // MARK: end T3
+        // MARK: T4 (publisher)
+        // MARK: end T4
+        // MARK: T5 (expo and pre-orders)
+        // MARK: end T5
+        // MARK: T6 (away)
+        // MARK: end T6
+        // MARK: T7 (press and stakes)
+        // MARK: end T7
+        // MARK: end of Iteration 17
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
@@ -1952,6 +1997,21 @@ extension GameState {
         // MARK: S2 (office downgrade)
         officeDowngrade = try container.decodeIfPresent(OfficeDowngradeState.self, forKey: .officeDowngrade)
         // MARK: end S2
+        // MARK: T1 (exits and joins)
+        // MARK: end T1
+        // MARK: T2 (the build)
+        // MARK: end T2
+        // MARK: T3 (people)
+        // MARK: end T3
+        // MARK: T4 (publisher)
+        // MARK: end T4
+        // MARK: T5 (expo and pre-orders)
+        // MARK: end T5
+        // MARK: T6 (away)
+        // MARK: end T6
+        // MARK: T7 (press and stakes)
+        // MARK: end T7
+        // MARK: end of Iteration 17
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
@@ -2112,6 +2172,21 @@ extension GameState {
         // MARK: S2 (office downgrade)
         try container.encodeIfPresent(officeDowngrade, forKey: .officeDowngrade)
         // MARK: end S2
+        // MARK: T1 (exits and joins)
+        // MARK: end T1
+        // MARK: T2 (the build)
+        // MARK: end T2
+        // MARK: T3 (people)
+        // MARK: end T3
+        // MARK: T4 (publisher)
+        // MARK: end T4
+        // MARK: T5 (expo and pre-orders)
+        // MARK: end T5
+        // MARK: T6 (away)
+        // MARK: end T6
+        // MARK: T7 (press and stakes)
+        // MARK: end T7
+        // MARK: end of Iteration 17
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
