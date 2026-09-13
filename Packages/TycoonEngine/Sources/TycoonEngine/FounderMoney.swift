@@ -383,9 +383,11 @@ enum FounderMoneySystem {
             )
             added = state.investors.boardPressure - before
         }
+        // MARK: T1 (exits and joins) — the holders on payroll read their lines at their desks.
         return [.founderMoneyDividend(
             amount: amount, take: take, boardPressure: Int(added.rounded()), day: state.day
-        )]
+        )] + holderDividendDesks(amount: amount, state: &state, balance: balance)
+        // MARK: end T1
     }
 
     // MARK: The rescue (armed runs only)
@@ -528,3 +530,69 @@ private extension Int {
         return sign + "$" + String(grouped.reversed())
     }
 }
+
+// MARK: T1 (exits and joins)
+
+extension FounderMoneySystem {
+    /// The dividend reaches the holders' desks: everybody on payroll whose
+    /// grant paid them a line gains morale and loyalty today, and the
+    /// manage sheet can say why for `holderDividendCauseDays`. Everybody
+    /// else keeps reading the founder's take as pay. Nothing with no holder
+    /// on payroll, which is every run nobody granted equity in.
+    static func holderDividendDesks(
+        amount: Int,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        let config = balance.exits
+        var ids: [UUID] = []
+        var names: [String] = []
+        for grant in state.networking.grants where grant.percent > 0 {
+            guard !ids.contains(grant.id),
+                  Int((Double(max(0, amount)) * grant.percent / 100).rounded()) > 0,
+                  let index = state.employees.firstIndex(where: { $0.id == grant.id && !$0.isFounder })
+            else { continue }
+            state.employees[index].morale = min(100, max(0, state.employees[index].morale + config.holderDividendMorale))
+            state.employees[index].loyalty = min(100, max(0, state.employees[index].loyalty + config.holderDividendLoyalty))
+            ids.append(grant.id)
+            names.append(state.employees[index].name)
+        }
+        guard !ids.isEmpty else { return [] }
+        var joins = state.joins ?? JoinsState()
+        joins.holderDividendDay = state.day
+        joins.holderDividendIDs = ids
+        state.joins = joins
+        return [.holderDividendDesks(names: names, day: state.day)]
+    }
+}
+
+extension GameState {
+    /// The manage sheet's morale cause for a holder the last dividend paid,
+    /// for `holderDividendCauseDays`; `nil` for everybody else.
+    public func founderMoneyHolderDividendCause(for employee: Employee, balance: BalanceConfig) -> String? {
+        guard let joins, let paidDay = joins.holderDividendDay,
+              joins.holderDividendIDs.contains(employee.id),
+              day - paidDay < max(1, balance.exits.holderDividendCauseDays)
+        else { return nil }
+        return "The dividend paid their options too"
+    }
+
+    /// The part of the founder-pay morale penalty that is the dividend's
+    /// take: what the room would stop minding if the dividend were not
+    /// read as the founder's pay. The partner on payroll gets it back —
+    /// that money landed in their own household. Zero with no dividend in
+    /// its pay window.
+    public func founderMoneyDividendPenaltyShare(balance: BalanceConfig) -> Double {
+        let dividend = founderMoneyDividendWeeklyPay(balance: balance)
+        guard dividend > 0, let median = teamMedianSalary, median > 0 else { return 0 }
+        let excess = founderPayExcess(balance: balance)
+        guard excess > 0 else { return 0 }
+        let config = balance.economy
+        let without = max(0, excess - Double(dividend) / Double(median))
+        let full = min(config.founderPayMoraleCap, excess * config.founderPayMoralePerRatioPoint)
+        let rest = min(config.founderPayMoraleCap, without * config.founderPayMoralePerRatioPoint)
+        return max(0, full - rest)
+    }
+}
+
+// MARK: end T1

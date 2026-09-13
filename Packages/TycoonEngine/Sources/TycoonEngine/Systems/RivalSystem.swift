@@ -1487,7 +1487,11 @@ enum RivalSystem {
     /// broke or unknown: `.soldUp`, which is not. Both used to land on the
     /// same crowned screen, so a fire sale on day 56 with nothing shipped
     /// read as the best ending in the game. Ignored with nothing pending.
-    static func acceptBuyout(state: inout GameState) -> [GameEvent] {
+    // MARK: T1 (exits and joins) — `accelerate` and the balance, both defaulted: `.acceptBuyout`'s call is the old one.
+    static func acceptBuyout(
+        state: inout GameState, accelerate: Bool = false, balance: BalanceConfig? = nil
+    ) -> [GameEvent] {
+    // MARK: end T1
         guard let offer = state.rivals.pendingBuyout else { return [] }
         state.rivals.pendingBuyout = nil
         let buyerName = state.rivals.rival(id: offer.rivalID)?.name ?? "a rival"
@@ -1500,6 +1504,17 @@ enum RivalSystem {
             category: .other,
             label: "Company sale to \(buyerName)"
         ))
+        // MARK: T1 (exits and joins) — the tail.
+        // The price is in: the director's loan comes out of it first, the
+        // vested holders are paid their share, and the unvested are the
+        // founder's answer — lapse, from the bots' `.acceptBuyout`. The
+        // grant block is the balance's when the reducer passes one, the
+        // shipped one otherwise. Nothing at all with no loan and no grant,
+        // which is every bot and fixture.
+        let settled = ExitSystem.settle(
+            kind: strategic ? .acquired : .soldUp, price: offer.amount, accelerate: accelerate,
+            grants: balance?.ladder.grants ?? .default, state: &state
+        )
         state.gameOver = GameOverInfo(
             day: state.day,
             reason: strategic
@@ -1507,10 +1522,11 @@ enum RivalSystem {
                 : "\(buyerName) bought the name and the desks for \(offer.amount.dollars).",
             kind: strategic ? .acquired : .soldUp
         )
-        return [
+        return settled + [
             .companySold(rivalID: offer.rivalID, amount: offer.amount, day: state.day),
             .gameOver(day: state.day),
         ]
+        // MARK: end T1
     }
 
     /// Turns a pending buyout down. Ignored with nothing pending.
@@ -1800,7 +1816,11 @@ enum RivalSystem {
     /// Sells up before the receiver (`dealSellUpOffer`): the run ends as
     /// *Sold up* today, the wallet and the address book intact. Ignored
     /// out of the red.
-    static func dealSellUp(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+    // MARK: T1 (exits and joins) — `accelerate`, defaulted: `.sellUp`'s call is the old one.
+    static func dealSellUp(
+        state: inout GameState, balance: BalanceConfig, accelerate: Bool = false
+    ) -> [GameEvent] {
+    // MARK: end T1
         guard let offer = state.dealSellUpOffer(balance: balance) else { return [] }
         state.rivals.pendingBuyout = nil
         state.rivals.lastBuyoutWasStrategic = false
@@ -1811,13 +1831,19 @@ enum RivalSystem {
             category: .other,
             label: "Company sale to \(offer.buyerName)"
         ))
+        // MARK: T1 (exits and joins) — the loan out of the price first, then the holders.
+        let settled = ExitSystem.settle(
+            kind: .soldUp, price: offer.amount, accelerate: accelerate,
+            grants: balance.ladder.grants, state: &state
+        )
+        // MARK: end T1
         state.gameOver = GameOverInfo(
             day: state.day,
             reason: "Sold on day \(offer.daysInDebt) of \(offer.graceDays) in the red: "
                 + "\(offer.buyerName) bought the name and the desks for \(offer.amount.dollars).",
             kind: .soldUp
         )
-        var events: [GameEvent] = [.dealSoldUp(
+        var events: [GameEvent] = settled /* T1 */ + [.dealSoldUp(
             buyer: offer.buyerName, amount: offer.amount, daysInDebt: offer.daysInDebt, day: state.day
         )]
         if let rivalID = offer.rivalID {

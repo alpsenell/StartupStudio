@@ -1232,6 +1232,11 @@ enum EmployeeSystem {
         // MARK: T3 (people)
         events.append(contentsOf: severance)
         // MARK: end T3
+        // MARK: T1 (exits and joins) — firing the partner is a fight.
+        if employee.id == state.life.family.partnerEmployeeID {
+            events.append(contentsOf: RelationshipSystem.partnerFired(employee, state: &state, balance: balance))
+        }
+        // MARK: end T1
         return events
     }
 

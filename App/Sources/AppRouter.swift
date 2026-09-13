@@ -255,6 +255,11 @@ enum Route: Hashable {
     // MARK: K7 (partner and diary)
     // MARK: end K7
     // MARK: T1 (exits and joins)
+    /// DEBUG `-autoRoute t1-buyout|t1-earnout|t1-sellup|t1-dividend`: the
+    /// Business tab, where the save is dressed and the queue opens its sheet.
+    case t1Exits
+    /// DEBUG `-autoRoute t1-firing`: the Life tab, the bag by the door.
+    case t1Firing
     // MARK: end T1
     // MARK: T2 (the build)
     // MARK: end T2
@@ -393,6 +398,8 @@ enum Route: Hashable {
         // MARK: K7 (partner and diary)
         // MARK: end K7
         // MARK: T1 (exits and joins)
+        case .t1Exits: .business
+        case .t1Firing: .life
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2

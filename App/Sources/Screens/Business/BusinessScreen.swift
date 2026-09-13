@@ -337,6 +337,11 @@ struct BusinessScreen: View {
         // MARK: K7 (partner and diary)
         // MARK: end K7
         // MARK: T1 (exits and joins)
+        // `-autoRoute t1-buyout|…`: the save dressed through the engine
+        // once; the queue opens the buyout or sell-up sheet over the tab.
+        #if DEBUG
+        if Route.launchRoute == .t1Exits { ExitsDebugLaunch.seedIfAsked(engine) }
+        #endif
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2

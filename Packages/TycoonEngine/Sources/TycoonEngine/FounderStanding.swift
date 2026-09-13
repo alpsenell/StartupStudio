@@ -160,6 +160,12 @@ public enum FounderStanding {
             score += balance.founderMoney.rescueStandingName
         }
         // MARK: end K1
+        // MARK: T1 (exits and joins)
+        // "They will not be coming with you": every holder whose unvested
+        // options lapsed at an exit, for good — the same read as a firing
+        // with cause. Zero on every run that never settled one.
+        score += Double(state.exitLapsedHolderCount) * balance.exits.lapsedNamePenalty
+        // MARK: end T1
         // The clamp is the identity: a clean founder with alumni who like
         // them reads zero, not below it.
         let clamped = min(100, max(0, score))

@@ -354,6 +354,8 @@ extension Route {
         // MARK: K7 (partner and diary)
         // MARK: end K7
         // MARK: T1 (exits and joins)
+        case "t1-buyout", "t1-earnout", "t1-sellup", "t1-dividend", "t1-bid": .t1Exits
+        case "t1-firing": .t1Firing
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2

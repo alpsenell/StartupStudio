@@ -94,6 +94,16 @@ enum PostMortem {
             lines.insert(line, at: state.gameOver?.kind == .soldUp ? 0 : min(1, lines.count))
         }
         // MARK: end K4
+        // MARK: T1 (exits and joins)
+        // A sell-up that settled a loan or options says what came out of
+        // the price, third at most. Nothing with no record.
+        if let record = state.joins?.exit, state.gameOver?.kind == .soldUp {
+            lines.insert(
+                Line(id: "t1-exit", systemImage: "banknote.fill", text: ExitOptionsRow.postMortemLine(record)),
+                at: min(2, lines.count)
+            )
+        }
+        // MARK: end T1
 
         return Array(lines.prefix(3))
     }

@@ -809,6 +809,24 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case officeDowngraded(tier: OfficeTier, day: Int)
     // MARK: end S2
     // MARK: T1 (exits and joins)
+    /// An exit repaid the director's loan out of the price and read the
+    /// options: `optionsPaid` to `holders` holders, `lapsed` of whom lost
+    /// what had not vested (none when `accelerated`).
+    case exitSettled(
+        kind: ExitKind, loanRepaid: Int, optionsPaid: Int, holders: Int, lapsed: Int,
+        accelerated: Bool, day: Int
+    )
+    /// A holder whose options lapsed at the earn-out's signing cleared
+    /// their desk at the weekly pass.
+    case exitHolderLeft(employeeID: UUID, name: String, day: Int)
+    /// The founder fired their partner.
+    case partnerFired(employeeID: UUID, name: String, day: Int)
+    /// The morning after a firing with cause: a bag by the door.
+    case partnerFiringMorning(day: Int)
+    /// The founder answered it: packed the bag, or stayed.
+    case partnerFiringAnswered(packBag: Bool, day: Int)
+    /// A dividend reached holders on payroll: morale and loyalty today.
+    case holderDividendDesks(names: [String], day: Int)
     // MARK: end T1
     // MARK: T2 (the build)
     // MARK: end T2
@@ -1501,6 +1519,11 @@ public struct GameState: Codable, Equatable, Sendable {
     public var officeDowngrade: OfficeDowngradeState? = nil
     // MARK: end S2
     // MARK: T1 (exits and joins)
+    /// What an exit did with the loan and the options, the partner's
+    /// firing, and the holders' last dividend (`Exits.swift`). `nil` on
+    /// every run that never had one — every bot and fixture — and then not
+    /// encoded.
+    public var joins: JoinsState? = nil
     // MARK: end T1
     // MARK: T2 (the build)
     // MARK: end T2
@@ -1886,6 +1909,7 @@ extension GameState {
         case officeDowngrade
         // MARK: end S2
         // MARK: T1 (exits and joins)
+        case joins
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2
@@ -2041,6 +2065,7 @@ extension GameState {
         officeDowngrade = try container.decodeIfPresent(OfficeDowngradeState.self, forKey: .officeDowngrade)
         // MARK: end S2
         // MARK: T1 (exits and joins)
+        joins = try container.decodeIfPresent(JoinsState.self, forKey: .joins)
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2
@@ -2217,6 +2242,7 @@ extension GameState {
         try container.encodeIfPresent(officeDowngrade, forKey: .officeDowngrade)
         // MARK: end S2
         // MARK: T1 (exits and joins)
+        try container.encodeIfPresent(joins, forKey: .joins)
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2

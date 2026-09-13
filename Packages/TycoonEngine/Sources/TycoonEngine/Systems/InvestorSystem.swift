@@ -590,7 +590,11 @@ enum InvestorSystem {
     /// review grades; and the team, who have just been sold, take it
     /// badly. Ignored with nothing pending, on a distress bid, or with an
     /// earn-out already running. No draws.
-    static func acceptBuyoutEarnOut(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+    // MARK: T1 (exits and joins) — `accelerate`, defaulted: `.acceptBuyoutEarnOut`'s call is the old one.
+    static func acceptBuyoutEarnOut(
+        state: inout GameState, balance: BalanceConfig, accelerate: Bool = false
+    ) -> [GameEvent] {
+    // MARK: end T1
         guard let offer = state.rivals.pendingBuyout,
               state.rivals.lastBuyoutWasStrategic,
               state.investors.earnOut == nil,
@@ -611,6 +615,15 @@ enum InvestorSystem {
             day: state.day, amount: upfront, category: .other,
             label: "\(buyerName) earn-out, up front"
         ))
+        // MARK: T1 (exits and joins)
+        // The loan out of what landed, the holders paid their share of the
+        // whole price, and the unvested answered. A lapsed holder leaves at
+        // the next weekly pass (`ExitSystem.run`).
+        let settled = ExitSystem.settle(
+            kind: .earnOut, price: offer.amount, accelerate: accelerate,
+            grants: balance.ladder.grants, state: &state
+        )
+        // MARK: end T1
         for index in state.employees.indices where !state.employees[index].isFounder {
             state.employees[index].morale = min(
                 100, max(0, state.employees[index].morale - config.earnOutMoraleCost)
@@ -630,9 +643,25 @@ enum InvestorSystem {
         // not a profitable quarter.
         state.investors.lastQuarterCash = state.company.cash
         state.investors.lastQuarterHeadcount = state.headcount
-        return [.earnOutSigned(
+        // MARK: T1 (exits and joins)
+        // The acquirer bought a team and some of it is walking out: each
+        // lapsed holder reads as a missed review, one short of the ousting
+        // (the lane's measurement: acceleration is only 3–5% of a studio
+        // founder's cheque, so the lapse has to cost something). Nothing
+        // with no lapse.
+        if let record = state.joins?.exit, record.day == state.day, record.kind == .earnOut,
+           !record.lapsedIDs.isEmpty, var earnOut = state.investors.earnOut {
+            let ceiling = max(0, config.earnOutMissesToOust - 1)
+            earnOut.missedReviews = min(
+                ceiling,
+                earnOut.missedReviews + record.lapsedIDs.count * max(0, balance.exits.lapsedEarnOutMisses)
+            )
+            state.investors.earnOut = earnOut
+        }
+        return settled + [.earnOutSigned(
             rivalID: offer.rivalID, upfront: upfront, price: offer.amount, day: state.day
         )]
+        // MARK: end T1
     }
 
     /// Turns the term sheet down. Ignored with nothing pending.
@@ -650,6 +679,17 @@ enum InvestorSystem {
         guard state.canFileIPO(balance: balance) else { return [] }
         let config = balance.investors
         let valuation = Double(state.companyValuation(balance: balance)) * config.ipoValuationMultiple
+        // MARK: T1 (exits and joins)
+        // The loan first (cash to the wallet, the valuation unmoved — it
+        // carried the loan as a liability), then the holders at the
+        // market's price; the unvested lapse and come home to the founder's
+        // slice before it is sold, because there is no company left to
+        // keep them in. Nothing with no loan and no grant.
+        let settled = ExitSystem.settle(
+            kind: .ipo, price: Int(valuation.rounded()), accelerate: false,
+            grants: balance.ladder.grants, state: &state
+        )
+        // MARK: end T1
         let proceeds = Int((valuation * state.investors.equityRemaining / 100).rounded())
 
         state.investors.ipoDay = state.day
@@ -664,7 +704,7 @@ enum InvestorSystem {
                 + "\(Int(state.investors.equityRemaining))% stake.",
             kind: .ipo
         )
-        return [.wentPublic(proceeds: proceeds, day: state.day), .gameOver(day: state.day)]
+        return settled /* T1 */ + [.wentPublic(proceeds: proceeds, day: state.day), .gameOver(day: state.day)]
     }
 
     // MARK: Iteration 5 — Still yours (WS-G)

@@ -290,6 +290,9 @@ struct LifeScreen: View {
                     // MARK: K7 (partner and diary)
                     // MARK: end K7
                     // MARK: T1 (exits and joins)
+                    // The morning after the founder fired their partner
+                    // with cause. Draws nothing unless that question is open.
+                    PartnerFiringCard(engine: engine)
                     // MARK: end T1
                     // MARK: T2 (the build)
                     // MARK: end T2
@@ -723,6 +726,11 @@ struct LifeScreen: View {
         #endif
         // MARK: end K7
         // MARK: T1 (exits and joins)
+        // `-autoRoute t1-firing`: the partner hired and fired with cause,
+        // the morning after; the card is on this page.
+        #if DEBUG
+        if Route.launchRoute == .t1Firing { ExitsDebugLaunch.seedIfAsked(engine) }
+        #endif
         // MARK: end T1
         // MARK: T2 (the build)
         // MARK: end T2
