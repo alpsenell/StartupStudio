@@ -813,6 +813,16 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: T2 (the build)
     // MARK: end T2
     // MARK: T3 (people)
+    /// A plain firing paid `weeks` of notice: `amount` out of the company.
+    case severancePaid(employeeID: UUID, name: String, weeks: Int, amount: Int, day: Int)
+    /// Somebody fired for cause filed for wrongful dismissal: `amount` to
+    /// settle, or the tribunal on `hearingDay`.
+    case dismissalClaimFiled(employeeID: UUID, name: String, amount: Int, hearingDay: Int, day: Int)
+    /// The tribunal heard it: `won` when it found for the founder; `award`
+    /// is what the company paid when it did not.
+    case dismissalClaimHeard(name: String, won: Bool, award: Int, day: Int)
+    /// Several people let go at once.
+    case laidOff(count: Int, severance: Int, moraleHit: Double, reputation: Double, boardPressure: Int, day: Int)
     // MARK: end T3
     // MARK: T4 (publisher)
     /// A rival publishes the build: `advance` paid, `share` of its revenue

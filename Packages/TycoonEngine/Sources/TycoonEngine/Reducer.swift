@@ -374,8 +374,12 @@ public enum Reducer {
             )
         case let .hire(candidateID):
             events = EmployeeSystem.hire(candidateID: candidateID, state: &state, balance: balance)
-        case let .fire(employeeID):
-            events = EmployeeSystem.fire(employeeID: employeeID, state: &state, balance: balance)
+        // MARK: T3 (people) — the notice only on the player's `payNotice`.
+        case let .fire(employeeID, payNotice):
+            events = EmployeeSystem.fire(
+                employeeID: employeeID, payNotice: payNotice == true, state: &state, balance: balance
+            )
+        // MARK: end T3
         case let .assign(employeeID, assignment):
             events = EmployeeSystem.assign(employeeID: employeeID, to: assignment, state: &state)
         case let .startResearch(nodeID):
@@ -1141,6 +1145,14 @@ public enum Reducer {
         // MARK: T2 (the build)
         // MARK: end T2
         // MARK: T3 (people)
+        case let .layOff(employeeIDs):
+            events = SeveranceSystem.layOff(employeeIDs: employeeIDs, state: &state, balance: balance)
+        case let .severanceDebugClaim(employeeID):
+            #if DEBUG
+            events = SeveranceSystem.debugClaim(employeeID: employeeID, state: &state, balance: balance)
+            #else
+            events = []
+            #endif
         // MARK: end T3
         // MARK: T4 (publisher)
         case let .shopToPublisher(productID):

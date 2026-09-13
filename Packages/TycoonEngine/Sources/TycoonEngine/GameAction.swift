@@ -6,7 +6,14 @@ public enum GameAction: Codable, Equatable, Sendable {
     case setPhaseFocus(productID: UUID, focus: PhaseFocus)
     case ship(productID: UUID)
     case hire(candidateID: UUID)
-    case fire(employeeID: UUID)
+    // MARK: T3 (people)
+    /// `payNotice` (T3): the player's plain firing pays notice — a week of
+    /// salary per quarter served, up to four — and is refused when the cash
+    /// is short. `nil` (the default, and every old caller: the resignation
+    /// sheet, the bots, the tests) is the old free firing, and an optional
+    /// keeps the synthesized encoding of the old case byte for byte.
+    case fire(employeeID: UUID, payNotice: Bool? = nil)
+    // MARK: end T3
     case assign(employeeID: UUID, to: Assignment)
     case startResearch(nodeID: String)
     case cancelResearch
@@ -734,6 +741,15 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: T2 (the build)
     // MARK: end T2
     // MARK: T3 (people)
+    /// Let several people go at once: everyone's notice paid, the room −2
+    /// morale a head (capped at −10), reputation −1 for every three, and a
+    /// seated board watching headcount reads it as a miss. Refused while
+    /// the notice is more than the cash. No bot sends it.
+    case layOff(employeeIDs: [UUID])
+    /// `-autoRoute t3-claim`: fires `employeeID` with cause and files the
+    /// wrongful-dismissal claim without the draw, for a screenshot. Applied
+    /// only in debug builds; nothing in the game sends it.
+    case severanceDebugClaim(employeeID: UUID)
     // MARK: end T3
     // MARK: T4 (publisher)
     /// Shop a build in development to the strongest rival at

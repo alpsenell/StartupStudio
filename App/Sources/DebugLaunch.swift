@@ -358,6 +358,7 @@ extension Route {
         // MARK: T2 (the build)
         // MARK: end T2
         // MARK: T3 (people)
+        case "t3-layoff", "t3-fire", "t3-dialog", "t3-claim": .severance
         // MARK: end T3
         // MARK: T4 (publisher)
         // MARK: end T4

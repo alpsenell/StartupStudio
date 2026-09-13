@@ -455,9 +455,15 @@ extension GameState {
         case let .lesson(mentorID, studentID, skill):
             guard let mentor = employee(id: mentorID), let student = employee(id: studentID) else { return [] }
             let gain = Self.seatingWeeklyLesson(mentor: mentor, student: student, balance: balance)
+            // MARK: T3 (people)
+            // J5: the lesson's price, printed under the lesson — what the
+            // quarter's skill does to their fair pay and to the recruiters'
+            // list, and whether it carries them to the next rung.
             return starting
                 ? [SeatingLine("\(seatingFirstName(mentorID)) teaches \(seatingFirstName(studentID)) \(skill.rawValue): +\(Self.seatingNumber(gain)) a week.", tone: .good)]
+                    + lessonPriceLines(mentor: mentor, student: student, skill: skill, balance: balance)
                 : [SeatingLine("\(seatingFirstName(studentID)) stops learning \(skill.rawValue) from \(seatingFirstName(mentorID)).", tone: .bad)]
+            // MARK: end T3
         case let .grumble(grumblerID, neighbourID):
             let delta = Self.seatingNumber(abs(config.grumblerMoraleDelta))
             return starting

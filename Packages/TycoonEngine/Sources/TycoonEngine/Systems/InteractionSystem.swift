@@ -343,6 +343,9 @@ public enum InteractionSystem {
     ) -> [GameEvent] {
         guard state.employees.contains(where: { $0.id == employeeID && !$0.isFounder })
         else { return [] }
+        // MARK: T3 (people) — who they were, read before the row goes.
+        let leaving = state.employees.first { $0.id == employeeID }
+        // MARK: end T3
         let events = EmployeeSystem.fire(employeeID: employeeID, state: &state, balance: balance)
         guard !events.isEmpty else { return events }
         state.interactions.firedWithCauseIDs.append(employeeID)
@@ -351,7 +354,11 @@ public enum InteractionSystem {
             state.networking.contacts[index].rapport = 0
         }
         state.narrative.flags.insert(InteractionTuning.estrangedFlag)
-        return events
+        // MARK: T3 (people)
+        // The room saw it, and somebody who was happy here may call a
+        // lawyer: one `socialRNG` word, only on this tap.
+        return events + SeveranceSystem.causeFollows(leaving, state: &state, balance: balance)
+        // MARK: end T3
     }
 
     // MARK: - Refusals

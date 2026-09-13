@@ -290,19 +290,26 @@ struct PeopleLegacyRows: View {
     @ViewBuilder
     private func fireRow(_ id: UUID) -> some View {
         let employee = engine.state.employees.first { $0.id == id }
+        // MARK: T3 (people)
+        // The ordinary firing pays notice now, priced here as on their page.
+        let notice = engine.state.severanceNotice(employeeID: id, balance: engine.balance)
+        let blocker = employee?.isFounder == true
+            ? "That's you"
+            : engine.state.severanceNoticeBlocker(employeeID: id, balance: engine.balance)
         PeopleRow(
             icon: "door.left.hand.open",
             title: "Let them go",
-            terms: "The ordinary firing · they stay in the address book",
+            terms: "The ordinary firing · \(notice.map(SeveranceCopy.noticePrice) ?? "no notice owed") · they stay in the address book",
             footnote: "No cause named — they can come back through the book.",
-            blocker: employee?.isFounder == true ? "That's you" : nil,
+            blocker: blocker,
             destructive: true
         ) {
             Haptics.tap()
             shell.toasts.send(
-                .fire(employeeID: id), to: engine,
-                rejected: "Not right now.", icon: "door.left.hand.open"
+                .fire(employeeID: id, payNotice: true), to: engine,
+                rejected: blocker ?? "Not right now.", icon: "door.left.hand.open"
             )
         }
+        // MARK: end T3
     }
 }

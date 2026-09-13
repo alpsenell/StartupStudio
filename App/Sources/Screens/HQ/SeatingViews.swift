@@ -361,7 +361,10 @@ struct SeatingDeskSection: View {
                         Text(SeatingCopy.beside(preview.neighbourIDs, state: state).seatingCapitalized + ".")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        SeatingLinesView(lines: preview.lines, ink: .primary)
+                        // MARK: T3 (people) — the sheet scrolls: room for the lesson's price
+                        // under every lesson without pushing S1's own lines behind "… and N more".
+                        SeatingLinesView(lines: preview.lines, limit: 10, ink: .primary)
+                        // MARK: end T3
                         if let blocker = preview.blocker {
                             Text(blocker)
                                 .font(.caption.weight(.semibold))

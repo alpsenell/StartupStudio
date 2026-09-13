@@ -82,6 +82,13 @@ enum SeatingSystem {
             case .marketing:
                 state.employees[index].skills.marketing = min(ceiling, max(state.employees[index].skills.marketing, state.employees[index].skills.marketing + gain))
             }
+            // MARK: T3 (people)
+            // J5: the lesson that carries a student past their rung's bar
+            // is the one that makes them ask for the title. No draw.
+            if GameState.lessonCrossesRung(before: student, after: state.employees[index]) {
+                SocialSystem.lessonAsksForPromotion(studentID, state: &state)
+            }
+            // MARK: end T3
         }
     }
 

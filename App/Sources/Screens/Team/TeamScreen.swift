@@ -35,6 +35,11 @@ struct TeamScreen: View {
     @State private var tookLaunchRoute = false
     @State private var showingHiring = false
     @State private var employeeToFire: Employee?
+    // MARK: T3 (people)
+    @State private var showingLayoff = false
+    /// DEBUG `-autoRoute t3-layoff`: who the sheet opens with ticked.
+    @State private var layoffPreselect: Set<UUID> = []
+    // MARK: end T3
     @State private var employeeToManage: Employee?
     @State private var search = ""
     @State private var sortOrder: SortOrder = .tenure
@@ -172,6 +177,26 @@ struct TeamScreen: View {
                     // MARK: T2 (the build)
                     // MARK: end T2
                     // MARK: T3 (people)
+                    // `-autoRoute t3-…`: the layoff sheet, a manage sheet
+                    // with the two priced answers, the swipe dialog, or a
+                    // claim filed and the Life tab where it waits.
+                    if Route.launchRoute == .severance, let route = SeveranceDebug.route {
+                        switch route {
+                        case "t3-layoff":
+                            layoffPreselect = SeveranceDebug.preselect(engine)
+                            showingLayoff = true
+                        case "t3-dialog":
+                            employeeToFire = SeveranceDebug.person(engine.state)
+                        case "t3-claim":
+                            if let person = SeveranceDebug.person(engine.state) {
+                                engine.send(.severanceDebugClaim(employeeID: person.id))
+                            }
+                            router.go(.life)
+                        default:
+                            employeeToManage = SeveranceDebug.person(engine.state)
+                        }
+                        return
+                    }
                     // MARK: end T3
                     // MARK: T4 (publisher)
                     // MARK: end T4
@@ -208,13 +233,29 @@ struct TeamScreen: View {
                 titleVisibility: .visible,
                 presenting: employeeToFire
             ) { employee in
-                Button("Fire \(employee.name)", role: .destructive) {
-                    engine.send(.fire(employeeID: employee.id))
+                // MARK: T3 (people) — the two priced answers.
+                Button(
+                    SeveranceCopy.noticeTitle(
+                        engine.state.severanceNotice(employeeID: employee.id, balance: engine.balance),
+                        name: employee.name
+                    ),
+                    role: .destructive
+                ) {
+                    engine.send(.fire(employeeID: employee.id, payNotice: true))
+                }
+                Button(SeveranceCopy.causeTitle(name: employee.name), role: .destructive) {
+                    engine.send(.interact(target: .employee(employee.id), interaction: SeveranceCopy.causeInteractionID))
                 }
                 Button("Cancel", role: .cancel) {}
-            } message: { _ in
-                Text("No severance in the garage era.")
+            } message: { employee in
+                Text(SeveranceCopy.dialogMessage(state: engine.state, employeeID: employee.id, balance: engine.balance))
+                // MARK: end T3
             }
+            // MARK: T3 (people)
+            .sheet(isPresented: $showingLayoff) {
+                LayoffSheet(engine: engine, preselect: layoffPreselect)
+            }
+            // MARK: end T3
         }
     }
 
@@ -263,6 +304,11 @@ struct TeamScreen: View {
                     bulkAssignRow
                 }
                 // MARK: end U1
+                // MARK: T3 (people) — several at once, every price totalled.
+                if engine.state.headcount >= 2 {
+                    layoffRow
+                }
+                // MARK: end T3
                 // Departments form by hiring the matching role, so the
                 // card lives where the hiring happens (it led HQ before).
                 DepartmentsCard(engine: engine)
@@ -449,6 +495,36 @@ struct TeamScreen: View {
             Label(label, systemImage: systemImage)
         }
     }
+
+    // MARK: T3 (people)
+    /// "Let people go", with the move down's shortfall when there is one.
+    private var layoffRow: some View {
+        let state = engine.state
+        let hired = state.employees.filter { !$0.isFounder }.count
+        let over = state.officeDowngradeQuote(balance: engine.balance).flatMap { quote -> String? in
+            let excess = state.headcount - quote.desksAfter
+            return excess > 0 ? "\(excess) over the \(quote.to.displayName)'s desks" : nil
+        }
+        return Button {
+            showingLayoff = true
+        } label: {
+            HStack {
+                Label("Let people go", systemImage: "person.2.slash")
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundStyle(Theme.accent)
+                Spacer()
+                Text(over ?? "\(hired) on payroll · notice priced")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .accessibilityLabel("Let people go")
+    }
+    // MARK: end T3
 
     /// Team dinner: morale + loyalty for everyone, per-head cost, global
     /// cooldown. Mirrors the engine's gates to disable with a reason.
