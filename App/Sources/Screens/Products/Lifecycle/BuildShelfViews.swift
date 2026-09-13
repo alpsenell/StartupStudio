@@ -315,12 +315,39 @@ private struct BuildAutoRoute: ViewModifier {
         try? await Task.sleep(for: .seconds(seconds))
     }
 
+    /// The fixture comes with a question waiting (the studio's hackathon
+    /// judge), and its sheet covers whatever the route opens. Answer each
+    /// with its first open option — `-autoAnswer`'s pick — without starting
+    /// the clock `-autoAnswer` would start.
+    private func clearQuestions() async {
+        for _ in 0..<10 {
+            // The story queue's choice first (the hackathon judge is one),
+            // then anything else `DecisionPrompt` would put up.
+            guard let prompt = NarrativeChoicePresenter.prompt(
+                for: engine.state, content: engine.content, balance: engine.balance
+            ) ?? DecisionPrompt.pending(
+                in: engine.state, content: engine.content, balance: engine.balance
+            ) else { break }
+            guard let option = prompt.options.first(where: { option in
+                guard option.disabledReason == nil else { return false }
+                switch option.action {
+                case .acceptBuyout, .acceptBuyoutEarnOut: return false
+                default: return true
+                }
+            }) else { break }
+            _ = engine.send(option.action)
+            await beat(0.5)
+        }
+        await beat()
+    }
+
     private func run(_ scenario: String) async {
         for _ in 0..<20 where engine.state.products.isEmpty { await beat() }
         await beat(2)
         // Keep the studio out of the bankruptcy warning, which pauses the
         // clock and takes the screen to HQ (K2's seed).
         engine.send(.lifecycleDebug(scenario: "solvent"))
+        await clearQuestions()
         switch scenario {
         case "ship", "card":
             engine.send(.buildDebugSeed(scenario: "ready"))
