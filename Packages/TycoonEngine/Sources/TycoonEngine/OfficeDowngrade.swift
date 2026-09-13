@@ -138,7 +138,10 @@ extension GameState {
         let excessBuilds = buildsInFlight - target.concurrentDevSlots
         if excessBuilds > 0 {
             refusals.append(
-                "Ship \(excessBuilds) build\(excessBuilds == 1 ? "" : "s") first: the \(target.displayName) runs \(target.concurrentDevSlots) at a time"
+                // MARK: T2 (the build) — the refusal names the verb that
+                // answers it; a shelved build is out of `buildsInFlight`.
+                "Ship or shelve \(excessBuilds) build\(excessBuilds == 1 ? "" : "s") first: the \(target.displayName) runs \(target.concurrentDevSlots) at a time"
+                // MARK: end T2
             )
         }
         let sale = owned ? city.propertyValue : 0

@@ -145,6 +145,10 @@ enum ProductSystem {
                 state.day <= $0 ? lifecycle.riseUnitsFactor : 1
             } ?? 1
             // MARK: end K2
+            // MARK: T2 (the build) — J4: the old version. `(1, 1)` unless a
+            // v2 declared on this product sells beside it.
+            let parentDecay = state.buildParentDecay(productID: productID, balance: balance)
+            // MARK: end T2
             let demand = type.marketSize * balance.marketSizeScale
                 * (balance.salesBaseFactor + balance.salesQualityFactor * qHat)
                 * hypeBoost
@@ -168,8 +172,14 @@ enum ProductSystem {
                 // addressable market up and loses a slice of the book.
                 let acquired = demand / max(1, economy.subscriberAcquisitionWeeks)
                     * adoption * world
+                    // MARK: T2 (the build) — J4: exactly ×1 with no live v2.
+                    * parentDecay.acquisition
+                    // MARK: end T2
                 var churnRate = max(0, economy.churnBase - economy.churnQualityFactor * qHat)
                 if overpriced { churnRate *= economy.premiumChurnPenalty }
+                // MARK: T2 (the build) — J4: exactly ×1 with no live v2.
+                churnRate *= parentDecay.churn
+                // MARK: end T2
                 churnRate *= 1 - supportChurnRelief(
                     productID: productID, state: state, balance: balance
                 )
@@ -191,7 +201,11 @@ enum ProductSystem {
                 let decayWeeks = max(0, Double(week) - (rampWeeks - 1))
                 // K2: `riseDrag` is exactly 1 unless the player raised the
                 // price of a one-time product in the last `riseWeeks`.
-                units = Int(demand * adoption * pow(decay, decayWeeks) * world * overpricedDrag * riseDrag)
+                units = Int(demand * adoption * pow(decay, decayWeeks) * world * overpricedDrag * riseDrag
+                    // MARK: T2 (the build) — J4: exactly ×1 with no live v2.
+                    * parentDecay.acquisition
+                    // MARK: end T2
+                )
                 delisted = units == 0
                     || (adoption >= 1 && Double(units) < balance.delistFraction * demand)
             }
@@ -308,6 +322,10 @@ enum ProductSystem {
         name: String,
         focus: PhaseFocus,
         codebaseID: String? = nil,
+        // MARK: T2 (the build) — J4: the "v2 of…" chip's parent; `nil`
+        // from both start actions, which is every bot's start.
+        parentID: UUID? = nil,
+        // MARK: end T2
         state: inout GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -342,11 +360,23 @@ enum ProductSystem {
             codebaseID: codebase?.id, typeID: typeID,
             state: state, content: content, balance: balance
         )
+        // MARK: T2 (the build) — J4: a declared v2 names a released parent
+        // of its own type and topic, or nothing.
+        let declaredParent = parentID.flatMap { id -> UUID? in
+            guard let parent = state.product(id: id), parent.releaseInfo != nil,
+                  parent.typeID == typeID, parent.topicID == topicID
+            else { return nil }
+            return id
+        }
+        // MARK: end T2
         state.products.append(Product(
             id: id, name: name, typeID: typeID, topicID: topicID,
             stage: .development(progress),
             codebaseID: codebase?.id,
-            features: inherited
+            features: inherited,
+            // MARK: T2 (the build)
+            parentID: declaredParent
+            // MARK: end T2
         ))
         for index in state.employees.indices where state.employees[index].assignment == .idle {
             state.employees[index].assignment = .product(id)
@@ -386,7 +416,11 @@ enum ProductSystem {
         state: inout GameState,
         balance: BalanceConfig,
         content: ContentCatalog,
-        excludingFromSaturation: UUID? = nil
+        excludingFromSaturation: UUID? = nil,
+        // MARK: T2 (the build) — P1: the price named on the ship sheet;
+        // `.standard` for `.ship`, which is every bot's ship.
+        tier: PriceTier = .standard
+        // MARK: end T2
     ) -> [GameEvent] {
         guard let index = state.products.firstIndex(where: { $0.id == productID }),
               case .development(let dev) = state.products[index].stage,
@@ -534,6 +568,15 @@ enum ProductSystem {
             state: &state, balance: balance
         )
         state.products[index].stage = .released(info)
+        // MARK: T2 (the build) — P1: a launch priced off standard writes
+        // the tier and starts K2's 28-day clock; standard, the bots' only
+        // price, writes nothing.
+        if tier != .standard, case .released(var priced) = state.products[index].stage {
+            priced.priceTier = tier
+            priced.lastPriceChangeDay = state.day
+            state.products[index].stage = .released(priced)
+        }
+        // MARK: end T2
 
         // The category ledger: a launch is the biggest single thing the
         // studio can do for its name in a topic, and the press decides how

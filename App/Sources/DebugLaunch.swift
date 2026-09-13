@@ -1777,6 +1777,16 @@ extension DebugLaunch {
     // MARK: T1 (exits and joins)
     // MARK: end T1
     // MARK: T2 (the build)
+    /// `-autoRoute t2-<scenario>` (with `-autoTab products`): T2's
+    /// screenshot pass (`BuildDebug`), `nil` otherwise.
+    static var buildScenario: String? {
+        #if DEBUG
+        guard let name = autoRouteName, name.hasPrefix("t2-") else { return nil }
+        return String(name.dropFirst(3))
+        #else
+        return nil
+        #endif
+    }
     // MARK: end T2
     // MARK: T3 (people)
     // MARK: end T3

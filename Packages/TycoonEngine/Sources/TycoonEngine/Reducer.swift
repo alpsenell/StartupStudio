@@ -264,6 +264,10 @@ public enum Reducer {
         // MARK: T1 (exits and joins)
         // MARK: end T1
         // MARK: T2 (the build)
+
+        // The drawer's weekly decay. Returns on its first line while the
+        // shelf is empty — every run nobody shelved in — and draws nothing.
+        ShelfSystem.run,
         // MARK: end T2
         // MARK: T3 (people)
         // MARK: end T3
@@ -1139,6 +1143,33 @@ public enum Reducer {
         // MARK: T1 (exits and joins)
         // MARK: end T1
         // MARK: T2 (the build)
+        case let .shelveBuild(productID):
+            events = ProductSystem.shelve(productID: productID, state: &state, balance: balance, content: content)
+        case let .unshelveBuild(productID):
+            events = ProductSystem.unshelve(productID: productID, state: &state, balance: balance)
+        case let .scrapBuild(productID):
+            events = ProductSystem.scrap(productID: productID, state: &state, balance: balance, content: content)
+        case let .startProductAsV2(typeID, topicID, name, focus, codebaseID, parentID):
+            events = ProductSystem.startProduct(
+                typeID: typeID, topicID: topicID, name: name, focus: focus,
+                codebaseID: codebaseID, parentID: parentID,
+                state: &state, balance: balance, content: content
+            )
+        case let .shipAt(productID, tier):
+            events = ProductSystem.ship(
+                productID: productID, state: &state, balance: balance, content: content, tier: tier
+            )
+        case let .shipReplacingAt(productID, parentID, tier):
+            events = ProductSystem.shipReplacing(
+                productID: productID, parentID: parentID,
+                state: &state, balance: balance, content: content, tier: tier
+            )
+        case let .buildDebugSeed(scenario):
+            #if DEBUG
+            events = BuildDebugSeed.apply(scenario: scenario, state: &state, balance: balance, content: content)
+            #else
+            events = []
+            #endif
         // MARK: end T2
         // MARK: T3 (people)
         // MARK: end T3

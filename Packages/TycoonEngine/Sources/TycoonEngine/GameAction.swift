@@ -732,6 +732,32 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: T1 (exits and joins)
     // MARK: end T1
     // MARK: T2 (the build)
+    /// O3: put a build in development into the drawer — its slot frees,
+    /// its hype goes, an announced date slips, its crew idles, its points
+    /// keep and decay. Refused for the reasons `BuildRefusal` names. No
+    /// bot sends it.
+    case shelveBuild(productID: UUID)
+    /// O3: take a shelved build back into a free slot.
+    case unshelveBuild(productID: UUID)
+    /// P2: scrap a build (in a slot or on the shelf): half its points into
+    /// the type's codebase, its crew's morale, no review.
+    case scrapBuild(productID: UUID)
+    /// J4: `startProductOnCodebase` from the "v2 of…" chip, which also
+    /// writes the parent (same type and topic, released) on the build. The
+    /// old two start actions are untouched, so every bot sends what it did.
+    case startProductAsV2(
+        typeID: String, topicID: String, name: String, focus: PhaseFocus,
+        codebaseID: String?, parentID: UUID
+    )
+    /// P1: `ship` with the price named on the ship sheet. `.ship` is
+    /// untouched and is `.standard`, which is every bot's ship.
+    case shipAt(productID: UUID, tier: PriceTier)
+    /// P1 × K2: `shipReplacing` with the price named on the ship sheet.
+    case shipReplacingAt(productID: UUID, parentID: UUID, tier: PriceTier)
+    /// `-autoRoute t2-…`: dresses the loaded save for a screenshot
+    /// (`BuildDebugSeed`). Applied only in debug builds; nothing in the
+    /// game sends it.
+    case buildDebugSeed(scenario: String)
     // MARK: end T2
     // MARK: T3 (people)
     // MARK: end T3
