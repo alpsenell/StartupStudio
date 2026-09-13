@@ -1413,7 +1413,16 @@ enum RivalSystem {
             // same arithmetic, so the sell-up can price the midpoint.
             distressFraction(config, uniform: state.worldRNG.nextUniform())
         }
-        let amount = max(1000, Int((Double(valuation) * multiplier).rounded()))
+        let offered = max(1000, Int((Double(valuation) * multiplier).rounded()))
+        // MARK: T4 (publisher) — O1: the sign caps the market. While it
+        // stands a strategic approach pays no more than the ask, and one
+        // capped under today's valuation is a sale, as a sign bid under it
+        // is. After both draws, so the world stream is untouched; with no
+        // sign up (every bot and fixture) `amount` is `offered` and the
+        // flag is `strong`.
+        let amount = strong ? state.dealCappedApproach(offered) : offered
+        let strategic = strong && (state.rivals.listing == nil || amount >= valuation)
+        // MARK: end T4
         let offer = BuyoutOffer(
             rivalID: buyer.id,
             amount: amount,
@@ -1421,7 +1430,7 @@ enum RivalSystem {
         )
         state.rivals.pendingBuyout = offer
         state.rivals.lastBuyoutDay = state.day
-        state.rivals.lastBuyoutWasStrategic = strong
+        state.rivals.lastBuyoutWasStrategic = strategic
         return [.buyoutOffered(
             rivalID: buyer.id, amount: amount, respondByDay: offer.respondByDay, day: state.day
         )]

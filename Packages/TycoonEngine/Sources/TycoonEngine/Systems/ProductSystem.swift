@@ -215,6 +215,11 @@ enum ProductSystem {
                 category: .sales,
                 label: state.products[index].name
             ))
+            // MARK: T4 (publisher) — the publisher's share of the week just
+            // posted, as its own ledger line. Returns at once for a product
+            // nobody published.
+            PublisherSystem.postShare(at: index, revenue: revenue, state: &state)
+            // MARK: end T4
         }
 
         // The cost of success: everything on the market needs servers,
@@ -437,6 +442,10 @@ enum ProductSystem {
         // A company with a for-sale sign up launches to a shrug. Exactly
         // ×1 while no sign stands.
         let hypeAtLaunch = dev.hype * state.dealLaunchHypeFactor(balance: balance)
+            // MARK: T4 (publisher) — the publisher's name on launch day;
+            // + exactly 0 for a build nobody published.
+            + state.publisherLaunchHype(for: state.products[index], balance: balance)
+            // MARK: end T4
         // MARK: end K4
         let expected = balance.reviewExpectationBase
             + balance.reviewExpectationPerYear * Double(state.year - 1)

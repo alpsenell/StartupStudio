@@ -2067,6 +2067,13 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: T3 (people)
     // MARK: end T3
     // MARK: T4 (publisher)
+
+    /// Iteration 17 — T4: the publishing deal
+    /// (`BalanceConfig+Publisher.swift`). Inline default, so `"publisher"`
+    /// is an optional key; read only behind `.shopToPublisher`, which no
+    /// bot sends, and on a build somebody published.
+    public var publisher: PublisherBalance = .default
+
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
     // MARK: end T5

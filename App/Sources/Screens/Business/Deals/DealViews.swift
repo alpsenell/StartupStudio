@@ -102,7 +102,8 @@ struct DealSignCard: View {
             }
             Button("Not yet", role: .cancel) {}
         } message: {
-            Text(DealCopy.bleed(state: state, balance: balance))
+            // T4 (O1): the cap is part of the price of hanging it.
+            Text(DealCopy.bleed(state: state, balance: balance) + " " + DealCopy.capLine)
         }
     }
 
@@ -167,7 +168,8 @@ struct DealSignCard: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(Theme.accent)
-                Text("The bleed stops today; a bid already on the desk stands until it lapses.")
+                // T4 (O1): what taking it down opens, as well as what it stops.
+                Text("The bleed stops today; a bid already on the desk stands until it lapses. " + DealCopy.takeDown(state: state, balance: balance))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -449,26 +451,38 @@ enum DealCopy {
     }
 
     /// The other answer: wait for somebody to come on their own.
+    ///
+    /// T4 (O1): the approach is the strongest studio's alone, as
+    /// `buyoutCheck` sends it (`dealStrategicSuitor`), and the sign caps it
+    /// at the ask, so the card says both before the tap.
     static func wait(state: GameState, balance: BalanceConfig) -> String {
         let exits = balance.investors
-        let config = balance.rivals
-        let valuation = Double(state.companyValuation(balance: balance))
-        let weak = state.company.daysInDebt > 0
-            || state.company.cash < config.weakCashThreshold
-            || state.company.reputation < config.weakRepThreshold
-        let courting = weak || state.company.reputation < exits.strategicMinReputation
-            ? []
-            : state.rivals.rivals.filter {
-                valuation >= Double($0.valuation(balance: balance)) * exits.strategicDominanceFactor
-            }
-        let premium = "\(factor(exits.strategicPremiumMin))–\(factor(exits.strategicPremiumMax))×"
-        if courting.isEmpty {
-            return "Or wait: a rival you are worth \(factor(exits.strategicDominanceFactor))× comes on its own at \(premium), "
-                + "once your reputation is \(Int(exits.strategicMinReputation)). None qualifies today."
+        guard let suitor = state.dealStrategicSuitor(balance: balance) else {
+            return "Or wait: a rival you are worth \(factor(exits.strategicDominanceFactor))× comes on its own at \(premium(balance)), "
+                + "once your reputation is \(Int(exits.strategicMinReputation)). None qualifies today, so the sign closes nothing."
         }
-        let names = courting.prefix(2).map(\.name).joined(separator: " and ")
-        return "Or wait: \(names) can come on \(courting.count == 1 ? "its" : "their") own at \(premium) — at their number, on their clock."
+        return "\(capLine) Without it, \(suitor.name) comes on its own at \(premium(balance)) — at their number, on their clock."
     }
+
+    // MARK: T4 (publisher) — O1: the sign caps the market
+
+    /// What the sign closes, in one sentence.
+    static let capLine = "While the sign stands nobody pays more than your ask."
+
+    /// The take-down button's other side: what the market can pay again.
+    static func takeDown(state: GameState, balance: BalanceConfig) -> String {
+        guard let suitor = state.dealStrategicSuitor(balance: balance) else {
+            return "Nobody courts you at a premium today, so taking it down opens nothing."
+        }
+        return "Down, the market sets the price again: \(suitor.name) comes on its own at \(premium(balance))."
+    }
+
+    /// "1.5–2.5×", the strategic approach's range.
+    static func premium(_ balance: BalanceConfig) -> String {
+        "\(factor(balance.investors.strategicPremiumMin))–\(factor(balance.investors.strategicPremiumMax))×"
+    }
+
+    // MARK: end T4
 
     /// The sell-up's price and what waiting does to it.
     static func sellUpLine(_ offer: DealSellUpOffer, balance: BalanceConfig) -> String {

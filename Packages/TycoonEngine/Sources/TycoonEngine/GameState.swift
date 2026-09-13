@@ -815,6 +815,14 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: T3 (people)
     // MARK: end T3
     // MARK: T4 (publisher)
+    /// A rival publishes the build: `advance` paid, `share` of its revenue
+    /// theirs, the date `forDay`.
+    case publisherSigned(productID: UUID, rivalID: UUID, advance: Int, share: Double, forDay: Int, day: Int)
+    /// A published build missed its date and the publisher took `amount`
+    /// of the advance back.
+    case publisherClawedBack(productID: UUID, rivalID: UUID, amount: Int, day: Int)
+    /// The founder bought the publisher out for `price`.
+    case publisherBoughtOut(productID: UUID, rivalID: UUID, price: Int, day: Int)
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
     // MARK: end T5

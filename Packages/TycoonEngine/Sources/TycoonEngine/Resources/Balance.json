@@ -2095,7 +2095,7 @@
   },
   "deals": {
     "askMin": 0.8,
-    "askMax": 1.6,
+    "askMax": 2.0,
     "bidIntervalDays": 28,
     "bidBase": 0.9,
     "bidStep": 0.1,
@@ -2155,5 +2155,16 @@
     "friendBondGain": 2.0,
     "founderBondGain": 2.0,
     "doorPoachWeight": 60.0
+  },
+  "publisher": {
+    "minStrength": 30.0,
+    "share": 0.4,
+    "clawbackPerSlip": 0.25,
+    "buyoutMultiple": 1.5,
+    "launchHypeFactor": 0.5,
+    "crewFloorSalaryBases": 3.0,
+    "advanceWeeksFactor": 0.5,
+    "dateSlackDays": 14,
+    "estimateWeeks": 42
   }
 }

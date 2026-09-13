@@ -343,6 +343,14 @@ struct BusinessScreen: View {
         // MARK: T3 (people)
         // MARK: end T3
         // MARK: T4 (publisher)
+        // `-autoRoute t4-publisher`: the build a publisher would take,
+        // pushed on the Products tab (`-autoPublisher` dresses it there).
+        if router.pendingPush == nil && !landed && PublisherDebug.wantsLanding,
+           let productID = PublisherDebug.candidate(in: engine) {
+            landed = true
+            router.go(.product(productID))
+            return
+        }
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
         // MARK: end T5
