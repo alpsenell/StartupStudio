@@ -228,6 +228,11 @@ struct EmployeeManageSheet: View {
         // MARK: K3 (the ladder) — a holder is read on the pay before the cut.
         let ratio = fair > 0 ? Double(employee.fairnessSalary) / fair : 1
         // MARK: end K3
+        // MARK: T1 (exits and joins) — merge glue: a dividend that reached their desk.
+        if let cause = state.founderMoneyHolderDividendCause(for: employee, balance: balance) {
+            causes.append((cause, true))
+        }
+        // MARK: end T1
         if state.cofounderWorksForEquity(employee, balance: balance) {
             // The deal, not a grievance: the morale pass reads it as fair.
         } else if ratio < staff.underpaidThreshold {

@@ -451,7 +451,9 @@ public enum Reducer {
         case .declinePoachOffer:
             events = RivalSystem.declinePoachOffer(state: &state, balance: balance)
         case .acceptBuyout:
-            events = RivalSystem.acceptBuyout(state: &state)
+            // MARK: T1 (exits and joins) — merge glue: the old case lapses the unvested with the shipped balance.
+            events = RivalSystem.acceptBuyout(state: &state, balance: balance)
+            // MARK: end T1
         case .declineBuyout:
             events = RivalSystem.declineBuyout(state: &state)
         case let .acquireRival(rivalID):

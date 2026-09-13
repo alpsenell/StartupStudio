@@ -440,11 +440,10 @@ struct InvestorsView: View {
         let balance = engine.balance
         let blocker = engine.state.ipoBlocker(balance: balance)
         let ready = engine.state.canFileIPO(balance: balance)
-        let proceeds = Int(
-            (Double(engine.state.companyValuation(balance: balance))
-                * balance.investors.ipoValuationMultiple
-                * investors.equityRemaining / 100).rounded()
-        )
+        // MARK: T1 (exits and joins) — merge glue: the IPO number reads the exit
+        // split (the unvested lapse and come home; the loan comes back first).
+        let proceeds = engine.state.exitIPOProceeds(balance: balance)
+        // MARK: end T1
 
         return CardView("Initial public offering", systemImage: "building.columns.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
