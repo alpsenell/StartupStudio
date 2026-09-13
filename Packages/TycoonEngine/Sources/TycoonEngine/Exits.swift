@@ -435,6 +435,8 @@ extension RelationshipSystem {
 /// - `sellup`: the same holders and loan, the company nine days in the red.
 /// - `dividend`: the same holders, then the largest dividend allowed today.
 /// - `firing`: the partner hired, then fired with cause, the morning after.
+/// - `bid`: the same bid with no holder and no loan — the sheet as it was
+///   before this lane (no options row), for the before shot.
 enum ExitsDebugSeed {
     static func apply(
         scenario: String,
@@ -454,7 +456,7 @@ enum ExitsDebugSeed {
             break
         }
         switch scenario {
-        case "buyout", "earnout":
+        case "buyout", "earnout", "bid":
             guard let buyer = GameState.dealStrongest(state.rivals.rivals) else { break }
             state.rivals.pendingBuyout = BuyoutOffer(
                 rivalID: buyer.id,

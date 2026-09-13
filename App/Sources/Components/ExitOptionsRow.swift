@@ -93,9 +93,9 @@ struct ExitOptionsRow {
         let leaving = split.unvestedHolders.map(\.name)
         let names = Self.names(leaving)
         var detail = "\(split.founderProceeds(accelerate: false).money) to you · "
-            + "\(names) won't be coming with you · name +\(Self.number(namePenalty * Double(leaving.count)))"
+            + "\(names) won't come · name +\(Self.number(namePenalty * Double(leaving.count)))"
         if offersEarnOut {
-            detail += " · an earn-out reads each as a missed review"
+            detail += " · earn-out: a missed review"
         }
         return detail
     }
@@ -103,7 +103,7 @@ struct ExitOptionsRow {
     /// "$343,226 to you · $11,441 vests for them today · the team arrives whole".
     var accelerateDetail: String {
         "\(split.founderProceeds(accelerate: true).money) to you · "
-            + "\(split.accelerationCost.money) vests for them today · the team arrives whole"
+            + "\(split.accelerationCost.money) vests for them · the team stays whole"
     }
 
     /// "Priya", "Priya and Tariq", "Priya, Tariq and Sofia".
@@ -184,9 +184,13 @@ struct ExitOptionsRowView: View {
                         choice(false)
                         choice(true)
                     }
+                    .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
+        // The answers are pinned under the question; the row keeps its
+        // full height and the question's body gives way instead.
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func choice(_ value: Bool) -> some View {
