@@ -104,6 +104,9 @@ struct AnnounceCard: View {
                 .font(.caption)
                 .foregroundStyle(Theme.warning)
         }
+        // MARK: T5 (expo and pre-orders) — the row under the date.
+        PreorderRow(engine: engine, product: product)
+        // MARK: end T5
     }
 
     private func label(_ day: Int) -> String {
@@ -193,6 +196,14 @@ enum AnnounceRoute {
         if AnnounceDebug.wantsPremium, let id = AnnounceDebug.premiumCandidate(in: engine)?.id {
             return id
         }
+        // MARK: T5 (expo and pre-orders) — `-autoRoute t5-preorders`: the
+        // announced build (or the one about to be), its pre-order sheet open.
+        if DebugLaunch.autoRouteName == "t5-preorders",
+           let id = engine.state.announcedBuilds.first?.id ?? candidate(in: engine)?.id {
+            PreorderRoute.sheetRequest = id
+            return id
+        }
+        // MARK: end T5
         #endif
         guard let id = candidate(in: engine)?.id else { return nil }
         sheetRequest = id

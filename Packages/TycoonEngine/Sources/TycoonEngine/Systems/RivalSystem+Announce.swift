@@ -15,6 +15,17 @@ extension RivalSystem {
     /// given the ordinary `ripeDay`. Returns `ripeDay` untouched for a
     /// product nobody announced.
     static func announceRipeDay(_ ripeDay: Int, for product: Product, _ balance: BalanceConfig) -> Int {
+        // MARK: T5 (expo and pre-orders) — a build shown at the expo told
+        // the industry what it was too: ripe at `expo.copycatDelayWeeks`.
+        // The bigger head start wins when it was also announced; a product
+        // nobody showed reads the J5 lines below exactly as before.
+        if product.expoDay != nil {
+            let weeks = RivalDepthTuning.copycatDelayWeeks
+            let shown = ripeDay + max(0, weeks - balance.expo.copycatDelayWeeks) * GameState.daysPerWeek
+            guard product.wasAnnounced else { return shown }
+            return max(shown, ripeDay + max(0, weeks - balance.announce.copycatDelayWeeks) * GameState.daysPerWeek)
+        }
+        // MARK: end T5
         guard product.wasAnnounced else { return ripeDay }
         let headStartWeeks = max(0, RivalDepthTuning.copycatDelayWeeks - balance.announce.copycatDelayWeeks)
         return ripeDay + headStartWeeks * GameState.daysPerWeek

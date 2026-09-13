@@ -263,6 +263,9 @@ enum Route: Hashable {
     // MARK: T4 (publisher)
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
+    /// Iteration 17 — T5: the year's expo, planned from the Now card's row
+    /// on HQ (the rail's *Expo in N days* lands here).
+    case expo
     // MARK: end T5
     // MARK: T6 (away)
     // MARK: end T6
@@ -395,6 +398,7 @@ enum Route: Hashable {
         // MARK: T4 (publisher)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+        case .expo: .hq
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6

@@ -40,6 +40,10 @@ enum AnnounceSystem {
                 }
             }
         }
+        // MARK: T5 (expo and pre-orders) — the launch week delivers what a
+        // build pre-sold. Walks only products that opened pre-orders.
+        events.append(contentsOf: deliverPreorders(&state, balance, content))
+        // MARK: end T5
         // `announce_live` stands while a date does, so the events about a
         // coming date stop once there is none. Only a run that announced
         // ever has a product past the guard above, so only it can get here
@@ -96,7 +100,9 @@ enum AnnounceSystem {
 
     // MARK: - The slip
 
-    private static func slip(
+    // T5: internal, not private — T2's shelve slips an announced build
+    // through this same function.
+    static func slip(
         at index: Int,
         state: inout GameState,
         balance: BalanceConfig,
@@ -124,12 +130,157 @@ enum AnnounceSystem {
             product.announcedDay = redated
             newDay = redated
         }
+        // MARK: T5 (expo and pre-orders) — pre-orders come back the day the
+        // date slips: a third on the first slip, the rest (and reputation
+        // −4 more) on the void. Nothing for a build that never pre-sold.
+        let refund = preorderRefund(
+            for: &product, voiding: product.slips >= Announce.voidAfterSlips, state: &state, balance: balance
+        )
+        // MARK: end T5
         state.narrative.flags.insert(Announce.slippedFlag)
         state.products[index] = product
         return [.announceSlipped(
             productID: product.id, slips: product.slips, newDay: newDay, day: state.day
-        )]
+        )] + refund // T5: the refund's line, empty without pre-orders
     }
 }
 
 // MARK: end J5
+
+// MARK: T5 (expo and pre-orders)
+
+/// Iteration 17 — T5. Pre-orders: opened against the announced date,
+/// refunded beside J5's slip, delivered by the launch week. Every function
+/// here is reached only from `.openPreorders` or a product that has a
+/// `PreorderBook`, so a run that never opened pre-orders passes through
+/// untouched and draws nothing.
+extension AnnounceSystem {
+    /// Sells `preorders.fraction` of the forecast's launch week now, at
+    /// `preorders.price` of the standard price. Refused for every reason
+    /// `GameState.preorderRefusal` names.
+    static func openPreorders(
+        productID: UUID,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        guard state.preorderRefusal(productID: productID, balance: balance, content: content) == nil,
+              let quote = state.preorderQuote(productID: productID, balance: balance, content: content),
+              let index = state.products.firstIndex(where: { $0.id == productID })
+        else { return [] }
+        state.products[index].preorders = PreorderBook(
+            units: quote.units, unitPrice: quote.unitPrice, cash: quote.cash,
+            openedDay: state.day, forecastQuality: quote.forecastQuality
+        )
+        state.company.cash += quote.cash
+        state.ledger.post(LedgerEntry(
+            day: state.day, amount: quote.cash, category: .sales,
+            label: "\(state.products[index].name): \(quote.units) pre-orders"
+        ))
+        return [.preordersOpened(productID: productID, units: quote.units, cash: quote.cash, day: state.day)]
+    }
+
+    /// What a slip gives back, written onto `product` (a copy the caller
+    /// stores) and paid out of the company's cash; on the void, the rest
+    /// and `preorders.voidReputation` off the company's name. Empty for a
+    /// product with nothing owed.
+    static func preorderRefund(
+        for product: inout Product,
+        voiding: Bool,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        guard var book = product.preorders, !book.isDelivered, book.outstanding > 0 else { return [] }
+        let units = book.refundUnits(voiding: voiding, balance: balance)
+        let cash = book.refundCash(units: units)
+        book.refundedUnits += units
+        book.refundedCash += cash
+        product.preorders = book
+        if cash != 0 {
+            state.company.cash -= cash
+            state.ledger.post(LedgerEntry(
+                day: state.day, amount: -cash, category: .sales,
+                label: "\(product.name): \(units) pre-orders refunded"
+            ))
+        }
+        if voiding {
+            state.company.reputation = min(100, max(0,
+                state.company.reputation - balance.expo.preorders.voidReputation
+            ))
+        }
+        return [.preordersRefunded(productID: product.id, units: units, cash: cash, voided: voiding, day: state.day)]
+    }
+
+    /// For a build that will never ship (T2's scrap): every pre-order back,
+    /// and the void's reputation. Empty for a build that never pre-sold.
+    static func refundAllPreorders(
+        at index: Int,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) -> [GameEvent] {
+        var product = state.products[index]
+        let events = preorderRefund(for: &product, voiding: true, state: &state, balance: balance)
+        state.products[index] = product
+        return events
+    }
+
+    /// The launch weeks' first buyers are the pre-orders, already paid for:
+    /// each sales week `postWeeklySales` posts (earlier the same day — it
+    /// runs before this system) hands its buyers to the pre-orders still
+    /// owed first, so its units stand and its revenue counts only the rest,
+    /// the difference taken back out as one ledger line. Once every
+    /// pre-order is out (or the product leaves the market) the book is
+    /// delivered. Walks only products with an undelivered `PreorderBook`.
+    static func deliverPreorders(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        var events: [GameEvent] = []
+        for index in state.products.indices {
+            guard var book = state.products[index].preorders, !book.isDelivered,
+                  case .released(var info) = state.products[index].stage
+            else { continue }
+            let name = state.products[index].name
+            let price = content.productType(state.products[index].typeID).map {
+                $0.unitPrice * balance.economy.priceTier(info.priceTier).priceFactor
+            } ?? 0
+            var carved = false
+            while book.deliveredWeeks < info.weeklySales.count, book.undelivered > 0 {
+                let week = book.deliveredWeeks
+                let sale = info.weeklySales[week]
+                let taken = min(book.undelivered, sale.units)
+                if taken > 0 {
+                    let revenue = Int(Double(sale.units - taken) * price)
+                    let adjustment = revenue - sale.revenue
+                    info.weeklySales[week] = WeeklySale(weekIndex: sale.weekIndex, units: sale.units, revenue: revenue)
+                    book.deliveredUnits += taken
+                    if adjustment != 0 {
+                        state.company.cash += adjustment
+                        state.ledger.post(LedgerEntry(
+                            day: state.day, amount: adjustment, category: .sales,
+                            label: "\(name): \(taken) pre-orders delivered, paid in advance"
+                        ))
+                    }
+                }
+                book.deliveredWeeks += 1
+                carved = true
+            }
+            let done = book.undelivered == 0 || info.offMarket
+            guard carved || done else { continue }
+            if carved { state.products[index].stage = .released(info) }
+            if done {
+                book.deliveredDay = state.day
+                if book.deliveredUnits > 0 {
+                    events.append(.preordersDelivered(
+                        productID: state.products[index].id, units: book.deliveredUnits, day: state.day
+                    ))
+                }
+            }
+            state.products[index].preorders = book
+        }
+        return events
+    }
+}
+
+// MARK: end T5

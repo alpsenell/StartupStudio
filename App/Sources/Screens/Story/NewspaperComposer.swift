@@ -317,6 +317,15 @@ struct NewspaperComposer {
         default: break
         }
         // MARK: end J5
+        // MARK: T5 (expo and pre-orders)
+        // A demo that crashed on the show floor leads the week; one that
+        // did not is front-page news, and so is a pre-order refund in full.
+        switch dated.event {
+        case let .expoShown(_, _, _, _, _, crashed, _, _): return severity * 10 + strand + (crashed ? 25 : 15)
+        case .preordersRefunded(_, _, _, true, _): return severity * 10 + strand + 20
+        default: break
+        }
+        // MARK: end T5
         // MARK: K4 (deals and exits)
         // The paper leads with a company for sale: the sign going up, a
         // bid it brought, the paper deal and the sell-up.

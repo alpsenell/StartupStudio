@@ -270,6 +270,80 @@ extension ShipForecast {
     }
 }
 
+// MARK: T5 (expo and pre-orders)
+
+/// Iteration 17 — T5. What the launch would sell: the weeks until the
+/// adoption ramp reaches its peak, and the units in them.
+public struct LaunchWindowEstimate: Equatable, Sendable {
+    /// The ramp's weeks, rounded up: 1 for the old instant peak.
+    public var weeks: Int
+    /// Units over those weeks.
+    public var units: Int
+    /// Units in the first of them alone.
+    public var firstWeekUnits: Int
+}
+
+extension GameState {
+    /// Iteration 17 — T5. What the launch would sell if this build shipped
+    /// today at the standard price: `postWeeklySales`'s arithmetic for a
+    /// one-time product, week by week until the adoption ramp reaches its
+    /// peak (demand × the ramp × the decay × the market and the live bugs
+    /// it would carry), with the forecast's quality standing in for the
+    /// reviews it has not had yet. A ramp of one week — the old instant
+    /// peak — is the launch week alone. `nil` for anything not in
+    /// development. A pure projection: it moves nothing and draws nothing.
+    /// Pre-orders are sold off it.
+    public func launchWindowEstimate(
+        productID: UUID,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> LaunchWindowEstimate? {
+        guard let product = product(id: productID),
+              case .development(let dev) = product.stage,
+              let type = content.productType(product.typeID),
+              let forecast = shipForecast(productID: productID, balance: balance, content: content)
+        else { return nil }
+        let economy = balance.economy
+        let score = Int(forecast.quality.rounded())
+        let qHat = Double(score) / 100
+        let hype = dev.hype * dealLaunchHypeFactor(balance: balance)
+        let hypeBoost = 1 + hype * balance.hypeLaunchCarryFraction / balance.salesHypeDivisor
+        let demand = type.marketSize * balance.marketSizeScale
+            * (balance.salesBaseFactor + balance.salesQualityFactor * qHat)
+            * hypeBoost
+            * forecast.marketScale
+            * economy.demandFactor(for: .standard, reviewScore: score)
+            * founderMarketFactor(balance)
+        let marketingAvg = employees.isEmpty
+            ? 0
+            : employees.reduce(0.0) { $0 + $1.skills.marketing } / Double(employees.count)
+        let adoptionConfig = balance.adoption
+        let rampWeeks = max(1, max(adoptionConfig.rampWeeksMin,
+            adoptionConfig.rampWeeksMax
+                - marketingAvg / adoptionConfig.marketingDivisor
+                - hype / adoptionConfig.hypeDivisor))
+        let liveBugs = (Double(dev.openBugs) * economy.liveBugSeedFraction).rounded()
+        let liveBugDrag = 1 - min(economy.liveBugPenaltyCap, liveBugs * economy.liveBugSalesPenalty(for: .standard))
+        let world = market.multiplier(for: product.topicID)
+            * market.shareMultiplier(for: product.topicID)
+            * liveBugDrag
+        let decay = balance.salesDecayBase + balance.salesDecayQualityFactor * qHat
+        let weeks = max(1, Int(rampWeeks.rounded(.up)))
+        var units = 0
+        var first = 0
+        for week in 0..<weeks {
+            let adoption = min(1, (Double(week) + 1) / rampWeeks)
+            let decayWeeks = max(0, Double(week) - (rampWeeks - 1))
+            let sold = max(0, Int(demand * adoption * pow(decay, decayWeeks) * world))
+            if week == 0 { first = sold }
+            units += sold
+        }
+        return LaunchWindowEstimate(weeks: weeks, units: units, firstWeekUnits: first)
+    }
+}
+
+// MARK: end T5
+
 extension PhaseFocus {
     /// A split matching what a build still needs: each pool weighted by
     /// the points it is short, so nobody pours a third of their days into

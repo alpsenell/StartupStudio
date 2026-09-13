@@ -254,3 +254,104 @@ enum MarketingSystem {
         return [.campaignStarted(campaignID: id, day: state.day)]
     }
 }
+
+// MARK: T5 (expo and pre-orders)
+
+/// Iteration 17 — T5 (G2). The expo's hype. A stand is booked from the app
+/// (`.showAtExpo`, paid then, re-pointable for free until the day) and the
+/// demo happens on the day, with whatever the build is by then: open bugs
+/// over `expo.crashBugs` crash it, a quality so far of `expo.goodQuality`
+/// earns the press's nod. The hype is `expo.hype` × the marketing team's
+/// traits (`TraitEffects.campaignHypeFactor`, exactly 1 with no
+/// marketers), × `marketerFactor` when a marketer pitches instead of the
+/// founder, × `hallwayFactor` for the hallway or an unstaffed stand.
+extension MarketingSystem {
+    static func showAtExpo(
+        productID: UUID,
+        booth: ExpoBooth,
+        attendee: ExpoAttendee,
+        state: inout GameState,
+        balance: BalanceConfig,
+        content: ContentCatalog
+    ) -> [GameEvent] {
+        guard state.expoRefusal(productID: productID, booth: booth, attendee: attendee, balance: balance) == nil,
+              let price = state.expoPrice(booth, balance: balance)
+        else { return [] }
+        let existing = state.expoBooking
+        let charged = existing == nil ? price : 0
+        if charged > 0 {
+            state.company.cash -= charged
+            state.ledger.post(LedgerEntry(
+                day: state.day, amount: -charged, category: .marketing,
+                label: booth == .booth ? "Expo: a booth" : "Expo: a hallway pass"
+            ))
+        }
+        var expo = state.expo ?? ExpoState()
+        expo.booking = ExpoBooking(
+            year: state.year, productID: productID, booth: booth, attendee: attendee,
+            paid: existing?.paid ?? price
+        )
+        state.expo = expo
+        var events: [GameEvent] = [.expoBooked(
+            productID: productID, booth: booth, attendee: attendee, price: charged, day: state.day
+        )]
+        // Booked on the day itself: the show is on now.
+        if state.day >= state.expoDay(balance: balance) {
+            events += show(&state, balance, content)
+        }
+        return events
+    }
+
+    /// Lets this year's expo go. Refused outside the notice window and
+    /// once the year is done; a booth already paid for is not refunded.
+    static func skipExpo(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+        guard state.expoDaysLeft(balance: balance) != nil else { return [] }
+        state.expo = ExpoState(lastYear: state.year, booking: nil)
+        return [.expoSkipped(day: state.day)]
+    }
+
+    /// The daily pass: a booking whose day has come is shown. Returns on
+    /// its first line with nothing booked.
+    @Sendable
+    static func runExpo(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let booking = state.expo?.booking,
+              state.day >= Expo.day(year: booking.year, balance: balance)
+        else { return [] }
+        return show(&state, balance, content)
+    }
+
+    private static func show(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        guard let booking = state.expo?.booking else { return [] }
+        state.expo = ExpoState(lastYear: booking.year, booking: nil)
+        guard let index = state.products.firstIndex(where: { $0.id == booking.productID }),
+              case .development(var dev) = state.products[index].stage,
+              let quote = state.expoQuote(
+                  productID: booking.productID, booth: booking.booth, attendee: booking.attendee,
+                  balance: balance, content: content
+              )
+        else { return [.expoEmptyBooth(productID: booking.productID, day: state.day)] }
+        dev.hype += quote.hype
+        state.products[index].stage = .development(dev)
+        state.products[index].expoDay = state.day
+        state.company.reputation = min(100, max(0, state.company.reputation + quote.reputation))
+        if booking.attendee == .founder, quote.staffed {
+            state.spendEvening(balance)
+            state.life.meters.energy = max(0, state.life.meters.energy - balance.expo.founderEnergy)
+        }
+        return [.expoShown(
+            productID: booking.productID, booth: booking.booth, attendee: booking.attendee,
+            hype: quote.hype, reputation: quote.reputation, crashed: quote.crashed,
+            staffed: quote.staffed, day: state.day
+        )]
+    }
+}
+
+// MARK: end T5

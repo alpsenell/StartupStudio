@@ -2155,5 +2155,33 @@
     "friendBondGain": 2.0,
     "founderBondGain": 2.0,
     "doorPoachWeight": 60.0
+  },
+  "expo": {
+    "dayOfYear": 182,
+    "noticeDays": 28,
+    "boothByTier": {
+      "loft": 2500,
+      "studio": 7500,
+      "campus": 15000
+    },
+    "hallway": 900,
+    "hype": 30.0,
+    "hallwayFactor": 0.5,
+    "crashBugs": 25,
+    "crashHypeFactor": 0.5,
+    "reputationGood": 3.0,
+    "goodQuality": 60.0,
+    "reputationCrash": 3.0,
+    "expectationBump": 3.0,
+    "marketerFactor": 0.7,
+    "founderEnergy": 8.0,
+    "copycatDelayWeeks": 3,
+    "preorders": {
+      "fraction": 0.3,
+      "price": 0.65,
+      "minDaysBefore": 21,
+      "refundPerSlip": 0.34,
+      "voidReputation": 4.0
+    }
   }
 }

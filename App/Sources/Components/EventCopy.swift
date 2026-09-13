@@ -1315,6 +1315,10 @@ struct EventCopy {
         // MARK: T4 (publisher)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
+        // Every line is `ExpoEventPresenter`'s, in the lane's own file.
+        case .expoBooked, .expoShown, .expoEmptyBooth, .expoSkipped,
+             .preordersOpened, .preordersRefunded, .preordersDelivered:
+            ExpoEventPresenter.entry(for: event, state: state) ?? fallbackEntry(for: event)
         // MARK: end T5
         // MARK: T6 (away)
         // MARK: end T6
