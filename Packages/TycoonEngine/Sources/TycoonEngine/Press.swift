@@ -74,7 +74,64 @@ extension GameState {
     }
 }
 
+extension ReleaseInfo {
+    /// Whether the other outlets' verdicts are still held back on `day`.
+    /// False for every release nobody gave an exclusive.
+    public func isEmbargoed(on day: Int) -> Bool {
+        embargoUntilDay.map { day < $0 } ?? false
+    }
+
+    /// The reviews that are out on `day`: only the exclusive's during its
+    /// embargo, all of them otherwise. `nil` reads as "after everything".
+    public func visibleReviews(on day: Int?) -> [Review] {
+        guard let day, isEmbargoed(on: day), let exclusive = exclusiveOutlet else { return reviews }
+        return reviews.filter { $0.outlet == exclusive }
+    }
+
+    /// The mean of the reviews that are out on `day`.
+    public func visibleAverageScore(on day: Int?) -> Int {
+        let visible = visibleReviews(on: day)
+        guard !visible.isEmpty else { return 0 }
+        return Int((Double(visible.reduce(0) { $0 + $1.score }) / Double(visible.count)).rounded())
+    }
+
+    /// The outlets whose verdicts are held back on `day`.
+    public func embargoedOutlets(on day: Int) -> [String] {
+        guard isEmbargoed(on: day), let exclusive = exclusiveOutlet else { return [] }
+        return reviews.map(\.outlet).filter { $0 != exclusive }
+    }
+
+    /// The score the week's review-driven demand reads (`postWeeklySales`):
+    /// with an exclusive, its outlet's score alone for launch week — the
+    /// first week posted, or any week while the others are embargoed — and
+    /// the four-outlet average from then on. Exactly `averageReviewScore`
+    /// on every release without an exclusive.
+    public func demandReviewScore(on day: Int) -> Int {
+        guard let exclusive = exclusiveOutlet, embargoUntilDay != nil,
+              weeklySales.isEmpty || isEmbargoed(on: day),
+              let review = reviews.first(where: { $0.outlet == exclusive })
+        else { return averageReviewScore }
+        return review.score
+    }
+}
+
 enum PressSystem {
+    /// The embargo lifting: on the day it ends, the other outlets publish.
+    /// Finds nothing on a run that never gave an exclusive; draws nothing.
+    @Sendable
+    static func run(
+        _ state: inout GameState,
+        _ balance: BalanceConfig,
+        _ content: ContentCatalog
+    ) -> [GameEvent] {
+        var events: [GameEvent] = []
+        for product in state.products {
+            guard case .released(let info) = product.stage, info.embargoUntilDay == state.day else { continue }
+            events.append(.pressEmbargoLifted(productID: product.id, averageScore: info.averageReviewScore, day: state.day))
+        }
+        return events
+    }
+
     /// Every standing moves `driftPerLaunch` toward 0; one that reaches it
     /// leaves the map. Called once per launch, after the review loop.
     /// Returns on its first line while the map is empty.
@@ -102,6 +159,8 @@ enum PressSystem {
               case .released(var info) = state.products[index].stage
         else { return [] }
         info.exclusiveOutlet = outlet
+        // The other verdicts wait: launch week reads this outlet alone.
+        info.embargoUntilDay = state.day + max(1, balance.press.embargoDays)
         state.products[index].stage = .released(info)
 
         let press = balance.press

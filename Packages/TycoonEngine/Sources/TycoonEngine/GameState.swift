@@ -843,6 +843,9 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// `outlet` had `productID` first: its verdict leads launch day and the
     /// paper, it warms to the studio and the other outlets cool.
     case pressExclusive(productID: UUID, outlet: String, day: Int)
+    /// The exclusive's embargo lifted: the other outlets published, and the
+    /// product now reads the four-outlet `averageScore`.
+    case pressEmbargoLifted(productID: UUID, averageScore: Int, day: Int)
     /// Bought `percent` of a rival for `price`.
     case rivalStakeBought(rivalID: UUID, name: String, percent: Double, price: Int, day: Int)
     /// Sold the stake back for `price`; it had cost `paid`.

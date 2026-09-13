@@ -274,6 +274,10 @@ public enum Reducer {
         // MARK: T6 (away)
         // MARK: end T6
         // MARK: T7 (press and stakes)
+        // The day an exclusive's embargo lifts, the other verdicts publish.
+        // Finds nothing on every run that never gave an exclusive, and
+        // draws nothing either way.
+        PressSystem.run,
         // MARK: end T7
         // MARK: end of Iteration 17
         // MARK: end of Iteration 15

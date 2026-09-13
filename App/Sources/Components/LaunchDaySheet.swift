@@ -75,7 +75,8 @@ struct LaunchDaySheet: View {
                             // exclusive's verdict first.
                             ReviewRevealList(
                                 release: release, revealed: revealed, productID: nil,
-                                bylines: PressByline.all(state: engine.state, balance: engine.balance)
+                                bylines: PressByline.all(state: engine.state, balance: engine.balance),
+                                today: engine.state.day
                             ) { route in
                                 dismiss()
                                 router?.go(route)
@@ -198,7 +199,7 @@ struct LaunchDaySheet: View {
         Sounds.play(.ship)
         Haptics.commit()
         Task {
-            for index in release.reviews.indices {
+            for index in release.visibleReviews(on: engine.state.day).indices {
                 try? await Task.sleep(for: .milliseconds(ReviewReveal.delay(forOutlet: index)))
                 withAnimation(Theme.Motion.emphatic) { revealed = index + 1 }
                 Sounds.play(.tap)
@@ -240,14 +241,17 @@ struct ReviewRevealList: View {
     /// T7: each outlet's standing in words (`PressByline.all`), empty —
     /// and nothing printed — while no outlet has one.
     var bylines: [String: String] = [:]
+    /// T7: today, for an exclusive's embargo — only the exclusive's verdict
+    /// is out until it lifts. `nil` (the static frames) shows every review.
+    var today: Int? = nil
     let onRoute: (Route) -> Void
 
     /// T7: the exclusive's verdict first, then the rest in the order the
     /// press filed. The engine's order unchanged when nobody had it first.
     private var orderedReviews: [Review] {
-        guard let exclusive = release.exclusiveOutlet else { return release.reviews }
-        return release.reviews.filter { $0.outlet == exclusive }
-            + release.reviews.filter { $0.outlet != exclusive }
+        let visible = release.visibleReviews(on: today)
+        guard let exclusive = release.exclusiveOutlet else { return visible }
+        return visible.filter { $0.outlet == exclusive } + visible.filter { $0.outlet != exclusive }
     }
 
     var body: some View {
@@ -263,8 +267,12 @@ struct ReviewRevealList: View {
                 }
             }
 
-            if revealed >= release.reviews.count {
-                LaunchScoreStamp(score: release.averageReviewScore)
+            if revealed >= orderedReviews.count {
+                LaunchScoreStamp(score: release.visibleAverageScore(on: today))
+                // T7: the verdicts still under embargo, and what reads meanwhile.
+                if let today, release.isEmbargoed(on: today) {
+                    PressEmbargoRow(release: release, today: today)
+                }
                 if let forecast = release.launchForecast, let reason = forecast.limitingFactor {
                     LaunchReasonRow(reason: reason, fix: forecast.fix, productID: productID, onRoute: onRoute)
                         .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
@@ -497,6 +505,15 @@ enum PressByline {
         return bylines
     }
 
+    /// "warm to you (+4)" — the byline's short form, for the ship row. Says
+    /// "even-handed" for an outlet with no standing.
+    static func short(outlet: String, state: GameState, balance: BalanceConfig) -> String {
+        let words = words(PressStandingBand.of(state.company.pressStanding(of: outlet)))
+        let points = Int(state.company.pressScoreOffset(for: outlet, balance: balance).rounded())
+        guard points != 0 else { return words }
+        return "\(words) (\(points > 0 ? "+" : "−")\(abs(points)))"
+    }
+
     static func words(_ band: PressStandingBand) -> String {
         switch band {
         case .warm: String(localized: "warm to you", comment: "Review byline: an outlet's standing, best to worst")
@@ -518,5 +535,61 @@ extension EventCopy {
               let review = info.reviews.first(where: { $0.outlet == outlet })
         else { return "\(outlet) had \(name) first." }
         return "\(outlet) had \(name) first and gave it \(review.score). “\(review.blurb)”"
+    }
+}
+
+/// T7: under an exclusive, the outlets still holding their verdicts, the
+/// day they publish, and who judges launch week meanwhile.
+struct PressEmbargoRow: View {
+    let release: ReleaseInfo
+    let today: Int
+
+    var body: some View {
+        let held = release.embargoedOutlets(on: today)
+        let names = held.count > 1
+            ? held.dropLast().joined(separator: ", ") + " and " + (held.last ?? "")
+            : (held.first ?? "")
+        let day = GameCalendar(day: release.embargoUntilDay ?? today).longLabel
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            Image(systemName: "clock.badge")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(Theme.accent)
+                .frame(width: 22)
+            Text(String(
+                localized: "\(names) publish on \(day). Until then \(release.exclusiveOutlet ?? "") alone judges launch week.",
+                comment: "Launch day: the other outlets' verdicts under an exclusive's embargo"
+            ))
+            .font(.system(.subheadline, design: .rounded).weight(.medium))
+            .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+extension EventCopy {
+    /// T7: the exclusive's verdict on a release under its embargo, if any.
+    static func exclusiveReview(state: GameState, productID: UUID) -> Review? {
+        guard let product = state.product(id: productID), case .released(let info) = product.stage,
+              info.embargoUntilDay != nil, let exclusive = info.exclusiveOutlet
+        else { return nil }
+        return info.reviews.first { $0.outlet == exclusive }
+    }
+
+    /// T7: launch day's review score — the exclusive's alone under its
+    /// embargo, the average for every other launch.
+    static func reviewsInScore(state: GameState, productID: UUID, averageScore: Int) -> Int {
+        exclusiveReview(state: state, productID: productID)?.score ?? averageScore
+    }
+
+    /// T7: launch day's review line; the old line for every launch without
+    /// an exclusive.
+    static func reviewsInLine(state: GameState, productID: UUID, name: String, averageScore: Int) -> String {
+        guard let review = exclusiveReview(state: state, productID: productID) else {
+            return "Reviews are in for \(name): \(averageScore)"
+        }
+        return "\(review.outlet)'s verdict on \(name) is in: \(review.score). The others publish in a week."
     }
 }

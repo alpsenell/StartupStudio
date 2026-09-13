@@ -326,7 +326,10 @@ private struct ReleasedProductsCard: View {
                         ReleasedProductRow(
                             product: entry.product,
                             info: entry.info,
-                            type: engine.content.productType(entry.product.typeID)
+                            type: engine.content.productType(entry.product.typeID),
+                            // MARK: T7 (press and stakes) — an exclusive's embargo.
+                            today: engine.state.day
+                            // MARK: end T7
                         )
                     }
                     .buttonStyle(.plain)
@@ -343,6 +346,10 @@ private struct ReleasedProductRow: View {
     let product: Product
     let info: ReleaseInfo
     let type: ProductTypeDef?
+    // MARK: T7 (press and stakes)
+    /// Today, for an exclusive's embargo; `nil` scores every review.
+    var today: Int? = nil
+    // MARK: end T7
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
@@ -373,7 +380,7 @@ private struct ReleasedProductRow: View {
 
             Spacer(minLength: Theme.Spacing.sm)
 
-            ScoreBadge(score: info.averageReviewScore)
+            ScoreBadge(score: info.visibleAverageScore(on: today)) // T7: the verdicts that are out
             Image(systemName: "chevron.right")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)

@@ -223,6 +223,11 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// for every release that gave nobody one. Not written while `nil`
     /// (the synthesized encode skips a nil optional).
     public var exclusiveOutlet: String? = nil
+    /// With an exclusive, the day the other outlets' verdicts publish
+    /// (`launchDay + press.embargoDays`); until then only the exclusive's
+    /// review is out, and launch week's buyers read its score alone.
+    /// `nil` for every release without one, and then not written.
+    public var embargoUntilDay: Int? = nil
     // MARK: end T7
 
     public init(
@@ -304,7 +309,7 @@ extension ReleaseInfo {
         case sunsetDay, lastPriceChangeDay, priceRiseUntilDay, lastSaleDay
         // MARK: end K2
         // MARK: T7 (press and stakes)
-        case exclusiveOutlet
+        case exclusiveOutlet, embargoUntilDay
         // MARK: end T7
     }
 
@@ -336,6 +341,7 @@ extension ReleaseInfo {
         )
         // MARK: T7 (press and stakes)
         exclusiveOutlet = try container.decodeIfPresent(String.self, forKey: .exclusiveOutlet)
+        embargoUntilDay = try container.decodeIfPresent(Int.self, forKey: .embargoUntilDay)
         // MARK: end T7
     }
 }

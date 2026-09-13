@@ -101,7 +101,14 @@ enum ProductSystem {
 
             let productID = state.products[index].id
             let economy = balance.economy
-            let qHat = Double(info.averageReviewScore) / 100.0
+            // MARK: T7 (press and stakes) — under an exclusive, launch week's
+            // buyers read the one verdict that is out (`demandReviewScore`).
+            // Exactly the average on every release nobody gave an exclusive
+            // — every bot, every fixture — and read by the two lines below
+            // that used to read the average.
+            let pressDemandScore = info.demandReviewScore(on: state.day)
+            let qHat = Double(pressDemandScore) / 100.0
+            // MARK: end T7
             // Launch hype carries at a fraction, because it is months old
             // by now; a campaign run *since* launch counts at full weight
             // and fades on its own. That is the trade the marketing tab is
@@ -117,7 +124,7 @@ enum ProductSystem {
             let pricing = economy.priceTier(info.priceTier)
             // A premium price the reviews don't back up drives people away.
             let overpriced = info.priceTier == .premium
-                && Double(info.averageReviewScore) < economy.premiumQualityThreshold
+                && Double(pressDemandScore) < economy.premiumQualityThreshold // T7: the demand score
             // Bugs players hit in the wild cost sales and subscribers alike.
             // MARK: J5 (announce) — I1: premium buyers notice bugs twice as
             // much. The standard penalty, untouched, for every other tier.
@@ -152,7 +159,7 @@ enum ProductSystem {
                 // MARK: J5 (announce) — I1: premium demand follows the
                 // reviews. The table's factor, untouched, for every other
                 // tier and for premium with the curve off.
-                * economy.demandFactor(for: info.priceTier, reviewScore: info.averageReviewScore)
+                * economy.demandFactor(for: info.priceTier, reviewScore: pressDemandScore) // T7: the demand score
                 // MARK: end J5
                 // A founder who knows the market puts the product in front
                 // of the people who want it. Neutral until they train it.

@@ -83,7 +83,9 @@ struct ProductDetailScreen: View {
 
     @ViewBuilder
     private func releasedContent(product: Product, info: ReleaseInfo) -> some View {
-        ReleasedHeaderCard(product: product, info: info, type: type, topic: topic)
+        // MARK: T7 (press and stakes) — `today`: an exclusive's embargo.
+        ReleasedHeaderCard(product: product, info: info, type: type, topic: topic, today: engine.state.day)
+        // MARK: end T7
         if info.isSubscription {
             SubscriptionCard(info: info, type: type)
         }
@@ -94,7 +96,9 @@ struct ProductDetailScreen: View {
             .id("k2-lifecycle")
         // MARK: end K2
         RivalProductsCard(engine: engine, topicID: product.topicID)
-        ReviewsCard(reviews: info.reviews)
+        // MARK: T7 (press and stakes) — only the verdicts that are out.
+        ReviewsCard(reviews: info.visibleReviews(on: engine.state.day))
+        // MARK: end T7
     }
 
     // MARK: - In development
@@ -597,6 +601,10 @@ private struct ReleasedHeaderCard: View {
     let info: ReleaseInfo
     let type: ProductTypeDef?
     let topic: TopicDef?
+    // MARK: T7 (press and stakes)
+    /// Today, for an exclusive's embargo; `nil` scores every review.
+    var today: Int? = nil
+    // MARK: end T7
 
     var body: some View {
         CardView("Product", systemImage: type?.iconSystemName ?? "shippingbox") {
@@ -610,7 +618,7 @@ private struct ReleasedHeaderCard: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    ScoreBadge(score: info.averageReviewScore)
+                    ScoreBadge(score: info.visibleAverageScore(on: today)) // T7: the verdicts that are out
                 }
 
                 HStack(spacing: Theme.Spacing.sm) {

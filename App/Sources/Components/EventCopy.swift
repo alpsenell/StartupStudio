@@ -194,12 +194,16 @@ struct EventCopy {
         case .shipped(let productID, let day):
             ("shippingbox.fill", "Shipped \(productName(productID))!", day, Theme.positiveCash)
         case .reviewsIn(let productID, let averageScore, let day):
+            // MARK: T7 (press and stakes) — under an exclusive the day's line
+            // is the one verdict that was out (the rest land with
+            // `.pressEmbargoLifted`); the old line for every other launch.
             (
                 "star.fill",
-                "Reviews are in for \(productName(productID)): \(averageScore)",
+                Self.reviewsInLine(state: state, productID: productID, name: productName(productID), averageScore: averageScore),
                 day,
-                Theme.scoreTint(averageScore)
+                Theme.scoreTint(Self.reviewsInScore(state: state, productID: productID, averageScore: averageScore))
             )
+            // MARK: end T7
         case .productOffMarket(let productID, let day):
             ("archivebox.fill", "\(productName(productID)) left the market", day, Color.secondary)
         case .hired(let employeeID, let day):
@@ -1324,6 +1328,12 @@ struct EventCopy {
                 "newspaper.fill",
                 Self.exclusiveLine(product: state.product(id: productID), outlet: outlet),
                 day, Theme.accent
+            )
+        case .pressEmbargoLifted(let productID, let averageScore, let day):
+            (
+                "newspaper",
+                "The embargo lifts on \(productName(productID)): the other verdicts are in, and the average is \(averageScore).",
+                day, Theme.scoreTint(averageScore)
             )
         case .rivalStakeBought(_, let name, let percent, let price, let day):
             (

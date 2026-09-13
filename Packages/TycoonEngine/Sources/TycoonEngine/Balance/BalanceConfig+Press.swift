@@ -9,7 +9,11 @@ import Foundation
 // empty and the review offset is exactly 0.
 //
 // - The outlet given the exclusive warms by `exclusiveGain`; every other
-//   outlet cools by `snub`. Standing is clamped to ±`cap`.
+//   outlet cools by `snub` (1, not the spec's 2: the coordinator's call, so
+//   an exclusive nets +2 standing and the rotation is worth managing).
+//   Standing is clamped to ±`cap`.
+// - The other outlets' verdicts are embargoed for `embargoDays`; launch
+//   week's buyers read the exclusive's score alone.
 // - Every launch, every standing drifts `driftPerLaunch` toward 0.
 // - An outlet's score on a launch moves by `standing / standingDivisor`.
 //   The spec's 0.2 per point (±4 at the cap) was measured first and lost
@@ -40,26 +44,30 @@ extension BalanceConfig {
         public var driftPerLaunch: Double
         /// The most (and, negated, the least) an outlet can think of you.
         public var cap: Double
+        /// Days the other outlets' verdicts wait behind an exclusive.
+        public var embargoDays: Int
 
         public init(
             exclusiveGain: Double = 5,
-            snub: Double = 2,
+            snub: Double = 1,
             standingDivisor: Double = 3,
             driftPerLaunch: Double = 1,
-            cap: Double = 20
+            cap: Double = 20,
+            embargoDays: Int = 7
         ) {
             self.exclusiveGain = exclusiveGain
             self.snub = snub
             self.standingDivisor = standingDivisor
             self.driftPerLaunch = driftPerLaunch
             self.cap = cap
+            self.embargoDays = embargoDays
         }
 
         /// The shipped numbers.
         public static let `default` = PressBalance()
 
         private enum CodingKeys: String, CodingKey {
-            case exclusiveGain, snub, standingDivisor, driftPerLaunch, cap
+            case exclusiveGain, snub, standingDivisor, driftPerLaunch, cap, embargoDays
         }
 
         /// Every key optional, falling back to the default.
@@ -74,7 +82,9 @@ extension BalanceConfig {
                     ?? fallback.standingDivisor,
                 driftPerLaunch: try container.decodeIfPresent(Double.self, forKey: .driftPerLaunch)
                     ?? fallback.driftPerLaunch,
-                cap: try container.decodeIfPresent(Double.self, forKey: .cap) ?? fallback.cap
+                cap: try container.decodeIfPresent(Double.self, forKey: .cap) ?? fallback.cap,
+                embargoDays: try container.decodeIfPresent(Int.self, forKey: .embargoDays)
+                    ?? fallback.embargoDays
             )
         }
     }

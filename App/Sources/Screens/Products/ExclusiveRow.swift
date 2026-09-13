@@ -85,26 +85,24 @@ struct ExclusiveRow: View {
         }
     }
 
-    /// "TechDaily · warm to you".
+    /// "TechDaily · warm to you (+4)".
     private func menuLabel(_ outlet: String) -> String {
-        guard let byline = PressByline.text(outlet: outlet, state: engine.state, balance: engine.balance) else {
-            return outlet
-        }
-        return "\(outlet) · \(byline)"
+        "\(outlet) · \(PressByline.short(outlet: outlet, state: engine.state, balance: engine.balance))"
     }
 
     /// Both answers, with what each costs later.
     private func consequence(_ outlet: String?, press: BalanceConfig.PressBalance) -> String {
         guard let outlet else {
             return String(
-                localized: "Even-handed: no outlet goes first and no one's standing moves.",
+                localized: "Even-handed: all four publish on launch day, launch week reads their average, and no one's standing moves.",
                 comment: "Ship row: what shipping without an exclusive does"
             )
         }
         let gain = Int(press.exclusiveGain.rounded())
         let snub = Int(press.snub.rounded())
+        let standing = PressByline.short(outlet: outlet, state: engine.state, balance: engine.balance)
         return String(
-            localized: "\(outlet)'s verdict leads launch day and the paper. \(outlet) warms +\(gain), the other three cool −\(snub): their scores follow on your next launch.",
+            localized: "\(outlet) alone judges launch week · \(standing). The other three publish \(press.embargoDays) days later, so launch week's buyers read \(outlet)'s score — higher or lower than all four would have been. \(outlet) warms +\(gain), the other three cool −\(snub) for your next launch.",
             comment: "Ship row: what an exclusive does now and what it closes later"
         )
     }
