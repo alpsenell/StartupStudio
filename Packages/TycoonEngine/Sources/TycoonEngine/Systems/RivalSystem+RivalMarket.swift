@@ -12,6 +12,19 @@ import TycoonContent
 
 extension RivalSystem {
 
+    // MARK: T7 (press and stakes)
+    /// Whether rival `index` holds off a price war this week because the
+    /// player owns part of it: the war is refused and its count starts
+    /// again. False with no stake in it — every bot, every fixture — and
+    /// then nothing is written. Draws nothing.
+    static func rivalMarketStakeRefusesWar(_ index: Int, _ state: inout GameState) -> Bool {
+        let rivalID = state.rivals.rivals[index].id
+        guard state.rivalStakeHoldsFire(rivalID: rivalID) else { return false }
+        state.rivals.rivals[index].weeksBeaten = 0
+        return true
+    }
+    // MARK: end T7
+
     // MARK: - The launch topic and type
 
     /// A rival's launch topic. Before the market is opened, exactly the

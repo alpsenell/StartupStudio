@@ -357,6 +357,12 @@ struct NewspaperComposer {
         default: break
         }
         // MARK: end T4
+        // MARK: T7 (press and stakes)
+        // The exclusive leads the paper the week it lands: the outlet's
+        // verdict is the headline and its blurb the deck (the copy is two
+        // sentences, the second the quote).
+        if case .pressExclusive = dated.event { return severity * 10 + strand + 30 }
+        // MARK: end T7
         return severity * 10 + strand
     }
 

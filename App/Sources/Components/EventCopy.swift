@@ -194,12 +194,16 @@ struct EventCopy {
         case .shipped(let productID, let day):
             ("shippingbox.fill", "Shipped \(productName(productID))!", day, Theme.positiveCash)
         case .reviewsIn(let productID, let averageScore, let day):
+            // MARK: T7 (press and stakes) — under an exclusive the day's line
+            // is the one verdict that was out (the rest land with
+            // `.pressEmbargoLifted`); the old line for every other launch.
             (
                 "star.fill",
-                "Reviews are in for \(productName(productID)): \(averageScore)",
+                Self.reviewsInLine(state: state, productID: productID, name: productName(productID), averageScore: averageScore),
                 day,
-                Theme.scoreTint(averageScore)
+                Theme.scoreTint(Self.reviewsInScore(state: state, productID: productID, averageScore: averageScore))
             )
+            // MARK: end T7
         case .productOffMarket(let productID, let day):
             ("archivebox.fill", "\(productName(productID)) left the market", day, Color.secondary)
         case .hired(let employeeID, let day):
@@ -1403,6 +1407,36 @@ struct EventCopy {
             )
         // MARK: end T6
         // MARK: T7 (press and stakes)
+        case .pressExclusive(let productID, let outlet, let day):
+            (
+                "newspaper.fill",
+                Self.exclusiveLine(product: state.product(id: productID), outlet: outlet),
+                day, Theme.accent
+            )
+        case .pressEmbargoLifted(let productID, let averageScore, let day):
+            (
+                "newspaper",
+                "The embargo lifts on \(productName(productID)): the other verdicts are in, and the average is \(averageScore).",
+                day, Theme.scoreTint(averageScore)
+            )
+        case .rivalStakeBought(_, let name, let percent, let price, let day):
+            (
+                "chart.pie.fill",
+                "Bought \(Int((percent * 100).rounded()))% of \(name) for \(price.money). A quarter of it is their strength now.",
+                day, Theme.accent
+            )
+        case .rivalStakeSold(_, let name, let percent, let price, let paid, let day):
+            (
+                "chart.pie",
+                "Sold \(Int((percent * 100).rounded()))% of \(name) for \(price.money). It cost \(paid.money).",
+                day, price >= paid ? Theme.positiveCash : Theme.warning
+            )
+        case .rivalStakeLost(_, let name, let percent, let paid, let day):
+            (
+                "flag.slash.fill",
+                "\(name) folded, and the \(Int((percent * 100).rounded()))% that cost \(paid.money) went with them.",
+                day, Theme.negativeCash
+            )
         // MARK: end T7
         // MARK: end of Iteration 17
         // MARK: end of Iteration 15

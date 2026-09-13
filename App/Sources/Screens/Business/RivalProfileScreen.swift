@@ -534,6 +534,21 @@ private struct RivalDealCard: View {
                 // for you, each opening its sheet and its buy-out.
                 PublisherProfileRows(engine: engine, rival: rival)
                 // MARK: end T4
+                // MARK: T7 (press and stakes)
+                // A piece of them beside the whole: 5, 10 or 25%, or selling
+                // what you hold.
+                RivalStakeRows(engine: engine, rival: rival)
+                    // `-autoRoute t7-stake|t7-offer`: the rows lifted into a
+                    // sheet for a screenshot (J3's precedent); never in play.
+                    .sheet(isPresented: .constant(RivalStakeDebug.liftsRows(for: rival, state: engine.state))) {
+                        ScrollView {
+                            RivalStakeRows(engine: engine, rival: rival)
+                                .padding(Theme.Spacing.lg)
+                        }
+                        .background(Theme.screenBackground)
+                        .presentationDetents([.medium])
+                    }
+                // MARK: end T7
             }
         }
         .confirmationDialog(
@@ -618,7 +633,12 @@ struct RivalAcquisitionTerms {
 
     init(rival: Rival, state: GameState, balance: BalanceConfig) {
         let valuation = rival.valuation(balance: balance)
-        cost = Int((Double(valuation) * balance.rivals.acquirePremium).rounded())
+        // MARK: T7 (press and stakes) — a stake you hold is part of the
+        // price, as `RivalSystem.acquireRival` counts it.
+        cost = state.rivalStakeAcquirePrice(
+            rivalID: rival.id, fullPrice: Int((Double(valuation) * balance.rivals.acquirePremium).rounded())
+        )
+        // MARK: end T7
 
         let dominanceBar = Double(valuation) * balance.rivals.acquireDominanceFactor
         if Double(state.companyValuation(balance: balance)) < dominanceBar {

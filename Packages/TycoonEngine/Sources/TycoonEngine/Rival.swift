@@ -545,6 +545,12 @@ public struct RivalsState: Codable, Equatable, Sendable {
     /// `nil` on every run that never lists, and then not encoded.
     public var listing: DealListing?
     // MARK: end K4
+    // MARK: T7 (press and stakes)
+    /// The minority stakes the player holds in rival studios
+    /// (`RivalStakes.swift`). Empty on every run that never bought one —
+    /// every bot, every fixture — and then not encoded.
+    public var stakes: [RivalStake] = []
+    // MARK: end T7
 
     public init(
         rivals: [Rival],
@@ -640,6 +646,9 @@ extension RivalsState {
         // MARK: K4 (deals and exits)
         case listing
         // MARK: end K4
+        // MARK: T7 (press and stakes)
+        case stakes
+        // MARK: end T7
     }
 
     private struct ShareEntry: Codable {
@@ -678,6 +687,9 @@ extension RivalsState {
         // MARK: K4 (deals and exits)
         listing = try container.decodeIfPresent(DealListing.self, forKey: .listing)
         // MARK: end K4
+        // MARK: T7 (press and stakes)
+        stakes = try container.decodeIfPresent([RivalStake].self, forKey: .stakes) ?? []
+        // MARK: end T7
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -710,5 +722,8 @@ extension RivalsState {
         // MARK: K4 (deals and exits)
         try container.encodeIfPresent(listing, forKey: .listing)
         // MARK: end K4
+        // MARK: T7 (press and stakes) — only once a stake is held.
+        if !stakes.isEmpty { try container.encode(stakes, forKey: .stakes) }
+        // MARK: end T7
     }
 }

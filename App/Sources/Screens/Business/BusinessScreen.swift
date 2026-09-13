@@ -362,6 +362,33 @@ struct BusinessScreen: View {
         // MARK: T6 (away)
         // MARK: end T6
         // MARK: T7 (press and stakes)
+        // `-autoRoute t7-…`: dress the save once (`DebugLaunch.t7DressIfAsked`),
+        // then land on the segment the flag is about.
+        #if DEBUG
+        if router.pendingPush == nil && !landed, let t7 = DebugLaunch.launchRoute, t7.hasPrefix("t7-") {
+            DebugLaunch.t7DressIfAsked(engine: engine)
+            landed = true
+            switch t7 {
+            case "t7-finances":
+                section = .finances
+            case "t7-stake":
+                section = .rivals
+                if let stake = engine.state.rivals.stakes.first {
+                    path.append(RivalRoute(rivalID: stake.rivalID))
+                }
+            case "t7-paper":
+                router.go(.newspaper)
+            case "t7-offer":
+                section = .rivals
+                if let rival = engine.state.rivals.rivals.max(by: { $0.strength < $1.strength }) {
+                    path.append(RivalRoute(rivalID: rival.id))
+                }
+            default:
+                section = .rivals
+            }
+            return
+        }
+        #endif
         // MARK: end T7
         // MARK: end of Iteration 17
         // MARK: end of Iteration 15

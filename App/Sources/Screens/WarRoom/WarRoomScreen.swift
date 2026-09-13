@@ -158,6 +158,8 @@ struct WarRoomScreen: View {
             to: engine,
             rejected: "It is not ready to ship yet."
         )
+        // T7: the exclusive, if one was picked on the row above the button.
+        ExclusivePick.shared.grantAfterShip(productID: productID, engine: engine)
         // Synchronously, before any view updates: the reveal is ours.
         claimLaunchDay()
     }
@@ -178,7 +180,7 @@ struct WarRoomScreen: View {
         guard !revealStarted, let product, case .released(let info) = product.stage else { return }
         revealStarted = true
         guard info.launchDay == engine.state.day, !info.reviews.isEmpty else {
-            revealed = info.reviews.count
+            revealed = info.visibleReviews(on: engine.state.day).count // T7: the embargo
             return
         }
         Sounds.play(.ship)
@@ -188,7 +190,7 @@ struct WarRoomScreen: View {
             // day sees the celebration *change* rather than start set.
             try? await Task.sleep(for: .milliseconds(80))
             celebrationToken = engine.state.day * 100 + info.reviews.count
-            for index in info.reviews.indices {
+            for index in info.visibleReviews(on: engine.state.day).indices { // T7: the embargo
                 try? await Task.sleep(for: .milliseconds(ReviewReveal.delay(forOutlet: index)))
                 withAnimation(Theme.Motion.emphatic) { revealed = index + 1 }
                 Sounds.play(.tap)
@@ -239,6 +241,10 @@ struct WarRoomContent: View {
                     product: product, progress: progress, type: type, eta: eta,
                     canShip: forecast?.canShip ?? false, engine: engine, onShip: onShip
                 )
+                // T7: who gets the review copy first, once it can ship.
+                if forecast?.canShip ?? false {
+                    ExclusiveRow(engine: engine, productID: product.id)
+                }
                 HypePanel(product: product, hype: progress.hype, engine: engine, onRoute: onRoute)
                 if let forecast {
                     ForecastBand(forecast: forecast)
@@ -766,7 +772,7 @@ private struct LaunchDayPanel: View {
     let onBack: () -> Void
     let onRoute: (Route) -> Void
 
-    private var revealComplete: Bool { revealed >= release.reviews.count }
+    private var revealComplete: Bool { revealed >= release.visibleReviews(on: engine.state.day).count }
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
@@ -778,7 +784,11 @@ private struct LaunchDayPanel: View {
             } else {
                 ReviewRevealList(
                     release: release, revealed: revealed, productID: product.id,
-                    typesOut: typesOut, onRoute: onRoute
+                    typesOut: typesOut,
+                    // T7: each outlet's standing as a byline.
+                    bylines: PressByline.all(state: engine.state, balance: engine.balance),
+                    today: engine.state.day,
+                    onRoute: onRoute
                 )
             }
             if revealComplete {

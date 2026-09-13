@@ -210,6 +210,10 @@ private struct InDevelopmentCard: View {
                     .foregroundStyle(.secondary)
                 }
 
+                // MARK: T7 (press and stakes) — who gets the review copy first.
+                if canShip { ExclusiveRow(engine: engine, productID: product.id) }
+                // MARK: end T7
+
                 // Launch week (U1): offered from seven days out, never forced.
                 WarRoomEntryButton(engine: engine, product: product)
             }
@@ -225,6 +229,9 @@ private struct InDevelopmentCard: View {
                     to: engine,
                     rejected: "It is not ready to ship yet."
                 )
+                // MARK: T7 (press and stakes) — the exclusive, if one was picked.
+                ExclusivePick.shared.grantAfterShip(productID: product.id, engine: engine)
+                // MARK: end T7
             }
             // MARK: K2 (product lifecycle) — ship it as a v2.
             ForEach(engine.state.lifecycleReplaceableParents(for: product.id)) { parent in
@@ -319,7 +326,10 @@ private struct ReleasedProductsCard: View {
                         ReleasedProductRow(
                             product: entry.product,
                             info: entry.info,
-                            type: engine.content.productType(entry.product.typeID)
+                            type: engine.content.productType(entry.product.typeID),
+                            // MARK: T7 (press and stakes) — an exclusive's embargo.
+                            today: engine.state.day
+                            // MARK: end T7
                         )
                     }
                     .buttonStyle(.plain)
@@ -336,6 +346,10 @@ private struct ReleasedProductRow: View {
     let product: Product
     let info: ReleaseInfo
     let type: ProductTypeDef?
+    // MARK: T7 (press and stakes)
+    /// Today, for an exclusive's embargo; `nil` scores every review.
+    var today: Int? = nil
+    // MARK: end T7
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
@@ -366,7 +380,7 @@ private struct ReleasedProductRow: View {
 
             Spacer(minLength: Theme.Spacing.sm)
 
-            ScoreBadge(score: info.averageReviewScore)
+            ScoreBadge(score: info.visibleAverageScore(on: today)) // T7: the verdicts that are out
             Image(systemName: "chevron.right")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.tertiary)

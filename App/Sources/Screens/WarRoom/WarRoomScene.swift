@@ -80,7 +80,8 @@ enum WarRoomScene {
     /// The shipped cheer, once the reveal has a score and a token.
     static func celebration(for product: Product, token: Int?) -> OfficeSceneInput.Celebration? {
         guard let token, case .released(let info) = product.stage, !info.reviews.isEmpty else { return nil }
-        return OfficeSceneInput.Celebration(kind: .shipped(score: info.averageReviewScore), token: token)
+        // T7: the cheer is for the verdicts that are out on launch day.
+        return OfficeSceneInput.Celebration(kind: .shipped(score: info.visibleAverageScore(on: info.launchDay)), token: token)
     }
 
     /// Founder first, then by hire day — the same desk order HQ uses, so

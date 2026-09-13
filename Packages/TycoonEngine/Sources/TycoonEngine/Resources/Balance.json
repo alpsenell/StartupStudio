@@ -2231,5 +2231,23 @@
     "launchHypeFactor": 0.85,
     "schoolDistrict": "midtown",
     "schoolBondPerWeek": 1.0
+  },
+  "press": {
+    "exclusiveGain": 5.0,
+    "snub": 1.0,
+    "standingDivisor": 3.0,
+    "driftPerLaunch": 1.0,
+    "cap": 20.0,
+    "embargoDays": 7
+  },
+  "stakes": {
+    "percents": [0.05, 0.10, 0.25],
+    "premium": 1.1,
+    "sellBack": 0.9,
+    "strengthShare": 0.25,
+    "roadmapFrom": 0.10,
+    "poachFactor": 0.5,
+    "countOffMarket": false,
+    "dividendPayout": 0.2
   }
 }

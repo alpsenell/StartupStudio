@@ -88,7 +88,10 @@ struct StorefrontPage: View {
                     developer: engine.state.company.name,
                     type: type,
                     topic: topic,
-                    rating: .released(info)
+                    rating: .released(info),
+                    // MARK: T7 (press and stakes) — an exclusive's embargo.
+                    today: engine.state.day
+                    // MARK: end T7
                 )
                 priceButton(info: info)
                 StorefrontShotsCard(product: product)
@@ -97,7 +100,9 @@ struct StorefrontPage: View {
                 StorefrontFeaturesCard(product: product, content: engine.content)
                 StorefrontWeekCard(info: info, type: type)
                 WhatsNewCard(product: product, info: info)
-                StorefrontReviewsCard(info: info)
+                // MARK: T7 (press and stakes) — only the verdicts that are out.
+                StorefrontReviewsCard(info: info, today: engine.state.day)
+                // MARK: end T7
             case .development(let progress):
                 StorefrontHero(
                     product: product,
@@ -266,6 +271,10 @@ private struct StorefrontHero: View {
     let type: ProductTypeDef?
     let topic: TopicDef?
     let rating: Rating
+    // MARK: T7 (press and stakes)
+    /// Today, for an exclusive's embargo; `nil` rates on every review.
+    var today: Int? = nil
+    // MARK: end T7
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -294,7 +303,8 @@ private struct StorefrontHero: View {
                         .foregroundStyle(Theme.pixelInk.opacity(0.7))
                     switch rating {
                     case .released(let info):
-                        StoreStars(score: info.averageReviewScore, count: info.reviews.count)
+                        // T7: the stars rate the verdicts that are out.
+                        StoreStars(score: info.visibleAverageScore(on: today), count: info.visibleReviews(on: today).count)
                             .padding(.top, Theme.Spacing.xs)
                     case .comingSoon:
                         PixelText(text: "Coming soon", scale: 2, color: Theme.pixelInk)
@@ -562,6 +572,10 @@ private struct WhatsNewCard: View {
 /// the quote. The same reviews the detail screen lists as rows.
 private struct StorefrontReviewsCard: View {
     let info: ReleaseInfo
+    // MARK: T7 (press and stakes)
+    /// Today, for an exclusive's embargo; `nil` lists every review.
+    var today: Int? = nil
+    // MARK: end T7
 
     var body: some View {
         CardView("Reviews", systemImage: "quote.bubble") {
@@ -570,7 +584,7 @@ private struct StorefrontReviewsCard: View {
                     .emptySectionText()
             } else {
                 VStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(info.reviews.enumerated()), id: \.offset) { _, review in
+                    ForEach(Array(info.visibleReviews(on: today).enumerated()), id: \.offset) { _, review in // T7
                         ReviewQuoteCard(review: review)
                     }
                 }
