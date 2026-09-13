@@ -71,7 +71,12 @@ struct LaunchDaySheet: View {
                         if release.reviews.isEmpty {
                             waitingForReviews(release)
                         } else {
-                            ReviewRevealList(release: release, revealed: revealed, productID: nil) { route in
+                            // T7: each outlet's standing as a byline, the
+                            // exclusive's verdict first.
+                            ReviewRevealList(
+                                release: release, revealed: revealed, productID: nil,
+                                bylines: PressByline.all(state: engine.state, balance: engine.balance)
+                            ) { route in
                                 dismiss()
                                 router?.go(route)
                             }
@@ -232,13 +237,28 @@ struct ReviewRevealList: View {
     var productID: UUID?
     /// Whether each blurb types itself out. Off for a static frame.
     var typesOut = true
+    /// T7: each outlet's standing in words (`PressByline.all`), empty —
+    /// and nothing printed — while no outlet has one.
+    var bylines: [String: String] = [:]
     let onRoute: (Route) -> Void
+
+    /// T7: the exclusive's verdict first, then the rest in the order the
+    /// press filed. The engine's order unchanged when nobody had it first.
+    private var orderedReviews: [Review] {
+        guard let exclusive = release.exclusiveOutlet else { return release.reviews }
+        return release.reviews.filter { $0.outlet == exclusive }
+            + release.reviews.filter { $0.outlet != exclusive }
+    }
 
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
-            ForEach(Array(release.reviews.enumerated()), id: \.offset) { index, review in
+            ForEach(Array(orderedReviews.enumerated()), id: \.offset) { index, review in
                 if index < revealed {
-                    ReviewCardView(review: review, typesOut: typesOut)
+                    ReviewCardView(
+                        review: review, typesOut: typesOut,
+                        byline: bylines[review.outlet],
+                        isExclusive: review.outlet == release.exclusiveOutlet
+                    )
                         .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
                 }
             }
@@ -335,6 +355,11 @@ struct LaunchStat: View {
 struct ReviewCardView: View {
     let review: Review
     var typesOut = true
+    /// T7: the outlet's standing with the studio in words; `nil` prints
+    /// nothing, which is every card before any exclusive was given.
+    var byline: String? = nil
+    /// T7: this outlet had the build first.
+    var isExclusive = false
 
     @State private var shownCharacters = 0
     @State private var shownScore = 0
@@ -355,6 +380,20 @@ struct ReviewCardView: View {
                         .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
                 }
+                // T7: the exclusive's stamp and the outlet's byline.
+                if isExclusive || byline != nil {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        if isExclusive {
+                            PixelText(text: "EXCLUSIVE", scale: 1, color: Theme.pixelAccent)
+                        }
+                        if let byline {
+                            Text(byline)
+                                .font(.caption)
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
                 Text(animates ? String(review.blurb.prefix(shownCharacters)) : review.blurb)
                     .font(.subheadline)
                     .italic()
@@ -363,7 +402,9 @@ struct ReviewCardView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(review.outlet) scored it \(review.score). \(review.blurb)")
+        .accessibilityLabel(
+            "\(review.outlet)\(isExclusive ? ", exclusive" : "")\(byline.map { ", \($0)" } ?? "") scored it \(review.score). \(review.blurb)"
+        )
         .onAppear { animate() }
     }
 
@@ -426,5 +467,56 @@ struct LaunchReasonRow: View {
         .background(Theme.warning.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Why: \(reason)")
+    }
+}
+
+// MARK: - T7 (press and stakes): the bylines
+
+/// An outlet's standing with the studio, as the byline prints it:
+/// "warm to you · +4 on your scores". Nothing at all until some outlet has
+/// a standing, so every launch before the first exclusive reads as it did.
+enum PressByline {
+    static func text(outlet: String, state: GameState, balance: BalanceConfig) -> String? {
+        guard !state.company.pressStanding.isEmpty else { return nil }
+        let words = words(PressStandingBand.of(state.company.pressStanding(of: outlet)))
+        let points = Int(state.company.pressScoreOffset(for: outlet, balance: balance).rounded())
+        guard points != 0 else { return words }
+        return String(
+            localized: "\(words) · \(points > 0 ? "+" : "−")\(abs(points)) on your scores",
+            comment: "Review byline: the outlet's standing in words and what it does to its score"
+        )
+    }
+
+    /// Every outlet's byline; empty while no outlet has a standing.
+    static func all(state: GameState, balance: BalanceConfig) -> [String: String] {
+        guard !state.company.pressStanding.isEmpty else { return [:] }
+        var bylines: [String: String] = [:]
+        for outlet in balance.reviewOutlets {
+            bylines[outlet] = text(outlet: outlet, state: state, balance: balance)
+        }
+        return bylines
+    }
+
+    static func words(_ band: PressStandingBand) -> String {
+        switch band {
+        case .warm: String(localized: "warm to you", comment: "Review byline: an outlet's standing, best to worst")
+        case .friendly: String(localized: "friendly", comment: "Review byline: an outlet's standing, best to worst")
+        case .even: String(localized: "even-handed", comment: "Review byline: an outlet's standing, best to worst")
+        case .cool: String(localized: "cool on you", comment: "Review byline: an outlet's standing, best to worst")
+        case .cold: String(localized: "cold on you", comment: "Review byline: an outlet's standing, best to worst")
+        }
+    }
+}
+
+extension EventCopy {
+    /// T7: "TechDaily had Round 7 first and gave it 78. “…”" — two
+    /// sentences, so the paper's headline is the verdict and its deck the
+    /// quote (`NewspaperComposer.afterTheFirstSentence`).
+    static func exclusiveLine(product: Product?, outlet: String) -> String {
+        let name = product?.name ?? String(localized: "the launch", comment: "Exclusive line: a product whose name is gone")
+        guard let product, case .released(let info) = product.stage,
+              let review = info.reviews.first(where: { $0.outlet == outlet })
+        else { return "\(outlet) had \(name) first." }
+        return "\(outlet) had \(name) first and gave it \(review.score). “\(review.blurb)”"
     }
 }

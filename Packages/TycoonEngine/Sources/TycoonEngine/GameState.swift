@@ -18,6 +18,13 @@ public struct Company: Codable, Equatable, Sendable {
     /// a desk-sorted array, and only when non-empty (`Company.encode`).
     public var seating: [UUID: Int] = [:]
     // MARK: end S1
+    // MARK: T7 (press and stakes)
+    /// Each review outlet's standing with the studio, ±`press.cap`; it
+    /// moves that outlet's score on launches (`pressScoreOffset`). Empty on
+    /// every run that never gave an exclusive — every bot, every fixture —
+    /// and then not encoded.
+    public var pressStanding: [String: Double] = [:]
+    // MARK: end T7
 }
 
 // MARK: S1 (seating)
@@ -28,6 +35,9 @@ public struct Company: Codable, Equatable, Sendable {
 extension Company {
     private enum CodingKeys: String, CodingKey {
         case name, cash, reputation, officeTier, daysInDebt, seating
+        // MARK: T7 (press and stakes)
+        case pressStanding
+        // MARK: end T7
     }
 
     public init(from decoder: any Decoder) throws {
@@ -41,6 +51,10 @@ extension Company {
         )
         let entries = try c.decodeIfPresent([SeatingEntry].self, forKey: .seating) ?? []
         for entry in entries { seating[entry.employeeID] = entry.desk }
+        // MARK: T7 (press and stakes)
+        let standings = try c.decodeIfPresent([PressStandingEntry].self, forKey: .pressStanding) ?? []
+        for entry in standings { pressStanding[entry.outlet] = entry.standing }
+        // MARK: end T7
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -53,6 +67,11 @@ extension Company {
         if !seating.isEmpty {
             try c.encode(SeatingEntry.sorted(seating), forKey: .seating)
         }
+        // MARK: T7 (press and stakes) — only once an outlet has a standing.
+        if !pressStanding.isEmpty {
+            try c.encode(PressStandingEntry.sorted(pressStanding), forKey: .pressStanding)
+        }
+        // MARK: end T7
     }
 }
 // MARK: end S1
@@ -821,6 +840,15 @@ public enum GameEvent: Codable, Equatable, Sendable {
     // MARK: T6 (away)
     // MARK: end T6
     // MARK: T7 (press and stakes)
+    /// `outlet` had `productID` first: its verdict leads launch day and the
+    /// paper, it warms to the studio and the other outlets cool.
+    case pressExclusive(productID: UUID, outlet: String, day: Int)
+    /// Bought `percent` of a rival for `price`.
+    case rivalStakeBought(rivalID: UUID, name: String, percent: Double, price: Int, day: Int)
+    /// Sold the stake back for `price`; it had cost `paid`.
+    case rivalStakeSold(rivalID: UUID, name: String, percent: Double, price: Int, paid: Int, day: Int)
+    /// The rival folded and the stake went with it.
+    case rivalStakeLost(rivalID: UUID, name: String, percent: Double, paid: Int, day: Int)
     // MARK: end T7
     // MARK: end of Iteration 17
     // MARK: end of Iteration 15

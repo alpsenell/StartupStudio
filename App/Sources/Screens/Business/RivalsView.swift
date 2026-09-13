@@ -58,6 +58,13 @@ struct RivalsView: View {
                 RivalCard(engine: engine, rival: rival)
             }
         }
+        // MARK: T7 (press and stakes)
+        // What you own of them, once you own something.
+        if !engine.state.rivals.stakes.isEmpty {
+            BusinessSectionHeader(title: "Your stakes", systemImage: "chart.pie.fill")
+            RivalHoldingsCard(engine: engine)
+        }
+        // MARK: end T7
         // MARK: K4 (deals and exits)
         if engine.state.rivals.listing == nil && !DealDebug.cardLeads {
             BusinessSectionHeader(title: "Sell the company", systemImage: "signpost.right.fill")

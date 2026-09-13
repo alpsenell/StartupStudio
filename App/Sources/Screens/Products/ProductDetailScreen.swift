@@ -216,6 +216,9 @@ struct ProductDetailScreen: View {
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
             }
+            // MARK: T7 (press and stakes) — who gets the review copy first.
+            if canShip { ExclusiveRow(engine: engine, productID: product.id) }
+            // MARK: end T7
         }
         .confirmationDialog(
             "Ship \(product.name)?",
@@ -228,6 +231,9 @@ struct ProductDetailScreen: View {
                     to: engine,
                     rejected: "It is not ready to ship yet."
                 )
+                // MARK: T7 (press and stakes) — the exclusive, if one was picked.
+                ExclusivePick.shared.grantAfterShip(productID: product.id, engine: engine)
+                // MARK: end T7
             }
             // MARK: K2 (product lifecycle) — the third answer: ship it as
             // the v2 of a live product of the same kind, with what carries

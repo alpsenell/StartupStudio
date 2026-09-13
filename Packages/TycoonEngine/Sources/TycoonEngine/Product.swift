@@ -218,6 +218,12 @@ public struct ReleaseInfo: Codable, Equatable, Sendable {
     /// The day the last cut was a sale: one bumper week, once a quarter.
     public var lastSaleDay: Int?
     // MARK: end K2
+    // MARK: T7 (press and stakes)
+    /// The outlet given the review copy first (`.grantExclusive`), `nil`
+    /// for every release that gave nobody one. Not written while `nil`
+    /// (the synthesized encode skips a nil optional).
+    public var exclusiveOutlet: String? = nil
+    // MARK: end T7
 
     public init(
         launchDay: Int,
@@ -297,6 +303,9 @@ extension ReleaseInfo {
         // re-priced encodes to the bytes it always did.
         case sunsetDay, lastPriceChangeDay, priceRiseUntilDay, lastSaleDay
         // MARK: end K2
+        // MARK: T7 (press and stakes)
+        case exclusiveOutlet
+        // MARK: end T7
     }
 
     public init(from decoder: any Decoder) throws {
@@ -325,6 +334,9 @@ extension ReleaseInfo {
             lastSaleDay: try container.decodeIfPresent(Int.self, forKey: .lastSaleDay)
             // MARK: end K2
         )
+        // MARK: T7 (press and stakes)
+        exclusiveOutlet = try container.decodeIfPresent(String.self, forKey: .exclusiveOutlet)
+        // MARK: end T7
     }
 }
 

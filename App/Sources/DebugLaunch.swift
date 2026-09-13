@@ -1787,6 +1787,31 @@ extension DebugLaunch {
     // MARK: T6 (away)
     // MARK: end T6
     // MARK: T7 (press and stakes)
+    /// T7's launch flags, dressed once from the Business tab
+    /// (`BusinessScreen`): `-autoRoute t7-stake` (the strongest rival's
+    /// profile with 25% of it held), `t7-holdings` (Rivals with the
+    /// holdings row), `t7-finances` (the asset line), `t7-standing` (the
+    /// four outlets dressed warm to cold), `t7-launch` / `t7-exclusive`
+    /// (the most finished build ships — the second with the first outlet
+    /// given the exclusive — and the launch-day sheet opens), `t7-paper`
+    /// (the exclusive, a week on, then the newspaper).
+    @MainActor private static var t7Dressed = false
+
+    @MainActor static func t7DressIfAsked(engine: GameEngine) {
+        #if DEBUG
+        guard !t7Dressed, let route = launchRoute, route.hasPrefix("t7-") else { return }
+        t7Dressed = true
+        let scenario: String? = switch route {
+        case "t7-stake", "t7-holdings", "t7-finances": "stake"
+        case "t7-standing": "standing"
+        case "t7-launch": "launch"
+        case "t7-exclusive": "exclusive"
+        case "t7-paper": "paper"
+        default: nil
+        }
+        if let scenario { _ = engine.send(.pressStakeDebugSeed(scenario: scenario)) }
+        #endif
+    }
     // MARK: end T7
     // MARK: end of Iteration 17
     // MARK: end of Iteration 15

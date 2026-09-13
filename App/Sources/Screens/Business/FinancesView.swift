@@ -20,6 +20,13 @@ struct FinancesView: View {
             // MARK: end of Iteration 11, wave two — W1
             RunRateCard(engine: engine)
             LoanCard(engine: engine)
+            // MARK: T7 (press and stakes)
+            // The asset line: what the company owns of other companies.
+            // Nothing until it owns some.
+            if !engine.state.rivals.stakes.isEmpty {
+                RivalStakeAssetCard(engine: engine)
+            }
+            // MARK: end T7
             CashflowCard(state: engine.state)
             CategoryBreakdownCard(state: engine.state)
             RecentLedgerCard(state: engine.state)

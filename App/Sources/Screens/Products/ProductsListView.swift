@@ -210,6 +210,10 @@ private struct InDevelopmentCard: View {
                     .foregroundStyle(.secondary)
                 }
 
+                // MARK: T7 (press and stakes) — who gets the review copy first.
+                if canShip { ExclusiveRow(engine: engine, productID: product.id) }
+                // MARK: end T7
+
                 // Launch week (U1): offered from seven days out, never forced.
                 WarRoomEntryButton(engine: engine, product: product)
             }
@@ -225,6 +229,9 @@ private struct InDevelopmentCard: View {
                     to: engine,
                     rejected: "It is not ready to ship yet."
                 )
+                // MARK: T7 (press and stakes) — the exclusive, if one was picked.
+                ExclusivePick.shared.grantAfterShip(productID: product.id, engine: engine)
+                // MARK: end T7
             }
             // MARK: K2 (product lifecycle) — ship it as a v2.
             ForEach(engine.state.lifecycleReplaceableParents(for: product.id)) { parent in

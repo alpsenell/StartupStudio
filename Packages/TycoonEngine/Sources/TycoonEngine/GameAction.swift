@@ -742,6 +742,20 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: T6 (away)
     // MARK: end T6
     // MARK: T7 (press and stakes)
+    /// Gives `outlet` the exclusive on a product that shipped today
+    /// (`PressSystem.grantExclusive`). Sent by the ship confirmation right
+    /// after the ship itself, so it composes with every way a build ships.
+    case grantExclusive(productID: UUID, outlet: String)
+    /// Buys a `percent` (0.05, 0.10 or 0.25) stake in a rival for company
+    /// cash (`RivalSystem.buyRivalStake`).
+    case buyRivalStake(rivalID: UUID, percent: Double)
+    /// Sells the stake held in a rival back at `valuation × sellBack ×
+    /// percent`.
+    case sellRivalStake(rivalID: UUID)
+    /// `-autoRoute t7-…`: dresses the loaded save for a screenshot
+    /// (`PressStakeDebugSeed`). Applied only in debug builds; nothing in
+    /// the game sends it.
+    case pressStakeDebugSeed(scenario: String)
     // MARK: end T7
     // MARK: end of Iteration 17
     // MARK: end of Iteration 15

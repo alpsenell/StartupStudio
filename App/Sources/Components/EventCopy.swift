@@ -1319,6 +1319,30 @@ struct EventCopy {
         // MARK: T6 (away)
         // MARK: end T6
         // MARK: T7 (press and stakes)
+        case .pressExclusive(let productID, let outlet, let day):
+            (
+                "newspaper.fill",
+                Self.exclusiveLine(product: state.product(id: productID), outlet: outlet),
+                day, Theme.accent
+            )
+        case .rivalStakeBought(_, let name, let percent, let price, let day):
+            (
+                "chart.pie.fill",
+                "Bought \(Int((percent * 100).rounded()))% of \(name) for \(price.money). A quarter of it is their strength now.",
+                day, Theme.accent
+            )
+        case .rivalStakeSold(_, let name, let percent, let price, let paid, let day):
+            (
+                "chart.pie",
+                "Sold \(Int((percent * 100).rounded()))% of \(name) for \(price.money). It cost \(paid.money).",
+                day, price >= paid ? Theme.positiveCash : Theme.warning
+            )
+        case .rivalStakeLost(_, let name, let percent, let paid, let day):
+            (
+                "flag.slash.fill",
+                "\(name) folded, and the \(Int((percent * 100).rounded()))% that cost \(paid.money) went with them.",
+                day, Theme.negativeCash
+            )
         // MARK: end T7
         // MARK: end of Iteration 17
         // MARK: end of Iteration 15

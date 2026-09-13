@@ -158,6 +158,8 @@ struct WarRoomScreen: View {
             to: engine,
             rejected: "It is not ready to ship yet."
         )
+        // T7: the exclusive, if one was picked on the row above the button.
+        ExclusivePick.shared.grantAfterShip(productID: productID, engine: engine)
         // Synchronously, before any view updates: the reveal is ours.
         claimLaunchDay()
     }
@@ -239,6 +241,10 @@ struct WarRoomContent: View {
                     product: product, progress: progress, type: type, eta: eta,
                     canShip: forecast?.canShip ?? false, engine: engine, onShip: onShip
                 )
+                // T7: who gets the review copy first, once it can ship.
+                if forecast?.canShip ?? false {
+                    ExclusiveRow(engine: engine, productID: product.id)
+                }
                 HypePanel(product: product, hype: progress.hype, engine: engine, onRoute: onRoute)
                 if let forecast {
                     ForecastBand(forecast: forecast)
@@ -778,7 +784,10 @@ private struct LaunchDayPanel: View {
             } else {
                 ReviewRevealList(
                     release: release, revealed: revealed, productID: product.id,
-                    typesOut: typesOut, onRoute: onRoute
+                    typesOut: typesOut,
+                    // T7: each outlet's standing as a byline.
+                    bylines: PressByline.all(state: engine.state, balance: engine.balance),
+                    onRoute: onRoute
                 )
             }
             if revealComplete {

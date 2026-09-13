@@ -475,7 +475,12 @@ enum ProductSystem {
 
         var reviews: [Review] = []
         for outlet in balance.reviewOutlets {
+            // MARK: T7 (press and stakes) — the outlet's standing with the
+            // studio. Exactly 0.0 with an empty map (every bot, every
+            // fixture); the one gaussian is drawn either way.
             let noise = state.rng.nextGaussian(sigma: balance.reviewNoiseSigma)
+                + state.company.pressScoreOffset(for: outlet, balance: balance)
+            // MARK: end T7
             let score = min(balance.reviewCeiling, max(balance.reviewFloor, Int(baseScore + noise)))
             reviews.append(Review(
                 outlet: outlet,

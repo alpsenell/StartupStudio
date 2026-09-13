@@ -131,6 +131,11 @@ enum RivalSystem {
         // on the same day keeps the desk. Returns at once unless listed.
         events.append(contentsOf: dealListingCheck(&state, balance))
         // MARK: end K4
+        // MARK: T7 (press and stakes)
+        // The stake's weekly dividend, after the week's folds. Returns at
+        // once with no stakes.
+        stakeWeek(&state, balance, content)
+        // MARK: end T7
         return events
     }
 
@@ -302,6 +307,9 @@ enum RivalSystem {
             if state.rivals.pendingPoach?.rivalID == rival.id { state.rivals.pendingPoach = nil }
             if state.rivals.pendingBuyout?.rivalID == rival.id { state.rivals.pendingBuyout = nil }
             events.append(.rivalFolded(rivalID: rival.id, name: rival.name, day: state.day))
+            // MARK: T7 (press and stakes) — the stake folds with them.
+            events.append(contentsOf: stakeFolded(rival, &state))
+            // MARK: end T7
             let replacement = found(&state, config, content)
             state.rivals.rivals.append(replacement)
             events.append(.rivalFounded(rivalID: replacement.id, name: replacement.name, day: state.day))
@@ -591,6 +599,10 @@ enum RivalSystem {
                 state.rivals.rivals[index].priceWarTopicID = nil
             }
             guard !state.rivals.rivals[index].isInPriceWar(on: day) else { continue }
+            // MARK: T7 (press and stakes) — a studio you own part of does
+            // not start a price war with you. False with no stake in it.
+            if rivalMarketStakeRefusesWar(index, &state) { continue }
+            // MARK: end T7
 
             // A topic they both sell into, where the player is ahead.
             //
@@ -1244,7 +1256,14 @@ enum RivalSystem {
         let listedFactor = state.dealPoachFactor(balance: balance)
         // MARK: end K4
         let roll = state.worldRNG.nextUniform()
-        guard roll < config.poachChance * resistance * appetite * awayFactor * listedFactor else { return [] }
+        // MARK: T7 (press and stakes)
+        // A poacher you own part of tries half as hard. `stakeFactor` is
+        // exactly 1 with no stake in them, and the draw above is taken
+        // either way.
+        let stakeFactor = state.rivalStakePoachFactor(rivalID: poacher.id, balance: balance)
+        guard roll < config.poachChance * resistance * appetite * awayFactor * listedFactor * stakeFactor
+        else { return [] }
+        // MARK: end T7
 
         let fairPay = EmployeeSystem.fairWeeklyPay(for: target, balance: balance)
         let premium = config.poachPremiumMin
@@ -1532,7 +1551,14 @@ enum RivalSystem {
         guard let rivalIndex = state.rivals.rivals.firstIndex(where: { $0.id == rivalID })
         else { return [] }
         let rival = state.rivals.rivals[rivalIndex]
-        let cost = Int((Double(rival.valuation(balance: balance)) * config.acquirePremium).rounded())
+        // MARK: T7 (press and stakes)
+        // The stake you already hold is part of the price: `(1 − percent) ×`
+        // it. Exactly the full price with no stake.
+        let cost = state.rivalStakeAcquirePrice(
+            rivalID: rivalID,
+            fullPrice: Int((Double(rival.valuation(balance: balance)) * config.acquirePremium).rounded())
+        )
+        // MARK: end T7
         guard state.company.cash >= cost,
               Double(state.companyValuation(balance: balance))
                 >= Double(rival.valuation(balance: balance)) * config.acquireDominanceFactor
@@ -1574,6 +1600,9 @@ enum RivalSystem {
         absorbShelf(of: rival, state: &state, balance: balance, content: content)
 
         state.rivals.rivals.remove(at: rivalIndex)
+        // MARK: T7 (press and stakes) — a stake in them closes with them.
+        stakeAbsorbed(rival.id, &state)
+        // MARK: end T7
         if state.rivals.pendingPoach?.rivalID == rival.id { state.rivals.pendingPoach = nil }
         if state.rivals.pendingBuyout?.rivalID == rival.id { state.rivals.pendingBuyout = nil }
         // Counted here rather than derived: an acquired rival leaves the

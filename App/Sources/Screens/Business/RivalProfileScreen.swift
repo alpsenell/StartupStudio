@@ -530,6 +530,11 @@ private struct RivalDealCard: View {
                 // Paper beside cash, and what this studio bids for a sign.
                 DealProfileRows(engine: engine, rival: rival)
                 // MARK: end K4
+                // MARK: T7 (press and stakes)
+                // A piece of them beside the whole: 5, 10 or 25%, or selling
+                // what you hold.
+                RivalStakeRows(engine: engine, rival: rival)
+                // MARK: end T7
             }
         }
         .confirmationDialog(
@@ -614,7 +619,12 @@ struct RivalAcquisitionTerms {
 
     init(rival: Rival, state: GameState, balance: BalanceConfig) {
         let valuation = rival.valuation(balance: balance)
-        cost = Int((Double(valuation) * balance.rivals.acquirePremium).rounded())
+        // MARK: T7 (press and stakes) — a stake you hold is part of the
+        // price, as `RivalSystem.acquireRival` counts it.
+        cost = state.rivalStakeAcquirePrice(
+            rivalID: rival.id, fullPrice: Int((Double(valuation) * balance.rivals.acquirePremium).rounded())
+        )
+        // MARK: end T7
 
         let dominanceBar = Double(valuation) * balance.rivals.acquireDominanceFactor
         if Double(state.companyValuation(balance: balance)) < dominanceBar {

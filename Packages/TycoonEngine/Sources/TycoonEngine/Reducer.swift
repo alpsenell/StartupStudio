@@ -1149,6 +1149,24 @@ public enum Reducer {
         // MARK: T6 (away)
         // MARK: end T6
         // MARK: T7 (press and stakes)
+        case let .grantExclusive(productID, outlet):
+            events = PressSystem.grantExclusive(
+                productID: productID, outlet: outlet, state: &state, balance: balance
+            )
+        case let .buyRivalStake(rivalID, percent):
+            events = RivalSystem.buyRivalStake(
+                rivalID: rivalID, percent: percent, state: &state, balance: balance
+            )
+        case let .sellRivalStake(rivalID):
+            events = RivalSystem.sellRivalStake(rivalID: rivalID, state: &state, balance: balance)
+        case let .pressStakeDebugSeed(scenario):
+            #if DEBUG
+            events = PressStakeDebugSeed.apply(
+                scenario: scenario, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
         // MARK: end T7
         // MARK: end of Iteration 17
         // MARK: end of Iteration 15

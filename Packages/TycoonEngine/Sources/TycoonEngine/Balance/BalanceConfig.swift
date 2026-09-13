@@ -2073,6 +2073,17 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: T6 (away)
     // MARK: end T6
     // MARK: T7 (press and stakes)
+
+    /// Iteration 17 — T7: the exclusive and the outlets' standing
+    /// (`BalanceConfig+Press.swift`). Inline default, so `"press"` is an
+    /// optional key; read only once a standing exists, which takes the
+    /// player's own `.grantExclusive`.
+    public var press: PressBalance = .default
+    /// Iteration 17 — T7: a stake in a rival. Inline default, so
+    /// `"stakes"` is an optional key; read only behind `.buyRivalStake`,
+    /// which no bot sends.
+    public var stakes: StakeBalance = .default
+
     // MARK: end T7
     // MARK: end of Iteration 17
     // MARK: end of Iteration 15
