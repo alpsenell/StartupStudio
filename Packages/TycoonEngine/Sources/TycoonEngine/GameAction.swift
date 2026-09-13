@@ -736,6 +736,16 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: T3 (people)
     // MARK: end T3
     // MARK: T4 (publisher)
+    /// Shop a build in development to the strongest rival at
+    /// `publisher.minStrength`: the advance `publisherTerms` prints in
+    /// cash, their share of the product's revenue for as long as it sells,
+    /// and their date announced. Refused for the reasons
+    /// `PublisherRefusal` names. No bot sends it.
+    case shopToPublisher(productID: UUID)
+    /// Buy the publisher on a product out at `publisherBuyoutPrice`: the
+    /// share stops today. Refused for the reasons
+    /// `GameState.publisherBuyoutBlocker` names. No bot sends it.
+    case buyOutPublisher(productID: UUID)
     // MARK: end T4
     // MARK: T5 (expo and pre-orders)
     // MARK: end T5

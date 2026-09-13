@@ -126,6 +126,16 @@ enum AnnounceSystem {
         }
         state.narrative.flags.insert(Announce.slippedFlag)
         state.products[index] = product
+        // MARK: T4 (publisher) — a published build's slip claws back
+        // `publisher.clawbackPerSlip` of the advance. Nothing for a build
+        // nobody published, which falls through to the line below.
+        if let clawed = PublisherSystem.clawBack(at: index, state: &state, balance: balance) {
+            return [
+                .announceSlipped(productID: product.id, slips: product.slips, newDay: newDay, day: state.day),
+                clawed,
+            ]
+        }
+        // MARK: end T4
         return [.announceSlipped(
             productID: product.id, slips: product.slips, newDay: newDay, day: state.day
         )]

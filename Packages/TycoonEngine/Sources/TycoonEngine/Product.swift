@@ -367,6 +367,12 @@ public struct Product: Codable, Equatable, Sendable, Identifiable {
     /// product that replaced nothing. Not written while `nil`.
     public var parentID: UUID?
     // MARK: end K2
+    // MARK: T4 (publisher)
+    /// The rival that advanced this build money for a share of it
+    /// (`shopToPublisher`), `nil` for every product nobody published. Not
+    /// written while `nil`.
+    public var publisher: Publisher? = nil
+    // MARK: end T4
 
     public init(
         id: UUID,
@@ -420,6 +426,9 @@ extension Product {
         // MARK: K2 (product lifecycle)
         case parentID
         // MARK: end K2
+        // MARK: T4 (publisher)
+        case publisher
+        // MARK: end T4
     }
 
     public init(from decoder: any Decoder) throws {
@@ -440,6 +449,9 @@ extension Product {
             parentID: try container.decodeIfPresent(UUID.self, forKey: .parentID)
             // MARK: end K2
         )
+        // MARK: T4 (publisher)
+        publisher = try container.decodeIfPresent(Publisher.self, forKey: .publisher)
+        // MARK: end T4
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -459,6 +471,9 @@ extension Product {
         // MARK: K2 (product lifecycle) — only a successor has one.
         try container.encodeIfPresent(parentID, forKey: .parentID)
         // MARK: end K2
+        // MARK: T4 (publisher) — only a published build has one.
+        try container.encodeIfPresent(publisher, forKey: .publisher)
+        // MARK: end T4
     }
 }
 

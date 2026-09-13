@@ -1143,6 +1143,10 @@ public enum Reducer {
         // MARK: T3 (people)
         // MARK: end T3
         // MARK: T4 (publisher)
+        case let .shopToPublisher(productID):
+            events = PublisherSystem.shop(productID: productID, state: &state, balance: balance, content: content)
+        case let .buyOutPublisher(productID):
+            events = PublisherSystem.buyOut(productID: productID, state: &state, balance: balance)
         // MARK: end T4
         // MARK: T5 (expo and pre-orders)
         // MARK: end T5

@@ -248,6 +248,36 @@ extension GameState {
         )
     }
 
+    // MARK: T4 (publisher) — O1: the sign caps the market
+
+    /// An unsolicited approach while the sign stands pays no more than the
+    /// ask (`RivalSystem.buyoutCheck`, after its draws). `amount` itself
+    /// with no sign up.
+    public func dealCappedApproach(_ amount: Int) -> Int {
+        guard let listing = rivals.listing else { return amount }
+        return min(amount, listing.askingPrice)
+    }
+
+    /// The studio that would come on its own today at the strategic
+    /// premium, as `buyoutCheck` reads it: the strongest rival, when the
+    /// company is not weak, has the reputation and is worth
+    /// `strategicDominanceFactor ×` it. `nil` when nobody would.
+    public func dealStrategicSuitor(balance: BalanceConfig) -> Rival? {
+        let config = balance.rivals
+        let exits = balance.investors
+        guard let buyer = Self.dealStrongest(rivals.rivals),
+              company.daysInDebt == 0,
+              company.cash >= config.weakCashThreshold,
+              company.reputation >= config.weakRepThreshold,
+              company.reputation >= exits.strategicMinReputation,
+              Double(companyValuation(balance: balance))
+                >= Double(buyer.valuation(balance: balance)) * exits.strategicDominanceFactor
+        else { return nil }
+        return buyer
+    }
+
+    // MARK: end T4
+
     // MARK: - Helpers
 
     /// The strongest of `pool`; ties break on the id string, as

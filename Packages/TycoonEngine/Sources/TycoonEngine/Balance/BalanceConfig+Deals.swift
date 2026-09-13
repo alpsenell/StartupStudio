@@ -69,7 +69,11 @@ extension BalanceConfig {
 
         public init(
             askMin: Double = 0.8,
-            askMax: Double = 1.6,
+            // T4 (O1): 1.6 → 2.0. With unsolicited offers capped at the ask
+            // while the sign stands, and the ≥1.5× approach measured under
+            // eight weeks away on the studio and the campus, a patient sign
+            // has to be able to reach the market's own number.
+            askMax: Double = 2.0,
             bidIntervalDays: Int = 28,
             bidBase: Double = 0.9,
             bidStep: Double = 0.1,
