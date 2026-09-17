@@ -167,6 +167,10 @@ struct IPOBellContent: View {
     let beat: Int
     let revealedPrints: Int
 
+    /// The floor's figures stand still under Reduce Motion, the way the
+    /// party room's do.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             board
@@ -225,21 +229,46 @@ struct IPOBellContent: View {
 
     // MARK: The room
 
-    /// The floor: the crowd, the desks, the rope, and the bell over it all,
-    /// drawn as blocks on a fixed 64×32 grid in the palette the rest of the
-    /// game draws in — nothing here invents a colour.
+    /// The floor: the hall, the desks, the rope, the bell over it all —
+    /// and the exchange's own people standing on it.
+    ///
+    /// Iteration 18's review photographed the first pass and read it as a
+    /// bar chart: an ink-block crowd on a pale wall, with the back desks
+    /// rhyming with the outlet chips two screens earlier. The architecture
+    /// is still `Canvas` blocks on a fixed 64×32 grid — but the wall is now
+    /// dark and the windows light rather than the other way round, the
+    /// floor has boards to stand on, and the crowd is `PixelFigure`, the
+    /// same sprite the office and the party room draw. Nothing here invents
+    /// a colour: the blocks are Theme's pixel tokens and the people carry
+    /// PixelKit's master palette with them.
     private var floor: some View {
+        ZStack(alignment: .bottom) {
+            hall
+            crowd
+        }
+        .frame(height: 190)
+        .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityHidden(true)
+    }
+
+    /// The room the crowd stands in: back wall, windows, banner, desks,
+    /// podium, bell, and the boards under everyone's feet.
+    private var hall: some View {
         Canvas(rendersAsynchronously: false) { context, size in
-            // The grid is fitted to the frame, so the room fills its card
-            // at every width and the blocks stay square.
-            let unit = min(size.width / 64, size.height / 32)
-            let originX = (size.width - unit * 64) / 2
-            let originY = (size.height - unit * 32) / 2
+            // The blocks stay square and the room runs the full width of
+            // its card: 32 rows set the unit, and the hall is as many
+            // columns wide as the card holds. Fitting a fixed 64 columns
+            // instead letterboxed the room — two pale slivers down the
+            // sides, which is what a wall must not have.
+            let unit = size.height / 32
+            let columns = max(32, Int((size.width / unit).rounded(.up)))
+            let middle = columns / 2
             func block(_ x: Int, _ y: Int, _ w: Int, _ h: Int, _ color: Color) {
                 context.fill(
                     Path(
                         CGRect(
-                            x: originX + CGFloat(x) * unit, y: originY + CGFloat(y) * unit,
+                            x: CGFloat(x) * unit, y: CGFloat(y) * unit,
                             width: CGFloat(w) * unit, height: CGFloat(h) * unit
                         )
                     ),
@@ -251,51 +280,97 @@ struct IPOBellContent: View {
             let accent = Theme.pixelAccent
             let rung = beat >= 2
 
-            // The hall: the back wall, its tall windows, and the floor.
-            block(0, 0, 64, 32, paper.opacity(0.5))
-            block(3, 1, 58, 11, ink.opacity(0.1))
-            for column in stride(from: 3, to: 61, by: 8) {
-                block(column, 1, 2, 11, ink.opacity(0.22))
+            // The hall, dark: a lit room is read from its windows, and on
+            // a pale wall the windows were the thing that disappeared.
+            block(0, 0, columns, 32, ink.opacity(0.78))
+            // The windows, in the wall rather than on it: a light pane, a
+            // sill under it, and a mullion down the middle of each. They
+            // skip the middle of the wall, which the banner hangs on.
+            for column in stride(from: 2, to: columns - 8, by: 11)
+            where column + 9 < middle - 8 || column > middle + 8 {
+                block(column, 2, 7, 9, paper.opacity(0.92))
+                block(column + 3, 2, 1, 9, ink.opacity(0.55))
+                block(column, 6, 7, 1, ink.opacity(0.35))
+                block(column - 1, 11, 9, 1, ink.opacity(0.45))
             }
-            block(0, 28, 64, 4, ink.opacity(0.16))
 
-            // The podium, the rope, and the bell above it.
-            let drop = rung ? 0 : 1
-            block(30, 2 + drop, 4, 4, accent)            // the bell
-            block(29, 6 + drop, 6, 1, ink)               // its lip
-            block(31, 7 + drop, 1, 4, ink.opacity(0.6))  // the rope
-            block(28, 13, 8, 3, ink.opacity(0.45))       // the podium
-            if rung {
-                // The clang, drawn the only way a pixel room can: lines
-                // leaving the bell.
-                block(26, 3, 3, 1, accent.opacity(0.65))
-                block(35, 3, 3, 1, accent.opacity(0.65))
-                block(27, 6, 2, 1, accent.opacity(0.4))
-                block(35, 6, 2, 1, accent.opacity(0.4))
+            // The banner, strung the width of the hall the way a room is
+            // dressed on a listing day. It carries no letters at this size
+            // — the board above the scene is where the ticker is read. A
+            // slab behind the bell instead of a strip across the wall read
+            // as a monitor on a stand, which is the first thing this scene
+            // must not look like.
+            block(0, 12, columns, 2, accent.opacity(rung ? 0.95 : 0.72))
+            for tab in stride(from: 2, to: columns, by: 9) {
+                block(tab, 14, 2, 1, accent.opacity(rung ? 0.8 : 0.6))
             }
 
             // The desks along the back, their screens lit once it opens.
-            for desk in stride(from: 2, to: 62, by: 10) where desk < 26 || desk > 36 {
-                block(desk, 13, 8, 3, ink.opacity(0.3))
-                block(desk + 1, 14, 6, 1, rung ? accent.opacity(0.75) : ink.opacity(0.45))
+            for desk in stride(from: 1, to: columns - 8, by: 11)
+            where desk + 8 < middle - 4 || desk > middle + 4 {
+                block(desk, 15, 8, 5, ink.opacity(0.42))
+                block(desk + 1, 16, 6, 2, rung ? accent.opacity(0.9) : paper.opacity(0.4))
+                block(desk, 19, 8, 1, ink.opacity(0.6))
             }
 
-            // The crowd on the floor: heads, shoulders, and one arm up.
-            for (index, person) in stride(from: 2, to: 62, by: 5).enumerated() {
-                let tall = index % 3 == 0
-                let body = tall ? 7 : 6
-                let top = 28 - body
-                block(person, top, 3, body, ink.opacity(0.8))      // the body
-                block(person, top - 3, 3, 3, ink.opacity(0.55))    // the head
-                if rung, index % 2 == 0 {
-                    block(person + 3, top - 5, 1, 5, ink.opacity(0.55))  // an arm up
-                }
+            // The boards: a lit floor with its planks drawn across it, so
+            // the people standing on it are standing on something.
+            block(0, 20, columns, 12, paper.opacity(0.82))
+            for plank in stride(from: 22, to: 32, by: 3) {
+                block(0, plank, columns, 1, ink.opacity(0.1))
+            }
+            block(0, 20, columns, 1, ink.opacity(0.4))
+
+            // The podium, the rope, and the bell above it.
+            let drop = rung ? 0 : 1
+            block(middle - 2, 2 + drop, 4, 4, accent)              // the bell
+            block(middle - 3, 6 + drop, 6, 1, paper.opacity(0.9))  // its lip
+            block(middle - 1, 7 + drop, 1, 4, paper.opacity(0.5))  // the pull rope
+            block(middle - 3, 15, 6, 5, paper.opacity(0.72))       // the podium
+            block(middle - 2, 16, 4, 2, ink.opacity(0.3))          // its front panel
+            block(middle - 4, 14, 8, 1, paper.opacity(0.9))        // its top edge
+            if rung {
+                // The clang, drawn the only way a pixel room can: lines
+                // leaving the bell.
+                block(middle - 6, 3, 3, 1, accent.opacity(0.85))
+                block(middle + 3, 3, 3, 1, accent.opacity(0.85))
+                block(middle - 5, 6, 2, 1, accent.opacity(0.55))
+                block(middle + 3, 6, 2, 1, accent.opacity(0.55))
             }
         }
-        .frame(height: 190)
-        .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .accessibilityHidden(true)
     }
+
+    /// The people on the floor. Seven of them, the same seven every time
+    /// (the seeds are fixed, not drawn), sized so the hall reads as a room
+    /// with a small crowd in it rather than a stadium of silhouettes. They
+    /// cheer once the bell is rung.
+    private var crowd: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            ForEach(Array(Self.floorSeeds.enumerated()), id: \.offset) { index, seed in
+                // Two ranks, staggered: the nearer people are taller and
+                // stand lower, so seven figures read as a crowd with depth
+                // rather than a chorus line.
+                let near = index.isMultiple(of: 2)
+                PixelFigure(
+                    seed: seed,
+                    pose: beat >= 2
+                        ? (near ? .cheer : .chat)
+                        : (near ? .chat : .standing),
+                    height: near ? 56 : 46,
+                    reduceMotion: reduceMotion
+                )
+                .frame(maxWidth: .infinity)
+                .offset(y: near ? 0 : -9)
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.bottom, 14)
+    }
+
+    /// Fixed, so the same seven people are on the floor in every
+    /// screenshot and on every run — the room is the exchange's, not the
+    /// player's, and a crowd that reshuffles reads as noise.
+    private static let floorSeeds: [UInt64] = [11, 47, 3, 92, 26, 64, 5]
 
     // MARK: The first day
 
@@ -351,7 +426,9 @@ struct IPOBellContent: View {
                 .foregroundStyle(result.brokeOpen ? Theme.negativeCash : Theme.positiveCash)
                 .fixedSize(horizontal: false, vertical: true)
             Text(
-                "Close: \(result.dayOneClose.money) · \(result.proceeds.money) of it was \(founderName)'s."
+                // Second person, like the headline above it — and the
+                // proceeds came out of the offer, not out of the close.
+                "Close: \(result.dayOneClose.money) · \(result.proceeds.money) of the offer was yours."
             )
             .font(.callout)
             .monospacedDigit()
