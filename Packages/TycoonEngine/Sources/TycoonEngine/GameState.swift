@@ -1689,6 +1689,13 @@ public struct GameState: Codable, Equatable, Sendable {
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12
+    // MARK: Client book
+    /// The clients the studio has settled jobs with, and whether the
+    /// book has been opened (`Clients.swift`). `.empty` — and then not
+    /// encoded — on every run that never opens the Business tab's
+    /// contracts, which is every bot and fixture.
+    public var clientBook: ClientBook = .empty
+    // MARK: end Client book
     /// What the staff remember about the founder's answers: the rules
     /// they became and who was told no (WS-D). Empty until somebody asks.
     public var staffMemory: StaffMemory = .initial
@@ -2077,6 +2084,9 @@ extension GameState {
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
+        // MARK: Client book
+        case clientBook
+        // MARK: end Client book
     }
 
     public init(from decoder: any Decoder) throws {
@@ -2238,6 +2248,9 @@ extension GameState {
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
+        // MARK: Client book
+        clientBook = try container.decodeIfPresent(ClientBook.self, forKey: .clientBook) ?? .empty
+        // MARK: end Client book
         lockedTopics = Dictionary(
             (try container.decodeIfPresent([TopicLockEntry].self, forKey: .lockedTopics) ?? [])
                 .map { ($0.topicID, $0.unlockDay) },
@@ -2420,5 +2433,10 @@ extension GameState {
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
+        // MARK: Client book
+        // Written only once the book has been opened, so a run that
+        // never looks — every bot and fixture — keeps its bytes.
+        if clientBook != .empty { try container.encode(clientBook, forKey: .clientBook) }
+        // MARK: end Client book
     }
 }

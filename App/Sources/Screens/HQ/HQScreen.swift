@@ -551,10 +551,16 @@ private struct CompanyCard: View {
     }
 
     /// How many chapters the catalog has, counting up from this one.
+    /// The epilogue chapter counts only once an epilogue exists: a run
+    /// that ends reads "of 5" its whole life, exactly as it did before
+    /// the sixth chapter shipped.
     private var chapterCount: Int {
         var count = progression.chapter
         while !engine.content.goals(inChapter: count + 1).isEmpty { count += 1 }
-        return count
+        if engine.state.epilogue == nil {
+            count = min(count, ProgressionState.chapterCount)
+        }
+        return max(count, progression.chapter)
     }
 
     private var chapterTitle: String {

@@ -236,7 +236,7 @@ struct FounderBiographyView: View {
         CardView("The story so far", systemImage: "book.closed.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 ForEach(state.progression.chapterLog, id: \.chapter) { entry in
-                    BiographyChapterRow(entry: entry)
+                    BiographyChapterRow(entry: entry, track: state.declaredGoalTrack)
                 }
 
                 Divider()
@@ -676,8 +676,16 @@ struct FounderBiographyView: View {
 /// so has no environment of its own.
 private struct BiographyChapterRow: View {
     let entry: ChapterEntry
+    /// The run's ladder, read only for the epilogue chapter so it can go
+    /// by its own name. The spine chapters keep the copy this row always
+    /// showed, whatever the ladder.
+    var track: GoalTrack? = nil
 
     @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var rowTrack: GoalTrack? {
+        entry.chapter >= ProgressionState.epilogueChapter ? track : nil
+    }
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
@@ -686,10 +694,10 @@ private struct BiographyChapterRow: View {
                 .frame(width: 18)
                 .foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 1) {
-                Text(ChapterDef.title(for: entry.chapter))
+                Text(ChapterDef.title(for: entry.chapter, track: rowTrack))
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)
-                Text(ChapterDef.teaser(for: entry.chapter))
+                Text(ChapterDef.teaser(for: entry.chapter, track: rowTrack))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

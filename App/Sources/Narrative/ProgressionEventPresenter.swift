@@ -29,7 +29,7 @@ enum ProgressionEventPresenter {
         case let .chapterReached(chapter, day):
             return EventLine(
                 icon: "flag.checkered",
-                message: "Chapter \(chapter): \(ChapterDef.title(for: chapter))",
+                message: "Chapter \(chapter): \(ChapterDef.title(for: chapter, track: state.declaredGoalTrack))",
                 day: day,
                 tint: Theme.accent
             )

@@ -134,9 +134,12 @@ struct GoalsCard: View {
     private var chapterTotal: Int { chapterGoals.count }
 
     /// Only teased while there is a next chapter to reach, in the voice of
-    /// the ladder the founder has chosen.
+    /// the ladder the founder has chosen. The epilogue chapter is never
+    /// teased ahead: it opens by playing past an ending, not by finishing
+    /// goals, so chapter 5 reads exactly as it did before it existed.
     private var nextChapterTeaser: String? {
         let next = progression.chapter + 1
+        guard next <= ProgressionState.chapterCount || engine.state.epilogue != nil else { return nil }
         guard engine.content.goals(inChapter: next).isEmpty == false else { return nil }
         let teaser = ChapterDef.teaser(for: next, track: engine.state.declaredGoalTrack)
         return teaser.isEmpty ? nil : teaser

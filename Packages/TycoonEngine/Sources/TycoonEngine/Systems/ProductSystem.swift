@@ -685,8 +685,18 @@ enum ProductSystem {
     /// Everyone idle joins the patch, mirroring `startProduct`. Ignored for
     /// unknown ids, unreleased or delisted products, and while a patch is
     /// already running on the same product.
+    ///
+    /// `featureCardID` (the wishlist) rides a defaulted argument, so every
+    /// old caller — the bots, the rival fight, the tests — starts the
+    /// plain patch it always did. Named, the update carries that card to
+    /// `Product.features` when it lands (`LiveOpsSystem.completeUpdates`).
+    /// A card the catalog doesn't know, the studio hasn't researched, the
+    /// product already has, or that belongs on neither its type nor its
+    /// topic refuses the whole update — no partial state, like every
+    /// other refused action here.
     static func startUpdate(
         productID: UUID,
+        featureCardID: String? = nil,
         state: inout GameState,
         balance: BalanceConfig,
         content: ContentCatalog
@@ -702,13 +712,23 @@ enum ProductSystem {
               let type = content.productType(state.products[index].typeID)
         else { return [] }
 
+        if let featureCardID {
+            guard let card = content.featureCard(featureCardID),
+                  FeatureBoard.isUnlocked(card, state: state),
+                  !state.products[index].features.contains(featureCardID),
+                  card.fits(typeID: state.products[index].typeID)
+                    || card.fits(topicID: state.products[index].topicID)
+            else { return [] }
+        }
+
         let fraction = balance.economy.updatePoolFraction
         state.economy.updates.append(ProductUpdate(
             productID: productID,
             startedDay: state.day,
             designPts: type.designPts * fraction,
             codePts: type.codePts * fraction,
-            polishPts: type.polishPts * fraction
+            polishPts: type.polishPts * fraction,
+            featureCardID: featureCardID
         ))
         for employeeIndex in state.employees.indices
         where state.employees[employeeIndex].assignment == .idle {

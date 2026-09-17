@@ -20,8 +20,10 @@ enum LiveOps {
     }
 
     /// Puts a released product back into a short update cycle.
-    static func startUpdate(productID: UUID) -> GameAction? {
-        .startUpdate(productID: productID)
+    /// `featureCardID` names the wished card the update carries; `nil`
+    /// is the plain patch every caller sent before the wishlist.
+    static func startUpdate(productID: UUID, featureCardID: String? = nil) -> GameAction? {
+        .startUpdate(productID: productID, featureCardID: featureCardID)
     }
 
     /// The assignment that puts an employee on a live product's bug queue.

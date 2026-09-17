@@ -156,8 +156,24 @@ enum LiveOpsSystem {
             // shipped; now the third is worth about three points and a
             // late patch is a marketing beat (the sales bump below) rather
             // than a quality fix.
-            let bonus = economy.updateQualityBonus
+            var bonus = economy.updateQualityBonus
                 * pow(economy.updateQualityDecay, Double(info.updateCount))
+            // MARK: The wishlist
+            // An update carrying a wished card ships a *thing*: the card
+            // lands on the board for good, a flat quality lift rides on
+            // top of the routine patch's decaying one, and the press's
+            // second look weighs more. All of it keyed on
+            // `featureCardID`, which only the player's own tap ever set —
+            // a plain patch is the plain patch, byte for byte.
+            var weight = economy.updateReviewWeight
+            if let cardID = update.featureCardID, content.featureCard(cardID) != nil {
+                if !state.products[index].features.contains(cardID) {
+                    state.products[index].features.append(cardID)
+                }
+                bonus += balance.wishlist.featureQualityBonus
+                weight *= balance.wishlist.featureReviewWeightFactor
+            }
+            // MARK: end The wishlist
             info.quality = min(100, info.quality + bonus)
             // A patch is mostly bug fixes: half the wild's backlog goes.
             info.liveBugs /= 2
@@ -166,7 +182,6 @@ enum LiveOpsSystem {
 
             // The press takes another look, at reduced weight against the
             // launch verdict.
-            let weight = economy.updateReviewWeight
             info.reviews = info.reviews.map { review in
                 let revisited = min(
                     balance.reviewCeiling,

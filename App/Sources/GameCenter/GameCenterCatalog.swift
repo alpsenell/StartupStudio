@@ -44,15 +44,22 @@ enum GameCenterCatalog {
     ]
 
     /// 10 points a goal: 42 goals from `Goals.json`, in file order.
+    ///
+    /// The epilogue chapter stays off Game Center: its goals exist only
+    /// for a run played past its ending, and keeping them out keeps the
+    /// id table — already created in App Store Connect — exactly the 49
+    /// rows the release doc lists.
     static func goalAchievements(content: ContentCatalog) -> [Achievement] {
-        content.goals.map { goal in
-            Achievement(
-                id: GameCenterID.achievement(goalID: goal.id),
-                title: goal.title,
-                detail: goal.detail ?? goal.title,
-                points: 10
-            )
-        }
+        content.goals
+            .filter { $0.chapter <= ProgressionState.chapterCount }
+            .map { goal in
+                Achievement(
+                    id: GameCenterID.achievement(goalID: goal.id),
+                    title: goal.title,
+                    detail: goal.detail ?? goal.title,
+                    points: 10
+                )
+            }
     }
 
     /// 50 points an ending, one for each way a company — or a founder —
