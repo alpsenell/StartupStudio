@@ -123,10 +123,19 @@ struct AwardsNightSheet: View {
         }
     }
 
-    /// Before the envelopes the headline cannot name the winners, so it
-    /// says what the night is instead.
+    /// Before the last envelope the headline cannot name the winners, so
+    /// it says what the night is instead. The marquee sits above the
+    /// envelopes: naming the winners while any of them is still sealed
+    /// spoils the scene the envelopes are.
     private var headline: String {
-        if phase == .question {
+        let sealed: Bool
+        switch phase {
+        case .question:
+            sealed = true
+        case let .envelopes(revealed, _):
+            sealed = revealed < night.categories.count
+        }
+        if sealed {
             return "\(night.categories.count) sealed envelopes, and the floor is filling up."
         }
         let wins = night.playerWins.count

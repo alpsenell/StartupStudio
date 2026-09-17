@@ -13,6 +13,15 @@ import TycoonEngine
 struct PartyLaunchRow: View {
     let engine: GameEngine
     let product: Product
+    /// Whether the reviews have finished revealing where this row is drawn.
+    ///
+    /// The launch-day sheet puts this row *above* the reveal, so its pitch
+    /// would print the stamped average while the outlets below are still
+    /// typing toward it. False holds the score back and leaves the rest of
+    /// the sentence — the window, which is the part the decision needs.
+    /// The war room's copy sits behind `revealComplete` already, so it
+    /// passes true.
+    var scoreIsPublic = true
 
     @State private var throwing = false
 
@@ -84,7 +93,7 @@ struct PartyLaunchRow: View {
         let when = left <= 0
             ? "Tonight, or it stops being a launch party."
             : "There are \(left) day\(left == 1 ? "" : "s") left to call it one."
-        guard score > 0 else { return "It is out. \(when)" }
+        guard scoreIsPublic, score > 0 else { return "It is out. \(when)" }
         return score >= 75
             ? "They liked it. \(when)"
             : "It is out, at \(score). \(when)"

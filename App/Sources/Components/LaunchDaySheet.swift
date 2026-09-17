@@ -37,6 +37,14 @@ struct LaunchDaySheet: View {
         return nil
     }
 
+    /// Whether every outlet this sheet is playing has landed. A launch
+    /// with no reviews yet is complete by default — there is nothing to
+    /// spoil.
+    private var revealComplete: Bool {
+        guard let release, !release.reviews.isEmpty else { return true }
+        return revealed >= release.visibleReviews(on: engine.state.day).count
+    }
+
     private var typeName: String {
         engine.content.productType(product.typeID)?.name ?? product.typeID.capitalized
     }
@@ -87,7 +95,10 @@ struct LaunchDaySheet: View {
                     // MARK: X4 (the launch party) — the room, for the week
                     // after the ship. Draws nothing outside the window, on a
                     // launch that already had one, or on a kept date.
-                    PartyLaunchRow(engine: engine, product: product)
+                    // The pitch's score is held until the outlets below have
+                    // finished: the row sits above the reveal, and the
+                    // average is what the reveal is building to.
+                    PartyLaunchRow(engine: engine, product: product, scoreIsPublic: revealComplete)
                     // MARK: end X4
                     if let release {
                         if release.reviews.isEmpty {
