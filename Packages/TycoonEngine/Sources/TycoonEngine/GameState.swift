@@ -925,6 +925,16 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case rivalStakeLost(rivalID: UUID, name: String, percent: Double, paid: Int, day: Int)
     // MARK: end T7
     // MARK: end of Iteration 17
+    // MARK: X4 (the launch party)
+    /// The party happened: the venue, what it cost, the `liveHype` it moved
+    /// (negative when it read desperate), how many came, and whether the
+    /// room was bigger than the reviews earned.
+    case launchPartyThrown(
+        productID: UUID, venue: String, cost: Int,
+        hype: Double, guests: Int, desperate: Bool, day: Int
+    )
+    // MARK: end X4
+    // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: S1 (seating)
     /// Somebody changed desks. `swappedWithID` is whoever sat there before
@@ -1592,6 +1602,16 @@ public struct GameState: Codable, Equatable, Sendable {
     // MARK: T7 (press and stakes)
     // MARK: end T7
     // MARK: end of Iteration 17
+    // MARK: Iteration 18 — the attention round
+    // MARK: X4 (the launch party)
+    /// Iteration 18 — X4. The parties that were thrown, oldest first: one
+    /// per launch, which is what the once-per-launch cap is made of, and
+    /// what the week's vice pressure reads. Empty on every run that never
+    /// threw one — every bot, every fixture, every replay — and then not
+    /// encoded, so those saves are byte for byte what they were.
+    public var parties: [LaunchParty] = []
+    // MARK: end X4
+    // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
@@ -1976,6 +1996,10 @@ extension GameState {
         // MARK: T7 (press and stakes)
         // MARK: end T7
         // MARK: end of Iteration 17
+        // MARK: X4 (the launch party)
+        case parties
+        // MARK: end X4
+        // MARK: end of Iteration 18
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
@@ -2133,6 +2157,10 @@ extension GameState {
         // MARK: T7 (press and stakes)
         // MARK: end T7
         // MARK: end of Iteration 17
+        // MARK: X4 (the launch party)
+        parties = try container.decodeIfPresent([LaunchParty].self, forKey: .parties) ?? []
+        // MARK: end X4
+        // MARK: end of Iteration 18
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
@@ -2311,6 +2339,10 @@ extension GameState {
         // MARK: T7 (press and stakes)
         // MARK: end T7
         // MARK: end of Iteration 17
+        // MARK: X4 (the launch party) — only once somebody has thrown one.
+        if !parties.isEmpty { try container.encode(parties, forKey: .parties) }
+        // MARK: end X4
+        // MARK: end of Iteration 18
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13

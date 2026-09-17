@@ -2258,5 +2258,19 @@
     "scrapBankFraction": 0.5,
     "scrapCrewMorale": -4.0,
     "scrapLastDays": 7
+  },
+  "party": {
+    "windowDays": 7,
+    "office": { "cost": 300, "morale": 2.0, "hype": 6.0, "guests": 2, "earnedAt": 0 },
+    "bar": { "cost": 1500, "morale": 4.0, "hype": 14.0, "guests": 4, "earnedAt": 55 },
+    "rooftop": { "cost": 6000, "morale": 6.0, "hype": 30.0, "guests": 8, "earnedAt": 75 },
+    "hypePivot": 60.0,
+    "hypeSlope": 25.0,
+    "hypeFloor": -1.2,
+    "hypeCeiling": 1.5,
+    "outletStanding": 2.0,
+    "desperateStanding": -3.0,
+    "bondPerGuest": 6.0,
+    "viceCrunchFactor": 1.0
   }
 }

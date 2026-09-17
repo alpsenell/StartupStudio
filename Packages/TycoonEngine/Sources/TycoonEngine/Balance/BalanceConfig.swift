@@ -2126,6 +2126,18 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end T7
     // MARK: end of Iteration 17
+    // MARK: Iteration 18 — the attention round
+    // MARK: X4 (the launch party)
+
+    /// Iteration 18 — X4: the venues, the review-score slope that prices
+    /// them, and what a party thrown on crunch does to the vices
+    /// (`BalanceConfig+Party.swift`). Inline default, so `"party"` is an
+    /// optional key; read only behind `.throwLaunchParty`, which no bot
+    /// sends.
+    public var party: PartyBalance = .default
+
+    // MARK: end X4
+    // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: S1 (seating)
     /// Iteration 16 — S1: who sits next to whom
