@@ -339,7 +339,7 @@ private struct MarketEventRow: View {
             VStack(spacing: 0) {
                 Image(systemName: event.kind.systemImage)
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.ink(on: event.kind.tint))
                     .frame(width: 22, height: 22)
                     .background(event.kind.tint, in: Circle())
                 if !isLast {
