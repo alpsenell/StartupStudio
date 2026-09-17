@@ -121,6 +121,9 @@ struct ProductsScreen: View {
         // MARK: T2 (the build) — `-autoRoute t2-…`.
         .buildAutoRoute(engine: engine, router: router)
         // MARK: end T2
+        // MARK: X4 (the launch party) — `-autoRoute x4-…`.
+        .partyAutoRoute(engine: engine)
+        // MARK: end X4
     }
 
     /// Deep links into this tab: R&D picks the segment, a product id

@@ -303,6 +303,13 @@ struct PixelFigure: View {
     var isFounder: Bool = false
     var pose: SpriteLibrary.PersonPose = .standing
     var height: CGFloat = 72
+    // MARK: X4 (the launch party)
+    /// Stand still. Reduce Motion (and VoiceOver) seat everybody in the
+    /// office — `OfficeSceneView.resolvedInput` — and a room of figures
+    /// breathing under the cursor is the same problem. Off by default, so
+    /// the networking floor is exactly what it was.
+    var reduceMotion = false
+    // MARK: end X4
 
     private static let frameDuration: TimeInterval = 0.45
 
@@ -317,6 +324,22 @@ struct PixelFigure: View {
 
     var body: some View {
         let sprite = sprite
+        // MARK: X4 (the launch party) — one frame, no clock.
+        if reduceMotion {
+            Image(decorative: sprite.cgImage(frame: 0), scale: 1)
+                .interpolation(.none)
+                .resizable()
+                .scaledToFit()
+                .frame(height: height)
+                .shadow(color: .black.opacity(0.35), radius: 4, y: 3)
+                .accessibilityHidden(true)
+        } else {
+            // MARK: end X4
+            animated(sprite)
+        }
+    }
+
+    private func animated(_ sprite: PixelSprite) -> some View {
         TimelineView(.periodic(from: .init(timeIntervalSinceReferenceDate: 0), by: Self.frameDuration)) { timeline in
             let tick = Int(timeline.date.timeIntervalSinceReferenceDate / Self.frameDuration)
             // Offset per seed so a room of six does not breathe in unison.

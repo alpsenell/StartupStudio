@@ -794,6 +794,12 @@ private struct LaunchDayPanel: View {
             if revealComplete {
                 firstWeek
                     .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
+                // MARK: X4 (the launch party) — the aftermath's own row,
+                // behind the same reveal gate. Draws nothing outside the
+                // window, on a launch that already had its party, or on one
+                // where the date was kept instead.
+                PartyLaunchRow(engine: engine, product: product)
+                // MARK: end X4
                 Button {
                     Haptics.tap()
                     Sounds.play(.tap)
