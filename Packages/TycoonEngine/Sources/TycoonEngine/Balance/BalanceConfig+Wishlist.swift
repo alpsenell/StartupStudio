@@ -105,3 +105,15 @@ extension BalanceConfig {
         }
     }
 }
+
+// The concrete overload wins over the generic `decode(_:forKey:)` in
+// `BalanceConfig`'s synthesized decoder, so a balance file without the key
+// still loads, with the defaults.
+extension KeyedDecodingContainer {
+    func decode(
+        _ type: BalanceConfig.WishlistBalance.Type,
+        forKey key: Key
+    ) throws -> BalanceConfig.WishlistBalance {
+        try decodeIfPresent(type, forKey: key) ?? .default
+    }
+}
