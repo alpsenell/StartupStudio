@@ -53,6 +53,16 @@
         }
       }
     },
+    "%@ %@ day one · closed at %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@ day one · closed at %3$@"
+          }
+        }
+      }
+    },
     "%@ %@ to %@" : {
       "localizations" : {
         "en" : {
@@ -578,6 +588,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ · %2$@ · year %3$lld"
+          }
+        }
+      }
+    },
+    "%@ · %@%% yours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@%% yours"
           }
         }
       }
@@ -2760,6 +2780,16 @@
     "Close the incident" : {
 
     },
+    "Close: %@ · %@ of it was %@'s." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close: %1$@ · %2$@ of it was %3$@'s."
+          }
+        }
+      }
+    },
     "Closes in %lld day%@" : {
       "localizations" : {
         "en" : {
@@ -3004,6 +3034,9 @@
     },
     "D%lld" : {
 
+    },
+    "DAY %lld" : {
+      "comment" : "Pixel subtitle under the IPO scene's title: the game day the bell rang. Uppercase A-Z only."
     },
     "DECISION" : {
       "comment" : "Bitmap kicker over a decision sheet. Uppercase, and only A-Z since the pixel face has no lowercase"
@@ -3363,18 +3396,6 @@
       }
     },
     "Feedback" : {
-
-    },
-    "File to go public" : {
-
-    },
-    "File to go public — %@ to you" : {
-
-    },
-    "File to go public. Ends the run with %@ for your stake." : {
-
-    },
-    "File to go public. Not available: %@" : {
 
     },
     "Finances" : {
@@ -3817,6 +3838,9 @@
         }
       }
     },
+    "I P O day, day %lld" : {
+
+    },
     "IN THE RED" : {
       "comment" : "Bitmap kicker: the company is out of cash and on the clock. Uppercase A-Z only\nHUD runway readout when cash is negative. Bitmap face: A-Z, digits and a few symbols only, uppercase"
     },
@@ -3825,6 +3849,9 @@
     },
     "INSIDE" : {
       "comment" : "Pixel-font title of the prison screen, the full-screen mode while the founder is serving a sentence. Uppercase A-Z only — the bitmap font has no accents."
+    },
+    "IPO DAY" : {
+      "comment" : "Pixel title over the exchange-floor scene. Uppercase A-Z only — the bitmap font has no lowercase and no accents."
     },
     "Idle" : {
       "comment" : "An employee with no work. Used in the assignment menu and as the current-assignment readout"
@@ -4797,7 +4824,7 @@
 
     },
     "OPTIONS" : {
-      "comment" : "Pixel header over the buyout sheet's options row. Uppercase A-Z only"
+      "comment" : "Pixel header over the IPO pricing sheet's options row. Uppercase A-Z only — the bitmap font has no lowercase and no accents.\nPixel header over the buyout sheet's options row. Uppercase A-Z only"
     },
     "Off market" : {
 
@@ -4810,6 +4837,16 @@
     },
     "Offer it" : {
 
+    },
+    "Offered at %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Offered at %1$@ · %2$@"
+          }
+        }
+      }
     },
     "Office" : {
 
@@ -5387,6 +5424,18 @@
     "Price at launch" : {
 
     },
+    "Price the offering" : {
+
+    },
+    "Price the offering — from %@ to you" : {
+
+    },
+    "Price the offering. Not available: %@" : {
+
+    },
+    "Price the offering. The fair price ends the run with %@ for your stake." : {
+
+    },
     "Price: %@" : {
 
     },
@@ -5755,9 +5804,6 @@
     },
     "Ride it" : {
       "comment" : "The wait answer on the sell-up sheet: keep going and hope"
-    },
-    "Ring the bell" : {
-
     },
     "Rival offer pending · %@/wk" : {
       "comment" : "Roster status: a rival has bid for this person. The figure is money per week"
@@ -6167,7 +6213,13 @@
     "Six things for the flat: two for the wall, two for a shelf, two for the floor. They change the picture and nothing else." : {
       "comment" : "Furnish sheet: what the loft pack is"
     },
+    "Skip the day" : {
+
+    },
     "Skip the tour" : {
+
+    },
+    "Skip to the ending" : {
 
     },
     "Slipped once already. The next miss voids it." : {
@@ -6469,9 +6521,6 @@
     "Take %@ off the board" : {
 
     },
-    "Take %@ public?" : {
-
-    },
     "Take back %@" : {
       "comment" : "Money sheet button: repay the director's loan"
     },
@@ -6600,7 +6649,7 @@
     "The answer itself is still yours — this only changed what you're answering." : {
 
     },
-    "The bell, the confetti, and the end of the run. Your stake is bought out at the offer price." : {
+    "The bell, the confetti, and the end of the run. You price the offering; your stake is bought out at the number you picked." : {
 
     },
     "The bench: %@" : {
@@ -6700,6 +6749,12 @@
     },
     "The file couldn't be read. Delete it to free the slot." : {
       "comment" : "Save slot detail for a corrupt file"
+    },
+    "The first day" : {
+
+    },
+    "The first day's chart, closing %@." : {
+
     },
     "The first seat: from now on everybody's neighbours matter, and the room stays as you leave it." : {
 
@@ -6902,6 +6957,9 @@
 
     },
     "The rest of the family" : {
+
+    },
+    "The rest of the story" : {
 
     },
     "The retreat clock is stopped until you hold both." : {
@@ -7140,16 +7198,6 @@
     },
     "This ends the run. You keep 100%% of %@; nobody buys anything." : {
 
-    },
-    "This ends the run. Your %@%% stake sells for %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "This ends the run. Your %1$@%% stake sells for %2$@."
-          }
-        }
-      }
     },
     "This one is still being built. The store page goes live the day it ships." : {
 

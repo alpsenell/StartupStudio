@@ -94,13 +94,23 @@ enum ProgressionEventPresenter {
                 tint: Theme.negativeCash
             )
 
-        case let .wentPublic(proceeds, day):
+        // MARK: A3 (IPO day)
+        case let .wentPublic(proceeds, day, ticker, pop):
+            let board = ticker ?? state.investors.ipoResult?.ticker
+            let move = pop ?? state.investors.ipoResult?.pop
+            let broke = (move ?? 0) < 0
+            let opening = board.map { broke ? "\($0) broke open" : "\($0) went public" }
+                ?? "\(state.company.name) went public"
+            let close = move.map { move in
+                " — \(Int(move.rounded()) >= 0 ? "+" : "")\(Int(move.rounded()))% on the first day,"
+            } ?? " —"
             return EventLine(
                 icon: "bell.fill",
-                message: "\(state.company.name) went public — \(proceeds.money) for your stake",
+                message: opening + close + " \(proceeds.money) for your stake",
                 day: day,
-                tint: Theme.positiveCash
+                tint: broke ? Theme.negativeCash : Theme.positiveCash
             )
+        // MARK: end A3
 
         case let .rivalProductLaunched(rivalID, productName, topicID, quality, day):
             return EventLine(

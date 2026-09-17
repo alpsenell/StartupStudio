@@ -106,6 +106,34 @@ public struct IPOResult: Codable, Equatable, Sendable {
         let rounded = Int(pop.rounded())
         return "\(rounded >= 0 ? "+" : "")\(rounded)%"
     }
+
+    /// The first day, tick by tick: the percent move at each print, from
+    /// the open (0) to the close (`pop`). Derived — a fold of the ticker
+    /// and the day into a fixed wobble around the line from open to
+    /// close — so the bell scene draws the same chart every time it is
+    /// opened, and nothing is drawn from the game's RNG.
+    public func dayOnePath(ticks: Int = 24) -> [Double] {
+        let count = max(2, ticks)
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in Array((ticker + "\(day)").utf8) {
+            hash ^= UInt64(byte)
+            hash &*= 0x0000_0100_0000_01b3
+        }
+        // The wobble is a fraction of the day's own move, so a flat day
+        // stays flat and a big day is choppy.
+        let amplitude = max(2, abs(pop) * 0.35)
+        return (0..<count).map { index in
+            let progress = Double(index) / Double(count - 1)
+            guard index > 0 else { return 0 }
+            guard index < count - 1 else { return pop }
+            hash ^= hash >> 33
+            hash &*= 0xff51_afd7_ed55_8ccd
+            let wobble = Double(hash % 2000) / 1000 - 1  // -1 ... 1
+            // The noise fades toward the close, so the last prints settle
+            // onto the number the headline will use.
+            return pop * progress + wobble * amplitude * (1 - progress)
+        }
+    }
 }
 
 /// One row of the pricing sheet: what this price pays, what it is expected

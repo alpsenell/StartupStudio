@@ -447,7 +447,7 @@ struct InvestorsView: View {
 
         return CardView("Initial public offering", systemImage: "building.columns.fill") {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                Text("The bell, the confetti, and the end of the run. Your stake is bought out at the offer price.")
+                Text("The bell, the confetti, and the end of the run. You price the offering; your stake is bought out at the number you picked.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -468,11 +468,15 @@ struct InvestorsView: View {
                     }
                 }
 
+                // MARK: A3 (IPO day)
+                // The button stops being the decision: it opens the
+                // pricing sheet, where the three books are printed side by
+                // side and the tap that ends the run is on one of them.
                 Button {
                     confirmingIPO = true
                 } label: {
                     Label(
-                        ready ? "File to go public — \(proceeds.money) to you" : "File to go public",
+                        ready ? "Price the offering — from \(proceeds.money) to you" : "Price the offering",
                         systemImage: "bell.fill"
                     )
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -483,9 +487,10 @@ struct InvestorsView: View {
                 .disabled(!ready)
                 .accessibilityLabel(
                     ready
-                        ? "File to go public. Ends the run with \(proceeds.money) for your stake."
-                        : "File to go public. Not available: \(blocker ?? "")"
+                        ? "Price the offering. The fair price ends the run with \(proceeds.money) for your stake."
+                        : "Price the offering. Not available: \(blocker ?? "")"
                 )
+                // MARK: end A3
 
                 if let blocker {
                     Text(blocker)
@@ -494,18 +499,11 @@ struct InvestorsView: View {
                 }
             }
         }
-        .confirmationDialog(
-            "Take \(engine.state.company.name) public?",
-            isPresented: $confirmingIPO,
-            titleVisibility: .visible
-        ) {
-            Button("Ring the bell") {
-                engine.send(.fileIPO)
-            }
-            Button("Not yet", role: .cancel) {}
-        } message: {
-            Text("This ends the run. Your \(investors.equityRemaining.oneDecimal)% stake sells for \(proceeds.money).")
+        // MARK: A3 (IPO day)
+        .sheet(isPresented: $confirmingIPO) {
+            IPOPricingSheet(engine: engine)
         }
+        // MARK: end A3
     }
 
     private func ipoGateRow(_ label: String, met: Bool) -> some View {
