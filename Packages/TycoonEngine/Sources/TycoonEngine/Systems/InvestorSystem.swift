@@ -675,10 +675,24 @@ enum InvestorSystem {
     /// so the UI can explain a refusal before the player taps. The founder
     /// cashes out their slice at the IPO multiple and the run ends on the
     /// best note in the game.
-    static func fileIPO(state: inout GameState, balance: BalanceConfig) -> [GameEvent] {
+    ///
+    /// A3: `price` is how the founder priced the offering. `.fair` — the
+    /// default — multiplies by exactly 1.0 and writes the same dollar,
+    /// the same ledger line and the same ending sentence it always did;
+    /// the pop, the ticker and the record are the only additions, and the
+    /// broken open's costs land only on a book that closed under water.
+    static func fileIPO(
+        state: inout GameState, balance: BalanceConfig, price: IPOPrice = .fair
+    ) -> [GameEvent] {
         guard state.canFileIPO(balance: balance) else { return [] }
         let config = balance.investors
-        let valuation = Double(state.companyValuation(balance: balance)) * config.ipoValuationMultiple
+        // MARK: A3 (IPO day)
+        // Read before anything moves: the pop is a function of the board
+        // as the bell rings, not of what the exit does to it.
+        let quote = state.ipoQuote(price: price, balance: balance)
+        let valuation = Double(state.companyValuation(balance: balance))
+            * config.ipoValuationMultiple * price.proceedsMultiple(balance.exits)
+        // MARK: end A3
         // MARK: T1 (exits and joins)
         // The loan first (cash to the wallet, the valuation unmoved — it
         // carried the loan as a liability), then the holders at the
@@ -697,14 +711,60 @@ enum InvestorSystem {
         state.ledger.post(LedgerEntry(
             day: state.day, amount: 0, category: .other, label: "Initial public offering"
         ))
+        // MARK: A3 (IPO day)
+        // The first day, priced off the book and written down for good: the
+        // bell scene draws it, the ending card and the biography carry it,
+        // and a run that keeps going (the epilogue) still knows how it
+        // opened — which is where the street picks the story up.
+        let result = IPOResult(
+            price: price,
+            ticker: quote.ticker,
+            offerValuation: Int(valuation.rounded()),
+            proceeds: proceeds,
+            pop: quote.pop,
+            dayOneClose: Int((valuation * (1 + quote.pop / 100)).rounded()),
+            day: state.day
+        )
+        state.investors.ipoResult = result
+        if result.brokeOpen {
+            // The stock closed under the price the founder sold it at. The
+            // paper leads with it and the name wears it.
+            state.company.reputation = max(
+                0, state.company.reputation - balance.exits.ipoBrokenOpenReputation
+            )
+        } else if price == .conservative {
+            // Money left on the table is a story every outlet gets to
+            // write — and they remember who let them.
+            let gain = balance.exits.ipoConservativeStanding
+            if gain != 0 {
+                for outlet in balance.reviewOutlets {
+                    let moved = min(
+                        balance.press.cap, state.company.pressStanding(of: outlet) + gain
+                    )
+                    state.company.pressStanding[outlet] = moved == 0 ? nil : moved
+                }
+            }
+        }
+        let closingLine = result.brokeOpen
+            ? " \(result.ticker) broke open, closing the first day at \(result.popLabel)."
+            : " \(result.ticker) closed its first day \(result.popLabel)."
+        // MARK: end A3
         state.gameOver = GameOverInfo(
             day: state.day,
             reason: "\(state.company.name) went public. \(state.progression.founder.displayName) "
                 + "walked away with \(proceeds.dollars) for a "
-                + "\(Int(state.investors.equityRemaining))% stake.",
-            kind: .ipo
+                + "\(Int(state.investors.equityRemaining))% stake."
+                + closingLine /* A3 */,
+            kind: .ipo,
+            ipo: result /* A3 */
         )
-        return settled /* T1 */ + [.wentPublic(proceeds: proceeds, day: state.day), .gameOver(day: state.day)]
+        return settled /* T1 */ + [
+            .wentPublic(
+                proceeds: proceeds, day: state.day,
+                ticker: result.ticker /* A3 */, pop: result.pop /* A3 */
+            ),
+            .gameOver(day: state.day)
+        ]
     }
 
     // MARK: Iteration 5 — Still yours (WS-G)

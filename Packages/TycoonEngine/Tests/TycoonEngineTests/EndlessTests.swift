@@ -50,7 +50,7 @@ struct EndlessTests {
     private static func publicState(seed: UInt64 = 21, balance: BalanceConfig) throws -> GameState {
         var state = ipoReadyState(seed: seed, balance: balance)
         #expect(state.canFileIPO(balance: balance))
-        Reducer.apply(.fileIPO, to: &state, balance: balance, content: content)
+        Reducer.apply(.fileIPO(), to: &state, balance: balance, content: content)
         try #require(state.gameOver?.kind == .ipo)
         return state
     }
@@ -176,7 +176,7 @@ struct EndlessTests {
         #expect(!state.canStayIndependent(balance: balance))
         #expect(state.ipoBlocker(balance: balance) != nil)
         #expect(state.independenceBlocker(balance: balance) != nil)
-        #expect(Reducer.apply(.fileIPO, to: &state, balance: balance, content: Self.content).isEmpty)
+        #expect(Reducer.apply(.fileIPO(), to: &state, balance: balance, content: Self.content).isEmpty)
         #expect(
             Reducer.apply(.declareIndependence, to: &state, balance: balance, content: Self.content).isEmpty
         )
@@ -303,7 +303,7 @@ struct EndlessClockTests {
         engine.setSpeed(.x2)
         #expect(engine.isTickLoopRunning)
 
-        engine.send(.fileIPO)
+        engine.send(.fileIPO())
         #expect(engine.state.gameOver?.kind == .ipo)
         // The loop's next tick is the one that cancels it for good.
         engine.performTick()
@@ -323,7 +323,7 @@ struct EndlessClockTests {
     /// speed, a continued one takes them.
     @Test func theSpeedControlWorksAgainAfterContinuing() {
         let engine = publicEngine()
-        engine.send(.fileIPO)
+        engine.send(.fileIPO())
         engine.setSpeed(.x4)
         #expect(engine.state.speed == .paused, "an ended game refuses the clock")
 

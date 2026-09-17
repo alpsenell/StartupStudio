@@ -56,7 +56,7 @@ final class EndlessAppTests: XCTestCase {
                 weeklySales: [], offMarket: false, isSubscription: true
             ))
         ))
-        _ = Reducer.apply(.fileIPO, to: &state, balance: fresh.balance, content: fresh.content)
+        _ = Reducer.apply(.fileIPO(), to: &state, balance: fresh.balance, content: fresh.content)
         return GameEngine.resume(state: state)
     }
 

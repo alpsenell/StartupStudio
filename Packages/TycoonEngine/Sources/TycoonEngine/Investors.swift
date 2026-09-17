@@ -410,6 +410,15 @@ public struct InvestorState: Codable, Equatable, Sendable {
     /// A strategic buyout being paid out over the next reviews, with the
     /// acquirer in the room. Saves from before it existed decode `nil`.
     public var earnOut: EarnOut?
+    // MARK: A3 (IPO day)
+    /// How the first day went, once the bell has rung: the price the
+    /// founder chose, the ticker, the pop and the day-one close. `nil`
+    /// until then — and in every save written before the bell — and
+    /// encoded only when set. This is the record a continued run keeps
+    /// (the ending info is cleared when the founder keeps running it), so
+    /// the street that comes after knows how the stock opened.
+    public var ipoResult: IPOResult?
+    // MARK: end A3
     /// Rounds the founder bought back out of the cap table, oldest first
     /// (WS-B). Their equity is home and their ask is out of the room;
     /// they stay here for the biography. Decodes empty.
@@ -435,7 +444,8 @@ public struct InvestorState: Codable, Equatable, Sendable {
         lastQuarterHeadcount: Int = 0,
         ipoDay: Int? = nil,
         earnOut: EarnOut? = nil,
-        boughtOut: [RaisedRound] = []
+        boughtOut: [RaisedRound] = [],
+        ipoResult: IPOResult? = nil /* A3 */
     ) {
         self.equityRemaining = equityRemaining
         self.rounds = rounds
@@ -454,6 +464,7 @@ public struct InvestorState: Codable, Equatable, Sendable {
         self.ipoDay = ipoDay
         self.earnOut = earnOut
         self.boughtOut = boughtOut
+        self.ipoResult = ipoResult /* A3 */
     }
 
     /// A fresh company: the founder owns all of it and nobody is watching.
@@ -546,6 +557,7 @@ extension InvestorState {
         case lastQuarterShipped, lastQuarterHeadcount
         case ipoDay
         case earnOut, boughtOut
+        case ipoResult /* A3 */
     }
 
     public init(from decoder: any Decoder) throws {
@@ -574,7 +586,8 @@ extension InvestorState {
             ) ?? 0,
             ipoDay: try container.decodeIfPresent(Int.self, forKey: .ipoDay),
             earnOut: try container.decodeIfPresent(EarnOut.self, forKey: .earnOut),
-            boughtOut: try container.decodeIfPresent([RaisedRound].self, forKey: .boughtOut) ?? []
+            boughtOut: try container.decodeIfPresent([RaisedRound].self, forKey: .boughtOut) ?? [],
+            ipoResult: try container.decodeIfPresent(IPOResult.self, forKey: .ipoResult) /* A3 */
         )
     }
 
@@ -599,6 +612,8 @@ extension InvestorState {
         // Encoded only when non-empty, so a save with no buyback is the
         // same bytes it was before buybacks existed.
         if !boughtOut.isEmpty { try container.encode(boughtOut, forKey: .boughtOut) }
+        // A3: written only once the bell has rung.
+        try container.encodeIfPresent(ipoResult, forKey: .ipoResult)
     }
 }
 

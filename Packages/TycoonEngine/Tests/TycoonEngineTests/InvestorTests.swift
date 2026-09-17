@@ -425,7 +425,7 @@ struct InvestorTests {
         var state = Self.fundableState(balance: balance, cash: 100_000, reputation: 60)
         #expect(!state.canFileIPO(balance: balance))
         #expect(state.ipoBlocker(balance: balance) != nil)
-        #expect(Reducer.apply(.fileIPO, to: &state, balance: balance, content: Self.content).isEmpty)
+        #expect(Reducer.apply(.fileIPO(), to: &state, balance: balance, content: Self.content).isEmpty)
         #expect(state.gameOver == nil)
 
         state.company.cash = balance.investors.ipoValuationFloor * 2
@@ -443,7 +443,7 @@ struct InvestorTests {
         #expect(state.ipoBlocker(balance: balance) == nil)
 
         let walletBefore = state.life.wallet
-        let events = Reducer.apply(.fileIPO, to: &state, balance: balance, content: Self.content)
+        let events = Reducer.apply(.fileIPO(), to: &state, balance: balance, content: Self.content)
         #expect(state.gameOver?.kind == .ipo)
         #expect(state.gameOver?.kind.isSuccess == true)
         #expect(state.life.wallet > walletBefore)
@@ -458,10 +458,10 @@ struct InvestorTests {
         state.company.cash = balance.investors.ipoValuationFloor * 2
         state.investors.profitableQuarters = balance.investors.ipoProfitableQuarters
         state = Self.withSubscriptionProduct(state, balance: balance)
-        Reducer.apply(.fileIPO, to: &state, balance: balance, content: Self.content)
+        Reducer.apply(.fileIPO(), to: &state, balance: balance, content: Self.content)
         #expect(state.investors.ipoDay != nil)
         // The run is over, so the reducer ignores everything.
-        #expect(Reducer.apply(.fileIPO, to: &state, balance: balance, content: Self.content).isEmpty)
+        #expect(Reducer.apply(.fileIPO(), to: &state, balance: balance, content: Self.content).isEmpty)
         #expect(!state.canFileIPO(balance: balance))
     }
 

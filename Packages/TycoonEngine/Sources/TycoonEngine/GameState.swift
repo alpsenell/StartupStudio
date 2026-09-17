@@ -175,17 +175,26 @@ public struct GameOverInfo: Codable, Equatable, Sendable {
     public var reason: String
     /// Saves written before endings existed decode as `.bankruptcy`.
     public var kind: EndingKind
+    // MARK: A3 (IPO day)
+    /// How the first day went, on the one ending that has a first day: the
+    /// ticker, the pop and the day-one close. `nil` on every other ending
+    /// and in every save written before the bell — and encoded only when
+    /// it is set, so those saves stay byte for byte what they were.
+    public var ipo: IPOResult?
+    // MARK: end A3
 
-    init(day: Int, reason: String, kind: EndingKind = .bankruptcy) {
+    init(day: Int, reason: String, kind: EndingKind = .bankruptcy, ipo: IPOResult? = nil) {
         self.day = day
         self.reason = reason
         self.kind = kind
+        self.ipo = ipo
     }
 }
 
 extension GameOverInfo {
     private enum CodingKeys: String, CodingKey {
         case day, reason, kind
+        case ipo /* A3 */
     }
 
     public init(from decoder: any Decoder) throws {
@@ -193,8 +202,19 @@ extension GameOverInfo {
         self.init(
             day: try container.decode(Int.self, forKey: .day),
             reason: try container.decode(String.self, forKey: .reason),
-            kind: try container.decodeIfPresent(EndingKind.self, forKey: .kind) ?? .bankruptcy
+            kind: try container.decodeIfPresent(EndingKind.self, forKey: .kind) ?? .bankruptcy,
+            ipo: try container.decodeIfPresent(IPOResult.self, forKey: .ipo) /* A3 */
         )
+    }
+
+    /// Hand-written (A3) so the IPO record is written only when there is
+    /// one: every other ending encodes the three keys it always did.
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(day, forKey: .day)
+        try container.encode(reason, forKey: .reason)
+        try container.encode(kind, forKey: .kind)
+        try container.encodeIfPresent(ipo, forKey: .ipo) /* A3 */
     }
 }
 
@@ -342,7 +362,12 @@ public enum GameEvent: Codable, Equatable, Sendable {
     /// The board replaced the founder — the run ends.
     case founderOusted(day: Int)
     /// The company filed to go public — the run ends.
-    case wentPublic(proceeds: Int, day: Int)
+    // MARK: A3 (IPO day)
+    /// `ticker` and `pop` (A3) say how the first day went. Both optional,
+    /// so an event written before the bell decodes unchanged and the case
+    /// encodes exactly the two keys it used to when nobody set them.
+    case wentPublic(proceeds: Int, day: Int, ticker: String? = nil, pop: Double? = nil)
+    // MARK: end A3
     /// A rival shipped a *named* product into a topic.
     case rivalProductLaunched(rivalID: UUID, productName: String, topicID: String, quality: Int, day: Int)
     /// A rival started a price war in a topic the player leads.
