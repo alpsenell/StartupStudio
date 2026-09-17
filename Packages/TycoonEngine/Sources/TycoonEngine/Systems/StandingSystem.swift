@@ -102,6 +102,22 @@ enum StandingSystem {
         award(amount, in: topicID, &state, balance.market.standing)
     }
 
+    // MARK: G8 (awards night, attended)
+    /// Iteration 18 — G8. A *Best in …* collected with the team in the
+    /// room. Unlike the sponsored delivery above it may create the entry:
+    /// winning a topic is the one way to have standing in it without
+    /// holding it today. Called by `AwardsSystem.recordCeremony` alone,
+    /// which only the ceremony sheet reaches.
+    static func recordAward(
+        topicID: String,
+        amount: Double,
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) {
+        award(amount, in: topicID, &state, balance.market.standing)
+    }
+    // MARK: end G8
+
     /// Topics the studio currently has something selling in.
     static func liveTopicIDs(_ state: GameState) -> Set<String> {
         var ids: Set<String> = []

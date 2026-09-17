@@ -2258,5 +2258,20 @@
     "scrapBankFraction": 0.5,
     "scrapCrewMorale": -4.0,
     "scrapLastDays": 7
+  },
+  "awards": {
+    "tableByTier": {
+      "garage": 2400,
+      "loft": 2400,
+      "studio": 4800,
+      "campus": 9600
+    },
+    "winStanding": 7.5,
+    "winHype": 20.0,
+    "winMoraleAll": 8.0,
+    "studioReputation": 5.0,
+    "lossMoraleAll": -3.0,
+    "homeReputation": 2.0,
+    "cutoffNoticeDays": 28
   }
 }

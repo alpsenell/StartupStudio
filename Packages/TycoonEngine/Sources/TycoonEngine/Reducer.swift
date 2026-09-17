@@ -1280,6 +1280,13 @@ public enum Reducer {
             #endif
         // MARK: end T7
         // MARK: end of Iteration 17
+        // MARK: G8 (awards night, attended)
+        case let .recordCeremony(year, attended, wins):
+            events = AwardsSystem.recordCeremony(
+                year: year, attended: attended, wins: wins, state: &state, balance: balance
+            )
+        // MARK: end G8
+        // MARK: end of Iteration 18
         // MARK: end of Iteration 15
         // MARK: S1 (seating)
         case let .seatingMove(employeeID, desk):
