@@ -85,6 +85,23 @@ all 276 pairs compared at 16 px, zero collisions over 90%; the glyph
 set was grown to get there, the palette untouched. `company.markSeed`
 encodes only when set, so every old save and fixture is byte-identical.
 
+## The finishing pass
+
+A UX review of the merged tree (its report and per-item resolution:
+`iteration-18-lanes/ux-review.md`, screenshots referenced from it) found
+one blocker — the awards marquee named the winners while the envelopes
+were still sealed — and a set of seams: the party row leaking the review
+average mid-reveal, an IPO pricing sheet nobody had rendered (a route
+was added; two real defects surfaced and were fixed), a dishonest floor
+claim in the pricing copy, two date grammars in the Now card's one slot,
+guests standing on name tags, and an exchange floor that read as blocks.
+All were fixed on main; the bell hall was rebuilt from PixelKit's own
+sprites and now holds beside the war room's rooms, with the remaining
+gap (the bell itself, the back desks, crowd depth) named honestly in the
+review's resolution as a `RoomBuilder` pass of its own. Deferred, with
+reasons, in the same file: the localization-catalog convention for
+computed sheet copy, and the smaller copy nits.
+
 ## The suites
 
 All four package suites and the app-target suite ran green on every
