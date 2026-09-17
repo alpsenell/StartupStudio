@@ -375,6 +375,16 @@ extension Route {
         // MARK: T7 (press and stakes)
         // MARK: end T7
         // MARK: end of Iteration 17
+        // MARK: Iteration 18 — the attention round
+        // MARK: A3 (IPO day)
+        // The pricing sheet, which is otherwise reachable only through a
+        // button no bundled fixture can enable (`canFileIPO`). The route
+        // lands on the Investors screen — which implies its own tab, so no
+        // `-autoTab` is needed — and `a3Priced` dresses the save on the way
+        // in so the three books are live. `InvestorsView` opens the sheet.
+        case "a3-pricing": .investors
+        // MARK: end A3
+        // MARK: end of Iteration 18
         // MARK: end of Iteration 15
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
@@ -1939,6 +1949,66 @@ extension DebugLaunch {
         #endif
     }
     // MARK: end X4
+    // MARK: A3 (IPO day)
+    /// `-autoRoute a3-pricing`: whether the pricing sheet is the pass's
+    /// subject. Read by `ReleaseFixtures` (to dress the save) and by
+    /// `InvestorsView` (to open the sheet once the card is up).
+    static var opensIPOPricingSheet: Bool { autoRouteName == "a3-pricing" }
+
+    /// The fixture with the IPO gates cleared, so `Price the offering` is
+    /// live and the three books can be photographed. No bundled fixture
+    /// passes `canFileIPO` — the same reason K5's doors needed
+    /// `k5Prepared`, and dressed the same way: in memory, on the way into
+    /// slot 0 of a debug build's store. A player's save is never touched.
+    ///
+    /// The numbers are deliberately over the bar rather than at it (the
+    /// floor is $5M of valuation and three profitable quarters), so the
+    /// pass does not go dark the next time balance moves.
+    static func a3Priced(_ start: GameState) -> GameState {
+        var state = start
+        state.company.cash = max(state.company.cash, 9_000_000)
+        state.loanBalance = 0
+        state.economy.founderMoney.directorLoan = 0
+        state.investors.profitableQuarters = max(state.investors.profitableQuarters, 12)
+        state.investors.ipoDay = nil
+        state.investors.earnOut = nil
+        // Some balances want recurring revenue on the market; give the
+        // first thing still on sale a subscription if nothing bills yet.
+        if !state.hasSubscriptionProduct,
+           let index = state.products.firstIndex(where: {
+               if case .released(let info) = $0.stage { return !info.offMarket }
+               return false
+           }),
+           case .released(var info) = state.products[index].stage {
+            info.isSubscription = true
+            state.products[index].stage = .released(info)
+        }
+        // T1's exit split is dormant on every bundled fixture — nobody was
+        // granted options in any of them — so the sheet's OPTIONS panel had
+        // nothing to draw and could not be looked at. Grant the two
+        // longest-serving people a slice, one of them recently enough to be
+        // part-way through vesting, so the panel renders with both of its
+        // states: the vested being paid, and the unvested lapsing home.
+        let staff = state.employees.indices
+            .filter { !state.employees[$0].isFounder }
+            .sorted { state.employees[$0].hiredDay < state.employees[$1].hiredDay }
+        if state.networking.grants.allSatisfy({ $0.reason != .options }) {
+            for (rank, index) in staff.prefix(2).enumerated() {
+                let percent = rank == 0 ? 2.5 : 1.5
+                state.employees[index].grantedEquity = percent
+                state.employees[index].grantDay = max(0, state.day - (rank == 0 ? 1_400 : 300))
+                state.networking.grants.append(EquityGrant(
+                    id: state.employees[index].id,
+                    name: state.employees[index].name,
+                    percent: percent,
+                    day: state.employees[index].grantDay ?? state.day,
+                    reason: .options
+                ))
+            }
+        }
+        return state
+    }
+    // MARK: end A3
     // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: S1 (seating)

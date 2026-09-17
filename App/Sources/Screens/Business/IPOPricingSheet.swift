@@ -98,6 +98,11 @@ struct IPOPricingSheet: View {
 
     private func row(_ quote: IPOQuote, blocker: String?, state: GameState) -> some View {
         let after = state.life.wallet + quote.proceeds
+        // The fair row is filled with the accent, so `.secondary` — a dim
+        // grey meant for paper — lands almost unreadable on it. Photographed
+        // on the 6.9" phone before this line existed.
+        let filled = quote.price == .fair
+        let quiet: Color = filled ? Theme.pixelPaper.opacity(0.85) : .secondary
         return Button { file(quote) } label: {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 HStack {
@@ -124,7 +129,7 @@ struct IPOPricingSheet: View {
                 )
                 .font(.caption.weight(.semibold))
                 .monospacedDigit()
-                .foregroundStyle(blocker == nil ? Color.secondary : Theme.warning)
+                .foregroundStyle(blocker == nil ? quiet : Theme.warning)
                 .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

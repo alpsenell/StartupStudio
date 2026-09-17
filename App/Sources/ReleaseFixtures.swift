@@ -88,6 +88,9 @@ enum ReleaseFixture {
         // MARK: S4 (city)
         if let dressing = DebugLaunch.launchCityDressing { state = DebugLaunch.cityDressed(state, dressing) }
         // MARK: end S4
+        // MARK: A3 (IPO day)
+        if DebugLaunch.opensIPOPricingSheet { state = DebugLaunch.a3Priced(state) }
+        // MARK: end A3
         do {
             try store.save(
                 state, appVersion: appVersion, summary: SaveSummary(state: state), slot: 0

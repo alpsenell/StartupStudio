@@ -476,7 +476,11 @@ struct InvestorsView: View {
                     confirmingIPO = true
                 } label: {
                     Label(
-                        ready ? "Price the offering — from \(proceeds.money) to you" : "Price the offering",
+                        // `proceeds` is the *fair* price; the sheet behind
+                        // this button prices conservative 15% under it. So
+                        // the door names which number it is quoting rather
+                        // than calling the fair price a floor.
+                        ready ? "Price the offering — \(proceeds.money) at the fair price" : "Price the offering",
                         systemImage: "bell.fill"
                     )
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -502,6 +506,14 @@ struct InvestorsView: View {
         // MARK: A3 (IPO day)
         .sheet(isPresented: $confirmingIPO) {
             IPOPricingSheet(engine: engine)
+        }
+        // DEBUG: `-autoRoute a3-pricing` opens the sheet once the card is
+        // up, over a save `DebugLaunch.a3Priced` has cleared the gates on.
+        // Nothing in the game reaches this.
+        .task {
+            guard DebugLaunch.opensIPOPricingSheet else { return }
+            try? await Task.sleep(for: .seconds(3))
+            confirmingIPO = true
         }
         // MARK: end A3
     }
