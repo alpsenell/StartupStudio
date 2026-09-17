@@ -1903,6 +1903,43 @@ extension DebugLaunch {
     }
     // MARK: end T7
     // MARK: end of Iteration 17
+    // MARK: X4 (the launch party)
+    /// X4's launch flags: `-autoRoute x4-open` (a build that shipped today,
+    /// reviewed well, the window open — the sheet with three affordable
+    /// venues), `x4-desperate` (the same launch dragged under the rooftop's
+    /// bar), `x4-thrown` (the rooftop already thrown, for the aftermath),
+    /// `x4-away` (the founder somewhere else, for the row that says so).
+    /// Each dresses the loaded save through `.partyDebugSeed` and opens the
+    /// launch-day sheet on it.
+    @MainActor private static var x4Dressed = false
+
+    @MainActor static func x4DressIfAsked(engine: GameEngine) {
+        #if DEBUG
+        guard !x4Dressed, let route = launchRoute, route.hasPrefix("x4-") else { return }
+        x4Dressed = true
+        let scenario = String(route.dropFirst("x4-".count))
+        guard ["open", "desperate", "thrown", "away"].contains(scenario) else { return }
+        _ = engine.send(.partyDebugSeed(scenario: scenario))
+        // A debug send does not pass through the toast centre that opens a
+        // sheet, so open one here: the party room for the scenarios that
+        // are about the room, the launch sheet for the ones about the row.
+        guard let shipped = engine.state.products.first(where: {
+            if case .released(let info) = $0.stage { return info.launchDay == engine.state.day }
+            return false
+        }) else { return }
+        let room = ["open", "desperate", "thrown"].contains(scenario)
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            if room {
+                GameShell.shared.partyProductID = shipped.id
+            } else {
+                GameShell.shared.launchDayProductID = shipped.id
+            }
+        }
+        #endif
+    }
+    // MARK: end X4
+    // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: S1 (seating)
     /// S1's launch flags. `-autoSeating dress` sends the real move once the

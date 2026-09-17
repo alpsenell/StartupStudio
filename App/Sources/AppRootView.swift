@@ -406,6 +406,16 @@ struct AppRootView: View {
                     LaunchDaySheet(engine: engine, product: product)
                 }
             }
+            // MARK: X4 (the launch party) — the room, when the screenshot
+            // pass asks for it directly (`-autoRoute x4-…`). The ordinary
+            // way in is the party row on the launch sheet and the war room.
+            .sheet(isPresented: partyPresented) {
+                if let productID = shell.partyProductID,
+                   let product = engine.state.product(id: productID) {
+                    PartySheet(engine: engine, product: product)
+                }
+            }
+            // MARK: end X4
             .sheet(isPresented: weeklyReportPresented) {
                 if let report = shell.report {
                     WeeklyReportSheet(
@@ -644,6 +654,18 @@ struct AppRootView: View {
             set: { _ in }
         )
     }
+
+    // MARK: X4 (the launch party)
+    /// The party sheet, opened straight from a debug route.
+    private var partyPresented: Binding<Bool> {
+        Binding(
+            get: { shell.partyProductID != nil && session.engine.state.gameOver == nil },
+            set: { presented in
+                if !presented { shell.partyProductID = nil }
+            }
+        )
+    }
+    // MARK: end X4
 
     /// Launch day: shown once for each product that ships.
     private var launchDayPresented: Binding<Bool> {

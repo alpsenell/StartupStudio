@@ -1487,6 +1487,17 @@ struct EventCopy {
                 )
             }
         // MARK: end G8
+        // MARK: X4 (the launch party)
+        case let .launchPartyThrown(productID, venue, cost, _, guests, desperate, day):
+            (
+                "party.popper.fill",
+                Self.partyLine(
+                    product: state.product(id: productID), venue: venue,
+                    cost: cost, guests: guests, desperate: desperate
+                ),
+                day, desperate ? Theme.warning : Theme.accent
+            )
+        // MARK: end X4
         // MARK: end of Iteration 18
         // MARK: end of Iteration 15
         // MARK: S1 (seating)

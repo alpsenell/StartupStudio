@@ -84,6 +84,11 @@ struct LaunchDaySheet: View {
                         .fixedSize(horizontal: false, vertical: true)
                     }
                     // MARK: end T6
+                    // MARK: X4 (the launch party) — the room, for the week
+                    // after the ship. Draws nothing outside the window, on a
+                    // launch that already had one, or on a kept date.
+                    PartyLaunchRow(engine: engine, product: product)
+                    // MARK: end X4
                     if let release {
                         if release.reviews.isEmpty {
                             waitingForReviews(release)

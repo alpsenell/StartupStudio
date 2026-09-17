@@ -1288,6 +1288,22 @@ public enum Reducer {
                 year: year, attended: attended, wins: wins, state: &state, balance: balance
             )
         // MARK: end G8
+        // MARK: Iteration 18 — the attention round
+        // MARK: X4 (the launch party)
+        case let .throwLaunchParty(productID, venue, guests):
+            events = PartySystem.throwParty(
+                productID: productID, venue: venue, guests: guests,
+                state: &state, balance: balance, content: content
+            )
+        case let .partyDebugSeed(scenario):
+            #if DEBUG
+            events = PartyDebugSeed.apply(
+                scenario: scenario, state: &state, balance: balance, content: content
+            )
+            #else
+            events = []
+            #endif
+        // MARK: end X4
         // MARK: end of Iteration 18
         // MARK: end of Iteration 15
         // MARK: S1 (seating)

@@ -859,6 +859,7 @@ public enum GameAction: Codable, Equatable, Sendable {
     case pressStakeDebugSeed(scenario: String)
     // MARK: end T7
     // MARK: end of Iteration 17
+    // MARK: Iteration 18 — the attention round
     // MARK: G8 (awards night, attended)
     /// Iteration 18 — G8. Answers the year's ceremony: the team was taken
     /// (`attended`, which costs `awards.tableByTier` and one founder
@@ -870,6 +871,20 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// Sent only from the ceremony sheet, which no bot opens.
     case recordCeremony(year: Int, attended: Bool, wins: [CeremonyWin])
     // MARK: end G8
+    // MARK: X4 (the launch party)
+    /// Iteration 18 — X4. Throw the party for a product that shipped inside
+    /// the last `party.windowDays`: `venue` pays in company cash and one of
+    /// the founder's evenings, `guests` are the outlets and address-book
+    /// names on the list. Once per launch; refused for the reasons
+    /// `GameState.launchPartyBlocker` names — the window, the cash, the
+    /// evening, a date kept instead, and a founder who is away (T6). No bot
+    /// sends it, so a run that never parties is byte-identical.
+    case throwLaunchParty(productID: UUID, venue: PartyVenue, guests: [PartyGuest])
+    /// `-autoRoute x4-…`: dresses the loaded save for a screenshot
+    /// (`PartyDebugSeed`). Applied only in debug builds; nothing in the game
+    /// sends it.
+    case partyDebugSeed(scenario: String)
+    // MARK: end X4
     // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: S1 (seating)

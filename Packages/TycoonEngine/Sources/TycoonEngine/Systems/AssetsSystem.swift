@@ -241,6 +241,16 @@ enum AssetsSystem {
             // MARK: T6 (away) — a launch the founder was away for is a party nobody threw (never counted twice with a kept date).
             value -= def.perLaunch * Double(min(max(0, launches - DiaryRoadmap.partiesSkipped(state)), AwaySystem.partiesMissed(state)))
             // MARK: end T6
+            // MARK: X4 (the launch party) — a party actually thrown, on
+            // crunch, is a later one still: the napkin J1's vices door
+            // arrives on has always come from this party, and now there is
+            // one. Exactly 0 on every run nobody threw a party in, and off
+            // crunch.
+            if crunched {
+                value += def.perLaunch * balance.party.viceCrunchFactor
+                    * Double(LaunchPartyMath.thrownThisWeek(state))
+            }
+            // MARK: end X4
             state.assets.setDependency(def.id, value)
         }
 

@@ -3672,6 +3672,9 @@
     "Guaranteed by you" : {
       "comment" : "Money sheet row: debt secured against the founder home"
     },
+    "Guests" : {
+      "comment" : "Launch party figure: how many came"
+    },
     "HAND OVER THE KEYS" : {
       "comment" : "Pixel-font headline on the hand-over sheet. Uppercase A-Z only — the bitmap font has no accents."
     },
@@ -3829,6 +3832,9 @@
     },
     "How to look at the team" : {
 
+    },
+    "Hype" : {
+      "comment" : "Launch party figure: what the night did for the product's attention"
     },
     "Hype %lld" : {
 
@@ -3996,6 +4002,9 @@
     },
     "Just trained · settling in" : {
       "comment" : "Roster status: recently sent on training"
+    },
+    "Just you, then." : {
+
     },
     "KEPT STAKE" : {
 
@@ -4304,7 +4313,7 @@
       "comment" : "Founder meter: how the founder feels"
     },
     "Morale" : {
-      "comment" : "Decision sheet stat: how the person feels about the job"
+      "comment" : "Decision sheet stat: how the person feels about the job\nLaunch party figure: what the night did for the room"
     },
     "Morale %lld/day from how you are showing up" : {
 
@@ -4650,6 +4659,9 @@
     "Nobody shipped." : {
 
     },
+    "Nobody to invite yet — the press have not filed and the address book is empty." : {
+
+    },
     "Nobody yet" : {
 
     },
@@ -4940,6 +4952,9 @@
 
     },
     "One day left" : {
+
+    },
+    "One evening of yours, and there is no second party for this launch." : {
 
     },
     "One hour left" : {
@@ -5969,6 +5984,9 @@
     "See the rivals" : {
 
     },
+    "See the room" : {
+
+    },
     "See them" : {
 
     },
@@ -6858,6 +6876,9 @@
     "The last %lld go with them into the next company." : {
 
     },
+    "The launch" : {
+      "comment" : "Launch party line: a product whose name is gone"
+    },
     "The letter is on the mat again. You are %@ down and the landlord wants it cleared by day %lld. The company could cover you. Everybody would know." : {
       "comment" : "Decision sheet body: the rescue question",
       "localizations" : {
@@ -6953,6 +6974,9 @@
 
     },
     "The papers belong to a company. Start one, or open a save, and they will be here in the morning." : {
+
+    },
+    "The party" : {
 
     },
     "The phone" : {
@@ -7279,6 +7303,15 @@
 
     },
     "Three screenshots of the app" : {
+
+    },
+    "Throw a launch party" : {
+
+    },
+    "Throw a party" : {
+
+    },
+    "Throw it" : {
 
     },
     "Time is paused: %@" : {
@@ -7637,6 +7670,9 @@
     "Whatever you say, communication decides how much of it lands." : {
 
     },
+    "Where" : {
+
+    },
     "Where the team spends its time, split %lld/%lld/%lld." : {
       "localizations" : {
         "en" : {
@@ -7651,6 +7687,9 @@
 
     },
     "Where you live, %@" : {
+
+    },
+    "Who" : {
 
     },
     "Who's starting this?" : {
@@ -8110,6 +8149,9 @@
     "friendly" : {
       "comment" : "Review byline: an outlet's standing, best to worst"
     },
+    "from the address book" : {
+      "comment" : "Launch party guest list: a contact"
+    },
     "iCloud" : {
 
     },
@@ -8201,6 +8243,9 @@
     },
     "on quality at launch" : {
 
+    },
+    "press" : {
+      "comment" : "Launch party guest list: a review outlet"
     },
     "projected quality" : {
 
