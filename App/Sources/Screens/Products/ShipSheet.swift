@@ -91,6 +91,20 @@ struct ShipSheet: View {
                     .monospacedDigit()
                     .foregroundStyle(Theme.pixelInk.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
+                // MARK: G8 (awards night, attended)
+                // The other half of the ship-or-polish question, once a
+                // year: ship it into this year's judging or into next
+                // year's. Nothing outside the notice window.
+                if let left = AwardsCutoff.daysLeft(state: state, balance: engine.balance) {
+                    Label(
+                        "\(AwardsCutoff.headline(daysLeft: left)) · \(AwardsCutoff.explanation)",
+                        systemImage: "trophy.fill"
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(Theme.pixelInk.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+                // MARK: end G8
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

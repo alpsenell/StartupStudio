@@ -1423,6 +1423,9 @@
     "%lld earlier — the journal has the rest." : {
 
     },
+    "%lld envelopes left" : {
+
+    },
     "%lld evening%@ a week for anything that isn't work" : {
       "localizations" : {
         "en" : {
@@ -2078,6 +2081,9 @@
     "A stake alone stays ranked. Any other change earns achievements but does not post to leaderboards." : {
 
     },
+    "A table seats the company down at the front, where the cameras are. The other answer is the sofa and the wire in the morning." : {
+
+    },
     "A term sheet is on the table. The pitch room is where the number moves before you sign it." : {
       "comment" : "Coach tip keyed to game state"
     },
@@ -2239,6 +2245,9 @@
     "Answers the unvested options before you sell" : {
 
     },
+    "Anything shipped after it is judged next year instead." : {
+      "comment" : "What the awards cutoff means, under the countdown"
+    },
     "Apply %@/wk" : {
 
     },
@@ -2289,6 +2298,9 @@
         }
       }
     },
+    "At home" : {
+
+    },
     "At the studio for %lld more days" : {
 
     },
@@ -2313,6 +2325,12 @@
           }
         }
       }
+    },
+    "Awards cutoff in %lld days" : {
+      "comment" : "Awards cutoff countdown, more than a day out"
+    },
+    "Awards cutoff tomorrow" : {
+      "comment" : "Awards cutoff countdown with one day left"
     },
     "Awards night" : {
 
@@ -4599,6 +4617,9 @@
     "Nobody on payroll yet." : {
 
     },
+    "Nobody on payroll yet. The seat beside you stays empty." : {
+
+    },
     "Nobody shipped." : {
 
     },
@@ -4926,6 +4947,9 @@
     "Open the custom page" : {
 
     },
+    "Open the first envelope" : {
+
+    },
     "Open the fortnight" : {
 
     },
@@ -4935,10 +4959,16 @@
     "Open the life score breakdown" : {
 
     },
+    "Open the next envelope" : {
+
+    },
     "Open the phone" : {
 
     },
     "Open the team" : {
+
+    },
+    "Open them all" : {
 
     },
     "Open this automatically again" : {
@@ -6600,6 +6630,9 @@
     "The answer itself is still yours — this only changed what you're answering." : {
 
     },
+    "The awards are tonight" : {
+      "comment" : "Awards cutoff countdown on the day of the ceremony"
+    },
     "The bell, the confetti, and the end of the run. Your stake is bought out at the offer price." : {
 
     },
@@ -6996,6 +7029,9 @@
 
     },
     "The will names %@." : {
+
+    },
+    "The wire will say who won. It will not say you were there." : {
 
     },
     "Their desk" : {
@@ -7879,6 +7915,9 @@
       "comment" : "Coach tip keyed to game state"
     },
     "Your price in week %lld, if the numbers hold." : {
+
+    },
+    "Your row" : {
 
     },
     "Your salary is %@ a week; the money card above the home sets it." : {

@@ -207,7 +207,12 @@ struct AppRootView: View {
                 engine.setSpeed(.paused)
             }
             .sheet(item: awardsNight(engine: engine)) { night in
-                AwardsNightSheet(night: night, companyName: engine.state.company.name) {
+                // MARK: G8 (awards night, attended) — the engine is the
+                // sheet's: the table's price, the team in the row, and
+                // where its one `.recordCeremony` is sent.
+                AwardsNightSheet(
+                    night: night, companyName: engine.state.company.name, engine: engine
+                ) {
                     shell.pendingAwardsYear = nil
                     if let speed = awardsResumeSpeed {
                         awardsResumeSpeed = nil

@@ -10,6 +10,12 @@ struct AwardWinner: Equatable, Identifiable {
     let name: String
     let detail: String
     let isPlayer: Bool
+    // MARK: G8 (awards night, attended)
+    /// The player product the envelope was for, where one won it. The
+    /// engine needs it to put `awards.winHype` on the right product;
+    /// nothing is drawn from it.
+    var productID: UUID? = nil
+    // MARK: end G8
 
     var id: String { name + detail }
 }
@@ -17,6 +23,13 @@ struct AwardWinner: Equatable, Identifiable {
 struct AwardCategory: Identifiable {
     let title: String
     let winner: AwardWinner?
+    // MARK: G8 (awards night, attended)
+    /// The topic a *Best in …* is for; `nil` for the three categories
+    /// that belong to no topic.
+    var topicID: String? = nil
+    /// The one envelope the floor came for (`AwardsSystem`).
+    var isStudioOfTheYear = false
+    // MARK: end G8
 
     var id: String { title }
 }
@@ -28,6 +41,22 @@ struct AwardsNight: Equatable {
     var playerWins: [AwardCategory] {
         categories.filter { $0.winner?.isPlayer == true }
     }
+
+    // MARK: G8 (awards night, attended)
+    /// The night as the engine files it: what the studio took home, with
+    /// the topic and the product each envelope belongs to. Handed to
+    /// `.recordCeremony` and read nowhere else.
+    var ceremonyWins: [CeremonyWin] {
+        playerWins.map { category in
+            CeremonyWin(
+                title: category.title,
+                topicID: category.topicID,
+                productID: category.winner?.productID,
+                isStudioOfTheYear: category.isStudioOfTheYear
+            )
+        }
+    }
+    // MARK: end G8
 
     static func == (lhs: AwardsNight, rhs: AwardsNight) -> Bool {
         lhs.year == rhs.year && lhs.categories.map(\.title) == rhs.categories.map(\.title)
@@ -43,6 +72,9 @@ private struct Launch {
     let topicID: String
     let quality: Double
     let day: Int
+    // MARK: G8 (awards night, attended) — the player's product, so a win
+    // can be paid onto it. `nil` for every rival launch.
+    var productID: UUID? = nil
 }
 
 enum AwardsJudge {
@@ -72,7 +104,12 @@ enum AwardsJudge {
         let best = launches.max { $0.quality < $1.quality }
         categories.append(AwardCategory(
             title: "Product of the Year",
-            winner: best.map { AwardWinner(name: $0.product, detail: "\($0.studio) · \(Int($0.quality.rounded()))", isPlayer: $0.isPlayer) }
+            winner: best.map {
+                AwardWinner(
+                    name: $0.product, detail: "\($0.studio) · \(Int($0.quality.rounded()))",
+                    isPlayer: $0.isPlayer, productID: $0.productID
+                )
+            }
         ))
 
         // Studio of the Year: the studio whose year added up to the most,
@@ -92,7 +129,8 @@ enum AwardsJudge {
                     detail: "\(entry.value.count) launch\(entry.value.count == 1 ? "" : "es")",
                     isPlayer: entry.value.first?.isPlayer == true
                 )
-            }
+            },
+            isStudioOfTheYear: true
         ))
 
         // Best Newcomer: the best launch by a studio founded this year.
@@ -111,7 +149,11 @@ enum AwardsJudge {
             guard let winner = inTopic.max(by: { $0.quality < $1.quality }) else { continue }
             categories.append(AwardCategory(
                 title: "Best in \(topic.name)",
-                winner: AwardWinner(name: winner.product, detail: "\(winner.studio) · \(Int(winner.quality.rounded()))", isPlayer: winner.isPlayer)
+                winner: AwardWinner(
+                    name: winner.product, detail: "\(winner.studio) · \(Int(winner.quality.rounded()))",
+                    isPlayer: winner.isPlayer, productID: winner.productID
+                ),
+                topicID: topic.id
             ))
         }
         return AwardsNight(year: year, categories: categories)
@@ -163,7 +205,8 @@ enum AwardsJudge {
             else { continue }
             launches.append(Launch(
                 studio: state.company.name, isPlayer: true, product: product.name,
-                topicID: product.topicID, quality: Double(reviewScore(release)), day: release.launchDay
+                topicID: product.topicID, quality: Double(reviewScore(release)), day: release.launchDay,
+                productID: product.id
             ))
         }
         for rival in state.rivals.rivals {

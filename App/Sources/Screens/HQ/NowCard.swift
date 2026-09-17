@@ -47,6 +47,12 @@ struct NowCard: View {
                     // outside the notice window, so the card reads as it did.
                     ExpoNowRow(engine: engine)
                     // MARK: end T5
+                    // MARK: G8 (awards night, attended)
+                    // The awards cutoff, from four weeks out. Renders
+                    // nothing for the other eleven months, so the card
+                    // reads as it did.
+                    AwardsCutoffRow(engine: engine)
+                    // MARK: end G8
                     if let goal {
                         goalRow(goal, buildID: build?.id)
                     } else if dayZero {
