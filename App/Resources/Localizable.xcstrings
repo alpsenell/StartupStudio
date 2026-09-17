@@ -3169,6 +3169,9 @@
     "Drawing the card" : {
 
     },
+    "Draws a shareable card for this launch: the box art, the scores, a line from the press and the code that founds this company again" : {
+
+    },
     "Drop the rule" : {
 
     },
@@ -3399,7 +3402,7 @@
 
     },
     "First week" : {
-      "comment" : "Launch day figure: revenue in the first week"
+      "comment" : "Launch card figure: units sold in the launch week\nLaunch day figure: revenue in the first week"
     },
     "Fit multiplies launch quality. Locked types need research first." : {
 
@@ -3903,6 +3906,9 @@
     "It burned %@ while you were gone." : {
 
     },
+    "It goes on every box you ship, the storefront, the paper's byline and your building on the map." : {
+
+    },
     "It goes on the record either way. The record is the part that lasts." : {
 
     },
@@ -4008,6 +4014,9 @@
     },
     "LANDLORD" : {
       "comment" : "Bitmap kicker: the landlord's question. Uppercase A-Z only"
+    },
+    "LAUNCH DAY" : {
+      "comment" : "Launch card kicker over the product's name (bitmap face, A-Z only)"
     },
     "LIFE" : {
       "comment" : "Kicker under the life score on the biography's life card. Drawn in the pixel bitmap font: uppercase ASCII only, no accents, keep it short."
@@ -4196,6 +4205,19 @@
     },
     "MORNING PAPERS" : {
       "comment" : "Bitmap heading on the front door's morning papers card. Uppercase: the pixel face has no lowercase"
+    },
+    "Make the launch card" : {
+
+    },
+    "Mark %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mark %1$lld of %2$lld"
+          }
+        }
+      }
     },
     "Market Report" : {
 
@@ -4514,6 +4536,9 @@
     "No longer on the team" : {
 
     },
+    "No mark" : {
+
+    },
     "No matches" : {
 
     },
@@ -4798,6 +4823,9 @@
     },
     "OPTIONS" : {
       "comment" : "Pixel header over the buyout sheet's options row. Uppercase A-Z only"
+    },
+    "OVERPROMISED" : {
+      "comment" : "Launch card stamp when pre-orders were sold on a forecast the reviews did not keep (bitmap face, A-Z only)"
     },
     "Off market" : {
 
@@ -6127,6 +6155,9 @@
     "Shuffle company names" : {
       "comment" : "Button that rolls a new company name"
     },
+    "Shuffle marks" : {
+      "comment" : "Button that rolls three new studio marks"
+    },
     "Shuffle names" : {
       "comment" : "Button that rolls a new founder and company name"
     },
@@ -6386,6 +6417,9 @@
     "Stepping away" : {
 
     },
+    "Still being built. Come back on launch day." : {
+
+    },
     "Still yours" : {
 
     },
@@ -6434,7 +6468,7 @@
 
     },
     "Subscribers" : {
-      "comment" : "Launch day figure: subscribers on a subscription product"
+      "comment" : "Launch card figure: paying subscribers on a subscription product\nLaunch day figure: subscribers on a subscription product"
     },
     "Sue %@" : {
 
@@ -6462,6 +6496,12 @@
     },
     "THE INCUMBENT" : {
 
+    },
+    "THE ONE VERDICT OUT" : {
+      "comment" : "Launch card heading over an exclusive's score while the other outlets are embargoed (bitmap face, A-Z only)"
+    },
+    "THE VERDICT" : {
+      "comment" : "Launch card heading over the average review score (bitmap face, A-Z only)"
     },
     "THIS WEEK" : {
 
@@ -6870,6 +6910,9 @@
     "The phone" : {
 
     },
+    "The press has not filed yet." : {
+
+    },
     "The press hasn't weighed in yet." : {
 
     },
@@ -7236,6 +7279,9 @@
     },
     "Tonight" : {
 
+    },
+    "Took" : {
+      "comment" : "Launch card figure: cash the launch week brought in"
     },
     "Took %@/wk off %@ for it. Fairness reads the %@." : {
       "localizations" : {
@@ -8005,6 +8051,9 @@
     "due today" : {
       "comment" : "Waiting on you: a desk row or a phone thread due today"
     },
+    "embargoed" : {
+      "comment" : "Launch card chip: an outlet whose verdict is still held back under an exclusive. One word, lowercase"
+    },
     "even-handed" : {
       "comment" : "Review byline: an outlet's standing, best to worst"
     },
@@ -8261,6 +8310,16 @@
     },
     "—" : {
 
+    },
+    "— %@, %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "— %1$@, %2$lld"
+          }
+        }
+      }
     },
     "“%@”" : {
 

@@ -799,6 +799,11 @@ private struct LaunchDayPanel: View {
             if revealComplete {
                 firstWeek
                     .transition(Theme.Motion.transition(.move(edge: .bottom).combined(with: .opacity)))
+                // MARK: Iteration 18 — the launch card, on the aftermath.
+                // Self-contained: it owns its own sheet and touches
+                // nothing else in the room.
+                LaunchCardButton(engine: engine, product: product, prominent: true)
+                // MARK: end of Iteration 18
                 Button {
                     Haptics.tap()
                     Sounds.play(.tap)

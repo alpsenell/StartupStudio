@@ -106,6 +106,10 @@ struct StorefrontPage: View {
                 // MARK: T7 (press and stakes) — only the verdicts that are out.
                 StorefrontReviewsCard(info: info, today: engine.state.day)
                 // MARK: end T7
+                // MARK: Iteration 18 — the launch card, retroactively:
+                // every product that ever shipped can still be minted.
+                LaunchCardButton(engine: engine, product: product)
+                // MARK: end of Iteration 18
             case .development(let progress):
                 StorefrontHero(
                     product: product,

@@ -100,6 +100,11 @@ struct LaunchDaySheet: View {
                             }
                         }
                         salesSection(release)
+                        // MARK: Iteration 18 — the launch card, at the end
+                        // of the reveal. Purely additive: it reads the
+                        // product and adds nothing to this sheet's state.
+                        LaunchCardButton(engine: engine, product: product, prominent: true)
+                        // MARK: end of Iteration 18
                     }
                 }
                 .padding(Theme.Spacing.lg)
