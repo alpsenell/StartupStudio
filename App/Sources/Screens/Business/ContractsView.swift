@@ -33,7 +33,23 @@ struct ContractsView: View {
                     ContractOfferCard(engine: engine, offer: offer)
                 }
             }
+
+            // MARK: Client book
+            BusinessSectionHeader(title: "Client book", systemImage: "book.closed.fill")
+            ClientBookCard(engine: engine)
+            // MARK: end Client book
         }
+        // MARK: Client book (the identity gate)
+        // The one flag the client book's engine gates read: jobs settle
+        // onto a client's page, and trusted clients warm their offers,
+        // only once the player has looked at their own contracts in this
+        // run. A pacing bot opens no screens, so it never sets this and
+        // every client stays a stranger. The `noticeFinancesOpened`
+        // pattern.
+        .onAppear {
+            engine.send(.noticeClientBookOpened)
+        }
+        // MARK: end Client book
     }
 }
 
@@ -205,6 +221,14 @@ private struct ContractOfferCard: View {
         offer.topicID.map { engine.content.topic($0)?.name ?? $0 }
     }
 
+    /// The offer's client out of the book — `nil` for a stranger, for a
+    /// rival wearing a client's coat, and for every run that has never
+    /// opened the book.
+    private var knownClient: Client? {
+        guard !offer.isSponsored else { return nil }
+        return engine.state.clientBook.client(named: offer.clientName)
+    }
+
     private var requirementSummary: String {
         var summary = "Code \(Int(offer.requiredCodePts.rounded())) · Design \(Int(offer.requiredDesignPts.rounded())) pts"
         if offer.requiredSkill > 0 {
@@ -236,6 +260,14 @@ private struct ContractOfferCard: View {
                         .font(.system(.headline, design: .rounded))
                     if offer.isSponsored, let topicName {
                         SponsorBadge(topic: topicName)
+                    }
+                    // MARK: Client book — a name the studio knows.
+                    if let knownClient {
+                        ClientTrustChip(
+                            client: knownClient,
+                            day: engine.state.day,
+                            trustedThreshold: engine.balance.clientBook.trustedThreshold
+                        )
                     }
                     Text(requirementSummary)
                         .font(Theme.Typography.number(.caption, weight: .regular))
@@ -345,5 +377,124 @@ private struct DeadlineChip: View {
             .padding(.horizontal, Theme.Spacing.xs + 2)
             .padding(.vertical, 2)
             .background(Theme.chipBackground, in: Capsule())
+    }
+}
+
+// MARK: - Client book
+
+/// The studio's memory of everyone it has settled a job with: their
+/// trust, the jobs, and who has gone cold. Opening the contracts screen
+/// is what turns the memory on; the card explains itself until a job
+/// settles.
+private struct ClientBookCard: View {
+    let engine: GameEngine
+
+    /// Best-trusted first, ties on the name — the engine's own order for
+    /// picking whose offers to warm.
+    private var clients: [Client] {
+        engine.state.clientBook.clients.sorted { lhs, rhs in
+            if lhs.trust != rhs.trust { return lhs.trust > rhs.trust }
+            return lhs.name < rhs.name
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            if clients.isEmpty {
+                Text("Nobody in the book yet. From here, every client you settle a job with remembers how it went — deliver well and their next offers arrive warmer.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                ForEach(clients) { client in
+                    ClientBookRow(
+                        client: client,
+                        day: engine.state.day,
+                        trustedThreshold: engine.balance.clientBook.trustedThreshold
+                    )
+                }
+                Text(warmLine)
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .cardStyle()
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(
+            clients.isEmpty
+                ? "Client book, empty. Settle a job and the client remembers."
+                : "Client book, \(clients.count) client\(clients.count == 1 ? "" : "s")"
+        )
+    }
+
+    /// What trust buys, in the engine's own numbers.
+    private var warmLine: String {
+        let config = engine.balance.clientBook
+        let low = Int((config.warmPayoutBonusMin * 100).rounded())
+        let high = Int((config.warmPayoutBonusMax * 100).rounded())
+        return "Trust \(Int(config.trustedThreshold.rounded()))+ warms their offers: "
+            + "+\(low)–\(high)% pay and a longer deadline. A botched job goes cold for a quarter."
+    }
+}
+
+/// One client's line in the book.
+private struct ClientBookRow: View {
+    let client: Client
+    let day: Int
+    let trustedThreshold: Double
+
+    private var jobsLine: String {
+        var parts = ["\(client.jobsDelivered) delivered"]
+        if client.jobsFailed > 0 { parts.append("\(client.jobsFailed) failed") }
+        if client.isCold(day: day), let until = client.coldUntilDay {
+            parts.append("cold until day \(until)")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(client.name)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                Text(jobsLine)
+                    .font(Theme.Typography.number(.caption, weight: .regular))
+                    .foregroundStyle(client.isCold(day: day) ? Theme.warning : .secondary)
+            }
+            Spacer(minLength: Theme.Spacing.sm)
+            ClientTrustChip(client: client, day: day, trustedThreshold: trustedThreshold)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// The trust capsule: the number, tinted by what it means today.
+private struct ClientTrustChip: View {
+    let client: Client
+    let day: Int
+    let trustedThreshold: Double
+
+    private var tint: Color {
+        if client.isCold(day: day) { return Theme.warning }
+        if client.trust >= trustedThreshold { return Theme.positiveCash }
+        return .secondary
+    }
+
+    private var label: String {
+        if client.isCold(day: day) { return "Cold · trust \(Int(client.trust.rounded()))" }
+        if client.trust >= trustedThreshold { return "Trusted · \(Int(client.trust.rounded()))" }
+        return "Trust \(Int(client.trust.rounded()))"
+    }
+
+    var body: some View {
+        Text(label)
+            .font(Theme.Typography.number(.caption2))
+            .foregroundStyle(tint)
+            .padding(.horizontal, Theme.Spacing.xs + 2)
+            .padding(.vertical, 2)
+            .background(Theme.chipBackground, in: Capsule())
+            .accessibilityLabel("\(client.name), trust \(Int(client.trust.rounded()))\(client.isCold(day: day) ? ", cold" : "")")
     }
 }

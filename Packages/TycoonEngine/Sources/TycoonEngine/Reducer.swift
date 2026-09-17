@@ -1291,6 +1291,17 @@ public enum Reducer {
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12
         // MARK: end of Iteration 11, wave two
+        // MARK: Client book
+        case .noticeClientBookOpened:
+            // The identity gate. Nothing in the lane remembers a client
+            // or warms an offer until a player has looked at their own
+            // contracts, and this is the only thing that makes
+            // `state.clientBook` non-empty.
+            if !state.clientBook.noticed {
+                state.clientBook.noticed = true
+            }
+            events = []
+        // MARK: end Client book
         }
 
         state.logEvents(events)

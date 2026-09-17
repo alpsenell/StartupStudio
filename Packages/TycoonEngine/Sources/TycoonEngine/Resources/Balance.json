@@ -2258,5 +2258,18 @@
     "scrapBankFraction": 0.5,
     "scrapCrewMorale": -4.0,
     "scrapLastDays": 7
+  },
+  "clientBook": {
+    "trustBase": 40.0,
+    "trustGreatGain": 12.0,
+    "trustOkayGain": 5.0,
+    "trustPoorLoss": 15.0,
+    "trustFailLoss": 20.0,
+    "trustedThreshold": 70.0,
+    "coldDays": 91,
+    "warmedOffersPerSheet": 2,
+    "warmPayoutBonusMin": 0.10,
+    "warmPayoutBonusMax": 0.25,
+    "warmDeadlineFactor": 1.25
   }
 }

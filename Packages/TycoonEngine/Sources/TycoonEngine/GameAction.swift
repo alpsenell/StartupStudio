@@ -870,6 +870,16 @@ public enum GameAction: Codable, Equatable, Sendable {
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12
     // MARK: end of Iteration 11, wave two
+    // MARK: Client book
+
+    /// The founder opened the Business tab's contracts. The one flag the
+    /// client book reads before anything else: from here the studio
+    /// remembers everyone it settles a job with, and trusted clients'
+    /// offers arrive warmed — and never in a run that never looks, which
+    /// is every bot and fixture. The `noticeFinancesOpened` pattern.
+    case noticeClientBookOpened
+
+    // MARK: end Client book
 }
 
 /// The skill a training course targets.

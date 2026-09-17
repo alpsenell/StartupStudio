@@ -2136,6 +2136,15 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12
+    // MARK: Client book
+
+    /// What a settled job does to a client's trust, and what a trusted
+    /// client's warmed offer is worth (`BalanceConfig+ClientBook.swift`).
+    /// Inline default, so `"clientBook"` is an optional key; every number
+    /// is read behind `ClientBook.noticed`, which no bot ever sets.
+    public var clientBook: ClientBookBalance = .default
+
+    // MARK: end Client book
 
     public init(
         startingCash: Int,
