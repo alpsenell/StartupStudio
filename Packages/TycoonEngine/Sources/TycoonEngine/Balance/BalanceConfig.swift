@@ -2126,6 +2126,17 @@ public struct BalanceConfig: Codable, Equatable, Sendable {
 
     // MARK: end T7
     // MARK: end of Iteration 17
+    // MARK: G8 (awards night, attended)
+
+    /// Iteration 18 — G8: the table, the envelopes and the cutoff notice
+    /// (`BalanceConfig+Awards.swift`). Inline default, so `"awards"` is an
+    /// optional key; read only behind `.recordCeremony`, which only the
+    /// ceremony sheet sends, and by the cutoff countdown the Now card and
+    /// the ship sheet draw.
+    public var awards: AwardsBalance = .default
+
+    // MARK: end G8
+    // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: S1 (seating)
     /// Iteration 16 — S1: who sits next to whom

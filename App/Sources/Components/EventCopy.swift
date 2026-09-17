@@ -1461,6 +1461,33 @@ struct EventCopy {
             )
         // MARK: end T7
         // MARK: end of Iteration 17
+        // MARK: G8 (awards night, attended)
+        case let .ceremonyRecorded(year, attended, wins, studioOfTheYear, cost, day):
+            if !attended {
+                (
+                    "trophy",
+                    wins == 0
+                        ? "Year \(year)'s awards went by on the wire. Nothing of ours in it"
+                        : "Year \(year)'s awards, read off the wire in the morning: \(wins) to us, and nobody there to collect them",
+                    day, wins == 0 ? Theme.accent : Theme.positiveCash
+                )
+            } else if studioOfTheYear {
+                (
+                    "trophy.fill",
+                    "Studio of the Year, year \(year), and the floor was there for it. The table cost \(cost.money)",
+                    day, Theme.positiveCash
+                )
+            } else {
+                (
+                    "trophy",
+                    wins == 0
+                        ? "Year \(year)'s awards: \(cost.money) for a table, and the team watched somebody else's name come out of every envelope"
+                        : "Year \(year)'s awards: \(wins) to us, but Studio of the Year went elsewhere and the row saw it go",
+                    day, Theme.warning
+                )
+            }
+        // MARK: end G8
+        // MARK: end of Iteration 18
         // MARK: end of Iteration 15
         // MARK: S1 (seating)
         case .seatingMoved, .seatingCleared:

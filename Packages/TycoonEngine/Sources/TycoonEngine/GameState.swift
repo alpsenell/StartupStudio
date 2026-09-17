@@ -25,6 +25,14 @@ public struct Company: Codable, Equatable, Sendable {
     /// and then not encoded.
     public var pressStanding: [String: Double] = [:]
     // MARK: end T7
+    // MARK: G8 (awards night, attended)
+    /// The ceremonies this run has answered, oldest first: the year,
+    /// whether the team was in the room, and what was won (`Awards.swift`).
+    /// Written by `.recordCeremony` alone, which only the ceremony sheet
+    /// sends. Empty on every run that never answered a night — every bot,
+    /// every fixture — and then not encoded.
+    public var ceremonies: [CeremonyRecord] = []
+    // MARK: end G8
 }
 
 // MARK: S1 (seating)
@@ -38,6 +46,9 @@ extension Company {
         // MARK: T7 (press and stakes)
         case pressStanding
         // MARK: end T7
+        // MARK: G8 (awards night, attended)
+        case ceremonies
+        // MARK: end G8
     }
 
     public init(from decoder: any Decoder) throws {
@@ -55,6 +66,9 @@ extension Company {
         let standings = try c.decodeIfPresent([PressStandingEntry].self, forKey: .pressStanding) ?? []
         for entry in standings { pressStanding[entry.outlet] = entry.standing }
         // MARK: end T7
+        // MARK: G8 (awards night, attended) — absent on every old save.
+        ceremonies = try c.decodeIfPresent([CeremonyRecord].self, forKey: .ceremonies) ?? []
+        // MARK: end G8
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -72,6 +86,11 @@ extension Company {
             try c.encode(PressStandingEntry.sorted(pressStanding), forKey: .pressStanding)
         }
         // MARK: end T7
+        // MARK: G8 (awards night, attended) — only once a night is answered.
+        if !ceremonies.isEmpty {
+            try c.encode(ceremonies, forKey: .ceremonies)
+        }
+        // MARK: end G8
     }
 }
 // MARK: end S1
@@ -925,6 +944,17 @@ public enum GameEvent: Codable, Equatable, Sendable {
     case rivalStakeLost(rivalID: UUID, name: String, percent: Double, paid: Int, day: Int)
     // MARK: end T7
     // MARK: end of Iteration 17
+    // MARK: G8 (awards night, attended)
+    /// Iteration 18 — G8. The year's ceremony was answered: the team was
+    /// taken (`attended`, and `cost` is what the table came to) or the
+    /// night was watched from home (`cost` 0). `wins` is how many
+    /// envelopes the studio took, `studioOfTheYear` whether the big one
+    /// was among them.
+    case ceremonyRecorded(
+        year: Int, attended: Bool, wins: Int, studioOfTheYear: Bool, cost: Int, day: Int
+    )
+    // MARK: end G8
+    // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: S1 (seating)
     /// Somebody changed desks. `swappedWithID` is whoever sat there before

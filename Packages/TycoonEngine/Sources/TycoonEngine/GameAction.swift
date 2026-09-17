@@ -853,6 +853,18 @@ public enum GameAction: Codable, Equatable, Sendable {
     case pressStakeDebugSeed(scenario: String)
     // MARK: end T7
     // MARK: end of Iteration 17
+    // MARK: G8 (awards night, attended)
+    /// Iteration 18 — G8. Answers the year's ceremony: the team was taken
+    /// (`attended`, which costs `awards.tableByTier` and one founder
+    /// evening) or the night was watched from home. `wins` is what the
+    /// app-side judge (`AwardsJudge`) read off the year — the engine never
+    /// judges anything; it applies what it is told and files the night in
+    /// `Company.ceremonies`, once per year.
+    ///
+    /// Sent only from the ceremony sheet, which no bot opens.
+    case recordCeremony(year: Int, attended: Bool, wins: [CeremonyWin])
+    // MARK: end G8
+    // MARK: end of Iteration 18
     // MARK: end of Iteration 15
     // MARK: S1 (seating)
     /// Puts `employeeID` at `desk` in the office grid; whoever sat there
