@@ -34,7 +34,9 @@ enum ContractSystem {
     /// `1 + contractYearScale * (year - 1)`; the required-skill roll rises
     /// `skillYearBump` per year, capped at `skillCap`. Once the sheet is
     /// rolled, `sponsorOneOffer` may hand one offer to a rival — from
-    /// `worldRNG`, after every `rng` draw above.
+    /// `worldRNG`, after every `rng` draw above — and then
+    /// `warmKnownClientOffers` may hand plain offers to trusted clients,
+    /// drawing nothing from any stream at all.
     private static func refreshOffers(
         _ state: inout GameState,
         _ balance: BalanceConfig,
@@ -211,12 +213,15 @@ enum ContractSystem {
     ) {
         let config = balance.clientBook
         let grades = balance.contractQuality
+        // Read once, outside the closure: mutating the book and reading
+        // the state inside its closure would be two overlapping accesses.
+        let day = state.day
         state.clientBook.record(clientName: clientName, baseTrust: config.trustBase) { client in
-            client.lastSettledDay = state.day
+            client.lastSettledDay = day
             guard delivered else {
                 client.jobsFailed += 1
                 client.trust -= config.trustFailLoss
-                client.coldUntilDay = state.day + max(0, config.coldDays)
+                client.coldUntilDay = day + max(0, config.coldDays)
                 return
             }
             client.jobsDelivered += 1
@@ -226,7 +231,7 @@ enum ContractSystem {
                 client.trust += config.trustOkayGain
             } else {
                 client.trust -= config.trustPoorLoss
-                client.coldUntilDay = state.day + max(0, config.coldDays)
+                client.coldUntilDay = day + max(0, config.coldDays)
             }
         }
     }
