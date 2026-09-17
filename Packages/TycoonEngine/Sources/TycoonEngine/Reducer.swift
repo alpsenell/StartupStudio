@@ -497,9 +497,10 @@ public enum Reducer {
             events = ProductSystem.setPriceTier(
                 productID: productID, tier: tier, state: &state, balance: balance
             )
-        case let .startUpdate(productID):
+        case let .startUpdate(productID, featureCardID):
             events = ProductSystem.startUpdate(
-                productID: productID, state: &state, balance: balance, content: content
+                productID: productID, featureCardID: featureCardID,
+                state: &state, balance: balance, content: content
             )
         case let .setWorkPace(pace):
             events = EmployeeSystem.setWorkPace(pace, state: &state)

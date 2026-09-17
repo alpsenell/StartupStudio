@@ -87,7 +87,15 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// Puts a released product back into a short patch cycle. On
     /// completion it gains quality, is re-reviewed, and gets one bumper
     /// sales week.
-    case startUpdate(productID: UUID)
+    ///
+    /// `featureCardID` (the wishlist): the update carries a wished
+    /// feature card, which lands on `Product.features` for good when the
+    /// patch does, with a bigger quality lift and a heavier re-review.
+    /// `nil` (the default, and every old caller: the update button, the
+    /// bots, the tests) is the plain patch it always was, and an optional
+    /// keeps the synthesized encoding of the old case byte for byte —
+    /// the `fire(employeeID:payNotice:)` pattern.
+    case startUpdate(productID: UUID, featureCardID: String? = nil)
     /// Sets the pace the whole company works at.
     case setWorkPace(WorkPace)
 

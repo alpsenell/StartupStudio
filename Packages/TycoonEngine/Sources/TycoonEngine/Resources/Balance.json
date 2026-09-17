@@ -2271,5 +2271,16 @@
     "warmPayoutBonusMin": 0.10,
     "warmPayoutBonusMax": 0.25,
     "warmDeadlineFactor": 1.25
+  },
+  "wishlist": {
+    "wishCount": 3,
+    "demandBase": 12.0,
+    "demandAppetite": 18.0,
+    "demandSynergy": 7.0,
+    "demandCopied": 15.0,
+    "demandJitter": 8.0,
+    "demandCap": 70.0,
+    "featureQualityBonus": 3.0,
+    "featureReviewWeightFactor": 1.5
   }
 }

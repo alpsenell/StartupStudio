@@ -67,6 +67,12 @@ public struct ProductUpdate: Codable, Equatable, Sendable, Identifiable {
     public var progressDesign: Double
     public var progressCode: Double
     public var progressPolish: Double
+    /// The wished feature card this update carries, landing on
+    /// `Product.features` when the patch does. `nil` — the plain patch —
+    /// for every update a bot or an old save started, and then not
+    /// encoded (the synthesized coding of an optional), so those updates
+    /// keep their bytes.
+    public var featureCardID: String?
 
     public init(
         productID: UUID,
@@ -76,7 +82,8 @@ public struct ProductUpdate: Codable, Equatable, Sendable, Identifiable {
         polishPts: Double,
         progressDesign: Double = 0,
         progressCode: Double = 0,
-        progressPolish: Double = 0
+        progressPolish: Double = 0,
+        featureCardID: String? = nil
     ) {
         self.productID = productID
         self.startedDay = startedDay
@@ -86,6 +93,7 @@ public struct ProductUpdate: Codable, Equatable, Sendable, Identifiable {
         self.progressDesign = progressDesign
         self.progressCode = progressCode
         self.progressPolish = progressPolish
+        self.featureCardID = featureCardID
     }
 
     /// Fraction of the patch finished, 0...1 across all three pools.
