@@ -362,5 +362,113 @@
     "condition": { "kind": "yearsTrading", "amount": 5 },
     "reward": { "reputation": 6.0, "perk": "talentMagnet" },
     "track": "independent"
+  },
+  {
+    "id": "g6_eight_public_quarters",
+    "title": "Eight profitable quarters in a row",
+    "detail": "The market forgives a public company nothing. Give it nothing to forgive.",
+    "chapter": 6,
+    "condition": { "kind": "profitableQuarters", "amount": 8 },
+    "reward": { "reputation": 8.0 },
+    "track": "funded"
+  },
+  {
+    "id": "g6_ten_million_company",
+    "title": "Be worth ten million",
+    "detail": "The bell was the start of the grade, not the end of it.",
+    "chapter": 6,
+    "condition": { "kind": "companyValuation", "amount": 10000000 },
+    "reward": { "reputation": 8.0 },
+    "track": "funded"
+  },
+  {
+    "id": "g6_public_decade",
+    "title": "A decade on the ticker",
+    "detail": "Ten years trading, and the name still means something.",
+    "chapter": 6,
+    "condition": { "kind": "yearsTrading", "amount": 10 },
+    "reward": { "reputation": 8.0 },
+    "track": "funded"
+  },
+  {
+    "id": "g6_second_topic",
+    "title": "Own a second topic",
+    "detail": "One category was a product. Two is a company.",
+    "chapter": 6,
+    "condition": { "kind": "topicsDominated", "amount": 2 },
+    "reward": { "reputation": 6.0 },
+    "track": "funded"
+  },
+  {
+    "id": "g6_forty_on_payroll",
+    "title": "Put forty people on payroll",
+    "detail": "Somebody in this building has never met you. Hire them anyway.",
+    "chapter": 6,
+    "condition": { "kind": "peakHeadcount", "amount": 40 },
+    "reward": { "reputation": 6.0 },
+    "track": "funded"
+  },
+  {
+    "id": "g6_review_95",
+    "title": "Score 95 or better",
+    "detail": "Public companies ship safe things. Ship the other kind.",
+    "chapter": 6,
+    "condition": { "kind": "bestReviewScore", "amount": 95 },
+    "reward": { "reputation": 6.0 },
+    "track": "funded"
+  },
+  {
+    "id": "g6i_decade_trading",
+    "title": "A decade trading",
+    "detail": "Outlast every rival that raised, and every one that didn't.",
+    "chapter": 6,
+    "condition": { "kind": "yearsTrading", "amount": 10 },
+    "reward": { "reputation": 8.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g6i_twelve_quarters",
+    "title": "Twelve profitable quarters in a row",
+    "detail": "Three years without a red one. That is what built means.",
+    "chapter": 6,
+    "condition": { "kind": "profitableQuarters", "amount": 12 },
+    "reward": { "reputation": 8.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g6i_three_million_worth",
+    "title": "Be worth three million",
+    "detail": "Never sold a share, and richer than most who did.",
+    "chapter": 6,
+    "condition": { "kind": "founderNetWorth", "amount": 3000000 },
+    "reward": { "reputation": 8.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g6i_ten_tenured",
+    "title": "Keep ten people a year each",
+    "detail": "An institution is the people who stay in it.",
+    "chapter": 6,
+    "condition": { "kind": "tenuredStaff", "amount": 10 },
+    "reward": { "reputation": 6.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g6i_million_banked",
+    "title": "Bank a million",
+    "detail": "Nobody to answer to, and a winter you could sleep through.",
+    "chapter": 6,
+    "condition": { "kind": "cashOnHand", "amount": 1000000 },
+    "reward": { "reputation": 6.0 },
+    "track": "independent"
+  },
+  {
+    "id": "g6i_review_95",
+    "title": "Score 95 or better",
+    "detail": "The institution's name on the best thing in the category.",
+    "chapter": 6,
+    "condition": { "kind": "bestReviewScore", "amount": 95 },
+    "reward": { "reputation": 6.0 },
+    "track": "independent"
   }
 ]

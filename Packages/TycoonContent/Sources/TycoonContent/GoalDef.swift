@@ -239,7 +239,8 @@ extension GoalDef.Condition {
 }
 
 extension ChapterDef {
-    /// The five chapters' names and teasers.
+    /// The chapters' names and teasers — the five of the run's spine,
+    /// plus the epilogue's.
     ///
     /// `Goals.json` is a flat array of goals — that is the shape
     /// `ContentCatalog` loads — so the prose that frames them lives here,
@@ -251,6 +252,11 @@ extension ChapterDef {
         3: ("Studio", "Fourteen people, a department that runs itself, and a market that notices you."),
         4: ("Scale", "Somebody else's money, forty desks, and rivals who have heard of you."),
         5: ("Legacy", "The part where you find out what all of it was for."),
+        // The epilogue's chapter: only a run played past its ending ever
+        // opens it (the engine's gate is `state.epilogue`), and the ladder
+        // is the ending's — the bell reads this pair, *Still yours* reads
+        // the independent pair below.
+        6: ("Public Company", "Keep the keys after the bell, and the market grades every quarter from here."),
     ]
 
     /// The title for a chapter number.
@@ -270,6 +276,15 @@ extension ChapterDef {
         3: "Fourteen people who stay, four quarters in the black, and an office with your name on the deeds.",
         4: "Nobody else's money. Two things on sale at once, and a company that runs without you on a Tuesday.",
         5: "Still yours. The part where you find out what all of it was for.",
+        6: "Keep it running past built, and find out what a company that lasts is called.",
+    ]
+
+    /// The independent ladder's own titles, for the one chapter whose
+    /// *name* differs between the ladders: the epilogue. Chapters 3–5
+    /// share a title and split only on the teaser, so this table stays a
+    /// single entry and every earlier chapter reads exactly as it did.
+    public static let independentTitles: [Int: String] = [
+        6: "The Institution",
     ]
 
     /// The teaser for a chapter on a ladder, shown while it is still
@@ -280,6 +295,15 @@ extension ChapterDef {
             return teaser
         }
         return teaser(for: chapter)
+    }
+
+    /// The title for a chapter on a ladder. Identical to `title(for:)`
+    /// everywhere but the epilogue chapter, whose name is the ending's.
+    public static func title(for chapter: Int, track: GoalTrack?) -> String {
+        if track == .independent, let title = independentTitles[chapter] {
+            return title
+        }
+        return title(for: chapter)
     }
 }
 
