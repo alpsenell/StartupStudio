@@ -309,3 +309,53 @@ have the route imply its tab the way `-autoRoute investors` does.
 | `awards-question.png` | Awards night, question phase, both answers priced |
 | `investors-ipo-card.png` | Investors screen (IPO card below the fold) |
 | `storefront.png` | Storefront released page, unmarked save (dormant check) |
+
+---
+
+## Resolution — the finishing lane
+
+*One pass over the merged tree, on main, after the review. `make test`
+(943 + 52 + 34 + 336) and `make apptest` (385) green; `make build`
+succeeds. New screenshots in `/tmp/i18-ux-shots/`: `pricing-a3.png`,
+`bell-good-i18f.png`, `bell-broken-i18f.png`, `party-thrown-i18f.png`. No
+fixture bytes moved, no
+snapshot baseline moved, no balance retuned.*
+
+| # | | |
+|---|---|---|
+| 1 | **fixed** | The winners headline is gated on `revealed == night.categories.count` rather than on leaving the question. Every sealed envelope keeps "N sealed envelopes, and the floor is filling up." over it. |
+| 2 | **fixed** | `PartyLaunchRow` takes `scoreIsPublic`; the launch-day sheet passes its own `revealComplete`, so the row reads "It is out. There are 7 days left to call it one." until the last outlet lands. The war room passes true — its row already sat behind the gate. |
+| 3 | **fixed** | `-autoRoute a3-pricing`: it lands on Investors, `DebugLaunch.a3Priced` clears the IPO gates on the way into slot 0, and `InvestorsView` opens the sheet. Photographed (`pricing-a3.png`). Two things came out of looking at it. The fair row's wallet line was `.secondary` grey on the accent fill and barely readable — it now takes a paper tone on that row only. And T1's OPTIONS panel drew nothing, because no bundled fixture grants options at all, so the dressing grants two people a slice (one part-way through vesting) and the panel renders with both of its states. Nothing clips or truncates otherwise. |
+| 4 | **fixed, with the distance named** | See the note below. |
+| 5 | **fixed** | Past four guests the band opens up (0.065–0.425 rather than 0.18–0.40), the figures drop to 36pt, and the seeded vertical jitter is off for a two-row band — it was worth ±5pt, which was the whole clearance. The second row's feet clear the first row's tags. |
+| 6 | **fixed** | "Price the offering — $480,516 at the fair price". The floor claim is dropped rather than re-derived: the door now says which of the three numbers it is quoting. |
+| 7 | **fixed** | `AwardsCutoffRow` uses `AnnounceEventPresenter.dateLabel`. Both Now-card countdowns read "July 1". |
+| 8 | **already done** | The newspaper wiring was committed with the merge glue (83484e4) before this pass, and `make test` / `make apptest` are green over it here. |
+| 9 | **deferred** | Out of scope by instruction: a cross-cutting localization pass of its own. |
+| 10 | **fixed** | "Close: $4,105,318 · $602,295 of the offer was yours." Second person, and out of the offer rather than out of the close. |
+| 11 | **deferred** | Week-one framing on the share card — next round. |
+| 12 | **fixed** | The venue row drops its note when it is the selected venue; the room's corner keeps it. |
+| 13 | **deferred** | The 55–59 earned-but-draining band is a balance question, and balance was out of scope here. |
+| 14 | **half fixed** | `@State thrown` and its one write are gone from `PartySheet`. The stack of "away"s on the launch-day sheet is deferred. |
+| 15 | **deferred** | "Stay home" contrast — next round. |
+| 16 | **deferred** | The war room's button wall — next round. |
+| 17 | **partly answered** | `a3-pricing` lands on Investors and needs no `-autoTab`; the `x4-` / `t7-` note is still owed. |
+
+**On item 4, the bell scene.** Reworked with existing grammar only. The
+crowd is seven `PixelFigure`s — the same sprite the office and the party
+room draw, which brings PixelKit's own skin, hair and shirt tones with it
+— standing on a floor with boards, in front of a dark hall whose windows
+are lit panes set into the wall rather than pale blocks laid on it, under
+a banner strung the width of the room. The grid fills the card instead of
+letterboxing at a fixed 64 columns, which was leaving a pale sliver down
+each side of a wall. It no longer reads as a bar chart, and at a glance it
+holds beside the war room's rooms.
+
+It is not yet as good as those rooms, and the remaining distance is
+honest: the bell, its rope and the podium are still three stacked
+rectangles rather than a bell; the back desks are still chips with a lit
+screen in them; and seven evenly spaced figures read as a row more than as
+a crowd with depth. The lane's own suggestion — build the hall as a real
+PixelKit room, so the desks, the podium and the bell come out of the
+sprite set instead of out of `Canvas` blocks — is still the right fix, and
+still a later pass.

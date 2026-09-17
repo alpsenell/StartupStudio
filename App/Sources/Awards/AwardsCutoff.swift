@@ -61,7 +61,11 @@ struct AwardsCutoffRow: View {
                     Label(AwardsCutoff.headline(daysLeft: left), systemImage: "trophy.fill")
                         .font(.system(.subheadline, design: .rounded).weight(.semibold))
                     Spacer(minLength: Theme.Spacing.sm)
-                    Text(GameState.dateLabel(forDay: AwardsCutoff.day(state: engine.state)))
+                    // The same slot as T5's expo countdown, so the same
+                    // grammar: "July 1", not "W50 · Y2".
+                    Text(AnnounceEventPresenter.dateLabel(
+                        AwardsCutoff.day(state: engine.state), today: engine.state.day
+                    ))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

@@ -22,9 +22,8 @@ struct PartySheet: View {
 
     @State private var venue: PartyVenue = .bar
     @State private var guests: [PartyGuest] = []
-    /// Set once the party is sent, so the sheet plays the night rather than
-    /// closing on the moment it exists for.
-    @State private var thrown = false
+    // The sheet plays the night off `state.party(for:)` — the engine's own
+    // record — so there is no local "thrown" flag to keep in step with it.
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -248,7 +247,6 @@ struct PartySheet: View {
                     rejected: blocker ?? "Not tonight.",
                     icon: "party.popper.fill"
                 )
-                thrown = true
             } label: {
                 Label("Throw it", systemImage: "party.popper.fill")
                     .font(.system(.headline, design: .rounded))
@@ -385,10 +383,14 @@ private struct PartyVenueRow: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(quote.desperate ? Theme.warning : .secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(venue.note)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                // The room above prints the selected venue's note in its
+                // own corner, so the row directly under it doesn't repeat.
+                if !selected {
+                    Text(venue.note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if let blocker {
                     Text(blocker)
                         .font(.caption2.weight(.semibold))
@@ -516,11 +518,19 @@ struct PartyFloorView: View {
                     figure(person, height: guestHeight, named: true, badge: person.isPress)
                         .position(spot(
                             index, of: guests.count, in: geometry.size,
-                            band: 0.18, depth: 0.22,
-                            // The list is at most eight; four abreast keeps
-                            // the back row one deep for the usual four
-                            // outlets, so no tag lands on a neighbour.
-                            columns: min(4, max(1, guests.count))
+                            // Four abreast, so the usual four outlets stand
+                            // one row deep. Past four the band opens up and
+                            // the figures shrink, because a second row at
+                            // the one-row pitch lands its feet on the first
+                            // row's name tags — and the names are the point.
+                            band: guests.count > 4 ? 0.065 : 0.18,
+                            depth: guests.count > 4 ? 0.36 : 0.22,
+                            columns: min(4, max(1, guests.count)),
+                            // The seeded vertical jitter is worth ±5pt,
+                            // which is the whole clearance the two-row band
+                            // has. Off for two rows; the horizontal scatter
+                            // still keeps the row from reading as a grid.
+                            verticalJitter: guests.count <= 4
                         ))
                 }
 
@@ -572,7 +582,9 @@ struct PartyFloorView: View {
         }
     }
 
-    private var guestHeight: CGFloat { guests.count > 4 ? 42 : 52 }
+    /// A tagged guest is the figure plus ~19pt of name tag, and two rows of
+    /// them have to fit between the venue note and the team's band.
+    private var guestHeight: CGFloat { guests.count > 4 ? 36 : 52 }
 
     private func figure(_ person: PartyPerson, height: CGFloat, named: Bool, badge: Bool) -> some View {
         VStack(spacing: 2) {
@@ -602,7 +614,8 @@ struct PartyFloorView: View {
     /// people stand in the same places every time the sheet opens.
     private func spot(
         _ index: Int, of count: Int, in size: CGSize,
-        band: Double, depth: Double, columns fixed: Int? = nil
+        band: Double, depth: Double, columns fixed: Int? = nil,
+        verticalJitter: Bool = true
     ) -> CGPoint {
         let spread: Int = switch count {
         case ...1: 1
@@ -618,8 +631,9 @@ struct PartyFloorView: View {
         let jitterX = Double(seed &* 2_654_435_761 % 100) / 100 - 0.5
         let jitterY = Double(seed &* 40_503 % 100) / 100 - 0.5
         let x = 0.20 + (Double(column) + 0.5) / Double(columns) * 0.72 + jitterX * 0.05
-        let y = band + (Double(row) + 0.5) / Double(rows) * depth + jitterY * 0.03
-        return CGPoint(x: size.width * min(0.92, max(0.12, x)), y: size.height * min(0.80, max(0.14, y)))
+        let y = band + (Double(row) + 0.5) / Double(rows) * depth
+            + (verticalJitter ? jitterY * 0.03 : 0)
+        return CGPoint(x: size.width * min(0.92, max(0.12, x)), y: size.height * min(0.80, max(0.13, y)))
     }
 }
 
