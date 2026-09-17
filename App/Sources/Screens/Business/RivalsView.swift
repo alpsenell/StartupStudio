@@ -295,6 +295,10 @@ struct RivalCard: View {
                 NavigationLink(value: RivalRoute(rivalID: rival.id)) {
                     HStack(spacing: Theme.Spacing.sm) {
                         PixelPortrait(seed: rival.appearanceSeed)
+                        // MARK: Iteration 18 — the rival's mark, off their
+                        // name, so the roster and the map agree.
+                        RivalMarkView(name: rival.name, size: 20)
+                        // MARK: end of Iteration 18
                         VStack(alignment: .leading, spacing: 2) {
                             Text("~\(rival.headcount) people")
                                 .font(Theme.Typography.number(.subheadline))

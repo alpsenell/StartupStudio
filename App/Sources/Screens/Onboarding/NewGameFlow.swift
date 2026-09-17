@@ -116,6 +116,16 @@ struct NewGameFlow: View {
     @State private var prefilledFromCode = false
     /// Iteration 8: the successor the founder page picked.
     @State private var chosenSuccessor: Successor?
+    // MARK: Iteration 18 — the studio mark
+    /// The mark the naming step picked, `nil` until a chip is tapped —
+    /// and `nil` is a real answer: a studio with no mark stamps nothing.
+    @State private var markSeed: UInt64?
+    /// How many times the mark die has been rolled. With the run seed it
+    /// is the whole input to the three comps, exactly the way
+    /// `nameShuffle` is the whole input to the name suggestions: no
+    /// generator the simulation owns is touched.
+    @State private var markShuffle = 0
+    // MARK: end of Iteration 18
 
     /// Appearance seeds the picker cycles through. Fixed and small so the
     /// founder you chose is the founder you get.
@@ -157,6 +167,16 @@ struct NewGameFlow: View {
         let trimmed = founderName.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? suggestedFounderName : trimmed
     }
+
+    // MARK: Iteration 18 — the studio mark
+    /// The three glyphs on offer this shuffle. A typed seed (R4's custom
+    /// page) makes them the seed's own three, so the same code founds the
+    /// same company down to the mark on the door; an untyped run rolls
+    /// from 0, which is only ever the flow's own number.
+    private var markComps: [UInt64] {
+        StudioMarkBuilder.comps(runSeed: custom.entry.seed ?? 0, shuffle: markShuffle)
+    }
+    // MARK: end of Iteration 18
 
     private var resolvedCompanyName: String {
         let trimmed = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -382,7 +402,15 @@ struct NewGameFlow: View {
                     }
                     PixelPanel {
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                            PixelText(text: resolvedCompanyName, scale: 2, color: Theme.pixelInk)
+                            HStack(spacing: Theme.Spacing.sm) {
+                                // MARK: Iteration 18 — the studio mark on
+                                // the sign, once one is picked.
+                                if let markSeed {
+                                    StudioMarkView(seed: markSeed, size: 24)
+                                }
+                                // MARK: end of Iteration 18
+                                PixelText(text: resolvedCompanyName, scale: 2, color: Theme.pixelInk)
+                            }
                             Text("Founded by \(resolvedFounderName)")
                                 .font(.footnote)
                                 .foregroundStyle(Theme.pixelInk.opacity(0.7))
@@ -392,6 +420,14 @@ struct NewGameFlow: View {
                     .accessibilityLabel("Sign preview: \(resolvedCompanyName), founded by \(resolvedFounderName)")
                 }
             }
+
+            // MARK: Iteration 18 — the studio mark
+            StudioMarkPicker(
+                comps: markComps,
+                chosen: $markSeed,
+                shuffle: { markShuffle += 1 }
+            )
+            // MARK: end of Iteration 18
         }
         .padding(.top, Theme.Spacing.lg)
     }
@@ -482,6 +518,9 @@ struct NewGameFlow: View {
         var setup = runSetup
         setup.heirloom = options.showsHeirloomsStep ? heirloom : nil
         setup.lineage = chosenSuccessor?.lineage
+        // MARK: Iteration 18 — the studio mark, nil unless a chip was tapped.
+        setup.markSeed = markSeed
+        // MARK: end of Iteration 18
         onStart(profile, resolvedCompanyName, difficulty, origin, setup)
     }
 
@@ -558,6 +597,72 @@ struct EarnedLookRibbon: View {
         .accessibilityLabel("Earned look: \(ending.headline)")
     }
 }
+
+// MARK: Iteration 18 — the studio mark
+
+/// Three glyphs and a die, at the naming step: the studio's mark.
+///
+/// *No mark* is a row of its own rather than an absence, because it is a
+/// real answer — a company without one stamps nothing anywhere, and the
+/// game looks exactly as it looked before this existed.
+struct StudioMarkPicker: View {
+    let comps: [UInt64]
+    @Binding var chosen: UInt64?
+    let shuffle: () -> Void
+
+    var body: some View {
+        CardView("Your mark", systemImage: "seal.fill") {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                Text("It goes on every box you ship, the storefront, the paper's byline and your building on the map.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: Theme.Spacing.md) {
+                    ForEach(Array(comps.enumerated()), id: \.offset) { index, seed in
+                        chip(seed: seed, index: index)
+                    }
+                    ShuffleButton(label: String(localized: "Shuffle marks", comment: "Button that rolls three new studio marks")) {
+                        shuffle()
+                    }
+                }
+                Button {
+                    Haptics.tap()
+                    Sounds.play(.tap)
+                    withAnimation(Theme.Motion.selection) { chosen = nil }
+                } label: {
+                    Text("No mark")
+                        .font(.footnote.weight(chosen == nil ? .bold : .regular))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(chosen == nil ? Theme.accent : .secondary)
+                .accessibilityLabel("No mark")
+                .accessibilityAddTraits(chosen == nil ? [.isSelected, .isButton] : .isButton)
+            }
+        }
+    }
+
+    private func chip(seed: UInt64, index: Int) -> some View {
+        let isChosen = chosen == seed
+        return Button {
+            Haptics.tap()
+            Sounds.play(.tap)
+            withAnimation(Theme.Motion.selection) { chosen = seed }
+        } label: {
+            StudioMarkView(seed: seed, size: 40)
+                .padding(Theme.Spacing.sm)
+                .background(Theme.chipBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .strokeBorder(isChosen ? Theme.accent : Color.clear, lineWidth: 3)
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Mark \(index + 1) of \(comps.count)")
+        .accessibilityAddTraits(isChosen ? [.isSelected, .isButton] : .isButton)
+    }
+}
+
+// MARK: end of Iteration 18
 
 // MARK: - Pieces
 

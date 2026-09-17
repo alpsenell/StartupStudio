@@ -58,6 +58,10 @@ enum ShareRenderer {
         case .phoneThread(let engine, let counterpart):
             render(PhoneThreadCardView(engine: engine, counterpart: counterpart))
         // MARK: end L1
+        // MARK: Iteration 18 — the launch card
+        case .launch(let engine, let product):
+            render(LaunchCardView(engine: engine, product: product))
+        // MARK: end of Iteration 18
         }
     }
 }
@@ -72,6 +76,10 @@ enum ShareCard {
     /// One conversation, as a card.
     case phoneThread(engine: GameEngine, counterpart: PhoneCounterpart)
     // MARK: end L1
+    // MARK: Iteration 18 — the launch card
+    /// One launch, minted from the product and the run — no new state.
+    case launch(engine: GameEngine, product: Product)
+    // MARK: end of Iteration 18
 
     /// The share sheet's title and the preview's caption.
     /// Iteration 8: the year as squares plus the score and the code, for
@@ -104,6 +112,10 @@ enum ShareCard {
         case .phoneThread(let engine, let counterpart):
             "\(engine.state.phoneName(for: counterpart)) · day \(engine.state.day)"
         // MARK: end L1
+        // MARK: Iteration 18 — the launch card
+        case .launch(let engine, let product):
+            "\(product.name) · \(engine.state.company.name)"
+        // MARK: end of Iteration 18
         }
     }
 
@@ -116,6 +128,10 @@ enum ShareCard {
         // MARK: Iteration 9 — L1 (the phone)
         case .phoneThread: "phone-thread"
         // MARK: end L1
+        // MARK: Iteration 18 — the launch card
+        case .launch(_, let product):
+            "launch-" + product.name.lowercased().replacingOccurrences(of: " ", with: "-")
+        // MARK: end of Iteration 18
         }
     }
 }

@@ -268,8 +268,13 @@ struct WarRoomContent: View {
 
     private var header: some View {
         HStack(spacing: Theme.Spacing.md) {
-            ProductBoxArtView(typeID: product.typeID, topicID: product.topicID, seed: product.boxArtSeed, size: 56)
-                .shadow(color: Theme.pixelShadow, radius: 0, x: 2, y: 2)
+            ProductBoxArtView(
+                typeID: product.typeID, topicID: product.topicID, seed: product.boxArtSeed, size: 56,
+                // MARK: Iteration 18 — the studio mark on the cover.
+                markSeed: engine.state.company.markSeed
+                // MARK: end of Iteration 18
+            )
+            .shadow(color: Theme.pixelShadow, radius: 0, x: 2, y: 2)
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 PixelText(text: product.name, scale: 3, color: Theme.pixelInk, shadow: true)
                 Text("\(type?.name ?? product.typeID.capitalized) · \(topic?.name ?? product.topicID.capitalized)")
@@ -800,6 +805,11 @@ private struct LaunchDayPanel: View {
                 // where the date was kept instead.
                 PartyLaunchRow(engine: engine, product: product)
                 // MARK: end X4
+                // MARK: Iteration 18 — the launch card, on the aftermath.
+                // Self-contained: it owns its own sheet and touches
+                // nothing else in the room.
+                LaunchCardButton(engine: engine, product: product, prominent: true)
+                // MARK: end of Iteration 18
                 Button {
                     Haptics.tap()
                     Sounds.play(.tap)

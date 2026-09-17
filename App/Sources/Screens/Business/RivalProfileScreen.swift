@@ -117,7 +117,14 @@ private struct RivalStudioCard: View {
                 HStack(alignment: .top, spacing: Theme.Spacing.md) {
                     PixelPortrait(seed: rival.appearanceSeed, size: 44)
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        PixelText(text: rival.name, scale: 2, color: Theme.pixelInk, shadow: true)
+                        // MARK: Iteration 18 — the studio mark: a rival's
+                        // comes free from their name, so every rival wears
+                        // one whether or not the player picked theirs.
+                        HStack(spacing: Theme.Spacing.sm) {
+                            RivalMarkView(name: rival.name, size: 18)
+                            PixelText(text: rival.name, scale: 2, color: Theme.pixelInk, shadow: true)
+                        }
+                        // MARK: end of Iteration 18
                         Text("~\(rival.headcount) people · valued around \(rival.valuation(balance: engine.balance).money)")
                             .font(Theme.Typography.number(.caption, weight: .regular))
                             .foregroundStyle(Theme.pixelInk.opacity(0.75))

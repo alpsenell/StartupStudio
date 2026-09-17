@@ -103,6 +103,12 @@ struct HQScreen: View {
             // V3: `-autoHQBottom` scrolls to Settings, so a headless pass
             // can photograph the bottom of HQ. Debug only.
             .task { await HQDebug.scrollToBottomIfAsked(scroller) }
+            // MARK: Iteration 18 — the launch card
+            // `-autoRoute i18-card-best|i18-card-worst` opens the card for
+            // a fixture's best or worst launch, so the spec's own check can
+            // be photographed. Debug only, inert without the flag.
+            .launchCardAutoRoute(engine: engine)
+            // MARK: end of Iteration 18
             // MARK: S1 (seating)
             .task {
                 #if DEBUG

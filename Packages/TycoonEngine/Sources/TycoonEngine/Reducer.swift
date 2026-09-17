@@ -1312,6 +1312,11 @@ public enum Reducer {
         case .seatingClear:
             events = SeatingSystem.clear(state: &state)
         // MARK: end S1
+        // MARK: Iteration 18 — the studio mark
+        case let .chooseStudioMark(seed):
+            state.company.markSeed = seed
+            events = []
+        // MARK: end of Iteration 18
         // MARK: end of Iteration 14
         // MARK: end of Iteration 13
         // MARK: end of Iteration 12

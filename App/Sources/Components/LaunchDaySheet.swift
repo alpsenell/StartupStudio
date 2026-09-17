@@ -105,6 +105,11 @@ struct LaunchDaySheet: View {
                             }
                         }
                         salesSection(release)
+                        // MARK: Iteration 18 — the launch card, at the end
+                        // of the reveal. Purely additive: it reads the
+                        // product and adds nothing to this sheet's state.
+                        LaunchCardButton(engine: engine, product: product, prominent: true)
+                        // MARK: end of Iteration 18
                     }
                 }
                 .padding(Theme.Spacing.lg)
@@ -135,7 +140,10 @@ struct LaunchDaySheet: View {
                     typeID: product.typeID,
                     topicID: product.topicID,
                     seed: product.boxArtSeed,
-                    size: 120
+                    size: 120,
+                    // MARK: Iteration 18 — the studio mark on the cover.
+                    markSeed: engine.state.company.markSeed
+                    // MARK: end of Iteration 18
                 )
                 .shadow(color: Theme.pixelShadow, radius: 0, x: 3, y: 3)
 

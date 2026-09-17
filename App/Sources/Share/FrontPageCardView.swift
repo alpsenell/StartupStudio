@@ -41,6 +41,13 @@ struct FrontPageCardView: View {
                     }
                     .shadow(color: ShareInk.ink.opacity(0.25), radius: 0, x: 4, y: 4)
                 HStack {
+                    // MARK: Iteration 18 — the studio mark beside the name
+                    // on the mat. The page above carries it in its own
+                    // masthead; nothing is drawn without one.
+                    if let markSeed = issue.markSeed {
+                        StudioMarkView(seed: markSeed, size: 16)
+                    }
+                    // MARK: end of Iteration 18
                     Text(companyName)
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundStyle(ShareInk.ink)

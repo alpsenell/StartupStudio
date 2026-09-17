@@ -90,8 +90,11 @@ struct StorefrontPage: View {
                     topic: topic,
                     rating: .released(info),
                     // MARK: T7 (press and stakes) — an exclusive's embargo.
-                    today: engine.state.day
+                    today: engine.state.day,
                     // MARK: end T7
+                    // MARK: Iteration 18 — the studio mark
+                    markSeed: engine.state.company.markSeed
+                    // MARK: end of Iteration 18
                 )
                 priceButton(info: info)
                 StorefrontShotsCard(product: product)
@@ -103,13 +106,20 @@ struct StorefrontPage: View {
                 // MARK: T7 (press and stakes) — only the verdicts that are out.
                 StorefrontReviewsCard(info: info, today: engine.state.day)
                 // MARK: end T7
+                // MARK: Iteration 18 — the launch card, retroactively:
+                // every product that ever shipped can still be minted.
+                LaunchCardButton(engine: engine, product: product)
+                // MARK: end of Iteration 18
             case .development(let progress):
                 StorefrontHero(
                     product: product,
                     developer: engine.state.company.name,
                     type: type,
                     topic: topic,
-                    rating: .comingSoon
+                    rating: .comingSoon,
+                    // MARK: Iteration 18 — the studio mark
+                    markSeed: engine.state.company.markSeed
+                    // MARK: end of Iteration 18
                 )
                 ComingSoonCard(progress: progress, type: type)
                 StorefrontFeaturesCard(product: product, content: engine.content)
@@ -275,6 +285,11 @@ private struct StorefrontHero: View {
     /// Today, for an exclusive's embargo; `nil` rates on every review.
     var today: Int? = nil
     // MARK: end T7
+    // MARK: Iteration 18 — the studio mark
+    /// The developer's glyph, on the cover and beside their name. `nil`
+    /// draws the page exactly as it was.
+    var markSeed: UInt64? = nil
+    // MARK: end of Iteration 18
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -288,16 +303,27 @@ private struct StorefrontHero: View {
                     typeID: product.typeID,
                     topicID: product.topicID,
                     seed: product.id.artSeed,
-                    size: 84
+                    size: 84,
+                    // MARK: Iteration 18 — the studio mark on the cover.
+                    markSeed: markSeed
+                    // MARK: end of Iteration 18
                 )
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text(product.name)
                         .font(.system(.title2, design: .rounded).weight(.bold))
                         .foregroundStyle(Theme.pixelInk)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(developer)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.pixelInk.opacity(0.7))
+                    // MARK: Iteration 18 — the developer's mark beside the
+                    // developer's name, the way a store badges a publisher.
+                    HStack(spacing: Theme.Spacing.xs) {
+                        if let markSeed {
+                            StudioMarkView(seed: markSeed, size: 14)
+                        }
+                        Text(developer)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.pixelInk.opacity(0.7))
+                    }
+                    // MARK: end of Iteration 18
                     Text(category)
                         .font(.footnote)
                         .foregroundStyle(Theme.pixelInk.opacity(0.7))

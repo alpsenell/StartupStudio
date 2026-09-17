@@ -19,6 +19,10 @@ struct CityMapReading: Hashable, Sendable {
     var landmarks: CityLandmarks
     var tier: OfficeTierStyle
     var season: PixelKit.Season
+    // MARK: Iteration 18 — the studio mark on the HQ sign; nil draws the
+    // map exactly as it always was.
+    var markSeed: UInt64?
+    // MARK: end of Iteration 18
 }
 
 extension GameState {
@@ -111,7 +115,12 @@ final class CityMapSceneCache: @unchecked Sendable {
         if let hit = byHour[hour] { return hit }
         let layers = CityMapComposer.layers(
             districts: reading.districts,
-            ambience: CityAmbience(timeOfDay: hour, season: reading.season, playerTier: reading.tier),
+            ambience: CityAmbience(
+                timeOfDay: hour, season: reading.season, playerTier: reading.tier,
+                // MARK: Iteration 18 — the studio mark
+                markSeed: reading.markSeed
+                // MARK: end of Iteration 18
+            ),
             landmarks: reading.landmarks
         )
         byHour[hour] = layers

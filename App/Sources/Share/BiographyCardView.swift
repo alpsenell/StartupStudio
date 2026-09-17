@@ -94,6 +94,11 @@ struct BiographyCardView: View {
                     .monospacedDigit()
             }
             Spacer(minLength: 0)
+            // MARK: Iteration 18 — the studio mark at the banner's far
+            // edge: the company's own seal on its own obituary. Nothing is
+            // drawn for a company that never picked one.
+            StudioMarkStamp(state: state, size: 40)
+            // MARK: end of Iteration 18
         }
     }
 
@@ -208,7 +213,10 @@ struct BiographyCardView: View {
             HStack(spacing: Theme.Spacing.sm) {
                 ProductBoxArtView(
                     typeID: best.product.typeID, topicID: best.product.topicID,
-                    seed: best.product.boxArtSeed, size: 56
+                    seed: best.product.boxArtSeed, size: 56,
+                    // MARK: Iteration 18 — the studio mark on the cover.
+                    markSeed: state.company.markSeed
+                    // MARK: end of Iteration 18
                 )
                 VStack(alignment: .leading, spacing: 3) {
                     Text(best.product.name)

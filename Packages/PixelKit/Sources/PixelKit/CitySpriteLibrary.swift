@@ -68,7 +68,15 @@ public enum CitySpriteLibrary {
     /// with the shutter half open, a brick loft, a glass studio, and finally
     /// a tower. Every version carries the indigo sign, so the eye finds it
     /// on the map without a legend.
-    public static func playerHQ(tier: OfficeTierStyle, time: TimeOfDay = .day) -> PixelSprite {
+    ///
+    /// Iteration 18: `markSeed` puts the studio's own glyph on the sign
+    /// band in place of the anonymous punched shape, and nothing else
+    /// moves. `nil` — every save that never picked a mark, and every
+    /// caller that has not been told about them — draws the building
+    /// exactly as it has always been drawn.
+    public static func playerHQ(
+        tier: OfficeTierStyle, time: TimeOfDay = .day, markSeed: UInt64? = nil
+    ) -> PixelSprite {
         let size: (width: Int, height: Int)
         switch tier {
         case .garage: size = (18, 16)
@@ -93,16 +101,23 @@ public enum CitySpriteLibrary {
             canvas.fill(x: size.width / 2 - 1, y: 0, width: 2, height: 2, Palettes.stone[3])
         }
 
-        // The indigo sign band, with the company initial punched out.
+        // The indigo sign band, with the company initial punched out — or,
+        // once the studio has a mark, the mark itself on a taller plate.
         let signY = 4
-        canvas.fill(x: 1, y: signY, width: size.width - 2, height: 5, Palettes.indigo[2])
-        canvas.fill(x: 3, y: signY + 1, width: 2, height: 3, Palettes.stone[0])
-        canvas.fill(x: 6, y: signY + 1, width: 1, height: 3, Palettes.stone[0])
-        canvas.fill(x: 8, y: signY + 1, width: 2, height: 1, Palettes.stone[0])
-        canvas.fill(x: 8, y: signY + 3, width: 2, height: 1, Palettes.stone[0])
+        let signHeight = markSeed == nil ? 5 : 7
+        canvas.fill(x: 1, y: signY, width: size.width - 2, height: signHeight, Palettes.indigo[2])
+        if let markSeed {
+            let plate = StudioMarkBuilder.sprite(seed: markSeed, side: 5)
+            canvas.stamp(plate, x: 3, y: signY + 1)
+        } else {
+            canvas.fill(x: 3, y: signY + 1, width: 2, height: 3, Palettes.stone[0])
+            canvas.fill(x: 6, y: signY + 1, width: 1, height: 3, Palettes.stone[0])
+            canvas.fill(x: 8, y: signY + 1, width: 2, height: 1, Palettes.stone[0])
+            canvas.fill(x: 8, y: signY + 3, width: 2, height: 1, Palettes.stone[0])
+        }
 
         // Windows below the sign.
-        var y = signY + 7
+        var y = signY + signHeight + 2
         while y < size.height - 6 {
             var x = 2
             while x < size.width - 3 {
@@ -138,14 +153,20 @@ public enum CitySpriteLibrary {
         // value type, so copying it keeps the grid *and* the palette keys.
         var glowing = canvas
         glowing.fill(x: 1, y: signY, width: size.width - 2, height: 1, Palettes.indigo[1])
-        glowing.fill(x: 1, y: signY + 4, width: size.width - 2, height: 1, Palettes.indigo[1])
+        glowing.fill(x: 1, y: signY + signHeight - 1, width: size.width - 2, height: 1, Palettes.indigo[1])
         return canvas.sprite(followedBy: [glowing])
     }
 
     /// A rival's headquarters: a plain block under a red banner, with the
     /// rival founder's portrait pinned to the front. It is the same portrait
     /// the Rivals screen shows, so the map and the roster agree.
-    public static func rivalHQ(seed: UInt64, district: DistrictStyle, time: TimeOfDay = .day) -> PixelSprite {
+    ///
+    /// Iteration 18: `markSeed` hangs the rival's own mark on the banner
+    /// beside the portrait — derived from their name by the caller, so it
+    /// costs no state. `nil` draws the building as it always was.
+    public static func rivalHQ(
+        seed: UInt64, district: DistrictStyle, time: TimeOfDay = .day, markSeed: UInt64? = nil
+    ) -> PixelSprite {
         let width = 20, height = 26
         var canvas = PixelCanvas(width: width, height: height)
         let night = time.darkness
@@ -164,6 +185,11 @@ public enum CitySpriteLibrary {
         for y in 4..<16 {
             canvas.set(x: 3, y: y, Palettes.outline)
             canvas.set(x: 14, y: y, Palettes.outline)
+        }
+
+        // Iteration 18: the rival's mark, on the plaque's right shoulder.
+        if let markSeed {
+            canvas.stamp(StudioMarkBuilder.sprite(seed: markSeed, side: 4), x: 15, y: 5)
         }
 
         // Windows and door.

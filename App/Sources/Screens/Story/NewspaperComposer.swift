@@ -49,6 +49,13 @@ struct NewspaperIssue: Identifiable, Equatable {
     /// The office, as it stood that week.
     let photo: Photo
 
+    // MARK: Iteration 18 — the studio mark
+    /// The studio's glyph, for the masthead's badge. `nil` on every issue
+    /// of every run that never picked a mark, and then the page is byte
+    /// for byte the page it was.
+    var markSeed: UInt64? = nil
+    // MARK: end of Iteration 18
+
     var id: Int { week }
 
     /// The lead story: a kicker naming the strand, a headline short
@@ -161,7 +168,10 @@ struct NewspaperComposer {
             // MARK: Iteration 11 — N4 (fame and the feed)
             beefColumn: beefColumn(in: range),
             // MARK: end of Iteration 11 — N4
-            photo: photo(endingDay: end, lead: lead, isLatest: isLatest)
+            photo: photo(endingDay: end, lead: lead, isLatest: isLatest),
+            // MARK: Iteration 18 — the studio mark
+            markSeed: state.company.markSeed
+            // MARK: end of Iteration 18
         )
     }
 

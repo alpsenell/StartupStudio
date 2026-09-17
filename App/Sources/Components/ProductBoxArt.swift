@@ -217,6 +217,13 @@ struct ProductBoxArtView: View {
     let topicID: String
     let seed: UInt64
     var size: CGFloat = 96
+    // MARK: Iteration 18 — the studio mark
+    /// The studio's glyph, stamped into the cover's bottom-left corner the
+    /// way a publisher's logo sits on a box. `nil` — every product of
+    /// every company that never picked a mark — draws the box exactly as
+    /// it has always been drawn.
+    var markSeed: UInt64? = nil
+    // MARK: end of Iteration 18
 
     var body: some View {
         let sprite = ProductBoxArt.sprite(typeID: typeID, topicID: topicID, seed: seed)
@@ -224,6 +231,18 @@ struct ProductBoxArtView: View {
             .interpolation(.none)
             .resizable()
             .frame(width: size, height: size)
+            // MARK: Iteration 18 — the studio mark
+            .overlay(alignment: .bottomLeading) {
+                if let markSeed {
+                    // The cover is columns 1–19 of the 24-wide box and the
+                    // spine owns the right edge, so the stamp sits two
+                    // pixels in from the outline on the cover's own side.
+                    StudioMarkView(seed: markSeed, size: size * 7 / 24)
+                        .padding(.leading, size * 2 / 24)
+                        .padding(.bottom, size * 2 / 24)
+                }
+            }
+            // MARK: end of Iteration 18
             .accessibilityHidden(true)
     }
 }
