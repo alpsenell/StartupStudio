@@ -1,4 +1,5 @@
 import Foundation
+import TycoonContent
 import TycoonEngine
 
 // MARK: Iteration 7 — Game Center (R3)
@@ -26,12 +27,21 @@ enum GameCenterMapping {
     /// - `lb.daily` is not here: the daily posts its own score when its
     ///   year stops, which is not always an ending (`GameSession+Daily`).
     static func reports(
-        for events: [GameEvent], state: GameState, balance: BalanceConfig
+        for events: [GameEvent], state: GameState, balance: BalanceConfig,
+        content: ContentCatalog? = nil
     ) -> [GameCenterReport] {
         var reports: [GameCenterReport] = []
         for event in events {
             switch event {
             case .goalCompleted(let goalID, _):
+                // The epilogue chapter has no achievements in the id
+                // table (`GameCenterCatalog.goalAchievements`), so its
+                // completions are not reported. Defaulted so every old
+                // caller — the tests — reads exactly as it did.
+                if let content, let goal = content.goal(goalID),
+                   goal.chapter > ProgressionState.chapterCount {
+                    continue
+                }
                 reports.append(.achievement(GameCenterID.achievement(goalID: goalID)))
             case .gameOver:
                 guard let ending = state.gameOver else { continue }
@@ -119,7 +129,7 @@ extension GameSession {
     func sendToGameCenter(_ events: [GameEvent]) {
         let client = GameCenterHub.client
         for report in GameCenterMapping.reports(
-            for: events, state: engine.state, balance: engine.balance
+            for: events, state: engine.state, balance: engine.balance, content: engine.content
         ) {
             if let achievement = report.achievement {
                 client.report(achievement: achievement)

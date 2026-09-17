@@ -16,12 +16,15 @@ struct GoalTests {
     }
 
     /// The catalog is the shape the card and the chapter gate assume:
-    /// five chapters, six goals on *each ladder* — chapters 1–2 carry one
-    /// set both ladders share, chapters 3–5 split into a funded and an
-    /// independent six (a goal both ask for is listed once, untracked).
+    /// the spine's five chapters plus the epilogue's, six goals on *each
+    /// ladder* — chapters 1–2 carry one set both ladders share, chapters
+    /// 3–5 split into a funded and an independent six (a goal both ask
+    /// for is listed once, untracked), and chapter 6 is fully split: the
+    /// public company's six and the institution's six.
+    /// Re-pinned 5 → 6 chapters when the epilogue ladders landed.
     @Test func catalogIsFiveChaptersOfSixPerLadder() throws {
         let content = Self.content
-        #expect(content.chapters.count == ProgressionState.chapterCount)
+        #expect(content.chapters.count == ProgressionState.epilogueChapter)
         for chapter in content.chapters {
             for track in GoalTrack.allCases {
                 let goals = content.goals(inChapter: chapter.chapter, track: track)

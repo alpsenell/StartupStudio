@@ -364,7 +364,9 @@ public struct ChapterEntry: Codable, Equatable, Sendable {
 public struct ProgressionState: Codable, Equatable, Sendable {
     /// The identity chosen at new game.
     public var founder: FounderProfile
-    /// 1-based chapter, 1...`ProgressionState.chapterCount`.
+    /// 1-based chapter, 1...`ProgressionState.chapterCount` for a run
+    /// that ends, `ProgressionState.epilogueChapter` for one played past
+    /// its ending.
     public var chapter: Int
     /// Title of the current chapter, refreshed daily from the catalog so
     /// the UI needs no content lookup.
@@ -397,8 +399,17 @@ public struct ProgressionState: Codable, Equatable, Sendable {
     /// which reads exactly as the old catalog did.
     public var independentSinceDay: Int?
 
-    /// How many chapters `Goals.json` ships.
+    /// How many chapters the run's spine has before its ending — the
+    /// count the paywall's pennants and Game Center's goal table mean by
+    /// "the chapters". The catalog itself is the source of truth for what
+    /// exists (`ContentCatalog.chapters`); this is the last one a run
+    /// reaches without playing past an ending.
     public static let chapterCount = 5
+    /// The epilogue's own chapter. Opened only by `state.epilogue` — a
+    /// founder who kept running the company past the bell or *Still
+    /// yours* — never by finishing goals, so a run that never continues
+    /// never sees it.
+    public static let epilogueChapter = 6
     /// How many goals the card shows at once.
     public static let activeGoalLimit = 3
     /// The first chapter whose goals differ between the two ladders.
@@ -548,6 +559,14 @@ extension GameState {
     /// question is still open. The card shows the name only once it is
     /// answered.
     public var declaredGoalTrack: GoalTrack? {
+        // An ending played past answers it for good: the bell is the
+        // funded ladder's, *Still yours* the independent one's — even for
+        // the rare founder who reached it without ever turning a term
+        // sheet down. `nil` for every run without an epilogue, so nothing
+        // below this line moves for a bot or a fixture.
+        if let epilogue {
+            return epilogue.ending == .independent ? .independent : .funded
+        }
         if investors.equityRemaining < 100 { return .funded }
         if progression.independentSinceDay != nil { return .independent }
         return nil

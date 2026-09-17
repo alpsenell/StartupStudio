@@ -34,7 +34,9 @@ enum ContractSystem {
     /// `1 + contractYearScale * (year - 1)`; the required-skill roll rises
     /// `skillYearBump` per year, capped at `skillCap`. Once the sheet is
     /// rolled, `sponsorOneOffer` may hand one offer to a rival — from
-    /// `worldRNG`, after every `rng` draw above.
+    /// `worldRNG`, after every `rng` draw above — and then
+    /// `warmKnownClientOffers` may hand plain offers to trusted clients,
+    /// drawing nothing from any stream at all.
     private static func refreshOffers(
         _ state: inout GameState,
         _ balance: BalanceConfig,
@@ -85,6 +87,7 @@ enum ContractSystem {
             ))
         }
         sponsorOneOffer(&offers, &state, balance)
+        warmKnownClientOffers(&offers, state, balance)
         state.contractOffers = offers
     }
 
@@ -161,6 +164,78 @@ enum ContractSystem {
         offers[slot] = offer
     }
 
+    // MARK: - The client book
+
+    /// After the sheet's documented draws and the sponsor's rewrite, a
+    /// trusted client may claim a plain offer: their name on it, a payout
+    /// bonus scaled by their trust, and a longer deadline — the same
+    /// rewrite-after-the-roll trick as `sponsorOneOffer`, except nothing
+    /// here draws from any stream at all, so the sheet's RNG walk is
+    /// byte-identical whether or not anybody is trusted. Inert until the
+    /// player has opened the client book, which no bot ever does.
+    private static func warmKnownClientOffers(
+        _ offers: inout [ContractOffer],
+        _ state: GameState,
+        _ balance: BalanceConfig
+    ) {
+        let config = balance.clientBook
+        guard state.clientBook.noticed, !offers.isEmpty else { return }
+        let warm = state.clientBook.warmClients(
+            day: state.day, trustedThreshold: config.trustedThreshold
+        )
+        guard !warm.isEmpty else { return }
+
+        var slots = offers.indices.filter { !offers[$0].isSponsored }
+        for client in warm.prefix(max(0, config.warmedOffersPerSheet)) {
+            guard let slot = slots.first else { return }
+            slots.removeFirst()
+            var offer = offers[slot]
+            offer.clientName = client.name
+            let bonus = config.warmPayoutBonus(forTrust: client.trust)
+            offer.payout = Int((Double(offer.payout) * (1 + bonus)).rounded())
+            offer.penalty = Int((balance.contractPenaltyFraction * Double(offer.payout)).rounded())
+            offer.deadlineDays = Int((Double(offer.deadlineDays) * config.warmDeadlineFactor).rounded(.up))
+            offers[slot] = offer
+        }
+    }
+
+    /// Writes a settled job onto its client's page: delivered at the
+    /// grade the settle just computed, or failed on the deadline. A
+    /// sponsored job's "client" is a rival with a payroll, not a client —
+    /// the book keeps out of it. Only ever called once the book has been
+    /// opened, so a run that never looks writes nothing.
+    private static func recordSettlement(
+        clientName: String,
+        delivered: Bool,
+        quality: Int,
+        state: inout GameState,
+        balance: BalanceConfig
+    ) {
+        let config = balance.clientBook
+        let grades = balance.contractQuality
+        // Read once, outside the closure: mutating the book and reading
+        // the state inside its closure would be two overlapping accesses.
+        let day = state.day
+        state.clientBook.record(clientName: clientName, baseTrust: config.trustBase) { client in
+            client.lastSettledDay = day
+            guard delivered else {
+                client.jobsFailed += 1
+                client.trust -= config.trustFailLoss
+                client.coldUntilDay = day + max(0, config.coldDays)
+                return
+            }
+            client.jobsDelivered += 1
+            if quality >= grades.greatThreshold {
+                client.trust += config.trustGreatGain
+            } else if quality >= grades.okayThreshold {
+                client.trust += config.trustOkayGain
+            } else {
+                client.trust -= config.trustPoorLoss
+                client.coldUntilDay = day + max(0, config.coldDays)
+            }
+        }
+    }
+
     /// The topic the player holds highest, `nil` when they hold nothing.
     /// Ties break on topic id so the choice replays.
     private static func bestStandingTopicID(_ state: GameState) -> String? {
@@ -229,6 +304,12 @@ enum ContractSystem {
                 events.append(.contractDelivered(
                     contractID: job.id, quality: quality, payout: paid, day: state.day
                 ))
+                if state.clientBook.noticed, !job.isSponsored {
+                    recordSettlement(
+                        clientName: job.clientName, delivered: true, quality: quality,
+                        state: &state, balance: balance
+                    )
+                }
                 if job.isSponsored {
                     events.append(contentsOf: shipSponsoredDelivery(
                         job, quality: quality, &state, balance, content
@@ -244,6 +325,12 @@ enum ContractSystem {
                     state.company.reputation - balance.contractReputationPenalty
                 ))
                 events.append(.contractFailed(contractID: job.id, penalty: penalty, day: state.day))
+                if state.clientBook.noticed, !job.isSponsored {
+                    recordSettlement(
+                        clientName: job.clientName, delivered: false, quality: 0,
+                        state: &state, balance: balance
+                    )
+                }
             } else {
                 remaining.append(job)
             }

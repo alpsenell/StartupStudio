@@ -378,6 +378,9 @@ private struct LiveOpsCard: View {
                     priceTierPicker
                     supportRow
                     updateButton
+                    // MARK: The wishlist
+                    wishlistSection
+                    // MARK: end The wishlist
                 }
             }
         }
@@ -516,6 +519,70 @@ private struct LiveOpsCard: View {
                 .monospacedDigit()
                 .foregroundStyle(noSlot ? Theme.warning : .secondary)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: The wishlist
+
+    /// What the people using it are asking for: up to three catalog
+    /// cards this product does not have, each shippable in an update. A
+    /// pure read (`Wishlist.wishes`) — nothing stored, nothing drawn —
+    /// so rendering the rows costs the simulation nothing.
+    private var wishes: [WishReading] {
+        Wishlist.wishes(
+            for: product, state: engine.state, content: engine.content, balance: engine.balance
+        )
+    }
+
+    @ViewBuilder private var wishlistSection: some View {
+        let wishes = self.wishes
+        if !wishes.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Wishlist")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                ForEach(wishes) { wish in
+                    wishRow(wish)
+                }
+                Text("Ship one in an update and it joins the product for good — "
+                    + "a bigger quality lift, and the press looks again, harder.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func wishRow(_ wish: WishReading) -> some View {
+        let updating = engine.state.economy.update(for: product.id) != nil
+        let noSlot = !engine.state.hasFreeDevSlot
+        let audience = info.isSubscription ? "subscribers" : "buyers"
+        return HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(wish.name) — \(wish.demandPercent)% of your \(audience) ask for it")
+                    .font(.footnote.weight(.semibold))
+                    .monospacedDigit()
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(wish.reason)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: Theme.Spacing.sm)
+            Button("Ship it") {
+                guard let action = LiveOps.startUpdate(
+                    productID: product.id, featureCardID: wish.cardID
+                ) else { return }
+                shell.toasts.send(
+                    action,
+                    to: engine,
+                    rejected: "No build slot free — something else is in development."
+                )
+            }
+            .font(.system(.footnote, design: .rounded).weight(.semibold))
+            .buttonStyle(.bordered)
+            .disabled(noSlot || updating)
+            .accessibilityLabel("Ship \(wish.name) in an update")
+            .accessibilityHint("\(wish.demandPercent) percent of your \(audience) ask for it")
         }
     }
 }

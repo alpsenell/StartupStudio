@@ -90,14 +90,17 @@ enum TimelineBuilder {
             detail: "\(state.progression.founder.displayName) founded \(state.company.name)."
         ))
 
-        // Chapters after the first: the first is the founding.
+        // Chapters after the first: the first is the founding. The title
+        // is track-aware for the epilogue chapter alone — the spine
+        // chapters read the same on both ladders.
         for entry in state.progression.chapterLog where entry.chapter > 1 {
+            let title = ChapterDef.title(for: entry.chapter, track: state.declaredGoalTrack)
             markers.append(TimelineMarker(
                 id: "chapter-\(entry.chapter)",
                 day: entry.day,
                 kind: .chapter(entry.chapter),
-                title: ChapterDef.title(for: entry.chapter),
-                detail: "Chapter \(entry.chapter): \(ChapterDef.title(for: entry.chapter))."
+                title: title,
+                detail: "Chapter \(entry.chapter): \(title)."
             ))
         }
 

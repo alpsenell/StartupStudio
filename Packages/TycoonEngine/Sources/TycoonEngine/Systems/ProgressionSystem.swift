@@ -169,7 +169,28 @@ enum ProgressionSystem {
         let chapters = content.chapters.map(\.chapter)
         guard let highest = chapters.max() else { return events }
 
-        while state.progression.chapter < highest {
+        // The epilogue chapter is not earned four-of-six like the others:
+        // playing past an ending is its gate. It opens on the first daily
+        // pass after the founder chooses to keep going — whatever chapter
+        // the run ended in — and a run without an epilogue caps at the
+        // spine's last chapter exactly as it always did.
+        if state.epilogue != nil,
+           chapters.contains(ProgressionState.epilogueChapter),
+           state.progression.chapter < ProgressionState.epilogueChapter {
+            state.progression.chapter = ProgressionState.epilogueChapter
+            state.progression.chapterLog.append(
+                ChapterEntry(chapter: ProgressionState.epilogueChapter, day: state.day)
+            )
+            events.append(.chapterReached(
+                chapter: ProgressionState.epilogueChapter, day: state.day
+            ))
+            return events
+        }
+        let cap = state.epilogue == nil
+            ? min(highest, ProgressionState.epilogueChapter - 1)
+            : highest
+
+        while state.progression.chapter < cap {
             // Four of the *active ladder's* six. A goal done on the other
             // ladder before a switch still counts if it is shared; one
             // that is not stays in the log and opens nothing.
@@ -192,7 +213,12 @@ enum ProgressionSystem {
     /// then any left behind in earlier chapters, so nothing is ever
     /// silently abandoned.
     static func refreshActiveGoals(_ state: inout GameState, _ content: ContentCatalog) {
-        state.progression.chapterTitle = ChapterDef.title(for: state.progression.chapter)
+        // Track-aware for the epilogue chapter alone — every chapter of
+        // the spine reads the same title on both ladders, so this line is
+        // the line it always was until an epilogue names the sixth.
+        state.progression.chapterTitle = ChapterDef.title(
+            for: state.progression.chapter, track: state.declaredGoalTrack
+        )
 
         let completed = state.progression.completedGoalIDs
         let currentChapter = state.progression.chapter

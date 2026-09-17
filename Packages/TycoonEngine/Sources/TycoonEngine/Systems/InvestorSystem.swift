@@ -35,7 +35,15 @@ enum InvestorSystem {
         // quarter — the offer check's draw is skipped with it, which only
         // ever moves `investorRNG` inside an epilogue run (no other run
         // has one), so every pinned suite is byte-identical.
-        guard state.epilogue == nil else { return events }
+        guard state.epilogue == nil else {
+            // Chapter 6 still counts the quarters, without the board:
+            // the epilogue ladders ask for profitable quarters, so the
+            // one number `quarterlyReview` fed them keeps moving. No
+            // draws, no reviews, no events — only ever inside an
+            // epilogue run.
+            countEpilogueQuarter(&state, balance)
+            return events
+        }
         events.append(contentsOf: offerCheck(&state, balance, content))
         events.append(contentsOf: quarterlyReview(&state, balance))
         return events
@@ -157,6 +165,25 @@ enum InvestorSystem {
     }
 
     // MARK: - Board
+
+    /// The epilogue's slice of `quarterlyReview`: on the same review days,
+    /// the same "did the account grow" arithmetic moves
+    /// `profitableQuarters` and the cash watermark it is graded against —
+    /// and nothing else. There is no board to grade the quarter, so no
+    /// pressure, no review record, no events.
+    private static func countEpilogueQuarter(
+        _ state: inout GameState,
+        _ balance: BalanceConfig
+    ) {
+        let interval = max(1, balance.investors.reviewIntervalDays)
+        guard state.day > 0, state.day.isMultiple(of: interval) else { return }
+        if state.company.cash > state.investors.lastQuarterCash {
+            state.investors.profitableQuarters += 1
+        } else {
+            state.investors.profitableQuarters = 0
+        }
+        state.investors.lastQuarterCash = state.company.cash
+    }
 
     /// Every `reviewIntervalDays` the board takes the company's temperature
     /// against the one thing it cares about, and the founder's grip on the
