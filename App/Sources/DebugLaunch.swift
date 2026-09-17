@@ -1920,14 +1920,19 @@ extension DebugLaunch {
         let scenario = String(route.dropFirst("x4-".count))
         guard ["open", "desperate", "thrown", "away"].contains(scenario) else { return }
         _ = engine.send(.partyDebugSeed(scenario: scenario))
-        // The launch sheet for the build the seed landed today: a debug send
-        // does not pass through the toast centre that opens it.
-        if let shipped = engine.state.products.first(where: {
+        // A debug send does not pass through the toast centre that opens a
+        // sheet, so open one here: the party room for the scenarios that
+        // are about the room, the launch sheet for the ones about the row.
+        guard let shipped = engine.state.products.first(where: {
             if case .released(let info) = $0.stage { return info.launchDay == engine.state.day }
             return false
-        }) {
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(1))
+        }) else { return }
+        let room = ["open", "desperate", "thrown"].contains(scenario)
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            if room {
+                GameShell.shared.partyProductID = shipped.id
+            } else {
                 GameShell.shared.launchDayProductID = shipped.id
             }
         }

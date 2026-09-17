@@ -62,7 +62,7 @@ struct PartySheet: View {
                         founderSeed: founderSeed,
                         reduceMotion: reduceMotion
                     )
-                    .frame(height: 300)
+                    .frame(height: 330)
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
 
                     if let party {
@@ -510,26 +510,37 @@ struct PartyFloorView: View {
                     .padding(Theme.Spacing.md)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                // The guests stand at the back of the room.
+                // The guests stand at the back of the room — always named,
+                // because who came is the half of the list the player chose.
                 ForEach(Array(guests.enumerated()), id: \.element.id) { index, person in
-                    figure(person, height: 56, badge: person.isPress)
-                        .position(spot(index, of: guests.count, in: geometry.size, band: 0.26, depth: 0.22))
+                    figure(person, height: guestHeight, named: true, badge: person.isPress)
+                        .position(spot(
+                            index, of: guests.count, in: geometry.size,
+                            band: 0.18, depth: 0.22,
+                            // The list is at most eight; four abreast keeps
+                            // the back row one deep for the usual four
+                            // outlets, so no tag lands on a neighbour.
+                            columns: min(4, max(1, guests.count))
+                        ))
                 }
 
                 // Your people, across the middle — the point of the picture.
+                // A full studio is fifteen figures in a phone-width room, so
+                // past six they lose their labels and shrink: a crowd reads
+                // as a crowd, and a garage of three still reads as names.
                 ForEach(Array(team.enumerated()), id: \.element.id) { index, person in
-                    figure(person, height: 66, badge: false)
-                        .position(spot(index, of: team.count, in: geometry.size, band: 0.52, depth: 0.26))
+                    figure(person, height: teamHeight, named: team.count <= 6, badge: false)
+                        .position(spot(index, of: team.count, in: geometry.size, band: 0.48, depth: 0.28))
                 }
 
                 VStack(spacing: 2) {
                     PixelFigure(
                         seed: founderSeed, isFounder: true, pose: .chat,
-                        height: 76, reduceMotion: reduceMotion
+                        height: 72, reduceMotion: reduceMotion
                     )
                     tag("You")
                 }
-                .position(x: geometry.size.width * 0.15, y: geometry.size.height * 0.87)
+                .position(x: geometry.size.width * 0.13, y: geometry.size.height * 0.80)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(label)
                 .accessibilitySortPriority(1)
@@ -551,13 +562,25 @@ struct PartyFloorView: View {
             + "guest\(guests.count == 1 ? "" : "s")."
     }
 
-    private func figure(_ person: PartyPerson, height: CGFloat, badge: Bool) -> some View {
+    /// Figures shrink as the room fills, so a campus roster still fits the
+    /// floor rather than standing on each other's heads.
+    private var teamHeight: CGFloat {
+        switch team.count {
+        case ...4: 64
+        case 5...8: 52
+        default: 42
+        }
+    }
+
+    private var guestHeight: CGFloat { guests.count > 4 ? 42 : 52 }
+
+    private func figure(_ person: PartyPerson, height: CGFloat, named: Bool, badge: Bool) -> some View {
         VStack(spacing: 2) {
             PixelFigure(
                 seed: person.seed, isFounder: false,
                 pose: .chat, height: height, reduceMotion: reduceMotion
             )
-            tag(person.name.split(separator: " ").first.map(String.init) ?? person.name, press: badge)
+            if named { tag(PartyCopy.shortName(person.name), press: badge) }
         }
         .accessibilityHidden(true)
     }
@@ -577,17 +600,26 @@ struct PartyFloorView: View {
     /// The same seeded scatter the networking floor uses, over a band of the
     /// room: two to a row, jittered off the person's own seed so the same
     /// people stand in the same places every time the sheet opens.
-    private func spot(_ index: Int, of count: Int, in size: CGSize, band: Double, depth: Double) -> CGPoint {
-        let columns = count <= 1 ? 1 : (count <= 4 ? 2 : 3)
+    private func spot(
+        _ index: Int, of count: Int, in size: CGSize,
+        band: Double, depth: Double, columns fixed: Int? = nil
+    ) -> CGPoint {
+        let spread: Int = switch count {
+        case ...1: 1
+        case 2...4: 2
+        case 5...8: 3
+        default: 4
+        }
+        let columns = fixed ?? spread
         let column = index % columns
         let row = index / columns
         let rows = max(1, Int(ceil(Double(count) / Double(columns))))
         let seed = (index < 99 ? UInt64(index) : 0) &+ 17
         let jitterX = Double(seed &* 2_654_435_761 % 100) / 100 - 0.5
         let jitterY = Double(seed &* 40_503 % 100) / 100 - 0.5
-        let x = 0.22 + (Double(column) + 0.5) / Double(columns) * 0.68 + jitterX * 0.06
-        let y = band + (Double(row) + 0.5) / Double(rows) * depth + jitterY * 0.04
-        return CGPoint(x: size.width * min(0.93, max(0.10, x)), y: size.height * min(0.82, max(0.16, y)))
+        let x = 0.20 + (Double(column) + 0.5) / Double(columns) * 0.72 + jitterX * 0.05
+        let y = band + (Double(row) + 0.5) / Double(rows) * depth + jitterY * 0.03
+        return CGPoint(x: size.width * min(0.92, max(0.12, x)), y: size.height * min(0.80, max(0.14, y)))
     }
 }
 

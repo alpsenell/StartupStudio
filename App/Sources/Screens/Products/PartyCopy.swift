@@ -63,6 +63,17 @@ enum PartyCopy {
         }
     }
 
+    /// What fits on a tag over somebody's head. A first name for a person;
+    /// for an outlet, the word that identifies it — "The Stack Review" is
+    /// "Stack", not "The", which is what taking the first word gave.
+    static func shortName(_ name: String) -> String {
+        var words = name.split(separator: " ").map(String.init)
+        if words.count > 1, words[0].caseInsensitiveCompare("the") == .orderedSame {
+            words.removeFirst()
+        }
+        return words.first ?? name
+    }
+
     /// A stable seed from a name, so an outlet's reporter has the same face
     /// at every party the studio ever throws.
     static func seed(for name: String) -> UInt64 {

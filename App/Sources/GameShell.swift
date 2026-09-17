@@ -40,6 +40,13 @@ final class GameShell {
         }
     }
 
+    // MARK: X4 (the launch party)
+    /// The product whose party sheet is open. Set only by the party row and
+    /// by `-autoRoute x4-…`, so the screenshot pass can photograph the room
+    /// without a tap — the scene is the feature.
+    var partyProductID: UUID?
+    // MARK: end X4
+
     /// Iteration 7 (R1): the tour, while a fresh install is on it. The
     /// shell reports the day, the events and its own sheets closing; the
     /// session decides what the tour does with them.
