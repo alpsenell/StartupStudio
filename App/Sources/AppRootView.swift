@@ -110,6 +110,29 @@ struct AppRootView: View {
     @ViewBuilder
     private func endingCover(engine: GameEngine) -> some View {
         if let info = engine.state.gameOver {
+            // MARK: A3 (IPO day)
+            // The bell first, on the one ending that has a first day. It
+            // plays once per run: the key is the run's seed and the day it
+            // ended, so a second company that lists on the same day still
+            // gets its own morning on the floor.
+            if let record = info.ipo, ipoBellSeenKey != bellKey(engine: engine, info: info) {
+                IPOBellScreen(
+                    companyName: engine.state.company.name,
+                    founderName: engine.state.progression.founder.displayName,
+                    result: record,
+                    onFinish: { ipoBellSeenKey = bellKey(engine: engine, info: info) }
+                )
+            } else {
+                endingBiography(engine: engine, info: info)
+            }
+            // MARK: end A3
+        }
+    }
+
+    /// The founder biography, won or lost.
+    @ViewBuilder
+    private func endingBiography(engine: GameEngine, info: GameOverInfo) -> some View {
+        Group {
             // WS-F: four endings now, graded by `EndingKind.isSuccess`
             // rather than one named case, and both screens are thin
             // wrappers on the founder biography, so they take the engine
@@ -152,6 +175,33 @@ struct AppRootView: View {
             }
         }
     }
+
+    // MARK: A3 (IPO day)
+
+    /// Which run's bell has already been rung on screen.
+    @State private var ipoBellSeenKey: String?
+
+    /// The floor on its own, for the screenshot pass (`-autoRoute a3-bell`).
+    @ViewBuilder
+    private func ipoBellDebugCover() -> some View {
+        #if DEBUG
+        if let fixture = IPOBellDebug.fixture {
+            IPOBellScreen(
+                companyName: fixture.ticker == "MERL" ? "Meridian Labs" : "Halcyon Systems",
+                founderName: "The founder",
+                result: fixture,
+                onFinish: {}
+            )
+            .gameColumn()
+        }
+        #endif
+    }
+
+    private func bellKey(engine: GameEngine, info: GameOverInfo) -> String {
+        "\(engine.state.seed)-\(info.day)"
+    }
+
+    // MARK: end A3
 
     /// The widest the game's column is ever drawn (R8).
     ///
@@ -287,6 +337,8 @@ struct AppRootView: View {
                 endingCover(engine: engine)
                     .gameColumn()
             }
+            // MARK: A3 (IPO day) — the screenshot pass's own door.
+            .overlay { ipoBellDebugCover() }
             // MARK: Iteration 10 — M3 (incident room)
             // A live product on fire opens its own room, the way the war
             // room is presented — full screen, at window level, over

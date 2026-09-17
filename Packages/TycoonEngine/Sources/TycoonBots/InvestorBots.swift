@@ -96,7 +96,7 @@ public struct InvestorBot: BotPolicy {
 
         // The best ending in the game, whenever it is on the table.
         if state.canFileIPO(balance: balance) {
-            return actions + [.fileIPO]
+            return actions + [.fileIPO()]
         }
         actions.append(contentsOf: answerTermSheet(state, balance))
 

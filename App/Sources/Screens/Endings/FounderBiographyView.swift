@@ -492,6 +492,17 @@ struct FounderBiographyView: View {
                         .monospacedDigit()
                         .fixedSize(horizontal: false, vertical: true)
                     }
+                    // MARK: A3 (IPO day)
+                    // The board's letters and the first day, on the one
+                    // ending that has them.
+                    if let ipo = info.ipo {
+                        row("Listed as", ipo.ticker)
+                        row(
+                            ipo.brokeOpen ? "Broke open, day one" : "Day one",
+                            "\(ipo.popLabel) · closed at \(ipo.dayOneClose.money)"
+                        )
+                    }
+                    // MARK: end A3
                     row("Company at the end", state.companyValuation(balance: balance).money)
                     row("You still owned", "\(state.investors.equityRemaining.oneDecimal)%")
                     // WS-B: every round bought back out of the cap table.

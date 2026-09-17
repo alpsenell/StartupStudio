@@ -337,6 +337,14 @@ struct NewspaperComposer {
         default: break
         }
         // MARK: end K4
+        // MARK: A3 (IPO day)
+        // The bell is the biggest company story the paper can print, and a
+        // broken open is the one it leads with hardest — the founder priced
+        // it, the street said no, and that is the front page.
+        if case let .wentPublic(_, _, _, pop) = dated.event {
+            return severity * 10 + strand + ((pop ?? 0) < 0 ? 40 : 30)
+        }
+        // MARK: end A3
         // MARK: K2 (product lifecycle)
         // A v2 replacing its parent is the week's product news; a
         // retirement, a rise or a sale is news too — a price change the

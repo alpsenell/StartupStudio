@@ -219,8 +219,8 @@ struct BuybackTests {
 
         func proceeds(_ state: GameState) -> Int? {
             var copy = state
-            for event in Reducer.apply(.fileIPO, to: &copy, balance: balance, content: Self.content) {
-                if case let .wentPublic(proceeds, _) = event { return proceeds }
+            for event in Reducer.apply(.fileIPO(), to: &copy, balance: balance, content: Self.content) {
+                if case let .wentPublic(proceeds, _, _, _) = event { return proceeds }
             }
             return nil
         }

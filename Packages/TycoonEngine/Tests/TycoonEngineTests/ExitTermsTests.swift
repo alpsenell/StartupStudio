@@ -320,7 +320,7 @@ struct ExitTermsTests {
         state.investors.earnOut = earnOut
         #expect(!state.canFileIPO(balance: balance))
         #expect(state.ipoBlocker(balance: balance)?.contains("Quill Systems") == true)
-        let filed = Reducer.apply(.fileIPO, to: &state, balance: balance, content: Self.content)
+        let filed = Reducer.apply(.fileIPO(), to: &state, balance: balance, content: Self.content)
         #expect(filed.isEmpty)
         #expect(state.gameOver == nil)
 

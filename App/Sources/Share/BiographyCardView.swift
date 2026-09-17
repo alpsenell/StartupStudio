@@ -66,7 +66,14 @@ struct BiographyCardView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "\(founder.displayName)'s biography card: \(info.kind.headline) on day \(info.day), "
-                + "\(state.company.name). Replay this life with code \(seedCode.encoded)."
+                + "\(state.company.name). "
+                // MARK: A3 (IPO day)
+                + (info.ipo.map {
+                    "Listed as \($0.ticker.map(String.init).joined(separator: " ")), "
+                        + "first day \($0.popLabel), closing at \($0.dayOneClose.money). "
+                } ?? "")
+                // MARK: end A3
+                + "Replay this life with code \(seedCode.encoded)."
         )
     }
 
@@ -338,6 +345,18 @@ struct BiographyCardView: View {
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundStyle(ShareInk.faint)
                     .lineLimit(1)
+                // MARK: A3 (IPO day)
+                // The one ending with a ticker carries it: the board's
+                // letters, how the first day closed, and what it closed
+                // at. Absent on every other ending, so the card is what it
+                // was.
+                if let ipo = info.ipo {
+                    Text("\(ipo.ticker) \(ipo.popLabel) day one · closed at \(ipo.dayOneClose.money)")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(ipo.brokeOpen ? ShareInk.failure : ShareInk.success)
+                        .lineLimit(1)
+                }
+                // MARK: end A3
             }
             Spacer(minLength: 0)
         }

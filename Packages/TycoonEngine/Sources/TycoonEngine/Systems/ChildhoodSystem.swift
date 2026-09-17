@@ -176,7 +176,7 @@ public enum ChildhoodSystem {
             )
         case let .chapterReached(chapter, eventDay) where eventDay == day:
             return (.chapter, "The company got bigger again. Chapter \(chapter), you called it.", 0)
-        case let .wentPublic(proceeds, eventDay) where eventDay == day:
+        case let .wentPublic(proceeds, eventDay, _, _) where eventDay == day:
             return (.exit, "The company went public. \(proceeds.childMoney), and a photograph of you ringing a bell.", 1)
         case let .companySold(_, amount, eventDay) where eventDay == day:
             return (.exit, "You sold it. \(amount.childMoney), and a strange quiet at dinner.", 1)

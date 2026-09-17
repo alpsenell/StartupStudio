@@ -526,8 +526,10 @@ public enum Reducer {
             if !events.isEmpty {
                 ProgressionSystem.termSheetAnswered(declined: true, state: &state, content: content)
             }
-        case .fileIPO:
-            events = InvestorSystem.fileIPO(state: &state, balance: balance)
+        // MARK: A3 (IPO day)
+        case let .fileIPO(price):
+            events = InvestorSystem.fileIPO(state: &state, balance: balance, price: price)
+        // MARK: end A3
         case let .interviewCandidate(candidateID):
             events = HiringSystem.interview(
                 candidateID: candidateID, state: &state, balance: balance

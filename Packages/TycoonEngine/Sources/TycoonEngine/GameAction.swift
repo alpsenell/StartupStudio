@@ -108,7 +108,13 @@ public enum GameAction: Codable, Equatable, Sendable {
     case declineInvestment
     /// Files to go public. Gated on valuation, profitable quarters and
     /// recurring revenue; ends the run as an IPO.
-    case fileIPO
+    // MARK: A3 (IPO day)
+    /// `price` (A3): how the founder priced the offering. `.fair` — the
+    /// default, and every old caller: the bots, the tests, the confirm
+    /// button as it was — pays exactly the dollar it always did, because
+    /// the fair proceeds multiple is 1.0.
+    case fileIPO(price: IPOPrice = .fair)
+    // MARK: end A3
     /// Spends a day of founder time interviewing a candidate, revealing
     /// the trait their CV didn't mention.
     case interviewCandidate(candidateID: UUID)
