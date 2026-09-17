@@ -348,8 +348,14 @@ struct CityMapScreen: View {
                     .filter { $0.homeDistrict == district }
                     .map(\.appearanceSeed),
                 // MARK: K6 (home and rooms)
-                hasPlayerHome: district == state.life.homeDistrict
+                hasPlayerHome: district == state.life.homeDistrict,
                 // MARK: end K6
+                // MARK: Iteration 18 — the studio mark: a rival's comes
+                // free from their name, so every rival on the map has one.
+                rivalMarkSeeds: state.rivals.rivals
+                    .filter { $0.homeDistrict == district }
+                    .map { StudioMark.seed(forRival: $0.name) }
+                // MARK: end of Iteration 18
             )
         }
     }
@@ -363,7 +369,10 @@ struct CityMapScreen: View {
             districts: districtInfos,
             landmarks: state.cityLandmarks(balance: engine.balance),
             tier: OfficeTierStyle(rawValue: state.company.officeTier.rawValue) ?? .garage,
-            season: PixelKit.Season(rawValue: state.calendar.season.rawValue) ?? .summer
+            season: PixelKit.Season(rawValue: state.calendar.season.rawValue) ?? .summer,
+            // MARK: Iteration 18 — the studio mark
+            markSeed: state.company.markSeed
+            // MARK: end of Iteration 18
         )
     }
 

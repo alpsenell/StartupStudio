@@ -13,16 +13,25 @@ public struct CityDistrictInfo: Sendable, Equatable, Hashable {
     /// no, so every existing caller draws the map it always drew.
     public var hasPlayerHome: Bool
     // MARK: end K6
+    // MARK: Iteration 18 — the studio mark
+    /// Each of those rivals' marks, in the same order as `rivalSeeds`;
+    /// derived from their names by the caller, so they cost no state.
+    /// Empty — the default, and every caller that predates marks — hangs
+    /// nothing on their banners.
+    public var rivalMarkSeeds: [UInt64?]
+    // MARK: end of Iteration 18
 
     public init(
         style: DistrictStyle, selected: Bool, hasPlayerOffice: Bool, rivalSeeds: [UInt64],
-        hasPlayerHome: Bool = false
+        hasPlayerHome: Bool = false,
+        rivalMarkSeeds: [UInt64?] = []
     ) {
         self.style = style
         self.selected = selected
         self.hasPlayerOffice = hasPlayerOffice
         self.rivalSeeds = rivalSeeds
         self.hasPlayerHome = hasPlayerHome
+        self.rivalMarkSeeds = rivalMarkSeeds
     }
 }
 
@@ -441,14 +450,21 @@ public enum CityMapComposer {
 
         switch claim {
         case .office:
-            let hq = SpriteCache.shared("city.hq.\(ambience.playerTier.rawValue).\(time)") {
-                CitySpriteLibrary.playerHQ(tier: ambience.playerTier, time: time)
+            // Iteration 18: the mark is part of the cache key, so a marked
+            // studio and an unmarked one never share a building.
+            let hq = SpriteCache.shared(
+                "city.hq.\(ambience.playerTier.rawValue).\(time).\(ambience.markSeed.map(String.init) ?? "-")"
+            ) {
+                CitySpriteLibrary.playerHQ(tier: ambience.playerTier, time: time, markSeed: ambience.markSeed)
             }
             return (hq, .cityProp("playerHQ"), .toggle(period: 3), claim)
         case .rival(_, let offset):
             let seed = info.rivalSeeds[offset]
-            let hq = SpriteCache.shared("city.rival.\(seed).\(style).\(time)") {
-                CitySpriteLibrary.rivalHQ(seed: seed, district: style, time: time)
+            // Iteration 18: the rival's own mark, when the caller knows
+            // their name well enough to derive one.
+            let mark = offset < info.rivalMarkSeeds.count ? info.rivalMarkSeeds[offset] : nil
+            let hq = SpriteCache.shared("city.rival.\(seed).\(style).\(time).\(mark.map(String.init) ?? "-")") {
+                CitySpriteLibrary.rivalHQ(seed: seed, district: style, time: time, markSeed: mark)
             }
             return (hq, .cityProp("rivalHQ"), .toggle(period: 4), claim)
         default:

@@ -866,6 +866,15 @@ public enum GameAction: Codable, Equatable, Sendable {
     /// the app.
     case seatingClear
     // MARK: end S1
+    // MARK: Iteration 18 — the studio mark
+    /// Sets the studio's mark to the glyph `seed` draws
+    /// (`StudioMarkBuilder`); `nil` takes the mark away again. Sent once,
+    /// by the naming step of the new-game flow, and by nothing else — no
+    /// bot sends it, so every fixture and every recorded run keeps
+    /// `company.markSeed` nil and writes the bytes it always wrote.
+    /// Draws nothing and moves no number: a mark is a picture.
+    case chooseStudioMark(seed: UInt64?)
+    // MARK: end of Iteration 18
     // MARK: end of Iteration 14
     // MARK: end of Iteration 13
     // MARK: end of Iteration 12

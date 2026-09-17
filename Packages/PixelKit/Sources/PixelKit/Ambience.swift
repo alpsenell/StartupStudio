@@ -87,11 +87,21 @@ public struct CityAmbience: Sendable, Equatable, Hashable {
     public var season: Season
     /// The player's office tier — their HQ building grows with it.
     public var playerTier: OfficeTierStyle
+    // MARK: Iteration 18 — the studio mark
+    /// The studio's mark, for the sign on the player's HQ. `nil` — the
+    /// default, and every caller that predates marks — draws the map
+    /// exactly as it always was.
+    public var markSeed: UInt64?
+    // MARK: end of Iteration 18
 
-    public init(timeOfDay: TimeOfDay = .day, season: Season = .summer, playerTier: OfficeTierStyle = .garage) {
+    public init(
+        timeOfDay: TimeOfDay = .day, season: Season = .summer, playerTier: OfficeTierStyle = .garage,
+        markSeed: UInt64? = nil
+    ) {
         self.timeOfDay = timeOfDay
         self.season = season
         self.playerTier = playerTier
+        self.markSeed = markSeed
     }
 
     /// Midday in high summer, the map as it looked before ambience existed.

@@ -185,9 +185,21 @@ struct NewspaperPage: View {
             .foregroundStyle(Newsprint.ink.opacity(0.7))
             .monospacedDigit()
 
-            PixelText(text: issue.masthead, scale: 3, color: Newsprint.ink)
-                .frame(maxWidth: .infinity)
-                .accessibilityAddTraits(.isHeader)
+            // MARK: Iteration 18 — the studio mark
+            // The paper belongs to the industry, not to the studio, so the
+            // mark sits *beside* the masthead as the subject's badge —
+            // the way a trade paper runs the logo of whoever it is about.
+            // Nothing is drawn, and the masthead is centred exactly as it
+            // always was, for a company that never picked one.
+            HStack(spacing: Theme.Spacing.sm) {
+                if let markSeed = issue.markSeed {
+                    StudioMarkView(seed: markSeed, size: 18)
+                }
+                PixelText(text: issue.masthead, scale: 3, color: Newsprint.ink)
+            }
+            .frame(maxWidth: .infinity)
+            .accessibilityAddTraits(.isHeader)
+            // MARK: end of Iteration 18
 
             Text(issue.dateline)
                 .font(.caption)

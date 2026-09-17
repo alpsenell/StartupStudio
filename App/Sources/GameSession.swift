@@ -427,7 +427,13 @@ final class GameSession {
         rules: GameRules = .standard,
         heirloom: Heirloom? = nil,
         mode: RunMode = .standard,
-        lineage: Lineage? = nil
+        lineage: Lineage? = nil,
+        // MARK: Iteration 18 — the studio mark
+        /// The glyph the naming step picked, `nil` on every path that did
+        /// not pick one — and then no action is sent and the company's
+        /// `markSeed` stays nil.
+        markSeed: UInt64? = nil
+        // MARK: end of Iteration 18
     ) {
         replaceEngine(inSlot: newGameSlot) {
             GameEngine.newGame(
@@ -442,6 +448,14 @@ final class GameSession {
                 lineage: lineage
             )
         }
+        // MARK: Iteration 18 — the studio mark
+        // Through the reducer like everything else, and saved again so the
+        // slot's row carries the mark from the first frame.
+        if let markSeed {
+            engine.send(.chooseStudioMark(seed: markSeed))
+            persist(engine.state, slot: newGameSlot)
+        }
+        // MARK: end of Iteration 18
         if let heirloom { spendHeirloom(heirloom) }  // R2
         GameSettings.hasCompletedOnboarding = true
         needsOnboarding = false
@@ -467,6 +481,12 @@ final class GameSession {
                 origin: ended.origin
             )
         }
+        // MARK: Iteration 18 — the same company, so the same mark.
+        if let markSeed = ended.company.markSeed {
+            engine.send(.chooseStudioMark(seed: markSeed))
+            persist(engine.state, slot: currentSlot)
+        }
+        // MARK: end of Iteration 18
         GameSettings.hasCompletedOnboarding = true
         needsOnboarding = false
         isAtFrontDoor = false

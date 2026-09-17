@@ -25,6 +25,14 @@ public struct Company: Codable, Equatable, Sendable {
     /// and then not encoded.
     public var pressStanding: [String: Double] = [:]
     // MARK: end T7
+    // MARK: Iteration 18 — the studio mark
+    /// The seed the studio's generated pixel glyph is drawn from
+    /// (`StudioMarkBuilder`), picked at the naming step. `nil` on every run
+    /// that never picked one — every bot, every fixture, every save written
+    /// before this existed — and then nothing is stamped anywhere and the
+    /// key is not encoded, so those saves stay byte-identical.
+    public var markSeed: UInt64? = nil
+    // MARK: end of Iteration 18
 }
 
 // MARK: S1 (seating)
@@ -38,6 +46,9 @@ extension Company {
         // MARK: T7 (press and stakes)
         case pressStanding
         // MARK: end T7
+        // MARK: Iteration 18 — the studio mark
+        case markSeed
+        // MARK: end of Iteration 18
     }
 
     public init(from decoder: any Decoder) throws {
@@ -55,6 +66,9 @@ extension Company {
         let standings = try c.decodeIfPresent([PressStandingEntry].self, forKey: .pressStanding) ?? []
         for entry in standings { pressStanding[entry.outlet] = entry.standing }
         // MARK: end T7
+        // MARK: Iteration 18 — the studio mark
+        markSeed = try c.decodeIfPresent(UInt64.self, forKey: .markSeed)
+        // MARK: end of Iteration 18
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -72,6 +86,11 @@ extension Company {
             try c.encode(PressStandingEntry.sorted(pressStanding), forKey: .pressStanding)
         }
         // MARK: end T7
+        // MARK: Iteration 18 — the studio mark, only once one is picked.
+        if let markSeed {
+            try c.encode(markSeed, forKey: .markSeed)
+        }
+        // MARK: end of Iteration 18
     }
 }
 // MARK: end S1

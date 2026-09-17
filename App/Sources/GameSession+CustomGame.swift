@@ -15,6 +15,12 @@ struct RunSetup: Equatable {
     var heirloom: Heirloom?
     /// Iteration 8: the successor the founder page picked, if any.
     var lineage: Lineage?
+    // MARK: Iteration 18 — the studio mark
+    /// The glyph the naming step picked. `nil` — the default, and what
+    /// every other path passes — leaves `company.markSeed` nil, and
+    /// nothing anywhere is stamped.
+    var markSeed: UInt64?
+    // MARK: end of Iteration 18
 
     static let standard = RunSetup()
 }
@@ -74,7 +80,10 @@ extension GameSession {
         startNewGame(
             profile: profile, companyName: companyName, difficulty: difficulty, origin: origin,
             seed: setup.seed, rules: setup.rules, heirloom: setup.heirloom, mode: setup.mode,
-            lineage: setup.lineage
+            lineage: setup.lineage,
+            // MARK: Iteration 18 — the studio mark
+            markSeed: setup.markSeed
+            // MARK: end of Iteration 18
         )
         clearCustomGameRequest()
     }
