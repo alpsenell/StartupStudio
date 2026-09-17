@@ -200,7 +200,7 @@ struct LifeBadge: View {
     var body: some View {
         Text("\(count)")
             .font(Theme.Typography.number(.caption))
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.ink(on: Theme.warning))
             .padding(.horizontal, 7)
             .padding(.vertical, 2)
             .background(Theme.warning, in: Capsule())

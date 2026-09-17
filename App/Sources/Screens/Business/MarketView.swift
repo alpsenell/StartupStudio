@@ -222,7 +222,7 @@ private struct MarketEventBanner: View {
         HStack(spacing: Theme.Spacing.md) {
             Image(systemName: event.kind.systemImage)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.ink(on: event.kind.tint))
                 .frame(width: 32, height: 32)
                 .background(event.kind.tint, in: Circle())
 
