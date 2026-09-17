@@ -260,7 +260,16 @@ struct NewspaperComposer {
     /// not have: the rest of the copy when there is any, and otherwise the
     /// day's numbers, which is what a reader would ask next.
     private func leadBody(for dated: Dated) -> String {
-        Self.afterTheFirstSentence(dated.line.message) ?? numbersLine(for: dated)
+        // MARK: X4 (the launch party) — when the paper leads with a party
+        // the reviews did not pay for, it files its own line on it.
+        if case let .launchPartyThrown(productID, _, _, _, _, true, _) = dated.event,
+           let party = state.parties.last(where: { $0.productID == productID }),
+           let product = state.product(id: productID),
+           let line = PartyCopy.newspaperLine(party, product: product) {
+            return line
+        }
+        // MARK: end X4
+        return Self.afterTheFirstSentence(dated.line.message) ?? numbersLine(for: dated)
     }
 
     /// Everything after the first sentence of `message`, or `nil` when the
@@ -381,6 +390,13 @@ struct NewspaperComposer {
         // sentences, the second the quote).
         if case .pressExclusive = dated.event { return severity * 10 + strand + 30 }
         // MARK: end T7
+        // MARK: X4 (the launch party)
+        // A party the reviews did not pay for is the paper's kind of story;
+        // one they did earn is a company enjoying itself, which is not news.
+        if case let .launchPartyThrown(_, _, _, _, _, desperate, _) = dated.event, desperate {
+            return severity * 10 + strand + 10
+        }
+        // MARK: end X4
         return severity * 10 + strand
     }
 
