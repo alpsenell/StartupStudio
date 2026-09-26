@@ -86,6 +86,37 @@ public enum InteractionTargetKind: String, Codable, Equatable, Hashable, Sendabl
     }
 }
 
+public enum RelationshipValue: String, Codable, Equatable, Hashable, Sendable, CaseIterable {
+    case words, time, gifts, help
+
+    public var displayName: String {
+        switch self {
+        case .words: "Kind words"
+        case .time: "Time together"
+        case .gifts: "Thoughtful gifts"
+        case .help: "A helping hand"
+        }
+    }
+
+    public var systemImage: String {
+        switch self {
+        case .words: "text.bubble.fill"
+        case .time: "clock.fill"
+        case .gifts: "gift.fill"
+        case .help: "hands.and.sparkles.fill"
+        }
+    }
+
+    var revealLine: String {
+        switch self {
+        case .words: "\"Honestly? Just tell me. Out loud. I can't read your mind.\""
+        case .time: "\"Time. Just you, actually here, phone in the other room.\""
+        case .gifts: "\"Little things. Something that shows you were thinking of me.\""
+        case .help: "\"When someone just… helps. Without being asked. That's it.\""
+        }
+    }
+}
+
 /// The four shelves the menu is grouped onto.
 public enum InteractionGroup: String, Codable, Equatable, Hashable, Sendable, CaseIterable {
     case nice, mean, money, serious
@@ -193,6 +224,7 @@ public struct InteractionState: Codable, Equatable, Sendable {
     /// and not written — for a founder who never did.
     public var standingMeanDays: [Int] = []
     // MARK: end J2
+    public var knownValues: [String] = []
 
     public init(
         cooldowns: [String: Int] = [:],
@@ -290,6 +322,7 @@ extension InteractionState {
         // MARK: J2 (record)
         case standingMeanDays
         // MARK: end J2
+        case knownValues
     }
 
     private struct CooldownEntry: Codable {
@@ -325,6 +358,7 @@ extension InteractionState {
             [Int].self, forKey: .standingMeanDays
         ) ?? []
         // MARK: end J2
+        knownValues = try container.decodeIfPresent([String].self, forKey: .knownValues) ?? []
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -351,6 +385,9 @@ extension InteractionState {
             try container.encode(standingMeanDays, forKey: .standingMeanDays)
         }
         // MARK: end J2
+        if !knownValues.isEmpty {
+            try container.encode(knownValues.sorted(), forKey: .knownValues)
+        }
     }
 }
 
@@ -367,6 +404,7 @@ public struct InteractionRule: Equatable, Sendable, Identifiable {
     public var title: String
     public var icon: String
     public var group: InteractionGroup
+    public var value: RelationshipValue?
     public var kinds: Set<InteractionTargetKind>
     public var cost: InteractionCost
     public var cooldownDays: Int
@@ -382,6 +420,7 @@ public struct InteractionRule: Equatable, Sendable, Identifiable {
     public var minStage: RelationshipStage?
     /// Minimum child stage, for disown.
     public var minChildStage: ChildStage?
+    public var maxChildStage: ChildStage?
     /// This one asks before it does anything.
     public var confirms: Bool
     /// One line under the title, in the founder's own words.
@@ -408,6 +447,7 @@ public struct InteractionRule: Equatable, Sendable, Identifiable {
         title = def.title
         icon = def.icon
         group = InteractionGroup(rawValue: def.group) ?? .nice
+        value = def.value.flatMap(RelationshipValue.init(rawValue:))
         kinds = Set(def.targets.compactMap(InteractionTargetKind.init(rawValue:)))
         cooldownDays = def.cooldownDays
         baseChance = def.baseChance
@@ -417,6 +457,7 @@ public struct InteractionRule: Equatable, Sendable, Identifiable {
         maxBar = def.maxBar
         minStage = def.minStage.flatMap(RelationshipStage.init(rawValue:))
         minChildStage = def.minChildStage.flatMap(ChildStage.init(rawValue:))
+        maxChildStage = def.maxChildStage.flatMap(ChildStage.init(rawValue:))
         confirms = def.confirms
         note = def.note
         switch def.cost {
@@ -556,6 +597,50 @@ extension GameState {
     /// Whether this rival is *the* nemesis right now.
     public func isNemesis(_ rivalID: UUID) -> Bool { nemesis?.id == rivalID }
 
+    // MARK: What they value
+
+    // A partner's key is tied to who they are, so the next partner starts
+    // unknown.
+    func valueKey(_ target: InteractionTarget) -> String {
+        switch target {
+        case .partner: "partner:\(life.family.partnerAppearanceSeed ?? 0)"
+        default: target.key
+        }
+    }
+
+    public func valuePreference(_ target: InteractionTarget) -> RelationshipValue? {
+        if target.kind == .rival { return nil }
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+        for byte in valueKey(target).utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x0000_0100_0000_01B3
+        }
+        let values = RelationshipValue.allCases
+        return values[Int(hash % UInt64(values.count))]
+    }
+
+    public func knownValue(_ target: InteractionTarget) -> RelationshipValue? {
+        guard interactions.knownValues.contains(valueKey(target)) else { return nil }
+        return valuePreference(target)
+    }
+
+    // Only known values pay, so the odds and deltas on the button never give
+    // the answer away before they tell you.
+    public func interactionMatchesValue(_ target: InteractionTarget, _ rule: InteractionRule) -> Bool {
+        guard let value = rule.value else { return false }
+        return knownValue(target) == value
+    }
+
+    public func interactionDeltas(
+        _ target: InteractionTarget, _ rule: InteractionRule
+    ) -> InteractionDeltaPair {
+        let base = rule.deltas(for: target.kind)
+        guard interactionMatchesValue(target, rule), base.good > 0 else { return base }
+        return InteractionDeltaPair(
+            good: (base.good * InteractionTuning.valueDeltaFactor).rounded(), bad: base.bad
+        )
+    }
+
     /// Why this interaction is refused, in the player's words, or `nil`.
     public func interactionBlocker(
         _ target: InteractionTarget, _ id: String,
@@ -573,7 +658,8 @@ extension GameState {
         _ target: InteractionTarget, _ rule: InteractionRule, content: ContentCatalog? = nil
     ) -> Double {
         InteractionSystem.chance(
-            rule: rule, bar: interactionBar(target, content: content) ?? 50, state: self
+            rule: rule, bar: interactionBar(target, content: content) ?? 50, state: self,
+            matched: interactionMatchesValue(target, rule)
         )
     }
 }

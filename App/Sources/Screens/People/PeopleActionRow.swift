@@ -27,6 +27,8 @@ struct PeopleActionRow: View {
             footnote: rule.note,
             blocker: blocker,
             destructive: rule.group != .nice,
+            highlight: engine.state.interactionMatchesValue(target, rule)
+                ? "They value this: bigger swing, better odds" : nil,
             act: act
         )
     }
@@ -35,7 +37,7 @@ struct PeopleActionRow: View {
     /// in the order a player reads them.
     private var terms: String {
         var parts: [String] = [costText]
-        let deltas = rule.deltas(for: target.kind)
+        let deltas = engine.state.interactionDeltas(target, rule)
         // The one-way rows (end it, disown, fire with cause) do not roll
         // for an outcome — the roll only picks which line you get — so
         // they say what they take and no percentage at all.
@@ -92,6 +94,7 @@ struct PeopleRow: View {
     var footnote: String?
     var blocker: String?
     var destructive = false
+    var highlight: String?
     let act: () -> Void
 
     private var tint: Color {
@@ -115,6 +118,11 @@ struct PeopleRow: View {
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    if let highlight, blocker == nil {
+                        Label(highlight, systemImage: "heart.fill")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Theme.accent)
+                    }
                     if let footnote, blocker == nil {
                         Text(footnote)
                             .font(.caption2)
@@ -139,6 +147,6 @@ struct PeopleRow: View {
         }
         .buttonStyle(.pressableRow)
         .disabled(blocker != nil)
-        .accessibilityLabel("\(title). \(terms). \(blocker ?? "")")
+        .accessibilityLabel("\(title). \(terms). \(highlight ?? "") \(blocker ?? "")")
     }
 }

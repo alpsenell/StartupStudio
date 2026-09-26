@@ -30,6 +30,8 @@ public enum InteractionTuning {
     static let eveningRelationships = 3.0
     static let eveningEnergy = -4.0
     static let eveningMood = 3.0
+    static let valueDeltaFactor = 1.5
+    static let valueChanceBonus = 0.10
     /// The grudge at which a rival is named the founder's nemesis.
     public static let nemesisGrudge = 25.0
     /// Ids the system does more than arithmetic for.
@@ -37,6 +39,7 @@ public enum InteractionTuning {
     static let affairID = "affair"
     static let disownID = "disown"
     static let fireWithCauseID = "fireWithCause"
+    static let askWhatMattersID = "askWhatMatters"
 
     /// The narrative flags this lane raises. They gate every `people_`
     /// life event, which is what keeps the event pool — and so the whole
@@ -54,11 +57,14 @@ public enum InteractionSystem {
     /// The chance the good line comes back. A pure function of the rule,
     /// the bar and the founder, so the percentage on the button is the
     /// number the roll actually uses.
-    static func chance(rule: InteractionRule, bar: Double, state: GameState) -> Double {
+    static func chance(
+        rule: InteractionRule, bar: Double, state: GameState, matched: Bool = false
+    ) -> Double {
         let conversation = state.life.skills.conversation
         let raw = rule.baseChance
             + (conversation - 50) / 100 * InteractionTuning.conversationWeight
             + (bar - 50) / 100 * InteractionTuning.barWeight
+            + (matched ? InteractionTuning.valueChanceBonus : 0)
         return min(InteractionTuning.maxChance, max(InteractionTuning.minChance, raw))
     }
 
@@ -91,7 +97,8 @@ public enum InteractionSystem {
 
         let day = state.day
         let bar = state.interactionBar(target, content: content) ?? 50
-        let odds = chance(rule: rule, bar: bar, state: state)
+        let matched = state.interactionMatchesValue(target, rule)
+        let odds = chance(rule: rule, bar: bar, state: state, matched: matched)
         let good = state.socialRNG.nextUniform() < odds
 
         // Costs first, so a refused wallet cannot be spent twice and the
@@ -105,7 +112,7 @@ public enum InteractionSystem {
             state.life.wallet -= money
         }
 
-        let deltas = rule.deltas(for: target.kind)
+        let deltas = state.interactionDeltas(target, rule)
         var delta = good ? deltas.good : deltas.bad
         var events: [GameEvent] = []
 
@@ -130,8 +137,13 @@ public enum InteractionSystem {
         }
 
         let applied = apply(delta: delta, to: target, state: &state)
-        let line = pick(rule: rule, kind: target.kind, good: good, state: &state)
+        var line = pick(rule: rule, kind: target.kind, good: good, state: &state)
             ?? fallbackLine(rule: rule, good: good)
+        if interactionID == InteractionTuning.askWhatMattersID, good,
+           let value = state.valuePreference(target) {
+            state.interactions.knownValues.append(state.valueKey(target))
+            line = value.revealLine
+        }
 
         // The founder's own meters: a good evening is an evening, a mean
         // thing going wrong sits with you.
@@ -413,6 +425,10 @@ public enum InteractionSystem {
                child.stage(on: state.day).rank < minChildStage.rank {
                 return "They're too young for that"
             }
+            if let maxChildStage = rule.maxChildStage,
+               child.stage(on: state.day).rank > maxChildStage.rank {
+                return "They've grown out of that"
+            }
             if state.interactions.isDisowned(id) && rule.id != "apologise" {
                 return "You cut them off"
             }
@@ -430,6 +446,10 @@ public enum InteractionSystem {
             }
         case .friend, .rival:
             break
+        }
+
+        if rule.id == InteractionTuning.askWhatMattersID, state.knownValue(target) != nil {
+            return "You already know"
         }
 
         if rule.id == InteractionTuning.fireWithCauseID,

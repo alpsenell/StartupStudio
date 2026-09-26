@@ -5,6 +5,7 @@
       "title": "Pay them a compliment",
       "icon": "hand.thumbsup.fill",
       "group": "nice",
+      "value": "words",
       "targets": ["partner", "child", "friend", "employee", "contact"],
       "good": 4,
       "bad": -1,
@@ -89,6 +90,7 @@
       "title": "Apologise",
       "icon": "figure.wave",
       "group": "nice",
+      "value": "words",
       "targets": ["partner", "child", "friend", "employee", "contact", "rival"],
       "good": 8,
       "bad": -2,
@@ -189,6 +191,7 @@
       "title": "Flirt with them",
       "icon": "heart.circle.fill",
       "group": "nice",
+      "value": "words",
       "targets": ["partner", "contact"],
       "good": 5,
       "bad": -3,
@@ -230,6 +233,7 @@
       "title": "Tell them something true",
       "icon": "lock.open.fill",
       "group": "nice",
+      "value": "time",
       "targets": ["partner", "friend", "employee", "contact"],
       "good": 10,
       "bad": -4,
@@ -370,6 +374,7 @@
       "title": "Buy them something",
       "icon": "gift.fill",
       "group": "nice",
+      "value": "gifts",
       "targets": ["partner", "child", "friend", "contact"],
       "good": 9,
       "bad": -1,
@@ -441,6 +446,7 @@
       "title": "Take them out for the evening",
       "icon": "fork.knife",
       "group": "nice",
+      "value": "time",
       "targets": ["partner", "child", "friend", "contact"],
       "good": 14,
       "bad": 3,
@@ -504,6 +510,826 @@
             "They took a call at the table and did not come back quickly.",
             "You pitched at the starter. It never recovered.",
             "Perfectly pleasant. Absolutely nothing moved."
+          ]
+        }
+      }
+    },
+    {
+      "id": "askWhatMatters",
+      "title": "Ask what actually matters to them",
+      "icon": "questionmark.bubble.fill",
+      "group": "nice",
+      "targets": ["partner", "child", "friend", "employee", "contact"],
+      "good": 2,
+      "bad": 0,
+      "baseChance": 0.7,
+      "cooldownDays": 10,
+      "note": "Find out what they value most. Doing that for them goes twice as far.",
+      "lines": {
+        "partner": {
+          "bad": [
+            "\"You're asking me this *now*? After four years?\"",
+            "\"I'll tell you when you've finished checking your phone.\""
+          ]
+        },
+        "child": {
+          "bad": [
+            "\"Why? Is this for a parenting app?\"",
+            "They said \"dunno\" and went back to the screen."
+          ]
+        },
+        "friend": {
+          "bad": [
+            "\"Mate, what is this, a performance review?\"",
+            "\"Buy me a pint and I might tell you.\""
+          ]
+        },
+        "employee": {
+          "bad": [
+            "\"Is this for the engagement survey?\" It sort of was.",
+            "They gave the answer from the careers page, word for word."
+          ]
+        },
+        "contact": {
+          "bad": [
+            "\"That's a second-coffee question.\" This was the first.",
+            "They answered with their LinkedIn headline."
+          ]
+        }
+      }
+    },
+    {
+      "id": "rememberDetail",
+      "title": "Remember the small thing they told you",
+      "icon": "brain.head.profile",
+      "group": "nice",
+      "value": "words",
+      "targets": ["partner", "child", "friend", "employee", "contact"],
+      "good": 5,
+      "bad": 0,
+      "baseChance": 0.75,
+      "cooldownDays": 12,
+      "note": "The dentist appointment. The dog's name. The thing they were dreading.",
+      "lines": {
+        "partner": {
+          "good": [
+            "\"You remembered the dentist.\" They sounded genuinely thrown.",
+            "\"How did it go?\" was the right question. It went fine.",
+            "\"You were listening. On a Tuesday. In launch week.\""
+          ],
+          "bad": [
+            "You asked about the wrong appointment. Close, though.",
+            "\"That was last month.\" It was last month."
+          ]
+        },
+        "child": {
+          "good": [
+            "You knew the name of the best friend. The *new* best friend.",
+            "\"You remembered the spelling test!\" You did. Barely.",
+            "They told you the whole thing again, with the good bits added."
+          ],
+          "bad": [
+            "\"That's not his name any more, we're not friends.\"",
+            "You got the day wrong. They noticed you got the day wrong."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"You remembered the interview. Nobody remembered the interview.\"",
+            "\"How's the knee?\" The knee is better. They were chuffed.",
+            "A ten-minute voice note back. You'd earned it."
+          ],
+          "bad": [
+            "\"That was my brother, mate.\"",
+            "Right thing, wrong friend. You'll live."
+          ]
+        },
+        "employee": {
+          "good": [
+            "You asked about their kid's recital by name. They'll mention it for a year.",
+            "\"You remembered the marathon?\" They showed you the medal.",
+            "Small question, big afternoon. Their tickets closed early."
+          ],
+          "bad": [
+            "You asked about the wedding. It was someone else's wedding.",
+            "\"It was cancelled, actually.\" Awkward pause, then standup."
+          ]
+        },
+        "contact": {
+          "good": [
+            "\"You remembered the Lisbon thing.\" They moved you up a list.",
+            "One line about their launch, and they replied within the minute.",
+            "\"Most people forget me the moment the lanyard comes off.\""
+          ],
+          "bad": [
+            "You congratulated them on someone else's raise.",
+            "\"Different company, but thanks.\""
+          ]
+        }
+      }
+    },
+    {
+      "id": "askAdvice",
+      "title": "Ask for their advice",
+      "icon": "lightbulb.fill",
+      "group": "nice",
+      "value": "words",
+      "targets": ["partner", "child", "friend", "employee", "contact"],
+      "good": 5,
+      "bad": -2,
+      "baseChance": 0.72,
+      "cooldownDays": 8,
+      "note": "People like being the one you came to. Less so if you ignore the answer.",
+      "lines": {
+        "partner": {
+          "good": [
+            "They said the obvious thing. It was also the right thing.",
+            "\"You're actually asking me?\" Yes. They liked that.",
+            "Twenty minutes on the sofa and the pricing page made sense."
+          ],
+          "bad": [
+            "\"You've already decided. You just want me to agree.\"",
+            "You argued with the advice. Out loud. To their face."
+          ]
+        },
+        "child": {
+          "good": [
+            "They suggested a dinosaur mode. You're not *not* considering it.",
+            "\"Make it purple.\" You made the button purple. Conversion up 2%.",
+            "They explained the app you'd got wrong. They were right."
+          ],
+          "bad": [
+            "\"I don't know, you're the boss.\" A shrug with opinions in it.",
+            "They gave great advice. You said \"hmm\" and they saw it."
+          ]
+        },
+        "friend": {
+          "good": [
+            "\"Honestly? Hire the other one.\" You hired the other one.",
+            "They told you something your board wouldn't. Useful.",
+            "\"Finally, someone asks.\" Two hours, one decent plan."
+          ],
+          "bad": [
+            "\"You want me to say it's fine. It's not fine.\"",
+            "You asked, they answered, you did the opposite. They noticed."
+          ]
+        },
+        "employee": {
+          "good": [
+            "They had an answer ready. They'd been waiting to be asked.",
+            "\"I've been saying this since March.\" Now it's on the roadmap.",
+            "Five minutes and a whiteboard. They left a foot taller."
+          ],
+          "bad": [
+            "\"Isn't that your job?\" Said kindly. Mostly.",
+            "You asked, then overruled them in the same meeting."
+          ]
+        },
+        "contact": {
+          "good": [
+            "They sent you three names and a warning. All useful.",
+            "\"Happy to help.\" They meant it and you could tell.",
+            "Their advice cost nothing and saved a quarter."
+          ],
+          "bad": [
+            "\"That's consulting. My day rate's on the site.\"",
+            "They answered politely and then went quiet for a month."
+          ]
+        }
+      }
+    },
+    {
+      "id": "loveNote",
+      "title": "Leave them a note",
+      "icon": "note.text",
+      "group": "nice",
+      "value": "words",
+      "targets": ["partner", "child"],
+      "good": 5,
+      "bad": 0,
+      "baseChance": 0.85,
+      "cooldownDays": 5,
+      "note": "On the mirror, in the lunchbox, stuck to the kettle.",
+      "lines": {
+        "partner": {
+          "good": [
+            "A photo of the note came back with a heart on it.",
+            "They kept it. It's on the fridge now, under the takeaway menu.",
+            "\"Who ARE you.\" Delighted, though."
+          ],
+          "bad": [
+            "The steam took the ink off before they saw it.",
+            "\"Was this a reminder to buy milk or a love letter?\" Both."
+          ]
+        },
+        "child": {
+          "good": [
+            "They found it at lunch and pretended not to be pleased.",
+            "They wrote one back. It had a drawing of your laptop in it.",
+            "It's in their pencil case now. For keeps, apparently."
+          ],
+          "bad": [
+            "Their friends saw it. Mortifying, allegedly.",
+            "It ended up under a yoghurt. Partially legible."
+          ]
+        }
+      }
+    },
+    {
+      "id": "creditPublicly",
+      "title": "Give them the credit at all-hands",
+      "icon": "megaphone.fill",
+      "group": "nice",
+      "value": "words",
+      "targets": ["employee"],
+      "good": 7,
+      "bad": 1,
+      "baseChance": 0.8,
+      "cooldownDays": 14,
+      "note": "By name, in front of everyone, for the specific thing they did.",
+      "lines": {
+        "employee": {
+          "good": [
+            "They went red, then went and fixed three more bugs.",
+            "Two people messaged them afterwards. They screenshot both.",
+            "\"Nobody's ever said my name at one of these.\""
+          ],
+          "bad": [
+            "You said the right thing about the wrong sprint.",
+            "They'd rather it had been a quiet word. Still counts."
+          ]
+        }
+      }
+    },
+    {
+      "id": "cookDinner",
+      "title": "Cook them dinner",
+      "icon": "fork.knife",
+      "group": "nice",
+      "value": "time",
+      "targets": ["partner", "child", "friend"],
+      "cost": "evening",
+      "wallet": 40,
+      "good": 9,
+      "bad": 2,
+      "baseChance": 0.8,
+      "cooldownDays": 5,
+      "note": "Phone in a drawer. Actual vegetables.",
+      "lines": {
+        "partner": {
+          "good": [
+            "The risotto was fine. The evening was lovely.",
+            "You set the table. They noticed you set the table.",
+            "Nobody mentioned work until pudding. A record."
+          ],
+          "bad": [
+            "Smoke alarm at 8:15. You ordered pizza and laughed about it.",
+            "Good food, but you checked Slack twice. Twice was noticed."
+          ]
+        },
+        "child": {
+          "good": [
+            "They helped. Everything had cheese on it. Perfect.",
+            "\"This is better than the restaurant.\" It really wasn't. Lovely, though.",
+            "They asked for it again tomorrow. High praise."
+          ],
+          "bad": [
+            "\"Why is it green.\" Dinner was not eaten. The chat was nice.",
+            "Burnt the fish fingers. They were very gracious about it."
+          ]
+        },
+        "friend": {
+          "good": [
+            "They stayed till midnight. The washing up can wait.",
+            "Two bottles, one lasagne and the best chat in months.",
+            "\"You can actually cook?\" A revelation for both of you."
+          ],
+          "bad": [
+            "Undercooked chicken. Great conversation, anxious night.",
+            "You were twenty minutes late to your own dinner."
+          ]
+        }
+      }
+    },
+    {
+      "id": "bedtimeChat",
+      "title": "Stay for the bedtime chat",
+      "icon": "moon.stars.fill",
+      "group": "nice",
+      "value": "time",
+      "targets": ["child"],
+      "minChildStage": "toddler",
+      "maxChildStage": "teen",
+      "good": 4,
+      "bad": 1,
+      "baseChance": 0.88,
+      "cooldownDays": 2,
+      "note": "The five minutes where they tell you the real stuff.",
+      "lines": {
+        "child": {
+          "good": [
+            "Three chapters and one very serious question about space.",
+            "They told you about the thing at school. The real version.",
+            "Asleep mid-sentence. Yours, not theirs."
+          ],
+          "bad": [
+            "You were somewhere else in your head. They could tell.",
+            "\"You already read this one.\" You had. Twice."
+          ]
+        }
+      }
+    },
+    {
+      "id": "buildTogether",
+      "title": "Build something together",
+      "icon": "hammer.fill",
+      "group": "nice",
+      "value": "time",
+      "targets": ["child"],
+      "minChildStage": "toddler",
+      "cost": "evening",
+      "wallet": 30,
+      "good": 10,
+      "bad": 3,
+      "baseChance": 0.85,
+      "cooldownDays": 7,
+      "note": "A kite, a bird box, a cardboard spaceship. The point is the evening.",
+      "lines": {
+        "child": {
+          "good": [
+            "The bird box is wonky. They've named it anyway.",
+            "A cardboard rocket now lives in the hall. Nobody may move it.",
+            "They did most of it. You held things. Correct division of labour."
+          ],
+          "bad": [
+            "Glue everywhere, kite nowhere. Still laughing, though.",
+            "You kept taking over. They let you, and went a bit quiet."
+          ]
+        }
+      }
+    },
+    {
+      "id": "lunch",
+      "title": "Take them to lunch",
+      "icon": "takeoutbag.and.cup.and.straw.fill",
+      "group": "nice",
+      "value": "time",
+      "targets": ["friend", "employee", "contact"],
+      "wallet": 35,
+      "good": 6,
+      "bad": 1,
+      "baseChance": 0.82,
+      "cooldownDays": 7,
+      "note": "An hour away from the desk, on you.",
+      "lines": {
+        "friend": {
+          "good": [
+            "A proper catch-up. You'd forgotten how funny they are.",
+            "Lunch became a long lunch. No regrets.",
+            "They picked the place. The place was excellent."
+          ],
+          "bad": [
+            "You took a call at the table. They ate your chips out of spite.",
+            "Pleasant, but you spent it talking about the company."
+          ]
+        },
+        "employee": {
+          "good": [
+            "You learned more about the codebase in an hour than in a month of standups.",
+            "They told you about their side project. It's quite good.",
+            "\"We should do this more.\" You should."
+          ],
+          "bad": [
+            "It felt like a performance review with sandwiches.",
+            "You talked the whole time. They got through half a wrap."
+          ]
+        },
+        "contact": {
+          "good": [
+            "Lunch turned into a second lunch next month. Good sign.",
+            "They paid for the coffees. That means something in this town.",
+            "Two intros and a lead by dessert."
+          ],
+          "bad": [
+            "Nice place, stilted chat. They had a hard stop at 1:30.",
+            "They spent it pitching you. Fair enough, really."
+          ]
+        }
+      }
+    },
+    {
+      "id": "gameNight",
+      "title": "Host a game night",
+      "icon": "dice.fill",
+      "group": "nice",
+      "value": "time",
+      "targets": ["friend", "employee", "contact"],
+      "cost": "evening",
+      "wallet": 80,
+      "good": 10,
+      "bad": 3,
+      "baseChance": 0.78,
+      "cooldownDays": 10,
+      "note": "Snacks, a board game nobody knows the rules to, and no pitching.",
+      "lines": {
+        "friend": {
+          "good": [
+            "Catan, three hours, one friendship nearly ended. A great night.",
+            "They won. Loudly. They've already booked the rematch.",
+            "Everyone stayed too late. Exactly right."
+          ],
+          "bad": [
+            "Someone flipped the Monopoly board. Not them. Still.",
+            "You kept explaining the rules. Nobody asked twice."
+          ]
+        },
+        "employee": {
+          "good": [
+            "They destroyed you at cards. The office has heard.",
+            "A new in-joke was born. It's already in a Slack channel.",
+            "Turns out they're hilarious once the laptop's shut."
+          ],
+          "bad": [
+            "It felt a bit like mandatory fun. It was a bit like mandatory fun.",
+            "Someone mentioned the roadmap and the room went stiff."
+          ]
+        },
+        "contact": {
+          "good": [
+            "Nobody pitched anybody. Everybody left friendlier.",
+            "They brought a game you'd never heard of. It was brilliant.",
+            "\"Same time next month?\" Definitely."
+          ],
+          "bad": [
+            "They didn't know anyone else there. Long evening for them.",
+            "Polite, early exit. Nice note the next day, at least."
+          ]
+        }
+      }
+    },
+    {
+      "id": "takeSomethingOn",
+      "title": "Take something off their plate",
+      "icon": "checklist",
+      "group": "nice",
+      "value": "help",
+      "targets": ["partner", "child", "friend", "employee"],
+      "good": 6,
+      "bad": -1,
+      "baseChance": 0.78,
+      "cooldownDays": 6,
+      "note": "The chore, the errand, the on-call shift. Before they have to ask.",
+      "lines": {
+        "partner": {
+          "good": [
+            "You did the thing on the list. The *annoying* thing on the list.",
+            "Bins, dishes, the council form. They looked at you like it was flowers.",
+            "\"You booked the boiler man?\" You booked the boiler man."
+          ],
+          "bad": [
+            "You did it, but you did it wrong. They redid it. Quietly.",
+            "You announced it three times. The announcing cost you."
+          ]
+        },
+        "child": {
+          "good": [
+            "You did their chore with them. Somehow it was fun.",
+            "Lift to practice, no lecture in the car. A good day.",
+            "You fixed the bike. You are, briefly, a hero."
+          ],
+          "bad": [
+            "\"I was going to do it!\" They were not going to do it.",
+            "You fixed the wrong thing on the bike."
+          ]
+        },
+        "friend": {
+          "good": [
+            "You picked up their parcel and fed the cat. Legend status.",
+            "\"You didn't have to do that.\" You did it anyway.",
+            "They owe you one. They're glad to."
+          ],
+          "bad": [
+            "Wrong cat. Long story. It's fine now.",
+            "You helped, loudly, while on a call. Half help."
+          ]
+        },
+        "employee": {
+          "good": [
+            "You took their on-call shift. They went to the wedding.",
+            "You cleared the blocker yourself. They shipped by Friday.",
+            "\"Did the founder just do my code review?\" Yes."
+          ],
+          "bad": [
+            "You 'helped' with the migration. They're still fixing it.",
+            "Kind thought, bad timing: they'd just finished it."
+          ]
+        }
+      }
+    },
+    {
+      "id": "homework",
+      "title": "Help with their homework",
+      "icon": "pencil.and.ruler.fill",
+      "group": "nice",
+      "value": "help",
+      "targets": ["child"],
+      "minChildStage": "school",
+      "maxChildStage": "teen",
+      "good": 5,
+      "bad": -1,
+      "baseChance": 0.74,
+      "cooldownDays": 4,
+      "note": "You will not remember long division. Go anyway.",
+      "lines": {
+        "child": {
+          "good": [
+            "You got the maths wrong together and then right together.",
+            "They explained it back to you. That's how you know they get it.",
+            "A gold star, apparently partly yours."
+          ],
+          "bad": [
+            "\"That's not how Miss Patel does it.\" Lost on method.",
+            "You did it for them. They know that's not the point."
+          ]
+        }
+      }
+    },
+    {
+      "id": "showUp",
+      "title": "Show up when they need a hand",
+      "icon": "figure.2.arms.open",
+      "group": "nice",
+      "value": "help",
+      "targets": ["partner", "friend", "employee", "contact"],
+      "cost": "evening",
+      "good": 11,
+      "bad": 4,
+      "baseChance": 0.85,
+      "cooldownDays": 21,
+      "note": "Moving day, a flat tyre, a launch that needs another pair of hands.",
+      "lines": {
+        "partner": {
+          "good": [
+            "You drove to the hospital with their mum. You stayed.",
+            "You cancelled the investor dinner. They know what that cost.",
+            "You were just *there*. That was the whole thing."
+          ],
+          "bad": [
+            "You came, but late, and on the phone.",
+            "Right intention, wrong evening. They'd sorted it already."
+          ]
+        },
+        "friend": {
+          "good": [
+            "Sofa up three flights. Pizza on the floor. Best night of the year.",
+            "You turned up with jump leads at 11pm. Unforgettable.",
+            "\"I knew you'd come.\" That's worth a lot."
+          ],
+          "bad": [
+            "You arrived as they finished. Still, beer.",
+            "You helped and then left early for a call. Mixed."
+          ]
+        },
+        "employee": {
+          "good": [
+            "You helped them move flat on a Saturday. The whole office knows.",
+            "You stayed till 2am on their launch. They'll never forget it.",
+            "You covered their panel talk when their kid was ill."
+          ],
+          "bad": [
+            "They found it a bit much, the founder carrying their boxes.",
+            "You helped, but managed them the whole time."
+          ]
+        },
+        "contact": {
+          "good": [
+            "Their demo day was short a judge. You were the judge.",
+            "You spoke at their meetup at a day's notice. They owe you.",
+            "You were in the room when their round nearly fell through."
+          ],
+          "bad": [
+            "Not quite what they needed, but they saw you try.",
+            "Came, helped a bit, left a bit early."
+          ]
+        }
+      }
+    },
+    {
+      "id": "makeIntro",
+      "title": "Make an introduction for them",
+      "icon": "person.line.dotted.person.fill",
+      "group": "nice",
+      "value": "help",
+      "targets": ["friend", "employee", "contact"],
+      "good": 8,
+      "bad": 1,
+      "baseChance": 0.7,
+      "cooldownDays": 21,
+      "note": "The person they need to meet, with a proper email, not a cc.",
+      "lines": {
+        "friend": {
+          "good": [
+            "They got the interview. You got a bottle of something expensive.",
+            "The intro went well enough that they're getting a coffee again.",
+            "\"You know EVERYONE.\" You know some people."
+          ],
+          "bad": [
+            "The other person never replied. Awkward for both of you.",
+            "Good intro, wrong person. They were polite about it."
+          ]
+        },
+        "employee": {
+          "good": [
+            "You got them a mentor. They came back with ideas and a new swagger.",
+            "They're speaking at a conference now. Your intro.",
+            "\"Thanks for thinking of me.\" You did. That's the point."
+          ],
+          "bad": [
+            "They thought it meant you wanted them gone.",
+            "The intro went nowhere. They appreciated the thought."
+          ]
+        },
+        "contact": {
+          "good": [
+            "The intro turned into a deal. They'll remember whose idea it was.",
+            "A double-opt-in done right. They told people about it.",
+            "\"I owe you one.\" In this town, that's currency."
+          ],
+          "bad": [
+            "Cold intro, cold reply. Could've been warmer.",
+            "Wrong fit, but they liked that you tried."
+          ]
+        }
+      }
+    },
+    {
+      "id": "sendSomething",
+      "title": "Send them something they'd like",
+      "icon": "shippingbox.fill",
+      "group": "nice",
+      "value": "gifts",
+      "targets": ["partner", "child", "friend", "employee", "contact"],
+      "wallet": 60,
+      "good": 6,
+      "bad": 1,
+      "baseChance": 0.8,
+      "cooldownDays": 7,
+      "note": "A book, a record, a ridiculous mug. Chosen, not bought.",
+      "lines": {
+        "partner": {
+          "good": [
+            "The book they mentioned once, in March. They noticed that you noticed.",
+            "Flowers at their office. Colleagues were insufferable. They loved it.",
+            "A ridiculous mug. It's their favourite mug now."
+          ],
+          "bad": [
+            "They already had it. They pretended not to, sweetly.",
+            "It arrived broken. The note survived, at least."
+          ]
+        },
+        "child": {
+          "good": [
+            "The exact trading card. How did you know? (You asked a friend.)",
+            "A book about sharks. Three days of shark facts followed.",
+            "Stickers. So many stickers. The laptop is theirs now."
+          ],
+          "bad": [
+            "\"That's for babies.\" It wasn't for babies. They're nine.",
+            "Wrong colour. Tragic, apparently."
+          ]
+        },
+        "friend": {
+          "good": [
+            "A signed record from the band you both loved at uni. Silence, then a long call.",
+            "A daft mug with an in-joke on it. Perfect.",
+            "\"You absolute idiot.\" Delighted, obviously."
+          ],
+          "bad": [
+            "They're vegan now. It was cheese.",
+            "It went to the old flat. It'll turn up."
+          ]
+        },
+        "employee": {
+          "good": [
+            "The keyboard they'd been eyeing. It's on their desk now, clacking.",
+            "A book on the thing they're obsessed with. They've dog-eared half of it.",
+            "Concert tickets with a note: 'for the release'. They showed everyone."
+          ],
+          "bad": [
+            "A company hoodie. They have four company hoodies.",
+            "Lovely thought, but it felt a bit like a retention bonus."
+          ]
+        },
+        "contact": {
+          "good": [
+            "The book you'd discussed. They sent a photo of it on their desk.",
+            "A thoughtful note and some good coffee. Remembered for months.",
+            "\"Nobody sends anything any more.\" You did."
+          ],
+          "bad": [
+            "Company swag. They clocked it as company swag.",
+            "Lost in the post room. A thank-you came three weeks later."
+          ]
+        }
+      }
+    },
+    {
+      "id": "surprise",
+      "title": "Plan a proper surprise",
+      "icon": "sparkles",
+      "group": "nice",
+      "value": "gifts",
+      "targets": ["partner", "child", "friend"],
+      "cost": "evening",
+      "wallet": 600,
+      "good": 16,
+      "bad": 4,
+      "baseChance": 0.72,
+      "cooldownDays": 28,
+      "note": "Tickets, a table, a plan they didn't see coming.",
+      "lines": {
+        "partner": {
+          "good": [
+            "Tickets to the show they'd stopped mentioning. Tears, the good kind.",
+            "A table at the place from your first date. They knew instantly.",
+            "You planned every minute and didn't check your phone once."
+          ],
+          "bad": [
+            "They'd made plans. The surprise became a negotiation.",
+            "The restaurant lost the booking. You still had a nice walk."
+          ]
+        },
+        "child": {
+          "good": [
+            "Aquarium, on a school day, with a note to the teacher. Legendary.",
+            "A day at the theme park. They've talked about nothing else.",
+            "Tickets to the match. You've never seen them so happy."
+          ],
+          "bad": [
+            "It rained on the theme park. Fun in the car, though.",
+            "They were too tired to enjoy it. They'll remember the thought."
+          ]
+        },
+        "friend": {
+          "good": [
+            "A surprise birthday that was actually a surprise. You're a genius.",
+            "Gig tickets. Front row. They've forgiven you for everything.",
+            "\"Who ARE you?\" Someone who plans ahead, it turns out."
+          ],
+          "bad": [
+            "Somebody spoiled it on the group chat. Still a good night.",
+            "They'd already been to that gig. Went again. Fine."
+          ]
+        }
+      }
+    },
+    {
+      "id": "congratulate",
+      "title": "Congratulate them, publicly",
+      "icon": "hand.thumbsup.circle.fill",
+      "group": "nice",
+      "targets": ["rival"],
+      "good": -7,
+      "bad": 1,
+      "baseChance": 0.6,
+      "cooldownDays": 14,
+      "note": "A generous post about their launch. Takes more nerve than a taunt.",
+      "lines": {
+        "rival": {
+          "good": [
+            "They liked the post. Then reposted it. Then DM'd a thank you.",
+            "\"Didn't expect that from you.\" A thaw, of sorts.",
+            "The trade press called it classy. So, grudgingly, did they."
+          ],
+          "bad": [
+            "They read it as sarcasm. It wasn't. Mostly.",
+            "Their cofounder replied with a single emoji. Not a kind one."
+          ]
+        }
+      }
+    },
+    {
+      "id": "conferenceDrink",
+      "title": "Buy them a drink at the conference",
+      "icon": "wineglass.fill",
+      "group": "nice",
+      "targets": ["rival"],
+      "wallet": 120,
+      "good": -11,
+      "bad": 2,
+      "baseChance": 0.5,
+      "cooldownDays": 30,
+      "note": "Neutral ground, a bar tab, and nobody from the press.",
+      "lines": {
+        "rival": {
+          "good": [
+            "Two drinks became four. You found out you hate the same investor.",
+            "They're human, it turns out. Annoyingly likeable.",
+            "\"Truce?\" \"Truce.\" For tonight, at least."
+          ],
+          "bad": [
+            "They took the drink and a photo, and posted the photo.",
+            "Stilted. They kept looking at your badge like it was a threat."
           ]
         }
       }
@@ -983,6 +1809,7 @@
       "title": "Lend them money",
       "icon": "banknote.fill",
       "group": "money",
+      "value": "help",
       "targets": ["child", "friend", "employee", "contact"],
       "good": 10,
       "bad": -5,

@@ -63,6 +63,7 @@ public struct InteractionDef: Codable, Equatable, Sendable, Identifiable {
     public var icon: String
     /// "nice" / "mean" / "money" / "serious".
     public var group: String
+    public var value: String?
     /// The target kinds this applies to: "partner", "child", "friend",
     /// "employee", "contact", "rival".
     public var targets: [String]
@@ -90,6 +91,7 @@ public struct InteractionDef: Codable, Equatable, Sendable, Identifiable {
     public var minStage: String?
     /// Minimum child stage, for disowning one.
     public var minChildStage: String?
+    public var maxChildStage: String?
     /// Whether the app asks before doing it.
     public var confirms: Bool
     /// One line under the title, saying what this actually is.
@@ -102,6 +104,7 @@ public struct InteractionDef: Codable, Equatable, Sendable, Identifiable {
         title: String,
         icon: String = "bubble.left.fill",
         group: String = "nice",
+        value: String? = nil,
         targets: [String] = [],
         good: Double = 0,
         bad: Double = 0,
@@ -114,6 +117,7 @@ public struct InteractionDef: Codable, Equatable, Sendable, Identifiable {
         maxBar: Double? = nil,
         minStage: String? = nil,
         minChildStage: String? = nil,
+        maxChildStage: String? = nil,
         confirms: Bool = false,
         note: String? = nil,
         lines: [String: Lines] = [:]
@@ -122,6 +126,7 @@ public struct InteractionDef: Codable, Equatable, Sendable, Identifiable {
         self.title = title
         self.icon = icon
         self.group = group
+        self.value = value
         self.targets = targets
         self.good = good
         self.bad = bad
@@ -134,14 +139,15 @@ public struct InteractionDef: Codable, Equatable, Sendable, Identifiable {
         self.maxBar = maxBar
         self.minStage = minStage
         self.minChildStage = minChildStage
+        self.maxChildStage = maxChildStage
         self.confirms = confirms
         self.note = note
         self.lines = lines
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, icon, group, targets, good, bad, overrides, baseChance
-        case cost, wallet, cooldownDays, minBar, maxBar, minStage, minChildStage
+        case id, title, icon, group, value, targets, good, bad, overrides, baseChance
+        case cost, wallet, cooldownDays, minBar, maxBar, minStage, minChildStage, maxChildStage
         case confirms, note, lines
     }
 
@@ -152,6 +158,7 @@ public struct InteractionDef: Codable, Equatable, Sendable, Identifiable {
             title: try container.decode(String.self, forKey: .title),
             icon: try container.decodeIfPresent(String.self, forKey: .icon) ?? "bubble.left.fill",
             group: try container.decodeIfPresent(String.self, forKey: .group) ?? "nice",
+            value: try container.decodeIfPresent(String.self, forKey: .value),
             targets: try container.decodeIfPresent([String].self, forKey: .targets) ?? [],
             good: try container.decodeIfPresent(Double.self, forKey: .good) ?? 0,
             bad: try container.decodeIfPresent(Double.self, forKey: .bad) ?? 0,
@@ -166,6 +173,7 @@ public struct InteractionDef: Codable, Equatable, Sendable, Identifiable {
             maxBar: try container.decodeIfPresent(Double.self, forKey: .maxBar),
             minStage: try container.decodeIfPresent(String.self, forKey: .minStage),
             minChildStage: try container.decodeIfPresent(String.self, forKey: .minChildStage),
+            maxChildStage: try container.decodeIfPresent(String.self, forKey: .maxChildStage),
             confirms: try container.decodeIfPresent(Bool.self, forKey: .confirms) ?? false,
             note: try container.decodeIfPresent(String.self, forKey: .note),
             lines: try container.decodeIfPresent([String: Lines].self, forKey: .lines) ?? [:]
