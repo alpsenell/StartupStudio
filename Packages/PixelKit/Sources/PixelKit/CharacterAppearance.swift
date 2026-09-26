@@ -8,12 +8,14 @@
 /// every seed that existed before keeps exactly the skin, hair and shirt it
 /// always had (`CharacterAppearanceTests.oldSeedsKeepTheirOriginalLook`).
 ///
-/// Version 3 adds beard styles, eye colour, headwear and freckles the same
-/// way, and a creator-only range of extra skin tones, hair colours and hair
-/// styles that a random seed never draws. A look built in the character
-/// creator travels as a `customSeed`: a tagged seed that decodes straight
-/// back into the chosen fields, so every place that stores a seed can store
-/// a hand-made face without a new save field.
+/// Version 3 adds beard styles, eye colour, headwear and freckles, and
+/// version 4 the face (shape, eyes, brows, nose, mouth), earrings,
+/// neckwear and the founder's choice to leave the hoodie off — all appended
+/// to the stream the same way. The creator offers more skin tones, hair
+/// colours, hair styles, glasses, outfits and headwear than a seed draws.
+/// A look built in the creator travels as a `customSeed`: a tagged seed
+/// that decodes straight back into the chosen fields, so every place that
+/// stores a seed can store a hand-made face without a new save field.
 public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
     public var skinTone: Int
     public var hairStyle: Int
@@ -22,30 +24,46 @@ public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
     /// `nil` for no glasses, otherwise an index into the glasses styles.
     public var glasses: Int?
     public var hasBeard: Bool
-    /// 0 hoodie, 1 shirt, 2 blazer.
+    /// 0 hoodie, 1 shirt, 2 blazer, 3 turtleneck, 4 tee.
     public var outfit: Int
     public var beardStyle: Int
     public var eyeColor: Int
     public var headwear: Int?
     public var freckles: Bool
+    public var faceShape: Int
+    public var eyeShape: Int
+    public var browStyle: Int
+    public var noseStyle: Int
+    public var mouthStyle: Int
+    public var earrings: Int?
+    public var neckwear: Int?
+    public var wearsFounderHoodie: Bool
 
-    // Seeds draw from the original ranges only; the palettes hold more for
-    // the creator. Changing these changes every existing face.
+    // Seeds draw from the original ranges only; the art holds more for the
+    // creator. Changing these changes every existing face.
     public static let skinToneCount = 5
     public static let hairStyleCount = 6
     public static let hairColorCount = 6
+    public static let glassesStyleCount = 2
+    public static let outfitCount = 3
+    private static let seededHeadwearCount = 3
+
+    public static var shirtColorCount: Int { Palettes.shirtColors.count }
     public static var selectableSkinToneCount: Int { Palettes.skinTones.count }
     public static var selectableHairStyleCount: Int { PersonArt.hairOverlays.count }
     public static var selectableHairColorCount: Int { Palettes.hairColors.count }
+    public static var selectableGlassesStyleCount: Int { PersonArt.glassesOverlays.count }
+    public static var selectableOutfitCount: Int { PersonArt.outfitOverlays.count }
+    public static var headwearStyleCount: Int { PersonArt.headwearOverlays.count }
     public static var eyeColorCount: Int { Palettes.eyeColors.count }
     public static var beardStyleCount: Int { PersonArt.beardOverlays.count }
-    public static var headwearStyleCount: Int { PersonArt.headwearOverlays.count }
-    /// Number of shirt colors in the sprite palette set.
-    public static var shirtColorCount: Int { Palettes.shirtColors.count }
-    /// Number of authored glasses styles.
-    public static var glassesStyleCount: Int { PersonArt.glassesOverlays.count }
-    /// Number of authored body outfits.
-    public static var outfitCount: Int { PersonArt.outfitOverlays.count }
+    public static let faceShapeCount = 4
+    public static let eyeShapeCount = 4
+    public static let browStyleCount = 4
+    public static let noseStyleCount = 4
+    public static let mouthStyleCount = 4
+    public static let earringStyleCount = 2
+    public static let neckwearStyleCount = 3
 
     public static let skinToneDisplayOrder = [5, 0, 1, 6, 2, 3, 4, 7]
 
@@ -61,11 +79,17 @@ public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
         Palettes.eyeColors[index % Palettes.eyeColors.count]
     }
 
+    public static func shirtSwatch(_ index: Int) -> PixelSprite.RGBA {
+        Palettes.shirtColors[index % Palettes.shirtColors.count].base
+    }
+
     /// How often a seed produces glasses / a beard, out of 100.
     private static let glassesChance: UInt64 = 34
     private static let beardChance: UInt64 = 28
     private static let headwearChance: UInt64 = 11
     private static let frecklesChance: UInt64 = 14
+    private static let earringChance: UInt64 = 16
+    private static let neckwearChance: UInt64 = 10
 
     public init(seed: UInt64) {
         if let custom = Self(customSeed: seed) {
@@ -89,30 +113,54 @@ public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
         let eyeRoll = Int(SplitMix64.next(&state) % 10)
         eyeColor = eyeRoll < 5 ? 0 : 1 + (eyeRoll - 5) % (Self.eyeColorCount - 1)
         headwear = SplitMix64.next(&state) % 100 < Self.headwearChance
-            ? Int(SplitMix64.next(&state) % UInt64(Self.headwearStyleCount))
+            ? Int(SplitMix64.next(&state) % UInt64(Self.seededHeadwearCount))
             : nil
         freckles = SplitMix64.next(&state) % 100 < Self.frecklesChance
+        // v4 fields — appended after v3.
+        faceShape = Int(SplitMix64.next(&state) % UInt64(Self.faceShapeCount))
+        eyeShape = Int(SplitMix64.next(&state) % UInt64(Self.eyeShapeCount))
+        browStyle = Int(SplitMix64.next(&state) % UInt64(Self.browStyleCount))
+        noseStyle = Int(SplitMix64.next(&state) % UInt64(Self.noseStyleCount))
+        mouthStyle = [0, 0, 0, 1, 1, 1, 2, 3][Int(SplitMix64.next(&state) % 8)]
+        earrings = SplitMix64.next(&state) % 100 < Self.earringChance
+            ? Int(SplitMix64.next(&state) % UInt64(Self.earringStyleCount))
+            : nil
+        neckwear = SplitMix64.next(&state) % 100 < Self.neckwearChance
+            ? Int(SplitMix64.next(&state) % UInt64(Self.neckwearStyleCount))
+            : nil
+        wearsFounderHoodie = true
     }
 
     // MARK: Custom seeds
 
-    private static let customTag: UInt64 = 0xC0FFE
-    private static let customTagShift: UInt64 = 44
+    // A custom seed is a 22-bit tag over a mixed-radix number, one digit per
+    // field. The radices are the format: growing an option list past its
+    // radix needs a new tag, or older custom seeds decode differently.
+    private static let customTag: UInt64 = 0x3C_0FFE
+    private static let customTagShift: UInt64 = 42
+    private static let radices: [UInt64] = [8, 11, 10, 8, 5, 5, 5, 5, 6, 2, 4, 4, 4, 4, 4, 3, 4, 2]
 
-    public var customSeed: UInt64 {
-        let fields: [Int] = [
+    private var customDigits: [Int] {
+        [
             skinTone, hairStyle, hairColor, shirtColor,
             glasses.map { $0 + 1 } ?? 0,
             hasBeard ? beardStyle + 1 : 0,
             outfit, eyeColor,
             headwear.map { $0 + 1 } ?? 0,
             freckles ? 1 : 0,
+            faceShape, eyeShape, browStyle, noseStyle, mouthStyle,
+            earrings.map { $0 + 1 } ?? 0,
+            neckwear.map { $0 + 1 } ?? 0,
+            wearsFounderHoodie ? 0 : 1,
         ]
-        var packed = Self.customTag << Self.customTagShift
-        for (index, value) in fields.enumerated() {
-            packed |= UInt64(value & 0xF) << UInt64(index * 4)
+    }
+
+    public var customSeed: UInt64 {
+        var packed: UInt64 = 0
+        for (digit, radix) in zip(customDigits, Self.radices).reversed() {
+            packed = packed * radix + UInt64(min(max(digit, 0), Int(radix) - 1))
         }
-        return packed
+        return Self.customTag << Self.customTagShift | packed
     }
 
     public static func isCustomSeed(_ seed: UInt64) -> Bool {
@@ -121,19 +169,33 @@ public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
 
     private init?(customSeed seed: UInt64) {
         guard Self.isCustomSeed(seed) else { return nil }
-        func field(_ index: Int) -> Int { Int((seed >> UInt64(index * 4)) & 0xF) }
+        var rest = seed & ((1 << Self.customTagShift) - 1)
+        var digits: [Int] = []
+        for radix in Self.radices {
+            digits.append(Int(rest % radix))
+            rest /= radix
+        }
         func clamp(_ value: Int, _ count: Int) -> Int { min(value, count - 1) }
-        skinTone = clamp(field(0), Self.selectableSkinToneCount)
-        hairStyle = clamp(field(1), Self.selectableHairStyleCount)
-        hairColor = clamp(field(2), Self.selectableHairColorCount)
-        shirtColor = clamp(field(3), Self.shirtColorCount)
-        glasses = field(4) == 0 ? nil : clamp(field(4) - 1, Self.glassesStyleCount)
-        hasBeard = field(5) != 0
-        beardStyle = hasBeard ? clamp(field(5) - 1, Self.beardStyleCount) : 0
-        outfit = clamp(field(6), Self.outfitCount)
-        eyeColor = clamp(field(7), Self.eyeColorCount)
-        headwear = field(8) == 0 ? nil : clamp(field(8) - 1, Self.headwearStyleCount)
-        freckles = field(9) != 0
+        func optional(_ value: Int, _ count: Int) -> Int? { value == 0 ? nil : clamp(value - 1, count) }
+        skinTone = clamp(digits[0], Self.selectableSkinToneCount)
+        hairStyle = clamp(digits[1], Self.selectableHairStyleCount)
+        hairColor = clamp(digits[2], Self.selectableHairColorCount)
+        shirtColor = clamp(digits[3], Self.shirtColorCount)
+        glasses = optional(digits[4], Self.selectableGlassesStyleCount)
+        hasBeard = digits[5] != 0
+        beardStyle = hasBeard ? clamp(digits[5] - 1, Self.beardStyleCount) : 0
+        outfit = clamp(digits[6], Self.selectableOutfitCount)
+        eyeColor = clamp(digits[7], Self.eyeColorCount)
+        headwear = optional(digits[8], Self.headwearStyleCount)
+        freckles = digits[9] != 0
+        faceShape = digits[10]
+        eyeShape = digits[11]
+        browStyle = digits[12]
+        noseStyle = digits[13]
+        mouthStyle = digits[14]
+        earrings = optional(digits[15], Self.earringStyleCount)
+        neckwear = optional(digits[16], Self.neckwearStyleCount)
+        wearsFounderHoodie = digits[17] == 0
     }
 
     // MARK: Codable
@@ -141,6 +203,7 @@ public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
     private enum CodingKeys: String, CodingKey {
         case skinTone, hairStyle, hairColor, shirtColor, glasses, hasBeard, outfit
         case beardStyle, eyeColor, headwear, freckles
+        case faceShape, eyeShape, browStyle, noseStyle, mouthStyle, earrings, neckwear, wearsFounderHoodie
     }
 
     public init(from decoder: any Decoder) throws {
@@ -157,6 +220,14 @@ public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
         eyeColor = try container.decodeIfPresent(Int.self, forKey: .eyeColor) ?? 0
         headwear = try container.decodeIfPresent(Int.self, forKey: .headwear)
         freckles = try container.decodeIfPresent(Bool.self, forKey: .freckles) ?? false
+        faceShape = try container.decodeIfPresent(Int.self, forKey: .faceShape) ?? 0
+        eyeShape = try container.decodeIfPresent(Int.self, forKey: .eyeShape) ?? 0
+        browStyle = try container.decodeIfPresent(Int.self, forKey: .browStyle) ?? 0
+        noseStyle = try container.decodeIfPresent(Int.self, forKey: .noseStyle) ?? 0
+        mouthStyle = try container.decodeIfPresent(Int.self, forKey: .mouthStyle) ?? 0
+        earrings = try container.decodeIfPresent(Int.self, forKey: .earrings)
+        neckwear = try container.decodeIfPresent(Int.self, forKey: .neckwear)
+        wearsFounderHoodie = try container.decodeIfPresent(Bool.self, forKey: .wearsFounderHoodie) ?? true
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -172,6 +243,14 @@ public struct CharacterAppearance: Sendable, Equatable, Hashable, Codable {
         try container.encode(eyeColor, forKey: .eyeColor)
         try container.encodeIfPresent(headwear, forKey: .headwear)
         try container.encode(freckles, forKey: .freckles)
+        try container.encode(faceShape, forKey: .faceShape)
+        try container.encode(eyeShape, forKey: .eyeShape)
+        try container.encode(browStyle, forKey: .browStyle)
+        try container.encode(noseStyle, forKey: .noseStyle)
+        try container.encode(mouthStyle, forKey: .mouthStyle)
+        try container.encodeIfPresent(earrings, forKey: .earrings)
+        try container.encodeIfPresent(neckwear, forKey: .neckwear)
+        try container.encode(wearsFounderHoodie, forKey: .wearsFounderHoodie)
     }
 }
 

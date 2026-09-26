@@ -193,6 +193,30 @@ enum Palettes {
     static let outline = ink[4]
     static let eye = ink[3]
     static let eyeColors: [RGBA] = [eye, sand[4], sky[3], moss[3], stone[4]]
+
+    private static let skinDepthOrder = [5, 0, 1, 6, 2, 3, 4, 7]
+
+    private static func skinStep(_ skinTone: Int, _ offset: Int) -> Int? {
+        let position = skinDepthOrder.firstIndex(of: skinTone % skinTones.count) ?? 0
+        let target = position + offset
+        return skinDepthOrder.indices.contains(target) ? skinDepthOrder[target] : nil
+    }
+
+    static func mouth(forSkin skinTone: Int) -> RGBA {
+        skinStep(skinTone, 3).map { skinTones[$0].shade } ?? (skinTone % skinTones.count == 7 ? ink[4] : ember[4])
+    }
+
+    static func freckle(forSkin skinTone: Int) -> RGBA {
+        skinStep(skinTone, 2).map { skinTones[$0].shade } ?? sand[4]
+    }
+
+    static func skinHighlight(forSkin skinTone: Int) -> RGBA {
+        skinStep(skinTone, -1).map { skinTones[$0].base } ?? stone[0]
+    }
+
+    static func hairHighlight(forHair hairColor: Int) -> RGBA {
+        [ink[0], sand[3], sand[2], gold[1], ember[3], stone[2], stone[0], gold[1], plum[0], teal[1]][hairColor % 10]
+    }
     static let pants = ink[2]
     static let chair = ink[1]
     static let hoodie = indigo[3]

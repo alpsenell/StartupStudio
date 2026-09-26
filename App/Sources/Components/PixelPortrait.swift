@@ -1,10 +1,10 @@
 import PixelKit
 import SwiftUI
 
-/// Small pixel-art portrait for an employee, candidate or rival: the
-/// PixelKit `.portrait` bust — a 10×10 head-and-shoulders crop that keeps
-/// the glasses, beard, outfit and role accessory — on a rounded chip,
-/// rendered with nearest-neighbor scaling so the pixels stay crisp.
+/// Pixel-art portrait for an employee, candidate or rival: the PixelKit
+/// 32×32 hi-res bust — face, hair, outfit, accessories and role
+/// accessory — on a rounded chip, rendered with nearest-neighbor scaling
+/// so the pixels stay crisp.
 ///
 /// The portrait blinks about once every four seconds. It is the cheapest
 /// possible signal that the person in the list row is a person.
@@ -15,8 +15,8 @@ struct PixelPortrait: View {
     var isFounder: Bool = false
     /// The role accessory drawn on the bust (headset, beret, tie…).
     var role: RoleLook = .none
-    /// Edge length of the square chip. Keep in the 28–36pt range so the
-    /// sprite reads at list-row sizes.
+    /// Edge length of the square chip. Below 30pt the 32px bust would drop
+    /// pixels, so small chips fall back to the 10×10 in-game bust.
     var size: CGFloat = 34
 
     /// Seconds between blinks, and how long a blink lasts. One tick of the
@@ -26,12 +26,11 @@ struct PixelPortrait: View {
     private static let ticksBetweenBlinks = 20
 
     private var sprite: PixelSprite {
-        SpriteLibrary.person(
-            appearance: CharacterAppearance(seed: seed),
-            pose: .portrait,
-            isFounder: isFounder,
-            role: role
-        )
+        let appearance = CharacterAppearance(seed: seed)
+        guard size >= 30 else {
+            return SpriteLibrary.person(appearance: appearance, pose: .portrait, isFounder: isFounder, role: role)
+        }
+        return SpriteLibrary.hiResPortrait(appearance: appearance, isFounder: isFounder, role: role)
     }
 
     /// Frame 1 is the blink. Each seed gets its own offset into the cycle so

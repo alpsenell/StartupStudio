@@ -12,8 +12,9 @@
 ///   N accessory dark   n lens glass   M metal   W/w paper
 ///   R/r accent warm    G/g accent green   V/v blazer   Q collar
 ///   Y gold             I indigo          K shoe/dark
-///   m mouth            f freckle         z stubble
+///   m mouth            f freckle
 ///   A/a beanie         J/j cap           L/l headband
+///   X/x bucket hat
 enum PersonArt {
     static let width = 14
     static let height = 18
@@ -190,6 +191,19 @@ enum PersonArt {
             "   LLLLLLLL   ",
             "          l   ",
         ],
+        [
+            "     NNNN     ",
+            "    N    N    ",
+            "   N      N   ",
+            "  NN      NN  ",
+            "  NR      RN  ",
+            "  NN      NN  ",
+        ],
+        [
+            "     XXXX     ",
+            "    XXXXXX    ",
+            "  xxxxxxxxxx  ",
+        ],
     ]
 
     // MARK: - Face accessories
@@ -215,6 +229,81 @@ enum PersonArt {
             "   NNNNNNNN   ",
             "   Nn nn nN   ",
             "   NN    NN   ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "    NN  NN    ",
+            "   Nn NN nN   ",
+            "    NN  NN    ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "   NNNNNNNN   ",
+            "    NN  NN    ",
+        ],
+    ]
+
+    static let earringOverlays: [[String]] = [
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "   Y      Y   ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "   Y      Y   ",
+            "  Y        Y  ",
+        ],
+    ]
+
+    static let neckwearOverlays: [[String]] = [
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "    RRRRRR    ",
+            "    rRRRRr    ",
+            "        rR    ",
+            "        rR    ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "     Y  Y     ",
+            "      YY      ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "     RrrR     ",
         ],
     ]
 
@@ -254,8 +343,8 @@ enum PersonArt {
             "              ",
             "              ",
             "              ",
-            "    z    z    ",
-            "    zzmmzz    ",
+            "              ",
+            "    h mm h    ",
         ],
     ]
 
@@ -331,8 +420,32 @@ enum PersonArt {
         " VVv      vVV ",
     ]
 
+    static let turtleneckOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "     tTTt     ",
+        "     tttt     ",
+    ]
+
+    static let teeOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "     tsst     ",
+    ]
+
     /// Every body outfit, in `CharacterAppearance.outfit` order.
-    static let outfitOverlays: [[String]] = [casualHoodieOverlay, shirtOverlay, blazerOverlay]
+    static let outfitOverlays: [[String]] = [casualHoodieOverlay, shirtOverlay, blazerOverlay, turtleneckOverlay, teeOverlay]
 
     // MARK: - Role accessories
 

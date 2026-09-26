@@ -345,7 +345,7 @@ struct NewGameFlow: View {
 
             CardView("Look", systemImage: "face.smiling") {
                 VStack(spacing: Theme.Spacing.md) {
-                    HStack(spacing: Theme.Spacing.lg) {
+                    HStack(spacing: Theme.Spacing.md) {
                         Button {
                             showPreset((appearanceIndex + looks.count - 1) % looks.count)
                         } label: {
@@ -353,11 +353,11 @@ struct NewGameFlow: View {
                         }
                         .accessibilityLabel("Previous look")
 
-                        HStack(alignment: .bottom, spacing: Theme.Spacing.md) {
-                            PixelPortrait(seed: appearanceSeed, isFounder: true, size: 96)
+                        HStack(alignment: .bottom, spacing: Theme.Spacing.sm) {
+                            PixelPortrait(seed: appearanceSeed, isFounder: true, size: 124)
                                 .id(presetSeed)
                                 .transition(Theme.Motion.transition(.scale.combined(with: .opacity)))
-                            FounderFigure(appearance: lookBinding.wrappedValue, height: 110)
+                            FounderFigure(appearance: lookBinding.wrappedValue, height: 96)
                         }
                         .accessibilityElement(children: .contain)
                         .accessibilityLabel(LookNames.summary(of: lookBinding.wrappedValue))

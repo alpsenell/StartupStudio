@@ -207,7 +207,10 @@ extension SpriteLibrary {
         props: [[String]] = [],
         faceDetail: Bool = true
     ) -> PixelSprite {
+        let isFounder = isFounder && appearance.wearsFounderHoodie
         let hair = PersonArt.hairOverlays[appearance.hairStyle % PersonArt.hairOverlays.count]
+        let earrings = appearance.earrings.map { PersonArt.earringOverlays[$0 % PersonArt.earringOverlays.count] }
+        let neckwear = appearance.neckwear.map { PersonArt.neckwearOverlays[$0 % PersonArt.neckwearOverlays.count] }
         let beard = PersonArt.beardOverlays[appearance.beardStyle % PersonArt.beardOverlays.count]
         let headwear = appearance.headwear.flatMap { style -> [String]? in
             role == .qa || role == .designer
@@ -237,6 +240,12 @@ extension SpriteLibrary {
             }
             if !sleeping {
                 grid = PixelGrid.overlay(base: grid, top: outfit, offsetY: torso)
+                if let neckwear {
+                    grid = PixelGrid.overlay(base: grid, top: neckwear, offsetY: torso)
+                }
+                if let earrings {
+                    grid = PixelGrid.overlay(base: grid, top: earrings, offsetY: head)
+                }
                 if let style = appearance.glasses {
                     grid = PixelGrid.overlay(
                         base: grid,
@@ -272,13 +281,11 @@ extension SpriteLibrary {
         let shirt = isFounder
             ? (base: Palettes.hoodie, shade: Palettes.hoodieShade)
             : Palettes.shirtColors[appearance.shirtColor % Palettes.shirtColors.count]
-        let mouth = Palettes.translucent(Palettes.ember[4], 120)
         return [
             "O": Palettes.outline,
             "E": Palettes.eyeColors[appearance.eyeColor % Palettes.eyeColors.count],
-            "m": mouth,
-            "f": Palettes.translucent(Palettes.sand[4], 85),
-            "z": Palettes.translucent(hairColor.shade, 130),
+            "m": Palettes.mouth(forSkin: appearance.skinTone),
+            "f": Palettes.freckle(forSkin: appearance.skinTone),
             "A": Palettes.ember[3], "a": Palettes.ember[4],
             "J": Palettes.teal[3], "j": Palettes.teal[4],
             "L": Palettes.plum[2], "l": Palettes.plum[3],
