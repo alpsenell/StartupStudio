@@ -52,6 +52,9 @@ func composition() -> [Placement] {
     appearance.glasses = nil
     appearance.hasBeard = false
     appearance.outfit = 0
+    appearance.eyeColor = 0
+    appearance.headwear = nil
+    appearance.freckles = false
 
     let person = SpriteLibrary.person(
         appearance: appearance, pose: .seated, isFounder: true, role: .founder

@@ -106,7 +106,7 @@ extension SpriteLibrary {
             return composePerson(
                 frames: [HomePersonArt.slumpA, HomePersonArt.slumpB],
                 headOffsets: [2, 3], torsoOffsets: [1, 1],
-                appearance: appearance, isFounder: isFounder, role: look
+                appearance: appearance, isFounder: isFounder, role: look, faceDetail: false
             )
         case .seatedSlump:
             // The same head and torso offsets as `.slump`: the art is the
@@ -115,7 +115,7 @@ extension SpriteLibrary {
             return composePerson(
                 frames: [HomePersonArt.seatedSlumpA, HomePersonArt.seatedSlumpB],
                 headOffsets: [2, 3], torsoOffsets: [1, 1],
-                appearance: appearance, isFounder: isFounder, role: look
+                appearance: appearance, isFounder: isFounder, role: look, faceDetail: false
             )
         case .coffee:
             return composePerson(
@@ -190,9 +190,11 @@ extension SpriteLibrary {
         }
     }
 
-    /// Shared assembly. Layers, back to front: base pose, hair, beard,
-    /// outfit, glasses, role accessory, held prop. Each layer takes the
-    /// frame's own head or torso offset, so everything rides a bob together.
+    /// Shared assembly. Layers, back to front: base pose, hair, face detail
+    /// (brows, mouth, freckles), beard, headwear, outfit, glasses, role
+    /// accessory, held prop. Each layer takes the frame's own head or torso
+    /// offset, so everything rides a bob together. `faceDetail` is off for
+    /// the slumps, whose downcast eyes sit where the brows would.
     private static func composePerson(
         frames: [[String]],
         headOffsets: [Int],
@@ -202,9 +204,16 @@ extension SpriteLibrary {
         role: RoleLook = .none,
         sleeping: Bool = false,
         mirrored: Bool = false,
-        props: [[String]] = []
+        props: [[String]] = [],
+        faceDetail: Bool = true
     ) -> PixelSprite {
         let hair = PersonArt.hairOverlays[appearance.hairStyle % PersonArt.hairOverlays.count]
+        let beard = PersonArt.beardOverlays[appearance.beardStyle % PersonArt.beardOverlays.count]
+        let headwear = appearance.headwear.flatMap { style -> [String]? in
+            role == .qa || role == .designer
+                ? nil
+                : PersonArt.headwearOverlays[style % PersonArt.headwearOverlays.count]
+        }
         let outfit = isFounder
             ? PersonArt.hoodieOverlay
             : PersonArt.outfitOverlays[appearance.outfit % PersonArt.outfitOverlays.count]
@@ -214,8 +223,17 @@ extension SpriteLibrary {
             let head = headOffsets[min(index, headOffsets.count - 1)]
             let torso = torsoOffsets.map { $0[min(index, $0.count - 1)] } ?? 0
             var grid = PixelGrid.overlay(base: frame, top: hair, offsetY: head)
+            if faceDetail, !sleeping {
+                grid = PixelGrid.overlay(base: grid, top: PersonArt.faceDetailOverlay, offsetY: head)
+                if appearance.freckles {
+                    grid = PixelGrid.overlay(base: grid, top: PersonArt.frecklesOverlay, offsetY: head)
+                }
+            }
             if appearance.hasBeard, !sleeping {
-                grid = PixelGrid.overlay(base: grid, top: PersonArt.beardOverlay, offsetY: head)
+                grid = PixelGrid.overlay(base: grid, top: beard, offsetY: head)
+            }
+            if let headwear, !sleeping {
+                grid = PixelGrid.overlay(base: grid, top: headwear, offsetY: head)
             }
             if !sleeping {
                 grid = PixelGrid.overlay(base: grid, top: outfit, offsetY: torso)
@@ -254,9 +272,16 @@ extension SpriteLibrary {
         let shirt = isFounder
             ? (base: Palettes.hoodie, shade: Palettes.hoodieShade)
             : Palettes.shirtColors[appearance.shirtColor % Palettes.shirtColors.count]
+        let mouth = Palettes.translucent(Palettes.ember[4], 120)
         return [
             "O": Palettes.outline,
-            "E": Palettes.eye,
+            "E": Palettes.eyeColors[appearance.eyeColor % Palettes.eyeColors.count],
+            "m": mouth,
+            "f": Palettes.translucent(Palettes.sand[4], 85),
+            "z": Palettes.translucent(hairColor.shade, 130),
+            "A": Palettes.ember[3], "a": Palettes.ember[4],
+            "J": Palettes.teal[3], "j": Palettes.teal[4],
+            "L": Palettes.plum[2], "l": Palettes.plum[3],
             "P": Palettes.pants,
             "C": Palettes.chair,
             "K": HomePalette.shoe,
