@@ -12,6 +12,9 @@
 ///   N accessory dark   n lens glass   M metal   W/w paper
 ///   R/r accent warm    G/g accent green   V/v blazer   Q collar
 ///   Y gold             I indigo          K shoe/dark
+///   m mouth            f freckle
+///   A/a beanie         J/j cap           L/l headband
+///   X/x bucket hat
 enum PersonArt {
     static let width = 14
     static let height = 18
@@ -59,7 +62,9 @@ enum PersonArt {
     }()
 
     /// Hair overlays, one per style, laid over the bald base head.
-    /// Order: short, spiky, curly, bun, long, bald.
+    /// Order: short, spiky, curly, bun, long, bald — the six a seed draws
+    /// from — then the creator-only side part, mohawk, ponytail, afro and
+    /// buzz cut.
     static let hairOverlays: [[String]] = [
         // 0 — short
         [
@@ -105,6 +110,100 @@ enum PersonArt {
         [
             "              ",
         ],
+        // 6 — side part
+        [
+            "              ",
+            "     HHHH     ",
+            "    hHHHHHH   ",
+            "    H hHHHH   ",
+            "          H   ",
+        ],
+        // 7 — mohawk
+        [
+            "      HH      ",
+            "      HH      ",
+            "     hHHh     ",
+            "      hh      ",
+        ],
+        // 8 — ponytail
+        [
+            "              ",
+            "     HHHH     ",
+            "    HHHHHH    ",
+            "    Hh  hHH   ",
+            "          hH  ",
+            "          HH  ",
+            "           h  ",
+        ],
+        // 9 — afro
+        [
+            "    HHHHHH    ",
+            "  HHHHHHHHHH  ",
+            "  HHhHHHHhHH  ",
+            "  HHh    hHH  ",
+            "  Hh      hH  ",
+            "   h      h   ",
+        ],
+        // 10 — buzz cut
+        [
+            "              ",
+            "     hhhh     ",
+            "    hhhhhh    ",
+            "    h    h    ",
+        ],
+    ]
+
+    static let faceDetailOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "    hh  hh    ",
+        "              ",
+        "              ",
+        "      mm      ",
+    ]
+
+    static let frecklesOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "    f ff f    ",
+    ]
+
+    static let headwearOverlays: [[String]] = [
+        [
+            "      AA      ",
+            "    AAAAAA    ",
+            "   AAAAAAAA   ",
+            "   aAaAaAaA   ",
+        ],
+        [
+            "              ",
+            "    JJJJJJ    ",
+            "   JJJQJJJJ   ",
+            "  jjjjjjjjJ   ",
+        ],
+        [
+            "              ",
+            "              ",
+            "   LLLLLLLL   ",
+            "          l   ",
+        ],
+        [
+            "     NNNN     ",
+            "    N    N    ",
+            "   N      N   ",
+            "  NN      NN  ",
+            "  NR      RN  ",
+            "  NN      NN  ",
+        ],
+        [
+            "     XXXX     ",
+            "    XXXXXX    ",
+            "  xxxxxxxxxx  ",
+        ],
     ]
 
     // MARK: - Face accessories
@@ -131,19 +230,125 @@ enum PersonArt {
             "   Nn nn nN   ",
             "   NN    NN   ",
         ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "    NN  NN    ",
+            "   Nn NN nN   ",
+            "    NN  NN    ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "   NNNNNNNN   ",
+            "    NN  NN    ",
+        ],
     ]
 
-    /// Beard: sideburns, jaw and chin in the hair's shade tone, so it always
-    /// matches the head it grows on.
-    static let beardOverlay: [String] = [
-        "              ",
-        "              ",
-        "              ",
-        "              ",
-        "              ",
-        "    h    h    ",
-        "    hhhhhh    ",
+    static let earringOverlays: [[String]] = [
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "   Y      Y   ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "   Y      Y   ",
+            "  Y        Y  ",
+        ],
     ]
+
+    static let neckwearOverlays: [[String]] = [
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "    RRRRRR    ",
+            "    rRRRRr    ",
+            "        rR    ",
+            "        rR    ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "     Y  Y     ",
+            "      YY      ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "     RrrR     ",
+        ],
+    ]
+
+    /// Beards in the hair's shade tone. Order: full, moustache, goatee, stubble.
+    static let beardOverlays: [[String]] = [
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "    h    h    ",
+            "    hhhhhh    ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "     hhhh     ",
+            "      mm      ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "     hmmh     ",
+            "      hh      ",
+        ],
+        [
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "              ",
+            "    h mm h    ",
+        ],
+    ]
+
+    static var beardOverlay: [String] { beardOverlays[0] }
 
     // MARK: - Outfits
 
@@ -215,8 +420,32 @@ enum PersonArt {
         " VVv      vVV ",
     ]
 
+    static let turtleneckOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "     tTTt     ",
+        "     tttt     ",
+    ]
+
+    static let teeOverlay: [String] = [
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "     tsst     ",
+    ]
+
     /// Every body outfit, in `CharacterAppearance.outfit` order.
-    static let outfitOverlays: [[String]] = [casualHoodieOverlay, shirtOverlay, blazerOverlay]
+    static let outfitOverlays: [[String]] = [casualHoodieOverlay, shirtOverlay, blazerOverlay, turtleneckOverlay, teeOverlay]
 
     // MARK: - Role accessories
 

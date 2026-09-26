@@ -153,6 +153,9 @@ enum Palettes {
         (RGBA(r: 208, g: 158, b: 110), RGBA(r: 183, g: 132, b: 88)),
         (RGBA(r: 166, g: 112, b: 74), RGBA(r: 140, g: 90, b: 58)),
         (RGBA(r: 118, g: 79, b: 54), RGBA(r: 96, g: 62, b: 42)),
+        (RGBA(r: 255, g: 232, b: 214), RGBA(r: 238, g: 204, b: 182)),
+        (RGBA(r: 214, g: 176, b: 128), RGBA(r: 188, g: 150, b: 104)),
+        (RGBA(r: 84, g: 56, b: 40), RGBA(r: 66, g: 43, b: 31)),
     ]
 
     /// (base, shade) hair pairs: black, dark brown, chestnut, blonde,
@@ -164,6 +167,10 @@ enum Palettes {
         (RGBA(r: 216, g: 180, b: 102), RGBA(r: 190, g: 152, b: 80)),
         (RGBA(r: 156, g: 74, b: 50), RGBA(r: 128, g: 58, b: 39)),
         (RGBA(r: 108, g: 110, b: 150), RGBA(r: 86, g: 88, b: 124)),
+        (stone[1], stone[2]),
+        (ember[1], ember[2]),
+        (plum[1], plum[2]),
+        (teal[2], teal[3]),
     ]
 
     /// Shirt (base, shade) pairs — each one is literally two neighbouring
@@ -185,6 +192,31 @@ enum Palettes {
     /// The universal 1px outline. Everything in PixelKit is outlined in it.
     static let outline = ink[4]
     static let eye = ink[3]
+    static let eyeColors: [RGBA] = [eye, sand[4], sky[3], moss[3], stone[4]]
+
+    private static let skinDepthOrder = [5, 0, 1, 6, 2, 3, 4, 7]
+
+    private static func skinStep(_ skinTone: Int, _ offset: Int) -> Int? {
+        let position = skinDepthOrder.firstIndex(of: skinTone % skinTones.count) ?? 0
+        let target = position + offset
+        return skinDepthOrder.indices.contains(target) ? skinDepthOrder[target] : nil
+    }
+
+    static func mouth(forSkin skinTone: Int) -> RGBA {
+        skinStep(skinTone, 3).map { skinTones[$0].shade } ?? (skinTone % skinTones.count == 7 ? ink[4] : ember[4])
+    }
+
+    static func freckle(forSkin skinTone: Int) -> RGBA {
+        skinStep(skinTone, 2).map { skinTones[$0].shade } ?? sand[4]
+    }
+
+    static func skinHighlight(forSkin skinTone: Int) -> RGBA {
+        skinStep(skinTone, -1).map { skinTones[$0].base } ?? stone[0]
+    }
+
+    static func hairHighlight(forHair hairColor: Int) -> RGBA {
+        [ink[0], sand[3], sand[2], gold[1], ember[3], stone[2], stone[0], gold[1], plum[0], teal[1]][hairColor % 10]
+    }
     static let pants = ink[2]
     static let chair = ink[1]
     static let hoodie = indigo[3]

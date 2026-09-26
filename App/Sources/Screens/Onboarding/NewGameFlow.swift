@@ -109,6 +109,8 @@ struct NewGameFlow: View {
     /// The one thing carried from the ledger (R2); `nil` is "carry nothing".
     @State private var heirloom: Heirloom?
     @State private var appearanceIndex = 0
+    @State private var customLook: CharacterAppearance?
+    @State private var isEditingLook = false
     @State private var nameShuffle = 0
     @State private var introPage = 0
     /// Iteration 7 (R4): what the custom page collects.
@@ -146,8 +148,24 @@ struct NewGameFlow: View {
             // MARK: end of Iteration 10 — M5
     }
 
-    private var appearanceSeed: UInt64 {
+    private var presetSeed: UInt64 {
         looks[appearanceIndex % looks.count].seed
+    }
+
+    private var appearanceSeed: UInt64 {
+        customLook?.customSeed ?? presetSeed
+    }
+
+    private var lookBinding: Binding<CharacterAppearance> {
+        Binding(
+            get: { customLook ?? CharacterAppearance(seed: presetSeed) },
+            set: { customLook = $0 }
+        )
+    }
+
+    private func showPreset(_ index: Int) {
+        customLook = nil
+        appearanceIndex = index
     }
 
     /// The ending the current look was earned for, if it is one of those.
@@ -297,7 +315,7 @@ struct NewGameFlow: View {
                                         founderName = successor.name
                                         founderNameEdited = true
                                         archetype = successor.archetype
-                                        appearanceIndex = 0
+                                        showPreset(0)
                                     }
                                 }
                             }
@@ -327,20 +345,25 @@ struct NewGameFlow: View {
 
             CardView("Look", systemImage: "face.smiling") {
                 VStack(spacing: Theme.Spacing.md) {
-                    HStack(spacing: Theme.Spacing.lg) {
+                    HStack(spacing: Theme.Spacing.md) {
                         Button {
-                            appearanceIndex = (appearanceIndex + looks.count - 1) % looks.count
+                            showPreset((appearanceIndex + looks.count - 1) % looks.count)
                         } label: {
                             Image(systemName: "chevron.left.circle.fill").font(.title2)
                         }
                         .accessibilityLabel("Previous look")
 
-                        PixelPortrait(seed: appearanceSeed, isFounder: true, size: 96)
-                            .id(appearanceSeed)
-                            .transition(Theme.Motion.transition(.scale.combined(with: .opacity)))
+                        HStack(alignment: .bottom, spacing: Theme.Spacing.sm) {
+                            PixelPortrait(seed: appearanceSeed, isFounder: true, size: 124)
+                                .id(presetSeed)
+                                .transition(Theme.Motion.transition(.scale.combined(with: .opacity)))
+                            FounderFigure(appearance: lookBinding.wrappedValue, height: 96)
+                        }
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel(LookNames.summary(of: lookBinding.wrappedValue))
 
                         Button {
-                            appearanceIndex = (appearanceIndex + 1) % looks.count
+                            showPreset((appearanceIndex + 1) % looks.count)
                         } label: {
                             Image(systemName: "chevron.right.circle.fill").font(.title2)
                         }
@@ -348,13 +371,43 @@ struct NewGameFlow: View {
                     }
                     .animation(Theme.Motion.selection, value: appearanceIndex)
 
-                    Text("Look \(appearanceIndex + 1) of \(looks.count)")
-                        .font(.caption)
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
+                    if customLook == nil {
+                        Text("Look \(appearanceIndex + 1) of \(looks.count)")
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Your own look")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     // R4: the ribbon on a look an ending earned.
-                    if let earnedFor = currentLookEarnedFor {
+                    if customLook == nil, let earnedFor = currentLookEarnedFor {
                         EarnedLookRibbon(ending: earnedFor)
+                            .transition(Theme.Motion.transition(.opacity))
+                    }
+
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Button {
+                            Haptics.tap()
+                            withAnimation(Theme.Motion.selection) { isEditingLook.toggle() }
+                        } label: {
+                            Label(
+                                isEditingLook
+                                    ? String(localized: "Done", comment: "Button that closes the character creator")
+                                    : String(localized: "Customize", comment: "Button that opens the character creator"),
+                                systemImage: isEditingLook ? "checkmark" : "slider.horizontal.3"
+                            )
+                            .font(.subheadline.weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
+                        ShuffleButton(label: String(localized: "Random look", comment: "Button that rolls a random founder look in the character creator")) {
+                            withAnimation(Theme.Motion.selection) { customLook = .randomLook() }
+                        }
+                    }
+
+                    if isEditingLook {
+                        LookEditor(appearance: lookBinding)
                             .transition(Theme.Motion.transition(.opacity))
                     }
                 }

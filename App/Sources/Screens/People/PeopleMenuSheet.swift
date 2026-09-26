@@ -85,7 +85,7 @@ struct PeopleMenuContent: View {
                     if !inGroup.isEmpty {
                         CardView(group.displayName, systemImage: group.systemImage) {
                             VStack(spacing: Theme.Spacing.sm) {
-                                ForEach(inGroup) { rule in
+                                ForEach(inGroup.filter { $0.value == nil }) { rule in
                                     PeopleActionRow(
                                         engine: engine, target: target, rule: rule
                                     ) { perform(rule) }
@@ -96,6 +96,17 @@ struct PeopleMenuContent: View {
                                 PeopleLegacyRows(
                                     engine: engine, target: target, group: group
                                 )
+                                ForEach(valueShelves(inGroup), id: \.value) { shelf in
+                                    ValueShelfHeader(
+                                        value: shelf.value,
+                                        isTheirs: engine.state.knownValue(target) == shelf.value
+                                    )
+                                    ForEach(shelf.rules) { rule in
+                                        PeopleActionRow(
+                                            engine: engine, target: target, rule: rule
+                                        ) { perform(rule) }
+                                    }
+                                }
                             }
                         }
                     }
@@ -125,6 +136,20 @@ struct PeopleMenuContent: View {
                 description: Text("This one isn't somebody you can call.")
             )
             .padding(.top, Theme.Spacing.xl)
+        }
+    }
+
+    private struct Shelf {
+        let value: RelationshipValue
+        let rules: [InteractionRule]
+    }
+
+    private func valueShelves(_ rules: [InteractionRule]) -> [Shelf] {
+        let known = engine.state.knownValue(target)
+        let order = (known.map { [$0] } ?? []) + RelationshipValue.allCases.filter { $0 != known }
+        return order.compactMap { value in
+            let tagged = rules.filter { $0.value == value }
+            return tagged.isEmpty ? nil : Shelf(value: value, rules: tagged)
         }
     }
 
@@ -175,12 +200,32 @@ private struct PeopleMenuHeader: View {
                             .contentTransition(.numericText())
                     }
                     PeopleBar(value: bar, tint: tint)
+                    if target.kind != .rival {
+                        valueLine
+                    }
                     Text(note)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var valueLine: some View {
+        if let value = engine.state.knownValue(target) {
+            Label {
+                Text("Values \(value.displayName.lowercased()) most")
+            } icon: {
+                Image(systemName: value.systemImage)
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Theme.accent)
+        } else {
+            Label("Ask what matters to them to learn what lands", systemImage: "questionmark.circle")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -240,5 +285,27 @@ struct PeopleBar: View {
         .frame(height: 6)
         .animation(Theme.Motion.valueChange, value: value)
         .accessibilityHidden(true)
+    }
+}
+
+private struct ValueShelfHeader: View {
+    let value: RelationshipValue
+    let isTheirs: Bool
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.xs) {
+            Image(systemName: value.systemImage)
+            Text(value.displayName)
+            if isTheirs {
+                Spacer()
+                Label("What they value", systemImage: "heart.fill")
+                    .labelStyle(.titleAndIcon)
+            }
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(isTheirs ? Theme.accent : .secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, Theme.Spacing.xs)
+        .accessibilityAddTraits(.isHeader)
     }
 }
